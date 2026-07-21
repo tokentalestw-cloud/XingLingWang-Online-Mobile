@@ -28331,6 +28331,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
 // ===== 📱 手機一鍵切換全螢幕與 iOS PWA 啟動引擎 =====
 window.xlwRequestFullScreen = function() {
   const docEl = document.documentElement;
@@ -28350,12 +28351,23 @@ window.xlwRequestFullScreen = function() {
   if (banner) banner.style.display = "none";
 };
 
-// Check if running in standalone PWA mode
 window.xlwCheckStandalone = function() {
   const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const banner = document.getElementById("xlwMobileFsBanner");
-  if (isStandalone && banner) {
-    banner.style.display = "none";
+  
+  if (banner) {
+    if (isStandalone) {
+      banner.style.display = "none";
+    } else if (isIOS) {
+      // iPhone Safari does not support requestFullscreen on standard HTML elements.
+      // Dynamically display PWA installation guide on the banner to avoid non-functional clicks.
+      banner.innerHTML = `<span>💡 <b>iPhone 滿版提示：</b>點擊 Safari 下方「<b>分享 ➔</b>」按鈕，選擇「<b>加入主畫面</b>」即可開啟全螢幕 App！</span>`;
+      banner.removeAttribute("onclick");
+      banner.style.background = "linear-gradient(90deg, #1b0d2b 0%, #fa541c 50%, #1b0d2b 100%)";
+      banner.style.color = "#ffffff";
+      banner.style.justifyContent = "center";
+    }
   }
 };
 
