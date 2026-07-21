@@ -21487,27 +21487,40 @@ function logBattle(text) {
 }
 
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
 
   const isMobile = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
   const isPortraitMobile = window.matchMedia("(max-width: 900px) and (orientation: portrait), (pointer: coarse) and (max-width: 900px)").matches;
+  const isLandscapeMobile = isMobile && !isPortraitMobile;
+
   const boardNaturalHeight = isPortraitMobile ? 920 : 940;
   const boardNaturalWidth = isPortraitMobile ? 760 : 980;
 
   let finalScale;
   if (isMobile) {
-    // 手機直立：依螢幕寬度盡量吃滿，避免上方場地左右留白。
-    const safeSidePadding = isPortraitMobile ? 0 : 8;
-    const availableWidth = Math.max(320, window.innerWidth - safeSidePadding);
-    const fillBoost = isPortraitMobile ? 1.0 : 1.0;
-    // 2026-06-13 真正修正：上一版把直立手機縮放上限鎖在 0.62，導致場地變小、留白變大。
-    // 這裡改成以螢幕寬度為主填滿，並把上限放寬到 0.94，讓 iPhone 直立畫面接近滿版但不重疊。
-    finalScale = Math.min((availableWidth / boardNaturalWidth) * fillBoost, isPortraitMobile ? 0.94 : 1.0);
-    document.documentElement.classList.add("xlw-mobile-layout");
-    document.body.classList.add("xlw-mobile-layout");
+    if (isLandscapeMobile) {
+      // 📱 橫向手機：改依螢幕高度與寬度取最小值，限制上限 0.38 確保不溢出
+      const topbarH = 34;
+      const padding = 8;
+      const availableHeight = Math.max(300, window.innerHeight - topbarH - padding);
+      const scaleH = availableHeight / boardNaturalHeight;
+      const scaleW = (window.innerWidth - 130) / boardNaturalWidth;
+      finalScale = Math.min(scaleH, scaleW, 0.38);
+      document.documentElement.classList.add("xlw-mobile-layout");
+      document.body.classList.add("xlw-mobile-layout");
+    } else {
+      // 📱 直向手機：依螢幕寬度盡量吃滿
+      const safeSidePadding = 0;
+      const availableWidth = Math.max(320, window.innerWidth - safeSidePadding);
+      finalScale = Math.min((availableWidth / boardNaturalWidth), 0.94);
+      document.documentElement.classList.add("xlw-mobile-layout");
+      document.body.classList.add("xlw-mobile-layout");
+    }
   } else {
+    // 💻 電腦版
     const topbarH = 48;
     const handPanelH = 200;
     const padding = 16;
@@ -21520,23 +21533,48 @@ function adjustBoardScale() {
     document.body.classList.remove("xlw-mobile-layout");
   }
 
-  // 重要：舊版 CSS 有 .board { transform: scale(.78) !important; }
-  // 所以這裡改用 CSS 變數 + 最後 CSS !important 規則，確保手機真的套用新版縮放。
+  // 設定 CSS 變數與縮放樣式
   document.documentElement.style.setProperty("--xlw-mobile-scale", String(finalScale));
-  board.style.transform = `scale(${finalScale})`;
-  board.style.transformOrigin = "top center";
+  
+  if (isMobile && isLandscapeMobile) {
+    board.style.transform = `translate(-50%, -46%) scale(${finalScale})`;
+    board.style.transformOrigin = "center center";
+    board.style.position = "absolute";
+    board.style.top = "50%";
+    board.style.left = "50%";
+    board.style.margin = "0";
+  } else {
+    board.style.transform = `scale(${finalScale})`;
+    board.style.transformOrigin = "top center";
+    board.style.position = "";
+    board.style.top = "";
+    board.style.left = "";
+    board.style.margin = "0 auto";
+  }
 
   const shell = document.querySelector(".game-shell");
   const wrap = document.querySelector(".board-wrap");
-  if (shell) {
-    const h = Math.ceil(boardNaturalHeight * finalScale);
-    shell.style.height = `${h}px`;
-    shell.style.minHeight = `${h}px`;
-  }
-  if (wrap) {
-    const h = Math.ceil(boardNaturalHeight * finalScale);
-    wrap.style.height = `${h}px`;
-    wrap.style.minHeight = `${h}px`;
+
+  if (isMobile && isLandscapeMobile) {
+    if (shell) {
+      shell.style.height = "100vh";
+      shell.style.minHeight = "100vh";
+    }
+    if (wrap) {
+      wrap.style.height = "100%";
+      wrap.style.minHeight = "100%";
+    }
+  } else {
+    if (shell) {
+      const h = Math.ceil(boardNaturalHeight * finalScale);
+      shell.style.height = `${h}px`;
+      shell.style.minHeight = `${h}px`;
+    }
+    if (wrap) {
+      const h = Math.ceil(boardNaturalHeight * finalScale);
+      wrap.style.height = `${h}px`;
+      wrap.style.minHeight = `${h}px`;
+    }
   }
 }
 
