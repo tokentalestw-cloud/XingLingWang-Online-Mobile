@@ -1,0 +1,19 @@
+1412: if (playerField.dataset.card) {
+1413: graveyard.push(JSON.parse(playerField.dataset.card));
+1415: playerField.dataset.card = JSON.stringify(card);
+1446: if (playerField && playerField.dataset.card) {
+1447: const fCard = JSON.parse(playerField.dataset.card);
+1449: playerField.dataset.card = JSON.stringify(fCard);
+1737: if ($("playerField").dataset.card) choices.push({ text: "破壞我方場地牌", value: "player" });
+1738: if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+1742: const fCard = JSON.parse($("playerField").dataset.card);
+1746: delete $("playerField").dataset.card;
+1751: const fCard = JSON.parse($("enemyField").dataset.card);
+1755: delete $("enemyField").dataset.card;
+1778: if (enemyField.dataset.card) {
+1779: window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+1781: enemyField.dataset.card = JSON.stringify(unit.card);
+6381: pfEl.dataset.card = JSON.stringify(s.enemyFieldCard);
+6388: efEl.dataset.card = JSON.stringify(s.playerFieldCard);
+9353: playerFieldCard: document.getElementById("playerField")?.dataset.card ? JSON.parse(document.getElementById("playerField").dataset.card) : null,
+9354: enemyFieldCard: document.getElementById("enemyField")?.dataset.card ? JSON.parse(document.getElementById("enemyField").dataset.card) : null,

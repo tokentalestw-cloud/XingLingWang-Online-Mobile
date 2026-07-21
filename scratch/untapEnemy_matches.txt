@@ -1,0 +1,42 @@
+3863: untapEnemy();
+  3861: 
+  3862: // 1. 整備階段：對手單位轉正
+  3863: untapEnemy();
+  3864: 
+  3865: // 2. 對手抽 2 張 (AI 抽牌階段)
+  3866: const enemyDrawn = [];
+  3867: for (let i = 0; i < 2; i++) {
+  3868: if (window.XLW_ENEMY.deck.length) {
+  3869: enemyDrawn.push(window.XLW_ENEMY.deck.pop());
+  3870: }
+  3871: }
+  3872: 
+------------------------------
+4388: untapEnemy(); // 對手回合開始，本地也同步將對手的所有疲勞狀態單位轉正
+  4386: }
+  4387: 
+  4388: untapEnemy(); // 對手回合開始，本地也同步將對手的所有疲勞狀態單位轉正
+  4389: 
+  4390: // Check Call Game resolution for enemy
+  4391: checkCallGameAtTurnStart(false);
+  4392: if (isGameOverFlag) return;
+  4393: 
+  4394: if (isMultiplayer && isMyTurn) {
+  4395: sendFullGameStateToOpponent();
+  4396: }
+  4397: 
+------------------------------
+4480: function untapEnemy() {
+  4478: }
+  4479: 
+  4480: function untapEnemy() {
+  4481: ["enemy_front", "enemy_back"].forEach(zone => {
+  4482: field[zone].forEach(u => {
+  4483: if (u) {
+  4484: u.attacking = false;
+  4485: u.target = null;
+  4486: u.tempAtkModifier = 0;
+  4487: }
+  4488: });
+  4489: });
+------------------------------

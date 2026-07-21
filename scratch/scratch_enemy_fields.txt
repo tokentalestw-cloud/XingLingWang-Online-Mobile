@@ -1,0 +1,200 @@
+L915: const fieldEl = owner === "player" ? $("playerField") : $("enemyField");
+  913:   if (zone && zone.includes("front")) {
+  914:     const owner = zone.startsWith("player_") ? "player" : "enemy";
+  915:     const fieldEl = owner === "player" ? $("playerField") : $("enemyField");
+  916:     if (fieldEl && fieldEl.dataset.card) {
+  917:       try {
+  918:         const fieldCard = JSON.parse(fieldEl.dataset.card);
+  919:         if (fieldCard.name.includes("河童")) {
+  920:           baseAtk = Math.max(0, baseAtk - 1);
+--------------------------------------------------
+L1606: if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+  1604:           const choices = [];
+  1605:           if ($("playerField").dataset.card) choices.push({ text: "破壞我方場地牌", value: "player" });
+  1606:           if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+  1607:           if (choices.length > 0) {
+  1608:             const chosen = await showXLWChoiceModal("晴天娃娃 獻祭效果", "請選擇要破壞的場地牌：", choices);
+  1609:             if (chosen === "player") {
+  1610:               const fCard = JSON.parse($("playerField").dataset.card);
+  1611:               if (fCard && fCard.indestructible) {
+--------------------------------------------------
+L1619: const fCard = JSON.parse($("enemyField").dataset.card);
+  1617:               }
+  1618:             } else if (chosen === "enemy") {
+  1619:               const fCard = JSON.parse($("enemyField").dataset.card);
+  1620:               if (fCard && fCard.indestructible) {
+  1621:                 logBattle("晴天娃娃 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+  1622:               } else {
+  1623:                 delete $("enemyField").dataset.card;
+  1624:                 window.XLW_ENEMY.grave.push(fCard);
+--------------------------------------------------
+L1623: delete $("enemyField").dataset.card;
+  1621:                 logBattle("晴天娃娃 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+  1622:               } else {
+  1623:                 delete $("enemyField").dataset.card;
+  1624:                 window.XLW_ENEMY.grave.push(fCard);
+  1625:                 logBattle("晴天娃娃 效果：敵方場地牌被破壞。");
+  1626:               }
+  1627:             }
+  1628:           }
+--------------------------------------------------
+L1644: const enemyField = $("enemyField");
+  1642:           const confirm = await showXLWConfirm("河童 獻祭效果", "是否將河童作為被動效果放置於對手場地？");
+  1643:           if (confirm) {
+  1644:             const enemyField = $("enemyField");
+  1645:             if (enemyField) {
+  1646:               if (enemyField.dataset.card) {
+  1647:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1648:               }
+  1649:               enemyField.dataset.card = JSON.stringify(unit.card);
+--------------------------------------------------
+L1645: if (enemyField) {
+  1643:           if (confirm) {
+  1644:             const enemyField = $("enemyField");
+  1645:             if (enemyField) {
+  1646:               if (enemyField.dataset.card) {
+  1647:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1648:               }
+  1649:               enemyField.dataset.card = JSON.stringify(unit.card);
+  1650:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+--------------------------------------------------
+L1646: if (enemyField.dataset.card) {
+  1644:             const enemyField = $("enemyField");
+  1645:             if (enemyField) {
+  1646:               if (enemyField.dataset.card) {
+  1647:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1648:               }
+  1649:               enemyField.dataset.card = JSON.stringify(unit.card);
+  1650:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+  1651:             }
+--------------------------------------------------
+L1647: window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1645:             if (enemyField) {
+  1646:               if (enemyField.dataset.card) {
+  1647:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1648:               }
+  1649:               enemyField.dataset.card = JSON.stringify(unit.card);
+  1650:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+  1651:             }
+  1652:           }
+--------------------------------------------------
+L1649: enemyField.dataset.card = JSON.stringify(unit.card);
+  1647:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+  1648:               }
+  1649:               enemyField.dataset.card = JSON.stringify(unit.card);
+  1650:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+  1651:             }
+  1652:           }
+  1653:         }
+  1654:         // (d) 瓶子長長: 移動敵方單位
+--------------------------------------------------
+L5420: let enemyFieldStars = 0;
+  5418:   }
+  5419: 
+  5420:   let enemyFieldStars = 0;
+  5421:   for (const zone of ["enemy_front", "enemy_back"]) {
+  5422:     field[zone].forEach((u, i) => {
+  5423:       if (u) {
+  5424:         const uStars = getUnitStars(u, zone, i);
+  5425:         enemyStars += uStars;
+--------------------------------------------------
+L5426: enemyFieldStars += uStars;
+  5424:         const uStars = getUnitStars(u, zone, i);
+  5425:         enemyStars += uStars;
+  5426:         enemyFieldStars += uStars;
+  5427:       }
+  5428:     });
+  5429:   }
+  5430: 
+  5431:   // 左上角浮動狀態更新
+--------------------------------------------------
+L5454: <span>場上星星: <span style="color: #ffd76a;">${enemyFieldStars} ★</span> | 額外分數: <span style="color: #ff5252;">${enemyBonusScore} ★</span></span>
+  5452:       </div>
+  5453:       <div class="score-badge-subrow">
+  5454:         <span>場上星星: <span style="color: #ffd76a;">${enemyFieldStars} ★</span> | 額外分數: <span style="color: #ff5252;">${enemyBonusScore} ★</span></span>
+  5455:       </div>
+  5456:     </div>
+  5457:   `;
+  5458: 
+  5459:   // 計分對戰紀錄更新
+--------------------------------------------------
+L5466: enemyVal.innerHTML = `${enemyStars} <span style="font-size: 13px; font-weight: normal; opacity: 0.8; margin-left: 6px;">(\u5834\u4e0a\u661f\u661f: ${enemyFieldStars} \u2605 | \u984d\u5916\u5206\u6578: ${enemyBonusScore} \u2605)</span>`;
+  5464:   }
+  5465:   if (enemyVal) {
+  5466:     enemyVal.innerHTML = `${enemyStars} <span style="font-size: 13px; font-weight: normal; opacity: 0.8; margin-left: 6px;">(\u5834\u4e0a\u661f\u661f: ${enemyFieldStars} \u2605 | \u984d\u5916\u5206\u6578: ${enemyBonusScore} \u2605)</span>`;
+  5467:   }
+  5468: 
+  5469:   const logContent = $("xlwBattleLogContent");
+  5470:   if (logContent) {
+  5471:     logContent.innerHTML = battleLog.length
+--------------------------------------------------
+L6577: const oppField = $("enemyField");
+  6575:       render();
+  6576:     } else if (data.action === "field_indestructible") {
+  6577:       const oppField = $("enemyField");
+  6578:       if (oppField && oppField.dataset.card) {
+  6579:         const fCard = JSON.parse(oppField.dataset.card);
+  6580:         fCard.indestructible = true;
+  6581:         oppField.dataset.card = JSON.stringify(fCard);
+  6582:         logBattle(`✨ 對手場地卡【${fCard.name}】獲得了破壞抗性！`);
+--------------------------------------------------
+L7498: let enemyFieldStars = 0;
+  7496: 
+  7497:   let enemyStars = enemyBonusScore;
+  7498:   let enemyFieldStars = 0;
+  7499:   for (const zone of ["enemy_front", "enemy_back"]) {
+  7500:     field[zone].forEach((u, i) => {
+  7501:       if (u) {
+  7502:         const uStars = getUnitStars(u, zone, i);
+  7503:         enemyStars += uStars;
+--------------------------------------------------
+L7504: enemyFieldStars += uStars;
+  7502:         const uStars = getUnitStars(u, zone, i);
+  7503:         enemyStars += uStars;
+  7504:         enemyFieldStars += uStars;
+  7505:       }
+  7506:     });
+  7507:   }
+  7508: 
+  7509:   let result = "DEFEAT";
+--------------------------------------------------
+L7529: \u5c0d\u624b ${enemyStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${enemyFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${enemyBonusScore} \u2605)</small>
+  7527:       <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff;">
+  7528:         \u6211\u65b9 ${playerStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${playerFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${playerBonusScore} \u2605)</small>
+  7529:         \u5c0d\u624b ${enemyStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${enemyFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${enemyBonusScore} \u2605)</small>
+  7530:       </div>
+  7531:       <button onclick="document.getElementById('xlwResultPanel').classList.remove('show')" style="margin-top:20px; background: #cdaa52; color:#fff; border:1px solid #ffe6aa; border-radius:6px; padding: 8px 20px; cursor:pointer;">\u95dc\u9589</button>
+  7532:     </div>
+  7533:   `;
+  7534:   panel.classList.add("show");
+--------------------------------------------------
+L7630: let enemyFieldStars = 0;
+  7628: 
+  7629:   let enemyStars = enemyBonusScore;
+  7630:   let enemyFieldStars = 0;
+  7631:   for (const zone of ["enemy_front", "enemy_back"]) {
+  7632:     field[zone].forEach((u, i) => {
+  7633:       if (u) {
+  7634:         const uStars = getUnitStars(u, zone, i);
+  7635:         enemyStars += uStars;
+--------------------------------------------------
+L7636: enemyFieldStars += uStars;
+  7634:         const uStars = getUnitStars(u, zone, i);
+  7635:         enemyStars += uStars;
+  7636:         enemyFieldStars += uStars;
+  7637:       }
+  7638:     });
+  7639:   }
+  7640: 
+  7641:   let result = "DRAW";
+--------------------------------------------------
+L7673: 對手 ${enemyStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${enemyFieldStars} ★ | 額外加分: ${enemyBonusScore} ★)</small>
+  7671:       <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff;">
+  7672:         我方 ${playerStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${playerFieldStars} ★ | 額外加分: ${playerBonusScore} ★)</small>
+  7673:         對手 ${enemyStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${enemyFieldStars} ★ | 額外加分: ${enemyBonusScore} ★)</small>
+  7674:       </div>
+  7675:       <button onclick="document.getElementById('xlwResultPanel').classList.remove('show')" style="margin-top:20px; background: #cdaa52; color:#fff; border:1px solid #ffe6aa; border-radius:6px; padding: 8px 20px; cursor:pointer;">關閉</button>
+  7676:     </div>
+  7677:   `;
+  7678:   panel.classList.add("show");
+--------------------------------------------------

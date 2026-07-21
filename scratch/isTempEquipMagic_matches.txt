@@ -1,0 +1,3 @@
+1192: const isTempEquipMagic =
+1198: if (isTempEquipMagic) {
+1561: if (isTempEquipMagic) {

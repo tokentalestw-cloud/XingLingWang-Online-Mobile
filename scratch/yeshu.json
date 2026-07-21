@@ -1,0 +1,24 @@
+[
+  {
+    "id": "SR-ART-0026",
+    "name": "和平使者 耶叔",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "7",
+    "score": 7,
+    "tribute": 0,
+    "keywords": [
+      "最後的"
+    ],
+    "effect_text": "你的主要階段,若你的後排戰線有3個或以上的 最後的 單位, 才可從你手牌打出此卡使敵方玩家不得進攻。此卡不會被敵方單位效果及敵方魔法卡選為目標",
+    "image": "/static/card_images/sr_art_0026.jpeg",
+    "original_file": "藝術品/IMG_6176.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
+  }
+]

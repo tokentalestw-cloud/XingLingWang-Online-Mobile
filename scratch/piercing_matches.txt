@@ -1,0 +1,25 @@
+1179: card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+1487: card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+1502: if (c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排"))) {
+2724: const hasPiercing = unit.piercing ||
+2725: (unit.card && unit.card.keywords && unit.card.keywords.includes("貫穿")) ||
+2726: (unit.equipments && unit.equipments.some(e => e.includes("菜刀")));
+2734: `我方進攻的 貫穿 單位 ${unit.card.name} 攻擊力剛好為其基礎值 (${baseAtkNum}) 的 2 倍！是否從我方額外牌庫召喚【大耳賊】至對手場上任意空位？`,
+3227: // 實行戰鬥判定 (防守方死亡送入對應墓地，包含卡牌碎裂火花動畫，全面支持 遠程、劇毒、偷襲、阻擋、貫穿 結算)
+3299: let piercingMsg = "";
+3485: // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
+3486: const hasPiercing = (attackerCard.keywords && attackerCard.keywords.includes("貫穿")) ||
+3487: (attackerCard.effect_text && attackerCard.effect_text.includes("貫穿"));
+3493: piercingMsg = `，並貫穿擊破了後排的 ${unitName(backUnit)}`;
+3692: combatMsg = `${unitName(attacker)} 成功擊破了 ${unitName(defender)}${piercingMsg}${sneakMsg}`;
+4926: else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+4927: obj.piercing = true;
+4928: logBattle(`✨ 3星菜刀 效果：${obj.card.name} 獲得貫穿效果！`);
+5152: obj.piercing = false;
+5334: const equipInGrave = graveyard.filter(c => c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排")));
+5424: else if (eqName.includes("菜刀")) displayText = "🔪 3\u661f\u83dc\u5200 (\u8cab\u7a7f)"; // 🔪 3星菜刀 (貫穿)
+6119: else if (eqName.includes("菜刀")) displayText = "🔪 3\u661f\u83dc\u5200 (\u8cab\u7a7f)";
+6500: } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+6501: obj.piercing = true;
+6553: obj.piercing = false;
+9065: setStatus("【大耳賊】無法直接召喚。當我方場上的「貫穿」單位進攻且攻擊力為基礎值 2 倍時會自動觸發！");

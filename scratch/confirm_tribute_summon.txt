@@ -1,0 +1,45 @@
+1836:           logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
+1837:         } else {
+1838:           graveyard.push(unit.card);
+1839:         }
+1840:         field[t.zone][t.idx] = null;
+1841:       }
+1842:     });
+1843: 
+1844:     const targetIdx = selectedHandForTribute;
+1845:     tributeWaitingPosition = true;
+1846:     selectedHandForSummon = targetIdx;
+1847:     selectedHandForTribute = null;
+1848:     selectedTributes = [];
+1849: 
+1850:     setStatus(`祭品已送入墓地！請點選我方空格召喚 ${card.name}（前排優先）。`);
+1851:     render();
+1852: 
+1853:     // 牆壁妖怪獻祭連召效果
+1854:     const wallIdx = hand.findIndex(c => c && c.name.includes("牆壁妖怪"));
+1855:     const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
+1856:     if (wallIdx >= 0 && hasEmptySlot) {
+1857:       setTimeout(async () => {
+1858:         const confirm = await showXLWConfirm("牆壁妖怪 效果發動", "偵測到場上有單位被獻祭，是否從手牌額外特殊召喚 牆壁妖怪？（不佔用常規召喚次數）");
+1859:         if (confirm) {
+1860:           window.XLW_bypassNormalSummonLimit = true;
+1861:           window.XLW_bypassTurnCheck = true;
+1862:           selectedHandForSummon = wallIdx;
+1863:           setStatus("【牆壁妖怪 召喚】請點選我方一個空格進行特殊召喚！");
+1864:           render();
+1865:           await new Promise(r => { window.XLW_summonPlacementResolve = r; });
+1866:           window.XLW_bypassTurnCheck = false;
+1867:         }
+1868:       }, 500);
+1869:     }
+1870: 
+1871:     // 雨傘妖怪自召效果
+1872:     const hasUmbrellaInGrave = graveyard.some(c => c && c.name.includes("雨傘妖怪"));
+1873:     if (hasUmbrellaInGrave && hasEmptySlot) {
+1874:       setTimeout(async () => {
+1875:         const confirm = await showXLWConfirm("雨傘妖怪 效果發動", "偵測到墓地中有雨傘妖怪且場上有單位被獻祭，是否將其自墓地特殊召喚？");
+1876:         if (confirm) {
+1877:           const graveIdx = graveyard.findIndex(c => c && c.name.includes("雨傘妖怪"));
+1878:           const card = graveyard[graveIdx];
+1879:           graveyard.splice(graveIdx, 1);
+1880:           window.XLW_bypassNormalSummonLimit = true;

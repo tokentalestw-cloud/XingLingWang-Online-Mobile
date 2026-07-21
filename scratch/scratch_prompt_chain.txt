@@ -1,0 +1,45 @@
+L7930: function promptNextChainAction() {
+    const overlay = getOrCreateSpellChainOverlay();
+    const statusText = document.getElementById("xlw-chain-status");
+    const actionsDiv = document.getElementById("xlw-chain-actions");
+    actionsDiv.innerHTML = "";
+  
+    if (window.XLW_chainAutoPassTimeout) {
+      clearTimeout(window.XLW_chainAutoPassTimeout);
+      window.XLW_chainAutoPassTimeout = null;
+    }
+  
+    const lastItem = spellChainStack[spellChainStack.length - 1];
+  
+    // Who is the next responder?
+    if (lastItem.owner === "me") {
+      statusText.textContent = "⌛ 等待對手確認是否進行連鎖反制...";
+    } else {
+      // I am the responder.
+      // 魔法炸彈客是單位卡，不能被可以克制魔法卡的卡片（魔法反制、終極無效化等）所克制
+      const isLastItemUnit = lastItem.card.type === "unit" || lastItem.card.name.includes("魔法炸彈客") || lastItem.card.id === "NEU-0025";
+      const counterCards = isLastItemUnit ? [] : hand.filter(c => c && (
+        c.name.includes("魔法反制") ||
+        c.name.includes("終極無效化") ||
+        c.name.includes("法術解析") ||
+        c.name.includes("法術保護") ||
+        c.name.includes("魔法炸彈客") ||
+        c.id === "NEU-0025"
+      ));
+  
+      if (counterCards.length > 0) {
+        statusText.textContent = `🔥 對手連鎖發動了 ${lastItem.card.name}，是否進行連鎖反制？`;
+  
+        // Pass button
+        const passBtn = document.createElement("button");
+        passBtn.className = "forest-summon-btn";
+        passBtn.style.background = "#ff4d4f";
+        passBtn.style.color = "#fff";
+        passBtn.style.borderColor = "#ff4d4f";
+        passBtn.style.padding = "8px 20px";
+        passBtn.style.fontSize = "14px";
+        passBtn.style.height = "auto";
+        passBtn.style.cursor = "pointer";
+        passBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+        passBtn.textContent = "❌ 不進行反制 (Pass)";
+        passBtn.onclick = () => {

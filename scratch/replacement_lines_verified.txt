@@ -1,0 +1,236 @@
+=== getUnitAtk Start (Lines 925-936) ===
+925: function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
+926:   if (!unit) return 0;
+927:   if (window.XLW_isShieldUnit(unit)) return 0;
+928:   const c = unit.card || unit;
+929:   let baseAtk = Number(c.attack ?? c.atk ?? 0);
+930:   baseAtk = Number.isFinite(baseAtk) ? baseAtk : 0;
+931: 
+932:   // 河童場地減攻效果
+933:   if (zone && zone.includes("front")) {
+934:     const owner = zone.startsWith("player_") ? "player" : "enemy";
+935:     const fieldEl = owner === "player" ? $("playerField") : $("enemyField");
+936:     if (fieldEl && fieldEl.dataset.card) {
+
+=== getUnitAtk End (Lines 1013-1022) ===
+1013:           maceCount++;
+1014:         }
+1015:       });
+1016:     }
+1017:     baseAtk += maceCount;
+1018:   }
+1019: 
+1020:   // 5. 爺爺 Buff 過期判斷
+1021:   if (unit.grandpaBuffExpiresTurn && turn >= unit.grandpaBuffExpiresTurn) {
+1022:     unit.atkModifier = Math.max(0, (unit.atkModifier || 0) - 2);
+
+=== startTributeSummon Start (Lines 1622-1630) ===
+1622: async function startTributeSummon(handIndex) {
+1623:   const card = hand[handIndex];
+1624:   if (!card || card.type !== "unit" || Number(card.tribute || 0) <= 0) return;
+1625: 
+1626:   if (phase === "戰術佈陣") {
+1627:     setStatus("戰術佈陣階段只能召喚免祭品單位或小旅人，不能進行獻祭召喚。");
+1628:     return;
+1629:   }
+1630: 
+
+=== toggleTributeSelection (Lines 1680-1718) ===
+1680: function toggleTributeSelection(zone, idx) {
+1681:   if (selectedHandForTribute === null) return;
+1682:   if (!zone.startsWith("player_")) return;
+1683: 
+1684:   const unit = field[zone][idx];
+1685:   if (!unit) return;
+1686: 
+1687:   // 不可獻祭判定
+1688:   const c = unit.card || unit;
+1689:   if (isUnitConfined(zone, idx)) {
+1690:     setStatus(`【獻祭失敗】${c.name} 處於禁錮或不可獻祭狀態！`);
+1691:     return;
+1692:   }
+1693: 
+1694:   const key = `${zone}:${idx}`;
+1695:   const existIdx = selectedTributes.findIndex(t => t.key === key);
+1696: 
+1697:   if (existIdx >= 0) {
+1698:     selectedTributes.splice(existIdx, 1);
+1699:     const card = hand[selectedHandForTribute];
+1700:     logDebug(`【祭品取消】取消選取: ${key}, 當前祭品數: ${selectedTributes.length}/${card.tribute}`);
+1701:   } else {
+1702:     const card = hand[selectedHandForTribute];
+1703:     if (selectedTributes.length >= card.tribute) {
+1704:       setStatus(`祭品已選滿（${card.tribute}個）。若要更換，請先點擊已選祭品取消。`);
+1705:       return;
+1706:     }
+1707:     selectedTributes.push({ zone, idx, key });
+1708:     logDebug(`【祭品追加】追加選取: ${key}, 當前祭品數: ${selectedTributes.length}/${card.tribute}`);
+1709:   }
+1710: 
+1711:   const card = hand[selectedHandForTribute];
+1712:   if (selectedTributes.length >= card.tribute) {
+1713:     setStatus(`祭品已選滿。請點擊「確認獻祭」按鈕。`);
+1714:   } else {
+1715:     setStatus(`【獻祭召喚】已選祭品 ${selectedTributes.length}/${card.tribute}。`);
+1716:   }
+1717:   render();
+1718: }
+
+=== confirmTribute Start (Lines 1720-1735) ===
+1720: function confirmTribute() {
+1721:   if (selectedHandForTribute === null) return;
+1722:   const card = hand[selectedHandForTribute];
+1723:   if (selectedTributes.length < card.tribute) {
+1724:     setStatus("祭品數量不足！");
+1725:     return;
+1726:   }
+1727: 
+1728:   // 祭品送墓前觸發效果
+1729:   const executeTributeEffects = async () => {
+1730:     for (const t of selectedTributes) {
+1731:       if (t.zone === "dummy") continue; 
+1732:       const unit = field[t.zone][t.idx];
+1733:       if (unit && unit.card) {
+1734:         // (a) 晴天娃娃: 破壞場地牌
+1735:         if (unit.card.name.includes("晴天娃娃")) {
+
+=== performSummonToSlot triggers (Lines 2290-2305) ===
+2290:     if (zone.startsWith("player_")) {
+2291:       if (card.name.includes("雪女")) {
+2292:         window.XLW_enemyFrontImprisonedUntilTurn = turn;
+2293:         logBattle("雪女 效果：使對手前排戰線單位受到禁錮，直到我方下個主要階段前！");
+2294:       }
+2295:       else if (card.name.includes("座敷童子")) {
+2296:         window.XLW_enemyCannotAttackOnNextTurn = true;
+2297:         logBattle("座敷童子 效果：對手下個回合將無法進行任何進攻！");
+2298:       }
+2299:       else if (card.name.includes("燈籠小鬼")) {
+2300:         logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
+2301:         await runLanternImpPlacementFlow();
+2302:       }
+2303:       else if (card.name.includes("恐怖錄影帶")) {
+2304:         const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
+2305:         if (wellIdx >= 0) {
+
+=== resolveUnitCombat checks (Lines 3740-3760) ===
+3740:   }
+3741: 
+3742:   if (attackerShouldDie) {
+3743:     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat, true));
+3744:   }
+3745:   if (defenderShouldDie) {
+3746:     destPromise.push(destroyUnit(defZone, defIdx, defenderOwner, attackerIsKnightCat, true));
+3747: 
+3748:     // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
+3749:     const hasPiercing = attacker.piercing ||
+3750:                         (attackerCard.keywords && attackerCard.keywords.includes("貫穿")) ||
+3751:                         (attackerCard.effect_text && attackerCard.effect_text.includes("貫穿")) ||
+3752:                         (attacker.equipments && attacker.equipments.some(e => e.includes("菜刀") || e.includes("迴旋飛斧")));
+3753:     if (hasPiercing && defZone.includes("front")) {
+3754:       const backZone = defZone.replace("front", "back");
+3755:       const backUnit = field[backZone]?.[defIdx];
+3756:       if (backUnit) {
+3757:         destPromise.push(destroyUnit(backZone, defIdx, defenderOwner, false, true));
+3758:         piercingMsg = `，並貫穿擊破了後排的 ${unitName(backUnit)}`;
+3759:       }
+3760:     }
+
+=== destroyUnit Start (Lines 3989-3995) ===
+3989: async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = false) {
+3990:   const unit = field[zone][idx];
+3991:   if (!unit) return;
+3992: 
+3993:   // 1. 尋找格子並播放 CSS 碎裂與紅光粒子動畫
+3994:   const slot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
+3995:   if (slot) {
+
+=== runEnemyTurn summon 1 (Lines 4297-4315) ===
+4297:     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+4298:       const card = window.XLW_ENEMY.hand[summonHandIdx];
+4299:       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4300:       
+4301:       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+4302:       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+4303:       
+4304:       const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+4305:       field[destZone][destIdx] = {
+4306:         card: card,
+4307:         tapped: isLyingOrc,
+4308:         attacking: false,
+4309:         target: null,
+4310:         summonedTurn: turn,
+4311:         summonedZone: destZone
+4312:       };
+4313:       logBattle(`對手召喚：${card.name} 到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}`);
+4314:     } else {
+4315:       logBattle("對手本回合沒有進行召喚。");
+
+=== runEnemyTurn summon 2 (Lines 4399-4421) ===
+4399:           if (summonHandIdx >= 0) {
+4400:             const card = window.XLW_ENEMY.hand[summonHandIdx];
+4401:             window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4402:             const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+4403:             field[destZone][destIdx] = {
+4404:               card: card,
+4405:               tapped: isLyingOrc,
+4406:               attacking: false,
+4407:               target: null,
+4408:               summonedTurn: turn,
+4409:               summonedZone: destZone
+4410:             };
+4411:             logBattle(`\u5c0d\u624b\u9032\u884c\u6230\u8853\u4f48\u9663\u53ec\u559a：${card.name}\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+4412:           } else {
+4413:             field[destZone][destIdx] = {
+4414:               card: structuredClone(LITTLE_TRAVELER),
+4415:               tapped: false,
+4416:               attacking: false,
+4417:               target: null,
+4418:               summonedTurn: turn,
+4419:               summonedZone: destZone
+4420:             };
+4421:             logBattle(`\u5c0d\u624b\u7121\u55ae\u4f4d\u53ef\u53ec\u559a，\u6230\u8853\u5f37\u5236\u53ec\u559a：小旅人\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+
+=== cardEl.onclick Equip Start (Lines 5201-5210) ===
+5201:           }
+5202:           
+5203:           if (window.XLW_equipSpellActive) {
+5204:             const isOrc = obj.card?.faction === "獸人" || obj.card?.race === "獸人" || obj.card?.id?.includes("ORC") || obj.card?.id?.includes("0RC") || obj.card?.id?.includes("ROC");
+5205:             const isShield = window.XLW_equipSpellCard && window.XLW_equipSpellCard.name === "法術保護-護盾";
+5206:             if (zone.startsWith("player_") && (isOrc || isShield)) {
+5207:               const spellCard = window.XLW_equipSpellCard;
+5208:               obj.equipments = obj.equipments || [];
+5209:               obj.equipments.push(spellCard.name);
+5210:               logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+
+=== cardEl.onclick Magic Immune checks (Lines 5320-5333) ===
+5320:               if (obj.card.name.includes("天狗")) {
+5321:                 setStatus("天狗 具有免疫效果：不會被敵方的效果 and 魔法選為目標！");
+5322:                 return;
+5323:               }
+5324:               if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+5325:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+5326:                 return;
+5327:               }
+5328:               if (obj.magicImmune) {
+5329:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+5330:                 return;
+5331:               }
+5332:             }
+5333: 
+
+=== ws.onmessage End (Lines 7323-7336) ===
+7323:       logBattle(`委託者 戴比 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+7324:       render();
+7325:     } else if (data.action === "field_indestructible") {
+7326:       const oppField = $("enemyField");
+7327:       if (oppField && oppField.dataset.card) {
+7328:         const fCard = JSON.parse(oppField.dataset.card);
+7329:         fCard.indestructible = true;
+7330:         oppField.dataset.card = JSON.stringify(fCard);
+7331:         logBattle(`✨ 對手場地卡【${fCard.name}】獲得了破壞抗性！`);
+7332:       }
+7333:       render();
+7334:     }
+7335:   };
+7336: }
+

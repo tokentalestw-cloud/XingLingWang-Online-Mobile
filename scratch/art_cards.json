@@ -1,0 +1,50 @@
+[
+  {
+    "id": "ART-0018",
+    "name": "畫框",
+    "deck": "藝術品",
+    "type": "magic",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "藝術品"
+    ],
+    "effect_text": "使你手牌的藝術品單位所需祭品-1直到本回合召喚階段結束時",
+    "image": "/static/card_images/art_0018.jpeg",
+    "original_file": "藝術品/IMG_6167.JPG",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Summon Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "ART-0019",
+    "name": "博物館",
+    "deck": "藝術品",
+    "type": "magic",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "藝術品"
+    ],
+    "effect_text": "戰鬥時,使你場上的藝術品防守單位+1攻擊力",
+    "image": "/static/card_images/art_0019.jpeg",
+    "original_file": "藝術品/IMG_6168.JPG",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "場地"
+  }
+]

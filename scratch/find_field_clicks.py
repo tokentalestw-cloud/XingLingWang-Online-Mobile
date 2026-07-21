@@ -1,0 +1,13 @@
+with open("c:/Users/a2132/Documents/星靈王/XingLingWang_v7_fixed/static/game_v8.js", "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+out = []
+for idx, line in enumerate(lines):
+    if "onclick" in line or "addEventListener" in line:
+        if "field" in line or "slot" in line or "zone" in line:
+            out.append(f"L{idx+1}: {line.strip()}")
+
+with open("c:/Users/a2132/Documents/星靈王/XingLingWang_v7_fixed/scratch/scratch_field_clicks.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(out))
+
+print("Done")

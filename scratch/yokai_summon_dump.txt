@@ -1,0 +1,101 @@
+2280:         }
+2281:       } else {
+2282:         if (phase === "召喚階段") normalSummonUsed = true;
+2283:         if (phase === "戰術佈陣") tacticalSummonUsed = true;
+2284:       }
+2285:       logDebug(`【召喚成功】卡牌: ${card.name} 已成功放置於 ${zone}:${idx + 1}！手牌扣減成功。`);
+2286:       logBattle(`召喚單位 ${card.name} 到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+2287:     }
+2288:     
+2289:     // 立即特殊效果：雪女、座敷童子、燈籠小鬼、恐怖錄影帶、八岐大蛇
+2290:     if (zone.startsWith("player_")) {
+2291:       if (card.name.includes("雪女")) {
+2292:         window.XLW_enemyFrontImprisonedUntilTurn = turn;
+2293:         logBattle("雪女 效果：使對手前排戰線單位受到禁錮，直到我方下個主要階段前！");
+2294:       }
+2295:       else if (card.name.includes("座敷童子")) {
+2296:         window.XLW_enemyCannotAttackOnNextTurn = true;
+2297:         logBattle("座敷童子 效果：對手下個回合將無法進行任何進攻！");
+2298:       }
+2299:       else if (card.name.includes("燈籠小鬼")) {
+2300:         logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
+2301:         await runLanternImpPlacementFlow();
+2302:       }
+2303:       else if (card.name.includes("恐怖錄影帶")) {
+2304:         const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
+2305:         if (wellIdx >= 0) {
+2306:           const wellCard = deck.splice(wellIdx, 1)[0];
+2307:           hand.push(wellCard);
+2308:           logBattle("恐怖錄影帶 效果：從牌庫檢索「恐怖的井」並加入手牌！");
+2309:           shuffle(deck);
+2310:         } else {
+2311:           logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
+2312:         }
+2313:       }
+2314:       else if (card.name.includes("八岐大蛇")) {
+2315:         const needed = 8 - hand.length;
+2316:         if (needed > 0) {
+2317:           draw(needed);
+2318:           logBattle(`八岐大蛇 效果：抽滿 8 張牌（抽了 ${needed} 張）！`);
+2319:         }
+2320:         setTimeout(async () => {
+2321:           while (hand.length > 0) {
+2322:             const choices = hand.map((c, i) => ({ text: `棄置: ${c.name}`, value: i }));
+2323:             choices.push({ text: "結束棄牌", value: -1 });
+2324:             const chosen = await showXLWChoiceModal("八岐大蛇 棄牌效果", "請選擇要棄置的手牌（點「結束棄牌」完成）：", choices);
+2325:             if (chosen === null || chosen === undefined || chosen === -1) {
+2326:               break;
+2327:             }
+2328:             const discarded = hand.splice(chosen, 1)[0];
+2329:             graveyard.push(discarded);
+2330:             logBattle(`八岐大蛇 效果：棄置 ${discarded.name} 至墓地。`);
+2331:             render();
+2332:           }
+2333:         }, 500);
+2334:       }
+2335:       else if (card.name.includes("水瓶座")) {
+2336:         logBattle("好奇女巫 水瓶座 效果：展示對手所有手牌，嘗試進行同名卡牌除外！");
+2337:         if (!isMultiplayer) {
+2338:           const oppHand = window.XLW_ENEMY.hand;
+2339:           const myHand = hand;
+2340:           setTimeout(async () => {
+2341:             const result = await showAquariusModal(oppHand, myHand);
+2342:             if (result && result.success) {
+2343:               const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
+2344:               if (matchingCardInMyHand) {
+2345:                 logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
+2346:                 window.XLW_ENEMY.hand.splice(result.oppIdx, 1);
+2347:                 exileCard(result.oppCard, "enemy");
+2348:                 logBattle(`✨ 對手手牌中的 ${result.oppCard.name} 被成功除外！`);
+2349:                 render();
+2350:               }
+2351:             }
+2352:           }, 500);
+2353:         } else {
+2354:           setTimeout(async () => {
+2355:             setStatus("【水瓶座】正在等待對手展示手牌...");
+2356:             const response = await new Promise(resolve => {
+2357:               window.XLW_aquariusHandResolve = resolve;
+2358:             });
+2359:             const result = await showAquariusModal(response.hand, hand);
+2360:             if (result && result.success) {
+2361:               const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
+2362:               if (matchingCardInMyHand) {
+2363:                 logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
+2364:                 ws.send(JSON.stringify({
+2365:                   action: "aquarius_exile_success",
+2366:                   cardName: result.cardName
+2367:                 }));
+2368:                 const oppIdx = window.XLW_ENEMY.hand.findIndex(c => c && c.name === result.cardName);
+2369:                 if (oppIdx >= 0) {
+2370:                   const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
+2371:                   exileCard(exiledCard, "enemy");
+2372:                 }
+2373:                 render();
+2374:               }
+2375:             } else {
+2376:               ws.send(JSON.stringify({
+2377:                 action: "aquarius_complete"
+2378:               }));
+2379:             }
+2380:           }, 500);

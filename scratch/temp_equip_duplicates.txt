@@ -1,0 +1,84 @@
+
+=== Occurrence at Line 6334 ===
+6320:     } else if (data.action === "add_to_hand_sync") {
+6321:       if (window.XLW_ENEMY.hand) {
+6322:         window.XLW_ENEMY.hand.push(null);
+6323:       }
+6324:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+6325:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+6326:         if (idx !== -1) {
+6327:           enemyExtraDeck.splice(idx, 1);
+6328:         } else {
+6329:           enemyExtraDeck.pop();
+6330:         }
+6331:       }
+6332:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+6333:       render();
+6334:     } else if (data.action === "temp_equip_spell_resolved") {
+6335:       const targetUnit = field[data.zone]?.[data.idx];
+6336:       if (targetUnit) {
+6337:         if (!targetUnit.equipments) targetUnit.equipments = [];
+6338:         const spellNameClean = data.spellCard.name;
+6339:         if (!targetUnit.equipments.includes(spellNameClean)) {
+6340:           targetUnit.equipments.push(spellNameClean);
+6341:         }
+6342:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+6343:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+6344:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+6345:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+6346:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+6347:         }
+6348:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+6349:         render();
+6350:       }
+6351:     } else if (data.action === "sneak_recall") {
+6352:       const key = `${data.attZone}:${data.attIdx}`;
+6353:       window.XLW_opponentSneakRecall[key] = data.recall;
+6354:     } else if (data.action === "foodball_choice") {
+6355:       const key = `${data.zone}:${data.idx}`;
+6356:       window.XLW_opponentFoodBallChoice[key] = data.trigger;
+6357:     } else if (data.action === "foodball_summon") {
+6358:       const key = `${data.zone}:${data.idx}`;
+6359:       window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+
+=== Occurrence at Line 6478 ===
+6464:     } else if (data.action === "add_to_hand_sync") {
+6465:       if (window.XLW_ENEMY.hand) {
+6466:         window.XLW_ENEMY.hand.push(null);
+6467:       }
+6468:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+6469:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+6470:         if (idx !== -1) {
+6471:           enemyExtraDeck.splice(idx, 1);
+6472:         } else {
+6473:           enemyExtraDeck.pop();
+6474:         }
+6475:       }
+6476:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+6477:       render();
+6478:     } else if (data.action === "temp_equip_spell_resolved") {
+6479:       const targetUnit = field[data.zone]?.[data.idx];
+6480:       if (targetUnit) {
+6481:         if (!targetUnit.equipments) targetUnit.equipments = [];
+6482:         const spellNameClean = data.spellCard.name;
+6483:         if (!targetUnit.equipments.includes(spellNameClean)) {
+6484:           targetUnit.equipments.push(spellNameClean);
+6485:         }
+6486:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+6487:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+6488:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+6489:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+6490:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+6491:         }
+6492:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+6493:         render();
+6494:       }
+6495:     } else if (data.action === "hannya_exile_drawn_card") {
+6496:       const exiledCard = data.exiledCard;
+6497:       const drawnCount = data.drawnCount;
+6498:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6499:         window.XLW_ENEMY.hand.pop();
+6500:       }
+6501:       enemyExileZone.push(exiledCard);
+6502:       logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+6503:       render();

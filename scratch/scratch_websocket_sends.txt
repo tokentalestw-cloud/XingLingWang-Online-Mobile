@@ -1,0 +1,1168 @@
+=== SEARCHING c:/Users/a2132/Documents/星靈王/XingLingWang_v7_fixed/static/game.js ===
+Line 653:
+  ws.send(JSON.stringify({
+          action: "hannya_exile_drawn_card",
+          exiledCard: exiledCard,
+          drawnCount: drawn.length
+        }));
+      }
+    } else if (oppHasSmartPrajna) {
+      // 智慧的般若：我方選擇1張展示
+      let revealedCard = null;
+      if (drawn.length === 1) {
+--------------------------------------------------
+Line 675:
+  ws.send(JSON.stringify({
+          action: "hannya_reveal_drawn_card",
+          revealedCard: revealedCard,
+          drawnCount: drawn.length
+        }));
+      } else {
+        // 單人模式 (AI對手)
+        // 若展示的是單位卡，且AI有憤怒的般若與智慧的般若，AI會自動升級進化
+        if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+          const hannyaSlots = [];
+--------------------------------------------------
+Line 765:
+  ws.send(JSON.stringify({
+        action: "mulligan_confirm"
+      }));
+      setStatus("我方起手換牌已確認，正在等待對手換牌中...");
+      await checkMulliganCompletion();
+    } else {
+      // 單人模式
+      if (isMyTurn) {
+        turn = 1;
+        phase = "召喚階段";
+--------------------------------------------------
+Line 1220:
+  ws.send(JSON.stringify({
+        action: "spell_chain_start",
+        card: card
+      }));
+      
+      promptNextChainAction();
+      
+      const response = await new Promise(resolve => {
+        window.XLW_pendingSpellResolve = resolve;
+      });
+--------------------------------------------------
+Line 1333:
+  ws.send(JSON.stringify({ action: "field_indestructible" }));
+            }
+            break;
+          } else {
+            await showXLWConfirm("力場保護", "我方場上目前沒有場地卡，無法發動此效果！請選擇「抽一張牌」！", "確定");
+          }
+        } else if (opt === "draw_card") {
+          draw(1);
+          logBattle("✨ 力場保護 效果：我方抽 1 張牌。");
+          break;
+--------------------------------------------------
+Line 1983:
+  ws.send(JSON.stringify({
+                    action: "aquarius_exile_success",
+                    cardName: result.cardName
+                  }));
+                  const oppIdx = window.XLW_ENEMY.hand.findIndex(c => c && c.name === result.cardName);
+                  if (oppIdx >= 0) {
+                    const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
+                    exileCard(exiledCard, "enemy");
+                  }
+                  render();
+--------------------------------------------------
+Line 1995:
+  ws.send(JSON.stringify({
+                  action: "aquarius_complete"
+                }));
+              }
+            }, 500);
+          }
+        }
+        // 獸人種族立即效果實作
+        else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+          function isHumanoid(unit) {
+--------------------------------------------------
+Line 2139:
+  ws.send(JSON.stringify({
+          action: "foodball_summon",
+          zone: window.XLW_currentFoodBallZone,
+          idx: window.XLW_currentFoodBallIdx,
+          toZone: zone,
+          toIdx: idx
+        }));
+      } else {
+        const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+                            selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
+--------------------------------------------------
+Line 2151:
+  ws.send(JSON.stringify({
+          action: "summon",
+          card: field[zone][idx].card,
+          zone: zone,
+          idx: idx,
+          fromHand: isFromHand,
+          tributes: window.XLW_lastTributes || []
+        }));
+        window.XLW_lastTributes = null;
+      }
+--------------------------------------------------
+Line 2196:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: firstPlacement.zone,
+            idx: firstPlacement.idx
+          }));
+        }
+      }
+      
+      // 2. Second Little Traveler on our side
+      let emptySlotsMe2 = [];
+--------------------------------------------------
+Line 2219:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: secondPlacement.zone,
+            idx: secondPlacement.idx
+          }));
+        }
+      }
+  
+      // 3. Third Little Traveler on the opponent's side
+      let emptySlotsOpp = [];
+--------------------------------------------------
+Line 2242:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: thirdPlacement.zone,
+            idx: thirdPlacement.idx
+          }));
+        }
+      }
+    } finally {
+      window.XLW_lanternPlacementActive = null;
+      window.XLW_lanternResolve = null;
+--------------------------------------------------
+Line 2279:
+  ws.send(JSON.stringify({
+            action: "debbie_summon_single",
+            zone: firstPlacement.zone,
+            idx: firstPlacement.idx
+          }));
+        }
+      }
+  
+      // 2. Second Little Traveler on opponent's side
+      let emptySlotsOpp2 = [];
+--------------------------------------------------
+Line 2302:
+  ws.send(JSON.stringify({
+            action: "debbie_summon_single",
+            zone: secondPlacement.zone,
+            idx: secondPlacement.idx
+          }));
+        }
+      }
+    } finally {
+      window.XLW_lanternPlacementActive = null;
+      window.XLW_lanternResolve = null;
+--------------------------------------------------
+Line 2377:
+  ws.send(JSON.stringify({
+        action: "move_unit",
+        fromZone: fromZone,
+        fromIdx: fromIdx,
+        toZone: toZone,
+        toIdx: toIdx
+      }));
+    }
+  
+    render();
+--------------------------------------------------
+Line 2458:
+  ws.send(JSON.stringify({
+        action: "attack_declare",
+        attZone: selectedAttacker.zone,
+        attIdx: selectedAttacker.idx,
+        targetZone: zone,
+        targetIdx: idx
+      }));
+    }
+  
+    selectedAttacker = null;
+--------------------------------------------------
+Line 2512:
+  ws.send(JSON.stringify({
+          action: "attack_declare",
+          attZone: actualZone,
+          attIdx: i,
+          targetZone: targetZone,
+          targetIdx: i
+        }));
+      }
+    }
+  
+--------------------------------------------------
+Line 2542:
+  ws.send(JSON.stringify({
+          action: "attack_cancel",
+          attZone: zone,
+          attIdx: idx
+        }));
+      }
+    } else {
+      if (isUnitConfined(zone, idx)) {
+        setStatus("禁錮狀態的單位無法進行攻擊宣言。");
+        return;
+--------------------------------------------------
+Line 2592:
+  ws.send(JSON.stringify({
+          action: "attack_declare",
+          attZone: zone,
+          attIdx: idx,
+          targetZone: targetZone,
+          targetIdx: idx
+        }));
+      }
+  
+      // --- 大耳賊效果觸發判定 ---
+--------------------------------------------------
+Line 2661:
+  ws.send(JSON.stringify({
+        action: "destroy_unit",
+        zone: zone,
+        idx: idx
+      }));
+    }
+  
+    window.XLW_blackCatChoosing = false;
+    setStatus("黑喵破壞效果已執行。"); // 黑喵破壞效果已執行。
+    if (window.XLW_blackCatResolve) {
+--------------------------------------------------
+Line 2749:
+  ws.send(JSON.stringify({
+        action: "redirect_attack_target",
+        attZone: targetEnemy.zone,
+        attIdx: targetEnemy.idx,
+        zone: chosenGuard.zone,
+        idx: chosenGuard.idx
+      }));
+    }
+  
+    render();
+--------------------------------------------------
+Line 2771:
+  ws.send(JSON.stringify({ action: "start_defense_phase" }));
+      }
+  
+      logBattle("—— 我方防守階段開始 (依戰線 1 -> 5 詢問並結算) ——");
+      setStatus("我方防守判定，系統正在依序結算各星星戰線戰鬥...");
+  
+      for (let lane = 0; lane < 5; lane++) {
+        let attacker = null;
+        let attZone = "";
+        if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
+--------------------------------------------------
+Line 2790:
+  ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+          }
+          setStatus(`防守判定：星星戰線 ${lane + 1} 對手無進攻。`);
+          await sleep(650);
+          continue;
+        }
+  
+        // 詢問玩家是否要在這條戰線發動防守反制魔法
+        const wantCounter = await showXLWConfirm(
+          `戰線 ${lane + 1} 魔法反制`,
+--------------------------------------------------
+Line 2820:
+  ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+        }
+  
+        // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+        let defZone = "";
+        let defender = null;
+        let defIdx = lane;
+  
+        if (attacker.target && attacker.target.redirected) {
+          defZone = attacker.target.zone;
+--------------------------------------------------
+Line 3183:
+  ws.send(JSON.stringify({
+                action: "foodball_choice",
+                zone: defZone,
+                idx: defIdx,
+                trigger: choice
+              }));
+            }
+            if (choice) {
+              defenderShouldDie = false;
+              window.XLW_foodBallTriggeredTurn = turn;
+--------------------------------------------------
+Line 3338:
+  ws.send(JSON.stringify({
+                action: "add_to_hand_sync"
+              }));
+            }
+            render();
+          }
+        }
+      }
+      // ---------------------------------
+    }
+--------------------------------------------------
+Line 3427:
+  ws.send(JSON.stringify({
+            action: "sneak_recall",
+            attZone: attZone,
+            attIdx: attIdx,
+            recall: userWantsRecall
+          }));
+        }
+        
+        if (userWantsRecall) {
+          if (attacker.equipments && attacker.equipments.length > 0) {
+--------------------------------------------------
+Line 4001:
+  ws.send(JSON.stringify({
+            action: "call_game_declare",
+            condition: chosen,
+            declaringPlayer: player_role,
+            turn: turn
+          }));
+        }
+        render();
+        await sleep(500);
+      }
+--------------------------------------------------
+Line 4157:
+  ws.send(JSON.stringify({
+        action: "end_turn",
+        next_turn: turn
+      }));
+      render();
+    } else {
+      // 進入對手回合
+      await runEnemyTurn();
+  
+      // 檢查倒數階段
+--------------------------------------------------
+Line 4660:
+  ws.send(JSON.stringify({
+                    action: "equip_spell_resolved",
+                    zone: zone,
+                    idx: idx,
+                    spellCard: spellCard
+                  }));
+                }
+                window.XLW_equipSpellActive = false;
+                window.XLW_equipSpellCard = null;
+                if (window.XLW_equipSpellResolve) {
+--------------------------------------------------
+Line 4769:
+  ws.send(JSON.stringify({
+                  action: "temp_equip_spell_resolved",
+                  zone: zone,
+                  idx: idx,
+                  spellCard: spellCard,
+                  currentTurn: turn
+                }));
+              }
+  
+              window.XLW_tempEquipSpellActive = false;
+--------------------------------------------------
+Line 4870:
+  ws.send(JSON.stringify({
+                  action: "goat_spell_resolved",
+                  zone: zone,
+                  idx: idx,
+                  goatSpellCard: goatSpellCard
+                }));
+              }
+              
+              window.XLW_goatSpellActive = false;
+              window.XLW_goatSpellCard = null;
+--------------------------------------------------
+Line 5198:
+  ws.send(JSON.stringify({
+                    action: "thief_summon_sync",
+                    zone: zone,
+                    idx: idx
+                  }));
+                }
+                
+                const resolve = window.XLW_thiefResolve;
+                window.XLW_thiefResolve = null;
+                window.XLW_thiefPlacementActive = false;
+--------------------------------------------------
+Line 5824:
+  ws.send(JSON.stringify({ action: "ping" }));
+        }
+      }, 20000);
+    };
+    
+    ws.onerror = (err) => {
+      console.error("WebSocket 錯誤:", err);
+      reconnectWebSocket();
+    };
+    
+--------------------------------------------------
+Line 5985:
+  ws.send(JSON.stringify({
+              action: "aquarius_hand_reveal",
+              hand: hand
+            }));
+          }
+          else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+            window.XLW_enemyDebbieActive = true;
+            logBattle("✨ 委託者 戴比 效果：對手召喚了 委託者 戴比，我方可決定對手召喚的小旅人的位置，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+          }
+        }
+--------------------------------------------------
+Line 6409:
+  ws.send(JSON.stringify({
+                  action: "hannya_evolve_sync",
+                  zone: zone,
+                  idx: idx,
+                  angryHannya: angryCard
+                }));
+                render();
+              }
+            }, 100);
+          }
+--------------------------------------------------
+Line 6473:
+  ws.send(JSON.stringify({
+            action: "sync_discard_log",
+            card_name: discarded.name
+          }));
+          render();
+        }
+      } else if (data.action === "sync_discard_log") {
+        logBattle(`🥷 變裝喵 效果：對手隨機捨棄了手牌中的 ${data.card_name}！`);
+        if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          window.XLW_ENEMY.hand.pop();
+--------------------------------------------------
+Line 6831:
+  ws.send(JSON.stringify({ action: "trigger_opponent_discard" }));
+        logBattle("🥷 變裝喵 效果：已向對手發送隨機捨棄手牌指令。");
+      } else {
+        if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+          const discarded = window.XLW_ENEMY.hand.splice(idx, 1)[0];
+          enemyGraveyard.push(discarded);
+          logBattle(`🥷 變裝喵 效果：對手被強制隨機捨棄了手牌中的 ${discarded.name}！`);
+          render();
+        } else {
+--------------------------------------------------
+Line 7486:
+  ws.send(JSON.stringify({
+            action: "call_game_end",
+            winner: player_role
+          }));
+        }
+      } else {
+        window.XLW_callGameDeclared = false;
+        logBattle("\u3010\u5ba3\u544a\u5931\u6557\u3011\u6211\u65b9\u5148\u524d\u5ba3\u544a\u7684\u63d0\u65e9\u7d50\u675f\u689d\u4ef6\u5df2\u4e0d\u6eff\u8db3\uff0c\u5c0d\u623d\u7e7c\u7e8c\uff01");
+        if (isMultiplayer) {
+          ws.send(JSON.stringify({
+--------------------------------------------------
+Line 7495:
+  ws.send(JSON.stringify({
+            action: "call_game_fail"
+          }));
+        }
+        render();
+      }
+    } else if (!isMyTurnStarting && declaringPlayer === "enemy") {
+      let met = false;
+      if (condition === 1) {
+        met = calculateTotalStars(false) >= 20;
+--------------------------------------------------
+Line 7908:
+  ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+          resolveLocalSpellChain();
+        };
+        actionsDiv.appendChild(passBtn);
+  
+        // Counter buttons
+        counterCards.forEach(c => {
+          const counterBtn = document.createElement("button");
+          counterBtn.className = "forest-summon-btn";
+          counterBtn.style.background = "#52c41a";
+--------------------------------------------------
+Line 7937:
+  ws.send(JSON.stringify({
+              action: "spell_chain_add",
+              card: c
+            }));
+            
+            // Update UI
+            showSpellChainUI(spellChainStack);
+            promptNextChainAction();
+            render();
+          };
+--------------------------------------------------
+Line 7965:
+  ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+          resolveLocalSpellChain();
+        }, 1500);
+      }
+    }
+  }
+  
+  function resolveLocalSpellChain() {
+    hideSpellChainUI();
+    
+--------------------------------------------------
+Line 8330:
+  ws.send(JSON.stringify({
+        action: "coin_toss_roll",
+        guess: playerGuess,
+        result: coinResult
+      }));
+    }
+    await showCoinRollResult(playerGuess, coinResult);
+  }
+  
+  async function showCoinRollResult(guess, result) {
+--------------------------------------------------
+Line 8380:
+  ws.send(JSON.stringify({
+        action: "coin_toss_choice",
+        winner_role: player_role,
+        choice: choice
+      }));
+    }
+    applyCoinTossChoice(player_role, choice);
+  }
+  
+  function applyCoinTossChoice(winnerRole, choice) {
+--------------------------------------------------
+Line 8420:
+  ws.send(JSON.stringify({
+        action: "sync_deck",
+        deck_name: deckName,
+        extra_deck: playerExtraDeck
+      }));
+    }
+  
+    setStatus("【線上起手換牌】請點選任意手牌，點擊「確認換牌」送出。等待雙方就緒...");
+    render();
+  }
+--------------------------------------------------
+Line 8580:
+  ws.send(JSON.stringify({
+                action: "extra_summon_resolved",
+                fromZone: targetZone,
+                fromIdx: targetIdx,
+                angryHannya: card
+              }));
+            }
+            
+            render();
+          }
+--------------------------------------------------
+Line 8662:
+  ws.send(JSON.stringify({
+              action: "extra_summon_resolved",
+              fromZone: targetZone,
+              fromIdx: targetIdx,
+              angryHannya: card
+            }));
+          }
+          
+          render();
+        };
+--------------------------------------------------
+Line 8823:
+  ws.send(JSON.stringify({
+      action: "sync_game_state",
+      state: stateToSend
+    }));
+  }
+--------------------------------------------------
+=== SEARCHING c:/Users/a2132/Documents/星靈王/XingLingWang_v7_fixed/static/game_v8.js ===
+Line 654:
+  ws.send(JSON.stringify({
+          action: "hannya_exile_drawn_card",
+          exiledCard: exiledCard,
+          drawnCount: drawn.length
+        }));
+      }
+    } else if (oppHasSmartPrajna) {
+      // 智慧的般若：我方選擇1張展示
+      let revealedCard = null;
+      if (drawn.length === 1) {
+--------------------------------------------------
+Line 676:
+  ws.send(JSON.stringify({
+          action: "hannya_reveal_drawn_card",
+          revealedCard: revealedCard,
+          drawnCount: drawn.length
+        }));
+      } else {
+        // 單人模式 (AI對手)
+        // 若展示的是單位卡，且AI有憤怒的般若與智慧的般若，AI會自動升級進化
+        if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+          const hannyaSlots = [];
+--------------------------------------------------
+Line 766:
+  ws.send(JSON.stringify({
+        action: "mulligan_confirm"
+      }));
+      setStatus("我方起手換牌已確認，正在等待對手換牌中...");
+      await checkMulliganCompletion();
+    } else {
+      // 單人模式
+      if (isMyTurn) {
+        turn = 1;
+        phase = "召喚階段";
+--------------------------------------------------
+Line 1221:
+  ws.send(JSON.stringify({
+        action: "spell_chain_start",
+        card: card
+      }));
+      
+      promptNextChainAction();
+      
+      const response = await new Promise(resolve => {
+        window.XLW_pendingSpellResolve = resolve;
+      });
+--------------------------------------------------
+Line 1334:
+  ws.send(JSON.stringify({ action: "field_indestructible" }));
+            }
+            break;
+          } else {
+            await showXLWConfirm("力場保護", "我方場上目前沒有場地卡，無法發動此效果！請選擇「抽一張牌」！", "確定");
+          }
+        } else if (opt === "draw_card") {
+          draw(1);
+          logBattle("✨ 力場保護 效果：我方抽 1 張牌。");
+          break;
+--------------------------------------------------
+Line 1984:
+  ws.send(JSON.stringify({
+                    action: "aquarius_exile_success",
+                    cardName: result.cardName
+                  }));
+                  const oppIdx = window.XLW_ENEMY.hand.findIndex(c => c && c.name === result.cardName);
+                  if (oppIdx >= 0) {
+                    const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
+                    exileCard(exiledCard, "enemy");
+                  }
+                  render();
+--------------------------------------------------
+Line 1996:
+  ws.send(JSON.stringify({
+                  action: "aquarius_complete"
+                }));
+              }
+            }, 500);
+          }
+        }
+        // 獸人種族立即效果實作
+        else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+          function isHumanoid(unit) {
+--------------------------------------------------
+Line 2140:
+  ws.send(JSON.stringify({
+          action: "foodball_summon",
+          zone: window.XLW_currentFoodBallZone,
+          idx: window.XLW_currentFoodBallIdx,
+          toZone: zone,
+          toIdx: idx
+        }));
+      } else {
+        const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+                            selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
+--------------------------------------------------
+Line 2152:
+  ws.send(JSON.stringify({
+          action: "summon",
+          card: field[zone][idx].card,
+          zone: zone,
+          idx: idx,
+          fromHand: isFromHand,
+          tributes: window.XLW_lastTributes || []
+        }));
+        window.XLW_lastTributes = null;
+      }
+--------------------------------------------------
+Line 2197:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: firstPlacement.zone,
+            idx: firstPlacement.idx
+          }));
+        }
+      }
+      
+      // 2. Second Little Traveler on our side
+      let emptySlotsMe2 = [];
+--------------------------------------------------
+Line 2220:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: secondPlacement.zone,
+            idx: secondPlacement.idx
+          }));
+        }
+      }
+  
+      // 3. Third Little Traveler on the opponent's side
+      let emptySlotsOpp = [];
+--------------------------------------------------
+Line 2243:
+  ws.send(JSON.stringify({
+            action: "lantern_summon_single",
+            zone: thirdPlacement.zone,
+            idx: thirdPlacement.idx
+          }));
+        }
+      }
+    } finally {
+      window.XLW_lanternPlacementActive = null;
+      window.XLW_lanternResolve = null;
+--------------------------------------------------
+Line 2280:
+  ws.send(JSON.stringify({
+            action: "debbie_summon_single",
+            zone: firstPlacement.zone,
+            idx: firstPlacement.idx
+          }));
+        }
+      }
+  
+      // 2. Second Little Traveler on opponent's side
+      let emptySlotsOpp2 = [];
+--------------------------------------------------
+Line 2303:
+  ws.send(JSON.stringify({
+            action: "debbie_summon_single",
+            zone: secondPlacement.zone,
+            idx: secondPlacement.idx
+          }));
+        }
+      }
+    } finally {
+      window.XLW_lanternPlacementActive = null;
+      window.XLW_lanternResolve = null;
+--------------------------------------------------
+Line 2378:
+  ws.send(JSON.stringify({
+        action: "move_unit",
+        fromZone: fromZone,
+        fromIdx: fromIdx,
+        toZone: toZone,
+        toIdx: toIdx
+      }));
+    }
+  
+    render();
+--------------------------------------------------
+Line 2459:
+  ws.send(JSON.stringify({
+        action: "attack_declare",
+        attZone: selectedAttacker.zone,
+        attIdx: selectedAttacker.idx,
+        targetZone: zone,
+        targetIdx: idx
+      }));
+    }
+  
+    selectedAttacker = null;
+--------------------------------------------------
+Line 2513:
+  ws.send(JSON.stringify({
+          action: "attack_declare",
+          attZone: actualZone,
+          attIdx: i,
+          targetZone: targetZone,
+          targetIdx: i
+        }));
+      }
+    }
+  
+--------------------------------------------------
+Line 2543:
+  ws.send(JSON.stringify({
+          action: "attack_cancel",
+          attZone: zone,
+          attIdx: idx
+        }));
+      }
+    } else {
+      if (isUnitConfined(zone, idx)) {
+        setStatus("禁錮狀態的單位無法進行攻擊宣言。");
+        return;
+--------------------------------------------------
+Line 2593:
+  ws.send(JSON.stringify({
+          action: "attack_declare",
+          attZone: zone,
+          attIdx: idx,
+          targetZone: targetZone,
+          targetIdx: idx
+        }));
+      }
+  
+      // --- 大耳賊效果觸發判定 ---
+--------------------------------------------------
+Line 2662:
+  ws.send(JSON.stringify({
+        action: "destroy_unit",
+        zone: zone,
+        idx: idx
+      }));
+    }
+  
+    window.XLW_blackCatChoosing = false;
+    setStatus("黑喵破壞效果已執行。"); // 黑喵破壞效果已執行。
+    if (window.XLW_blackCatResolve) {
+--------------------------------------------------
+Line 2750:
+  ws.send(JSON.stringify({
+        action: "redirect_attack_target",
+        attZone: targetEnemy.zone,
+        attIdx: targetEnemy.idx,
+        zone: chosenGuard.zone,
+        idx: chosenGuard.idx
+      }));
+    }
+  
+    render();
+--------------------------------------------------
+Line 2772:
+  ws.send(JSON.stringify({ action: "start_defense_phase" }));
+      }
+  
+      logBattle("—— 我方防守階段開始 (依戰線 1 -> 5 詢問並結算) ——");
+      setStatus("我方防守判定，系統正在依序結算各星星戰線戰鬥...");
+  
+      for (let lane = 0; lane < 5; lane++) {
+        let attacker = null;
+        let attZone = "";
+        if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
+--------------------------------------------------
+Line 2791:
+  ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+          }
+          setStatus(`防守判定：星星戰線 ${lane + 1} 對手無進攻。`);
+          await sleep(650);
+          continue;
+        }
+  
+        // 詢問玩家是否要在這條戰線發動防守反制魔法
+        const wantCounter = await showXLWConfirm(
+          `戰線 ${lane + 1} 魔法反制`,
+--------------------------------------------------
+Line 2821:
+  ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+        }
+  
+        // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+        let defZone = "";
+        let defender = null;
+        let defIdx = lane;
+  
+        if (attacker.target && attacker.target.redirected) {
+          defZone = attacker.target.zone;
+--------------------------------------------------
+Line 3184:
+  ws.send(JSON.stringify({
+                action: "foodball_choice",
+                zone: defZone,
+                idx: defIdx,
+                trigger: choice
+              }));
+            }
+            if (choice) {
+              defenderShouldDie = false;
+              window.XLW_foodBallTriggeredTurn = turn;
+--------------------------------------------------
+Line 3339:
+  ws.send(JSON.stringify({
+                action: "add_to_hand_sync"
+              }));
+            }
+            render();
+          }
+        }
+      }
+      // ---------------------------------
+    }
+--------------------------------------------------
+Line 3428:
+  ws.send(JSON.stringify({
+            action: "sneak_recall",
+            attZone: attZone,
+            attIdx: attIdx,
+            recall: userWantsRecall
+          }));
+        }
+        
+        if (userWantsRecall) {
+          if (attacker.equipments && attacker.equipments.length > 0) {
+--------------------------------------------------
+Line 4002:
+  ws.send(JSON.stringify({
+            action: "call_game_declare",
+            condition: chosen,
+            declaringPlayer: player_role,
+            turn: turn
+          }));
+        }
+        render();
+        await sleep(500);
+      }
+--------------------------------------------------
+Line 4158:
+  ws.send(JSON.stringify({
+        action: "end_turn",
+        next_turn: turn
+      }));
+      render();
+    } else {
+      // 進入對手回合
+      await runEnemyTurn();
+  
+      // 檢查倒數階段
+--------------------------------------------------
+Line 4685:
+  ws.send(JSON.stringify({
+                    action: "equip_spell_resolved",
+                    zone: zone,
+                    idx: idx,
+                    spellCard: spellCard
+                  }));
+                }
+                window.XLW_equipSpellActive = false;
+                window.XLW_equipSpellCard = null;
+                if (window.XLW_equipSpellResolve) {
+--------------------------------------------------
+Line 4794:
+  ws.send(JSON.stringify({
+                  action: "temp_equip_spell_resolved",
+                  zone: zone,
+                  idx: idx,
+                  spellCard: spellCard,
+                  currentTurn: turn
+                }));
+              }
+  
+              window.XLW_tempEquipSpellActive = false;
+--------------------------------------------------
+Line 4895:
+  ws.send(JSON.stringify({
+                  action: "goat_spell_resolved",
+                  zone: zone,
+                  idx: idx,
+                  goatSpellCard: goatSpellCard
+                }));
+              }
+              
+              window.XLW_goatSpellActive = false;
+              window.XLW_goatSpellCard = null;
+--------------------------------------------------
+Line 5223:
+  ws.send(JSON.stringify({
+                    action: "thief_summon_sync",
+                    zone: zone,
+                    idx: idx
+                  }));
+                }
+                
+                const resolve = window.XLW_thiefResolve;
+                window.XLW_thiefResolve = null;
+                window.XLW_thiefPlacementActive = false;
+--------------------------------------------------
+Line 5889:
+  ws.send(JSON.stringify({ action: "ping" }));
+        }
+      }, 20000);
+    };
+    
+    ws.onerror = (err) => {
+      console.error("WebSocket 錯誤:", err);
+      reconnectWebSocket();
+    };
+    
+--------------------------------------------------
+Line 6050:
+  ws.send(JSON.stringify({
+              action: "aquarius_hand_reveal",
+              hand: hand
+            }));
+          }
+          else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+            window.XLW_enemyDebbieActive = true;
+            logBattle("✨ 委託者 戴比 效果：對手召喚了 委託者 戴比，我方可決定對手召喚的小旅人的位置，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+          }
+        }
+--------------------------------------------------
+Line 6474:
+  ws.send(JSON.stringify({
+                  action: "hannya_evolve_sync",
+                  zone: zone,
+                  idx: idx,
+                  angryHannya: angryCard
+                }));
+                render();
+              }
+            }, 100);
+          }
+--------------------------------------------------
+Line 6538:
+  ws.send(JSON.stringify({
+            action: "sync_discard_log",
+            card_name: discarded.name
+          }));
+          render();
+        }
+      } else if (data.action === "sync_discard_log") {
+        logBattle(`🥷 變裝喵 效果：對手隨機捨棄了手牌中的 ${data.card_name}！`);
+        if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          window.XLW_ENEMY.hand.pop();
+--------------------------------------------------
+Line 6896:
+  ws.send(JSON.stringify({ action: "trigger_opponent_discard" }));
+        logBattle("🥷 變裝喵 效果：已向對手發送隨機捨棄手牌指令。");
+      } else {
+        if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+          const discarded = window.XLW_ENEMY.hand.splice(idx, 1)[0];
+          enemyGraveyard.push(discarded);
+          logBattle(`🥷 變裝喵 效果：對手被強制隨機捨棄了手牌中的 ${discarded.name}！`);
+          render();
+        } else {
+--------------------------------------------------
+Line 7555:
+  ws.send(JSON.stringify({
+            action: "call_game_end",
+            winner: player_role
+          }));
+        }
+      } else {
+        window.XLW_callGameDeclared = false;
+        logBattle("\u3010\u5ba3\u544a\u5931\u6557\u3011\u6211\u65b9\u5148\u524d\u5ba3\u544a\u7684\u63d0\u65e9\u7d50\u675f\u689d\u4ef6\u5df2\u4e0d\u6eff\u8db3\uff0c\u5c0d\u623d\u7e7c\u7e8c\uff01");
+        if (isMultiplayer) {
+          ws.send(JSON.stringify({
+--------------------------------------------------
+Line 7564:
+  ws.send(JSON.stringify({
+            action: "call_game_fail"
+          }));
+        }
+        render();
+      }
+    } else if (!isMyTurnStarting && declaringPlayer === "enemy") {
+      let met = false;
+      if (condition === 1) {
+        met = calculateTotalStars(false) >= 20;
+--------------------------------------------------
+Line 7977:
+  ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+          resolveLocalSpellChain();
+        };
+        actionsDiv.appendChild(passBtn);
+  
+        // Counter buttons
+        counterCards.forEach(c => {
+          const counterBtn = document.createElement("button");
+          counterBtn.className = "forest-summon-btn";
+          counterBtn.style.background = "#52c41a";
+--------------------------------------------------
+Line 8006:
+  ws.send(JSON.stringify({
+              action: "spell_chain_add",
+              card: c
+            }));
+            
+            // Update UI
+            showSpellChainUI(spellChainStack);
+            promptNextChainAction();
+            render();
+          };
+--------------------------------------------------
+Line 8034:
+  ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+          resolveLocalSpellChain();
+        }, 1500);
+      }
+    }
+  }
+  
+  function resolveLocalSpellChain() {
+    hideSpellChainUI();
+    
+--------------------------------------------------
+Line 8403:
+  ws.send(JSON.stringify({
+        action: "coin_toss_roll",
+        guess: playerGuess,
+        result: coinResult
+      }));
+    }
+    await showCoinRollResult(playerGuess, coinResult);
+  }
+  
+  async function showCoinRollResult(guess, result) {
+--------------------------------------------------
+Line 8453:
+  ws.send(JSON.stringify({
+        action: "coin_toss_choice",
+        winner_role: player_role,
+        choice: choice
+      }));
+    }
+    applyCoinTossChoice(player_role, choice);
+  }
+  
+  function applyCoinTossChoice(winnerRole, choice) {
+--------------------------------------------------
+Line 8493:
+  ws.send(JSON.stringify({
+        action: "sync_deck",
+        deck_name: deckName,
+        extra_deck: playerExtraDeck
+      }));
+    }
+  
+    setStatus("【線上起手換牌】請點選任意手牌，點擊「確認換牌」送出。等待雙方就緒...");
+    render();
+  }
+--------------------------------------------------
+Line 8653:
+  ws.send(JSON.stringify({
+                action: "extra_summon_resolved",
+                fromZone: targetZone,
+                fromIdx: targetIdx,
+                angryHannya: card
+              }));
+            }
+            
+            render();
+          }
+--------------------------------------------------
+Line 8735:
+  ws.send(JSON.stringify({
+              action: "extra_summon_resolved",
+              fromZone: targetZone,
+              fromIdx: targetIdx,
+              angryHannya: card
+            }));
+          }
+          
+          render();
+        };
+--------------------------------------------------
+Line 8896:
+  ws.send(JSON.stringify({
+      action: "sync_game_state",
+      state: stateToSend
+    }));
+  }
+--------------------------------------------------

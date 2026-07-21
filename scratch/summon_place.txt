@@ -1,0 +1,51 @@
+1910:   if (selectedHandForSummon === null) {
+1911:     logDebug("【放置終止】當前 selectedHandForSummon 為 null！");
+1912:     return;
+1913:   }
+1914: 
+1915:   if (isMultiplayer && !isMyTurn && !window.XLW_bypassTurnCheck) {
+1916:     setStatus("對手回合中，請稍候！");
+1917:     logDebug("【放置終止】非我方回合！");
+1918:     return;
+1919:   }
+1920: 
+1921:   const canSum = window.XLW_bypassNormalSummonLimit ||
+1922:                  (phase === "召喚階段" && !normalSummonUsed) || 
+1923:                  (phase === "戰術佈陣" && !tacticalSummonUsed);
+1924:   if (!canSum) {
+1925:     setStatus("本回合已進行過單位召喚。");
+1926:     logDebug(`【放置終止】本回合召喚次數已用盡！(normalSummonUsed: ${normalSummonUsed})`);
+1927:     clearModes();
+1928:     render();
+1929:     return;
+1930:   }
+1931: 
+1932:   try {
+1933: 
+1934:   if (selectedHandForSummon === "TRAVELER") {
+1935:     // 召喚小旅人
+1936:     field[zone][idx] = {
+1937:       card: structuredClone(LITTLE_TRAVELER),
+1938:       tapped: false,
+1939:       attacking: false,
+1940:       target: null,
+1941:       summonedTurn: turn,
+1942:       summonedZone: zone
+1943:     };
+1944:     if (phase === "召喚階段" && !window.XLW_bypassTurnCheck) normalSummonUsed = true;
+1945:     if (phase === "戰術佈陣" && !window.XLW_bypassTurnCheck) tacticalSummonUsed = true;
+1946:     logBattle(`從森林召喚小旅人到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+1947:     playTravelerSummonAnimation("#playerForest", zone, idx);
+1948:   } else {
+1949:     // 召喚手牌
+1950:     const isTributeSummon = (tributeWaitingPosition && selectedTributeCard !== null);
+1951:     let handIndex = Number(selectedHandForSummon);
+1952:     
+1953:     let card = null;
+1954:     if (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || selectedHandForSummon === "GRAVEYARD_WELL" || selectedHandForSummon === "GRAVEYARD_GHOST_MEOW") {
+1955:       card = window.XLW_tempGraveCard;
+1956:     } else {
+1957:       if (handIndex < 0 || handIndex >= hand.length || !hand[handIndex]) {
+1958:         if (tributeWaitingPosition) {
+1959:           const foundIdx = hand.findIndex(c => c && Number(c.tribute || 0) > 0);
+1960:           if (foundIdx >= 0) {

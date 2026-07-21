@@ -1,0 +1,120 @@
+1461:       ]
+1462:     );
+1463:     if (opt === "negate_magic") {
+1464:       await showXLWConfirm("法術保護", "【提示】無效化效果必須在對手打出魔法卡的當下，於反制提示框中發動。目前無法直接打出。", "確定");
+1465:       hand.splice(handIndex, 0, card); // 加回手牌
+1466:       render();
+1467:       return;
+1468:     } else if (opt === "protect_unit") {
+1469:       let hasMyUnit = false;
+1470:       for (const z of ["player_front", "player_back"]) {
+1471:         if (field[z].some(u => u !== null)) hasMyUnit = true;
+1472:       }
+1473:       if (!hasMyUnit) {
+1474:         await showXLWConfirm("法術保護", "我方場上目前沒有任何單位可以施加法術保護！", "確定");
+1475:         hand.splice(handIndex, 0, card); // 加回手牌
+1476:         render();
+1477:         return;
+1478:       }
+1479:       
+1480:       window.XLW_equipSpellActive = true;
+1481:       window.XLW_equipSpellCard = { ...card, name: "法術保護-護盾" };
+1482:       setStatus("【法術保護】請點選我方場上一個單位以賦予法術保護（對魔抗性）！");
+1483:       render();
+1484:       await new Promise(r => { window.XLW_equipSpellResolve = r; });
+1485:     }
+1486:   } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+1487:              card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+1488:     let hasOrc = false;
+1489:     for (const z of ["player_front", "player_back"]) {
+1490:       if (field[z].some(u => u && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC")))) {
+1491:         hasOrc = true;
+1492:       }
+1493:     }
+1494:     if (!hasOrc) {
+1495:       setStatus("場上無我方獸人單位可以裝備此卡！");
+1496:       return;
+1497:     }
+1498: 
+1499:     if (card.name?.includes("戰斧牛排") || card.id === "SR-ORC-0043") {
+1500:       let equipCards = [];
+1501:       graveyard.forEach((c, idx) => {
+1502:         if (c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排"))) {
+1503:           equipCards.push({ source: "graveyard", index: idx, card: c });
+1504:         }
+1505:       });
+1506:       for (const z of ["player_front", "player_back"]) {
+1507:         for (let i = 0; i < 5; i++) {
+1508:           const u = field[z][i];
+1509:           if (u && u.equipments && u.equipments.length > 0) {
+1510:             u.equipments.forEach((eqName, eqIdx) => {
+1511:               const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+1512:               if (!isTempMagic) {
+1513:                 equipCards.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
+1514:               }
+1515:             });
+1516:           }
+1517:         }
+1518:       }
+1519: 
+1520:       if (equipCards.length < 2) {
+1521:         setStatus("我方場上與墓地裝備卡不足 2 張，無法除外以發動戰斧牛排！");
+1522:         return;
+1523:       }
+1524: 
+1525:       const proceed = await showXLWConfirm("戰斧牛排 額外代價", `發動戰斧牛排需要除外我方場上/墓地共 2 張裝備卡，系統將自動為您除外以下裝備卡：\n${equipCards.slice(0, 2).map(e => e.card ? e.card.name : e.name).join("、")}。是否確認？`);
+1526:       if (!proceed) {
+1527:         return;
+1528:       }
+1529: 
+1530:       const toRemove = equipCards.slice(0, 2);
+1531:       toRemove.forEach(item => {
+1532:         if (item.source === "graveyard") {
+1533:           const idx = graveyard.indexOf(item.card);
+1534:           if (idx !== -1) {
+1535:             graveyard.splice(idx, 1);
+1536:           }
+1537:           exileCard(item.card, "player");
+1538:           logBattle(`[戰斧牛排 代價] 除外了墓地裝備卡：${item.card.name}`);
+1539:         } else {
+1540:           const u = field[item.zone][item.slotIdx];
+1541:           if (u && u.equipments) {
+1542:             const idx = u.equipments.indexOf(item.name);
+1543:             if (idx !== -1) {
+1544:               u.equipments.splice(idx, 1);
+1545:             }
+1546:             const cardObj = allCards.find(c => c && c.name === item.name) || { name: item.name, type: "magic" };
+1547:             exileCard(cardObj, "player");
+1548:             logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的裝備：${item.name}`);
+1549:           }
+1550:         }
+1551:       });
+1552:     }
+1553: 
+1554:     window.XLW_equipSpellActive = true;
+1555:     window.XLW_equipSpellCard = card;
+1556:     setStatus(`【${card.name}】請點選我方一個獸人單位進行裝備！`);
+1557:     render();
+1558:     await new Promise(r => { window.XLW_equipSpellResolve = r; });
+1559:   } else {
+1560:     // 普通魔法效果
+1561:     if (isTempEquipMagic) {
+1562:       window.XLW_tempEquipSpellActive = true;
+1563:       window.XLW_tempEquipSpellCard = card;
+1564:       let promptText = `【${card.name}】`;
+1565:       if (card.name.includes("削弱藥水")) {
+1566:         promptText += "請選擇場上一個單位，賦予 -3 攻擊力直到本回合結束。";
+1567:       } else if (card.name.includes("振奮藥水")) {
+1568:         promptText += "請選擇場上一個單位，賦予 +3 攻擊力直到下個回合結束。";
+1569:       } else if (card.name.includes("塗毒")) {
+1570:         promptText += "請選擇場上一個單位，賦予劇毒。";
+1571:       } else if (card.name.includes("睡眠反擊拳")) {
+1572:         promptText += "請選擇我方場上一個防守單位（橫置單位），賦予 +3 攻擊力直到本回合結束。";
+1573:       }
+1574:       setStatus(promptText);
+1575:       render();
+1576:       await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+1577:     } else if (text.includes("抽2張")) {
+1578:       draw(2);
+1579:       logBattle(`發動魔法 ${card.name}：抽 2 張牌`);
+1580:     } else if (text.includes("抽1張")) {

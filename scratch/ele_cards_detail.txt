@@ -1,0 +1,165 @@
+Count: 40
+
+ID: E-ELE-0002 | Name: 太陽能發電獸 | Type: unit | Atk: 2 | Score: 2 | Tribute: 0 | Subtype: 電廠
+Keywords: ['獎勵，超載']
+Effect: 結束階段時，若本回合敵方場地的場地卡曾發動效果，則獎勵+1。超載。
+--------------------------------------------------
+ID: E-EVL-0021 | Name: 分散式電網 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗，永久
+Keywords: ['電廠']
+Effect: 若你場上有4個卡名不相同的電廠單位，則抽2張牌。使你場上1單位被賦予+2★。
+--------------------------------------------------
+ID: ELE-0001 | Name: 燃煤發電獸 | Type: unit | Atk: 6 | Score: -2 | Tribute: 1 | Subtype: 電廠
+Keywords: ['立即，超載']
+Effect: 立即 : 使敵方1攻擊力2或以下的單位被破壞。超載。
+--------------------------------------------------
+ID: ELE-0002 | Name: 太陽能發電獸 | Type: unit | Atk: 2 | Score: 2 | Tribute: 0 | Subtype: 電廠
+Keywords: ['獎勵，超載']
+Effect: 結束階段時，若本回合敵方場地的場地卡曾發動效果，則獎勵+1。超載。
+--------------------------------------------------
+ID: ELE-0003 | Name: 天然氣發電獸 | Type: unit | Atk: 4 | Score: 2 | Tribute: 0 | Subtype: 電廠
+Keywords: ['橫放，超載']
+Effect:  遠程攻擊 。此卡橫放時，使此卡被破壞。超載。
+--------------------------------------------------
+ID: ELE-0004 | Name: 水力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['獎勵，超載']
+Effect: 敵方從手牌打出單位時，若此卡攻擊力大於等於該單位，則獎勵+1。超載。
+--------------------------------------------------
+ID: ELE-0005 | Name: 燃油發電獸 | Type: unit | Atk: 3 | Score: -3 | Tribute: 0 | Subtype: None
+Keywords: ['貫穿，電廠，超載']
+Effect: 貫穿 。你的結束階段時，使此卡左右邊的非電廠單位被破壞。超載
+--------------------------------------------------
+ID: ELE-0006 | Name: 用愛發電獸 | Type: unit | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 電廠
+Keywords: ['立即，超載']
+Effect: 立即 : 使你墓地2個無需祭品的電廠單位被召喚。超載。
+--------------------------------------------------
+ID: ELE-0007 | Name: 風力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['電廠']
+Effect: 使你前排的所有電廠單位+1攻擊力。此卡可打出或召喚在後排戰線。超載。
+--------------------------------------------------
+ID: ELE-0008 | Name: 核能發電獸 | Type: unit | Atk: 10 | Score: 6 | Tribute: 0 | Subtype: 電廠
+Keywords: ['超載']
+Effect: 你的召喚階段, 可改為除外你場上和手牌加總5張牌, 並從手牌打出此卡。你的主要階段開始時, 轉正此卡。你的結束階段時, 除外你場上或手牌中的1張牌, 否則除外此卡。
+超載。
+--------------------------------------------------
+ID: ELE-0009 | Name: 鈾238 | Type: unit | Atk: 5 | Score: 0 | Tribute: 0 | Subtype: 核廢料 (在墓地時)
+Keywords: []
+Effect: 此卡被除外時，改為使此卡被召喚(同名卡一回合限一次)
+--------------------------------------------------
+ID: ELE-0016 | Name: 永續能源世界 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 場地
+Keywords: ['電廠，獎勵，橫放']
+Effect: 你的結束階段時，若你場上所有電廠單位★加總為2或以上，獎勵+1，為負則使你場上1單位被橫放
+--------------------------------------------------
+ID: ELE-0019 | Name: 大北極熊 | Type: unit | Atk: 6 | Score: 4 | Tribute: 0 | Subtype: None
+Keywords: ['貫穿，立即，電廠']
+Effect: 你的主要階段，若你場上有「小北極熊」，則可從手牌打出此卡。貫穿 。立即 : 使你場上所有電廠單位被破壞。
+--------------------------------------------------
+ID: ELE-0020 | Name: 電容量備載 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: ['電廠']
+Effect: 使你本次戰鬥被破壞的所有電廠單位回手牌
+--------------------------------------------------
+ID: ELE-0022 | Name: 節約用水 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗，永久
+Keywords: []
+Effect: 若你場上有2個「水力發電獸」，則抽2張牌。使你場上1單位被賦予+2攻擊力
+--------------------------------------------------
+ID: ELE-0024 | Name: 地熱發電獸 | Type: unit | Atk: 3 | Score: 0 | Tribute: 1 | Subtype: 電廠
+Keywords: ['橫放，獎勵，超載']
+Effect: 結束階段時，若此卡處於橫放，則獎勵+X。X=你場上「地熱發電獸」的數量。超載。
+--------------------------------------------------
+ID: ELE-0025 | Name: 小北極熊 | Type: unit | Atk: 4 | Score: 4 | Tribute: 0 | Subtype: None
+Keywords: ['貫穿']
+Effect: 你的召喚階段，若你場上所有 電廠 單位★加總為-5或以下，則可從手牌打出此卡。 貫穿。
+--------------------------------------------------
+ID: R-ELE-0001 | Name: 燃煤發電獸 | Type: unit | Atk: 6 | Score: -2 | Tribute: 1 | Subtype: 電廠
+Keywords: ['立即，超載']
+Effect: 立即 : 使敵方1攻擊力2或以下的單位被破壞。超載。
+--------------------------------------------------
+ID: R-ELE-0003 | Name: 天然氣發電獸 | Type: unit | Atk: 4 | Score: 2 | Tribute: 0 | Subtype: 電廠
+Keywords: ['橫放，超載']
+Effect:  遠程攻擊 。此卡橫放時，使此卡被破壞。超載。
+--------------------------------------------------
+ID: R-ELE-0004 | Name: 水力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['獎勵，超載']
+Effect: 敵方從手牌打出單位時，若此卡攻擊力大於等於該單位，則獎勵+1。超載。
+--------------------------------------------------
+ID: R-ELE-0005 | Name: 燃油發電獸 | Type: unit | Atk: 3 | Score: -3 | Tribute: 0 | Subtype: None
+Keywords: ['貫穿，電廠，超載']
+Effect: 貫穿 。你的結束階段時，使此卡左右邊的非電廠單位被破壞。超載
+--------------------------------------------------
+ID: R-ELE-0006 | Name: 用愛發電獸 | Type: unit | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['立即，超載']
+Effect: 立即 : 使你墓地2個無需祭品的電廠單位被召喚。超載。
+--------------------------------------------------
+ID: R-ELE-0007 | Name: 風力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['電廠']
+Effect: 使你前排的所有電廠單位+1攻擊力。此卡可打出或召喚在後排戰線。超載。
+--------------------------------------------------
+ID: R-ELE-0007-泳裝 | Name: 風力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['電廠']
+Effect: 使你前排的所有電廠單位+1攻擊力。此卡可打出或召喚在後排戰線。超載。
+--------------------------------------------------
+ID: R-ELE-0008 | Name: 核能發電獸 | Type: unit | Atk: 10 | Score: 6 | Tribute: 0 | Subtype: 電廠
+Keywords: ['超載']
+Effect: 你的召喚階段, 可改為除外你場上和手牌加總5張牌, 並從手牌打出此卡。你的主要階段開始時, 轉正此卡。你的結束階段時, 除外你場上或手牌中的1張牌, 否則除外此卡。
+超載。
+--------------------------------------------------
+ID: R-ELE-0011 | Name: 3077 | Type: unit | Atk: 2 | Score: 1 | Tribute: 0 | Subtype: 機械
+Keywords: ['立即']
+Effect: 立即 : 從你牌庫或墓地尋找「曬博龐克世界」展示並加入手牌，然後重洗牌庫
+--------------------------------------------------
+ID: R-ELE-0013 | Name: 碳排放收集獸 | Type: unit | Atk: 3 | Score: 2 | Tribute: 0 | Subtype: 電廠
+Keywords: []
+Effect: 你的結束階段後，若你場上有「燃煤發電獸」/「燃油發電獸」/「天然氣發電獸」其中1個，則可使墓地的此卡被召喚
+--------------------------------------------------
+ID: R-ELE-0014 | Name: -2度C 冷氣旅人 | Type: unit | Atk: 3 | Score: 2 | Tribute: 0 | Subtype: 機械
+Keywords: ['禁錮']
+Effect: 使敵方場上所有小旅人受到禁錮
+--------------------------------------------------
+ID: R-ELE-0015 | Name: 開開關關旅人 | Type: unit | Atk: 3 | Score: 1 | Tribute: 0 | Subtype: None
+Keywords: ['立即']
+Effect: 立即 : 抽2張牌，棄掉其中1張
+--------------------------------------------------
+ID: R-ELE-0017 | Name: 曬博龐克世界 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 場地
+Keywords: ['電廠，發電獸']
+Effect: 若你場上所有電廠單位星星加總為負，則你手上的發電獸單位所需祭品-2
+--------------------------------------------------
+ID: R-ELE-0018 | Name: 你不愛地球 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: []
+Effect: 若該卡會使敵方本回合打出的法力值加總為4或以上，則使該卡無效化
+--------------------------------------------------
+ID: R-ELE-0023 | Name: 生質能發電獸 | Type: unit | Atk: 6 | Score: 6 | Tribute: 3 | Subtype: 電廠
+Keywords: ['獎勵，超載']
+Effect: 結束階段時，若本回合有兩張或以上的牌進入墓地，則獎勵+1。超載。
+--------------------------------------------------
+ID: R-ELE-0024 | Name: 地熱發電獸 | Type: unit | Atk: 3 | Score: 1 | Tribute: 1 | Subtype: 電廠
+Keywords: ['橫放，獎勵，超載']
+Effect: 結束階段時，若此卡處於橫放，則獎勵+X。X=你場上「地熱發電獸」的數量。超載。
+--------------------------------------------------
+ID: SR-ELE-0010 | Name: 地球超旅人 | Type: unit | Atk: 8 | Score: 6 | Tribute: 3 | Subtype: None
+Keywords: []
+Effect: 你的主要階段，若你總分低於敵方10點或以上，則可使你墓地的此卡被召喚
+--------------------------------------------------
+ID: SR-ELE-0012 | Name: 能源執法者 | Type: unit | Atk: 4 | Score: 3 | Tribute: 0 | Subtype: 人型
+Keywords: []
+Effect: 雙方玩家一回合只能使用一張魔法卡
+--------------------------------------------------
+ID: SR-ELE-0016 | Name: 永續能源世界 | Type: magic | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 場地
+Keywords: ['電廠，獎勵，橫放']
+Effect: 你的結束階段時，若你場上所有電廠單位★加總為2或以上，獎勵+1，為負則使你場上1單位被橫放
+--------------------------------------------------
+ID: SSR-ELE-0006 | Name: 用愛發電獸 | Type: unit | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['立即，超載']
+Effect: 立即 : 使你墓地2個無需祭品的電廠單位被召喚。超載。
+--------------------------------------------------
+ID: SSR-ELE-0007 | Name: 風力發電獸 | Type: unit | Atk: 1 | Score: 1 | Tribute: 0 | Subtype: 電廠
+Keywords: ['電廠']
+Effect: 使你前排的所有電廠單位+1攻擊力。此卡可打出或召喚在後排戰線。超載。
+--------------------------------------------------
+ID: SSR-ELE-0008 | Name: 核能發電獸 | Type: unit | Atk: 10 | Score: 6 | Tribute: 0 | Subtype: 電廠
+Keywords: ['超載']
+Effect: 你的召喚階段, 可改為除外你場上和手牌加總5張牌, 並從手牌打出此卡。你的主要階段開始時, 轉正此卡。你的結束階段時, 除外你場上或手牌中的1張牌, 否則除外此卡。
+超載。
+--------------------------------------------------
+ID: SSSR-ELE-0010 | Name: 地球超旅人 | Type: unit | Atk: 8 | Score: 6 | Tribute: 3 | Subtype: None
+Keywords: []
+Effect: 你的主要階段，若你總分低於敵方10點或以上，則可使你墓地的此卡被召喚
+--------------------------------------------------

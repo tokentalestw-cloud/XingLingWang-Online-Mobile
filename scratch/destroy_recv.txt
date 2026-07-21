@@ -1,0 +1,24 @@
+2809: action: "destroy_unit",
+  2807: if (isMultiplayer) {
+  2808: ws.send(JSON.stringify({
+  2809: action: "destroy_unit",
+  2810: zone: zone,
+  2811: idx: idx
+  2812: }));
+  2813: }
+  2814: 
+  2815: window.XLW_blackCatChoosing = false;
+  2816: setStatus("黑喵破壞效果已執行。"); // 黑喵破壞效果已執行。
+------------------------------
+6663: } else if (data.action === "destroy_unit") {
+  6661: render();
+  6662: }
+  6663: } else if (data.action === "destroy_unit") {
+  6664: const zone = data.zone;
+  6665: const idx = data.idx;
+  6666: const unit = field[zone][idx];
+  6667: if (unit) {
+  6668: graveyard.push(unit.card);
+  6669: field[zone][idx] = null;
+  6670: logBattle(`\u5c0d\u624b\u7279\u6b8a\u6548\u679c\uff1a\u7834\u58bad\u6211\u65b9\u0020${unitName(unit)}\u0021`); // 對手特殊效果：破壞我方 [單位]！
+------------------------------

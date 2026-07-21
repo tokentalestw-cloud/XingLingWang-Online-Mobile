@@ -1,0 +1,100 @@
+1128: async function castSpell(handIndex) {
+1129:   if (isMultiplayer && !isMyTurn) {
+1130:     setStatus("對手回合中，請稍候！");
+1131:     return;
+1132:   }
+1133:   const card = hand[handIndex];
+1134:   if (!card || card.type !== "magic") return;
+1135: 
+1136:   const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析"));
+1137:   if (isPureCounter) {
+1138:     setStatus("【提示】反制魔法卡無法直接打出，必須在對手使用魔法卡時進行反制。");
+1139:     showModal(card);
+1140:     return;
+1141:   }
+1142: 
+1143:   // 1. Target and cost pre-checks before casting/chaining to prevent card loss or dead chains
+1144:   if (card.name.includes("逗喵棒") || card.id === "R-CAT-0040") {
+1145:     let hasMeowUnit = false;
+1146:     for (const z of ["player_front", "player_back"]) {
+1147:       if (field[z].some(u => u && (u.card?.faction === "喵喵賊" || u.card?.race === "喵喵賊" || u.card?.id?.includes("CAT") || u.card?.id?.includes("cat")))) {
+1148:         hasMeowUnit = true;
+1149:       }
+1150:     }
+1151:     if (!hasMeowUnit) {
+1152:       setStatus("場上無我方喵喵賊單位可以指定！");
+1153:       return;
+1154:     }
+1155:   } else if (card.name.includes("恐懼凝視")) {
+1156:     let hasEnemyUnit = false;
+1157:     for (const zone of ["enemy_front", "enemy_back"]) {
+1158:       if (field[zone].some(u => u !== null)) hasEnemyUnit = true;
+1159:     }
+1160:     if (!hasEnemyUnit) {
+1161:       setStatus("對方場上無單位可禁錮！");
+1162:       return;
+1163:     }
+1164:   } else if (card.name.includes("山羊術")) {
+1165:     let hasAnyUnit = false;
+1166:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1167:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1168:     }
+1169:     if (!hasAnyUnit) {
+1170:       setStatus("場上無單位可變成山羊！");
+1171:       return;
+1172:     }
+1173:   } else if (card.name.includes("魔抗鐵拳")) {
+1174:     let hasAnyUnit = false;
+1175:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1176:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1177:     }
+1178:     if (!hasAnyUnit) {
+1179:       setStatus("場上無單位可施加魔抗鐵拳！");
+1180:       return;
+1181:     }
+1182:   } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+1183:     const spellsInGrave = graveyard.filter(c => c && c.type === "magic");
+1184:     if (spellsInGrave.length === 0) {
+1185:       setStatus("墓地無魔法卡可回收！");
+1186:       return;
+1187:     }
+1188:   } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+1189:              card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+1190:     let hasOrc = false;
+1191:     for (const z of ["player_front", "player_back"]) {
+1192:       if (field[z].some(u => u && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC")))) {
+1193:         hasOrc = true;
+1194:       }
+1195:     }
+1196:     if (!hasOrc) {
+1197:       setStatus("場上無獸人單位可裝備！");
+1198:       return;
+1199:     }
+1200:   }
+1201: 
+1202:   const isTempEquipMagic = 
+1203:     card.name.includes("削弱藥水") || card.id?.includes("0003") ||
+1204:     card.name.includes("振奮藥水") || card.id?.includes("0002") ||
+1205:     card.name.includes("塗毒") || card.id?.includes("0004") ||
+1206:     card.name.includes("睡眠反擊拳") || card.id?.includes("0025");
+1207: 
+1208:   if (isTempEquipMagic) {
+1209:     if (phase !== "防守階段") {
+1210:       setStatus(`【${card.name}】只能在防守階段使用！`);
+1211:       return;
+1212:     }
+1213:     let hasAnyUnit = false;
+1214:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1215:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1216:     }
+1217:     if (!hasAnyUnit) {
+1218:       setStatus(`場上沒有任何單位可以施放【${card.name}】！`);
+1219:       return;
+1220:     }
+1221:   }
+1222: 
+1223:   // Remove card from hand immediately
+1224:   hand.splice(handIndex, 1);
+1225: 
+1226:   // 對手反制判定 (在 multiplayer 模式下，或在單機 VS AI 模式下)
+1227:   if (!isMultiplayer) {

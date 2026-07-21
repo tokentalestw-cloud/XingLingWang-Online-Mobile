@@ -1,0 +1,22 @@
+
+=== Occurrence at Line 8659 ===
+8652:           return;
+8653:         }
+8654:         
+8655:         if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+8656:           overlay.remove(); // Close modal
+8657:           window.XLW_equipSpellActive = true;
+8658:           window.XLW_equipSpellCard = card;
+8659:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+8660:           render();
+8661:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+8662:           
+8663:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8664:           render();
+8665:           return;
+8666:         }
+8667:         
+8668:         if (card.name === "大耳賊" || card.id === "NEU-0064") {
+8669:           setStatus("【大耳賊】無法直接召喚。當我方場上的「貫穿」單位進攻且攻擊力為基礎值 2 倍時會自動觸發！");
+8670:           return;
+8671:         }

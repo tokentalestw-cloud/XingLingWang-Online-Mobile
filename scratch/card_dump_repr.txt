@@ -1,0 +1,66 @@
+ID: NMS-0020
+Name: 壞掉的機器人
+Tribute: 0
+Score/Stars: 2
+ATK: 5
+Keywords: ['機械', '合體']
+Effect: 機械 合體。無法進攻
+----------------------------------------
+ID: R-ART-0040
+Name: 詛咒斷臂雕像
+Tribute: 0
+Score/Stars: 2
+ATK: 2
+Keywords: ['衰退']
+Effect: 使此單位前後方的第一個單位被賦予衰退
+----------------------------------------
+ID: R-NMS-0035
+Name: 尖叫的女人
+Tribute: 0
+Score/Stars: 1
+ATK: 2
+Keywords: ['貫穿']
+Effect: 貫穿
+----------------------------------------
+ID: R-NMS-0039
+Name: 恐怖稻草人
+Tribute: 0
+Score/Stars: 1
+ATK: 0
+Keywords: []
+Effect: 無法進攻。你的結束階段結束後,使此卡前方第1個單位移動至其持有者場上任意位置(須為場上合法位置)
+----------------------------------------
+ID: R-NMS-0047
+Name: 皇家魔法師
+Tribute: 0
+Score/Stars: 2
+ATK: 2
+Keywords: []
+Effect: 使你場上此單位
+前後方的單位被賦予
+敵方效果抗性
+----------------------------------------
+ID: SSSR-NMS-0056
+Name: 狐狸雜耍者 達亞
+Tribute: 0
+Score/Stars: 3
+ATK: 2
+Keywords: []
+Effect: 若此單位左右邊皆有單位,則使此單位左邊的單位被賦予-3 ⭐並使此單位右邊的單位被賦予+3 ⭐
+----------------------------------------
+ID: SSSR-NMS-0058
+Name: 烈陽戰士 獅子座
+Tribute: 0
+Score/Stars: 2
+ATK: 0
+Keywords: []
+Effect: 你的主要階段限一次,使你場上1個其他單位被賦予+2攻擊力直到你的主要階段開始時。X=該單位的攻擊力
+----------------------------------------
+ID: SSSR-NMS-0065
+Name: 中星城騎士
+Tribute: 0
+Score/Stars: 2
+ATK: 4
+Keywords: ['升級']
+Effect: 你持有的卡牌升級時，獎勵+2
+----------------------------------------

@@ -1,0 +1,106 @@
+925: function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
+926:   if (!unit) return 0;
+927:   if (window.XLW_isShieldUnit(unit)) return 0;
+928:   const c = unit.card || unit;
+929:   let baseAtk = Number(c.attack ?? c.atk ?? 0);
+930:   baseAtk = Number.isFinite(baseAtk) ? baseAtk : 0;
+931: 
+932:   // 河童場地減攻效果
+933:   if (zone && zone.includes("front")) {
+934:     const owner = zone.startsWith("player_") ? "player" : "enemy";
+935:     const fieldEl = owner === "player" ? $("playerField") : $("enemyField");
+936:     if (fieldEl && fieldEl.dataset.card) {
+937:       try {
+938:         const fieldCard = JSON.parse(fieldEl.dataset.card);
+939:         if (fieldCard.name.includes("河童")) {
+940:           baseAtk = Math.max(0, baseAtk - 1);
+941:         }
+942:       } catch (err) {}
+943:     }
+944:   }
+945: 
+946:   // 魔抗鐵拳等動態加減攻
+947:   if (unit && unit.atkModifier) {
+948:     baseAtk = Math.max(0, baseAtk + Number(unit.atkModifier));
+949:   }
+950:   if (unit && unit.tempAtkModifier) {
+951:     baseAtk = Math.max(0, baseAtk + Number(unit.tempAtkModifier));
+952:   }
+953: 
+954:   // 計算相鄰強化與連動 Buff
+955:   if (zone && lane !== undefined && field[zone]) {
+956:     // 1. 大鵰像 (ART-0002) 相鄰強化：左右邊的單位 +2 攻擊力
+957:     if (lane > 0) {
+958:       const leftUnit = field[zone][lane - 1];
+959:       const leftCard = leftUnit && (leftUnit.card || leftUnit);
+960:       if (leftCard && leftCard.id === "ART-0002") {
+961:         baseAtk += 2;
+962:       }
+963:     }
+964:     if (lane < 4) {
+965:       const rightUnit = field[zone][lane + 1];
+966:       const rightCard = rightUnit && (rightUnit.card || rightUnit);
+967:       if (rightCard && rightCard.id === "ART-0002") {
+968:         baseAtk += 2;
+969:       }
+970:     }
+971: 
+972:     // 2. 創世老人 (ART-0014) 連動：創世男孩在左邊時 +4 攻擊力
+973:     if (c.id === "ART-0014" && lane > 0) {
+974:       const leftUnit = field[zone][lane - 1];
+975:       const leftCard = leftUnit && (leftUnit.card || leftUnit);
+976:       if (leftCard && leftCard.id === "ART-0013") {
+977:         baseAtk += 4;
+978:       }
+979:     }
+980:   }
+981: 
+982:   // 3. 禁衛軍獸人 (SSR-ORC-0057) 被攻擊時 +2 攻擊力
+983:   if (c.id === "SSR-ORC-0057" || c.name?.includes("禁衛軍獸人")) {
+984:     if (isBeingAttacked) {
+985:       baseAtk += 2;
+986:     }
+987:   }
+988: 
+989:   // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
+990:   if (unit.equipments) {
+991:     if (unit.equipments.includes("削弱藥水")) {
+992:       baseAtk = Math.max(0, baseAtk - 3);
+993:     }
+994:     if (unit.equipments.includes("振奮藥水")) {
+995:       baseAtk += 3;
+996:     }
+997:     if (unit.equipments.includes("睡眠反擊拳")) {
+998:       baseAtk += 3;
+999:     }
+1000:   }
+1001: 
+1002:   // 4. 血戰幫狼牙棒 (裝備)
+1003:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+1004:     let maceCount = 0;
+1005:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1006:       field[z].forEach(u => {
+1007:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+1008:           maceCount++;
+1009:         }
+1010:       });
+1011:     }
+1012:     baseAtk += maceCount;
+1013:   }
+1014: 
+1015:   // 5. 爺爺 Buff 過期判斷
+1016:   if (unit.grandpaBuffExpiresTurn && turn >= unit.grandpaBuffExpiresTurn) {
+1017:     unit.atkModifier = Math.max(0, (unit.atkModifier || 0) - 2);
+1018:     delete unit.grandpaBuffExpiresTurn;
+1019:   }
+1020: 
+1021:   return baseAtk;
+1022: }
+1023: 
+1024: // 單位星數分數 (加入加成)
+1025: function getUnitStars(unit, zone, lane) {
+1026:   if (!unit) return 0;
+1027:   const c = unit.card || unit;
+1028:   let baseStars = Number(c.score ?? c.stars ?? 0) + Number(unit.bonusScore ?? 0);
+1029: 
+1030:   if (zone && lane !== undefined && field[zone]) {

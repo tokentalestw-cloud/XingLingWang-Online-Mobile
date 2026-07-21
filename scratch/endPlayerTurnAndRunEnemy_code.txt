@@ -1,0 +1,182 @@
+Line 3733: async function endPlayerTurnAndRunEnemy() {
+3733: async function endPlayerTurnAndRunEnemy() {
+3734:   phase = "\u7d50\u675f\u968e\u6bb5"; // 結束階段
+3735:   xlwCleanExpiredTempEquips(turn);
+3736:   render();
+3737: 
+3738:   // 檢測我方是否滿足提早結束的宣告條件，若滿足則彈出詢問視窗
+3739:   let canDeclare1 = calculateTotalStars(true) >= 20;
+3740:   let canDeclare2 = (calculateUnitCount(true) - calculateUnitCount(false)) >= 4;
+3741:   
+3742:   if (!window.XLW_callGameDeclared && (canDeclare1 || canDeclare2)) {
+3743:     let choices = [];
+3744:     if (canDeclare1) {
+3745:       choices.push({ text: "\u4ee5\u689d\u4ef6 (1) \u5ba3\u544a\u63d0\u65e9\u7d50\u675f\uff1a\u7e3d\u5206\u6578\u9054\u5230 20 \u5206\u4ee5\u4e0a", value: "1" });
+3746:     }
+3747:     if (canDeclare2) {
+3748:       choices.push({ text: "\u4ee5\u689d\u4ef6 (2) \u5ba3\u544a\u63d0\u65e9\u7d50\u675f\uff1a\u5834\u4e0a\u55ae\u4f4d\u6bd4\u6575\u65b9\u591a 4 \u500b\u4ee5\u4e0a", value: "2" });
+3749:     }
+3750:     choices.push({ text: "\u4e0d\u5ba3\u544a\uff0c\u6b63\u5e38\u7d50\u675f\u56de\u5408", value: "0" });
+3751:     
+3752:     const choiceVal = await showXLWChoiceModal(
+3753:       "\u63d0\u65e9\u7d50\u675f (Call Game) \u5ba3\u544a", 
+3754:       "\u60a8\u7b26\u5408\u5ba3\u544a\u63d0\u65e9\u7d50\u675f\u7684\u689d\u4ef6\uff0c\u662f\u5426\u9032\u884c\u5ba3\u544a\uff1f\uff08\u5ba3\u544a\u5f8c\uff0c\u82e5\u4e0b\u56de\u5408\u4e3b\u8981\u968e\u6bb5\u958b\u59cb\u524d\u4ecd\u7b26\u5408\u689d\u4ef6\uff0c\u6211\u65b9\u5c07\u76f4\u63a5\u7372\u5f97\u52dd\u5229\uff09", 
+3755:       choices
+3756:     );
+3757:     const chosen = parseInt(choiceVal, 10);
+3758:     if (chosen === 1 || chosen === 2) {
+3759:       window.XLW_callGameDeclared = true;
+3760:       window.XLW_callGameDeclaringPlayer = "player";
+3761:       window.XLW_callGameCondition = chosen;
+3762:       window.XLW_callGameTurn = turn;
+3763:       
+3764:       const conditionStr = chosen === 1 
+3765:         ? "\u5206\u6578\u52a0\u7e3d\u81f3\u5c1120\u5206" 
+3766:         : "\u5834\u4e0a\u55ae\u4f4d\u6578\u6bd4\u6575\u65b9\u591a\u81f3\u5c114\u500b";
+3767:       logBattle(`\u6211\u65b9\u5ba3\u544a\u63d0\u65e9\u7d50\u675f (Call Game)\uff01\u689d\u4ef6\uff1a${conditionStr}\uff0c\u82e5\u4e0b\u56de\u5408\u4e3b\u8981\u968e\u6bb5\u958b\u59cb\u524d\u4ecd\u7b26\u5408\u689d\u4ef6\uff0c\u6211\u65b9\u7372\u52dd\uff01`);
+3768:       
+3769:       if (isMultiplayer) {
+3770:         ws.send(JSON.stringify({
+3771:           action: "call_game_declare",
+3772:           condition: chosen,
+3773:           declaringPlayer: player_role,
+3774:           turn: turn
+3775:         }));
+3776:       }
+3777:       render();
+3778:       await sleep(500);
+3779:     }
+3780:   }
+3781: 
+3782:   // === 妖怪村莊結束階段效果結算 ===
+3783:   const runYokaiEndPhaseEffects = async () => {
+3784:     const hasYarnMonster = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("毛線怪"));
+3785:     if (hasYarnMonster) {
+3786:       let hasEnemyImprisoned = false;
+3787:       for (const zone of ["enemy_front", "enemy_back"]) {
+3788:         for (let i = 0; i < 5; i++) {
+3789:           if (field[zone][i] && isUnitConfined(zone, i)) {
+3790:             hasEnemyImprisoned = true;
+3791:             break;
+3792:           }
+3793:         }
+3794:         if (hasEnemyImprisoned) break;
+3795:       }
+3796:       if (hasEnemyImprisoned) {
+3797:         playerBonusScore += 1;
+3798:         logBattle("毛線怪 效果：偵測到敵方場上有單位受到禁錮，我方額外獲得 +1★ 獎勵！");
+3799:         renderScore();
+3800:       }
+3801:     }
+3802: 
+3803:     const enemyFrontCount = field["enemy_front"].filter(u => u !== null).length;
+3804:     if (enemyFrontCount >= 2) {
+3805:       for (let idx = 0; idx < 5; idx++) {
+3806:         const hasBroom = (field["player_front"][idx] && field["player_front"][idx].card.name.includes("掃把精")) ||
+3807:                           (field["player_back"][idx] && field["player_back"][idx].card.name.includes("掃把精"));
+3808:         if (hasBroom) {
+3809:           const oppUnit = field["enemy_front"][idx];
+3810:           if (oppUnit) {
+3811:             const backUnit = field["enemy_back"][idx];
+3812:             if (backUnit) {
+3813:               if (backUnit.equipments && backUnit.equipments.length > 0) {
+3814:                 backUnit.equipments.forEach(eqName => {
+3815:                   const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+3816:                   if (isTempMagic) return;
+3817:                   const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+3818:                   const cloned = structuredClone(cardObj);
+3819:                   cloned.type = "magic";
+3820:                   window.XLW_ENEMY.grave.push(cloned);
+3821:                   enemyGraveyard = window.XLW_ENEMY.grave;
+3822:                   logBattle(`✨ 裝備卡 ${cloned.name} 因對手單位回手進入對手墓地。`);
+3823:                 });
+3824:                 backUnit.equipments = [];
+3825:               }
+3826:               if (window.XLW_ENEMY.hand) {
+3827:                 window.XLW_ENEMY.hand.push(backUnit.card);
+3828:               }
+3829:               logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排，原後排單位 ${backUnit.card.name} 被推回對手手牌！`);
+3830:             } else {
+3831:               logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排！`);
+3832:             }
+3833:             field["enemy_back"][idx] = oppUnit;
+3834:             field["enemy_front"][idx] = null;
+3835: 
+3836:             const hasBottleInGrave = graveyard.some(c => c && c.name.includes("瓶子長長"));
+3837:             const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
+3838:             if (hasBottleInGrave && hasEmptySlot) {
+3839:               const graveIdx = graveyard.findIndex(c => c && c.name.includes("瓶子長長"));
+3840:               const bottleCard = graveyard[graveIdx];
+3841:               graveyard.splice(graveIdx, 1);
+3842:               
+3843:               let summoned = false;
+3844:               for (const zone of ["player_front", "player_back"]) {
+3845:                 for (let i = 0; i < 5; i++) {
+3846:                   if (!summoned && !field[zone][i] && xlwCanSummonToZone(zone, bottleCard)) {
+3847:                     field[zone][i] = {
+3848:                       card: structuredClone(bottleCard),
+3849:                       tapped: false,
+3850:                       attacking: false,
+3851:                       target: null,
+3852:                       summonedTurn: turn,
+3853:                       summonedZone: zone
+3854:                     };
+3855:                     summoned = true;
+3856:                     logBattle(`瓶子長長 效果：偵測到敵方單位因推擠離場，從墓地自動特殊召喚至我方 ${zone.includes("front") ? "前排" : "後排"}${i + 1}！`);
+3857:                   }
+3858:                 }
+3859:               }
+3860:             }
+3861:           }
+3862:         }
+3863:       }
+3864:     }
+3865: 
+3866:     const pfEl = $("playerField");
+3867:     if (pfEl && pfEl.dataset.card) {
+3868:       try {
+3869:         const fieldCard = JSON.parse(pfEl.dataset.card);
+3870:         if (fieldCard.name.includes("恐怖的井")) {
+3871:           const eligible = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")) && (Number(c.score || 0) <= 2));
+3872:           const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
+3873:           if (eligible.length > 0 && hasEmptySlot) {
+3874:             const choices = eligible.map((c, i) => ({ text: `${c.name} (祭品需求: ${c.tribute})`, value: i }));
+3875:             const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
+3876:             if (chosen !== null && chosen !== undefined) {
+3877:               const cardToSummon = eligible[chosen];
+3878:               const graveIdx = graveyard.indexOf(cardToSummon);
+3879:               if (graveIdx >= 0) graveyard.splice(graveIdx, 1);
+3880:               
+3881:               window.XLW_bypassNormalSummonLimit = true;
+3882:               window.XLW_bypassTurnCheck = true;
+3883:               selectedHandForSummon = "GRAVEYARD_WELL";
+3884:               window.XLW_tempGraveCard = cardToSummon;
+3885:               setStatus("【恐怖的井 召喚】請點選我方一個空格進行特殊召喚！");
+3886:               render();
+3887:               await new Promise(r => { window.XLW_summonPlacementResolve = r; });
+3888:               window.XLW_bypassTurnCheck = false;
+3889:             }
+3890:           }
+3891:         }
+3892:       } catch (err) {}
+3893:     }
+3894:   };
+3895: 
+3896:   await runYokaiEndPhaseEffects();
+3897: 
+3898:   // 檢查倒數階段
+3899:   handleTurnEndCountdownLogic();
+3900:   if (isGameOverFlag) return;
+3901: 
+3902:   if (isMultiplayer) {
+3903:     isMyTurn = false;
+3904:     setStatus("我方回合結束，正在等待對手行動...");
+3905:     
+3906:     // 聯網同步：如果我方有宣告進攻單位，此處需先行調用 xlwResolveEnemyDefensePhaseSafe 模擬我方的進攻，以清理在戰鬥中死亡的我方/敵方單位
+3907:     let playerHasAttackers = false;
+3908:     ["player_front", "player_back"].forEach(zone => {
+3909:       field[zone].forEach(u => {
+3910:         if (u && u.attacking) playerHasAttackers = true;
+3911:       });
+3912:     });
+3913:     if (playerHasAttackers) {

@@ -1,0 +1,100 @@
+6751:         }
+6752:         else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+6753:           window.XLW_enemyDebbieActive = true;
+6754:           logBattle("✨ 委託者 戴比 效果：對手召喚了 委託者 戴比，我方可決定對手召喚的小旅人的位置，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+6755:         }
+6756:       }
+6757: 
+6758:       if (card && card.id === "TOKEN_TRAVELER") {
+6759:         playTravelerSummonAnimation("#enemyForest", zone, idx);
+6760:       } else if (card && Number(card.tribute || 0) > 0) {
+6761:         playTributeSummonAnimation(zone, idx);
+6762:       } else {
+6763:         render();
+6764:       }
+6765:     } else if (data.action === "spell_chain_start") {
+6766:       spellChainStack = [{ card: data.card, owner: "opponent" }];
+6767:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6768:         window.XLW_ENEMY.hand.pop();
+6769:       }
+6770:       showSpellChainUI(spellChainStack);
+6771:       promptNextChainAction();
+6772:     } else if (data.action === "spell_chain_add") {
+6773:       spellChainStack.push({ card: data.card, owner: "opponent" });
+6774:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6775:         window.XLW_ENEMY.hand.pop();
+6776:       }
+6777:       showSpellChainUI(spellChainStack);
+6778:       promptNextChainAction();
+6779:     } else if (data.action === "spell_chain_resolve") {
+6780:       resolveLocalSpellChain();
+6781:     } else if (data.action === "equip_spell_resolved") {
+6782:       const zone = data.zone;
+6783:       const idx = data.idx;
+6784:       const spellCard = data.spellCard;
+6785:       
+6786:       const obj = field[zone]?.[idx];
+6787:       if (obj) {
+6788:         obj.equipments = obj.equipments || [];
+6789:         obj.equipments.push(spellCard.name);
+6790:         logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+6791:         
+6792:         if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+6793:           obj.magicImmune = true;
+6794:         } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+6795:           obj.piercing = true;
+6796:         } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+6797:           obj.atkModifier = (obj.atkModifier || 0) + 1;
+6798:           obj.hasRanged = true;
+6799:         } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+6800:           obj.atkModifier = (obj.atkModifier || 0) + 5;
+6801:           obj.steakBonus = true;
+6802:         } else if (spellCard.name?.includes("迴旋飛斧") || spellCard.id === "R-ORC-0025") {
+6803:           obj.piercing = true;
+6804:         } else if (spellCard.name === "法術保護-護盾") {
+6805:           obj.magicImmune = true;
+6806:         }
+6807:         render();
+6808:       }
+6809:     } else if (data.action === "goat_spell_resolved") {
+6810:       const zone = data.zone;
+6811:       const idx = data.idx;
+6812:       const goatSpellCard = data.goatSpellCard;
+6813:       
+6814:       const obj = field[zone]?.[idx];
+6815:       if (obj) {
+6816:         logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+6817:         graveyard.push(obj.card); // 進入我方墓地
+6818: 
+6819:         const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
+6820:         if (obj.equipments && obj.equipments.length > 0) {
+6821:           obj.equipments.forEach(eqName => {
+6822:             const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+6823:             if (isTempMagic) return;
+6824:             const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+6825:             const cloned = structuredClone(cardObj);
+6826:             cloned.type = "magic";
+6827:             if (targetOwner === "player") {
+6828:               graveyard.push(cloned);
+6829:               logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入我方墓地。`);
+6830:             } else {
+6831:               window.XLW_ENEMY.grave.push(cloned);
+6832:               enemyGraveyard = window.XLW_ENEMY.grave;
+6833:               logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入對手墓地。`);
+6834:             }
+6835:           });
+6836:         }
+6837:         
+6838:         const goatUnitCard = structuredClone(goatSpellCard);
+6839:         goatUnitCard.type = "unit";
+6840:         goatUnitCard.attack = 3;
+6841:         goatUnitCard.score = 1;
+6842:         goatUnitCard.tribute = 0;
+6843:         goatUnitCard.faction = "中立";
+6844:         goatUnitCard.creator = "enemy"; // 標記為敵方創造
+6845:         
+6846:         obj.card = goatUnitCard;
+6847:         obj.equipments = [];
+6848:         obj.atkModifier = 0;
+6849:         obj.piercing = false;
+6850:         obj.magicImmune = false;

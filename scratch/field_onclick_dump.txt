@@ -1,0 +1,171 @@
+5180: 
+5181:         cardEl.onclick = async (e) => {
+5182:           e.stopPropagation();
+5183: 
+5184:           // 手機版戰術佈陣：改成「點單位 → 點空格」移動，避免拖曳時誤開圖片或卡住。
+5185:           // 電腦版也可使用此方式，原本滑鼠拖曳仍保留。
+5186:           if (phase === "戰術佈陣" && zone.startsWith("player_") && !window.XLW_equipSpellActive && !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive) {
+5187:             if (isMultiplayer && !isMyTurn) {
+5188:               setStatus("對手回合中，請稍候！");
+5189:               return;
+5190:             }
+5191:             if (window.XLW_tacticalSelected && window.XLW_tacticalSelected.zone === zone && window.XLW_tacticalSelected.idx === idx) {
+5192:               window.XLW_tacticalSelected = null;
+5193:               setStatus("已取消戰術移動選擇。");
+5194:               render();
+5195:               return;
+5196:             }
+5197:             window.XLW_tacticalSelected = { zone, idx };
+5198:             setStatus(`已選擇 ${unitName(obj)}。請再點擊我方空白位置進行移動。`);
+5199:             render();
+5200:             return;
+5201:           }
+5202:           
+5203:           if (window.XLW_equipSpellActive) {
+5204:             const isOrc = obj.card?.faction === "獸人" || obj.card?.race === "獸人" || obj.card?.id?.includes("ORC") || obj.card?.id?.includes("0RC") || obj.card?.id?.includes("ROC");
+5205:             const isShield = window.XLW_equipSpellCard && window.XLW_equipSpellCard.name === "法術保護-護盾";
+5206:             if (zone.startsWith("player_") && (isOrc || isShield)) {
+5207:               const spellCard = window.XLW_equipSpellCard;
+5208:               obj.equipments = obj.equipments || [];
+5209:               obj.equipments.push(spellCard.name);
+5210:               logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+5211:               if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+5212:                 obj.magicImmune = true;
+5213:                 logBattle(`✨ 符咒帽 效果：${obj.card.name} 獲得永久敵方魔法抗性！`);
+5214:               }
+5215:               else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+5216:                 obj.piercing = true;
+5217:                 logBattle(`✨ 3星菜刀 效果：${obj.card.name} 獲得貫穿效果！`);
+5218:               }
+5219:               else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+5220:                 obj.atkModifier = (obj.atkModifier || 0) + 1;
+5221:                 obj.hasRanged = true;
+5222:                 logBattle(`✨ 獸人弓箭手的弓箭 效果：${obj.card.name} 攻擊力 +1 並獲得遠程攻擊！`);
+5223:               }
+5224:               else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+5225:                 obj.atkModifier = (obj.atkModifier || 0) + 5;
+5226:                 obj.steakBonus = true;
+5227:                 logBattle(`✨ 戰斧牛排 效果：${obj.card.name} 攻擊力 +5 且進攻成功時額外獎勵 +5！`);
+5228:               }
+5229:               else if (spellCard.name?.includes("迴旋飛斧") || spellCard.id === "R-ORC-0025") {
+5230:                 obj.piercing = true;
+5231:                 logBattle(`✨ 迴旋飛斧 效果：${obj.card.name} 獲得貫穿效果與最終攻擊力加倍！`);
+5232:               }
+5233:               else if (spellCard.name?.includes("狼牙棒") || spellCard.id === "R-ORC-0054") {
+5234:                 logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+5235:               }
+5236:               else if (spellCard.name === "法術保護-護盾") {
+5237:                 obj.magicImmune = true;
+5238:                 logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+5239:               }
+5240:               if (isMultiplayer) {
+5241:                 ws.send(JSON.stringify({
+5242:                   action: "equip_spell_resolved",
+5243:                   zone: zone,
+5244:                   idx: idx,
+5245:                   spellCard: spellCard
+5246:                 }));
+5247:               }
+5248:               window.XLW_equipSpellActive = false;
+5249:               window.XLW_equipSpellCard = null;
+5250:               if (window.XLW_equipSpellResolve) {
+5251:                 const resolve = window.XLW_equipSpellResolve;
+5252:                 window.XLW_equipSpellResolve = null;
+5253:                 resolve();
+5254:               }
+5255:               render();
+5256:             } else {
+5257:               if (isShield) {
+5258:                 setStatus("請點選我方場上的單位進行裝備！");
+5259:               } else {
+5260:                 setStatus("請點選我方場上的「獸人」單位進行裝備！");
+5261:               }
+5262:             }
+5263:             return;
+5264:           }
+5265: 
+5266:           if (phase === "防守階段" && zone.startsWith("player_")) {
+5267:             const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
+5268:             if (isDefenderGuard) {
+5269:               if (window.XLW_defenderGuardUsedTurn === turn) {
+5270:                 setStatus("禁衛軍獸人 效果本回合已使用過。");
+5271:                 showModal(obj.card, obj.equipments);
+5272:                 return;
+5273:               }
+5274:               let attackingEnemyUnits = [];
+5275:               for (const ez of ["enemy_front", "enemy_back"]) {
+5276:                 for (let i = 0; i < 5; i++) {
+5277:                   const enemyUnit = field[ez][i];
+5278:                   if (enemyUnit && enemyUnit.attacking && enemyUnit.target) {
+5279:                     const isTargetingThis = enemyUnit.target.zone === zone && enemyUnit.target.idx === idx;
+5280:                     if (!isTargetingThis) {
+5281:                       attackingEnemyUnits.push({ zone: ez, idx: i, unit: enemyUnit });
+5282:                     }
+5283:                   }
+5284:                 }
+5285:               }
+5286:               if (attackingEnemyUnits.length === 0) {
+5287:                 setStatus("目前沒有敵方單位進攻我方其他單位！");
+5288:                 showModal(obj.card, obj.equipments);
+5289:                 return;
+5290:               }
+5291:               const confirmUse = await showXLWConfirm("禁衛軍獸人 效果發動", "是否使敵方一個進攻單位改為進攻此禁衛軍獸人？");
+5292:               if (confirmUse) {
+5293:                 const choices = attackingEnemyUnits.map((u, i) => ({ text: `${u.unit.card.name} (進攻指向我方 ${u.unit.target.zone.includes("front") ? "前排" : "後排"}${u.unit.target.idx + 1})`, value: i }));
+5294:                 const chosenIdx = await showXLWChoiceModal("選擇轉移的進攻單位", "選擇進攻單位：", choices);
+5295:                 if (chosenIdx !== null && chosenIdx !== undefined) {
+5296:                   const targetItem = attackingEnemyUnits[chosenIdx];
+5297:                   targetItem.unit.target = { zone: zone, idx: idx };
+5298:                   window.XLW_defenderGuardUsedTurn = turn;
+5299:                   logBattle(`✨ 禁衛軍獸人 效果：使對手 ${targetItem.unit.card.name} 的攻擊目標轉移為我方的 禁衛軍獸人！`);
+5300:                   render();
+5301:                 }
+5302:               }
+5303:               return;
+5304:             }
+5305:           }
+5306: 
+5307: 
+5308: 
+5309:           if (window.XLW_tempEquipSpellActive) {
+5310:             const spellCard = window.XLW_tempEquipSpellCard;
+5311: 
+5312:             if (spellCard.name.includes("睡眠反擊拳") || spellCard.id?.includes("0025")) {
+5313:               if (!zone.startsWith("player_")) {
+5314:                 setStatus("【睡眠反擊拳】只能施加在我方場上的單位！");
+5315:                 return;
+5316:               }
+5317:             }
+5318: 
+5319:             if (zone.startsWith("enemy_")) {
+5320:               if (obj.card.name.includes("天狗")) {
+5321:                 setStatus("天狗 具有免疫效果：不會被敵方的效果 and 魔法選為目標！");
+5322:                 return;
+5323:               }
+5324:               if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+5325:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+5326:                 return;
+5327:               }
+5328:               if (obj.magicImmune) {
+5329:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+5330:                 return;
+5331:               }
+5332:             }
+5333: 
+5334:             if (!obj.equipments) obj.equipments = [];
+5335:             const spellNameClean = spellCard.name;
+5336:             if (!obj.equipments.includes(spellNameClean)) {
+5337:               obj.equipments.push(spellNameClean);
+5338:             }
+5339: 
+5340:             if (!obj.tempEquips) obj.tempEquips = {};
+5341:             if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+5342:               obj.tempEquips[spellNameClean] = turn;
+5343:             } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+5344:               obj.tempEquips[spellNameClean] = turn + 1;
+5345:             }
+5346: 
+5347:             logBattle(`✨ 發動魔法 ${spellCard.name}：賦予場上 ${obj.card.name} 該效果作為臨時裝備。`);
+5348: 
+5349:             if (isMultiplayer) {
+5350:               ws.send(JSON.stringify({

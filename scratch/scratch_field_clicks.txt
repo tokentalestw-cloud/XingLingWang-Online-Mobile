@@ -1,0 +1,3 @@
+L5199: slot.onclick = (e) => {
+L7332: zone.onclick = null;
+L7356: zone.onclick = (e) => {

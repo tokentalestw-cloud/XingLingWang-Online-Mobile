@@ -1,0 +1,40 @@
+6381:       // 換到我方回合
+6382:       isMyTurn = true;
+6383:       turn = data.next_turn;
+6384:       window.XLW_turnSneakCount = 0;
+6385:       normalSummonUsed = false;
+6386:       tacticalSummonUsed = false;
+6387:       playerUntap();
+6388:       
+6389:       // Check Call Game resolution for player: only immediately if player does not need defense.
+6390:       let enemyHasAttackers = false;
+6391:       ["enemy_front", "enemy_back"].forEach(zone => {
+6392:         field[zone].forEach(u => {
+6393:           if (u && u.attacking) enemyHasAttackers = true;
+6394:         });
+6395:       });
+6396:       const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+6397:       if (!playerNeedsDefense) {
+6398:         checkCallGameAtTurnStart(true);
+6399:         if (isGameOverFlag) return;
+6400:       }
+6401:       
+6402:       // 動態更新對手的手牌與牌庫張數（對手回補抽了 2 張）
+6403:       if (window.XLW_ENEMY.hand) {
+6404:         for (let i = 0; i < 2; i++) window.XLW_ENEMY.hand.push(null);
+6405:       }
+6406:       if (window.XLW_ENEMY.deck) {
+6407:         for (let i = 0; i < 2; i++) window.XLW_ENEMY.deck.pop();
+6408:       }
+6409: 
+6410:       await performPlayerTurnStartDraw();
+6411:       if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
+6412:         phase = "\u9632\u5b88\u968e\u6bb5";
+6413:         setStatus(`\u7b2c ${turn} \u56de\u5408開始，已自動抽2張。前一回合對手有進攻宣言，自動進入「防守階段」！`);
+6414:         render();
+6415:         setTimeout(() => {
+6416:           xlwResolvePlayerDefensePhase();
+6417:         }, 500);
+6418:       } else {
+6419:         const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
+6420:         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;

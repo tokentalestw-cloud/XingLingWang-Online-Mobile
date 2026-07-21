@@ -1,0 +1,91 @@
+1960:           if (foundIdx >= 0) {
+1961:             handIndex = foundIdx;
+1962:           }
+1963:         }
+1964:       }
+1965:       if (handIndex >= 0 && hand[handIndex]) {
+1966:         card = hand[handIndex];
+1967:       }
+1968:     }
+1969: 
+1970:     if (!card) {
+1971:       setStatus("找不到手牌中的卡牌，請點選重新召喚。");
+1972:       return;
+1973:     }
+1974: 
+1975:     field[zone][idx] = {
+1976:       card: structuredClone(card),
+1977:       tapped: false,
+1978:       attacking: false,
+1979:       target: null,
+1980:       summonedTurn: turn,
+1981:       summonedZone: zone
+1982:     };
+1983: 
+1984:     const isExtraSum = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || 
+1985:                         selectedHandForSummon === "GRAVEYARD_WELL" || 
+1986:                         selectedHandForSummon === "GRAVEYARD_GHOST_MEOW" ||
+1987:                         window.XLW_bypassNormalSummonLimit);
+1988:     if (isExtraSum && zone.startsWith("player_")) {
+1989:       window.XLW_turnExtraSummonsCount = (window.XLW_turnExtraSummonsCount || 0) + 1;
+1990:       logDebug(`【額外召喚追蹤】我方進行了額外召喚！本回合已額外召喚 ${window.XLW_turnExtraSummonsCount} 個單位。`);
+1991:     }
+1992: 
+1993:     if (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || selectedHandForSummon === "GRAVEYARD_WELL" || selectedHandForSummon === "GRAVEYARD_GHOST_MEOW") {
+1994:       window.XLW_tempGraveCard = null;
+1995:       window.XLW_bypassNormalSummonLimit = false;
+1996:       logBattle(`特殊召喚墓地單位 ${card.name} 到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+1997:     } else {
+1998:       hand.splice(handIndex, 1);
+1999:       if (window.XLW_bypassNormalSummonLimit) {
+2000:         window.XLW_bypassNormalSummonLimit = false;
+2001:         logDebug(`【連動額外召喚】成功！不佔用本回合常規召喚額度。`);
+2002:         
+2003:         const isPlayer = zone.startsWith("player_");
+2004:         const checkZonePrefix = isPlayer ? "player_" : "enemy_";
+2005:         const prOnField = field[checkZonePrefix + "front"].concat(field[checkZonePrefix + "back"]).some(u => {
+2006:           return u && u.card && (u.card.id === "CAT_005" || u.card.id === "R-CAT-0041" || u.card.name.includes("公關姐姐喵"));
+2007:         });
+2008:         if (prOnField) {
+2009:           if (isPlayer) {
+2010:             playerBonusScore += 1;
+2011:             logBattle(`✨ 公關姐姐喵 效果：我方進行額外召喚單位，我方額外獎勵 +1 分！`);
+2012:           } else {
+2013:             enemyBonusScore += 1;
+2014:             logBattle(`✨ 公關姐姐喵 效果：對手進行額外召喚單位，對手額外獎勵 +1 分！`);
+2015:           }
+2016:           renderScore();
+2017:         }
+2018:       } else {
+2019:         if (phase === "召喚階段") normalSummonUsed = true;
+2020:         if (phase === "戰術佈陣") tacticalSummonUsed = true;
+2021:       }
+2022:       logDebug(`【召喚成功】卡牌: ${card.name} 已成功放置於 ${zone}:${idx + 1}！手牌扣減成功。`);
+2023:       logBattle(`召喚單位 ${card.name} 到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+2024:     }
+2025:     
+2026:     // 立即特殊效果：雪女、座敷童子、燈籠小鬼、恐怖錄影帶、八岐大蛇
+2027:     if (zone.startsWith("player_")) {
+2028:       if (card.name.includes("雪女")) {
+2029:         window.XLW_enemyFrontImprisonedUntilTurn = turn;
+2030:         logBattle("雪女 效果：使對手前排戰線單位受到禁錮，直到我方下個主要階段前！");
+2031:       }
+2032:       else if (card.name.includes("座敷童子")) {
+2033:         window.XLW_enemyCannotAttackOnNextTurn = true;
+2034:         logBattle("座敷童子 效果：對手下個回合將無法進行任何進攻！");
+2035:       }
+2036:       else if (card.name.includes("燈籠小鬼")) {
+2037:         logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
+2038:         await runLanternImpPlacementFlow();
+2039:       }
+2040:       else if (card.name.includes("恐怖錄影帶")) {
+2041:         const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
+2042:         if (wellIdx >= 0) {
+2043:           const wellCard = deck.splice(wellIdx, 1)[0];
+2044:           hand.push(wellCard);
+2045:           logBattle("恐怖錄影帶 效果：從牌庫檢索「恐怖的井」並加入手牌！");
+2046:           shuffle(deck);
+2047:         } else {
+2048:           logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
+2049:         }
+2050:       }

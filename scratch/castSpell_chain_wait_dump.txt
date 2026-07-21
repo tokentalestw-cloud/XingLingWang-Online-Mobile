@@ -1,0 +1,125 @@
+1226:   // 對手反制判定 (在 multiplayer 模式下，或在單機 VS AI 模式下)
+1227:   if (!isMultiplayer) {
+1228:     const hasBomb = window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.some(c => c && (c.name.includes("魔法炸彈客") || c.id === "NEU-0025"));
+1229:     const hasCounter = window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.some(c => c && (c.name.includes("魔法反制") || c.name.includes("法術保護") || c.name.includes("終極無效化") || c.name.includes("法術解析") || c.id === "SSR-NMG-0019" || c.id === "NMG-0019"));
+1230:     
+1231:     if (hasBomb && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0 && Math.random() < 0.45) {
+1232:       const bombCard = window.XLW_ENEMY.hand.find(c => c && (c.name.includes("魔法炸彈客") || c.id === "NEU-0025"));
+1233:       const bIdx = window.XLW_ENEMY.hand.indexOf(bombCard);
+1234:       window.XLW_ENEMY.hand.splice(bIdx, 1);
+1235:       const exiledLibCard = window.XLW_ENEMY.deck.pop();
+1236:       const exiledLibName = (exiledLibCard && exiledLibCard.name) ? exiledLibCard.name : "未知卡牌";
+1237:       logBattle(`對手從手牌除外了 ${bombCard.name}，並將對手牌庫頂的 ${exiledLibName} 一併除外，無效化了我方的魔法卡 ${card.name}！`);
+1238:       exileCard(bombCard, "enemy");
+1239:       exileCard(exiledLibCard, "enemy");
+1240:       
+1241:       exileCard(card, "player");
+1242:       clearModes();
+1243:       render();
+1244:       return;
+1245:     } else if (hasCounter && Math.random() < 0.45) {
+1246:       const counterCard = window.XLW_ENEMY.hand.find(c => c && (c.name.includes("魔法反制") || c.name.includes("法術保護") || c.name.includes("終極無效化") || c.name.includes("法術解析")));
+1247:       const cIdx = window.XLW_ENEMY.hand.indexOf(counterCard);
+1248:       window.XLW_ENEMY.hand.splice(cIdx, 1);
+1249:       window.XLW_ENEMY.grave.push(counterCard);
+1250:       logBattle(`對手從手牌發動了 ${counterCard.name}，無效化了我方的魔法卡 ${card.name}！`);
+1251:       
+1252:       graveyard.push(card);
+1253:       clearModes();
+1254:       render();
+1255:       return;
+1256:     }
+1257:   } else {
+1258:     // Multiplayer Countering Chain
+1259:     spellChainStack = [{ card: card, owner: "me" }];
+1260:     showSpellChainUI(spellChainStack);
+1261:     
+1262:     ws.send(JSON.stringify({
+1263:       action: "spell_chain_start",
+1264:       card: card
+1265:     }));
+1266:     
+1267:     promptNextChainAction();
+1268:     
+1269:     const response = await new Promise(resolve => {
+1270:       window.XLW_pendingSpellResolve = resolve;
+1271:     });
+1272:     
+1273:     if (response.countered) {
+1274:       clearModes();
+1275:       render();
+1276:       return;
+1277:     }
+1278:   }
+1279: 
+1280:   const text = card.effect_text || "";
+1281:   
+1282:   // 逗喵棒：使你場上1個喵喵賊單位被轉正，並可使其移動至你場上任意位置
+1283:   if (card.name.includes("逗喵棒") || card.id === "R-CAT-0040") {
+1284:     let meowUnits = [];
+1285:     for (const z of ["player_front", "player_back"]) {
+1286:       field[z].forEach((u, i) => {
+1287:         if (u && (u.card?.faction === "喵喵賊" || u.card?.race === "喵喵賊" || u.card?.id?.includes("CAT") || u.card?.id?.includes("cat"))) {
+1288:           meowUnits.push({ zone: z, idx: i, unit: u });
+1289:         }
+1290:       });
+1291:     }
+1292:     if (meowUnits.length > 0) {
+1293:       const choices = meowUnits.map((item, idx) => ({
+1294:         text: `${item.zone === "player_front" ? "前排" : "後排"}${item.idx + 1} 的 ${item.unit.card.name}`,
+1295:         value: idx
+1296:       }));
+1297:       const chosenIdx = await showXLWChoiceModal("逗喵棒 效果發動", "選擇我方一個喵喵賊單位以轉正及移動：", choices);
+1298:       if (chosenIdx !== null && chosenIdx !== undefined) {
+1299:         const targetItem = meowUnits[chosenIdx];
+1300:         targetItem.unit.tapped = false;
+1301:         logBattle(`✨ 逗喵棒 效果：使我方 ${targetItem.unit.card.name} 轉正！`);
+1302: 
+1303:         let emptySlots = [];
+1304:         for (const z of ["player_front", "player_back"]) {
+1305:           for (let i = 0; i < 5; i++) {
+1306:             if (!field[z][i]) emptySlots.push({ zone: z, idx: i });
+1307:           }
+1308:         }
+1309: 
+1310:         let teasingStickMoved = false;
+1311:         let targetToZone = null;
+1312:         let targetToIdx = -1;
+1313: 
+1314:         if (emptySlots.length > 0) {
+1315:           const moveConfirm = await showXLWConfirm("逗喵棒 移動效果", "是否要將該單位移動至我方場上其他位置？");
+1316:           if (moveConfirm) {
+1317:             window.XLW_teasingStickMoveActive = true;
+1318:             window.XLW_teasingStickFromZone = targetItem.zone;
+1319:             window.XLW_teasingStickFromIdx = targetItem.idx;
+1320:             setStatus(`【逗喵棒】請點選我方場上一個空白格子進行移動！`);
+1321:             render();
+1322:             const res = await new Promise(r => { window.XLW_teasingStickResolve = r; });
+1323:             teasingStickMoved = res.moved;
+1324:             if (teasingStickMoved) {
+1325:               targetToZone = res.toZone;
+1326:               targetToIdx = res.toIdx;
+1327:             }
+1328:           }
+1329:         }
+1330:         
+1331:         if (isMultiplayer) {
+1332:           ws.send(JSON.stringify({
+1333:             action: "teasing_stick_resolved",
+1334:             targetZone: targetItem.zone,
+1335:             targetIdx: targetItem.idx,
+1336:             fromZone: teasingStickMoved ? targetItem.zone : null,
+1337:             toZone: teasingStickMoved ? targetToZone : null,
+1338:             toIdx: teasingStickMoved ? targetToIdx : null
+1339:           }));
+1340:         }
+1341:         
+1342:         window.XLW_teasingStickMoveActive = false;
+1343:         window.XLW_teasingStickFromZone = null;
+1344:         window.XLW_teasingStickFromIdx = -1;
+1345:         render();
+1346:       } else {
+1347:         // Canceled choosing a unit
+1348:         hand.splice(handIndex, 0, card); // Return card to hand
+1349:         render();
+1350:         return;

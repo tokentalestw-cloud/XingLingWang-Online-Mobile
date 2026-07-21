@@ -1,0 +1,91 @@
+7600:     if (field[z].some((u, i) => u && u.card && (u.card.id === "SSSR-NMS-0065" || u.card.name?.includes("中星城騎士")) && !window.isUnitSilenced(u, z, i))) {
+7601:       hasKnight = true;
+7602:       break;
+7603:     }
+7604:   }
+7605:   if (hasKnight) {
+7606:     if (isPlayer) {
+7607:       playerBonusScore += 2;
+7608:       logBattle("✨ 中星城騎士 被動效果：我方卡牌升級進化，我方額外獲得 +2★ 獎勵點數！");
+7609:       renderScore();
+7610:     } else {
+7611:       enemyBonusScore += 2;
+7612:       logBattle("✨ 對手 中星城騎士 被動效果：對手卡牌升級進化，對手額外獲得 +2★ 獎勵點數！");
+7613:       renderScore();
+7614:     }
+7615:   }
+7616: }
+7617: 
+7618: function hasMuseumGuardOnField(side) {
+7619:   const frontZone = side === "player" ? "player_front" : "enemy_front";
+7620:   const backZone = side === "player" ? "player_back" : "enemy_back";
+7621:   const zones = [frontZone, backZone];
+7622:   for (const z of zones) {
+7623:     if (field[z]) {
+7624:       for (const u of field[z]) {
+7625:         if (u && (u.card?.id === "R-ART-0031" || u.card?.name?.includes("博物館保全"))) {
+7626:           return true;
+7627:         }
+7628:       }
+7629:     }
+7630:   }
+7631:   return false;
+7632: }
+7633: 
+7634: function hasBlackMerchantOnField(side) {
+7635:   const frontZone = side === "player" ? "player_front" : "enemy_front";
+7636:   const backZone = side === "player" ? "player_back" : "enemy_back";
+7637:   const zones = [frontZone, backZone];
+7638:   for (const z of zones) {
+7639:     if (field[z]) {
+7640:       for (const u of field[z]) {
+7641:         if (u && (u.card?.id === "R-ART-0036" || u.card?.name?.includes("黑心網路賣家"))) {
+7642:           return true;
+7643:         }
+7644:       }
+7645:     }
+7646:   }
+7647:   return false;
+7648: }
+7649: 
+7650: function countUnitOnField(side, cardId, cardNamePart) {
+7651:   const zones = side === "player" ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+7652:   let count = 0;
+7653:   for (const z of zones) {
+7654:     if (field[z]) {
+7655:       for (const u of field[z]) {
+7656:         if (u && u.card) {
+7657:           if (u.card.id === cardId || (cardNamePart && u.card.name?.includes(cardNamePart))) {
+7658:             count++;
+7659:           }
+7660:         }
+7661:       }
+7662:     }
+7663:   }
+7664:   return count;
+7665: }
+7666: 
+7667: function xlwNotifyUnitTapped(zone, idx) {
+7668:   const u = field[zone] ? field[zone][idx] : null;
+7669:   if (!u || !u.card) return;
+7670:   
+7671:   const side = zone.startsWith("player_") ? "player" : "enemy";
+7672:   const unitName = u.card.name || "";
+7673:   
+7674:   logBattle(`📸 偵測到場上的藝術品單位【${unitName}】被橫置！`);
+7675:   
+7676:   // 1. 害羞的斑點南瓜 (R-ART-0062)
+7677:   const pumpkinCount = countUnitOnField(side, "R-ART-0062", "害羞的斑點南瓜");
+7678:   if (pumpkinCount > 0) {
+7679:     const scoreAdd = pumpkinCount * 1;
+7680:     if (side === "player") {
+7681:       playerBonusScore += scoreAdd;
+7682:       logBattle(`✨ 【害羞的斑點南瓜】被動效果：場上有 ${pumpkinCount} 個南瓜，我方額外獲得 +${scoreAdd}★ 獎勵點數！`);
+7683:       renderScore();
+7684:     } else {
+7685:       enemyBonusScore += scoreAdd;
+7686:       logBattle(`✨ 對手的【害羞的斑點南瓜】被動效果：場上有 ${pumpkinCount} 個南瓜，對手額外獲得 +${scoreAdd}★ 獎勵點數！`);
+7687:       renderScore();
+7688:     }
+7689:   }
+7690:   

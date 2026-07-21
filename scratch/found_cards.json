@@ -1,0 +1,116 @@
+{
+  "ORC-0005": {
+    "id": "ORC-0005",
+    "name": "突擊獸人",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "1",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "進攻時+3攻擊力，進攻時戰鬥成功獎勵+2",
+    "image": "/static/card_images/orc_0005.jpeg",
+    "original_file": "獸人/IMG_6679.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  "ORC-0008": {
+    "id": "ORC-0008",
+    "name": "雷哥",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你的主要階段開始時轉正此卡，進攻時戰鬥成功獎勵+1",
+    "image": "/static/card_images/orc_0008.jpeg",
+    "original_file": "獸人/IMG_6684.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  "ORC-0018": {
+    "id": "ORC-0018",
+    "name": "賞金",
+    "deck": "獸人",
+    "type": "magic",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "使敵方場上1單位被賦予此卡，若該單位被戰鬥破壞，此卡持有人獎勵+3",
+    "image": "/static/card_images/orc_0018.jpeg",
+    "original_file": "獸人/IMG_6699.JPG",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "永久"
+  },
+  "R-ORC-0025": {
+    "id": "R-ORC-0025",
+    "name": "迴旋飛斧",
+    "deck": "獸人",
+    "type": "magic",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "獸人"
+    ],
+    "effect_text": "使你場上1獸人單位被賦予貫穿以及最終攻擊力兩倍計算",
+    "image": "/static/card_images/r_orc_0025.jpeg",
+    "original_file": "獸人/IMG_6707.JPG",
+    "deck_eligible": true,
+    "mana": 3,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "永久"
+  },
+  "R-ORC-0031": {
+    "id": "R-ORC-0031",
+    "name": "躺平獸人",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "6",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "橫放，獎勵"
+    ],
+    "effect_text": "此卡以橫放狀態入場，戰鬥成功時，獎勵+2",
+    "image": "/static/card_images/r_orc_0031.jpeg",
+    "original_file": "獸人/IMG_6714.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  }
+}

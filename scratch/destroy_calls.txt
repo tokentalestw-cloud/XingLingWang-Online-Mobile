@@ -1,0 +1,4 @@
+1745: await destroyUnit(targetZone, col, "enemy");
+3480: destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat));
+3483: destPromise.push(destroyUnit(defZone, defIdx, defenderOwner, attackerIsKnightCat));
+3492: destPromise.push(destroyUnit(backZone, defIdx, defenderOwner));

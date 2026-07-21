@@ -1,0 +1,74 @@
+6487:     } else if (data.action === "equip_spell_resolved") {
+6488:       const zone = data.zone;
+6489:       const idx = data.idx;
+6490:       const spellCard = data.spellCard;
+6491:       
+6492:       const obj = field[zone]?.[idx];
+6493:       if (obj) {
+6494:         obj.equipments = obj.equipments || [];
+6495:         obj.equipments.push(spellCard.name);
+6496:         logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+6497:         
+6498:         if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+6499:           obj.magicImmune = true;
+6500:         } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+6501:           obj.piercing = true;
+6502:         } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+6503:           obj.atkModifier = (obj.atkModifier || 0) + 1;
+6504:           obj.hasRanged = true;
+6505:         } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+6506:           obj.atkModifier = (obj.atkModifier || 0) + 5;
+6507:           obj.steakBonus = true;
+6508:         } else if (spellCard.name === "法術保護-護盾") {
+6509:           obj.magicImmune = true;
+6510:         }
+6511:         render();
+6512:       }
+6513:     } else if (data.action === "goat_spell_resolved") {
+6514:       const zone = data.zone;
+6515:       const idx = data.idx;
+6516:       const goatSpellCard = data.goatSpellCard;
+6517:       
+6518:       const obj = field[zone]?.[idx];
+6519:       if (obj) {
+6520:         logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+6521:         graveyard.push(obj.card); // 進入我方墓地
+6522: 
+6523:         const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
+6524:         if (obj.equipments && obj.equipments.length > 0) {
+6525:           obj.equipments.forEach(eqName => {
+6526:             const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+6527:             if (isTempMagic) return;
+6528:             const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+6529:             const cloned = structuredClone(cardObj);
+6530:             cloned.type = "magic";
+6531:             if (targetOwner === "player") {
+6532:               graveyard.push(cloned);
+6533:               logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入我方墓地。`);
+6534:             } else {
+6535:               window.XLW_ENEMY.grave.push(cloned);
+6536:               enemyGraveyard = window.XLW_ENEMY.grave;
+6537:               logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入對手墓地。`);
+6538:             }
+6539:           });
+6540:         }
+6541:         
+6542:         const goatUnitCard = structuredClone(goatSpellCard);
+6543:         goatUnitCard.type = "unit";
+6544:         goatUnitCard.attack = 3;
+6545:         goatUnitCard.score = 1;
+6546:         goatUnitCard.tribute = 0;
+6547:         goatUnitCard.faction = "中立";
+6548:         goatUnitCard.creator = "enemy"; // 標記為敵方創造
+6549:         
+6550:         obj.card = goatUnitCard;
+6551:         obj.equipments = [];
+6552:         obj.atkModifier = 0;
+6553:         obj.piercing = false;
+6554:         obj.magicImmune = false;
+6555:         obj.hasRanged = false;
+6556:         obj.steakBonus = false;
+6557:         
+6558:         render();
+6559:       }
+6560:     } else if (data.action === "aquarius_hand_reveal") {

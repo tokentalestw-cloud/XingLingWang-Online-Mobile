@@ -1,0 +1,36 @@
+4110: 
+4111:         const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+4112:         const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+4113:         const hasEmptySlot = emptyFrontIdx >= 0 || emptyBackIdx >= 0;
+4114: 
+4115:         if (hasEmptySlot) {
+4116:           const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+4117:             c && (c.type === "unit" || c.type === "\u602a\u7378") && Number(c.tribute || 0) <= 0
+4118:           );
+4119: 
+4120:           const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+4121:           const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+4122: 
+4123:           if (summonHandIdx >= 0) {
+4124:             const card = window.XLW_ENEMY.hand[summonHandIdx];
+4125:             window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4126:             field[destZone][destIdx] = {
+4127:               card: card,
+4128:               tapped: false,
+4129:               attacking: false,
+4130:               target: null,
+4131:               summonedTurn: turn,
+4132:               summonedZone: destZone
+4133:             };
+4134:             logBattle(`\u5c0d\u624b\u9032\u884c\u6230\u8853\u4f48\u9663\u53ec\u559a：${card.name}\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+4135:           } else {
+4136:             field[destZone][destIdx] = {
+4137:               card: structuredClone(LITTLE_TRAVELER),
+4138:               tapped: false,
+4139:               attacking: false,
+4140:               target: null,
+4141:               summonedTurn: turn,
+4142:               summonedZone: destZone
+4143:             };
+4144:             logBattle(`\u5c0d\u624b\u7121\u55ae\u4f4d\u53ef\u53ec\u559a，\u6230\u8853\u5f37\u5236\u53ec\u559a：小旅人\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+4145:             playTravelerSummonAnimation("#enemyForest", destZone, destIdx);

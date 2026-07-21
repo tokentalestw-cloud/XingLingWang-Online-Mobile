@@ -1,0 +1,402 @@
+11860 (stack size  1):   
+11861 (stack size  2):   ws.onmessage = async (event) => {
+11862 (stack size  2):     const data = JSON.parse(event.data);
+11863 (stack size  2):     console.log("收到線上廣播數據:", data);
+11864 (stack size  2):     
+11865 (stack size  3):     if (data.type === "welcome") {
+11866 (stack size  3):       setStatus(data.message);
+Line 11867: '}' closes brace opened at Line 11865 ('if (data.type === "welcome")')
+11867 (stack size  3):     } else if (data.type === "opponent_joined") {
+11868 (stack size  3):       // 只有在遊戲尚未開始時，才初始化新局
+11869 (stack size  4):       if (!window.XLW_gameInProgress) {
+11870 (stack size  4):         opponent_joined = true;
+11871 (stack size  4):         logBattle(data.message);
+11872 (stack size  4):         setStatus("對手已進入房間！即將開始線上起手換牌...");
+11873 (stack size  4):         newGameMultiplayer();
+Line 11874: '}' closes brace opened at Line 11869 ('if (!window.XLW_gameInProgress)')
+11874 (stack size  4):       } else {
+11875 (stack size  4):         logBattle("對手重新進入房間，正在恢復對戰...");
+Line 11876: '}' closes brace opened at Line 11874 ('} else')
+11876 (stack size  3):       }
+Line 11877: '}' closes brace opened at Line 11867 ('} else if (data.type === "opponent_joined")')
+11877 (stack size  3):     } else if (data.type === "opponent_rejoined") {
+11878 (stack size  3):       logBattle(data.message);
+11879 (stack size  3):       setStatus("對手已重新連線！正在傳送戰局狀態進行同步...");
+11880 (stack size  3):       sendFullGameStateToOpponent();
+Line 11881: '}' closes brace opened at Line 11877 ('} else if (data.type === "opponent_rejoined")')
+11881 (stack size  3):     } else if (data.type === "opponent_rejoined_ack") {
+11882 (stack size  3):       logBattle(data.message);
+11883 (stack size  3):       setStatus("已成功連回遊戲！正在等待對手同步狀態...");
+Line 11884: '}' closes brace opened at Line 11881 ('} else if (data.type === "opponent_rejoined_ack")')
+11884 (stack size  3):     } else if (data.action === "sync_game_state") {
+11885 (stack size  3):       const s = data.state;
+11886 (stack size  4):       if (s) {
+11887 (stack size  4):         // 翻轉格子坐標（對手的前排是我方後排，依此類推）
+11888 (stack size  4):         field.player_front = s.field.enemy_front;
+11889 (stack size  4):         field.player_back = s.field.enemy_back;
+11890 (stack size  4):         field.enemy_front = s.field.player_front;
+11891 (stack size  4):         field.enemy_back = s.field.player_back;
+11892 (stack size  4):         
+11893 (stack size  4):         // 修正每個單位的 summonedZone 屬性，防止座標對決判定失準
+11894 (stack size  5):         const zoneMap = {
+11895 (stack size  5):           "player_front": "enemy_front",
+11896 (stack size  5):           "player_back": "enemy_back",
+11897 (stack size  5):           "enemy_front": "player_front",
+11898 (stack size  5):           "enemy_back": "player_back"
+Line 11899: '}' closes brace opened at Line 11894 ('const zoneMap =')
+11899 (stack size  4):         };
+11900 (stack size  5):         for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+11901 (stack size  6):           if (field[zone]) {
+11902 (stack size  7):             field[zone].forEach(u => {
+11903 (stack size  8):               if (u && u.summonedZone && zoneMap[u.summonedZone]) {
+11904 (stack size  8):                 u.summonedZone = zoneMap[u.summonedZone];
+Line 11905: '}' closes brace opened at Line 11903 ('if (u && u.summonedZone && zoneMap[u.summonedZone])')
+11905 (stack size  7):               }
+11906 (stack size  8):               if (u && u.kidnappedCards) {
+11907 (stack size  9):                 u.kidnappedCards.forEach(c => {
+11908 (stack size  9):                   if (c.originalOwner === "player") c.originalOwner = "enemy";
+11909 (stack size  9):                   else if (c.originalOwner === "enemy") c.originalOwner = "player";
+Line 11910: '}' closes brace opened at Line 11907 ('u.kidnappedCards.forEach(c =>')
+11910 (stack size  8):                 });
+Line 11911: '}' closes brace opened at Line 11906 ('if (u && u.kidnappedCards)')
+11911 (stack size  7):               }
+Line 11912: '}' closes brace opened at Line 11902 ('field[zone].forEach(u =>')
+11912 (stack size  6):             });
+Line 11913: '}' closes brace opened at Line 11901 ('if (field[zone])')
+11913 (stack size  5):           }
+Line 11914: '}' closes brace opened at Line 11900 ('for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"])')
+11914 (stack size  4):         }
+11915 (stack size  4): 
+11916 (stack size  4):         // 同步場地卡數據（並對稱交換我方與敵方場地卡）
+11917 (stack size  4):         const pfEl = document.getElementById("playerField");
+11918 (stack size  4):         const efEl = document.getElementById("enemyField");
+11919 (stack size  5):         if (pfEl) {
+11920 (stack size  6):           if (s.enemyFieldCard) {
+11921 (stack size  6):             pfEl.dataset.card = JSON.stringify(s.enemyFieldCard);
+Line 11922: '}' closes brace opened at Line 11920 ('if (s.enemyFieldCard)')
+11922 (stack size  6):           } else {
+11923 (stack size  6):             delete pfEl.dataset.card;
+Line 11924: '}' closes brace opened at Line 11922 ('} else')
+11924 (stack size  5):           }
+Line 11925: '}' closes brace opened at Line 11919 ('if (pfEl)')
+11925 (stack size  4):         }
+11926 (stack size  5):         if (efEl) {
+11927 (stack size  6):           if (s.playerFieldCard) {
+11928 (stack size  6):             efEl.dataset.card = JSON.stringify(s.playerFieldCard);
+Line 11929: '}' closes brace opened at Line 11927 ('if (s.playerFieldCard)')
+11929 (stack size  6):           } else {
+11930 (stack size  6):             delete efEl.dataset.card;
+Line 11931: '}' closes brace opened at Line 11929 ('} else')
+11931 (stack size  5):           }
+Line 11932: '}' closes brace opened at Line 11926 ('if (efEl)')
+11932 (stack size  4):         }
+11933 (stack size  4):         
+11934 (stack size  4):         playerBonusScore = s.enemyBonusScore;
+11935 (stack size  4):         enemyBonusScore = s.playerBonusScore;
+11936 (stack size  4):         
+11937 (stack size  4):         graveyard = s.enemyGraveyard || [];
+11938 (stack size  4):         window.XLW_ENEMY.grave = s.graveyard || [];
+11939 (stack size  4):         enemyGraveyard = window.XLW_ENEMY.grave;
+11940 (stack size  4):         
+11941 (stack size  4):         playerExileZone = s.enemyExileZone || [];
+11942 (stack size  4):         enemyExileZone = s.playerExileZone || [];
+11943 (stack size  4):         
+11944 (stack size  4):         playerExtraDeck = s.enemyExtraDeck || [];
+11945 (stack size  4):         enemyExtraDeck = s.playerExtraDeck || [];
+11946 (stack size  4):         
+11947 (stack size  4):         turn = s.turn;
+11948 (stack size  4):         phase = s.phase;
+11949 (stack size  4):         isMyTurn = !s.isMyTurn;
+11950 (stack size  4):         
+11951 (stack size  4):         window.XLW_ENEMY.hand = new Array(s.handCount).fill(null);
+11952 (stack size  4):         opponent_mulligan_done = s.opponent_mulligan_done;
+11953 (stack size  4):         
+11954 (stack size  4):         logBattle("對戰狀態同步完成！繼續遊戲。");
+11955 (stack size  4):         render();
+Line 11956: '}' closes brace opened at Line 11886 ('if (s)')
+11956 (stack size  3):       }
+Line 11957: '}' closes brace opened at Line 11884 ('} else if (data.action === "sync_game_state")')
+11957 (stack size  3):     } else if (data.type === "opponent_disconnected") {
+11958 (stack size  3):       logBattle(data.message);
+11959 (stack size  3):       setStatus(data.message);
+11960 (stack size  4):       if (!data.temporary) {
+11961 (stack size  4):         alert(data.message);
+Line 11962: '}' closes brace opened at Line 11960 ('if (!data.temporary)')
+11962 (stack size  4):       } else {
+11963 (stack size  4):         setStatus("對手暫時斷線，正在等待其重新連線...");
+Line 11964: '}' closes brace opened at Line 11962 ('} else')
+11964 (stack size  3):       }
+Line 11965: '}' closes brace opened at Line 11957 ('} else if (data.type === "opponent_disconnected")')
+11965 (stack size  3):     } else if (data.action === "coin_toss_roll") {
+11966 (stack size  3):       showCoinRollResult(data.guess, data.result);
+Line 11967: '}' closes brace opened at Line 11965 ('} else if (data.action === "coin_toss_roll")')
+11967 (stack size  3):     } else if (data.action === "coin_toss_choice") {
+11968 (stack size  3):       applyCoinTossChoice(data.winner_role, data.choice);
+Line 11969: '}' closes brace opened at Line 11967 ('} else if (data.action === "coin_toss_choice")')
+11969 (stack size  3):     } else if (data.action === "mulligan_confirm") {
+11970 (stack size  3):       opponent_mulligan_done = true;
+11971 (stack size  3):       logBattle("對手已確認起手換牌，等待我方確認。");
+11972 (stack size  3):       await checkMulliganCompletion();
+Line 11973: '}' closes brace opened at Line 11969 ('} else if (data.action === "mulligan_confirm")')
+11973 (stack size  3):     } else if (data.action === "summon") {
+11974 (stack size  3):       // 後端已將 zone 座標自動翻轉，所以收到時對本地來說就是 enemy_front / enemy_back
+11975 (stack size  3):       const zone = data.zone; 
+11976 (stack size  3):       const idx = data.idx;
+11977 (stack size  3):       const card = data.card;
+11978 (stack size  3):       
+11979 (stack size  3):       // 清除對手獻祭的祭品單位
+11980 (stack size  4):       if (data.tributes && data.tributes.length > 0) {
+11981 (stack size  5):         data.tributes.forEach(t => {
+11982 (stack size  5):           if (t.zone === "dummy") return;
+11983 (stack size  5):           const unit = field[t.zone][t.idx];
+11984 (stack size  6):           if (unit) {
+11985 (stack size  6):             // 先處理裝備卡送入對手墓地
+11986 (stack size  7):             if (unit.equipments && unit.equipments.length > 0) {
+11987 (stack size  8):               unit.equipments.forEach(eqName => {
+11988 (stack size  8):                 const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+11989 (stack size  8):                 if (isTempMagic) return;
+Line 11990: '}' closes brace opened at Line 11990 ('const cardObj = allCards.find(c => c && c.name === eqName) ||')
+11990 (stack size  8):                 const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+11991 (stack size  8):                 const cloned = structuredClone(cardObj);
+11992 (stack size  8):                 cloned.type = "magic";
+11993 (stack size  8):                 window.XLW_ENEMY.grave.push(cloned);
+11994 (stack size  8):                 enemyGraveyard = window.XLW_ENEMY.grave;
+11995 (stack size  8):                 logBattle(`✨ 裝備卡 ${cloned.name} 隨著對手單位被獻祭進入對手墓地。`);
+Line 11996: '}' closes brace opened at Line 11987 ('unit.equipments.forEach(eqName =>')
+11996 (stack size  7):               });
+11997 (stack size  7):               unit.equipments = [];
+Line 11998: '}' closes brace opened at Line 11986 ('if (unit.equipments && unit.equipments.length > 0)')
+11998 (stack size  6):             }
+11999 (stack size  6):             
+12000 (stack size  7):             if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+12001 (stack size  8):               if (zone.startsWith("player_")) {
+12002 (stack size  8):                 enemyBonusScore += 2;
+12003 (stack size  8):                 logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+Line 12004: '}' closes brace opened at Line 12001 ('if (zone.startsWith("player_"))')
+12004 (stack size  8):               } else {
+12005 (stack size  8):                 playerBonusScore += 2;
+12006 (stack size  8):                 logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+Line 12007: '}' closes brace opened at Line 12004 ('} else')
+12007 (stack size  7):               }
+Line 12008: '}' closes brace opened at Line 12000 ('if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064")')
+12008 (stack size  6):             }
+12009 (stack size  6): 
+12010 (stack size  7):   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+12011 (stack size  7):               logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
+Line 12012: '}' closes brace opened at Line 12010 ('if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER")')
+12012 (stack size  7):             } else {
+12013 (stack size  7):               window.XLW_ENEMY.grave.push(unit.card);
+12014 (stack size  7):               enemyGraveyard = window.XLW_ENEMY.grave;
+Line 12015: '}' closes brace opened at Line 12012 ('} else')
+12015 (stack size  6):             }
+12016 (stack size  6):             field[t.zone][t.idx] = null;
+Line 12017: '}' closes brace opened at Line 11984 ('if (unit)')
+12017 (stack size  5):           }
+Line 12018: '}' closes brace opened at Line 11981 ('data.tributes.forEach(t =>')
+12018 (stack size  4):         });
+Line 12019: '}' closes brace opened at Line 11980 ('if (data.tributes && data.tributes.length > 0)')
+12019 (stack size  3):       }
+12020 (stack size  3): 
+12021 (stack size  3):       const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+12022 (stack size  4):       field[zone][idx] = {
+12023 (stack size  4):         card: card,
+12024 (stack size  4):         tapped: isLyingOrc,
+12025 (stack size  4):         attacking: false,
+12026 (stack size  4):         target: null,
+12027 (stack size  4):         summonedTurn: turn,
+12028 (stack size  4):         summonedZone: zone
+Line 12029: '}' closes brace opened at Line 12022 ('field[zone][idx] =')
+12029 (stack size  3):       };
+12030 (stack size  4):       if (zone.startsWith("player_")) {
+12031 (stack size  4):         window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
+Line 12032: '}' closes brace opened at Line 12030 ('if (zone.startsWith("player_"))')
+12032 (stack size  4):       } else {
+12033 (stack size  4):         window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
+Line 12034: '}' closes brace opened at Line 12032 ('} else')
+12034 (stack size  3):       }
+12035 (stack size  3):       // 動態遞減對手手牌數量以供顯示（僅限從手牌召喚的卡）
+12036 (stack size  4):       if (data.fromHand !== false) {
+12037 (stack size  5):         if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+12038 (stack size  5):           window.XLW_ENEMY.hand.pop();
+Line 12039: '}' closes brace opened at Line 12037 ('if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0)')
+12039 (stack size  4):         }
+Line 12040: '}' closes brace opened at Line 12036 ('if (data.fromHand !== false)')
+12040 (stack size  3):       }
+12041 (stack size  3): 
+12042 (stack size  3):       // Check if player has 星空 in hand
+12043 (stack size  3):       let starryCountered = false;
+12044 (stack size  3):       const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+12045 (stack size  4):       if (playerHasStarry) {
+12046 (stack size  4):         const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
+12047 (stack size  5):         if (useStarry) {
+12048 (stack size  5):           starryCountered = true;
+12049 (stack size  5):           const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+12050 (stack size  5):           const sCard = hand.splice(sIdx, 1)[0];
+12051 (stack size  5):           graveyard.push(sCard);
+12052 (stack size  5):           logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
+12053 (stack size  5):           await destroyUnit(zone, idx, "enemy", false);
+12054 (stack size  5):           
+12055 (stack size  6):           ws.send(JSON.stringify({
+12056 (stack size  6):             action: "counter_summon_response",
+12057 (stack size  6):             countered: true
+Line 12058: '}' closes brace opened at Line 12055 ('ws.send(JSON.stringify(')
+12058 (stack size  5):           }));
+12059 (stack size  5):           render();
+Line 12060: '}' closes brace opened at Line 12047 ('if (useStarry)')
+12060 (stack size  4):         }
+Line 12061: '}' closes brace opened at Line 12045 ('if (playerHasStarry)')
+12061 (stack size  3):       }
+12062 (stack size  3): 
+12063 (stack size  3):       let interruptCountered = false;
+12064 (stack size  4):       if (!starryCountered) {
+12065 (stack size  4):         const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+12066 (stack size  4):         const hasImm = hasImmediateEffect(card);
+12067 (stack size  5):         if (playerHasInterrupt && hasImm) {
+12068 (stack size  5):           const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
+12069 (stack size  6):           if (useInterrupt) {
+12070 (stack size  6):             interruptCountered = true;
+12071 (stack size  6):             const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+12072 (stack size  6):             const sCard = hand.splice(sIdx, 1)[0];
+12073 (stack size  6):             graveyard.push(sCard);
+12074 (stack size  6):             logBattle(`✨ 我方從手牌發動了【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
+12075 (stack size  6):             
+12076 (stack size  7):             ws.send(JSON.stringify({
+12077 (stack size  7):               action: "counter_summon_response",
+12078 (stack size  7):               countered: "interrupt"
+Line 12079: '}' closes brace opened at Line 12076 ('ws.send(JSON.stringify(')
+12079 (stack size  6):             }));
+12080 (stack size  6):             render();
+Line 12081: '}' closes brace opened at Line 12069 ('if (useInterrupt)')
+12081 (stack size  5):           }
+Line 12082: '}' closes brace opened at Line 12067 ('if (playerHasInterrupt && hasImm)')
+12082 (stack size  4):         }
+Line 12083: '}' closes brace opened at Line 12064 ('if (!starryCountered)')
+12083 (stack size  3):       }
+12084 (stack size  3): 
+12085 (stack size  4):       if (!starryCountered && !interruptCountered) {
+12086 (stack size  5):         ws.send(JSON.stringify({
+12087 (stack size  5):           action: "counter_summon_response",
+12088 (stack size  5):           countered: false
+Line 12089: '}' closes brace opened at Line 12086 ('ws.send(JSON.stringify(')
+12089 (stack size  4):         }));
+Line 12090: '}' closes brace opened at Line 12085 ('if (!starryCountered && !interruptCountered)')
+12090 (stack size  3):       }
+12091 (stack size  4):       if (!starryCountered) {
+12092 (stack size  4):         await window.checkForPlayerSummonCounters(card, zone, idx, true);
+Line 12093: '}' closes brace opened at Line 12091 ('if (!starryCountered)')
+12093 (stack size  3):       }
+12094 (stack size  3):         
+12095 (stack size  3):         // 黑心網路賣家 (R-ART-0036) 對手召喚藝術品單位到我方場上時，對手額外得分 +1★
+12096 (stack size  4):         if (zone.startsWith("player_") && hasBlackMerchantOnField("enemy")) {
+12097 (stack size  4):           const isArtwork = card && (card.faction === "藝術品" || card.deck === "藝術品" || card.id?.includes("ART"));
+12098 (stack size  5):           if (isArtwork) {
+12099 (stack size  5):             enemyBonusScore += 1;
+12100 (stack size  5):             logBattle("✨ 對手 黑心網路賣家 效果：對手將藝術品單位召喚至我方場上，對手得分 +1 ★！");
+Line 12101: '}' closes brace opened at Line 12098 ('if (isArtwork)')
+12101 (stack size  4):           }
+Line 12102: '}' closes brace opened at Line 12096 ('if (zone.startsWith("player_") && hasBlackMerchantOnField("enemy"))')
+12102 (stack size  3):         }
+12103 (stack size  3):         
+12104 (stack size  3):         // 對手召喚時，同步觸發對我方影響的立即效果
+12105 (stack size  3):         let immediateEffectNegated = false;
+12106 (stack size  4):         if (card && !window.isUndergroundEnforcerOnField()) {
+12107 (stack size  4):           let mushroomZone = null, mushroomIdx = -1;
+12108 (stack size  5):           for (const z of ["player_front", "player_back"]) {
+12109 (stack size  6):             field[z].forEach((u, i) => {
+12110 (stack size  7):               if (u && u.card && (u.card.id === "SSSR-NMS-0042" || u.card.id === "R-NMS-0042" || u.card.name?.includes("驚嚇蘑菇"))) {
+12111 (stack size  7):                 mushroomZone = z;
+12112 (stack size  7):                 mushroomIdx = i;
+Line 12113: '}' closes brace opened at Line 12110 ('if (u && u.card && (u.card.id === "SSSR-NMS-0042" || u.card.id === "R-NMS-0042" || u.card.name?.includes("驚嚇蘑菇")))')
+12113 (stack size  6):               }
+Line 12114: '}' closes brace opened at Line 12109 ('field[z].forEach((u, i) =>')
+12114 (stack size  5):             });
+Line 12115: '}' closes brace opened at Line 12108 ('for (const z of ["player_front", "player_back"])')
+12115 (stack size  4):           }
+12116 (stack size  5):           if (mushroomZone && mushroomIdx !== -1 && window.hasImmediateEffect(card)) {
+12117 (stack size  5):             const triggerMushroom = await showXLWConfirm("【驚嚇蘑菇】引爆觸發", `對手打出了立即單位【${card.name}】，是否引爆我方場上的【驚嚇蘑菇】以無效化其立即效果？`);
+12118 (stack size  6):             if (triggerMushroom) {
+12119 (stack size  6):               logBattle(`✨ 我方場上的【驚嚇蘑菇】引爆！自毀並無效化了對手【${card.name}】的立即效果。`);
+12120 (stack size  6):               await destroyUnit(mushroomZone, mushroomIdx, "player", false);
+12121 (stack size  6):               immediateEffectNegated = true;
+12122 (stack size  7):               if (isMultiplayer && ws) {
+12123 (stack size  8):                 ws.send(JSON.stringify({
+12124 (stack size  8):                   action: "mushroom_negate_sync",
+12125 (stack size  8):                   mushroomZone: mushroomZone,
+12126 (stack size  8):                   mushroomIdx: mushroomIdx
+Line 12127: '}' closes brace opened at Line 12123 ('ws.send(JSON.stringify(')
+12127 (stack size  7):                 }));
+Line 12128: '}' closes brace opened at Line 12122 ('if (isMultiplayer && ws)')
+12128 (stack size  6):               }
+12129 (stack size  6):               render();
+Line 12130: '}' closes brace opened at Line 12118 ('if (triggerMushroom)')
+12130 (stack size  5):             }
+Line 12131: '}' closes brace opened at Line 12116 ('if (mushroomZone && mushroomIdx !== -1 && window.hasImmediateEffect(card))')
+12131 (stack size  4):           }
+Line 12132: '}' closes brace opened at Line 12106 ('if (card && !window.isUndergroundEnforcerOnField())')
+12132 (stack size  3):         }
+12133 (stack size  3): 
+12134 (stack size  4):         if (card && !window.isUndergroundEnforcerOnField() && !immediateEffectNegated) {
+12135 (stack size  5):           if (card.name.includes("雪女")) {
+12136 (stack size  5):             window.XLW_playerFrontImprisonedUntilTurn = turn;
+12137 (stack size  5):             logBattle("雪女 效果：使我方前排戰線單位受到禁錮，直到對手下個主要階段前！");
+Line 12138: '}' closes brace opened at Line 12135 ('if (card.name.includes("雪女"))')
+12138 (stack size  4):           }
+12139 (stack size  5):           else if (card.name.includes("座敷童子")) {
+12140 (stack size  5):             window.XLW_playerCannotAttackOnNextTurn = true;
+12141 (stack size  5):             logBattle("座敷童子 效果：我方下個回合將無法進行任何進攻！");
+Line 12142: '}' closes brace opened at Line 12139 ('else if (card.name.includes("座敷童子"))')
+12142 (stack size  4):           }
+12143 (stack size  5):           else if (card.name.includes("水瓶座")) {
+12144 (stack size  5):             logBattle("好奇女巫 水瓶座 效果：對手召喚了 水瓶座，展示我方手牌以供檢查。");
+12145 (stack size  6):             ws.send(JSON.stringify({
+12146 (stack size  6):               action: "aquarius_hand_reveal",
+12147 (stack size  6):               hand: hand
+Line 12148: '}' closes brace opened at Line 12145 ('ws.send(JSON.stringify(')
+12148 (stack size  5):             }));
+Line 12149: '}' closes brace opened at Line 12143 ('else if (card.name.includes("水瓶座"))')
+12149 (stack size  4):           }
+12150 (stack size  5):           else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+12151 (stack size  5):             window.XLW_enemyDebbieActive = true;
+12152 (stack size  5):             logBattle("✨ 委託者 戴比 效果：對手召喚了 委託者 戴比，我方可決定對手召喚的小旅人的位置，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+Line 12153: '}' closes brace opened at Line 12150 ('else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010")')
+12153 (stack size  4):           }
+Line 12154: '}' closes brace opened at Line 12134 ('if (card && !window.isUndergroundEnforcerOnField() && !immediateEffectNegated)')
+12154 (stack size  3):         }
+12155 (stack size  3): 
+12156 (stack size  4):         if (card && card.id === "TOKEN_TRAVELER") {
+12157 (stack size  4):           playTravelerSummonAnimation("#enemyForest", zone, idx);
+Line 12158: '}' closes brace opened at Line 12156 ('if (card && card.id === "TOKEN_TRAVELER")')
+12158 (stack size  4):         } else if (card && Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0)) {
+12159 (stack size  4):           playTributeSummonAnimation(zone, idx);
+Line 12160: '}' closes brace opened at Line 12158 ('} else if (card && Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0))')
+12160 (stack size  4):         } else {
+12161 (stack size  4):           render();
+Line 12162: '}' closes brace opened at Line 12160 ('} else')
+12162 (stack size  3):         }
+Line 12163: '}' closes brace opened at Line 11973 ('} else if (data.action === "summon")')
+12163 (stack size  2):       }
+Line 12164: '}' closes brace opened at Line 11861 ('ws.onmessage = async (event) =>')
+12164 (stack size  2):     } else if (data.action === "counter_summon_response") {
+12165 (stack size  3):       if (window.XLW_pendingSummonCounterResolve) {
+12166 (stack size  3):         const resolve = window.XLW_pendingSummonCounterResolve;
+12167 (stack size  3):         window.XLW_pendingSummonCounterResolve = null;
+Line 12168: '}' closes brace opened at Line 12168 ('resolve(')
+12168 (stack size  3):         resolve({ countered: data.countered });
+Line 12169: '}' closes brace opened at Line 12165 ('if (window.XLW_pendingSummonCounterResolve)')
+12169 (stack size  2):       }
+Line 12170: '}' closes brace opened at Line 12164 ('} else if (data.action === "counter_summon_response")')
+12170 (stack size  2):     } else if (data.action === "spell_chain_start") {
+Line 12171: '}' closes brace opened at Line 12171 ('spellChainStack = [')
+12171 (stack size  2):       spellChainStack = [{ card: data.card, owner: "opponent" }];
+12172 (stack size  3):       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+12173 (stack size  3):         window.XLW_ENEMY.hand.pop();
+Line 12174: '}' closes brace opened at Line 12172 ('if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0)')
+12174 (stack size  2):       }
+12175 (stack size  2):       showSpellChainUI(spellChainStack);
+12176 (stack size  2):       promptNextChainAction();
+Line 12177: '}' closes brace opened at Line 12170 ('} else if (data.action === "spell_chain_start")')
+12177 (stack size  2):     } else if (data.action === "spell_chain_add") {
+Line 12178: '}' closes brace opened at Line 12178 ('spellChainStack.push(')
+12178 (stack size  2):       spellChainStack.push({ card: data.card, owner: "opponent" });
+12179 (stack size  3):       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+12180 (stack size  3):         window.XLW_ENEMY.hand.pop();

@@ -1,0 +1,2 @@
+L1098: async function castSpell(handIndex) {
+L4489: castSpell(idx);

@@ -1,0 +1,60 @@
+6161:       window.XLW_callGameDeclared = false;
+6162:       logBattle("\u3010\u5c0d\u624b\u5ba3\u544a\u5931\u6557\u3011\u5c0d\u624b\u5148\u524d\u5ba3\u544a\u7684\u63d0\u65e9\u7d50\u675f\u689d\u4ef6\u5df2\u4e0d\u6eff\u8db3\uff0c\u5c0d\u623d\u7e7c\u7e8c\uff01");
+6163:       render();
+6164:     } else if (data.action === "end_turn") {
+6165:       // 結束階段，清理對手回合結束時到期的臨時狀態裝備
+6166:       xlwCleanExpiredTempEquips(turn);
+6167: 
+6168:       // 換到我方回合
+6169:       isMyTurn = true;
+6170:       turn = data.next_turn;
+6171:       window.XLW_turnSneakCount = 0;
+6172:       normalSummonUsed = false;
+6173:       tacticalSummonUsed = false;
+6174:       playerUntap();
+6175:       
+6176:       // Check Call Game resolution for player: only immediately if player does not need defense.
+6177:       let enemyHasAttackers = false;
+6178:       ["enemy_front", "enemy_back"].forEach(zone => {
+6179:         field[zone].forEach(u => {
+6180:           if (u && u.attacking) enemyHasAttackers = true;
+6181:         });
+6182:       });
+6183:       const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+6184:       if (!playerNeedsDefense) {
+6185:         checkCallGameAtTurnStart(true);
+6186:         if (isGameOverFlag) return;
+6187:       }
+6188:       
+6189:       // 動態更新對手的手牌與牌庫張數（對手回補抽了 2 張）
+6190:       if (window.XLW_ENEMY.hand) {
+6191:         for (let i = 0; i < 2; i++) window.XLW_ENEMY.hand.push(null);
+6192:       }
+6193:       if (window.XLW_ENEMY.deck) {
+6194:         for (let i = 0; i < 2; i++) window.XLW_ENEMY.deck.pop();
+6195:       }
+6196: 
+6197:       draw(2);
+6198:       if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
+6199:         phase = "\u9632\u5b88\u968e\u6bb5";
+6200:         setStatus(`\u7b2c ${turn} \u56de\u5408開始，已自動抽2張。前一回合對手有進攻宣言，自動進入「防守階段」！`);
+6201:         render();
+6202:         setTimeout(() => {
+6203:           xlwResolvePlayerDefensePhase();
+6204:         }, 500);
+6205:       } else {
+6206:         const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
+6207:         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+6208:         phase = "\u53ec\u559a\u968e\u6bb5";
+6209:         setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb，已自\u52d5抽2\u5f35。`);
+6210:         if (wasPending) {
+6211:           logBattle("\u6211\u65b9\u9632\u5b88階\u6bb5\u958b\u59cb\u524d，因對手無進攻單位，跳過防守階段。");
+6212:         }
+6213:         render();
+6214:       }
+6215:     } else if (data.action === "sync_deck") {
+6216:       window.XLW_ENEMY.deckName = data.deck_name;
+6217:       enemyExtraDeck = data.extra_deck || xlwInitExtraDeck(data.deck_name);
+6218:       logBattle(`對手選擇了牌組種族：${data.deck_name}`);
+6219:       render();
+6220:     } else if (data.action === "weakening_spell_resolved") {

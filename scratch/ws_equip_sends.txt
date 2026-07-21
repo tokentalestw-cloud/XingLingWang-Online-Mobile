@@ -1,0 +1,153 @@
+Line 1219:    ws.send(JSON.stringify({
+      action: "spell_chain_start",
+      card: card
+    }));
+    
+    promptNextChainAction();
+    
+    const response = await new Promise(resolve => {
+      window.XLW_pendingSpellResolve = resolve;
+    });
+    
+    if (response.countered) {
+      clearModes();
+      render();
+      return;
+    }
+--------------------------------------------------
+Line 2576:      ws.send(JSON.stringify({
+        action: "attack_declare",
+        attZone: zone,
+        attIdx: idx,
+        targetZone: targetZone,
+        targetIdx: idx
+      }));
+    }
+
+    // --- 大耳賊效果觸發判定 ---
+    const hasPiercing = unit.piercing || 
+                        (unit.card && unit.card.keywords && unit.card.keywords.includes("貫穿")) || 
+                        (unit.equipments && unit.equipments.some(e => e.includes("菜刀")));
+    const baseAtkNum = Number(unit.card.attack || 0);
+    const hasDoubleAtk = baseAtkNum > 0 && getUnitAtk(unit) === baseAtkNum * 2;
+    const thiefInExtra = playerExtraDeck.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+--------------------------------------------------
+Line 3409:        ws.send(JSON.stringify({
+          action: "sneak_recall",
+          attZone: attZone,
+          attIdx: attIdx,
+          recall: userWantsRecall
+        }));
+      }
+      
+      if (userWantsRecall) {
+        if (attacker.equipments && attacker.equipments.length > 0) {
+          attacker.equipments.forEach(eqName => {
+            const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+            const cloned = structuredClone(cardObj);
+            cloned.type = "magic";
+            graveyard.push(cloned);
+            logBattle(`✨ 裝備卡 ${cloned.name} 因我方單位回手進入我方墓地。`);
+--------------------------------------------------
+Line 4666:                ws.send(JSON.stringify({
+                  action: "equip_spell_resolved",
+                  zone: zone,
+                  idx: idx,
+                  spellCard: spellCard
+                }));
+              }
+              window.XLW_equipSpellActive = false;
+              window.XLW_equipSpellCard = null;
+              if (window.XLW_equipSpellResolve) {
+                const resolve = window.XLW_equipSpellResolve;
+                window.XLW_equipSpellResolve = null;
+                resolve();
+              }
+              render();
+            } else {
+--------------------------------------------------
+Line 4775:              ws.send(JSON.stringify({
+                action: "temp_equip_spell_resolved",
+                zone: zone,
+                idx: idx,
+                spellCard: spellCard,
+                currentTurn: turn
+              }));
+            }
+
+            window.XLW_tempEquipSpellActive = false;
+            window.XLW_tempEquipSpellCard = null;
+            if (window.XLW_tempEquipSpellResolve) {
+              const resolve = window.XLW_tempEquipSpellResolve;
+              window.XLW_tempEquipSpellResolve = null;
+              resolve();
+            }
+--------------------------------------------------
+Line 4876:              ws.send(JSON.stringify({
+                action: "goat_spell_resolved",
+                zone: zone,
+                idx: idx,
+                goatSpellCard: goatSpellCard
+              }));
+            }
+            
+            window.XLW_goatSpellActive = false;
+            window.XLW_goatSpellCard = null;
+            if (window.XLW_goatResolve) {
+              const resolve = window.XLW_goatResolve;
+              window.XLW_goatResolve = null;
+              resolve();
+            }
+            render();
+--------------------------------------------------
+Line 8049:        ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+        resolveLocalSpellChain();
+      };
+      actionsDiv.appendChild(passBtn);
+
+      // Counter buttons
+      counterCards.forEach(c => {
+        const counterBtn = document.createElement("button");
+        counterBtn.className = "forest-summon-btn";
+        counterBtn.style.background = "#52c41a";
+        counterBtn.style.color = "#fff";
+        counterBtn.style.borderColor = "#52c41a";
+        counterBtn.style.padding = "8px 20px";
+        counterBtn.style.fontSize = "14px";
+        counterBtn.style.height = "auto";
+        counterBtn.style.cursor = "pointer";
+--------------------------------------------------
+Line 8078:          ws.send(JSON.stringify({
+            action: "spell_chain_add",
+            card: c
+          }));
+          
+          // Update UI
+          showSpellChainUI(spellChainStack);
+          promptNextChainAction();
+          render();
+        };
+        actionsDiv.appendChild(counterBtn);
+      });
+    } else {
+      statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
+      
+      const autoPassBtn = document.createElement("button");
+--------------------------------------------------
+Line 8106:        ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+        resolveLocalSpellChain();
+      }, 1500);
+    }
+  }
+}
+
+function resolveLocalSpellChain() {
+  hideSpellChainUI();
+  
+  if (window.XLW_chainAutoPassTimeout) {
+    clearTimeout(window.XLW_chainAutoPassTimeout);
+    window.XLW_chainAutoPassTimeout = null;
+  }
+  
+  if (!spellChainStack || spellChainStack.length === 0) return;
+--------------------------------------------------

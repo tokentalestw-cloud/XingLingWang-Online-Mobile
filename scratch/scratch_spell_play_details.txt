@@ -1,0 +1,23 @@
+Line 1064: window.XLW_equipSpellCard = null;
+Line 1265: window.XLW_goatSpellCard = card;
+Line 1373: window.XLW_equipSpellCard = { ...card, name: "法術保護-護盾" };
+Line 1447: window.XLW_equipSpellCard = card;
+Line 1455: window.XLW_tempEquipSpellCard = card;
+Line 4653: const isShield = window.XLW_equipSpellCard && window.XLW_equipSpellCard.name === "法術保護-護盾";
+Line 4655: const spellCard = window.XLW_equipSpellCard;
+Line 4686: action: "equip_spell_resolved",
+Line 4693: window.XLW_equipSpellCard = null;
+Line 4754: const spellCard = window.XLW_tempEquipSpellCard;
+Line 4795: action: "temp_equip_spell_resolved",
+Line 4804: window.XLW_tempEquipSpellCard = null;
+Line 4846: const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
+Line 4878: const goatUnitCard = structuredClone(goatSpellCard);
+Line 4896: action: "goat_spell_resolved",
+Line 4899: goatSpellCard: goatSpellCard
+Line 4904: window.XLW_goatSpellCard = null;
+Line 6084: } else if (data.action === "equip_spell_resolved") {
+Line 6110: } else if (data.action === "goat_spell_resolved") {
+Line 6113: const goatSpellCard = data.goatSpellCard;
+Line 6139: const goatUnitCard = structuredClone(goatSpellCard);
+Line 6310: } else if (data.action === "temp_equip_spell_resolved") {
+Line 8586: window.XLW_equipSpellCard = card;

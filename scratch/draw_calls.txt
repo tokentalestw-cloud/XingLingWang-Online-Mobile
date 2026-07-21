@@ -1,0 +1,13 @@
+Line 565: function draw(n) {
+Line 614: draw(replacedCards.length);
+Line 635: draw(2);
+Line 657: draw(2);
+Line 672: draw(2);
+Line 1197: draw(1);
+Line 1326: draw(2);
+Line 1329: draw(1);
+Line 1780: draw(needed);
+Line 3963: draw(2);
+Line 6197: draw(2);
+Line 8132: draw(4);
+Line 8249: draw(4);

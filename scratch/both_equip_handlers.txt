@@ -1,0 +1,78 @@
+=== Handler 1 (Around 5892) ===
+5886:     } else {
+5887:       createDebugPanel();
+5888:     }
+5889:   };
+5890: 
+5891:   btn.onclick = () => {
+5892:     const on = localStorage.getItem("XLW_DEBUG_ALWAYS_ON") === "1";
+5893:     localStorage.setItem("XLW_DEBUG_ALWAYS_ON", on ? "0" : "1");
+5894:     refresh();
+5895:   };
+5896: 
+5897:   topbar.appendChild(btn);
+5898:   refresh();
+5899: }
+5900: 
+5901: function setupWebSocketEvents() {
+5902:   ws.onopen = () => {
+5903:     console.log("WebSocket connected to room " + room_id);
+5904:     setStatus("成功建立線上對戰連線！正在等待對手加入...");
+5905:     if (window.XLW_wsHeartbeatInterval) {
+5906:       clearInterval(window.XLW_wsHeartbeatInterval);
+5907:     }
+5908:     window.XLW_wsHeartbeatInterval = setInterval(() => {
+5909:       if (ws && ws.readyState === WebSocket.OPEN) {
+5910:         ws.send(JSON.stringify({ action: "ping" }));
+5911:       }
+5912:     }, 20000);
+5913:   };
+5914:   
+5915:   ws.onerror = (err) => {
+5916:     console.error("WebSocket 錯誤:", err);
+5917:     reconnectWebSocket();
+5918:   };
+5919:   
+5920:   ws.onclose = () => {
+
+=== Handler 2 (Around 6105) ===
+6096:     } else if (data.action === "spell_chain_add") {
+6097:       spellChainStack.push({ card: data.card, owner: "opponent" });
+6098:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6099:         window.XLW_ENEMY.hand.pop();
+6100:       }
+6101:       showSpellChainUI(spellChainStack);
+6102:       promptNextChainAction();
+6103:     } else if (data.action === "spell_chain_resolve") {
+6104:       resolveLocalSpellChain();
+6105:     } else if (data.action === "equip_spell_resolved") {
+6106:       const originalZone = data.zone;
+6107:       const idx = data.idx;
+6108:       const spellCard = data.spellCard;
+6109:       const zone = originalZone.startsWith("player") ? originalZone.replace("player", "enemy") : originalZone.replace("enemy", "player");
+6110:       
+6111:       const obj = field[zone][idx];
+6112:       if (obj) {
+6113:         obj.equipments = obj.equipments || [];
+6114:         obj.equipments.push(spellCard.name);
+6115:         logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+6116:         
+6117:         if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+6118:           obj.magicImmune = true;
+6119:         } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+6120:           obj.piercing = true;
+6121:         } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+6122:           obj.atkModifier = (obj.atkModifier || 0) + 1;
+6123:           obj.hasRanged = true;
+6124:         } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+6125:           obj.atkModifier = (obj.atkModifier || 0) + 5;
+6126:           obj.steakBonus = true;
+6127:         } else if (spellCard.name === "法術保護-護盾") {
+6128:           obj.magicImmune = true;
+6129:         }
+6130:         render();
+6131:       }
+6132:     } else if (data.action === "goat_spell_resolved") {
+6133:       const originalZone = data.zone;
+6134:       const idx = data.idx;
+6135:       const goatSpellCard = data.goatSpellCard;

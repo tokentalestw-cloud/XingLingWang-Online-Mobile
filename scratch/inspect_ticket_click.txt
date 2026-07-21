@@ -1,0 +1,101 @@
+12380:                   const targetUnit = field[targetPos.zone][targetPos.idx];
+12381:                   
+12382:                   // Untap the target unit
+12383:                   targetUnit.tapped = false;
+12384:                   
+12385:                   // Swap positions
+12386:                   const temp = field[zone][idx];
+12387:                   field[zone][idx] = field[targetPos.zone][targetPos.idx];
+12388:                   field[targetPos.zone][targetPos.idx] = temp;
+12389:                   
+12390:                   // Update summonedZone property
+12391:                   field[zone][idx].summonedZone = zone;
+12392:                   field[targetPos.zone][targetPos.idx].summonedZone = targetPos.zone;
+12393:                   
+12394:                   obj.sculptureEffectUsedTurn = turn;
+12395:                   logBattle(`✨ 守護的斷臂雕像 效果：使我方【${targetUnit.card.name}】轉正，並與【守護的斷臂雕像】互換位置！`);
+12396:                   
+12397:                   if (isMultiplayer) {
+12398:                     sendFullGameStateToOpponent();
+12399:                   }
+12400:                   render();
+12401:                 }
+12402:               }
+12403:               return;
+12404:             }
+12405: 
+12406:             const isTicketCollector = obj.card?.id === "R-ART-0050" || obj.card?.name?.includes("博物館剪票員");
+12407:             if (isTicketCollector) {
+12408:               if (obj.tapped) {
+12409:                 setStatus("該單位已處於橫置狀態，無法發動效果！");
+12410:                 showModal(obj.card, obj.equipments);
+12411:                 return;
+12412:               }
+12413:               if (obj.collectorEffectUsedTurn === turn) {
+12414:                 setStatus("博物館剪票員 的效果本回合已使用過。");
+12415:                 showModal(obj.card, obj.equipments);
+12416:                 return;
+12417:               }
+12418: 
+12419:               // Count non-humanoid Artwork units on player's field
+12420:               let nonHumanoidArtCount = 0;
+12421:               for (const z of ["player_front", "player_back"]) {
+12422:                 field[z].forEach(u => {
+12423:                   if (u && isNonHumanoidArtworkCard(u.card)) {
+12424:                     nonHumanoidArtCount++;
+12425:                   }
+12426:                 });
+12427:               }
+12428: 
+12429:               const confirmUse = await showXLWConfirm(
+12430:                 "博物館剪票員 效果發動",
+12431:                 `是否橫置【博物館剪票員】並召喚 ${nonHumanoidArtCount} 個小旅人？（X=場上非人型藝術品數：${nonHumanoidArtCount}）`
+12432:               );
+12433:               if (confirmUse) {
+12434:                 obj.tapped = true;
+12435:                 obj.collectorEffectUsedTurn = turn;
+12436:                 logBattle(`✨ 博物館剪票員 效果：橫置自身並召喚 ${nonHumanoidArtCount} 個小旅人！`);
+12437: 
+12438:                 // Summon X Little Travelers
+12439:                 let summonedCount = 0;
+12440:                 for (const z of ["player_front", "player_back"]) {
+12441:                   for (let i = 0; i < 5; i++) {
+12442:                     if (summonedCount >= nonHumanoidArtCount) break;
+12443:                     if (field[z][i] === null) {
+12444:                       const travelerCard = structuredClone(LITTLE_TRAVELER);
+12445:                       field[z][i] = {
+12446:                         card: travelerCard,
+12447:                         tapped: false,
+12448:                         attacking: false,
+12449:                         target: null,
+12450:                         summonedTurn: turn,
+12451:                         summonedZone: z
+12452:                       };
+12453:                       playTravelerSummonAnimation("#playerForest", z, i);
+12454:                       summonedCount++;
+12455:                     }
+12456:                   }
+12457:                 }
+12458:                 
+12459:                 if (isMultiplayer) {
+12460:                   sendFullGameStateToOpponent();
+12461:                 }
+12462:                 render();
+12463:               }
+12464:               return;
+12465:             }
+12466: 
+12467:             // ===== 蜘蛛魔盜團 (Spider Rogues) 主動技能 =====
+12468: 
+12469:             // 1. 千面 (R-ART-0052)
+12470:             const isQianmian = obj.card?.id === "R-ART-0052" || obj.card?.name?.includes("千面");
+12471:             if (isQianmian) {
+12472:               if (obj.tapped) {
+12473:                 setStatus("【千面】已橫置，無法發動效果！");
+12474:                 showModal(obj.card, obj.equipments);
+12475:                 return;
+12476:               }
+12477:               if (obj.qianmianEffectUsedTurn === turn) {
+12478:                 setStatus("【千面】的效果本回合已使用過。");
+12479:                 showModal(obj.card, obj.equipments);
+12480:                 return;

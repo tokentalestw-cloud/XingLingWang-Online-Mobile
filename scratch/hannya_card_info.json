@@ -1,0 +1,45 @@
+[
+  {
+    "id": "R-VLG-0022",
+    "name": "智慧的般若",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "4",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [],
+    "effect_text": "敵方抽牌階段時，敵方玩家需展示1張抽出的牌",
+    "image": "/static/card_images/r_vlg_0022.jpeg",
+    "original_file": "妖怪村莊/IMG_6095.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SR-VLG-0049",
+    "name": "憤怒的般若",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "6",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [
+      "升級"
+    ],
+    "effect_text": "敵方抽牌階段時，使敵方除外1張抽出的牌",
+    "image": "/static/card_images/sr_vlg_0049.jpeg",
+    "original_file": "妖怪村莊/IMG_6127.JPG",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "因你的[智慧的般若]效果展示的若為單位卡，則可在該次抽牌階段結束後使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型"
+  }
+]

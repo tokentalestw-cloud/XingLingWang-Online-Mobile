@@ -1,0 +1,68 @@
+=== SEARCHING c:/Users/a2132/Documents/星靈王/XingLingWang_v7_fixed/static/game_v8.js ===
+L108 (spellChainStack): window.spellChainStack = [];
+L1218 (spellChainStack): spellChainStack = [{ card: card, owner: "me" }];
+L1219 (spellChainStack): showSpellChainUI(spellChainStack);
+L1265 (goatSpellCard): window.XLW_goatSpellCard = card;
+L4655 (spellCard): const spellCard = window.XLW_equipSpellCard;
+L4657 (spellCard): obj.equipments.push(spellCard.name);
+L4658 (spellCard): logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+L4659 (spellCard): if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+L4663 (spellCard): else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+L4667 (spellCard): else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+L4672 (spellCard): else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+L4677 (spellCard): else if (spellCard.name?.includes("狼牙棒") || spellCard.id === "R-ORC-0054") {
+L4680 (spellCard): else if (spellCard.name === "法術保護-護盾") {
+L4686 (equip_spell_resolved): action: "equip_spell_resolved",
+L4689 (spellCard): spellCard: spellCard
+L4754 (spellCard): const spellCard = window.XLW_tempEquipSpellCard;
+L4756 (spellCard): if (spellCard.name.includes("睡眠反擊拳") || spellCard.id?.includes("0025")) {
+L4779 (spellCard): const spellNameClean = spellCard.name;
+L4785 (spellCard): if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+L4787 (spellCard): } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+L4791 (spellCard): logBattle(`✨ 發動魔法 ${spellCard.name}：賦予場上 ${obj.card.name} 該效果作為臨時裝備。`);
+L4795 (equip_spell_resolved): action: "temp_equip_spell_resolved",
+L4798 (spellCard): spellCard: spellCard,
+L4846 (goatSpellCard): const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
+L4878 (goatSpellCard): const goatUnitCard = structuredClone(goatSpellCard);
+L4896 (goat_spell_resolved): action: "goat_spell_resolved",
+L4899 (goatSpellCard): goatSpellCard: goatSpellCard
+L4904 (goatSpellCard): window.XLW_goatSpellCard = null;
+L6069 (spellChainStack): spellChainStack = [{ card: data.card, owner: "opponent" }];
+L6073 (spellChainStack): showSpellChainUI(spellChainStack);
+L6076 (spellChainStack): spellChainStack.push({ card: data.card, owner: "opponent" });
+L6080 (spellChainStack): showSpellChainUI(spellChainStack);
+L6083 (resolveLocalSpellChain): resolveLocalSpellChain();
+L6084 (equip_spell_resolved): } else if (data.action === "equip_spell_resolved") {
+L6087 (spellCard): const spellCard = data.spellCard;
+L6092 (spellCard): obj.equipments.push(spellCard.name);
+L6093 (spellCard): logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+L6095 (spellCard): if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+L6097 (spellCard): } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+L6099 (spellCard): } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+L6102 (spellCard): } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+L6105 (spellCard): } else if (spellCard.name === "法術保護-護盾") {
+L6110 (goat_spell_resolved): } else if (data.action === "goat_spell_resolved") {
+L6113 (goatSpellCard): const goatSpellCard = data.goatSpellCard;
+L6139 (goatSpellCard): const goatUnitCard = structuredClone(goatSpellCard);
+L6310 (equip_spell_resolved): } else if (data.action === "temp_equip_spell_resolved") {
+L6314 (spellCard): const spellNameClean = data.spellCard.name;
+L6319 (spellCard): if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+L6321 (spellCard): } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+L7941 (spellChainStack): const lastItem = spellChainStack[spellChainStack.length - 1];
+L7978 (resolveLocalSpellChain): resolveLocalSpellChain();
+L8003 (spellChainStack): spellChainStack.push({ card: c, owner: "me" });
+L8012 (spellChainStack): showSpellChainUI(spellChainStack);
+L8035 (resolveLocalSpellChain): resolveLocalSpellChain();
+L8041 (resolveLocalSpellChain): function resolveLocalSpellChain() {
+L8049 (spellChainStack): if (!spellChainStack || spellChainStack.length === 0) return;
+L8052 (spellChainStack): const resolved = new Array(spellChainStack.length).fill(true);
+L8053 (spellChainStack): for (let i = spellChainStack.length - 1; i >= 1; i--) {
+L8055 (spellChainStack): const counteringCard = spellChainStack[i] ? spellChainStack[i].card : null;
+L8056 (spellChainStack): const targetCard = spellChainStack[i - 1] ? spellChainStack[i - 1].card : null;
+L8078 (spellChainStack): const S = spellChainStack[0];
+L8082 (spellChainStack): for (let i = 1; i < spellChainStack.length; i++) {
+L8083 (spellChainStack): const item = spellChainStack[i];
+L8118 (spellChainStack): const targetItem = spellChainStack[i - 1];
+L8181 (spellChainStack): for (let i = 1; i < spellChainStack.length; i++) {
+L8182 (spellChainStack): const item = spellChainStack[i];
+L8193 (spellChainStack): spellChainStack = [];

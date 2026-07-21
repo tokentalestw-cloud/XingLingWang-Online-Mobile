@@ -1,0 +1,21 @@
+7320:         summonedTurn: turn,
+7321:         summonedZone: zone
+7322:       };
+7323:       logBattle(`委託者 戴比 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+7324:       render();
+7325:     } else if (data.action === "field_indestructible") {
+7326:       const oppField = $("enemyField");
+7327:       if (oppField && oppField.dataset.card) {
+7328:         const fCard = JSON.parse(oppField.dataset.card);
+7329:         fCard.indestructible = true;
+7330:         oppField.dataset.card = JSON.stringify(fCard);
+7331:         logBattle(`✨ 對手場地卡【${fCard.name}】獲得了破壞抗性！`);
+7332:       }
+7333:       render();
+7334:     }
+7335:   };
+7336: }
+7337: 
+7338: // ===== 21. 小旅人 3D 躍出森林軌跡飛行特效 =====
+7339: function playTravelerSummonAnimation(fromForestId, toZone, toIdx) {
+7340:   window.XLW_animatingSlots = window.XLW_animatingSlots || new Set();

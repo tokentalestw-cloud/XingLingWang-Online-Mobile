@@ -1,0 +1,240 @@
+L2762: async function xlwResolvePlayerDefensePhase() {
+    if (window.XLW_DEFENSE_RULE.resolving) return;
+    window.XLW_DEFENSE_RULE.resolving = true;
+  
+    try {
+      // 在結算開始前，檢查禁衛軍獸人的效果發動
+      await xlwCheckDefenderGuardEffect();
+  
+      // 聯網同步：開始防守階段
+      if (isMultiplayer) {
+        ws.send(JSON.stringify({ action: "start_defense_phase" }));
+      }
+  
+      logBattle("—— 我方防守階段開始 (依戰線 1 -> 5 詢問並結算) ——");
+      setStatus("我方防守判定，系統正在依序結算各星星戰線戰鬥...");
+  
+      for (let lane = 0; lane < 5; lane++) {
+        let attacker = null;
+        let attZone = "";
+        if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
+          attacker = field.enemy_front[lane];
+          attZone = "enemy_front";
+        } else if (field.enemy_back[lane] && field.enemy_back[lane].attacking) {
+          attacker = field.enemy_back[lane];
+          attZone = "enemy_back";
+        }
+  
+        if (!attacker) {
+          if (isMultiplayer) {
+            ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+          }
+          setStatus(`防守判定：星星戰線 ${lane + 1} 對手無進攻。`);
+          await sleep(650);
+          continue;
+        }
+  
+        // 詢問玩家是否要在這條戰線發動防守反制魔法
+        const wantCounter = await showXLWConfirm(
+          `戰線 ${lane + 1} 魔法反制`,
+          `對手在星星戰線 ${lane + 1} 的 ${attacker.card.name} 發動了進攻，是否在此戰線戰鬥前發動防守反制魔法卡（如削弱藥水等）？`,
+L2791: ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+          }
+          setStatus(`防守判定：星星戰線 ${lane + 1} 對手無進攻。`);
+          await sleep(650);
+          continue;
+        }
+  
+        // 詢問玩家是否要在這條戰線發動防守反制魔法
+        const wantCounter = await showXLWConfirm(
+          `戰線 ${lane + 1} 魔法反制`,
+          `對手在星星戰線 ${lane + 1} 的 ${attacker.card.name} 發動了進攻，是否在此戰線戰鬥前發動防守反制魔法卡（如削弱藥水等）？`,
+          "是",
+          "否"
+        );
+        if (wantCounter) {
+          window.XLW_defenseCounterActive = true;
+          setStatus(`戰線 ${lane + 1} 反制中：您可以從手牌中打出魔法卡。完成後請點擊右下角「結束反制並開始戰鬥結算」按鈕。`);
+          logBattle(`我方選擇在星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
+          render();
+          await new Promise(resolve => {
+            window.XLW_defenseCounterResolve = resolve;
+          });
+          window.XLW_defenseCounterActive = false;
+          render();
+        } else {
+          logBattle(`我方選擇不對星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
+        }
+  
+        // 聯網同步：通知對手結算此戰線
+        if (isMultiplayer) {
+          ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+        }
+  
+        // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+        let defZone = "";
+        let defender = null;
+        let defIdx = lane;
+  
+        if (attacker.target && attacker.target.redirected) {
+          defZone = attacker.target.zone;
+L2821: ws.send(JSON.stringify({ action: "resolve_lane", lane: lane }));
+        }
+  
+        // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+        let defZone = "";
+        let defender = null;
+        let defIdx = lane;
+  
+        if (attacker.target && attacker.target.redirected) {
+          defZone = attacker.target.zone;
+          defIdx = attacker.target.idx;
+          defender = field[defZone][defIdx];
+        } else {
+          if (field.player_front[lane]) {
+            defender = field.player_front[lane];
+            defZone = "player_front";
+          } else if (field.player_back[lane]) {
+            defender = field.player_back[lane];
+            defZone = "player_back";
+          }
+        }
+  
+        // 規則九第2條：前方沒有敵方單位時，橫置單位維持橫置，不立直
+        if (!defender) {
+          attacker.attacking = false;
+          attacker.target = null;
+          attacker.tapped = true; // 橫置單位維持橫置，不立直
+          logBattle(`防守判定：星星戰線 ${lane + 1} 前方無我方單位，對手進攻單位進行空戰線結算（陣營維持橫置）。`);
+          setStatus(`防守判定：星星戰線 ${lane + 1} 前方無我方單位，對手進攻單位已橫置。`);
+          render();
+          await sleep(650);
+          continue;
+        }
+  
+        // 動態更新進攻目標
+        if (!attacker.target || !attacker.target.redirected) {
+          attacker.target = { zone: defZone, idx: defIdx };
+        }
+  
+        if (window.XLW_isShieldUnit(defender)) {
+L2896: async function xlwResolveEnemyLaneSafe(lane) {
+    let attacker = null;
+    let attZone = "";
+    if (field.player_front[lane] && field.player_front[lane].attacking) {
+      attacker = field.player_front[lane];
+      attZone = "player_front";
+    } else if (field.player_back[lane] && field.player_back[lane].attacking) {
+      attacker = field.player_back[lane];
+      attZone = "player_back";
+    }
+  
+    if (!attacker) {
+      setStatus(`防守判定：星星戰線 ${lane + 1} 我方無進攻。`);
+      await sleep(650);
+      if (lane === 4) {
+        window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+        window.XLW_DEFENSE_RULE.resolving = false;
+        logBattle("—— 對手防守階段結束 ——");
+        checkCallGameAtTurnStart(false);
+      }
+      return;
+    }
+  
+    // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+    let defZone = "";
+    let defender = null;
+    let defIdx = lane;
+  
+    if (attacker.target && attacker.target.redirected) {
+      defZone = attacker.target.zone;
+      defIdx = attacker.target.idx;
+      defender = field[defZone][defIdx];
+    } else {
+      if (field.enemy_front[lane]) {
+        defender = field.enemy_front[lane];
+        defZone = "enemy_front";
+      } else if (field.enemy_back[lane]) {
+        defender = field.enemy_back[lane];
+        defZone = "enemy_back";
+      }
+L2994: async function xlwResolveEnemyDefensePhaseSafe() {
+    if (window.XLW_DEFENSE_RULE.resolving) return;
+    window.XLW_DEFENSE_RULE.resolving = true;
+  
+    try {
+      // AI 禁衛軍獸人自動轉移攻擊目標 logic (僅單機/AI模式)
+      if (!isMultiplayer && window.XLW_enemyDefenderGuardUsedTurn !== turn) {
+        let enemyGuards = [];
+        for (const z of ["enemy_front", "enemy_back"]) {
+          for (let i = 0; i < 5; i++) {
+            const u = field[z][i];
+            if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
+              enemyGuards.push({ zone: z, idx: i, unit: u });
+            }
+          }
+        }
+  
+        if (enemyGuards.length > 0) {
+          let attackingPlayerUnits = [];
+          for (const pz of ["player_front", "player_back"]) {
+            for (let i = 0; i < 5; i++) {
+              const playerUnit = field[pz][i];
+              if (playerUnit && playerUnit.attacking && playerUnit.target) {
+                const isTargetingAGuard = enemyGuards.some(g => playerUnit.target.zone === g.zone && playerUnit.target.idx === g.idx);
+                if (!isTargetingAGuard) {
+                  attackingPlayerUnits.push({ zone: pz, idx: i, unit: playerUnit });
+                }
+              }
+            }
+          }
+  
+          if (attackingPlayerUnits.length > 0) {
+            const targetEnemyGuard = enemyGuards[0];
+            const targetPlayerAttacker = attackingPlayerUnits[0];
+            targetPlayerAttacker.unit.target = { zone: targetEnemyGuard.zone, idx: targetEnemyGuard.idx, redirected: true };
+            window.XLW_enemyDefenderGuardUsedTurn = turn;
+            logBattle(`✨ 對手發動 禁衛軍獸人 效果：使我方 ${targetPlayerAttacker.unit.card.name} 的攻擊目標轉移為對方的 禁衛軍獸人！`);
+            render();
+          }
+        }
+L6266: } else if (data.action === "resolve_lane") {
+        await xlwResolveEnemyLaneSafe(data.lane);
+      } else if (data.action === "redirect_attack_target") {
+        const attacker = field[data.attZone]?.[data.attIdx];
+        if (attacker) {
+          attacker.target = { zone: data.zone, idx: data.idx, redirected: true };
+          logBattle(`✨ 對手發動 禁衛軍獸人 效果：使我方 ${attacker.card?.name || ""} 的攻擊目標轉移為對手的 禁衛軍獸人！`);
+          render();
+        }
+      } else if (data.action === "thief_summon_sync") {
+        const zone = data.zone;
+        const idx = data.idx;
+  
+        const THIEF_CARD = allCards.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+        field[zone][idx] = {
+          card: structuredClone(THIEF_CARD),
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: turn,
+          summonedZone: zone
+        };
+  
+        // Also remove 大耳賊 from opponent's extra deck (which is enemyExtraDeck on our client)
+        const thiefInEnemyExtra = enemyExtraDeck.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+        if (thiefInEnemyExtra) {
+          enemyExtraDeck.splice(enemyExtraDeck.indexOf(thiefInEnemyExtra), 1);
+        }
+        logBattle(`對手發動 大耳賊 效果：從其額外牌庫召喚 大耳賊 到我方 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}！`);
+        render();
+      } else if (data.action === "add_to_hand_sync") {
+        if (window.XLW_ENEMY.hand) {
+          window.XLW_ENEMY.hand.push(null);
+        }
+        if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+          const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+          if (idx !== -1) {
+            enemyExtraDeck.splice(idx, 1);
+          } else {
+            enemyExtraDeck.pop();

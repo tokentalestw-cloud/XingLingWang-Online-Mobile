@@ -1,0 +1,16 @@
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except AttributeError:
+    import codecs
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+
+with open('static/game_v8.js', 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+
+for idx, line in enumerate(lines):
+    if '般若' in line or '智慧' in line or '憤怒' in line:
+        # Encode and decode to replace any unprintable characters for safe terminal output
+        safe_line = line.strip().encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+        print(f"Line {idx+1}: {safe_line}")

@@ -1,0 +1,90 @@
+1087:   clearModes();
+1088:   tributeWaitingPosition = true; // 借用位置等待狀態
+1089:   selectedHandForSummon = "TRAVELER";
+1090:   setStatus("【小旅人】請點選我方一個空格進行召喚（前排優先）。");
+1091:   render();
+1092: }
+1093: 
+1094: // 魔法卡點擊發動
+1095: // 魔法卡點擊發動
+1096: async function castSpell(handIndex) {
+1097:   if (isMultiplayer && !isMyTurn) {
+1098:     setStatus("對手回合中，請稍候！");
+1099:     return;
+1100:   }
+1101:   const card = hand[handIndex];
+1102:   if (!card || card.type !== "magic") return;
+1103: 
+1104:   const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析"));
+1105:   if (isPureCounter) {
+1106:     setStatus("【提示】反制魔法卡無法直接打出，必須在對手使用魔法卡時進行反制。");
+1107:     showModal(card);
+1108:     return;
+1109:   }
+1110: 
+1111:   // 1. Target and cost pre-checks before casting/chaining to prevent card loss or dead chains
+1112:   if (card.name.includes("恐懼凝視")) {
+1113:     let hasEnemyUnit = false;
+1114:     for (const zone of ["enemy_front", "enemy_back"]) {
+1115:       if (field[zone].some(u => u !== null)) hasEnemyUnit = true;
+1116:     }
+1117:     if (!hasEnemyUnit) {
+1118:       setStatus("對方場上無單位可禁錮！");
+1119:       return;
+1120:     }
+1121:   } else if (card.name.includes("山羊術")) {
+1122:     let hasAnyUnit = false;
+1123:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1124:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1125:     }
+1126:     if (!hasAnyUnit) {
+1127:       setStatus("場上無單位可變成山羊！");
+1128:       return;
+1129:     }
+1130:   } else if (card.name.includes("魔抗鐵拳")) {
+1131:     let hasAnyUnit = false;
+1132:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1133:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1134:     }
+1135:     if (!hasAnyUnit) {
+1136:       setStatus("場上無單位可施加魔抗鐵拳！");
+1137:       return;
+1138:     }
+1139:   } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+1140:     const spellsInGrave = graveyard.filter(c => c && c.type === "magic");
+1141:     if (spellsInGrave.length === 0) {
+1142:       setStatus("墓地無魔法卡可回收！");
+1143:       return;
+1144:     }
+1145:   } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+1146:              card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+1147:     let hasOrc = false;
+1148:     for (const z of ["player_front", "player_back"]) {
+1149:       if (field[z].some(u => u && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC")))) {
+1150:         hasOrc = true;
+1151:       }
+1152:     }
+1153:     if (!hasOrc) {
+1154:       setStatus("場上無獸人單位可裝備！");
+1155:       return;
+1156:     }
+1157:   }
+1158: 
+1159:   const isTempEquipMagic = 
+1160:     card.name.includes("削弱藥水") || card.id?.includes("0003") ||
+1161:     card.name.includes("振奮藥水") || card.id?.includes("0002") ||
+1162:     card.name.includes("塗毒") || card.id?.includes("0004") ||
+1163:     card.name.includes("睡眠反擊拳") || card.id?.includes("0025");
+1164: 
+1165:   if (isTempEquipMagic) {
+1166:     if (phase !== "防守階段") {
+1167:       setStatus(`【${card.name}】只能在防守階段使用！`);
+1168:       return;
+1169:     }
+1170:     let hasAnyUnit = false;
+1171:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1172:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1173:     }
+1174:     if (!hasAnyUnit) {
+1175:       setStatus(`場上沒有任何單位可以施放【${card.name}】！`);
+1176:       return;

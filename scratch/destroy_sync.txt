@@ -1,0 +1,15 @@
+6901:     } else if (data.action === "destroy_unit") {
+6902:       const zone = data.zone;
+6903:       const idx = data.idx;
+6904:       const unit = field[zone][idx];
+6905:       if (unit) {
+6906:         graveyard.push(unit.card);
+6907:         field[zone][idx] = null;
+6908:         logBattle(`\u5c0d\u624b\u7279\u6b8a\u6548\u679c\uff1a\u7834\u58bad\u6211\u65b9\u0020${unitName(unit)}\u0021`); // 對手特殊效果：破壞我方 [單位]！
+6909:         render();
+6910:       }
+6911:     } else if (data.action === "attack_declare") {
+6912:       const attZone = data.attZone;
+6913:       const attIdx = data.attIdx;
+6914:       const targetZone = data.targetZone;
+6915:       const targetIdx = data.targetIdx;

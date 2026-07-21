@@ -1,0 +1,150 @@
+3989: async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = false) {
+3990:   const unit = field[zone][idx];
+3991:   if (!unit) return;
+3992: 
+3993:   // 1. 尋找格子並播放 CSS 碎裂與紅光粒子動畫
+3994:   const slot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
+3995:   if (slot) {
+3996:     const cardEl = slot.querySelector(".card");
+3997:     if (cardEl) {
+3998:       cardEl.classList.add("xlw-card-shatter");
+3999:       
+4000:       const sparks = document.createElement("div");
+4001:       sparks.className = "shatter-sparks";
+4002:       slot.appendChild(sparks);
+4003:     }
+4004:   }
+4005: 
+4006:   // 2. 等待動畫完整播放結束 (0.8 秒)
+4007:   await sleep(800);
+4008: 
+4009:   // 3. 清理火花層
+4010:   if (slot) {
+4011:     const sparks = slot.querySelector(".shatter-sparks");
+4012:     if (sparks) sparks.remove();
+4013:   }
+4014: 
+4015:   // 4. 送墓或除外並真正清空格子
+4016:   if (unit.equipments && unit.equipments.length > 0) {
+4017:     unit.equipments.forEach(eqName => {
+4018:       if ((eqName === "賞金" || eqName.includes("賞金")) && isCombatDestruction) {
+4019:         if (zone.startsWith("player_")) {
+4020:           enemyBonusScore += 3;
+4021:           logBattle(`💥 附有【賞金】的我方單位 ${unit.card.name} 被戰鬥破壞：對手額外獲得 +3★ 獎勵！`);
+4022:         } else {
+4023:           playerBonusScore += 3;
+4024:           logBattle(`💥 附有【賞金】的敵方單位 ${unit.card.name} 被戰鬥破壞：我方額外獲得 +3★ 獎勵！`);
+4025:         }
+4026:         renderScore();
+4027:       }
+4028:       const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+4029:       if (isTempMagic) return;
+4030:       const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+4031:       const cloned = structuredClone(cardObj);
+4032:       cloned.type = "magic";
+4033:       if (owner === "player") {
+4034:         graveyard.push(cloned);
+4035:         logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被破壞進入我方墓地。`);
+4036:       } else {
+4037:         window.XLW_ENEMY.grave.push(cloned);
+4038:         enemyGraveyard = window.XLW_ENEMY.grave;
+4039:         logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被破壞進入對手墓地。`);
+4040:       }
+4041:     });
+4042:     unit.equipments = [];
+4043:   }
+4044: 
+4045:   if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+4046:     if (zone.startsWith("player_")) {
+4047:       enemyBonusScore += 2;
+4048:       logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+4049:     } else {
+4050:       playerBonusScore += 2;
+4051:       logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+4052:     }
+4053:   }
+4054: 
+4055:   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+4056:     logBattle(`✨ ${unit.card.name} 被破壞，直接返回森林（消失在遊戲中）。`);
+4057:   } else if (shouldExile) {
+4058:     logBattle(`✨ 被擊破的 ${unit.card.name} 被除外（不進入墓地）！`);
+4059:     exileCard(unit.card, owner);
+4060:   } else {
+4061:     if (unit.card.name.includes("山羊術")) {
+4062:       unit.card.type = "magic"; // 還原卡牌類型為魔法卡
+4063:       const creator = unit.card.creator || "player";
+4064:       if (creator === "player") {
+4065:         graveyard.push(unit.card);
+4066:         logBattle(`✨ ${unit.card.name} 被破壞，回到我方墓地。`);
+4067:       } else {
+4068:         enemyGraveyard.push(unit.card);
+4069:         logBattle(`✨ ${unit.card.name} 被破壞，回到對手墓地。`);
+4070:       }
+4071:     } else if (owner === "player") {
+4072:       graveyard.push(unit.card);
+4073:     } else {
+4074:       window.XLW_ENEMY.grave.push(unit.card);
+4075:       enemyGraveyard = window.XLW_ENEMY.grave;
+4076:     }
+4077:   }
+4078:   field[zone][idx] = null;
+4079: }
+4080: 
+4081: function flashBattle(attZone, attIdx, defZone, defIdx) {
+4082:   const attEl = document.querySelector(`[data-zone="${attZone}"][data-index="${attIdx}"]`);
+4083:   const defEl = document.querySelector(`[data-zone="${defZone}"][data-index="${defIdx}"]`);
+4084:   if (attEl) {
+4085:     if (attZone.startsWith("player_")) {
+4086:       attEl.classList.add("xlw-my-attack-flash");
+4087:     } else {
+4088:       attEl.classList.add("xlw-enemy-attack-flash");
+4089:     }
+4090:   }
+4091:   if (defEl) defEl.classList.add("xlw-hit-flash");
+4092:   
+4093:   setTimeout(() => {
+4094:     if (attEl) {
+4095:       attEl.classList.remove("xlw-my-attack-flash");
+4096:       attEl.classList.remove("xlw-enemy-attack-flash");
+4097:     }
+4098:     if (defEl) defEl.classList.remove("xlw-hit-flash");
+4099:   }, 600);
+4100: }
+4101: 
+4102: // ===== 10. 對手 AI 行動與回合接管 =====
+4103: function xlwInitEnemyDeck() {
+4104:   const baseCards = strictSourceCards("妖怪村莊");
+4105:   window.XLW_ENEMY.deck = baseCards.map(c => structuredClone(c));
+4106:   shuffle(window.XLW_ENEMY.deck);
+4107:   window.XLW_ENEMY.hand = [];
+4108:   window.XLW_ENEMY.grave = [];
+4109:   enemyGraveyard = window.XLW_ENEMY.grave;
+4110:   enemyExtraDeck = xlwInitExtraDeck("妖怪村莊");
+4111: 
+4112:   // 對手起手抽 4
+4113:   for (let i = 0; i < 4; i++) {
+4114:     if (window.XLW_ENEMY.deck.length) {
+4115:       window.XLW_ENEMY.hand.push(window.XLW_ENEMY.deck.pop());
+4116:     }
+4117:   }
+4118: }
+4119: 
+4120: async function runEnemyTurn() {
+4121:   if (window.XLW_ENEMY.running) return;
+4122:   window.XLW_ENEMY.running = true;
+4123: 
+4124:   try {
+4125:     // Check Call Game resolution for enemy (B)
+4126:     const playerHasAttackers = field["player_front"].concat(field["player_back"]).some(u => u && u.attacking);
+4127:     const enemyNeedsDefense = window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers;
+4128:     if (!enemyNeedsDefense) {
+4129:       checkCallGameAtTurnStart(false);
+4130:       if (isGameOverFlag) return;
+4131:     }
+4132: 
+4133:     logBattle("—— 對手回合開始 ——");
+4134:     setStatus("對手回合：妖怪村莊正在進行整備抽牌...");
+4135:     await sleep(700);
+4136: 
+4137:     // 1. 整備階段：對手單位轉正
+4138:     untapEnemy();

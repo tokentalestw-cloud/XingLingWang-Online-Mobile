@@ -1,0 +1,45 @@
+63: let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
+64: let turn = 1;
+319: turn = 0;
+503: turn = 0;
+557: turn = 0;
+794: turn = 1;
+795: phase = "召喚階段";
+798: setStatus("起手換牌完成！目前為我方第 1 回合「召喚階段」，起手共 6 張。");
+802: turn = 1;
+803: phase = "召喚階段";
+812: turn = 2;
+816: playerUntap();
+819: phase = "召喚階段";
+820: setStatus("對手回合結束。目前為我方第 2 回合「召喚階段」，已自動抽 2 張。");
+830: turn = 1;
+832: phase = "召喚階段";
+838: setStatus("對決開始！第 1 回合為我方回合，召喚階段開始。");
+1104: const can = (phase === "召喚階段" && !normalSummonUsed) || (phase === "戰術佈陣" && !tacticalSummonUsed);
+1608: setStatus("本回合召喚階段已進行過普通/獻祭召喚。");
+1922: (phase === "召喚階段" && !normalSummonUsed) ||
+1944: if (phase === "召喚階段" && !window.XLW_bypassTurnCheck) normalSummonUsed = true;
+2019: if (phase === "召喚階段") normalSummonUsed = true;
+2442: if (phase !== "召喚階段") return;
+3009: phase = "召喚階段";
+3010: logBattle("—— 我方防守階段結束，進入召喚階段 ——");
+3011: setStatus("防守階段結算完成！已進入「召喚階段」，您可以開始召喚單位。");
+3973: // 4. 對手召喚階段 (召喚一個免祭品單位，優先前排)
+4049: logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+4054: logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+4424: playerUntap();
+4443: phase = "召喚階段";
+4444: setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！已自動抽2張。`);
+4468: function playerUntap() {
+4608: case "召喚階段": return "回合開始已自動抽牌。可點手牌進行召喚/發動魔法，完成後可選擇「戰術佈陣」或「進攻宣言」。";
+5255: if (phase === "召喚階段" && selectedHandForTribute !== null) {
+5260: if ((phase === "召喚階段" || phase === "戰術佈陣") && zone.startsWith("player_")) {
+5263: if (phase !== "召喚階段") {
+5264: setStatus("【經理喵】的效果只能在召喚階段發動！");
+6352: turn = s.turn;
+6663: logBattle("對手取消了所有進攻宣告，並返回戰術調整/召喚階段。");
+6812: turn = data.next_turn;
+6816: playerUntap();
+9046: if (phase !== "召喚階段") {
+9047: setStatus("【額外召喚】只能在召喚階段進行！");
+9220: turn = s.turn;

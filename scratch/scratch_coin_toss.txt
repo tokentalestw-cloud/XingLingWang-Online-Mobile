@@ -1,0 +1,54 @@
+L330: startMultiplayerCoinToss();
+L555: startSinglePlayerCoinToss();
+L815: const goFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
+L3830: const aiWentFirst = (window.XLW_coinTossFirstGo === false);
+L5967: } else if (data.action === "coin_toss_roll") {
+L5968: showCoinRollResult(data.guess, data.result);
+L5969: } else if (data.action === "coin_toss_choice") {
+L5970: applyCoinTossChoice(data.winner_role, data.choice);
+L7650: const weWentFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
+L8245: function getOrCreateCoinTossOverlay() {
+L8246: let overlay = document.getElementById("xlw-coin-toss-overlay");
+L8249: overlay.id = "xlw-coin-toss-overlay";
+L8264: <div id="xlw-coin-graphic" style="font-size: 90px; margin: 25px 0; transition: transform 0.8s ease-in-out; display: inline-block;">🪙</div>
+L8265: <p id="xlw-coin-toss-status" style="color: #fff; font-size: 15px; margin-bottom: 25px; line-height: 1.6; font-weight: bold; min-height: 48px;"></p>
+L8266: <div id="xlw-coin-toss-actions" style="display: flex; gap: 15px; justify-content: center; align-items: center;"></div>
+L8274: function startSinglePlayerCoinToss() {
+L8275: const overlay = getOrCreateCoinTossOverlay();
+L8278: const graphic = document.getElementById("xlw-coin-graphic");
+L8279: const status = document.getElementById("xlw-coin-toss-status");
+L8280: const actions = document.getElementById("xlw-coin-toss-actions");
+L8291: frontBtn.onclick = () => rollSinglePlayerCoin("正面");
+L8297: backBtn.onclick = () => rollSinglePlayerCoin("反面");
+L8303: async function rollSinglePlayerCoin(playerGuess) {
+L8304: const graphic = document.getElementById("xlw-coin-graphic");
+L8305: const status = document.getElementById("xlw-coin-toss-status");
+L8306: const actions = document.getElementById("xlw-coin-toss-actions");
+L8315: const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+L8316: graphic.textContent = coinResult === "正面" ? "🟡" : "⚪";
+L8318: const win = (playerGuess === coinResult);
+L8320: status.innerHTML = `🎉 結果是【${coinResult}】！您猜對了！<br>請選擇您要先攻還是後攻：`;
+L8337: status.innerHTML = `❌ 結果是【${coinResult}】！您猜錯了！<br>由對手 AI 決定先後攻中...`;
+L8354: const overlay = getOrCreateCoinTossOverlay();
+L8357: window.XLW_coinTossFirstGo = playerGoesFirst; // 記錄單人遊戲先後攻
+L8366: function startMultiplayerCoinToss() {
+L8367: const overlay = getOrCreateCoinTossOverlay();
+L8370: const graphic = document.getElementById("xlw-coin-graphic");
+L8371: const status = document.getElementById("xlw-coin-toss-status");
+L8372: const actions = document.getElementById("xlw-coin-toss-actions");
+L8385: frontBtn.onclick = () => rollMultiplayerCoin("正面");
+L8391: backBtn.onclick = () => rollMultiplayerCoin("反面");
+L8400: async function rollMultiplayerCoin(playerGuess) {
+L8401: const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+L8404: action: "coin_toss_roll",
+L8406: result: coinResult
+L8409: await showCoinRollResult(playerGuess, coinResult);
+L8412: async function showCoinRollResult(guess, result) {
+L8413: const graphic = document.getElementById("xlw-coin-graphic");
+L8414: const status = document.getElementById("xlw-coin-toss-status");
+L8415: const actions = document.getElementById("xlw-coin-toss-actions");
+L8454: action: "coin_toss_choice",
+L8459: applyCoinTossChoice(player_role, choice);
+L8462: function applyCoinTossChoice(winnerRole, choice) {
+L8463: const overlay = getOrCreateCoinTossOverlay();
+L8472: window.XLW_coinTossFirstGo = isMyTurn; // 記錄硬幣決定之先後攻結果

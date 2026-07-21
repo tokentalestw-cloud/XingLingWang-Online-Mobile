@@ -1,0 +1,62 @@
+8189: async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
+8190:   if (!unit || !unit.card || !oppUnit) return;
+8191:   const card = unit.card;
+8192:   const isPlayer = owner === "player";
+8193:   
+8194:   let baseReward = 0;
+8195:   let hasRewardEffect = false;
+8196:   const cid = card.id;
+8197:   const name = card.name;
+8198:   
+8199:   if ((cid === "R-ORC-0015" || name?.includes("獸人弓箭手")) && isAttacker) {
+8200:     baseReward += 2;
+8201:     hasRewardEffect = true;
+8202:   }
+8203:   if (cid === "R-ORC-0029" || name?.includes("符咒獸人")) {
+8204:     baseReward += 1;
+8205:     hasRewardEffect = true;
+8206:   }
+8207:   if ((cid === "R-ROC-0040" || cid === "R-ORC-0040" || name?.includes("嗜血獸人")) && isAttacker) {
+8208:     baseReward += 3;
+8209:     hasRewardEffect = true;
+8210:   }
+8211:   if (unit.steakBonus && isAttacker) {
+8212:     baseReward += 5;
+8213:     hasRewardEffect = true;
+8214:   }
+8215:   if (cid === "SR-ORC-0052" || name?.includes("獸人爺爺")) {
+8216:     baseReward += 2;
+8217:     hasRewardEffect = true;
+8218:   }
+8219:   if (cid === "SSR-ORC-0057" || name?.includes("禁衛軍獸人")) {
+8220:     baseReward += 2;
+8221:     hasRewardEffect = true;
+8222:   }
+8223:   
+8224:   if (hasRewardEffect && ((isPlayer && window.XLW_debbieActive) || (!isPlayer && window.XLW_enemyDebbieActive))) {
+8225:     baseReward += 1;
+8226:     logBattle(`✨ 委託者 戴比 被動：使該單位的戰鬥成功獎勵額外 +1★！`);
+8227:   }
+8228:   
+8229:   if (baseReward > 0) {
+8230:     if (isPlayer) {
+8231:       playerBonusScore += baseReward;
+8232:       logBattle(`✨ ${card.name} 戰鬥成功：我方額外獲得 +${baseReward}★ 獎勵！`);
+8233:     } else {
+8234:       enemyBonusScore += baseReward;
+8235:       logBattle(`✨ 對手 ${card.name} 戰鬥成功：對手額外獲得 +${baseReward}★ 獎勵！`);
+8236:     }
+8237:     renderScore();
+8238:   }
+8239:   
+8240:   // 獸人粉絲被動效果
+8241:   const isOrc = card.faction === "獸人" || card.race === "獸人" || card.id.includes("ORC") || card.id.includes("0RC");
+8242:   if (isOrc) {
+8243:     const targetZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+8244:     let hasFans = false;
+8245:     for (const z of targetZones) {
+8246:       if (field[z].some(u => u && (u.card?.id === "R-ORC-0051" || u.card?.name?.includes("獸人粉絲")))) {
+8247:         hasFans = true;
+8248:       }
+8249:     }
+8250:     

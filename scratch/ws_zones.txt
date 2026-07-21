@@ -1,0 +1,324 @@
+6435: const zone = data.zone;
+  6433: } else if (data.action === "summon") {
+  6434: // 後端已將 zone 座標自動翻轉，所以收到時對本地來說就是 enemy_front / enemy_back
+  6435: const zone = data.zone;
+  6436: const idx = data.idx;
+  6437: const card = data.card;
+  6438: 
+  6439: // 清除對手獻祭的祭品單位
+  6440: if (data.tributes && data.tributes.length > 0) {
+  6441: data.tributes.forEach(t => {
+  6442: if (t.zone === "dummy") return;
+------------------------------
+6544: const zone = data.zone;
+  6542: resolveLocalSpellChain();
+  6543: } else if (data.action === "equip_spell_resolved") {
+  6544: const zone = data.zone;
+  6545: const idx = data.idx;
+  6546: const spellCard = data.spellCard;
+  6547: 
+  6548: const obj = field[zone]?.[idx];
+  6549: if (obj) {
+  6550: obj.equipments = obj.equipments || [];
+  6551: obj.equipments.push(spellCard.name);
+------------------------------
+6572: const zone = data.zone;
+  6570: }
+  6571: } else if (data.action === "goat_spell_resolved") {
+  6572: const zone = data.zone;
+  6573: const idx = data.idx;
+  6574: const goatSpellCard = data.goatSpellCard;
+  6575: 
+  6576: const obj = field[zone]?.[idx];
+  6577: if (obj) {
+  6578: logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+  6579: graveyard.push(obj.card); // 進入我方墓地
+------------------------------
+6639: const fromZone = data.fromZone;
+  6637: render();
+  6638: } else if (data.action === "move_unit") {
+  6639: const fromZone = data.fromZone;
+  6640: const fromIdx = data.fromIdx;
+  6641: const toZone = data.toZone;
+  6642: const toIdx = data.toIdx;
+  6643: const unit = field[fromZone][fromIdx];
+  6644: if (unit) {
+  6645: field[toZone][toIdx] = unit;
+  6646: field[fromZone][fromIdx] = null;
+------------------------------
+6641: const toZone = data.toZone;
+  6639: const fromZone = data.fromZone;
+  6640: const fromIdx = data.fromIdx;
+  6641: const toZone = data.toZone;
+  6642: const toIdx = data.toIdx;
+  6643: const unit = field[fromZone][fromIdx];
+  6644: if (unit) {
+  6645: field[toZone][toIdx] = unit;
+  6646: field[fromZone][fromIdx] = null;
+  6647: logBattle(`對手進行戰術調整：將 ${unitName(unit)} 移動至其場地上`);
+  6648: render();
+------------------------------
+6651: const fromZone = data.fromZone;
+  6649: }
+  6650: } else if (data.action === "swap_units") {
+  6651: const fromZone = data.fromZone;
+  6652: const fromIdx = data.fromIdx;
+  6653: const toZone = data.toZone;
+  6654: const toIdx = data.toIdx;
+  6655: const unit = field[fromZone][fromIdx];
+  6656: const targetUnit = field[toZone][toIdx];
+  6657: if (unit && targetUnit) {
+  6658: field[toZone][toIdx] = unit;
+------------------------------
+6653: const toZone = data.toZone;
+  6651: const fromZone = data.fromZone;
+  6652: const fromIdx = data.fromIdx;
+  6653: const toZone = data.toZone;
+  6654: const toIdx = data.toIdx;
+  6655: const unit = field[fromZone][fromIdx];
+  6656: const targetUnit = field[toZone][toIdx];
+  6657: if (unit && targetUnit) {
+  6658: field[toZone][toIdx] = unit;
+  6659: field[fromZone][fromIdx] = targetUnit;
+  6660: logBattle(`對手進行戰術調整：將 ${unitName(unit)} 與 ${unitName(targetUnit)} 位置互換`);
+------------------------------
+6664: const zone = data.zone;
+  6662: }
+  6663: } else if (data.action === "destroy_unit") {
+  6664: const zone = data.zone;
+  6665: const idx = data.idx;
+  6666: const unit = field[zone][idx];
+  6667: if (unit) {
+  6668: graveyard.push(unit.card);
+  6669: field[zone][idx] = null;
+  6670: logBattle(`\u5c0d\u624b\u7279\u6b8a\u6548\u679c\uff1a\u7834\u58bad\u6211\u65b9\u0020${unitName(unit)}\u0021`); // 對手特殊效果：破壞我方 [單位]！
+  6671: render();
+------------------------------
+6732: attacker.target = { zone: data.zone, idx: data.idx, redirected: true };
+  6730: const attacker = field[data.attZone]?.[data.attIdx];
+  6731: if (attacker) {
+  6732: attacker.target = { zone: data.zone, idx: data.idx, redirected: true };
+  6733: logBattle(`✨ 對手發動 禁衛軍獸人 效果：使我方 ${attacker.card?.name || ""} 的攻擊目標轉移為對手的 禁衛軍獸人！`);
+  6734: render();
+  6735: }
+  6736: } else if (data.action === "thief_summon_sync") {
+  6737: const zone = data.zone;
+  6738: const idx = data.idx;
+  6739: 
+------------------------------
+6737: const zone = data.zone;
+  6735: }
+  6736: } else if (data.action === "thief_summon_sync") {
+  6737: const zone = data.zone;
+  6738: const idx = data.idx;
+  6739: 
+  6740: const THIEF_CARD = allCards.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+  6741: field[zone][idx] = {
+  6742: card: structuredClone(THIEF_CARD),
+  6743: tapped: false,
+  6744: attacking: false,
+------------------------------
+6772: const targetUnit = field[data.zone]?.[data.idx];
+  6770: render();
+  6771: } else if (data.action === "temp_equip_spell_resolved") {
+  6772: const targetUnit = field[data.zone]?.[data.idx];
+  6773: if (targetUnit) {
+  6774: if (!targetUnit.equipments) targetUnit.equipments = [];
+  6775: const spellNameClean = data.spellCard.name;
+  6776: if (!targetUnit.equipments.includes(spellNameClean)) {
+  6777: targetUnit.equipments.push(spellNameClean);
+  6778: }
+  6779: if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+------------------------------
+6792: const key = `${data.zone}:${data.idx}`;
+  6790: window.XLW_opponentSneakRecall[key] = data.recall;
+  6791: } else if (data.action === "foodball_choice") {
+  6792: const key = `${data.zone}:${data.idx}`;
+  6793: window.XLW_opponentFoodBallChoice[key] = data.trigger;
+  6794: } else if (data.action === "foodball_summon") {
+  6795: const key = `${data.zone}:${data.idx}`;
+  6796: window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+  6797: } else if (data.action === "extra_upgrade_sync") {
+  6798: const unit = field[data.zone]?.[data.idx];
+  6799: if (unit) {
+------------------------------
+6795: const key = `${data.zone}:${data.idx}`;
+  6793: window.XLW_opponentFoodBallChoice[key] = data.trigger;
+  6794: } else if (data.action === "foodball_summon") {
+  6795: const key = `${data.zone}:${data.idx}`;
+  6796: window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+  6797: } else if (data.action === "extra_upgrade_sync") {
+  6798: const unit = field[data.zone]?.[data.idx];
+  6799: if (unit) {
+  6800: const oldName = unit.card?.name || "單位";
+  6801: unit.card = data.newCard;
+  6802: logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】！`);
+------------------------------
+6796: window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+  6794: } else if (data.action === "foodball_summon") {
+  6795: const key = `${data.zone}:${data.idx}`;
+  6796: window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+  6797: } else if (data.action === "extra_upgrade_sync") {
+  6798: const unit = field[data.zone]?.[data.idx];
+  6799: if (unit) {
+  6800: const oldName = unit.card?.name || "單位";
+  6801: unit.card = data.newCard;
+  6802: logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】！`);
+  6803: render();
+------------------------------
+6798: const unit = field[data.zone]?.[data.idx];
+  6796: window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+  6797: } else if (data.action === "extra_upgrade_sync") {
+  6798: const unit = field[data.zone]?.[data.idx];
+  6799: if (unit) {
+  6800: const oldName = unit.card?.name || "單位";
+  6801: unit.card = data.newCard;
+  6802: logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】！`);
+  6803: render();
+  6804: }
+  6805: } else if (data.action === "extra_upgrade_to_hand_sync") {
+------------------------------
+6806: const unit = field[data.zone]?.[data.idx];
+  6804: }
+  6805: } else if (data.action === "extra_upgrade_to_hand_sync") {
+  6806: const unit = field[data.zone]?.[data.idx];
+  6807: if (unit) {
+  6808: const oldName = unit.card?.name || "單位";
+  6809: field[data.zone][data.idx] = null;
+  6810: if (window.XLW_ENEMY.hand) {
+  6811: window.XLW_ENEMY.hand.push(data.newCard);
+  6812: }
+  6813: logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】並收回手牌！`);
+------------------------------
+6809: field[data.zone][data.idx] = null;
+  6807: if (unit) {
+  6808: const oldName = unit.card?.name || "單位";
+  6809: field[data.zone][data.idx] = null;
+  6810: if (window.XLW_ENEMY.hand) {
+  6811: window.XLW_ENEMY.hand.push(data.newCard);
+  6812: }
+  6813: logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】並收回手牌！`);
+  6814: render();
+  6815: }
+  6816: } else if (data.action === "double_claw_choice") {
+------------------------------
+6836: const unit = field[data.zone]?.[data.idx];
+  6834: renderScore();
+  6835: } else if (data.action === "teasing_stick_resolved") {
+  6836: const unit = field[data.zone]?.[data.idx];
+  6837: if (unit) {
+  6838: unit.tapped = false;
+  6839: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${unit.card?.name || "單位"} 轉正！`);
+  6840: }
+  6841: if (data.toZone !== null && data.toIdx !== null && data.fromZone !== null && data.fromIdx !== null) {
+  6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6843: field[data.fromZone][data.fromIdx] = null;
+------------------------------
+6841: if (data.toZone !== null && data.toIdx !== null && data.fromZone !== null && data.fromIdx !== null) {
+  6839: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${unit.card?.name || "單位"} 轉正！`);
+  6840: }
+  6841: if (data.toZone !== null && data.toIdx !== null && data.fromZone !== null && data.fromIdx !== null) {
+  6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6843: field[data.fromZone][data.fromIdx] = null;
+  6844: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${field[data.toZone][data.toIdx].card?.name || "單位"} 移動至 ${data.toZone === "enemy_front" ? "前排" : "後排"}${data.toIdx + 1}。`);
+  6845: }
+  6846: render();
+  6847: } else if (data.action === "call_game_declare") {
+  6848: window.XLW_callGameDeclared = true;
+------------------------------
+6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6840: }
+  6841: if (data.toZone !== null && data.toIdx !== null && data.fromZone !== null && data.fromIdx !== null) {
+  6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6843: field[data.fromZone][data.fromIdx] = null;
+  6844: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${field[data.toZone][data.toIdx].card?.name || "單位"} 移動至 ${data.toZone === "enemy_front" ? "前排" : "後排"}${data.toIdx + 1}。`);
+  6845: }
+  6846: render();
+  6847: } else if (data.action === "call_game_declare") {
+  6848: window.XLW_callGameDeclared = true;
+  6849: window.XLW_callGameCondition = data.condition;
+------------------------------
+6843: field[data.fromZone][data.fromIdx] = null;
+  6841: if (data.toZone !== null && data.toIdx !== null && data.fromZone !== null && data.fromIdx !== null) {
+  6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6843: field[data.fromZone][data.fromIdx] = null;
+  6844: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${field[data.toZone][data.toIdx].card?.name || "單位"} 移動至 ${data.toZone === "enemy_front" ? "前排" : "後排"}${data.toIdx + 1}。`);
+  6845: }
+  6846: render();
+  6847: } else if (data.action === "call_game_declare") {
+  6848: window.XLW_callGameDeclared = true;
+  6849: window.XLW_callGameCondition = data.condition;
+  6850: window.XLW_callGameDeclaringPlayer = "enemy";
+------------------------------
+6844: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${field[data.toZone][data.toIdx].card?.name || "單位"} 移動至 ${data.toZone === "enemy_front" ? "前排" : "後排"}${data.toIdx + 1}。`);
+  6842: field[data.toZone][data.toIdx] = field[data.fromZone][data.fromIdx];
+  6843: field[data.fromZone][data.fromIdx] = null;
+  6844: logBattle(`✨ 對手發動 逗喵棒 效果：使對手場上的 ${field[data.toZone][data.toIdx].card?.name || "單位"} 移動至 ${data.toZone === "enemy_front" ? "前排" : "後排"}${data.toIdx + 1}。`);
+  6845: }
+  6846: render();
+  6847: } else if (data.action === "call_game_declare") {
+  6848: window.XLW_callGameDeclared = true;
+  6849: window.XLW_callGameCondition = data.condition;
+  6850: window.XLW_callGameDeclaringPlayer = "enemy";
+  6851: window.XLW_callGameTurn = data.turn;
+------------------------------
+6921: const zone = data.zone;
+  6919: render();
+  6920: } else if (data.action === "weakening_spell_resolved") {
+  6921: const zone = data.zone;
+  6922: const idx = data.idx;
+  6923: const obj = field[zone][idx];
+  6924: if (obj) {
+  6925: obj.tempAtkModifier = (obj.tempAtkModifier || 0) - 3;
+  6926: logBattle(`削弱藥水 效果：對手使場上的 ${obj.card.name} 攻擊力 -3，維持到回合結束。`);
+  6927: }
+  6928: render();
+------------------------------
+6997: const zone = data.zone;
+  6995: }
+  6996: } else if (data.action === "hannya_evolve_sync") {
+  6997: const zone = data.zone;
+  6998: const idx = data.idx;
+  6999: const angryHannya = data.angryHannya;
+  7000: const oldUnit = field[zone][idx];
+  7001: if (oldUnit) {
+  7002: exileCard(oldUnit.card, "enemy");
+  7003: }
+  7004: const extraIdx = enemyExtraDeck.findIndex(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+------------------------------
+7020: const oppZone = data.fromZone;
+  7018: render();
+  7019: } else if (data.action === "extra_summon_resolved") {
+  7020: const oppZone = data.fromZone;
+  7021: const oppIdx = data.fromIdx;
+  7022: const angryHannya = data.angryHannya;
+  7023: const oldUnit = field[oppZone][oppIdx];
+  7024: if (oldUnit) {
+  7025: exileCard(oldUnit.card, "enemy");
+  7026: logBattle(`[額外召喚] 對手將場上的【般若】作為素材除外。`);
+  7027: }
+------------------------------
+7062: const zone = data.zone;
+  7060: render();
+  7061: } else if (data.action === "lantern_summon_single") {
+  7062: const zone = data.zone;
+  7063: const idx = data.idx;
+  7064: field[zone][idx] = {
+  7065: card: structuredClone(LITTLE_TRAVELER),
+  7066: tapped: false,
+  7067: attacking: false,
+  7068: target: null,
+  7069: summonedTurn: turn,
+------------------------------
+7075: const zone = data.zone;
+  7073: render();
+  7074: } else if (data.action === "debbie_summon_single") {
+  7075: const zone = data.zone;
+  7076: const idx = data.idx;
+  7077: field[zone][idx] = {
+  7078: card: structuredClone(LITTLE_TRAVELER),
+  7079: tapped: false,
+  7080: attacking: false,
+  7081: target: null,
+  7082: summonedTurn: turn,
+------------------------------

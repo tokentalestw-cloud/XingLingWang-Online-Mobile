@@ -1,0 +1,81 @@
+6670:       await checkMulliganCompletion();
+6671:     } else if (data.action === "summon") {
+6672:       // 後端已將 zone 座標自動翻轉，所以收到時對本地來說就是 enemy_front / enemy_back
+6673:       const zone = data.zone; 
+6674:       const idx = data.idx;
+6675:       const card = data.card;
+6676:       
+6677:       // 清除對手獻祭的祭品單位
+6678:       if (data.tributes && data.tributes.length > 0) {
+6679:         data.tributes.forEach(t => {
+6680:           if (t.zone === "dummy") return;
+6681:           const unit = field[t.zone][t.idx];
+6682:           if (unit) {
+6683:             // 先處理裝備卡送入對手墓地
+6684:             if (unit.equipments && unit.equipments.length > 0) {
+6685:               unit.equipments.forEach(eqName => {
+6686:                 const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+6687:                 if (isTempMagic) return;
+6688:                 const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+6689:                 const cloned = structuredClone(cardObj);
+6690:                 cloned.type = "magic";
+6691:                 window.XLW_ENEMY.grave.push(cloned);
+6692:                 enemyGraveyard = window.XLW_ENEMY.grave;
+6693:                 logBattle(`✨ 裝備卡 ${cloned.name} 隨著對手單位被獻祭進入對手墓地。`);
+6694:               });
+6695:               unit.equipments = [];
+6696:             }
+6697:             
+6698:             if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+6699:     if (zone.startsWith("player_")) {
+6700:       enemyBonusScore += 2;
+6701:       logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+6702:     } else {
+6703:       playerBonusScore += 2;
+6704:       logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+6705:     }
+6706:   }
+6707: 
+6708:   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+6709:               logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
+6710:             } else {
+6711:               window.XLW_ENEMY.grave.push(unit.card);
+6712:               enemyGraveyard = window.XLW_ENEMY.grave;
+6713:             }
+6714:             field[t.zone][t.idx] = null;
+6715:           }
+6716:         });
+6717:       }
+6718: 
+6719:       const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+6720:       field[zone][idx] = {
+6721:         card: card,
+6722:         tapped: isLyingOrc,
+6723:         attacking: false,
+6724:         target: null,
+6725:         summonedTurn: turn,
+6726:         summonedZone: zone
+6727:       };
+6728:       // 動態遞減對手手牌數量以供顯示（僅限從手牌召喚的卡）
+6729:       if (data.fromHand !== false) {
+6730:         if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6731:           window.XLW_ENEMY.hand.pop();
+6732:         }
+6733:       }
+6734: 
+6735:       // 對手召喚時，同步觸發對我方影響的立即效果
+6736:       if (card) {
+6737:         if (card.name.includes("雪女")) {
+6738:           window.XLW_playerFrontImprisonedUntilTurn = turn;
+6739:           logBattle("雪女 效果：使我方前排戰線單位受到禁錮，直到對手下個主要階段前！");
+6740:         }
+6741:         else if (card.name.includes("座敷童子")) {
+6742:           window.XLW_playerCannotAttackOnNextTurn = true;
+6743:           logBattle("座敷童子 效果：我方下個回合將無法進行任何進攻！");
+6744:         }
+6745:         else if (card.name.includes("水瓶座")) {
+6746:           logBattle("好奇女巫 水瓶座 效果：對手召喚了 水瓶座，展示我方手牌以供檢查。");
+6747:           ws.send(JSON.stringify({
+6748:             action: "aquarius_hand_reveal",
+6749:             hand: hand
+6750:           }));

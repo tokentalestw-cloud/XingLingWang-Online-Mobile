@@ -1,0 +1,25 @@
+L705: summonedZone: zone
+L1834: summonedZone: zone
+L1873: summonedZone: zone
+L2097: const battleRes = await resolveUnitCombat(zone, idx, oppUnit.summonedZone || "enemy_front", field[oppUnit.summonedZone || "enemy_front"].indexOf(oppUnit), "enemy");
+L2366: if (unit.summonedZone === "player_front" && toZone === "player_back") {
+L3250: summonedZone: placement.zone
+L3269: summonedZone: z
+L3731: summonedZone: zone
+L3794: summonedZone: zone
+L3820: summonedZone: destZone
+L3917: summonedZone: destZone
+L3927: summonedZone: destZone
+L4085: summonedZone: zone
+L5218: summonedZone: zone
+L5263: summonedZone: zone
+L5283: summonedZone: zone
+L6029: summonedZone: zone
+L6286: summonedZone: zone
+L6469: summonedZone: zone
+L6503: summonedZone: zone
+L6526: summonedZone: oppZone
+L6559: summonedZone: zone
+L6572: summonedZone: zone
+L8644: summonedZone: targetZone
+L8726: summonedZone: targetZone

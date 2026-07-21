@@ -1,0 +1,157 @@
+Count: 38
+
+ID: CRB-0002 | Name: 綠碳子 | Type: unit | Atk: 1 | Score: -2 | Tribute: 0 | Subtype: 碳
+Keywords: ['劇毒']
+Effect: 只能通過碳碳族單位效果召喚，劇毒。
+--------------------------------------------------
+ID: CRB-0003 | Name: 金碳子 | Type: unit | Atk: 2 | Score: -3 | Tribute: 0 | Subtype: 碳
+Keywords: ['破甲，貫穿']
+Effect: 破甲。貫穿。
+--------------------------------------------------
+ID: CRB-0004 | Name: 吹碳子 | Type: unit | Atk: 4 | Score: -3 | Tribute: 0 | Subtype: 碳
+Keywords: ['遠程攻擊']
+Effect: 遠程攻擊
+--------------------------------------------------
+ID: CRB-0005 | Name: 旅人公車- | Type: unit | Atk: 4 | Score: 4 | Tribute: 2 | Subtype: 運輸
+Keywords: ['搭乘，下車']
+Effect: 此卡被召喚/打出時搭乘3。此卡被破壞時可下車2代替破壞
+--------------------------------------------------
+ID: CRB-0007 | Name: 吸管接龍 | Type: unit | Atk: 6 | Score: 3 | Tribute: 1 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即 : 可從你手牌或牌庫尋找1碳單位並使其被召喚, 然後重洗牌庫。此卡被破壞時, 使你墓地1碳單位被召喚
+--------------------------------------------------
+ID: CRB-0008 | Name: 一雙免洗筷 | Type: unit | Atk: 4 | Score: 2 | Tribute: 0 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即 : 可使你手牌或墓地 1碳單位被召喚
+--------------------------------------------------
+ID: CRB-0010 | Name: 旅人電動車 | Type: unit | Atk: 3 | Score: 3 | Tribute: 1 | Subtype: 運輸
+Keywords: ['搭乘，下車']
+Effect: 此卡被召喚/打出時搭乘2。你的召喚階段, 可下車1, 若成功則使你場上1單位轉正
+--------------------------------------------------
+ID: CRB-0011 | Name: 綠色消費人 | Type: unit | Atk: 2 | Score: 2 | Tribute: 0 | Subtype: 人型
+Keywords: ['獎勵']
+Effect: 每當你的小旅人回森林時, 獎勵+1 (一回合限一次）
+--------------------------------------------------
+ID: CRB-0012 | Name: 節能補充員 | Type: unit | Atk: 3 | Score: 3 | Tribute: 0 | Subtype: 人型
+Keywords: ['運輸，上車']
+Effect: 你的主要階段, 可使你場上1個小旅人與運輸單位發動上車
+--------------------------------------------------
+ID: CRB-0014 | Name: 大樹 | Type: unit | Atk: 盾 | Score: 2 | Tribute: 0 | Subtype: None
+Keywords: ['阻檔，立即，運輸，上車']
+Effect: 阻擋 。立即 : 召喚2個小旅人, 且此2個小旅人可與你場上的運輸單位發動上車
+--------------------------------------------------
+ID: CRB-0016 | Name: 碳中和 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: ['碳']
+Effect: 使你場上所有碳單位被破壞, 並召喚等同破壞單位數量的小旅人
+--------------------------------------------------
+ID: CRB-0018 | Name: 碳交易所 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 場地
+Keywords: ['碳']
+Effect: 你的主要階段, 可使場上1碳單位被洗回持有者牌庫, 若成功, 你抽1張牌
+--------------------------------------------------
+ID: CRB-0020 | Name: 溫室效應 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: ['碳']
+Effect: 若你場上有2個或以上的碳單位, 使你場上所有碳單位被破壞, 使敵方場上1單位被破壞
+--------------------------------------------------
+ID: CRB-0021 | Name: 碳足跡減少 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: ['運輸，上車']
+Effect: 使場上2個小旅人被破壞, 若成功則從森林將2個小旅人與你場上1運輸單位發動上車
+--------------------------------------------------
+ID: CRB-0024 | Name: 旅人噴碳車 | Type: unit | Atk: 3 | Score: 2 | Tribute: 0 | Subtype: 運輸
+Keywords: ['搭乘，碳，下車']
+Effect: 此卡被召喚/打出時搭乘1。立即 : 可從你牌庫尋找1 碳 單位並使其被召喚, 然後重洗牌庫。
+你的主要階段, 可下車1, 若成功則使你墓地1碳單位被召喚。
+--------------------------------------------------
+ID: R-CRB-0006 | Name: 巨大寶特瓶 | Type: unit | Atk: 7 | Score: 6 | Tribute: 2 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即:可從你手牌/墓地/牌庫尋找加總2碳單位並使其被召喚, 若成功則將其中1個移動到敵方場上任意位置, 然後重洗牌庫
+此單位被破壞時, 使你墓地1碳單位被召喚
+--------------------------------------------------
+ID: R-CRB-0008 | Name: 一雙免洗筷 | Type: unit | Atk: 4 | Score: 2 | Tribute: 0 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即 : 可使你手牌或墓地 1碳單位被召喚
+--------------------------------------------------
+ID: R-CRB-0010 | Name: 旅人電動車 | Type: unit | Atk: 3 | Score: 3 | Tribute: 1 | Subtype: 運輸
+Keywords: ['搭乘，下車']
+Effect: 此卡被召喚/打出時搭乘2。你的召喚階段, 可下車1, 若成功則使你場上1單位轉正
+--------------------------------------------------
+ID: R-CRB-0012 | Name: 節能補充員 | Type: unit | Atk: 3 | Score: 3 | Tribute: 0 | Subtype: 人型
+Keywords: ['運輸，上車']
+Effect: 你的主要階段, 可使你場上1個小旅人與運輸單位發動上車。
+--------------------------------------------------
+ID: R-CRB-0015 | Name: 塑膠袋浪人 | Type: unit | Atk: 5 | Score: 1 | Tribute: 0 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即 : 可從你手牌或牌庫尋找1碳單位並使其被召喚, 然後重洗牌庫
+--------------------------------------------------
+ID: R-CRB-0017 | Name: 碳稅 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: []
+Effect: 敵方須棄掉1張手牌, 否則使該單位被破壞
+--------------------------------------------------
+ID: R-CRB-0019 | Name: 碳盤查 | Type: magic | Atk: 0 | Score: 0 | Tribute: 0 | Subtype: 消耗
+Keywords: ['塑膠，碳']
+Effect: 若你場上沒有塑膠單位及碳單位, 則使你場上所有單位被賦予+2攻擊力直到本回合結束
+--------------------------------------------------
+ID: R-CRB-0020 | Name: 溫室效應 | Type: magic | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 消耗
+Keywords: ['碳']
+Effect: 若你場上有2個或以上的碳單位, 使你場上所有碳單位被破壞, 使敵方場上1單位被破壞
+--------------------------------------------------
+ID: R-CRB-0021 | Name: 碳足跡減少 | Type: magic | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 消耗
+Keywords: ['運輸，上車']
+Effect: 使場上2個小旅人被破壞, 若成功則從森林將2個小旅人與你場上1運輸單位發動上車
+--------------------------------------------------
+ID: R-CRB-0022 | Name: 汙染者付費 | Type: magic | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 消耗
+Keywords: ['塑膠']
+Effect: 若你場上有塑膠單位, 則你棄掉1張手牌並抽1張牌
+--------------------------------------------------
+ID: R-CRB-0022-泳裝 | Name: 汙染者付費 | Type: magic | Atk: 0 | Score: 1 | Tribute: 0 | Subtype: 消耗
+Keywords: ['塑膠']
+Effect: 若你場上有塑膠單位, 則你棄掉1張手牌並抽1張牌
+--------------------------------------------------
+ID: R-CRB-0023 | Name: 藍碳王 | Type: unit | Atk: 4 | Score: 2 | Tribute: 0 | Subtype: None
+Keywords: ['運輸，碳']
+Effect: 你打出運輸單位時, 若該單位的祭品包含碳單位，則可使你墓地或手牌的此卡被召喚
+--------------------------------------------------
+ID: R-CRB-0025 | Name: 下車鈴旅人 | Type: unit | Atk: 3 | Score: 3 | Tribute: 0 | Subtype: None
+Keywords: ['下車']
+Effect: 你場上的單位發動下車時, 召喚1個小旅人 (一回合限一次)
+--------------------------------------------------
+ID: SR-CRB-0001 | Name: 碳碳子 | Type: unit | Atk: 1 | Score: -4 | Tribute: 0 | Subtype: 碳
+Keywords: ['運輸，塑膠']
+Effect: 只能透過碳碳族的單位效果召喚。此卡可作為運輸或塑膠單位的2個祭品
+--------------------------------------------------
+ID: SR-CRB-0002 | Name: 綠碳子 | Type: unit | Atk: 1 | Score: -2 | Tribute: 0 | Subtype: 碳
+Keywords: ['劇毒']
+Effect: 只能通過碳碳族單位效果召喚，劇毒。
+--------------------------------------------------
+ID: SR-CRB-0007 | Name: 吸管接龍 | Type: unit | Atk: 6 | Score: 3 | Tribute: 1 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即 : 可從你手牌或牌庫尋找1碳單位並使其被召喚, 然後重洗牌庫。此卡被破壞時, 使你墓地1碳單位被召喚
+--------------------------------------------------
+ID: SR-CRB-0009 | Name: 旅人捷運 | Type: unit | Atk: 4 | Score: 4 | Tribute: 3 | Subtype: 運輸
+Keywords: ['搭乘']
+Effect: 此卡被召喚/打出時搭乘4。你的主要階段, 可下車3, 若成功則使此卡前方1個敵方單位被破壞
+--------------------------------------------------
+ID: SR-CRB-0012 | Name: 節能補充員 | Type: unit | Atk: 3 | Score: 3 | Tribute: 0 | Subtype: 人型
+Keywords: ['運輸，上車']
+Effect: 你的主要階段, 可使你場上1個小旅人與運輸單位發動上車
+--------------------------------------------------
+ID: SR-CRB-0014 | Name: 大樹 | Type: unit | Atk: 盾 | Score: 2 | Tribute: 0 | Subtype: None
+Keywords: ['阻檔，立即，運輸，上車']
+Effect: 阻擋 。立即 : 召喚2個小旅人, 且此2個小旅人可與你場上的運輸單位發動上車
+--------------------------------------------------
+ID: SSR-CRB-0001 | Name: 碳碳子 | Type: unit | Atk: 1 | Score: -4 | Tribute: 0 | Subtype: 碳
+Keywords: ['運輸，塑膠']
+Effect: 只能透過碳碳族的單位效果召喚。此卡可作為運輸或塑膠單位的2個祭品
+--------------------------------------------------
+ID: SSR-CRB-0004 | Name: 吹碳子 | Type: unit | Atk: 4 | Score: -3 | Tribute: 0 | Subtype: 碳
+Keywords: ['遠程攻擊']
+Effect: 遠程攻擊
+--------------------------------------------------
+ID: SSR-CRB-0006 | Name: 巨大寶特瓶 | Type: unit | Atk: 7 | Score: 6 | Tribute: 2 | Subtype: 塑膠
+Keywords: ['立即，碳']
+Effect: 立即:可從你手牌/墓地/牌庫尋找加總2碳單位並使其被召喚, 若成功則將其中1個移動到敵方場上任意位置, 然後重洗牌庫
+此單位被破壞時, 使你墓地1碳單位被召喚
+--------------------------------------------------
+ID: SSSR-CRB-0012 | Name: 節能補充員 | Type: unit | Atk: 3 | Score: 3 | Tribute: 0 | Subtype: 人型
+Keywords: ['運輸，上車']
+Effect: 你的主要階段, 可使你場上1個小旅人與運輸單位發動上車
+--------------------------------------------------

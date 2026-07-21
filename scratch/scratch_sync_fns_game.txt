@@ -1,0 +1,29 @@
+L5858: sendFullGameStateToOpponent();
+L5862: } else if (data.action === "sync_game_state") {
+L8162: sendFullGameStateToOpponent();
+L8843: function sendFullGameStateToOpponent() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const stateToSend = {
+      field: field,
+      playerFieldCard: document.getElementById("playerField")?.dataset.card ? JSON.parse(document.getElementById("playerField").dataset.card) : null,
+      enemyFieldCard: document.getElementById("enemyField")?.dataset.card ? JSON.parse(document.getElementById("enemyField").dataset.card) : null,
+      playerBonusScore: playerBonusScore,
+      enemyBonusScore: enemyBonusScore,
+      turn: turn,
+      phase: phase,
+      isMyTurn: isMyTurn,
+      opponent_mulligan_done: opponent_mulligan_done,
+      graveyard: graveyard,
+      enemyGraveyard: enemyGraveyard,
+      playerExileZone: playerExileZone,
+      enemyExileZone: enemyExileZone,
+      playerExtraDeck: playerExtraDeck,
+      enemyExtraDeck: enemyExtraDeck,
+      handCount: hand.length
+    };
+    ws.send(JSON.stringify({
+      action: "sync_game_state",
+      state: stateToSend
+    }));
+  }
+L8864: action: "sync_game_state",

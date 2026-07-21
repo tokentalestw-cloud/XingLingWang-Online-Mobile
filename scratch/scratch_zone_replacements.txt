@@ -1,0 +1,2 @@
+game_v8.js L350: div.dataset.zone = key.replace('_', '_'); // 統一為 player_front/player_back
+game.js L349: div.dataset.zone = key.replace('_', '_'); // 統一為 player_front/player_back

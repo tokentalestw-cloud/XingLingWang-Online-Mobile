@@ -1,0 +1,81 @@
+9110:   }
+9111: }
+9112: 
+9113: async function runNeutralEndPhaseEffects(isPlayerSide) {
+9114:   const side = isPlayerSide ? "player" : "enemy";
+9115:   const frontZone = isPlayerSide ? "player_front" : "enemy_front";
+9116:   const backZone = isPlayerSide ? "player_back" : "enemy_back";
+9117: 
+9118:   // 1. 觀光阿姨 (NEU-0004 / R-NEU-0004)
+9119:   let auntCount = 0;
+9120:   field[frontZone].concat(field[backZone]).forEach(u => {
+9121:     if (u && u.card && (u.card.id === "NEU-0004" || u.card.name?.includes("觀光阿姨"))) {
+9122:       auntCount++;
+9123:     }
+9124:   });
+9125: 
+9126:   for (let i = 0; i < auntCount; i++) {
+9127:     if (isPlayerSide) {
+9128:       const choices = [
+9129:         { text: "召喚至我方場上", value: "player" },
+9130:         { text: "召喚至敵方場上", value: "enemy" }
+9131:       ];
+9132:       const chosenSide = await showXLWChoiceModal("觀光阿姨 效果觸發", "請選擇召喚小旅人的目標場地：", choices);
+9133:       if (chosenSide) {
+9134:         const targetZones = chosenSide === "player" ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+9135:         const allowedSlots = [];
+9136:         for (const z of targetZones) {
+9137:           for (let idx = 0; idx < 5; idx++) {
+9138:             if (!field[z][idx] && xlwCanLanternSummonToZone(chosenSide, z, idx)) {
+9139:               allowedSlots.push({ zone: z, idx });
+9140:             }
+9141:           }
+9142:         }
+9143:         if (allowedSlots.length > 0) {
+9144:           window.XLW_emperorSlotSelecting = true;
+9145:           window.XLW_emperorAllowedSlots = allowedSlots;
+9146:           setStatus(`【觀光阿姨】請點選${chosenSide === "player" ? "我方" : "敵方"}場上一個空格以召喚小旅人！`);
+9147:           render();
+9148:           const res = await new Promise(r => { window.XLW_emperorSlotResolve = r; });
+9149:           if (res) {
+9150:             field[res.zone][res.idx] = {
+9151:               card: structuredClone(LITTLE_TRAVELER),
+9152:               tapped: false,
+9153:               attacking: false,
+9154:               target: null,
+9155:               summonedTurn: turn,
+9156:               summonedZone: res.zone
+9157:             };
+9158:             logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+9159:             playTravelerSummonAnimation(chosenSide === "player" ? "#playerForest" : "#enemyForest", res.zone, res.idx);
+9160:           }
+9161:         } else {
+9162:           logBattle("觀光阿姨 效果：目標場地已滿，無法召喚。");
+9163:         }
+9164:       }
+9165:     } else {
+9166:       // AI side triggers aunt: AI randomly summons Little Traveler to player or enemy side
+9167:       const chosenSide = Math.random() < 0.5 ? "player" : "enemy";
+9168:       const targetZones = chosenSide === "player" ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+9169:       const allowedSlots = [];
+9170:       for (const z of targetZones) {
+9171:         for (let idx = 0; idx < 5; idx++) {
+9172:           if (!field[z][idx] && xlwCanLanternSummonToZone(chosenSide, z, idx)) {
+9173:             allowedSlots.push({ zone: z, idx });
+9174:           }
+9175:         }
+9176:       }
+9177:       if (allowedSlots.length > 0) {
+9178:         const res = allowedSlots[Math.floor(Math.random() * allowedSlots.length)];
+9179:         field[res.zone][res.idx] = {
+9180:           card: structuredClone(LITTLE_TRAVELER),
+9181:           tapped: false,
+9182:           attacking: false,
+9183:           target: null,
+9184:           summonedTurn: turn,
+9185:           summonedZone: res.zone
+9186:         };
+9187:         logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+9188:         playTravelerSummonAnimation(chosenSide === "player" ? "#playerForest" : "#enemyForest", res.zone, res.idx);
+9189:       }
+9190:     }

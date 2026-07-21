@@ -1,0 +1,52 @@
+L915: const fieldEl = owner === "player" ? $("playerField") : $("enemyField");
+L1290: // 4. 恐怖的井 / 持久魔法卡放置到場地區
+L1291: else if (card.name.includes("恐怖的井") || card.magic_type === "場地" || card.name.includes("場地") || text.includes("結束階段時")) {
+L1292: const playerField = $("playerField");
+L1293: if (playerField) {
+L1294: if (playerField.dataset.card) {
+L1295: graveyard.push(JSON.parse(playerField.dataset.card));
+L1297: playerField.dataset.card = JSON.stringify(card);
+L1327: const playerField = $("playerField");
+L1328: if (playerField && playerField.dataset.card) {
+L1329: const fCard = JSON.parse(playerField.dataset.card);
+L1331: playerField.dataset.card = JSON.stringify(fCard);
+L1605: if ($("playerField").dataset.card) choices.push({ text: "破壞我方場地牌", value: "player" });
+L1606: if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+L1610: const fCard = JSON.parse($("playerField").dataset.card);
+L1614: delete $("playerField").dataset.card;
+L1619: const fCard = JSON.parse($("enemyField").dataset.card);
+L1623: delete $("enemyField").dataset.card;
+L1644: const enemyField = $("enemyField");
+L1645: if (enemyField) {
+L1646: if (enemyField.dataset.card) {
+L1647: window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+L1649: enemyField.dataset.card = JSON.stringify(unit.card);
+L1924: const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
+L1928: logBattle("恐怖錄影帶 效果：從牌庫檢索「恐怖的井」並加入手牌！");
+L1931: logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
+L4098: const pfEl = $("playerField");
+L4102: if (fieldCard.name.includes("恐怖的井")) {
+L4107: const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
+L4117: setStatus("【恐怖的井 召喚】請點選我方一個空格進行特殊召喚！");
+L5350: const pf = $("playerField");
+L5409: let playerFieldStars = 0;
+L5415: playerFieldStars += uStars;
+L5420: let enemyFieldStars = 0;
+L5426: enemyFieldStars += uStars;
+L5447: <span>場上星星: <span style="color: #ffd76a;">${playerFieldStars} ★</span> | 額外分數: <span style="color: #ff5252;">${playerBonusScore} ★</span></span>
+L5454: <span>場上星星: <span style="color: #ffd76a;">${enemyFieldStars} ★</span> | 額外分數: <span style="color: #ff5252;">${enemyBonusScore} ★</span></span>
+L5463: playerVal.innerHTML = `${playerStars} <span style="font-size: 13px; font-weight: normal; opacity: 0.8; margin-left: 6px;">(\u5834\u4e0a\u661f\u661f: ${playerFieldStars} \u2605 | \u984d\u5916\u5206\u6578: ${playerBonusScore} \u2605)</span>`;
+L5466: enemyVal.innerHTML = `${enemyStars} <span style="font-size: 13px; font-weight: normal; opacity: 0.8; margin-left: 6px;">(\u5834\u4e0a\u661f\u661f: ${enemyFieldStars} \u2605 | \u984d\u5916\u5206\u6578: ${enemyBonusScore} \u2605)</span>`;
+L6577: const oppField = $("enemyField");
+L7486: let playerFieldStars = 0;
+L7492: playerFieldStars += uStars;
+L7498: let enemyFieldStars = 0;
+L7504: enemyFieldStars += uStars;
+L7528: \u6211\u65b9 ${playerStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${playerFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${playerBonusScore} \u2605)</small>
+L7529: \u5c0d\u624b ${enemyStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${enemyFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${enemyBonusScore} \u2605)</small>
+L7618: let playerFieldStars = 0;
+L7624: playerFieldStars += uStars;
+L7630: let enemyFieldStars = 0;
+L7636: enemyFieldStars += uStars;
+L7672: 我方 ${playerStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${playerFieldStars} ★ | 額外加分: ${playerBonusScore} ★)</small>
+L7673: 對手 ${enemyStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${enemyFieldStars} ★ | 額外加分: ${enemyBonusScore} ★)</small>

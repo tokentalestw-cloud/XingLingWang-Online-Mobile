@@ -1,0 +1,321 @@
+17430:         resolve();
+17431:       }, 300);
+17432:     }, 2200);
+17433:   });
+17434: }
+17435: 
+17436: function showSpellChainUI(stack) {
+17437:   const overlay = getOrCreateSpellChainOverlay();
+17438:   overlay.style.display = "flex";
+17439:   
+17440:   window.XLW_chainMinimized = false;
+17441:   const content = document.getElementById("xlw-chain-content");
+17442:   const minBtn = document.getElementById("xlw-chain-toggle-minimize");
+17443:   content.style.display = "flex";
+17444:   overlay.style.background = "rgba(8, 6, 16, 0.5)";
+17445:   overlay.style.pointerEvents = "auto";
+17446:   minBtn.style.pointerEvents = "auto";
+17447:   minBtn.textContent = "👁️ 隱藏連鎖";
+17448:   minBtn.style.background = "rgba(0,0,0,0.7)";
+17449:   minBtn.style.borderColor = "#ffd76a";
+17450:   
+17451:   const cardsContainer = document.getElementById("xlw-chain-cards");
+17452:   cardsContainer.innerHTML = "";
+17453:   
+17454:   stack.forEach((item, idx) => {
+17455:     const wrapper = document.createElement("div");
+17456:     wrapper.className = `chain-card-wrapper ${item.owner === "me" ? "me-card" : "opp-card"}`;
+17457:     
+17458:     const indexLabel = document.createElement("div");
+17459:     indexLabel.className = "chain-card-index";
+17460:     indexLabel.textContent = `連鎖 ${idx + 1}`;
+17461:     wrapper.appendChild(indexLabel);
+17462:     
+17463:     const img = document.createElement("img");
+17464:     img.className = "chain-card-img";
+17465:     img.src = item.card.image || "/static/card_back.jpeg";
+17466:     img.alt = item.card.name;
+17467:     wrapper.appendChild(img);
+17468:     
+17469:     const ownerLabel = document.createElement("div");
+17470:     ownerLabel.className = "chain-card-owner";
+17471:     ownerLabel.textContent = `${item.owner === "me" ? "我方" : "對手"} - ${item.card.name}`;
+17472:     wrapper.appendChild(ownerLabel);
+17473:     
+17474:     cardsContainer.appendChild(wrapper);
+17475:     
+17476:     if (idx < stack.length - 1) {
+17477:       const divider = document.createElement("div");
+17478:       divider.className = "chain-divider";
+17479:       divider.textContent = "⚡";
+17480:       cardsContainer.appendChild(divider);
+17481:     }
+17482:   });
+17483: }
+17484: 
+17485: function hideSpellChainUI() {
+17486:   const overlay = document.getElementById("xlw-spell-chain-overlay");
+17487:   if (overlay) {
+17488:     overlay.style.display = "none";
+17489:   }
+17490:   if (window.XLW_chainAutoPassTimeout) {
+17491:     clearTimeout(window.XLW_chainAutoPassTimeout);
+17492:     window.XLW_chainAutoPassTimeout = null;
+17493:   }
+17494:   window.XLW_chainMinimized = false;
+17495: }
+17496: 
+17497: function aiRespondToSpellChain() {
+17498:   if (spellChainStack.length === 0) return;
+17499:   const lastItem = spellChainStack[spellChainStack.length - 1];
+17500:   if (lastItem.owner !== "me") return; 
+17501: 
+17502:   const isLastItemUnit = lastItem.card.type === "unit" || lastItem.card.name.includes("魔法炸彈客") || lastItem.card.id === "NEU-0025";
+17503:   if (isLastItemUnit) {
+17504:     resolveLocalSpellChain();
+17505:     return;
+17506:   }
+17507: 
+17508:   const aiHand = window.XLW_ENEMY.hand || [];
+17509:   const bombCard = aiHand.find(c => c && (c.name.includes("魔法炸彈客") || c.id === "NEU-0025"));
+17510:   const counterCard = aiHand.find(c => c && (
+17511:     c.name.includes("魔法反制") || 
+17512:     c.name.includes("法術保護") || 
+17513:     c.name.includes("終極無效化") || 
+17514:     c.name.includes("法術解析") || 
+17515:     c.id === "SSR-NMG-0019" || 
+17516:     c.id === "NMG-0019"
+17517:   ));
+17518: 
+17519:   if (bombCard && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0 && Math.random() < 0.45) {
+17520:     const idx = aiHand.indexOf(bombCard);
+17521:     aiHand.splice(idx, 1);
+17522:     logBattle(`對手 AI 從手牌連鎖發動了 ${bombCard.name}！`);
+17523:     spellChainStack.push({ card: bombCard, owner: "opponent" });
+17524:     showSpellChainUI(spellChainStack);
+17525:     promptNextChainAction();
+17526:   } else if (counterCard && Math.random() < 0.45) {
+17527:     const idx = aiHand.indexOf(counterCard);
+17528:     aiHand.splice(idx, 1);
+17529:     logBattle(`對手 AI 從手牌連鎖發動了 ${counterCard.name}！`);
+17530:     spellChainStack.push({ card: counterCard, owner: "opponent" });
+17531:     showSpellChainUI(spellChainStack);
+17532:     promptNextChainAction();
+17533:   } else {
+17534:     logBattle("對手 AI 選擇不進行連鎖反制。");
+17535:     resolveLocalSpellChain();
+17536:   }
+17537: }
+17538: 
+17539: function promptNextChainAction() {
+17540:   const overlay = getOrCreateSpellChainOverlay();
+17541:   const statusText = document.getElementById("xlw-chain-status");
+17542:   const actionsDiv = document.getElementById("xlw-chain-actions");
+17543:   actionsDiv.innerHTML = "";
+17544: 
+17545:   if (window.XLW_chainAutoPassTimeout) {
+17546:     clearTimeout(window.XLW_chainAutoPassTimeout);
+17547:     window.XLW_chainAutoPassTimeout = null;
+17548:   }
+17549: 
+17550:   const lastItem = spellChainStack[spellChainStack.length - 1];
+17551:   
+17552:   // Who is the next responder?
+17553:   if (lastItem.owner === "me") {
+17554:     statusText.textContent = "⌛ 等待對手確認是否進行連鎖反制...";
+17555:     if (!isMultiplayer) {
+17556:       setTimeout(() => {
+17557:         aiRespondToSpellChain();
+17558:       }, 1000);
+17559:     }
+17560:   } else {
+17561:     // I am the responder.
+17562:     // 魔法炸彈客是單位卡，不能被可以克制魔法卡的卡片（魔法反制、終極無效化等）所克制
+17563:     const isLastItemUnit = lastItem.card.type === "unit" || lastItem.card.name.includes("魔法炸彈客") || lastItem.card.id === "NEU-0025";
+17564:     const counterCards = isLastItemUnit ? [] : hand.filter(c => c && (
+17565:       c.name.includes("魔法反制") || 
+17566:       c.name.includes("終極無效化") || 
+17567:       c.name.includes("法術解析") || 
+17568:       c.name.includes("法術保護") ||
+17569:       c.name.includes("魔法炸彈客") ||
+17570:       c.id === "NEU-0025"
+17571:     ));
+17572: 
+17573:     if (counterCards.length > 0) {
+17574:       statusText.textContent = `🔥 對手連鎖發動了 ${lastItem.card.name}，是否進行連鎖反制？`;
+17575:       
+17576:       // Pass button
+17577:       const passBtn = document.createElement("button");
+17578:       passBtn.className = "forest-summon-btn";
+17579:       passBtn.style.background = "#ff4d4f";
+17580:       passBtn.style.color = "#fff";
+17581:       passBtn.style.borderColor = "#ff4d4f";
+17582:       passBtn.style.padding = "8px 20px";
+17583:       passBtn.style.fontSize = "14px";
+17584:       passBtn.style.height = "auto";
+17585:       passBtn.style.cursor = "pointer";
+17586:       passBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+17587:       passBtn.textContent = "❌ 不進行反制 (Pass)";
+17588:       passBtn.onclick = () => {
+17589:         actionsDiv.innerHTML = "";
+17590:         statusText.textContent = "⌛ 正在送出連鎖決議...";
+17591:         if (isMultiplayer && ws) {
+17592:           ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+17593:         }
+17594:         resolveLocalSpellChain();
+17595:       };
+17596:       actionsDiv.appendChild(passBtn);
+17597: 
+17598:       // Counter buttons
+17599:       counterCards.forEach(c => {
+17600:         const counterBtn = document.createElement("button");
+17601:         counterBtn.className = "forest-summon-btn";
+17602:         counterBtn.style.background = "#52c41a";
+17603:         counterBtn.style.color = "#fff";
+17604:         counterBtn.style.borderColor = "#52c41a";
+17605:         counterBtn.style.padding = "8px 20px";
+17606:         counterBtn.style.fontSize = "14px";
+17607:         counterBtn.style.height = "auto";
+17608:         counterBtn.style.cursor = "pointer";
+17609:         counterBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+17610:         counterBtn.textContent = `🔥 使用 ${c.name}`;
+17611:         counterBtn.onclick = async () => {
+17612:           actionsDiv.innerHTML = "";
+17613:           statusText.textContent = `🔥 正在連鎖施放 ${c.name}...`;
+17614:           
+17615:           await xlwShowSpellActivationOverlay(c, "player");
+17616:           
+17617:           // Remove from hand
+17618:           hand.splice(hand.indexOf(c), 1);
+17619:           
+17620:           // Add to local stack
+17621:           spellChainStack.push({ card: c, owner: "me" });
+17622:           
+17623:           // Sync with opponent
+17624:           if (isMultiplayer && ws) {
+17625:             ws.send(JSON.stringify({
+17626:               action: "spell_chain_add",
+17627:               card: c
+17628:             }));
+17629:           }
+17630:           
+17631:           // Update UI
+17632:           showSpellChainUI(spellChainStack);
+17633:           promptNextChainAction();
+17634:           render();
+17635:         };
+17636:         actionsDiv.appendChild(counterBtn);
+17637:       });
+17638:     } else {
+17639:       statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
+17640:       
+17641:       const autoPassBtn = document.createElement("button");
+17642:       autoPassBtn.className = "forest-summon-btn";
+17643:       autoPassBtn.style.background = "#444";
+17644:       autoPassBtn.style.color = "#888";
+17645:       autoPassBtn.style.borderColor = "#666";
+17646:       autoPassBtn.style.padding = "8px 20px";
+17647:       autoPassBtn.style.fontSize = "14px";
+17648:       autoPassBtn.style.height = "auto";
+17649:       autoPassBtn.disabled = true;
+17650:       autoPassBtn.textContent = "自動放行中 (1.5秒)...";
+17651:       actionsDiv.appendChild(autoPassBtn);
+17652: 
+17653:       window.XLW_chainAutoPassTimeout = setTimeout(() => {
+17654:         if (isMultiplayer && ws) {
+17655:           ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+17656:         }
+17657:         resolveLocalSpellChain();
+17658:       }, 1500);
+17659:     }
+17660:   }
+17661: }
+17662: 
+17663: function resolveLocalSpellChain() {
+17664:   hideSpellChainUI();
+17665:   
+17666:   if (window.XLW_chainAutoPassTimeout) {
+17667:     clearTimeout(window.XLW_chainAutoPassTimeout);
+17668:     window.XLW_chainAutoPassTimeout = null;
+17669:   }
+17670: 
+17671:   if (window.XLW_ENEMY && window.XLW_ENEMY.grave) {
+17672:     enemyGraveyard = window.XLW_ENEMY.grave;
+17673:   }
+17674:   
+17675:   if (!spellChainStack || spellChainStack.length === 0) return;
+17676:   
+17677:   // 1. Work backwards from the top of the stack to determine which counter/spell resolves
+17678:   const resolved = new Array(spellChainStack.length).fill(true);
+17679:   for (let i = spellChainStack.length - 1; i >= 1; i--) {
+17680:     if (resolved[i]) {
+17681:       const counteringCard = spellChainStack[i] ? spellChainStack[i].card : null;
+17682:       const targetCard = spellChainStack[i - 1] ? spellChainStack[i - 1].card : null;
+17683:       
+17684:       if (counteringCard && targetCard) {
+17685:         const isTargetUnit = targetCard.type === "unit" || (targetCard.name && targetCard.name.includes("\u9b54\u6cd5\u70b8\u5f48\u5ba2")) || targetCard.id === "NEU-0025";
+17686:         const isCounterMagicOnly = (counteringCard.name && counteringCard.name.includes("\u9b54\u6cd5\u53cd\u5236")) || 
+17687:                                    (counteringCard.name && counteringCard.name.includes("\u7d42\u6975\u7121\u6548\u5316")) || 
+17688:                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u89e3\u6790")) || 
+17689:                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u4fdd\u8b77"));
+17690:                                    
+17691:         if (isTargetUnit && isCounterMagicOnly) {
+17692:           logBattle(`\u3010\u53cd\u5236\u7121\u6548\u3011${counteringCard.name} \u7121\u6cd5\u53cd\u5236\u55ae\u4f4d\u5361 ${targetCard.name} \u7684\u6548\u679c\uff01`);
+17693:         } else {
+17694:           // If card i resolves, it negates the card below it (i-1)
+17695:           resolved[i - 1] = false;
+17696:         }
+17697:       } else {
+17698:         resolved[i - 1] = false;
+17699:       }
+17700:     }
+17701:   }
+17702: 
+17703:   // 2. Resolve each card in the stack
+17704:   const S = spellChainStack[0];
+17705:   const isCountered = !resolved[0];
+17706: 
+17707:   // We process counters first (indices 1 to stack.length - 1)
+17708:   for (let i = 1; i < spellChainStack.length; i++) {
+17709:     const item = spellChainStack[i];
+17710:     const isItemCountered = !resolved[i];
+17711:     const cOwner = item.owner === "me" ? "player" : "enemy";
+17712: 
+17713:     if (item.card.name.includes("魔法炸彈客") || item.card.id === "NEU-0025") {
+17714:       if (isItemCountered) {
+17715:         if (item.owner === "me") {
+17716:           graveyard.push(item.card);
+17717:         } else {
+17718:           enemyGraveyard.push(item.card);
+17719:         }
+17720:       } else {
+17721:         // It resolves!
+17722:         // (a) Exile the magic bomber card itself
+17723:         exileCard(item.card, cOwner);
+17724:         // (b) Exile the top card of its owner's deck
+17725:         if (item.owner === "me") {
+17726:           if (deck.length > 0) {
+17727:             const topCard = deck.pop();
+17728:             exileCard(topCard, "player");
+17729:             const topName = (topCard && topCard.name) ? topCard.name : "未知卡牌";
+17730:             logBattle(`[魔法炸彈客] 效果：我方牌庫頂的 ${topName} 被除外。`);
+17731:           }
+17732:         } else {
+17733:           if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+17734:             let topCard = window.XLW_ENEMY.deck.pop();
+17735:             if (!topCard) {
+17736:               topCard = { name: "對手卡牌", id: "UNKNOWN", type: "單位" };
+17737:             }
+17738:             exileCard(topCard, "enemy");
+17739:             const topName = topCard.name;
+17740:             logBattle(`[魔法炸彈客] 效果：對手牌庫頂的 ${topName} 被除外。`);
+17741:           }
+17742:         }
+17743:         // (c) Exile the card targeted/countered by it
+17744:         const targetItem = spellChainStack[i - 1];
+17745:         targetItem.wasExiledByBomb = true;
+17746:       }
+17747:     } else {
+17748:       // Normal counter spell
+17749:       if (item.owner === "me") {
+17750:         graveyard.push(item.card);

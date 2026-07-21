@@ -1,0 +1,26 @@
+685:         const hannyaSlots = [];
+686:         for (const zone of ["enemy_front", "enemy_back"]) {
+687:           field[zone].forEach((u, idx) => {
+688:             if (u && u.card && u.card.name.includes("智慧的般若")) {
+689:               hannyaSlots.push({ zone, idx, unit: u });
+690:             }
+691:           });
+692:         }
+693:         
+694:         const angryCard = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+695:         if (hannyaSlots.length > 0 && angryCard) {
+696:           const { zone, idx, unit } = hannyaSlots[0];
+697:           window.XLW_ENEMY.grave.push(unit.card);
+698:           enemyGraveyard = window.XLW_ENEMY.grave;
+699:           enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryCard), 1);
+700:           field[zone][idx] = {
+701:             card: structuredClone(angryCard),
+702:             tapped: false,
+703:             attacking: false,
+704:             target: null,
+705:             summonedTurn: turn,
+706:             summonedZone: zone
+707:           };
+708:           logBattle(`✨ 對手 額外進化：對手場上的【智慧的般若】已升級進化為【憤怒的般若】！`);
+709:           playerBonusScore = Math.max(0, playerBonusScore - 1);
+710:         }

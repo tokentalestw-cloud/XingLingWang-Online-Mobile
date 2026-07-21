@@ -1,0 +1,106 @@
+3640:                 card: structuredClone(LITTLE_TRAVELER),
+3641:                 tapped: false,
+3642:                 attacking: false,
+3643:                 target: null,
+3644:                 summonedTurn: turn,
+3645:                 summonedZone: placement.zone
+3646:               };
+3647:               logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+3648:             }
+3649:           } else {
+3650:             // 單機 AI 模式：AI為進攻方，50% 機率發動並召喚到AI場上（我方的enemy_front/back）
+3651:             if (Math.random() < 0.5) {
+3652:               defenderShouldDie = false;
+3653:               window.XLW_foodBallTriggeredTurn = turn;
+3654:               let placed = false;
+3655:               for (const z of ["enemy_front", "enemy_back"]) {
+3656:                 for (let i = 0; i < 5; i++) {
+3657:                   if (!field[z][i]) {
+3658:                     field[z][i] = {
+3659:                       card: structuredClone(LITTLE_TRAVELER),
+3660:                       tapped: false,
+3661:                       attacking: false,
+3662:                       target: null,
+3663:                       summonedTurn: turn,
+3664:                       summonedZone: z
+3665:                     };
+3666:                     logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+3667:                     placed = true;
+3668:                     break;
+3669:                   }
+3670:                 }
+3671:                 if (placed) break;
+3672:               }
+3673:             }
+3674:           }
+3675:         }
+3676:       }
+3677:     }
+3678:   }
+3679: 
+3680:   // --- 二連爪擊喵 (SR-CAT-0047) 戰鬥破壞無效與攻擊力 +3 效果 ---
+3681:   if (attackerShouldDie) {
+3682:     const isDoubleClawAttacking = (attackerCard.id === "SR-CAT-0047" || attackerCard.name === "二連爪擊喵");
+3683:     if (isDoubleClawAttacking) {
+3684:       if (defenderOwner === "enemy") {
+3685:         if (!attacker.doubleClawUsed) {
+3686:           const confirmNegate = await showXLWConfirm(
+3687:             "二連爪擊喵 效果發動",
+3688:             "【二連爪擊喵】即將被戰鬥破壞！是否發動效果無效化本次破壞，並獲得 +3 攻擊力直到防守階段結束？"
+3689:           );
+3690:           if (isMultiplayer) {
+3691:             ws.send(JSON.stringify({
+3692:               action: "double_claw_choice",
+3693:               attZone: attZone,
+3694:               attIdx: attIdx,
+3695:               negate: confirmNegate
+3696:             }));
+3697:           }
+3698:           if (confirmNegate) {
+3699:             attackerShouldDie = false;
+3700:             attacker.doubleClawUsed = true;
+3701:             attacker.doubleClawBonus = true;
+3702:             attacker.atkModifier = (attacker.atkModifier || 0) + 3;
+3703:             logBattle(`✨ 效果發動：我方【二連爪擊喵】無效化了本次戰鬥破壞，並獲得 +3 攻擊力！`);
+3704:             render();
+3705:           }
+3706:         }
+3707:       } else {
+3708:         if (isMultiplayer) {
+3709:           const key = `${attZone}:${attIdx}`;
+3710:           if (window.XLW_opponentDoubleClawNegate[key] === undefined) {
+3711:             await new Promise(resolve => {
+3712:               const check = setInterval(() => {
+3713:                 if (window.XLW_opponentDoubleClawNegate[key] !== undefined) {
+3714:                   clearInterval(check);
+3715:                   resolve();
+3716:                 }
+3717:               }, 50);
+3718:             });
+3719:           }
+3720:           const opponentNegated = window.XLW_opponentDoubleClawNegate[key];
+3721:           if (opponentNegated) {
+3722:             attackerShouldDie = false;
+3723:             attacker.doubleClawBonus = true;
+3724:             attacker.atkModifier = (attacker.atkModifier || 0) + 3;
+3725:             logBattle(`✨ 效果發動：對手的【二連爪擊喵】無效化了本次戰鬥破壞，並獲得 +3 攻擊力！`);
+3726:             render();
+3727:           }
+3728:         } else {
+3729:           if (!attacker.doubleClawUsed) {
+3730:             attackerShouldDie = false;
+3731:             attacker.doubleClawUsed = true;
+3732:             attacker.doubleClawBonus = true;
+3733:             attacker.atkModifier = (attacker.atkModifier || 0) + 3;
+3734:             logBattle(`✨ 效果發動：對手AI的【二連爪擊喵】無效化了本次戰鬥破壞，並獲得 +3 攻擊力！`);
+3735:             render();
+3736:           }
+3737:         }
+3738:       }
+3739:     }
+3740:   }
+3741: 
+3742:   if (attackerShouldDie) {
+3743:     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat, true));
+3744:   }
+3745:   if (defenderShouldDie) {

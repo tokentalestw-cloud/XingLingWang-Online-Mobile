@@ -1,0 +1,22 @@
+391: if (idUpper.includes("CAT") || idUpper.includes("VLG") || idUpper.includes("ORC")) {
+395: if (idUpper.includes("VLG") || idUpper.includes("ART") || idUpper.includes("ORC")) {
+403: if (idUpper.includes("CAT") || idUpper.includes("VLG") || idUpper.includes("ART")) {
+425: return c.faction === "妖怪村莊" || c.race === "妖怪村莊" || idUpper.startsWith("VLG_") || idUpper.startsWith("VLG-");
+714: const angryCard = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+1408: // 4. 恐怖的井 / 持久魔法卡放置到場地區
+1409: else if (card.name.includes("恐怖的井") || card.magic_type === "場地" || card.name.includes("場地") || text.includes("結束階段時")) {
+1637: if (card.name.includes("十八呎") || card.id === "VLG_011") {
+1638: const yokaiInHand = hand.filter((c, idx) => idx !== handIndex && c && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
+2066: const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
+2070: logBattle("恐怖錄影帶 效果：從牌庫檢索「恐怖的井」並加入手牌！");
+2073: logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
+3724: // 武士繪 (R-VLG-0011) 戰鬥成功回收效果
+3727: const yokaiInGrave = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
+3958: const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+4022: const angryHannya = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+4378: if (fieldCard.name.includes("恐怖的井")) {
+4379: const eligible = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")) && (Number(c.score || 0) <= 2));
+4383: const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
+4393: setStatus("【恐怖的井 召喚】請點選我方一個空格進行特殊召喚！");
+6954: const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+7004: const extraIdx = enemyExtraDeck.findIndex(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));

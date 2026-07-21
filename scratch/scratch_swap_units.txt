@@ -1,0 +1,10 @@
+L6189: } else if (data.action === "swap_units") {
+  6187:         render();
+  6188:       }
+  6189:     } else if (data.action === "swap_units") {
+  6190:       const fromZone = data.fromZone;
+  6191:       const fromIdx = data.fromIdx;
+  6192:       const toZone = data.toZone;
+  6193:       const toIdx = data.toIdx;
+  6194:       const unit = field[fromZone][fromIdx];
+--------------------------------------------------

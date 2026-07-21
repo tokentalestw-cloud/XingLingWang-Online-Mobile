@@ -1,0 +1,65 @@
+722: attacking: false,
+1939: attacking: false,
+1978: attacking: false,
+2567: attacker.attacking = true;
+2622: playerAttacker.attacking = true;
+2650: if (unit && !unit.attacking && window.XLW_playerCannotAttackOnNextTurn) {
+2656: if (unit.attacking) {
+2657: unit.attacking = false;
+2706: unit.attacking = true;
+2752: if (u && u.attacking) playerAttackCount++;
+2830: if (enemyUnit && enemyUnit.attacking && enemyUnit.target) {
+2902: if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
+2905: } else if (field.enemy_back[lane] && field.enemy_back[lane].attacking) {
+2966: attacker.attacking = false;
+2983: attacker.attacking = false;
+3024: if (field.player_front[lane] && field.player_front[lane].attacking) {
+3027: } else if (field.player_back[lane] && field.player_back[lane].attacking) {
+3065: attacker.attacking = false;
+3088: attacker.attacking = false;
+3148: if (playerUnit && playerUnit.attacking && playerUnit.target) {
+3242: attacker.attacking = false;
+3248: attacker.attacking = false;
+3379: attacking: false,
+3398: attacking: false,
+3597: attacker.attacking = false;
+3659: attacker.attacking = false;
+3680: attacker.attacking = false;
+3851: const playerHasAttackers = field["player_front"].concat(field["player_back"]).some(u => u && u.attacking);
+3943: attacking: false,
+4006: attacking: false,
+4032: attacking: false,
+4092: enemyAttacker.attacking = true;
+4129: attacking: false,
+4139: attacking: false,
+4319: attacking: false,
+4379: if (u && u.attacking) playerHasAttackers = true;
+4430: if (u && u.attacking) enemyHasAttackers = true;
+4472: u.attacking = false;
+4484: u.attacking = false;
+4810: if (obj.attacking) {
+4825: if (obj.attacking && obj.target) {
+4836: if (phase === "防守階段" && obj.attacking) {
+4845: if (u && u.attacking && u.target && u.target.zone === zone && u.target.idx === idx) {
+4985: if (enemyUnit && enemyUnit.attacking && enemyUnit.target) {
+5539: attacking: false,
+5584: attacking: false,
+5604: attacking: false,
+5735: const hasAttacker = (field.player_front[i] && field.player_front[i].attacking) ||
+5736: (field.player_back[i] && field.player_back[i].attacking) ||
+5737: (field.enemy_front[i] && field.enemy_front[i].attacking);
+6429: attacking: false,
+6622: attacker.attacking = true;
+6639: attacker.attacking = false;
+6646: if (u && u.attacking) enemyAttackCount++;
+6655: if (u && u.attacking) {
+6656: u.attacking = false;
+6686: attacking: false,
+6822: if (u && u.attacking) enemyHasAttackers = true;
+6919: attacking: false,
+6953: attacking: false,
+6976: attacking: false,
+7009: attacking: false,
+7022: attacking: false,
+7201: attacking: false,
+9124: attacking: false,

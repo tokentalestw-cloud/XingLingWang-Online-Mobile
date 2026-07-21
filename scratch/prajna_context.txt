@@ -1,0 +1,670 @@
+
+=================== static/game.js ===================
+
+--- Lines 3475 to 3581 ---
+3475:     const enemyNeedsDefense = window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers;
+3476:     if (!enemyNeedsDefense) {
+3477:       checkCallGameAtTurnStart(false);
+3478:       if (isGameOverFlag) return;
+3479:     }
+3480: 
+3481:     logBattle("—— 對手回合開始 ——");
+3482:     setStatus("對手回合：妖怪村莊正在進行整備抽牌...");
+3483:     await sleep(700);
+3484: 
+3485:     // 1. 整備階段：對手單位轉正
+3486:     untapEnemy();
+3487:     
+3488:     // 2. 對手抽 2 張
+3489:     let drawn = 0;
+3490:     const hasSmartPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
+3491:     const hasAngryPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
+3492: 
+3493:     for (let i = 0; i < 2; i++) {
+3494:       if (window.XLW_ENEMY.deck.length) {
+3495:         const drawnCard = window.XLW_ENEMY.deck.pop();
+3496:         const drawnName = (drawnCard && drawnCard.name) ? drawnCard.name : "未知卡牌";
+3497:         if (hasAngryPrajna) {
+3498:           exileCard(drawnCard, "enemy");
+3499:           logBattle(`憤怒的般若 效果：使對手強行棄置抽到的卡片 ${drawnName}！`);
+3500:         } else {
+3501:           window.XLW_ENEMY.hand.push(drawnCard);
+3502:           drawn++;
+3503:           if (hasSmartPrajna) {
+3504:             logBattle(`智慧的般若 效果：展示對手抽到的卡片：【${drawnName}】！`);
+3505:           }
+3506:         }
+3507:       }
+3508:     }
+3509:     logBattle(`對手整備：對手抽卡結算，單位全體轉正。`);
+3510:     render();
+3511:     await sleep(700);
+3512: 
+3513:     // 3. 對手防守階段 (若我方上回合有宣告攻擊，且我方場上仍有進攻單位 - 規則九第5條)
+3514:     if (window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers) {
+3515:       phase = "\u9632\u5b88\u968e\u6bb5";
+3516:       setStatus("\u5c0d\u624b\u56de\u5408\uff1a\u6b63\u5728\u81ea\u52d5\u7d50\u7b97\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u5c0d\u6c7a...");
+3517:       render();
+3518:       await xlwResolveEnemyDefensePhaseSafe();
+3519:     } else {
+3520:       window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+3521:       logBattle("\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u6211\u65b9\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
+3522:     }
+3523: 
+3524:     // 4. 對手召喚階段 (召喚一個免祭品單位，優先前排)
+3525:     phase = "\u53ec\u559a\u968e\u6bb5";
+3526:     render();
+3527:     const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+3528:     const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+3529:     // 加強 AI 的免祭品召喚判定，以支援小於等於 0 祭品的單位（如 -2 祭品等特規卡牌）
+3530:     const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+3531:       c && (c.type === "unit" || c.type === "單位") && Number(c.tribute || 0) <= 0
+3532:     );
+3533: 
+3534:     // AI 額外召喚邏輯：若場上有般若且額外牌庫有憤怒的般若，自動升級
+3535:     if (enemyExtraDeck.length > 0) {
+3536:       const angryHannya = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+3537:       if (angryHannya) {
+3538:         let hannyaSlot = null;
+3539:         for (const zone of ["enemy_front", "enemy_back"]) {
+3540:           const idx = field[zone].findIndex(u => u && u.card && u.card.name.includes("般若") && !u.card.name.includes("憤怒"));
+3541:           if (idx >= 0) {
+3542:             hannyaSlot = { zone, idx };
+3543:             break;
+3544:           }
+3545:         }
+3546:         if (hannyaSlot) {
+3547:           const { zone, idx } = hannyaSlot;
+3548:           const oldUnit = field[zone][idx];
+3549:           window.XLW_ENEMY.grave.push(oldUnit.card);
+3550:           enemyGraveyard = window.XLW_ENEMY.grave;
+3551:           logBattle(`[對手 額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+3552:           
+3553:           enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryHannya), 1);
+3554:           
+3555:           field[zone][idx] = {
+3556:             card: structuredClone(angryHannya),
+3557:             tapped: false,
+3558:             attacking: false,
+3559:             target: null,
+3560:             summonedTurn: turn,
+3561:             summonedZone: zone
+3562:           };
+3563:           logBattle(`✨ 對手 額外召喚：【憤怒的般若】降臨於對手 ${zone === "enemy_front" ? "前排" : "後排"}${idx + 1}！`);
+3564:           
+3565:           playerBonusScore = Math.max(0, playerBonusScore - 1);
+3566:           logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+3567:           
+3568:           render();
+3569:           await sleep(800);
+3570:         }
+3571:       }
+3572:     }
+3573: 
+3574:     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+3575:       const card = window.XLW_ENEMY.hand[summonHandIdx];
+3576:       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+3577:       
+3578:       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+3579:       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+3580:       
+3581:       field[destZone][destIdx] = {
+
+--- Lines 6205 to 6255 ---
+6205:         if (!targetUnit.equipments.includes(spellNameClean)) {
+6206:           targetUnit.equipments.push(spellNameClean);
+6207:         }
+6208:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+6209:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+6210:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+6211:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+6212:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+6213:         }
+6214:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+6215:         render();
+6216:       }
+6217:     } else if (data.action === "extra_summon_resolved") {
+6218:       const oppZone = data.fromZone;
+6219:       const oppIdx = data.fromIdx;
+6220:       const angryHannya = data.angryHannya;
+6221:       const oldUnit = field[oppZone][oppIdx];
+6222:       if (oldUnit) {
+6223:         window.XLW_ENEMY.grave.push(oldUnit.card);
+6224:         enemyGraveyard = window.XLW_ENEMY.grave;
+6225:         logBattle(`[額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+6226:       }
+6227:       if (enemyExtraDeck.length > 0) {
+6228:         enemyExtraDeck.pop();
+6229:       }
+6230:       field[oppZone][oppIdx] = {
+6231:         card: structuredClone(angryHannya),
+6232:         tapped: false,
+6233:         attacking: false,
+6234:         target: null,
+6235:         summonedTurn: turn,
+6236:         summonedZone: oppZone
+6237:       };
+6238:       logBattle(`✨ 額外召喚：對手特殊召喚了【憤怒的般若】！`);
+6239:       playerBonusScore = Math.max(0, playerBonusScore - 1);
+6240:       logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+6241:       render();
+6242:     } else if (data.action === "trigger_opponent_discard") {
+6243:       if (hand.length > 0) {
+6244:         const idx = Math.floor(Math.random() * hand.length);
+6245:         const discarded = hand.splice(idx, 1)[0];
+6246:         graveyard.push(discarded);
+6247:         logBattle(`🥷 變裝喵 效果：對手變裝喵偷襲成功，我方被迫隨機捨棄了手牌中的 ${discarded.name}！`);
+6248:         ws.send(JSON.stringify({
+6249:           action: "sync_discard_log",
+6250:           card_name: discarded.name
+6251:         }));
+6252:         render();
+6253:       }
+6254:     } else if (data.action === "sync_discard_log") {
+6255:       logBattle(`🥷 變裝喵 效果：對手隨機捨棄了手牌中的 ${data.card_name}！`);
+
+--- Lines 8284 to 8452 ---
+8284:           window.XLW_equipSpellCard = card;
+8285:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+8286:           render();
+8287:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+8288:           
+8289:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8290:           render();
+8291:           return;
+8292:         }
+8293:         
+8294:         if (card.name === "大耳賊" || card.id === "NEU-0064") {
+8295:           setStatus("【大耳賊】無法直接召喚。當我方場上的「貫穿」單位進攻且攻擊力為基礎值 2 倍時會自動觸發！");
+8296:           return;
+8297:         }
+8298: 
+8299:         if (card.name.includes("般若")) {
+8300:           const hannyaSlots = [];
+8301:           for (const zone of ["player_front", "player_back"]) {
+8302:             field[zone].forEach((u, idx) => {
+8303:               if (u && u.card && (u.card.name.includes("般若") && !u.card.name.includes("憤怒"))) {
+8304:                 hannyaSlots.push({ zone: zone, idx: idx, unit: u });
+8305:               }
+8306:             });
+8307:           }
+8308:           
+8309:           if (hannyaSlots.length === 0) {
+8310:             setStatus("我方場上沒有【般若】可以作為融合素材！");
+8311:             return;
+8312:           }
+8313:           
+8314:           overlay.remove(); // Close modal
+8315:           
+8316:           let selectedHannya = hannyaSlots[0];
+8317:           if (hannyaSlots.length > 1) {
+8318:             const choices = hannyaSlots.map((h, i) => ({
+8319:               text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 般若`,
+8320:               value: i
+8321:             }));
+8322:             const chosenIdx = await showXLWChoiceModal("選擇作為素材的般若", "請選擇場上的【般若】：", choices);
+8323:             if (chosenIdx === null || chosenIdx === undefined) return;
+8324:             selectedHannya = hannyaSlots[chosenIdx];
+8325:           }
+8326:           
+8327:           const targetZone = selectedHannya.zone;
+8328:           const targetIdx = selectedHannya.idx;
+8329:           const oldHannya = selectedHannya.unit;
+8330:           
+8331:           graveyard.push(oldHannya.card);
+8332:           logBattle(`[額外召喚] 將場上的【般若】送入墓地作為素材。`);
+8333:           
+8334:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8335:           
+8336:           field[targetZone][targetIdx] = {
+8337:             card: structuredClone(card),
+8338:             tapped: false,
+8339:             attacking: false,
+8340:             target: null,
+8341:             summonedTurn: turn,
+8342:             summonedZone: targetZone
+8343:           };
+8344:           
+8345:           logBattle(`✨ 額外召喚：【${card.name}】降臨於我方 ${targetZone === "player_front" ? "前排" : "後排"}${targetIdx + 1}！`);
+8346:           
+8347:           enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+8348:           logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+8349:           
+8350:           if (isMultiplayer) {
+8351:             ws.send(JSON.stringify({
+8352:               action: "extra_summon_resolved",
+8353:               fromZone: targetZone,
+8354:               fromIdx: targetIdx,
+8355:               angryHannya: card
+8356:             }));
+8357:           }
+8358:           
+8359:           render();
+8360:         }
+8361:       };
+8362:     }
+8363:     
+8364:     const metaText = card.type === "unit" ? `攻 ${card.attack}` : `魔法`;
+8365:       
+8366:     if (card.image) {
+8367:       cardEl.innerHTML = `<img src="${card.image}"><div class="mini-meta" style="font-size: 8px; padding: 2px;">#${i+1} ${card.name}<br>${metaText}</div>`;
+8368:     } else {
+8369:       cardEl.innerHTML = `<div class="fallback" style="font-size:8px; padding: 4px;">#${i+1} <b>${card.name}</b><br>${metaText}</div>`;
+8370:     }
+8371:     
+8372:     cardEl.onmouseover = () => showModal(card);
+8373:     
+8374:     if (owner === "player") {
+8375:       cardEl.onclick = async (e) => {
+8376:         e.stopPropagation();
+8377:         if (phase !== "召喚階段") {
+8378:           setStatus("【額外召喚】只能在召喚階段進行！");
+8379:           return;
+8380:         }
+8381:         
+8382:         const hannyaSlots = [];
+8383:         for (const zone of ["player_front", "player_back"]) {
+8384:           field[zone].forEach((u, idx) => {
+8385:             if (u && u.card && (u.card.name.includes("般若") && !u.card.name.includes("憤怒"))) {
+8386:               hannyaSlots.push({ zone: zone, idx: idx, unit: u });
+8387:             }
+8388:           });
+8389:         }
+8390:         
+8391:         if (hannyaSlots.length === 0) {
+8392:           setStatus("我方場上沒有【般若】可以作為融合素材！");
+8393:           return;
+8394:         }
+8395:         
+8396:         overlay.remove(); // Close modal
+8397:         
+8398:         let selectedHannya = hannyaSlots[0];
+8399:         if (hannyaSlots.length > 1) {
+8400:           const choices = hannyaSlots.map((h, i) => ({
+8401:             text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 般若`,
+8402:             value: i
+8403:           }));
+8404:           const chosenIdx = await showXLWChoiceModal("選擇作為素材的般若", "請選擇場上的【般若】：", choices);
+8405:           if (chosenIdx === null || chosenIdx === undefined) return;
+8406:           selectedHannya = hannyaSlots[chosenIdx];
+8407:         }
+8408:         
+8409:         const targetZone = selectedHannya.zone;
+8410:         const targetIdx = selectedHannya.idx;
+8411:         const oldHannya = selectedHannya.unit;
+8412:         
+8413:         graveyard.push(oldHannya.card);
+8414:         logBattle(`[額外召喚] 將場上的【般若】送入墓地作為素材。`);
+8415:         
+8416:         playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8417:         
+8418:         field[targetZone][targetIdx] = {
+8419:           card: structuredClone(card),
+8420:           tapped: false,
+8421:           attacking: false,
+8422:           target: null,
+8423:           summonedTurn: turn,
+8424:           summonedZone: targetZone
+8425:         };
+8426:         
+8427:         logBattle(`✨ 額外召喚：【${card.name}】降臨於我方 ${targetZone === "player_front" ? "前排" : "後排"}${targetIdx + 1}！`);
+8428:         
+8429:         enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+8430:         logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+8431:         
+8432:         if (isMultiplayer) {
+8433:           ws.send(JSON.stringify({
+8434:             action: "extra_summon_resolved",
+8435:             fromZone: targetZone,
+8436:             fromIdx: targetIdx,
+8437:             angryHannya: card
+8438:           }));
+8439:         }
+8440:         
+8441:         render();
+8442:       };
+8443:     }
+8444:     
+8445:     listContainer.appendChild(cardEl);
+8446:   });
+8447:   
+8448:   box.appendChild(listContainer);
+8449:   overlay.appendChild(box);
+8450:   document.body.appendChild(overlay);
+8451:   
+8452:   overlay.querySelector("#closeGraveModal").onclick = () => {
+
+=================== static/game_v8.js ===================
+
+--- Lines 3476 to 3582 ---
+3476:     const enemyNeedsDefense = window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers;
+3477:     if (!enemyNeedsDefense) {
+3478:       checkCallGameAtTurnStart(false);
+3479:       if (isGameOverFlag) return;
+3480:     }
+3481: 
+3482:     logBattle("—— 對手回合開始 ——");
+3483:     setStatus("對手回合：妖怪村莊正在進行整備抽牌...");
+3484:     await sleep(700);
+3485: 
+3486:     // 1. 整備階段：對手單位轉正
+3487:     untapEnemy();
+3488:     
+3489:     // 2. 對手抽 2 張
+3490:     let drawn = 0;
+3491:     const hasSmartPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
+3492:     const hasAngryPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
+3493: 
+3494:     for (let i = 0; i < 2; i++) {
+3495:       if (window.XLW_ENEMY.deck.length) {
+3496:         const drawnCard = window.XLW_ENEMY.deck.pop();
+3497:         const drawnName = (drawnCard && drawnCard.name) ? drawnCard.name : "未知卡牌";
+3498:         if (hasAngryPrajna) {
+3499:           exileCard(drawnCard, "enemy");
+3500:           logBattle(`憤怒的般若 效果：使對手強行棄置抽到的卡片 ${drawnName}！`);
+3501:         } else {
+3502:           window.XLW_ENEMY.hand.push(drawnCard);
+3503:           drawn++;
+3504:           if (hasSmartPrajna) {
+3505:             logBattle(`智慧的般若 效果：展示對手抽到的卡片：【${drawnName}】！`);
+3506:           }
+3507:         }
+3508:       }
+3509:     }
+3510:     logBattle(`對手整備：對手抽卡結算，單位全體轉正。`);
+3511:     render();
+3512:     await sleep(700);
+3513: 
+3514:     // 3. 對手防守階段 (若我方上回合有宣告攻擊，且我方場上仍有進攻單位 - 規則九第5條)
+3515:     if (window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers) {
+3516:       phase = "\u9632\u5b88\u968e\u6bb5";
+3517:       setStatus("\u5c0d\u624b\u56de\u5408\uff1a\u6b63\u5728\u81ea\u52d5\u7d50\u7b97\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u5c0d\u6c7a...");
+3518:       render();
+3519:       await xlwResolveEnemyDefensePhaseSafe();
+3520:     } else {
+3521:       window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+3522:       logBattle("\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u6211\u65b9\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
+3523:     }
+3524: 
+3525:     // 4. 對手召喚階段 (召喚一個免祭品單位，優先前排)
+3526:     phase = "\u53ec\u559a\u968e\u6bb5";
+3527:     render();
+3528:     const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+3529:     const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+3530:     // 加強 AI 的免祭品召喚判定，以支援小於等於 0 祭品的單位（如 -2 祭品等特規卡牌）
+3531:     const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+3532:       c && (c.type === "unit" || c.type === "單位") && Number(c.tribute || 0) <= 0
+3533:     );
+3534: 
+3535:     // AI 額外召喚邏輯：若場上有般若且額外牌庫有憤怒的般若，自動升級
+3536:     if (enemyExtraDeck.length > 0) {
+3537:       const angryHannya = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+3538:       if (angryHannya) {
+3539:         let hannyaSlot = null;
+3540:         for (const zone of ["enemy_front", "enemy_back"]) {
+3541:           const idx = field[zone].findIndex(u => u && u.card && u.card.name.includes("般若") && !u.card.name.includes("憤怒"));
+3542:           if (idx >= 0) {
+3543:             hannyaSlot = { zone, idx };
+3544:             break;
+3545:           }
+3546:         }
+3547:         if (hannyaSlot) {
+3548:           const { zone, idx } = hannyaSlot;
+3549:           const oldUnit = field[zone][idx];
+3550:           window.XLW_ENEMY.grave.push(oldUnit.card);
+3551:           enemyGraveyard = window.XLW_ENEMY.grave;
+3552:           logBattle(`[對手 額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+3553:           
+3554:           enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryHannya), 1);
+3555:           
+3556:           field[zone][idx] = {
+3557:             card: structuredClone(angryHannya),
+3558:             tapped: false,
+3559:             attacking: false,
+3560:             target: null,
+3561:             summonedTurn: turn,
+3562:             summonedZone: zone
+3563:           };
+3564:           logBattle(`✨ 對手 額外召喚：【憤怒的般若】降臨於對手 ${zone === "enemy_front" ? "前排" : "後排"}${idx + 1}！`);
+3565:           
+3566:           playerBonusScore = Math.max(0, playerBonusScore - 1);
+3567:           logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+3568:           
+3569:           render();
+3570:           await sleep(800);
+3571:         }
+3572:       }
+3573:     }
+3574: 
+3575:     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+3576:       const card = window.XLW_ENEMY.hand[summonHandIdx];
+3577:       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+3578:       
+3579:       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+3580:       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+3581:       
+3582:       field[destZone][destIdx] = {
+
+--- Lines 6270 to 6320 ---
+6270:         if (!targetUnit.equipments.includes(spellNameClean)) {
+6271:           targetUnit.equipments.push(spellNameClean);
+6272:         }
+6273:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+6274:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+6275:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+6276:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+6277:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+6278:         }
+6279:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+6280:         render();
+6281:       }
+6282:     } else if (data.action === "extra_summon_resolved") {
+6283:       const oppZone = data.fromZone;
+6284:       const oppIdx = data.fromIdx;
+6285:       const angryHannya = data.angryHannya;
+6286:       const oldUnit = field[oppZone][oppIdx];
+6287:       if (oldUnit) {
+6288:         window.XLW_ENEMY.grave.push(oldUnit.card);
+6289:         enemyGraveyard = window.XLW_ENEMY.grave;
+6290:         logBattle(`[額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+6291:       }
+6292:       if (enemyExtraDeck.length > 0) {
+6293:         enemyExtraDeck.pop();
+6294:       }
+6295:       field[oppZone][oppIdx] = {
+6296:         card: structuredClone(angryHannya),
+6297:         tapped: false,
+6298:         attacking: false,
+6299:         target: null,
+6300:         summonedTurn: turn,
+6301:         summonedZone: oppZone
+6302:       };
+6303:       logBattle(`✨ 額外召喚：對手特殊召喚了【憤怒的般若】！`);
+6304:       playerBonusScore = Math.max(0, playerBonusScore - 1);
+6305:       logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+6306:       render();
+6307:     } else if (data.action === "trigger_opponent_discard") {
+6308:       if (hand.length > 0) {
+6309:         const idx = Math.floor(Math.random() * hand.length);
+6310:         const discarded = hand.splice(idx, 1)[0];
+6311:         graveyard.push(discarded);
+6312:         logBattle(`🥷 變裝喵 效果：對手變裝喵偷襲成功，我方被迫隨機捨棄了手牌中的 ${discarded.name}！`);
+6313:         ws.send(JSON.stringify({
+6314:           action: "sync_discard_log",
+6315:           card_name: discarded.name
+6316:         }));
+6317:         render();
+6318:       }
+6319:     } else if (data.action === "sync_discard_log") {
+6320:       logBattle(`🥷 變裝喵 效果：對手隨機捨棄了手牌中的 ${data.card_name}！`);
+
+--- Lines 8357 to 8525 ---
+8357:           window.XLW_equipSpellCard = card;
+8358:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+8359:           render();
+8360:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+8361:           
+8362:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8363:           render();
+8364:           return;
+8365:         }
+8366:         
+8367:         if (card.name === "大耳賊" || card.id === "NEU-0064") {
+8368:           setStatus("【大耳賊】無法直接召喚。當我方場上的「貫穿」單位進攻且攻擊力為基礎值 2 倍時會自動觸發！");
+8369:           return;
+8370:         }
+8371: 
+8372:         if (card.name.includes("般若")) {
+8373:           const hannyaSlots = [];
+8374:           for (const zone of ["player_front", "player_back"]) {
+8375:             field[zone].forEach((u, idx) => {
+8376:               if (u && u.card && (u.card.name.includes("般若") && !u.card.name.includes("憤怒"))) {
+8377:                 hannyaSlots.push({ zone: zone, idx: idx, unit: u });
+8378:               }
+8379:             });
+8380:           }
+8381:           
+8382:           if (hannyaSlots.length === 0) {
+8383:             setStatus("我方場上沒有【般若】可以作為融合素材！");
+8384:             return;
+8385:           }
+8386:           
+8387:           overlay.remove(); // Close modal
+8388:           
+8389:           let selectedHannya = hannyaSlots[0];
+8390:           if (hannyaSlots.length > 1) {
+8391:             const choices = hannyaSlots.map((h, i) => ({
+8392:               text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 般若`,
+8393:               value: i
+8394:             }));
+8395:             const chosenIdx = await showXLWChoiceModal("選擇作為素材的般若", "請選擇場上的【般若】：", choices);
+8396:             if (chosenIdx === null || chosenIdx === undefined) return;
+8397:             selectedHannya = hannyaSlots[chosenIdx];
+8398:           }
+8399:           
+8400:           const targetZone = selectedHannya.zone;
+8401:           const targetIdx = selectedHannya.idx;
+8402:           const oldHannya = selectedHannya.unit;
+8403:           
+8404:           graveyard.push(oldHannya.card);
+8405:           logBattle(`[額外召喚] 將場上的【般若】送入墓地作為素材。`);
+8406:           
+8407:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8408:           
+8409:           field[targetZone][targetIdx] = {
+8410:             card: structuredClone(card),
+8411:             tapped: false,
+8412:             attacking: false,
+8413:             target: null,
+8414:             summonedTurn: turn,
+8415:             summonedZone: targetZone
+8416:           };
+8417:           
+8418:           logBattle(`✨ 額外召喚：【${card.name}】降臨於我方 ${targetZone === "player_front" ? "前排" : "後排"}${targetIdx + 1}！`);
+8419:           
+8420:           enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+8421:           logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+8422:           
+8423:           if (isMultiplayer) {
+8424:             ws.send(JSON.stringify({
+8425:               action: "extra_summon_resolved",
+8426:               fromZone: targetZone,
+8427:               fromIdx: targetIdx,
+8428:               angryHannya: card
+8429:             }));
+8430:           }
+8431:           
+8432:           render();
+8433:         }
+8434:       };
+8435:     }
+8436:     
+8437:     const metaText = card.type === "unit" ? `攻 ${card.attack}` : `魔法`;
+8438:       
+8439:     if (card.image) {
+8440:       cardEl.innerHTML = `<img src="${card.image}"><div class="mini-meta" style="font-size: 8px; padding: 2px;">#${i+1} ${card.name}<br>${metaText}</div>`;
+8441:     } else {
+8442:       cardEl.innerHTML = `<div class="fallback" style="font-size:8px; padding: 4px;">#${i+1} <b>${card.name}</b><br>${metaText}</div>`;
+8443:     }
+8444:     
+8445:     cardEl.onmouseover = () => showModal(card);
+8446:     
+8447:     if (owner === "player") {
+8448:       cardEl.onclick = async (e) => {
+8449:         e.stopPropagation();
+8450:         if (phase !== "召喚階段") {
+8451:           setStatus("【額外召喚】只能在召喚階段進行！");
+8452:           return;
+8453:         }
+8454:         
+8455:         const hannyaSlots = [];
+8456:         for (const zone of ["player_front", "player_back"]) {
+8457:           field[zone].forEach((u, idx) => {
+8458:             if (u && u.card && (u.card.name.includes("般若") && !u.card.name.includes("憤怒"))) {
+8459:               hannyaSlots.push({ zone: zone, idx: idx, unit: u });
+8460:             }
+8461:           });
+8462:         }
+8463:         
+8464:         if (hannyaSlots.length === 0) {
+8465:           setStatus("我方場上沒有【般若】可以作為融合素材！");
+8466:           return;
+8467:         }
+8468:         
+8469:         overlay.remove(); // Close modal
+8470:         
+8471:         let selectedHannya = hannyaSlots[0];
+8472:         if (hannyaSlots.length > 1) {
+8473:           const choices = hannyaSlots.map((h, i) => ({
+8474:             text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 般若`,
+8475:             value: i
+8476:           }));
+8477:           const chosenIdx = await showXLWChoiceModal("選擇作為素材的般若", "請選擇場上的【般若】：", choices);
+8478:           if (chosenIdx === null || chosenIdx === undefined) return;
+8479:           selectedHannya = hannyaSlots[chosenIdx];
+8480:         }
+8481:         
+8482:         const targetZone = selectedHannya.zone;
+8483:         const targetIdx = selectedHannya.idx;
+8484:         const oldHannya = selectedHannya.unit;
+8485:         
+8486:         graveyard.push(oldHannya.card);
+8487:         logBattle(`[額外召喚] 將場上的【般若】送入墓地作為素材。`);
+8488:         
+8489:         playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+8490:         
+8491:         field[targetZone][targetIdx] = {
+8492:           card: structuredClone(card),
+8493:           tapped: false,
+8494:           attacking: false,
+8495:           target: null,
+8496:           summonedTurn: turn,
+8497:           summonedZone: targetZone
+8498:         };
+8499:         
+8500:         logBattle(`✨ 額外召喚：【${card.name}】降臨於我方 ${targetZone === "player_front" ? "前排" : "後排"}${targetIdx + 1}！`);
+8501:         
+8502:         enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+8503:         logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+8504:         
+8505:         if (isMultiplayer) {
+8506:           ws.send(JSON.stringify({
+8507:             action: "extra_summon_resolved",
+8508:             fromZone: targetZone,
+8509:             fromIdx: targetIdx,
+8510:             angryHannya: card
+8511:           }));
+8512:         }
+8513:         
+8514:         render();
+8515:       };
+8516:     }
+8517:     
+8518:     listContainer.appendChild(cardEl);
+8519:   });
+8520:   
+8521:   box.appendChild(listContainer);
+8522:   overlay.appendChild(box);
+8523:   document.body.appendChild(overlay);
+8524:   
+8525:   overlay.querySelector("#closeGraveModal").onclick = () => {

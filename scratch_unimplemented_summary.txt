@@ -1,0 +1,331 @@
+Faction: 中立 (20 cards)
+  NMS-0012: 彈弓小童 | stars: None | type: unit
+    Effect: None
+
+  NMS-0012-2: 彈弓小童 | stars: None | type: unit
+    Effect: None
+
+  NMS-0015: 劇毒蜘蛛 | stars: None | type: unit
+    Effect: None
+
+  NMS-0015-3: 劇毒蜘蛛 | stars: None | type: unit
+    Effect: None
+
+  NMS-0018: 石巨人 | stars: None | type: unit
+    Effect: None
+
+  NMS-0019: 鬧鐘人 | stars: None | type: unit
+    Effect: None
+
+  NMS-0019-2: 鬧鐘人 | stars: None | type: unit
+    Effect: None
+
+  R-NMS-0024: 破甲小兵 | stars: None | type: unit
+    Effect: None
+
+  R-NMS-0024-小丑: 破甲小兵 | stars: None | type: unit
+    Effect: None
+
+  R-NMS-0035: 尖叫的女人 | stars: None | type: unit
+    Effect: None
+
+  SSR-NMS-0018: 石巨人 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMG-0073: 流浪巨人 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0019: 鬧鐘人 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0027: 星靈女孩 星娜 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0028: 山羊勇者魔羯座 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0031: 小女魔導士庫路路 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0033: 魔王女參謀 克蕾 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0034: 海中的干貝 火野貝 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0053: 幻想巨人 雙魚座 | stars: None | type: unit
+    Effect: None
+
+  SSSR-NMS-0066: 破甲菜兵 | stars: None | type: unit
+    Effect: None
+
+Faction: 喵喵賊 (14 cards)
+  R-CAT-0019: 逃脫 | stars: None | type: magic
+    Effect: None
+
+  R-CAT-0025: 壞掉的機械喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0027: 草叢喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0029: 肥宅喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0030: 彩虹幻象喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0031: 訊號干擾喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0035: 惡夢9命喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0037: 喵抓板 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0042: 魔拳喵喵 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0043: 喵喵球 | stars: None | type: unit
+    Effect: None
+
+  R-CAT-0051: 喵店店長 | stars: None | type: unit
+    Effect: None
+
+  SR-CAT-0026: 惡魔招財喵 | stars: None | type: unit
+    Effect: None
+
+  SR-CAT-0034: 百變喵 | stars: None | type: unit
+    Effect: None
+
+  SSR-CAT-0042: 魔拳喵喵 | stars: None | type: unit
+    Effect: None
+
+Faction: 妖怪村莊 (25 cards)
+  R-VLG-0018: 如月車站 | stars: None | type: magic
+    Effect: None
+
+  R-VLG-0020: 詛咒通靈 | stars: None | type: magic
+    Effect: None
+
+  R-VLG-0031: 如月站長 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0034: 紅衣女孩 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0036: 人臉魚 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0037: 地下怪鳥 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0037-2025黑暗市集: 地下怪鳥 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0038: 水鬼 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0040: 製風龜龜 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0041: 卡卡小巨人 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0043: 恐怖祭司 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0044: 毛線女孩 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0045: 殭屍女 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0046: 背後靈 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0048: 恐怖小丑 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0050: 紅眼小僧 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0051: 伽椰貞美子 | stars: None | type: unit
+    Effect: None
+
+  R-VLG-0054: 事故物件 | stars: None | type: magic
+    Effect: None
+
+  R-VLG-0055: 魔神仔 | stars: None | type: unit
+    Effect: None
+
+  SR-VLG-0029: 魔貨車 | stars: None | type: unit
+    Effect: None
+
+  SR-VLG-0039: 無臉人 | stars: None | type: unit
+    Effect: None
+
+  SR-VLG-0047: 如月車票 | stars: None | type: magic
+    Effect: None
+
+  SSR-VLG-0044: 毛線女孩 | stars: None | type: unit
+    Effect: None
+
+  SSR-VLG-0044-金: 毛線女孩 | stars: None | type: unit
+    Effect: None
+
+  SSR-VLG-0051: 伽椰貞美子 | stars: None | type: unit
+    Effect: None
+
+Faction: 獸人 (50 cards)
+  C-ORC-0012: 寶寶獸人 | stars: None | type: unit
+    Effect: None
+
+  C-ORC-0016: 駭獸人 | stars: None | type: unit
+    Effect: None
+
+  C-ORC-0060: 作弊獸人 | stars: None | type: unit
+    Effect: None
+
+  C-ORC-0063: 挑釁獸人的面具 | stars: None | type: magic
+    Effect: None
+
+  ORC-0002: 背刺獸人 | stars: None | type: unit
+    Effect: None
+
+  ORC-0003: 菜刀哥 | stars: None | type: unit
+    Effect: None
+
+  ORC-0004: 破甲獸人 | stars: None | type: unit
+    Effect: None
+
+  ORC-0009: 獸人王 加爾帝 | stars: None | type: unit
+    Effect: None
+
+  ORC-0011: 盾牌獸人 | stars: None | type: unit
+    Effect: None
+
+  ORC-0013: 媽咪獸人 | stars: None | type: unit
+    Effect: None
+
+  ORC-0016: 駭獸人 | stars: None | type: unit
+    Effect: None
+
+  ORC-0019: 天下第一獸人作弊大會 | stars: None | type: magic
+    Effect: None
+
+  ORC-0020: 有打有嘉獎! | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0001: 札克 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0007: 鐵獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0012: 寶寶獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0012-新年: 寶寶獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0014: 獸人跳戰者 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0017: 獸人女王 金納斯 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0017-金: 獸人女王 金納斯 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0023: 阿姨獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0024: 爆破獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0027: 死靈法師獸人 莫亞 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0028: 激動獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0030: 靈騷獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0032: 激動獸人的牛排戰斧 | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0033: 阿庫瑪的戰錘 | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0036: 怒吼 | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0037: 獸人小妹 莎莎 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0038: 初心獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0041: 獸人血戰幫 士氣獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0042-繪畫: 背背獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0045: 獸人替身忍法 | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0047: 獸人姑姑 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0049: 獸人弟弟 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0050: 盾牌獸人的盾牌 | stars: None | type: magic
+    Effect: None
+
+  R-ORC-0055: 戰勝初心獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0059: 懸賞獸人 | stars: None | type: unit
+    Effect: None
+
+  R-ORC-0061: 挑釁獸人 | stars: None | type: unit
+    Effect: None
+
+  R=ORC-0058: 懸賞令 | stars: None | type: magic
+    Effect: None
+
+  SR-ORC-0021: 角鬥士獸人 洛克塔 | stars: None | type: unit
+    Effect: None
+
+  SR-ORC-0022: 女法師獸人 艾娜 | stars: None | type: unit
+    Effect: None
+
+  SR-ORC-0026: 永鬥神 奈祖爾 | stars: None | type: unit
+    Effect: None
+
+  SR-ORC-0053: 憤怒的駭獸人 | stars: None | type: unit
+    Effect: None
+
+  SR-ORC-0062: 戰爭巨象 艾勒粉 | stars: None | type: unit
+    Effect: None
+
+  SSR-ORC-0003: 菜刀哥 | stars: None | type: unit
+    Effect: None
+
+  SSR-ORC-0009: 獸人王 加爾帝 | stars: None | type: unit
+    Effect: None
+
+  SSR-ORC-0012: 寶寶獸人 | stars: None | type: unit
+    Effect: None
+
+  SSR-ORC-0021: 角鬥士獸人 洛克塔 | stars: None | type: unit
+    Effect: None
+
+  SSR-ORC-0026: 永鬥神 奈祖爾 | stars: None | type: unit
+    Effect: None
+

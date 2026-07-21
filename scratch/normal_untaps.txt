@@ -1,0 +1,35 @@
+=== 2650-2665 ===
+2650:   if (unit && !unit.attacking && window.XLW_playerCannotAttackOnNextTurn) {
+2651:     setStatus("座敷童子 效果生效：本回合我方無法進行任何進攻！");
+2652:     return;
+2653:   }
+2654:   if (!unit) return;
+2655: 
+2656:   if (unit.attacking) {
+2657:     unit.attacking = false;
+2658:     unit.target = null;
+2659:     unit.tapped = false;
+2660:     logBattle(`\u6211\u65b9\u53d6\u6d88\u9032\u653b\u5ba3\u8a00\uff1a\u661f\u661f\u6230\u7dda${idx + 1}\uff0c${unitName(unit)}`);
+2661:     
+2662:     if (isMultiplayer) {
+2663:       ws.send(JSON.stringify({
+2664:         action: "attack_cancel",
+2665:         attZone: zone,
+
+=== 6650-6665 ===
+6650:         render();
+6651:       }
+6652:     } else if (data.action === "cancel_all_attacks") {
+6653:       ["enemy_front", "enemy_back"].forEach(z => {
+6654:         field[z].forEach(u => {
+6655:           if (u && u.attacking) {
+6656:             u.attacking = false;
+6657:             u.target = null;
+6658:             u.tapped = false;
+6659:           }
+6660:         });
+6661:       });
+6662:       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+6663:       logBattle("對手取消了所有進攻宣告，並返回戰術調整/召喚階段。");
+6664:       render();
+6665:     } else if (data.action === "start_defense_phase") {

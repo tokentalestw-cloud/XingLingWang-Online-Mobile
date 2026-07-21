@@ -1,0 +1,41 @@
+Line 6217: } else if (data.action === "extra_summon_resolved") {
+  6213: }
+  6214: logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+  6215: render();
+  6216: }
+  6217: } else if (data.action === "extra_summon_resolved") {
+  6218: const oppZone = data.fromZone;
+  6219: const oppIdx = data.fromIdx;
+  6220: const angryHannya = data.angryHannya;
+  6221: const oldUnit = field[oppZone][oppIdx];
+  6222: if (oldUnit) {
+  6223: window.XLW_ENEMY.grave.push(oldUnit.card);
+  6224: enemyGraveyard = window.XLW_ENEMY.grave;
+  6225: logBattle(`[額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+  6226: }
+  6227: if (enemyExtraDeck.length > 0) {
+  6228: enemyExtraDeck.pop();
+  6229: }
+  6230: field[oppZone][oppIdx] = {
+  6231: card: structuredClone(angryHannya),
+  6232: tapped: false,
+  6233: attacking: false,
+  6234: target: null,
+  6235: summonedTurn: turn,
+  6236: summonedZone: oppZone
+  6237: };
+  6238: logBattle(`✨ 額外召喚：對手特殊召喚了【憤怒的般若】！`);
+  6239: playerBonusScore = Math.max(0, playerBonusScore - 1);
+  6240: logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+  6241: render();
+  6242: } else if (data.action === "trigger_opponent_discard") {
+  6243: if (hand.length > 0) {
+  6244: const idx = Math.floor(Math.random() * hand.length);
+  6245: const discarded = hand.splice(idx, 1)[0];
+  6246: graveyard.push(discarded);
+  6247: logBattle(`🥷 變裝喵 效果：對手變裝喵偷襲成功，我方被迫隨機捨棄了手牌中的 ${discarded.name}！`);
+  6248: ws.send(JSON.stringify({
+  6249: action: "sync_discard_log",
+  6250: card_name: discarded.name
+  6251: }));
+  6252: render();

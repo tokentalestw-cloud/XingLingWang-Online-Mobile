@@ -1,0 +1,1079 @@
+Line 5: if (u && u.equipments && u.tempEquips) {
+  1: function xlwCleanExpiredTempEquips(currentTurn) {
+  2: for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  3: for (let i = 0; i < 5; i++) {
+  4: const u = field[zone][i];
+  5: if (u && u.equipments && u.tempEquips) {
+  6: let changed = false;
+  7: const keysToDelete = [];
+  8: for (const eqName in u.tempEquips) {
+  9: if (u.tempEquips[eqName] <= currentTurn) {
+  10: keysToDelete.push(eqName);
+  11: }
+  12: }
+------------------------------
+Line 15: u.equipments = u.equipments.filter(x => x !== eqName);
+  10: keysToDelete.push(eqName);
+  11: }
+  12: }
+  13: if (keysToDelete.length > 0) {
+  14: keysToDelete.forEach(eqName => {
+  15: u.equipments = u.equipments.filter(x => x !== eqName);
+  16: delete u.tempEquips[eqName];
+  17: logBattle(`✨ ${eqName} 的時效已到，該效果從 ${u.card?.name || "單位"} 身上消失。`);
+  18: });
+  19: changed = true;
+  20: }
+  21: if (changed) {
+  22: if (u.equipments.length === 0) {
+------------------------------
+Line 22: if (u.equipments.length === 0) {
+  17: logBattle(`✨ ${eqName} 的時效已到，該效果從 ${u.card?.name || "單位"} 身上消失。`);
+  18: });
+  19: changed = true;
+  20: }
+  21: if (changed) {
+  22: if (u.equipments.length === 0) {
+  23: delete u.equipments;
+  24: }
+  25: }
+  26: }
+  27: }
+  28: }
+  29: render();
+------------------------------
+Line 23: delete u.equipments;
+  18: });
+  19: changed = true;
+  20: }
+  21: if (changed) {
+  22: if (u.equipments.length === 0) {
+  23: delete u.equipments;
+  24: }
+  25: }
+  26: }
+  27: }
+  28: }
+  29: render();
+  30: }
+------------------------------
+Line 990: if (unit.equipments) {
+  985: baseAtk += 2;
+  986: }
+  987: }
+  988: 
+  989: // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
+  990: if (unit.equipments) {
+  991: if (unit.equipments.includes("削弱藥水")) {
+  992: baseAtk = Math.max(0, baseAtk - 3);
+  993: }
+  994: if (unit.equipments.includes("振奮藥水")) {
+  995: baseAtk += 3;
+  996: }
+  997: if (unit.equipments.includes("睡眠反擊拳")) {
+------------------------------
+Line 991: if (unit.equipments.includes("削弱藥水")) {
+  986: }
+  987: }
+  988: 
+  989: // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
+  990: if (unit.equipments) {
+  991: if (unit.equipments.includes("削弱藥水")) {
+  992: baseAtk = Math.max(0, baseAtk - 3);
+  993: }
+  994: if (unit.equipments.includes("振奮藥水")) {
+  995: baseAtk += 3;
+  996: }
+  997: if (unit.equipments.includes("睡眠反擊拳")) {
+  998: baseAtk += 3;
+------------------------------
+Line 994: if (unit.equipments.includes("振奮藥水")) {
+  989: // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
+  990: if (unit.equipments) {
+  991: if (unit.equipments.includes("削弱藥水")) {
+  992: baseAtk = Math.max(0, baseAtk - 3);
+  993: }
+  994: if (unit.equipments.includes("振奮藥水")) {
+  995: baseAtk += 3;
+  996: }
+  997: if (unit.equipments.includes("睡眠反擊拳")) {
+  998: baseAtk += 3;
+  999: }
+  1000: }
+  1001: 
+------------------------------
+Line 997: if (unit.equipments.includes("睡眠反擊拳")) {
+  992: baseAtk = Math.max(0, baseAtk - 3);
+  993: }
+  994: if (unit.equipments.includes("振奮藥水")) {
+  995: baseAtk += 3;
+  996: }
+  997: if (unit.equipments.includes("睡眠反擊拳")) {
+  998: baseAtk += 3;
+  999: }
+  1000: }
+  1001: 
+  1002: // 4. 血戰幫狼牙棒 (裝備)
+  1003: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  1004: let maceCount = 0;
+------------------------------
+Line 1003: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  998: baseAtk += 3;
+  999: }
+  1000: }
+  1001: 
+  1002: // 4. 血戰幫狼牙棒 (裝備)
+  1003: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  1004: let maceCount = 0;
+  1005: for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  1006: field[z].forEach(u => {
+  1007: if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  1008: maceCount++;
+  1009: }
+  1010: });
+------------------------------
+Line 1007: if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  1002: // 4. 血戰幫狼牙棒 (裝備)
+  1003: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  1004: let maceCount = 0;
+  1005: for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  1006: field[z].forEach(u => {
+  1007: if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  1008: maceCount++;
+  1009: }
+  1010: });
+  1011: }
+  1012: baseAtk += maceCount;
+  1013: }
+  1014: 
+------------------------------
+Line 1509: if (u && u.equipments && u.equipments.length > 0) {
+  1504: }
+  1505: });
+  1506: for (const z of ["player_front", "player_back"]) {
+  1507: for (let i = 0; i < 5; i++) {
+  1508: const u = field[z][i];
+  1509: if (u && u.equipments && u.equipments.length > 0) {
+  1510: u.equipments.forEach((eqName, eqIdx) => {
+  1511: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  1512: if (!isTempMagic) {
+  1513: equipCards.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
+  1514: }
+  1515: });
+  1516: }
+------------------------------
+Line 1510: u.equipments.forEach((eqName, eqIdx) => {
+  1505: });
+  1506: for (const z of ["player_front", "player_back"]) {
+  1507: for (let i = 0; i < 5; i++) {
+  1508: const u = field[z][i];
+  1509: if (u && u.equipments && u.equipments.length > 0) {
+  1510: u.equipments.forEach((eqName, eqIdx) => {
+  1511: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  1512: if (!isTempMagic) {
+  1513: equipCards.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
+  1514: }
+  1515: });
+  1516: }
+  1517: }
+------------------------------
+Line 1541: if (u && u.equipments) {
+  1536: }
+  1537: exileCard(item.card, "player");
+  1538: logBattle(`[戰斧牛排 代價] 除外了墓地裝備卡：${item.card.name}`);
+  1539: } else {
+  1540: const u = field[item.zone][item.slotIdx];
+  1541: if (u && u.equipments) {
+  1542: const idx = u.equipments.indexOf(item.name);
+  1543: if (idx !== -1) {
+  1544: u.equipments.splice(idx, 1);
+  1545: }
+  1546: const cardObj = allCards.find(c => c && c.name === item.name) || { name: item.name, type: "magic" };
+  1547: exileCard(cardObj, "player");
+  1548: logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的裝備：${item.name}`);
+------------------------------
+Line 1542: const idx = u.equipments.indexOf(item.name);
+  1537: exileCard(item.card, "player");
+  1538: logBattle(`[戰斧牛排 代價] 除外了墓地裝備卡：${item.card.name}`);
+  1539: } else {
+  1540: const u = field[item.zone][item.slotIdx];
+  1541: if (u && u.equipments) {
+  1542: const idx = u.equipments.indexOf(item.name);
+  1543: if (idx !== -1) {
+  1544: u.equipments.splice(idx, 1);
+  1545: }
+  1546: const cardObj = allCards.find(c => c && c.name === item.name) || { name: item.name, type: "magic" };
+  1547: exileCard(cardObj, "player");
+  1548: logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的裝備：${item.name}`);
+  1549: }
+------------------------------
+Line 1544: u.equipments.splice(idx, 1);
+  1539: } else {
+  1540: const u = field[item.zone][item.slotIdx];
+  1541: if (u && u.equipments) {
+  1542: const idx = u.equipments.indexOf(item.name);
+  1543: if (idx !== -1) {
+  1544: u.equipments.splice(idx, 1);
+  1545: }
+  1546: const cardObj = allCards.find(c => c && c.name === item.name) || { name: item.name, type: "magic" };
+  1547: exileCard(cardObj, "player");
+  1548: logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的裝備：${item.name}`);
+  1549: }
+  1550: }
+  1551: });
+------------------------------
+Line 1788: if (unit.equipments && unit.equipments.length > 0) {
+  1783: selectedTributes.forEach(t => {
+  1784: if (t.zone === "dummy") return;
+  1785: const unit = field[t.zone][t.idx];
+  1786: if (unit) {
+  1787: // 先處理裝備卡送入墓地
+  1788: if (unit.equipments && unit.equipments.length > 0) {
+  1789: unit.equipments.forEach(eqName => {
+  1790: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  1791: if (isTempMagic) return;
+  1792: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  1793: const cloned = structuredClone(cardObj);
+  1794: cloned.type = "magic";
+  1795: graveyard.push(cloned);
+------------------------------
+Line 1789: unit.equipments.forEach(eqName => {
+  1784: if (t.zone === "dummy") return;
+  1785: const unit = field[t.zone][t.idx];
+  1786: if (unit) {
+  1787: // 先處理裝備卡送入墓地
+  1788: if (unit.equipments && unit.equipments.length > 0) {
+  1789: unit.equipments.forEach(eqName => {
+  1790: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  1791: if (isTempMagic) return;
+  1792: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  1793: const cloned = structuredClone(cardObj);
+  1794: cloned.type = "magic";
+  1795: graveyard.push(cloned);
+  1796: logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被獻祭進入我方墓地。`);
+------------------------------
+Line 1798: unit.equipments = [];
+  1793: const cloned = structuredClone(cardObj);
+  1794: cloned.type = "magic";
+  1795: graveyard.push(cloned);
+  1796: logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被獻祭進入我方墓地。`);
+  1797: });
+  1798: unit.equipments = [];
+  1799: }
+  1800: 
+  1801: if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+  1802: if (zone.startsWith("player_")) {
+  1803: enemyBonusScore += 2;
+  1804: logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+  1805: } else {
+------------------------------
+Line 2726: (unit.equipments && unit.equipments.some(e => e.includes("菜刀")));
+  2721: }
+  2722: 
+  2723: // --- 大耳賊效果觸發判定 ---
+  2724: const hasPiercing = unit.piercing ||
+  2725: (unit.card && unit.card.keywords && unit.card.keywords.includes("貫穿")) ||
+  2726: (unit.equipments && unit.equipments.some(e => e.includes("菜刀")));
+  2727: const baseAtkNum = Number(unit.card.attack || 0);
+  2728: const hasDoubleAtk = baseAtkNum > 0 && getUnitAtk(unit) === baseAtkNum * 2;
+  2729: const thiefInExtra = playerExtraDeck.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+  2730: 
+  2731: if (hasPiercing && hasDoubleAtk && thiefInExtra) {
+  2732: const confirmSummon = await showXLWConfirm(
+  2733: "大耳賊 效果觸發",
+------------------------------
+Line 3262: (attacker.equipments && attacker.equipments.includes("塗毒"));
+  3257: const attackerHasRanged = (attackerCard.keywords && attackerCard.keywords.includes("\u9060\u7a0b")) ||
+  3258: (attackerCard.effect_text && attackerCard.effect_text.includes("\u9060\u7a0b")) ||
+  3259: attacker.hasRanged;
+  3260: const attackerHasPoison = (attackerCard.keywords && attackerCard.keywords.includes("\u5287\u6bd2")) ||
+  3261: (attackerCard.effect_text && attackerCard.effect_text.includes("\u5287\u6bd2")) ||
+  3262: (attacker.equipments && attacker.equipments.includes("塗毒"));
+  3263: const attackerHasSneak = (attackerCard.keywords && attackerCard.keywords.includes("\u5077\u8972")) ||
+  3264: (attackerCard.effect_text && attackerCard.effect_text.includes("\u5077\u8972"));
+  3265: 
+  3266: const defenderHasPoison = (defenderCard.keywords && defenderCard.keywords.includes("\u5287\u6bd2")) ||
+  3267: (defenderCard.effect_text && defenderCard.effect_text.includes("\u5287\u6bd2")) ||
+  3268: (defender.equipments && defender.equipments.includes("塗毒"));
+  3269: 
+------------------------------
+Line 3268: (defender.equipments && defender.equipments.includes("塗毒"));
+  3263: const attackerHasSneak = (attackerCard.keywords && attackerCard.keywords.includes("\u5077\u8972")) ||
+  3264: (attackerCard.effect_text && attackerCard.effect_text.includes("\u5077\u8972"));
+  3265: 
+  3266: const defenderHasPoison = (defenderCard.keywords && defenderCard.keywords.includes("\u5287\u6bd2")) ||
+  3267: (defenderCard.effect_text && defenderCard.effect_text.includes("\u5287\u6bd2")) ||
+  3268: (defender.equipments && defender.equipments.includes("塗毒"));
+  3269: 
+  3270: // 4. 計算雙方是否應當被擊破 (引入 Ranged 免疫反擊與 Poisonous 必殺邏輯)
+  3271: let attackerShouldDie = false;
+  3272: let defenderShouldDie = false;
+  3273: 
+  3274: // 基礎戰鬥數值對決 (相同攻擊力時攻擊方獲勝，防守方被破壞)
+  3275: if (atkPower >= defPower) {
+------------------------------
+Line 3521: const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3516: }
+  3517: 
+  3518: // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3519: if (successOwner === "player") {
+  3520: const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
+  3521: const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3522: if (eqName === "血戰幫狼牙棒") return false;
+  3523: if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3524: if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3525: return true;
+  3526: });
+  3527: const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3528: 
+------------------------------
+Line 3577: if (attacker.equipments && attacker.equipments.length > 0) {
+  3572: }, 50);
+  3573: });
+  3574: }
+  3575: const opponentRecalled = window.XLW_opponentSneakRecall[key];
+  3576: if (opponentRecalled) {
+  3577: if (attacker.equipments && attacker.equipments.length > 0) {
+  3578: attacker.equipments.forEach(eqName => {
+  3579: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3580: if (isTempMagic) return;
+  3581: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3582: const cloned = structuredClone(cardObj);
+  3583: cloned.type = "magic";
+  3584: window.XLW_ENEMY.grave.push(cloned);
+------------------------------
+Line 3578: attacker.equipments.forEach(eqName => {
+  3573: });
+  3574: }
+  3575: const opponentRecalled = window.XLW_opponentSneakRecall[key];
+  3576: if (opponentRecalled) {
+  3577: if (attacker.equipments && attacker.equipments.length > 0) {
+  3578: attacker.equipments.forEach(eqName => {
+  3579: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3580: if (isTempMagic) return;
+  3581: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3582: const cloned = structuredClone(cardObj);
+  3583: cloned.type = "magic";
+  3584: window.XLW_ENEMY.grave.push(cloned);
+  3585: enemyGraveyard = window.XLW_ENEMY.grave;
+------------------------------
+Line 3588: attacker.equipments = [];
+  3583: cloned.type = "magic";
+  3584: window.XLW_ENEMY.grave.push(cloned);
+  3585: enemyGraveyard = window.XLW_ENEMY.grave;
+  3586: logBattle(`✨ 裝備卡 ${cloned.name} 因對手單位回手進入對手墓地。`);
+  3587: });
+  3588: attacker.equipments = [];
+  3589: }
+  3590: if (window.XLW_ENEMY.hand) {
+  3591: window.XLW_ENEMY.hand.push(attacker.card);
+  3592: }
+  3593: field[attZone][attIdx] = null;
+  3594: sneakMsg = `，且對手觸發「偷襲」成功收回其手牌`;
+  3595: } else {
+------------------------------
+Line 3602: if (attacker.equipments && attacker.equipments.length > 0) {
+  3597: attacker.attacking = false;
+  3598: attacker.target = null;
+  3599: sneakMsg = `，對手選擇放棄「偷襲」回手，使該單位留在場上處於疲勞狀態`;
+  3600: }
+  3601: } else {
+  3602: if (attacker.equipments && attacker.equipments.length > 0) {
+  3603: attacker.equipments.forEach(eqName => {
+  3604: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3605: if (isTempMagic) return;
+  3606: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3607: const cloned = structuredClone(cardObj);
+  3608: cloned.type = "magic";
+  3609: window.XLW_ENEMY.grave.push(cloned);
+------------------------------
+Line 3603: attacker.equipments.forEach(eqName => {
+  3598: attacker.target = null;
+  3599: sneakMsg = `，對手選擇放棄「偷襲」回手，使該單位留在場上處於疲勞狀態`;
+  3600: }
+  3601: } else {
+  3602: if (attacker.equipments && attacker.equipments.length > 0) {
+  3603: attacker.equipments.forEach(eqName => {
+  3604: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3605: if (isTempMagic) return;
+  3606: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3607: const cloned = structuredClone(cardObj);
+  3608: cloned.type = "magic";
+  3609: window.XLW_ENEMY.grave.push(cloned);
+  3610: enemyGraveyard = window.XLW_ENEMY.grave;
+------------------------------
+Line 3613: attacker.equipments = [];
+  3608: cloned.type = "magic";
+  3609: window.XLW_ENEMY.grave.push(cloned);
+  3610: enemyGraveyard = window.XLW_ENEMY.grave;
+  3611: logBattle(`✨ 裝備卡 ${cloned.name} 因對手單位回手進入對手墓地。`);
+  3612: });
+  3613: attacker.equipments = [];
+  3614: }
+  3615: if (window.XLW_ENEMY.hand) {
+  3616: window.XLW_ENEMY.hand.push(attacker.card);
+  3617: field[attZone][attIdx] = null;
+  3618: sneakMsg = `，且對手觸發「偷襲」成功收回其手牌`;
+  3619: }
+  3620: }
+------------------------------
+Line 3640: if (attacker.equipments && attacker.equipments.length > 0) {
+  3635: recall: userWantsRecall
+  3636: }));
+  3637: }
+  3638: 
+  3639: if (userWantsRecall) {
+  3640: if (attacker.equipments && attacker.equipments.length > 0) {
+  3641: attacker.equipments.forEach(eqName => {
+  3642: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3643: const cloned = structuredClone(cardObj);
+  3644: cloned.type = "magic";
+  3645: graveyard.push(cloned);
+  3646: logBattle(`✨ 裝備卡 ${cloned.name} 因我方單位回手進入我方墓地。`);
+  3647: });
+------------------------------
+Line 3641: attacker.equipments.forEach(eqName => {
+  3636: }));
+  3637: }
+  3638: 
+  3639: if (userWantsRecall) {
+  3640: if (attacker.equipments && attacker.equipments.length > 0) {
+  3641: attacker.equipments.forEach(eqName => {
+  3642: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3643: const cloned = structuredClone(cardObj);
+  3644: cloned.type = "magic";
+  3645: graveyard.push(cloned);
+  3646: logBattle(`✨ 裝備卡 ${cloned.name} 因我方單位回手進入我方墓地。`);
+  3647: });
+  3648: attacker.equipments = [];
+------------------------------
+Line 3648: attacker.equipments = [];
+  3643: const cloned = structuredClone(cardObj);
+  3644: cloned.type = "magic";
+  3645: graveyard.push(cloned);
+  3646: logBattle(`✨ 裝備卡 ${cloned.name} 因我方單位回手進入我方墓地。`);
+  3647: });
+  3648: attacker.equipments = [];
+  3649: }
+  3650: hand.push(attacker.card);
+  3651: field[attZone][attIdx] = null;
+  3652: sneakMsg = `，且觸發「偷襲」成功收回我方手牌`;
+  3653: 
+  3654: // 核心：觸發「偷襲成功」的一系列效果！
+  3655: await triggerSneakAttackSuccessEffects(attacker.card);
+------------------------------
+Line 3751: if (unit.equipments && unit.equipments.length > 0) {
+  3746: const sparks = slot.querySelector(".shatter-sparks");
+  3747: if (sparks) sparks.remove();
+  3748: }
+  3749: 
+  3750: // 4. 送墓或除外並真正清空格子
+  3751: if (unit.equipments && unit.equipments.length > 0) {
+  3752: unit.equipments.forEach(eqName => {
+  3753: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3754: if (isTempMagic) return;
+  3755: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3756: const cloned = structuredClone(cardObj);
+  3757: cloned.type = "magic";
+  3758: if (owner === "player") {
+------------------------------
+Line 3752: unit.equipments.forEach(eqName => {
+  3747: if (sparks) sparks.remove();
+  3748: }
+  3749: 
+  3750: // 4. 送墓或除外並真正清空格子
+  3751: if (unit.equipments && unit.equipments.length > 0) {
+  3752: unit.equipments.forEach(eqName => {
+  3753: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  3754: if (isTempMagic) return;
+  3755: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  3756: const cloned = structuredClone(cardObj);
+  3757: cloned.type = "magic";
+  3758: if (owner === "player") {
+  3759: graveyard.push(cloned);
+------------------------------
+Line 3767: unit.equipments = [];
+  3762: window.XLW_ENEMY.grave.push(cloned);
+  3763: enemyGraveyard = window.XLW_ENEMY.grave;
+  3764: logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被破壞進入對手墓地。`);
+  3765: }
+  3766: });
+  3767: unit.equipments = [];
+  3768: }
+  3769: 
+  3770: if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+  3771: if (zone.startsWith("player_")) {
+  3772: enemyBonusScore += 2;
+  3773: logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+  3774: } else {
+------------------------------
+Line 4282: if (backUnit.equipments && backUnit.equipments.length > 0) {
+  4277: if (hasBroom) {
+  4278: const oppUnit = field["enemy_front"][idx];
+  4279: if (oppUnit) {
+  4280: const backUnit = field["enemy_back"][idx];
+  4281: if (backUnit) {
+  4282: if (backUnit.equipments && backUnit.equipments.length > 0) {
+  4283: backUnit.equipments.forEach(eqName => {
+  4284: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  4285: if (isTempMagic) return;
+  4286: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  4287: const cloned = structuredClone(cardObj);
+  4288: cloned.type = "magic";
+  4289: window.XLW_ENEMY.grave.push(cloned);
+------------------------------
+Line 4283: backUnit.equipments.forEach(eqName => {
+  4278: const oppUnit = field["enemy_front"][idx];
+  4279: if (oppUnit) {
+  4280: const backUnit = field["enemy_back"][idx];
+  4281: if (backUnit) {
+  4282: if (backUnit.equipments && backUnit.equipments.length > 0) {
+  4283: backUnit.equipments.forEach(eqName => {
+  4284: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  4285: if (isTempMagic) return;
+  4286: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  4287: const cloned = structuredClone(cardObj);
+  4288: cloned.type = "magic";
+  4289: window.XLW_ENEMY.grave.push(cloned);
+  4290: enemyGraveyard = window.XLW_ENEMY.grave;
+------------------------------
+Line 4293: backUnit.equipments = [];
+  4288: cloned.type = "magic";
+  4289: window.XLW_ENEMY.grave.push(cloned);
+  4290: enemyGraveyard = window.XLW_ENEMY.grave;
+  4291: logBattle(`✨ 裝備卡 ${cloned.name} 因對手單位回手進入對手墓地。`);
+  4292: });
+  4293: backUnit.equipments = [];
+  4294: }
+  4295: if (window.XLW_ENEMY.hand) {
+  4296: window.XLW_ENEMY.hand.push(backUnit.card);
+  4297: }
+  4298: logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排，原後排單位 ${backUnit.card.name} 被推回對手手牌！`);
+  4299: } else {
+  4300: logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排！`);
+------------------------------
+Line 4919: obj.equipments = obj.equipments || [];
+  4914: if (window.XLW_equipSpellActive) {
+  4915: const isOrc = obj.card?.faction === "獸人" || obj.card?.race === "獸人" || obj.card?.id?.includes("ORC") || obj.card?.id?.includes("0RC") || obj.card?.id?.includes("ROC");
+  4916: const isShield = window.XLW_equipSpellCard && window.XLW_equipSpellCard.name === "法術保護-護盾";
+  4917: if (zone.startsWith("player_") && (isOrc || isShield)) {
+  4918: const spellCard = window.XLW_equipSpellCard;
+  4919: obj.equipments = obj.equipments || [];
+  4920: obj.equipments.push(spellCard.name);
+  4921: logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  4922: if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  4923: obj.magicImmune = true;
+  4924: logBattle(`✨ 符咒帽 效果：${obj.card.name} 獲得永久敵方魔法抗性！`);
+  4925: }
+  4926: else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+------------------------------
+Line 4920: obj.equipments.push(spellCard.name);
+  4915: const isOrc = obj.card?.faction === "獸人" || obj.card?.race === "獸人" || obj.card?.id?.includes("ORC") || obj.card?.id?.includes("0RC") || obj.card?.id?.includes("ROC");
+  4916: const isShield = window.XLW_equipSpellCard && window.XLW_equipSpellCard.name === "法術保護-護盾";
+  4917: if (zone.startsWith("player_") && (isOrc || isShield)) {
+  4918: const spellCard = window.XLW_equipSpellCard;
+  4919: obj.equipments = obj.equipments || [];
+  4920: obj.equipments.push(spellCard.name);
+  4921: logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  4922: if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  4923: obj.magicImmune = true;
+  4924: logBattle(`✨ 符咒帽 效果：${obj.card.name} 獲得永久敵方魔法抗性！`);
+  4925: }
+  4926: else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  4927: obj.piercing = true;
+------------------------------
+Line 4978: showModal(obj.card, obj.equipments);
+  4973: if (phase === "防守階段" && zone.startsWith("player_")) {
+  4974: const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
+  4975: if (isDefenderGuard) {
+  4976: if (window.XLW_defenderGuardUsedTurn === turn) {
+  4977: setStatus("禁衛軍獸人 效果本回合已使用過。");
+  4978: showModal(obj.card, obj.equipments);
+  4979: return;
+  4980: }
+  4981: let attackingEnemyUnits = [];
+  4982: for (const ez of ["enemy_front", "enemy_back"]) {
+  4983: for (let i = 0; i < 5; i++) {
+  4984: const enemyUnit = field[ez][i];
+  4985: if (enemyUnit && enemyUnit.attacking && enemyUnit.target) {
+------------------------------
+Line 4995: showModal(obj.card, obj.equipments);
+  4990: }
+  4991: }
+  4992: }
+  4993: if (attackingEnemyUnits.length === 0) {
+  4994: setStatus("目前沒有敵方單位進攻我方其他單位！");
+  4995: showModal(obj.card, obj.equipments);
+  4996: return;
+  4997: }
+  4998: const confirmUse = await showXLWConfirm("禁衛軍獸人 效果發動", "是否使敵方一個進攻單位改為進攻此禁衛軍獸人？");
+  4999: if (confirmUse) {
+  5000: const choices = attackingEnemyUnits.map((u, i) => ({ text: `${u.unit.card.name} (進攻指向我方 ${u.unit.target.zone.includes("front") ? "前排" : "後排"}${u.unit.target.idx + 1})`, value: i }));
+  5001: const chosenIdx = await showXLWChoiceModal("選擇轉移的進攻單位", "選擇進攻單位：", choices);
+  5002: if (chosenIdx !== null && chosenIdx !== undefined) {
+------------------------------
+Line 5041: if (!obj.equipments) obj.equipments = [];
+  5036: setStatus("該單位具有魔法免疫，無法被魔法指定！");
+  5037: return;
+  5038: }
+  5039: }
+  5040: 
+  5041: if (!obj.equipments) obj.equipments = [];
+  5042: const spellNameClean = spellCard.name;
+  5043: if (!obj.equipments.includes(spellNameClean)) {
+  5044: obj.equipments.push(spellNameClean);
+  5045: }
+  5046: 
+  5047: if (!obj.tempEquips) obj.tempEquips = {};
+  5048: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+------------------------------
+Line 5043: if (!obj.equipments.includes(spellNameClean)) {
+  5038: }
+  5039: }
+  5040: 
+  5041: if (!obj.equipments) obj.equipments = [];
+  5042: const spellNameClean = spellCard.name;
+  5043: if (!obj.equipments.includes(spellNameClean)) {
+  5044: obj.equipments.push(spellNameClean);
+  5045: }
+  5046: 
+  5047: if (!obj.tempEquips) obj.tempEquips = {};
+  5048: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+  5049: obj.tempEquips[spellNameClean] = turn;
+  5050: } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+------------------------------
+Line 5044: obj.equipments.push(spellNameClean);
+  5039: }
+  5040: 
+  5041: if (!obj.equipments) obj.equipments = [];
+  5042: const spellNameClean = spellCard.name;
+  5043: if (!obj.equipments.includes(spellNameClean)) {
+  5044: obj.equipments.push(spellNameClean);
+  5045: }
+  5046: 
+  5047: if (!obj.tempEquips) obj.tempEquips = {};
+  5048: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+  5049: obj.tempEquips[spellNameClean] = turn;
+  5050: } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+  5051: obj.tempEquips[spellNameClean] = turn + 1;
+------------------------------
+Line 5122: if (obj.equipments && obj.equipments.length > 0) {
+  5117: window.XLW_ENEMY.grave.push(obj.card);
+  5118: enemyGraveyard = window.XLW_ENEMY.grave;
+  5119: }
+  5120: 
+  5121: // 處理裝備卡送入墓地
+  5122: if (obj.equipments && obj.equipments.length > 0) {
+  5123: obj.equipments.forEach(eqName => {
+  5124: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  5125: if (isTempMagic) return;
+  5126: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  5127: const cloned = structuredClone(cardObj);
+  5128: cloned.type = "magic";
+  5129: if (targetOwner === "player") {
+------------------------------
+Line 5123: obj.equipments.forEach(eqName => {
+  5118: enemyGraveyard = window.XLW_ENEMY.grave;
+  5119: }
+  5120: 
+  5121: // 處理裝備卡送入墓地
+  5122: if (obj.equipments && obj.equipments.length > 0) {
+  5123: obj.equipments.forEach(eqName => {
+  5124: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  5125: if (isTempMagic) return;
+  5126: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  5127: const cloned = structuredClone(cardObj);
+  5128: cloned.type = "magic";
+  5129: if (targetOwner === "player") {
+  5130: graveyard.push(cloned);
+------------------------------
+Line 5150: obj.equipments = [];
+  5145: goatUnitCard.tribute = 0;
+  5146: goatUnitCard.faction = "中立";
+  5147: goatUnitCard.creator = "player"; // 標記為我方創造
+  5148: 
+  5149: obj.card = goatUnitCard;
+  5150: obj.equipments = [];
+  5151: obj.atkModifier = 0;
+  5152: obj.piercing = false;
+  5153: obj.magicImmune = false;
+  5154: obj.hasRanged = false;
+  5155: obj.steakBonus = false;
+  5156: 
+  5157: if (isMultiplayer) {
+------------------------------
+Line 5243: showModal(obj.card, obj.equipments);
+  5238: }
+  5239: return;
+  5240: }
+  5241: // 進攻宣言與防守點選優先處理
+  5242: if (isMultiplayer && !isMyTurn) {
+  5243: showModal(obj.card, obj.equipments);
+  5244: setStatus("對手回合中，請稍候！");
+  5245: return;
+  5246: }
+  5247: if (phase === "進攻宣言") {
+  5248: if (zone.startsWith("player_")) {
+  5249: await xlwTogglePlayerAttack(zone, idx);
+  5250: } else {
+------------------------------
+Line 5251: showModal(obj.card, obj.equipments);
+  5246: }
+  5247: if (phase === "進攻宣言") {
+  5248: if (zone.startsWith("player_")) {
+  5249: await xlwTogglePlayerAttack(zone, idx);
+  5250: } else {
+  5251: showModal(obj.card, obj.equipments);
+  5252: }
+  5253: return;
+  5254: }
+  5255: if (phase === "召喚階段" && selectedHandForTribute !== null) {
+  5256: toggleTributeSelection(zone, idx);
+  5257: return;
+  5258: }
+------------------------------
+Line 5265: showModal(obj.card, obj.equipments);
+  5260: if ((phase === "召喚階段" || phase === "戰術佈陣") && zone.startsWith("player_")) {
+  5261: const isManagerMeow = obj.card?.id === "R-CAT-0048" || obj.card?.name?.includes("經理喵");
+  5262: if (isManagerMeow) {
+  5263: if (phase !== "召喚階段") {
+  5264: setStatus("【經理喵】的效果只能在召喚階段發動！");
+  5265: showModal(obj.card, obj.equipments);
+  5266: return;
+  5267: }
+  5268: if (window.XLW_managerMeowUsedTurn === turn) {
+  5269: setStatus("經理喵 效果本回合已使用過。");
+  5270: showModal(obj.card, obj.equipments);
+  5271: return;
+  5272: }
+------------------------------
+Line 5270: showModal(obj.card, obj.equipments);
+  5265: showModal(obj.card, obj.equipments);
+  5266: return;
+  5267: }
+  5268: if (window.XLW_managerMeowUsedTurn === turn) {
+  5269: setStatus("經理喵 效果本回合已使用過。");
+  5270: showModal(obj.card, obj.equipments);
+  5271: return;
+  5272: }
+  5273: if (playerBonusScore < 1) {
+  5274: setStatus("我方額外分數不足 1★，無法發動效果！");
+  5275: showModal(obj.card, obj.equipments);
+  5276: return;
+  5277: }
+------------------------------
+Line 5275: showModal(obj.card, obj.equipments);
+  5270: showModal(obj.card, obj.equipments);
+  5271: return;
+  5272: }
+  5273: if (playerBonusScore < 1) {
+  5274: setStatus("我方額外分數不足 1★，無法發動效果！");
+  5275: showModal(obj.card, obj.equipments);
+  5276: return;
+  5277: }
+  5278: if (hand.length === 0) {
+  5279: setStatus("我方手牌為空，無法選擇卡牌置於牌庫底！");
+  5280: showModal(obj.card, obj.equipments);
+  5281: return;
+  5282: }
+------------------------------
+Line 5280: showModal(obj.card, obj.equipments);
+  5275: showModal(obj.card, obj.equipments);
+  5276: return;
+  5277: }
+  5278: if (hand.length === 0) {
+  5279: setStatus("我方手牌為空，無法選擇卡牌置於牌庫底！");
+  5280: showModal(obj.card, obj.equipments);
+  5281: return;
+  5282: }
+  5283: 
+  5284: const confirmUse = await showXLWConfirm(
+  5285: "經理喵 效果發動",
+  5286: "是否發動【經理喵】效果：消耗 1★ 額外分數，並將我方 1 張手牌置於牌庫底，使我方場上所有「喵喵賊」單位獲得魔法免疫直到下回合敵方防守階段結束？"
+  5287: );
+------------------------------
+Line 5326: showModal(obj.card, obj.equipments);
+  5321: 
+  5322: const isWeaponMerchant = obj.card?.id === "R-ORC-0046" || obj.card?.name?.includes("武器商");
+  5323: if (isWeaponMerchant) {
+  5324: if (window.XLW_weaponMerchantUsedTurn === turn) {
+  5325: setStatus("獸人武器商 效果本回合已使用過。");
+  5326: showModal(obj.card, obj.equipments);
+  5327: return;
+  5328: }
+  5329: if (playerBonusScore < 2) {
+  5330: setStatus("我方獎勵不足 2★，無法發動效果！");
+  5331: showModal(obj.card, obj.equipments);
+  5332: return;
+  5333: }
+------------------------------
+Line 5331: showModal(obj.card, obj.equipments);
+  5326: showModal(obj.card, obj.equipments);
+  5327: return;
+  5328: }
+  5329: if (playerBonusScore < 2) {
+  5330: setStatus("我方獎勵不足 2★，無法發動效果！");
+  5331: showModal(obj.card, obj.equipments);
+  5332: return;
+  5333: }
+  5334: const equipInGrave = graveyard.filter(c => c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排")));
+  5335: if (equipInGrave.length === 0) {
+  5336: setStatus("墓地中沒有可以回收的獸人裝備卡！");
+  5337: showModal(obj.card, obj.equipments);
+  5338: return;
+------------------------------
+Line 5337: showModal(obj.card, obj.equipments);
+  5332: return;
+  5333: }
+  5334: const equipInGrave = graveyard.filter(c => c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排")));
+  5335: if (equipInGrave.length === 0) {
+  5336: setStatus("墓地中沒有可以回收的獸人裝備卡！");
+  5337: showModal(obj.card, obj.equipments);
+  5338: return;
+  5339: }
+  5340: const confirmUse = await showXLWConfirm("獸人武器商 效果發動", "是否消費 2★ 獎勵，回收墓地一張獸人裝備卡？");
+  5341: if (confirmUse) {
+  5342: const choices = equipInGrave.map((c, idx) => ({ text: `${c.name} (墓地)`, value: idx }));
+  5343: const chosenIdx = await showXLWChoiceModal("選擇回收的裝備卡", "選擇裝備卡：", choices);
+  5344: if (chosenIdx !== null && chosenIdx !== undefined) {
+------------------------------
+Line 5362: showModal(obj.card, obj.equipments);
+  5357: }
+  5358: const isGrandpa = obj.card?.id === "SR-ORC-0052" || obj.card?.name?.includes("獸人爺爺");
+  5359: if (isGrandpa) {
+  5360: if (window.XLW_grandpaUsedTurn === turn) {
+  5361: setStatus("獸人爺爺 效果本回合已使用過。");
+  5362: showModal(obj.card, obj.equipments);
+  5363: return;
+  5364: }
+  5365: let otherOrcs = [];
+  5366: for (const z of ["player_front", "player_back"]) {
+  5367: for (let i = 0; i < 5; i++) {
+  5368: const u = field[z][i];
+  5369: if (u && u !== obj && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC"))) {
+------------------------------
+Line 5376: showModal(obj.card, obj.equipments);
+  5371: }
+  5372: }
+  5373: }
+  5374: if (otherOrcs.length === 0) {
+  5375: setStatus("場上沒有其他獸人單位可以回手！");
+  5376: showModal(obj.card, obj.equipments);
+  5377: return;
+  5378: }
+  5379: const confirmUse = await showXLWConfirm("獸人爺爺 效果發動", "是否使我方場上一個其他獸人單位回手，使獸人爺爺獲得 +2 攻擊力？");
+  5380: if (confirmUse) {
+  5381: const choices = otherOrcs.map((o, idx) => ({ text: `${o.card.name} (場上 ${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: idx }));
+  5382: const chosenIdx = await showXLWChoiceModal("選擇回手的獸人單位", "選擇單位：", choices);
+  5383: if (chosenIdx !== null && chosenIdx !== undefined) {
+------------------------------
+Line 5397: showModal(obj.card, obj.equipments);
+  5392: }
+  5393: }
+  5394: return;
+  5395: }
+  5396: }
+  5397: showModal(obj.card, obj.equipments);
+  5398: };
+  5399: 
+  5400: slot.appendChild(cardEl);
+  5401: 
+  5402: // 渲染已裝備之魔法卡（置於單位卡下方，堆疊並僅露出最上方裝備效果字樣）
+  5403: if (obj.equipments && obj.equipments.length > 0) {
+  5404: slot.style.overflow = "visible"; // 允許溢出以顯示下方的裝備卡
+------------------------------
+Line 5403: if (obj.equipments && obj.equipments.length > 0) {
+  5398: };
+  5399: 
+  5400: slot.appendChild(cardEl);
+  5401: 
+  5402: // 渲染已裝備之魔法卡（置於單位卡下方，堆疊並僅露出最上方裝備效果字樣）
+  5403: if (obj.equipments && obj.equipments.length > 0) {
+  5404: slot.style.overflow = "visible"; // 允許溢出以顯示下方的裝備卡
+  5405: cardEl.style.position = "relative";
+  5406: cardEl.style.zIndex = "10"; // 主牌置於最上層
+  5407: 
+  5408: // 1. 同時在卡牌牌面上方（浮動）顯示裝備效果字樣，以示辨別
+  5409: const eqContainer = document.createElement("div");
+  5410: eqContainer.className = "xlw-equipments-overlay-container";
+------------------------------
+Line 5421: obj.equipments.forEach((eqName) => {
+  5416: eqContainer.style.display = "flex";
+  5417: eqContainer.style.flexDirection = "column";
+  5418: eqContainer.style.gap = "4px";
+  5419: eqContainer.style.pointerEvents = "none";
+  5420: 
+  5421: obj.equipments.forEach((eqName) => {
+  5422: let displayText = eqName;
+  5423: if (eqName.includes("符咒帽")) displayText = "🎩 \u7b26\u5492\u5e3d (\u9b54\u514d)"; // 🎩 符咒帽 (魔免)
+  5424: else if (eqName.includes("菜刀")) displayText = "🔪 3\u661f\u83dc\u5200 (\u8cab\u7a7f)"; // 🔪 3星菜刀 (貫穿)
+  5425: else if (eqName.includes("弓箭")) displayText = "🏹 \u5f13\u7bad (\u9060\u7a0b+1)"; // 🏹 弓箭 (遠程+1)
+  5426: else if (eqName.includes("戰斧牛排")) displayText = "🥩 \u6230\u65ac\u725b\u6392 (+5)"; // 🥩 戰斧牛排 (+5)
+  5427: else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水 (-3)";
+  5428: else if (eqName.includes("振奮藥水")) displayText = "🧪 振奮藥水 (+3)";
+------------------------------
+Line 6391: if (unit.equipments && unit.equipments.length > 0) {
+  6386: data.tributes.forEach(t => {
+  6387: if (t.zone === "dummy") return;
+  6388: const unit = field[t.zone][t.idx];
+  6389: if (unit) {
+  6390: // 先處理裝備卡送入對手墓地
+  6391: if (unit.equipments && unit.equipments.length > 0) {
+  6392: unit.equipments.forEach(eqName => {
+  6393: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  6394: if (isTempMagic) return;
+  6395: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  6396: const cloned = structuredClone(cardObj);
+  6397: cloned.type = "magic";
+  6398: window.XLW_ENEMY.grave.push(cloned);
+------------------------------
+Line 6392: unit.equipments.forEach(eqName => {
+  6387: if (t.zone === "dummy") return;
+  6388: const unit = field[t.zone][t.idx];
+  6389: if (unit) {
+  6390: // 先處理裝備卡送入對手墓地
+  6391: if (unit.equipments && unit.equipments.length > 0) {
+  6392: unit.equipments.forEach(eqName => {
+  6393: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  6394: if (isTempMagic) return;
+  6395: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  6396: const cloned = structuredClone(cardObj);
+  6397: cloned.type = "magic";
+  6398: window.XLW_ENEMY.grave.push(cloned);
+  6399: enemyGraveyard = window.XLW_ENEMY.grave;
+------------------------------
+Line 6402: unit.equipments = [];
+  6397: cloned.type = "magic";
+  6398: window.XLW_ENEMY.grave.push(cloned);
+  6399: enemyGraveyard = window.XLW_ENEMY.grave;
+  6400: logBattle(`✨ 裝備卡 ${cloned.name} 隨著對手單位被獻祭進入對手墓地。`);
+  6401: });
+  6402: unit.equipments = [];
+  6403: }
+  6404: 
+  6405: if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+  6406: if (zone.startsWith("player_")) {
+  6407: enemyBonusScore += 2;
+  6408: logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+  6409: } else {
+------------------------------
+Line 6494: obj.equipments = obj.equipments || [];
+  6489: const idx = data.idx;
+  6490: const spellCard = data.spellCard;
+  6491: 
+  6492: const obj = field[zone]?.[idx];
+  6493: if (obj) {
+  6494: obj.equipments = obj.equipments || [];
+  6495: obj.equipments.push(spellCard.name);
+  6496: logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  6497: 
+  6498: if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  6499: obj.magicImmune = true;
+  6500: } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  6501: obj.piercing = true;
+------------------------------
+Line 6495: obj.equipments.push(spellCard.name);
+  6490: const spellCard = data.spellCard;
+  6491: 
+  6492: const obj = field[zone]?.[idx];
+  6493: if (obj) {
+  6494: obj.equipments = obj.equipments || [];
+  6495: obj.equipments.push(spellCard.name);
+  6496: logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  6497: 
+  6498: if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  6499: obj.magicImmune = true;
+  6500: } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  6501: obj.piercing = true;
+  6502: } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+------------------------------
+Line 6524: if (obj.equipments && obj.equipments.length > 0) {
+  6519: if (obj) {
+  6520: logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+  6521: graveyard.push(obj.card); // 進入我方墓地
+  6522: 
+  6523: const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
+  6524: if (obj.equipments && obj.equipments.length > 0) {
+  6525: obj.equipments.forEach(eqName => {
+  6526: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  6527: if (isTempMagic) return;
+  6528: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  6529: const cloned = structuredClone(cardObj);
+  6530: cloned.type = "magic";
+  6531: if (targetOwner === "player") {
+------------------------------
+Line 6525: obj.equipments.forEach(eqName => {
+  6520: logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+  6521: graveyard.push(obj.card); // 進入我方墓地
+  6522: 
+  6523: const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
+  6524: if (obj.equipments && obj.equipments.length > 0) {
+  6525: obj.equipments.forEach(eqName => {
+  6526: const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  6527: if (isTempMagic) return;
+  6528: const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+  6529: const cloned = structuredClone(cardObj);
+  6530: cloned.type = "magic";
+  6531: if (targetOwner === "player") {
+  6532: graveyard.push(cloned);
+------------------------------
+Line 6551: obj.equipments = [];
+  6546: goatUnitCard.tribute = 0;
+  6547: goatUnitCard.faction = "中立";
+  6548: goatUnitCard.creator = "enemy"; // 標記為敵方創造
+  6549: 
+  6550: obj.card = goatUnitCard;
+  6551: obj.equipments = [];
+  6552: obj.atkModifier = 0;
+  6553: obj.piercing = false;
+  6554: obj.magicImmune = false;
+  6555: obj.hasRanged = false;
+  6556: obj.steakBonus = false;
+  6557: 
+  6558: render();
+------------------------------
+Line 6716: if (!targetUnit.equipments) targetUnit.equipments = [];
+  6711: logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6712: render();
+  6713: } else if (data.action === "temp_equip_spell_resolved") {
+  6714: const targetUnit = field[data.zone]?.[data.idx];
+  6715: if (targetUnit) {
+  6716: if (!targetUnit.equipments) targetUnit.equipments = [];
+  6717: const spellNameClean = data.spellCard.name;
+  6718: if (!targetUnit.equipments.includes(spellNameClean)) {
+  6719: targetUnit.equipments.push(spellNameClean);
+  6720: }
+  6721: if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+  6722: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  6723: targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+------------------------------
+Line 6718: if (!targetUnit.equipments.includes(spellNameClean)) {
+  6713: } else if (data.action === "temp_equip_spell_resolved") {
+  6714: const targetUnit = field[data.zone]?.[data.idx];
+  6715: if (targetUnit) {
+  6716: if (!targetUnit.equipments) targetUnit.equipments = [];
+  6717: const spellNameClean = data.spellCard.name;
+  6718: if (!targetUnit.equipments.includes(spellNameClean)) {
+  6719: targetUnit.equipments.push(spellNameClean);
+  6720: }
+  6721: if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+  6722: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  6723: targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+  6724: } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+  6725: targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+------------------------------
+Line 6719: targetUnit.equipments.push(spellNameClean);
+  6714: const targetUnit = field[data.zone]?.[data.idx];
+  6715: if (targetUnit) {
+  6716: if (!targetUnit.equipments) targetUnit.equipments = [];
+  6717: const spellNameClean = data.spellCard.name;
+  6718: if (!targetUnit.equipments.includes(spellNameClean)) {
+  6719: targetUnit.equipments.push(spellNameClean);
+  6720: }
+  6721: if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+  6722: if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  6723: targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+  6724: } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+  6725: targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+  6726: }
+------------------------------

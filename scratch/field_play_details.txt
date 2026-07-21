@@ -1,0 +1,36 @@
+1400:       setStatus("【魔抗鐵拳】請點選場上一個單位施加魔抗鐵拳！");
+1401:       render();
+1402:       await new Promise(r => { window.XLW_resistIronFistResolve = r; });
+1403:     } else {
+1404:       setStatus("場上無單位可附加魔抗鐵拳！");
+1405:       return;
+1406:     }
+1407:   }
+1408:   // 4. 恐怖的井 / 持久魔法卡放置到場地區
+1409:   else if (card.name.includes("恐怖的井") || card.magic_type === "場地" || card.name.includes("場地") || text.includes("結束階段時")) {
+1410:     const playerField = $("playerField");
+1411:     if (playerField) {
+1412:       if (playerField.dataset.card) {
+1413:         graveyard.push(JSON.parse(playerField.dataset.card));
+1414:       }
+1415:       playerField.dataset.card = JSON.stringify(card);
+1416:       logBattle(`設置魔法卡：${card.name}`);
+1417:     }
+1418:   } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+1419:     const spellsInGrave = graveyard.filter(c => c && c.type === "magic");
+1420:     if (spellsInGrave.length > 0) {
+1421:       const choices = spellsInGrave.map((c, i) => ({ text: `${c.name} (墓地)`, value: i }));
+1422:       const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices);
+1423:       if (chosenIdx !== null && chosenIdx !== undefined) {
+1424:         const chosenSpell = spellsInGrave[chosenIdx];
+1425:         const gIdx = graveyard.indexOf(chosenSpell);
+1426:         if (gIdx >= 0) graveyard.splice(gIdx, 1);
+1427:         hand.push(chosenSpell);
+1428:         logBattle(`✨ 法力回收壺 效果：將墓地魔法卡 ${chosenSpell.name} 回收至手牌！`);
+1429:       }
+1430:     } else {
+1431:       setStatus("墓地中無魔法卡可回收！");
+1432:       return;
+1433:     }
+1434:   } else if (card.name?.includes("力場保護") || card.id === "NMG-0040") {
+1435:     while (true) {

@@ -1,0 +1,35 @@
+3476:     }
+3477:   }
+3478: 
+3479:   if (attackerShouldDie) {
+3480:     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat));
+3481:   }
+3482:   if (defenderShouldDie) {
+3483:     destPromise.push(destroyUnit(defZone, defIdx, defenderOwner, attackerIsKnightCat));
+3484: 
+3485:     // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
+3486:     const hasPiercing = (attackerCard.keywords && attackerCard.keywords.includes("貫穿")) ||
+3487:                         (attackerCard.effect_text && attackerCard.effect_text.includes("貫穿"));
+3488:     if (hasPiercing && defZone.includes("front")) {
+3489:       const backZone = defZone.replace("front", "back");
+3490:       const backUnit = field[backZone]?.[defIdx];
+3491:       if (backUnit) {
+3492:         destPromise.push(destroyUnit(backZone, defIdx, defenderOwner));
+3493:         piercingMsg = `，並貫穿擊破了後排的 ${unitName(backUnit)}`;
+3494:       }
+3495:     }
+3496:   }
+3497: 
+3498:   if (destPromise.length > 0) {
+3499:     await Promise.all(destPromise);
+3500:   }
+3501: 
+3502:   // 統計與套用戰鬥成功獎勵
+3503:   const attackerSuccess = (!attackerShouldDie && defenderShouldDie);
+3504:   const defenderSuccess = (!defenderShouldDie && attackerShouldDie);
+3505:   if (attackerSuccess) {
+3506:     const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
+3507:     await applyCombatSuccessReward(attacker, defender, successOwner, true);
+3508: 
+3509:     if (successOwner === "player") {
+3510:       const isMeow = attacker.card && (attacker.card.deck === "喵喵賊" || attacker.card.faction === "喵喵賊" || (attacker.card.id && (String(attacker.card.id).includes("CAT") || String(attacker.card.id).includes("cat"))));

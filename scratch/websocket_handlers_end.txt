@@ -1,0 +1,80 @@
+6276:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+6277:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+6278:         }
+6279:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+6280:         render();
+6281:       }
+6282:     } else if (data.action === "extra_summon_resolved") {
+6283:       const oppZone = data.fromZone;
+6284:       const oppIdx = data.fromIdx;
+6285:       const angryHannya = data.angryHannya;
+6286:       const oldUnit = field[oppZone][oppIdx];
+6287:       if (oldUnit) {
+6288:         window.XLW_ENEMY.grave.push(oldUnit.card);
+6289:         enemyGraveyard = window.XLW_ENEMY.grave;
+6290:         logBattle(`[額外召喚] 對手將場上的【般若】送入墓地作為素材。`);
+6291:       }
+6292:       if (enemyExtraDeck.length > 0) {
+6293:         enemyExtraDeck.pop();
+6294:       }
+6295:       field[oppZone][oppIdx] = {
+6296:         card: structuredClone(angryHannya),
+6297:         tapped: false,
+6298:         attacking: false,
+6299:         target: null,
+6300:         summonedTurn: turn,
+6301:         summonedZone: oppZone
+6302:       };
+6303:       logBattle(`✨ 額外召喚：對手特殊召喚了【憤怒的般若】！`);
+6304:       playerBonusScore = Math.max(0, playerBonusScore - 1);
+6305:       logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+6306:       render();
+6307:     } else if (data.action === "trigger_opponent_discard") {
+6308:       if (hand.length > 0) {
+6309:         const idx = Math.floor(Math.random() * hand.length);
+6310:         const discarded = hand.splice(idx, 1)[0];
+6311:         graveyard.push(discarded);
+6312:         logBattle(`🥷 變裝喵 效果：對手變裝喵偷襲成功，我方被迫隨機捨棄了手牌中的 ${discarded.name}！`);
+6313:         ws.send(JSON.stringify({
+6314:           action: "sync_discard_log",
+6315:           card_name: discarded.name
+6316:         }));
+6317:         render();
+6318:       }
+6319:     } else if (data.action === "sync_discard_log") {
+6320:       logBattle(`🥷 變裝喵 效果：對手隨機捨棄了手牌中的 ${data.card_name}！`);
+6321:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6322:         window.XLW_ENEMY.hand.pop();
+6323:       }
+6324:       render();
+6325:     } else if (data.action === "lantern_summon_single") {
+6326:       const zone = data.zone;
+6327:       const idx = data.idx;
+6328:       field[zone][idx] = {
+6329:         card: structuredClone(LITTLE_TRAVELER),
+6330:         tapped: false,
+6331:         attacking: false,
+6332:         target: null,
+6333:         summonedTurn: turn,
+6334:         summonedZone: zone
+6335:       };
+6336:       logBattle(`燈籠小鬼 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+6337:       render();
+6338:     } else if (data.action === "debbie_summon_single") {
+6339:       const zone = data.zone;
+6340:       const idx = data.idx;
+6341:       field[zone][idx] = {
+6342:         card: structuredClone(LITTLE_TRAVELER),
+6343:         tapped: false,
+6344:         attacking: false,
+6345:         target: null,
+6346:         summonedTurn: turn,
+6347:         summonedZone: zone
+6348:       };
+6349:       logBattle(`委託者 戴比 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+6350:       render();
+6351:     } else if (data.action === "field_indestructible") {
+6352:       const oppField = $("enemyField");
+6353:       if (oppField && oppField.dataset.card) {
+6354:         const fCard = JSON.parse(oppField.dataset.card);
+6355:         fCard.indestructible = true;

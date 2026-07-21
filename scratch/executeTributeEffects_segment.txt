@@ -1,0 +1,64 @@
+1735:         if (unit.card.name.includes("晴天娃娃")) {
+1736:           const choices = [];
+1737:           if ($("playerField").dataset.card) choices.push({ text: "破壞我方場地牌", value: "player" });
+1738:           if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+1739:           if (choices.length > 0) {
+1740:             const chosen = await showXLWChoiceModal("晴天娃娃 獻祭效果", "請選擇要破壞的場地牌：", choices);
+1741:             if (chosen === "player") {
+1742:               const fCard = JSON.parse($("playerField").dataset.card);
+1743:               if (fCard && fCard.indestructible) {
+1744:                 logBattle("晴天娃娃 效果：因【力場保護】效果，我方場地牌免疫破壞！");
+1745:               } else {
+1746:                 delete $("playerField").dataset.card;
+1747:                 graveyard.push(fCard);
+1748:                 logBattle("晴天娃娃 效果：我方場地牌被破壞。");
+1749:               }
+1750:             } else if (chosen === "enemy") {
+1751:               const fCard = JSON.parse($("enemyField").dataset.card);
+1752:               if (fCard && fCard.indestructible) {
+1753:                 logBattle("晴天娃娃 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+1754:               } else {
+1755:                 delete $("enemyField").dataset.card;
+1756:                 window.XLW_ENEMY.grave.push(fCard);
+1757:                 logBattle("晴天娃娃 效果：敵方場地牌被破壞。");
+1758:               }
+1759:             }
+1760:           }
+1761:         }
+1762:         // (b) 嘴裂的女孩: 破壞前方第一個敵方單位
+1763:         if (unit.card.name.includes("嘴裂的女孩")) {
+1764:           const col = t.idx;
+1765:           let targetUnit = field["enemy_front"][col] || field["enemy_back"][col];
+1766:           if (targetUnit) {
+1767:             const targetZone = field["enemy_front"][col] ? "enemy_front" : "enemy_back";
+1768:             logBattle(`嘴裂的女孩 效果：破壞其前方第一格的敵方單位 ${targetUnit.card.name}！`);
+1769:             await destroyUnit(targetZone, col, "enemy");
+1770:           }
+1771:         }
+1772:         // (c) 河童: 放置在對手場地
+1773:         if (unit.card.name.includes("河童")) {
+1774:           const confirm = await showXLWConfirm("河童 獻祭效果", "是否將河童作為被動效果放置於對手場地？");
+1775:           if (confirm) {
+1776:             const enemyField = $("enemyField");
+1777:             if (enemyField) {
+1778:               if (enemyField.dataset.card) {
+1779:                 window.XLW_ENEMY.grave.push(JSON.parse(enemyField.dataset.card));
+1780:               }
+1781:               enemyField.dataset.card = JSON.stringify(unit.card);
+1782:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+1783:             }
+1784:           }
+1785:         }
+1786:         // (d) 瓶子長長: 移動敵方單位
+1787:         if (unit.card.name.includes("瓶子長長")) {
+1788:           let hasEnemyUnit = false;
+1789:           for (const zone of ["enemy_front", "enemy_back"]) {
+1790:             if (field[zone].some(u => u !== null)) hasEnemyUnit = true;
+1791:           }
+1792:           if (hasEnemyUnit) {
+1793:             setStatus("【瓶子長長 效果】請點選敵方場上一個單位進行移動！");
+1794:             window.XLW_bottleMovingActive = true;
+1795:             render();
+1796:             await new Promise(r => { window.XLW_bottleResolve = r; });
+1797:           }
+1798:         }

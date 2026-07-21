@@ -1,0 +1,64 @@
+--- Magic Immune / Resistance ---
+Line 946: // 魔抗鐵拳等動態加減攻
+Line 1173: } else if (card.name.includes("魔抗鐵拳")) {
+Line 1179: setStatus("場上無單位可施加魔抗鐵拳！");
+Line 1392: // 3. 魔抗鐵拳：+1/-1攻擊力，且獲得魔法免疫效果
+Line 1393: else if (card.name.includes("魔抗鐵拳")) {
+Line 1400: setStatus("【魔抗鐵拳】請點選場上一個單位施加魔抗鐵拳！");
+Line 1404: setStatus("場上無單位可附加魔抗鐵拳！");
+Line 1440: { text: "🛡️ 讓我方已在場上的一張場地卡具備破壞抗性", value: "protect_field" },
+Line 1450: logBattle(`✨ 力場保護 效果：使我方場上的場地卡【${fCard.name}】具備破壞抗性！`);
+Line 1492: setStatus("【法術保護】請點選我方場上一個單位以賦予法術保護（對魔抗性）！");
+Line 5212: obj.magicImmune = true;
+Line 5213: logBattle(`✨ 符咒帽 效果：${obj.card.name} 獲得永久敵方魔法抗性！`);
+Line 5237: obj.magicImmune = true;
+Line 5238: logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+Line 5324: if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+Line 5328: if (obj.magicImmune) {
+Line 5397: if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+Line 5446: obj.magicImmune = false;
+Line 5477: "魔抗鐵拳 效果選擇",
+Line 5478: `請選擇要為 ${obj.card.name} 施加的魔抗鐵拳效果：`,
+Line 5486: obj.magicImmuneUntilTurn = turn + 1;
+Line 5487: logBattle(`魔抗鐵拳 效果：使 ${obj.card.name} 攻擊力變更了 ${opt > 0 ? "+1" : "-1"}，並獲得對魔法免疫直至對手下個主要階段前！`);
+Line 5594: u.magicImmuneUntilTurn = turn + 2;
+Line 6793: obj.magicImmune = true;
+Line 6805: obj.magicImmune = true;
+Line 6850: obj.magicImmune = false;
+Line 7066: u.magicImmuneUntilTurn = turn + 2;
+Line 7331: logBattle(`✨ 對手場地卡【${fCard.name}】獲得了破壞抗性！`);
+
+--- Indestructible / Destruction Immune ---
+Line 1440: { text: "🛡️ 讓我方已在場上的一張場地卡具備破壞抗性", value: "protect_field" },
+Line 1448: fCard.indestructible = true;
+Line 1450: logBattle(`✨ 力場保護 效果：使我方場上的場地卡【${fCard.name}】具備破壞抗性！`);
+Line 1452: ws.send(JSON.stringify({ action: "field_indestructible" }));
+Line 1746: } else if (fCard && fCard.indestructible) {
+Line 1747: logBattle("晴天娃娃 效果：因【力場保護】效果，我方場地牌免疫破壞！");
+Line 1758: } else if (fCard && fCard.indestructible) {
+Line 1759: logBattle("晴天娃娃 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+Line 7325: } else if (data.action === "field_indestructible") {
+Line 7329: fCard.indestructible = true;
+Line 7331: logBattle(`✨ 對手場地卡【${fCard.name}】獲得了破壞抗性！`);
+
+--- Immediate Triggers ---
+Line 2488: if (isImmediateCat && zone.startsWith("player_")) {
+Line 2489: const validImmediateSummons = hand.filter(c => {
+Line 2495: if (validImmediateSummons.length > 0) {
+Line 2496: logDebug(`【立即連動】喵女/立即單位入場！偵測到手牌可連動偷襲單位：${validImmediateSummons.map(c => c.name).join(", ")}`);
+Line 2503: const extraCard = validImmediateSummons[0];
+Line 2544: if (window.XLW_summonPlacementResolve) {
+Line 2746: if (unit.summonedZone === "player_front" && toZone === "player_back") {
+Line 4297: if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+Line 4399: if (summonHandIdx >= 0) {
+Line 4592: if (!summoned && !field[zone][i] && xlwCanSummonToZone(zone, bottleCard)) {
+Line 6267: if (btn.closest("#stableActionPanel") || btn.id === "summonTravelerBtn") return;
+Line 6607: if (u && u.summonedZone && zoneMap[u.summonedZone]) {
+Line 6671: } else if (data.action === "summon") {
+Line 6974: } else if (data.action === "thief_summon_sync") {
+Line 7032: } else if (data.action === "foodball_summon") {
+Line 7257: } else if (data.action === "extra_summon_resolved") {
+Line 7299: } else if (data.action === "lantern_summon_single") {
+Line 7312: } else if (data.action === "debbie_summon_single") {
+Line 7608: if (!summoned) {
+Line 7883: <button id="xlwConfirmYes" class="forest-summon-btn" style="padding: 10px 24px; font-size: 13px; min-width: 120px;">${confirmText}</button>

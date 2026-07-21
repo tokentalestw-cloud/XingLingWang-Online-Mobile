@@ -1,0 +1,81 @@
+3980:       c && (c.type === "unit" || c.type === "單位") && Number(c.tribute || 0) <= 0
+3981:     );
+3982: 
+3983:     // AI 額外召喚邏輯：若場上有般若且額外牌庫有憤怒的般若，自動升級
+3984:     if (enemyExtraDeck.length > 0) {
+3985:       const angryHannya = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+3986:       if (angryHannya) {
+3987:         let hannyaSlot = null;
+3988:         for (const zone of ["enemy_front", "enemy_back"]) {
+3989:           const idx = field[zone].findIndex(u => u && u.card && u.card.name.includes("般若") && !u.card.name.includes("憤怒"));
+3990:           if (idx >= 0) {
+3991:             hannyaSlot = { zone, idx };
+3992:             break;
+3993:           }
+3994:         }
+3995:         if (hannyaSlot) {
+3996:           const { zone, idx } = hannyaSlot;
+3997:           const oldUnit = field[zone][idx];
+3998:           exileCard(oldUnit.card, "enemy");
+3999:           logBattle(`[對手 額外召喚] 對手將場上的【般若】作為素材除外。`);
+4000:           
+4001:           enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryHannya), 1);
+4002:           
+4003:           field[zone][idx] = {
+4004:             card: structuredClone(angryHannya),
+4005:             tapped: false,
+4006:             attacking: false,
+4007:             target: null,
+4008:             summonedTurn: turn,
+4009:             summonedZone: zone
+4010:           };
+4011:           logBattle(`✨ 對手 額外召喚：【憤怒的般若】降臨於對手 ${zone === "enemy_front" ? "前排" : "後排"}${idx + 1}！`);
+4012:           
+4013:           playerBonusScore = Math.max(0, playerBonusScore - 1);
+4014:           logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+4015:           
+4016:           render();
+4017:           await sleep(800);
+4018:         }
+4019:       }
+4020:     }
+4021: 
+4022:     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+4023:       const card = window.XLW_ENEMY.hand[summonHandIdx];
+4024:       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4025:       
+4026:       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+4027:       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+4028:       
+4029:       field[destZone][destIdx] = {
+4030:         card: card,
+4031:         tapped: false,
+4032:         attacking: false,
+4033:         target: null,
+4034:         summonedTurn: turn,
+4035:         summonedZone: destZone
+4036:       };
+4037:       logBattle(`對手召喚：${card.name} 到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}`);
+4038:     } else {
+4039:       logBattle("對手本回合沒有進行召喚。");
+4040:     }
+4041:     render();
+4042:     await sleep(800);
+4043: 
+4044:     // 5. 對手進攻宣言與戰術佈陣階段
+4045:     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
+4046:     const isAiFirstTurn = aiWentFirst && (turn === 1);
+4047: 
+4048:     if (countdownActive && countdownRemaining === 1) {
+4049:       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+4050:       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+4051:       render();
+4052:       await sleep(800);
+4053:     } else if (isAiFirstTurn) {
+4054:       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+4055:       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+4056:       render();
+4057:       await sleep(800);
+4058:     } else {
+4059:       phase = "進攻宣言";
+4060:       render();

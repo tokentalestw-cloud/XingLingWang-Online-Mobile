@@ -1,0 +1,150 @@
+8804: function resolveLocalSpellChain() {
+8805:   hideSpellChainUI();
+8806:   
+8807:   if (window.XLW_chainAutoPassTimeout) {
+8808:     clearTimeout(window.XLW_chainAutoPassTimeout);
+8809:     window.XLW_chainAutoPassTimeout = null;
+8810:   }
+8811:   
+8812:   if (!spellChainStack || spellChainStack.length === 0) return;
+8813:   
+8814:   // 1. Work backwards from the top of the stack to determine which counter/spell resolves
+8815:   const resolved = new Array(spellChainStack.length).fill(true);
+8816:   for (let i = spellChainStack.length - 1; i >= 1; i--) {
+8817:     if (resolved[i]) {
+8818:       const counteringCard = spellChainStack[i] ? spellChainStack[i].card : null;
+8819:       const targetCard = spellChainStack[i - 1] ? spellChainStack[i - 1].card : null;
+8820:       
+8821:       if (counteringCard && targetCard) {
+8822:         const isTargetUnit = targetCard.type === "unit" || (targetCard.name && targetCard.name.includes("\u9b54\u6cd5\u70b8\u5f48\u5ba2")) || targetCard.id === "NEU-0025";
+8823:         const isCounterMagicOnly = (counteringCard.name && counteringCard.name.includes("\u9b54\u6cd5\u53cd\u5236")) || 
+8824:                                    (counteringCard.name && counteringCard.name.includes("\u7d42\u6975\u7121\u6548\u5316")) || 
+8825:                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u89e3\u6790")) || 
+8826:                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u4fdd\u8b77"));
+8827:                                    
+8828:         if (isTargetUnit && isCounterMagicOnly) {
+8829:           logBattle(`\u3010\u53cd\u5236\u7121\u6548\u3011${counteringCard.name} \u7121\u6cd5\u53cd\u5236\u55ae\u4f4d\u5361 ${targetCard.name} \u7684\u6548\u679c\uff01`);
+8830:         } else {
+8831:           // If card i resolves, it negates the card below it (i-1)
+8832:           resolved[i - 1] = false;
+8833:         }
+8834:       } else {
+8835:         resolved[i - 1] = false;
+8836:       }
+8837:     }
+8838:   }
+8839: 
+8840:   // 2. Resolve each card in the stack
+8841:   const S = spellChainStack[0];
+8842:   const isCountered = !resolved[0];
+8843: 
+8844:   // We process counters first (indices 1 to stack.length - 1)
+8845:   for (let i = 1; i < spellChainStack.length; i++) {
+8846:     const item = spellChainStack[i];
+8847:     const isItemCountered = !resolved[i];
+8848:     const cOwner = item.owner === "me" ? "player" : "enemy";
+8849: 
+8850:     if (item.card.name.includes("魔法炸彈客") || item.card.id === "NEU-0025") {
+8851:       if (isItemCountered) {
+8852:         if (item.owner === "me") {
+8853:           graveyard.push(item.card);
+8854:         } else {
+8855:           enemyGraveyard.push(item.card);
+8856:         }
+8857:       } else {
+8858:         // It resolves!
+8859:         // (a) Exile the magic bomber card itself
+8860:         exileCard(item.card, cOwner);
+8861:         // (b) Exile the top card of its owner's deck
+8862:         if (item.owner === "me") {
+8863:           if (deck.length > 0) {
+8864:             const topCard = deck.pop();
+8865:             exileCard(topCard, "player");
+8866:             const topName = (topCard && topCard.name) ? topCard.name : "未知卡牌";
+8867:             logBattle(`[魔法炸彈客] 效果：我方牌庫頂的 ${topName} 被除外。`);
+8868:           }
+8869:         } else {
+8870:           if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+8871:             let topCard = window.XLW_ENEMY.deck.pop();
+8872:             if (!topCard) {
+8873:               topCard = { name: "對手卡牌", id: "UNKNOWN", type: "單位" };
+8874:             }
+8875:             exileCard(topCard, "enemy");
+8876:             const topName = topCard.name;
+8877:             logBattle(`[魔法炸彈客] 效果：對手牌庫頂的 ${topName} 被除外。`);
+8878:           }
+8879:         }
+8880:         // (c) Exile the card targeted/countered by it
+8881:         const targetItem = spellChainStack[i - 1];
+8882:         targetItem.wasExiledByBomb = true;
+8883:       }
+8884:     } else {
+8885:       // Normal counter spell
+8886:       if (item.owner === "me") {
+8887:         graveyard.push(item.card);
+8888:       } else {
+8889:         enemyGraveyard.push(item.card);
+8890:       }
+8891:     }
+8892:   }
+8893: 
+8894:   // 3. Resolve the initial spell (index 0)
+8895:   if (isCountered) {
+8896:     if (S.owner === "me") {
+8897:       if (S.wasExiledByBomb) {
+8898:         exileCard(S.card, "player");
+8899:         logBattle(`我方的魔法卡 ${S.card.name} 被對手【魔法炸彈客】除外了！`);
+8900:       } else {
+8901:         graveyard.push(S.card);
+8902:         logBattle(`我方的魔法卡 ${S.card.name} 被對手連鎖反制無效了！`);
+8903:       }
+8904:       if (window.XLW_pendingSpellResolve) {
+8905:         const resolve = window.XLW_pendingSpellResolve;
+8906:         window.XLW_pendingSpellResolve = null;
+8907:         resolve({ countered: true });
+8908:       }
+8909:     } else {
+8910:       if (S.wasExiledByBomb) {
+8911:         exileCard(S.card, "enemy");
+8912:         logBattle(`對手的魔法卡 ${S.card.name} 被我方【魔法炸彈客】除外了！`);
+8913:       } else {
+8914:         enemyGraveyard.push(S.card);
+8915:         logBattle(`對手的魔法卡 ${S.card.name} 被我方連鎖反制無效了！`);
+8916:       }
+8917:       if (window.XLW_pendingSpellResolve) {
+8918:         const resolve = window.XLW_pendingSpellResolve;
+8919:         window.XLW_pendingSpellResolve = null;
+8920:         resolve({ countered: true });
+8921:       }
+8922:     }
+8923:   } else {
+8924:     // Initial spell resolves successfully!
+8925:     if (S.owner === "me") {
+8926:       logBattle(`我方的魔法卡 ${S.card.name} 成功連鎖生效！`);
+8927:       if (window.XLW_pendingSpellResolve) {
+8928:         const resolve = window.XLW_pendingSpellResolve;
+8929:         window.XLW_pendingSpellResolve = null;
+8930:         resolve({ countered: false });
+8931:       }
+8932:     } else {
+8933:       enemyGraveyard.push(S.card);
+8934:       logBattle(`對手發動了魔法卡 ${S.card.name}：${S.card.effect_text || ""}`);
+8935:       if (window.XLW_pendingSpellResolve) {
+8936:         const resolve = window.XLW_pendingSpellResolve;
+8937:         window.XLW_pendingSpellResolve = null;
+8938:         resolve({ countered: false });
+8939:       }
+8940:     }
+8941:   }
+8942: 
+8943:   // Also clean up any other counter cards in the stack that were countered/exiled by a bomb
+8944:   for (let i = 1; i < spellChainStack.length; i++) {
+8945:     const item = spellChainStack[i];
+8946:     if (item.wasExiledByBomb) {
+8947:       const list = item.owner === "me" ? graveyard : enemyGraveyard;
+8948:       const idx = list.indexOf(item.card);
+8949:       if (idx >= 0) {
+8950:         list.splice(idx, 1);
+8951:       }
+8952:       exileCard(item.card, item.owner === "me" ? "player" : "enemy");
+8953:     }

@@ -1,0 +1,55 @@
+1781:               enemyField.dataset.card = JSON.stringify(unit.card);
+1782:               logBattle(`河童 效果：河童被放置在對手的場地中！對手前排進攻單位攻擊力 -1。`);
+1783:             }
+1784:           }
+1785:         }
+1786:         // (d) 瓶子長長: 移動敵方單位
+1787:         if (unit.card.name.includes("瓶子長長")) {
+1788:           let hasEnemyUnit = false;
+1789:           for (const zone of ["enemy_front", "enemy_back"]) {
+1790:             if (field[zone].some(u => u !== null)) hasEnemyUnit = true;
+1791:           }
+1792:           if (hasEnemyUnit) {
+1793:             setStatus("【瓶子長長 效果】請點選敵方場上一個單位進行移動！");
+1794:             window.XLW_bottleMovingActive = true;
+1795:             render();
+1796:             await new Promise(r => { window.XLW_bottleResolve = r; });
+1797:           }
+1798:         }
+1799:       }
+1800:     }
+1801:   };
+1802: 
+1803:   executeTributeEffects().then(async () => {
+1804:     // 記錄被獻祭的祭品位置，供聯網召喚同步清除
+1805:     window.XLW_lastTributes = selectedTributes.map(t => ({ zone: t.zone, idx: t.idx }));
+1806: 
+1807:     selectedTributes.forEach(t => {
+1808:       if (t.zone === "dummy") return;
+1809:       const unit = field[t.zone][t.idx];
+1810:       if (unit) {
+1811:         // 先處理裝備卡送入墓地
+1812:         if (unit.equipments && unit.equipments.length > 0) {
+1813:           unit.equipments.forEach(eqName => {
+1814:             const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+1815:             if (isTempMagic) return;
+1816:             const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+1817:             const cloned = structuredClone(cardObj);
+1818:             cloned.type = "magic";
+1819:             graveyard.push(cloned);
+1820:             logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被獻祭進入我方墓地。`);
+1821:           });
+1822:           unit.equipments = [];
+1823:         }
+1824: 
+1825:         if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+1826:     if (zone.startsWith("player_")) {
+1827:       enemyBonusScore += 2;
+1828:       logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+1829:     } else {
+1830:       playerBonusScore += 2;
+1831:       logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+1832:     }
+1833:   }
+1834: 
+1835:   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {

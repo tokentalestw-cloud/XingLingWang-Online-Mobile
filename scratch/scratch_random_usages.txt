@@ -1,0 +1,190 @@
+L560: const j = Math.floor(Math.random() * (i + 1));
+  558: function shuffle(arr) {
+  559:   for (let i = arr.length - 1; i > 0; i--) {
+  560:     const j = Math.floor(Math.random() * (i + 1));
+  561:     [arr[i], arr[j]] = [arr[j], arr[i]];
+  562:   }
+  563: }
+  564: 
+  565: function draw(n) {
+--------------------------------------------------
+L1190: if (hasBomb && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0 && Math.random() < 0.45) {
+  1188:     const hasCounter = window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.some(c => c && (c.name.includes("魔法反制") || c.name.includes("法術保護") || c.name.includes("終極無效化") || c.name.includes("法術解析") || c.id === "SSR-NMG-0019" || c.id === "NMG-0019"));
+  1189: 
+  1190:     if (hasBomb && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0 && Math.random() < 0.45) {
+  1191:       const bombCard = window.XLW_ENEMY.hand.find(c => c && (c.name.includes("魔法炸彈客") || c.id === "NEU-0025"));
+  1192:       const bIdx = window.XLW_ENEMY.hand.indexOf(bombCard);
+  1193:       window.XLW_ENEMY.hand.splice(bIdx, 1);
+  1194:       const exiledLibCard = window.XLW_ENEMY.deck.pop();
+  1195:       const exiledLibName = (exiledLibCard && exiledLibCard.name) ? exiledLibCard.name : "未知卡牌";
+--------------------------------------------------
+L1204: } else if (hasCounter && Math.random() < 0.45) {
+  1202:       render();
+  1203:       return;
+  1204:     } else if (hasCounter && Math.random() < 0.45) {
+  1205:       const counterCard = window.XLW_ENEMY.hand.find(c => c && (c.name.includes("魔法反制") || c.name.includes("法術保護") || c.name.includes("終極無效化") || c.name.includes("法術解析")));
+  1206:       const cIdx = window.XLW_ENEMY.hand.indexOf(counterCard);
+  1207:       window.XLW_ENEMY.hand.splice(cIdx, 1);
+  1208:       window.XLW_ENEMY.grave.push(counterCard);
+  1209:       logBattle(`對手從手牌發動了 ${counterCard.name}，無效化了我方的魔法卡 ${card.name}！`);
+--------------------------------------------------
+L3256: if (Math.random() < 0.5) {
+  3254:           } else {
+  3255:             // 單機 AI 模式：AI為進攻方，50% 機率發動並召喚到AI場上（我方的enemy_front/back）
+  3256:             if (Math.random() < 0.5) {
+  3257:               defenderShouldDie = false;
+  3258:               window.XLW_foodBallTriggeredTurn = turn;
+  3259:               let placed = false;
+  3260:               for (const z of ["enemy_front", "enemy_back"]) {
+  3261:                 for (let i = 0; i < 5; i++) {
+--------------------------------------------------
+L3664: const exileIdx = Math.floor(Math.random() * enemyDrawn.length);
+  3662:       if (hasAngryPrajna) {
+  3663:         // AI 選擇 1 張除外
+  3664:         const exileIdx = Math.floor(Math.random() * enemyDrawn.length);
+  3665:         const exiledCard = enemyDrawn[exileIdx];
+  3666:         exileCard(exiledCard, "enemy");
+  3667:         logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+  3668: 
+  3669:         enemyDrawn.forEach((c, idx) => {
+--------------------------------------------------
+L3683: revealIdx = Math.floor(Math.random() * enemyDrawn.length);
+  3681:             revealIdx = enemyDrawn.findIndex(c => c && c.type !== "unit" && c.type !== "單位");
+  3682:           } else {
+  3683:             revealIdx = Math.floor(Math.random() * enemyDrawn.length);
+  3684:           }
+  3685:         }
+  3686: 
+  3687:         const revealedCard = enemyDrawn[revealIdx];
+  3688:         enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+--------------------------------------------------
+L6534: const idx = Math.floor(Math.random() * hand.length);
+  6532:     } else if (data.action === "trigger_opponent_discard") {
+  6533:       if (hand.length > 0) {
+  6534:         const idx = Math.floor(Math.random() * hand.length);
+  6535:         const discarded = hand.splice(idx, 1)[0];
+  6536:         graveyard.push(discarded);
+  6537:         logBattle(`🥷 變裝喵 效果：對手變裝喵偷襲成功，我方被迫隨機捨棄了手牌中的 ${discarded.name}！`);
+  6538:         ws.send(JSON.stringify({
+  6539:           action: "sync_discard_log",
+--------------------------------------------------
+L6900: const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+  6898:     } else {
+  6899:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+  6900:         const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+  6901:         const discarded = window.XLW_ENEMY.hand.splice(idx, 1)[0];
+  6902:         enemyGraveyard.push(discarded);
+  6903:         logBattle(`🥷 變裝喵 效果：對手被強制隨機捨棄了手牌中的 ${discarded.name}！`);
+  6904:         render();
+  6905:       } else {
+--------------------------------------------------
+L7044: const angle = Math.random() * Math.PI * 2;
+  7042:       p.style.top = `${centerY}px`;
+  7043: 
+  7044:       const angle = Math.random() * Math.PI * 2;
+  7045:       const distance = Math.random() * 160 + 60;
+  7046:       const destX = centerX + Math.cos(angle) * distance;
+  7047:       const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+  7048: 
+  7049:       const randType = Math.random();
+--------------------------------------------------
+L7045: const distance = Math.random() * 160 + 60;
+  7043: 
+  7044:       const angle = Math.random() * Math.PI * 2;
+  7045:       const distance = Math.random() * 160 + 60;
+  7046:       const destX = centerX + Math.cos(angle) * distance;
+  7047:       const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+  7048: 
+  7049:       const randType = Math.random();
+  7050:       if (randType < 0.35) {
+--------------------------------------------------
+L7047: const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+  7045:       const distance = Math.random() * 160 + 60;
+  7046:       const destX = centerX + Math.cos(angle) * distance;
+  7047:       const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+  7048: 
+  7049:       const randType = Math.random();
+  7050:       if (randType < 0.35) {
+  7051:         p.innerHTML = "✨";
+  7052:         p.style.fontSize = `${Math.random() * 18 + 14}px`;
+--------------------------------------------------
+L7049: const randType = Math.random();
+  7047:       const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+  7048: 
+  7049:       const randType = Math.random();
+  7050:       if (randType < 0.35) {
+  7051:         p.innerHTML = "✨";
+  7052:         p.style.fontSize = `${Math.random() * 18 + 14}px`;
+  7053:         p.style.textShadow = "0 0 15px #ffd700, 0 0 30px #ffe066, 0 0 45px #fff";
+  7054:       } else if (randType < 0.65) {
+--------------------------------------------------
+L7052: p.style.fontSize = `${Math.random() * 18 + 14}px`;
+  7050:       if (randType < 0.35) {
+  7051:         p.innerHTML = "✨";
+  7052:         p.style.fontSize = `${Math.random() * 18 + 14}px`;
+  7053:         p.style.textShadow = "0 0 15px #ffd700, 0 0 30px #ffe066, 0 0 45px #fff";
+  7054:       } else if (randType < 0.65) {
+  7055:         p.innerHTML = "⭐";
+  7056:         p.style.fontSize = `${Math.random() * 14 + 10}px`;
+  7057:         p.style.textShadow = "0 0 15px #ff8c00, 0 0 25px #ffd700";
+--------------------------------------------------
+L7056: p.style.fontSize = `${Math.random() * 14 + 10}px`;
+  7054:       } else if (randType < 0.65) {
+  7055:         p.innerHTML = "⭐";
+  7056:         p.style.fontSize = `${Math.random() * 14 + 10}px`;
+  7057:         p.style.textShadow = "0 0 15px #ff8c00, 0 0 25px #ffd700";
+  7058:       } else {
+  7059:         // 高亮度發光黃金菱形亮片
+  7060:         const size = Math.random() * 12 + 8;
+  7061:         p.style.width = `${size}px`;
+--------------------------------------------------
+L7060: const size = Math.random() * 12 + 8;
+  7058:       } else {
+  7059:         // 高亮度發光黃金菱形亮片
+  7060:         const size = Math.random() * 12 + 8;
+  7061:         p.style.width = `${size}px`;
+  7062:         p.style.height = `${size}px`;
+  7063:         p.style.background = "linear-gradient(135deg, #fff 0%, #ffd700 50%, #ff8c00 100%)";
+  7064:         p.style.boxShadow = "0 0 15px #ffd700, 0 0 30px #ff8c00, 0 0 45px #fff";
+  7065:         p.style.borderRadius = "2px";
+--------------------------------------------------
+L7076: p.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 720 - 360}deg) scale(0)`;
+  7074:       p.style.left = `${destX}px`;
+  7075:       p.style.top = `${destY}px`;
+  7076:       p.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 720 - 360}deg) scale(0)`;
+  7077:       p.style.opacity = "0";
+  7078: 
+  7079:       setTimeout(() => p.remove(), 1100);
+  7080:     }
+  7081: 
+--------------------------------------------------
+L8315: const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+  8313:   graphic.style.animation = "none";
+  8314: 
+  8315:   const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+  8316:   graphic.textContent = coinResult === "正面" ? "🟡" : "⚪";
+  8317: 
+  8318:   const win = (playerGuess === coinResult);
+  8319:   if (win) {
+  8320:     status.innerHTML = `🎉 結果是【${coinResult}】！您猜對了！<br>請選擇您要先攻還是後攻：`;
+--------------------------------------------------
+L8340: const aiFirst = Math.random() < 0.5;
+  8338:     await sleep(1200);
+  8339: 
+  8340:     const aiFirst = Math.random() < 0.5;
+  8341:     if (aiFirst) {
+  8342:       status.innerHTML = `對手 AI 決定：<b>AI 先攻，我方後攻！</b><br>遊戲即將開始...`;
+  8343:       await sleep(1200);
+  8344:       startSinglePlayerGameActual(false);
+  8345:     } else {
+--------------------------------------------------
+L8401: const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+  8399: 
+  8400: async function rollMultiplayerCoin(playerGuess) {
+  8401:   const coinResult = Math.random() < 0.5 ? "正面" : "反面";
+  8402:   if (isMultiplayer) {
+  8403:     ws.send(JSON.stringify({
+  8404:       action: "coin_toss_roll",
+  8405:       guess: playerGuess,
+  8406:       result: coinResult
+--------------------------------------------------

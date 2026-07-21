@@ -1,0 +1,81 @@
+5530:                 setStatus("該格子已經有單位了！請點選空格！");
+5531:                 return;
+5532:               }
+5533:               const cardToSummon = window.XLW_thiefInExtraCard;
+5534:               playerExtraDeck.splice(playerExtraDeck.indexOf(cardToSummon), 1);
+5535:               
+5536:               field[zone][idx] = {
+5537:                 card: structuredClone(cardToSummon),
+5538:                 tapped: false,
+5539:                 attacking: false,
+5540:                 target: null,
+5541:                 summonedTurn: turn,
+5542:                 summonedZone: zone
+5543:               };
+5544:               logBattle(`大耳賊 效果：從額外牌庫召喚 大耳賊 到對手 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}！`);
+5545:               
+5546:               if (isMultiplayer) {
+5547:                 ws.send(JSON.stringify({
+5548:                   action: "thief_summon_sync",
+5549:                   zone: zone,
+5550:                   idx: idx
+5551:                 }));
+5552:               }
+5553:               
+5554:               const resolve = window.XLW_thiefResolve;
+5555:               window.XLW_thiefResolve = null;
+5556:               window.XLW_thiefPlacementActive = false;
+5557:               window.XLW_thiefInExtraCard = null;
+5558:               resolve();
+5559:               render();
+5560:             } else {
+5561:               setStatus("請點選對手場上的空格！");
+5562:             }
+5563:             return;
+5564:           }
+5565: 
+5566:           if (window.XLW_lanternPlacementActive) {
+5567:             const expectedSide = window.XLW_lanternPlacementActive;
+5568:             const isMeSide = zone.startsWith("player_");
+5569:             const isOppSide = zone.startsWith("enemy_");
+5570:             
+5571:             if (field[zone][idx] !== null) {
+5572:               setStatus("該格子已經有單位了！請點選空格！");
+5573:               return;
+5574:             }
+5575:             
+5576:             if (expectedSide === "player" && isMeSide) {
+5577:               if (!xlwCanLanternSummonToZone("player", zone, idx)) {
+5578:                 setStatus("前排仍有空位時，必須優先召喚至前排！");
+5579:                 return;
+5580:               }
+5581:               field[zone][idx] = {
+5582:                 card: structuredClone(LITTLE_TRAVELER),
+5583:                 tapped: false,
+5584:                 attacking: false,
+5585:                 target: null,
+5586:                 summonedTurn: turn,
+5587:                 summonedZone: zone
+5588:               };
+5589:               logBattle(`${window.XLW_lanternSummonSourceText || "燈籠小鬼 效果"}：召喚小旅人到我方 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+5590:               playTravelerSummonAnimation("#playerForest", zone, idx);
+5591:               
+5592:               const resolve = window.XLW_lanternResolve;
+5593:               window.XLW_lanternResolve = null;
+5594:               window.XLW_lanternPlacementActive = null;
+5595:               resolve({ zone, idx });
+5596:             } else if (expectedSide === "enemy" && isOppSide) {
+5597:               if (!xlwCanLanternSummonToZone("enemy", zone, idx)) {
+5598:                 setStatus("前排仍有空位時，必須優先召喚至前排！");
+5599:                 return;
+5600:               }
+5601:               field[zone][idx] = {
+5602:                 card: structuredClone(LITTLE_TRAVELER),
+5603:                 tapped: false,
+5604:                 attacking: false,
+5605:                 target: null,
+5606:                 summonedTurn: turn,
+5607:                 summonedZone: zone
+5608:               };
+5609:               logBattle(`${window.XLW_lanternSummonSourceText || "燈籠小鬼 效果"}：召喚小旅人到對手 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+5610:               playTravelerSummonAnimation("#enemyForest", zone, idx);

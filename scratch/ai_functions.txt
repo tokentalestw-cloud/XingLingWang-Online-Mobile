@@ -1,0 +1,19 @@
+854: function xlwIsEnemySummonCard(c) {
+1050: function enemyLaneHasAny(lane) {
+1055: function enemyFrontIsShield(lane) {
+1071: function clearModes(keepTributeWaiting = false) {
+3021: async function xlwResolveEnemyLaneSafe(lane) {
+3126: async function xlwResolveEnemyDefensePhaseSafe() {
+3828: function xlwInitEnemyDeck() {
+3845: async function runEnemyTurn() {
+4195: async function endPlayerTurnAndRunEnemy() {
+4480: function untapEnemy() {
+5833: function renderEnemyPanel() {
+7819: function showGraveyardDetailModal(title, graveList) {
+8270: function getOrCreateSpellChainOverlay() {
+8298: function toggleChainMinimize() {
+8324: function showSpellChainUI(stack) {
+8373: function hideSpellChainUI() {
+8385: function promptNextChainAction() {
+8496: function resolveLocalSpellChain() {
+8964: function showExtraDeckDetailModal(title, extraList, owner) {

@@ -1,0 +1,7 @@
+Line 377: if (v.includes("藝術") || v.includes("中立")) return "藝術品";
+Line 381: return ["喵喵賊", "妖怪村莊", "藝術品", "獸人"].includes(v) ? v : "喵喵賊";
+Line 390: if (deckName === "藝術品") {
+Line 413: if (deckName === "藝術品") {
+Line 414: // 卡片左下角的種族字樣為「藝術品」，表示此卡屬於藝術品牌組
+Line 415: return c.faction === "藝術品" || c.race === "藝術品" || idUpper.startsWith("ART-");
+Line 4795: "藝術品": "%23U85dd%23U8853%23U54c1.png",

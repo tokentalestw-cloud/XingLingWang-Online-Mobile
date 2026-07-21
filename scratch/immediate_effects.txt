@@ -1,0 +1,55 @@
+Line 2486: const isImmediateCat = (card.keywords?.includes("立即") || card.effect_text?.includes("立即") || card.name?.includes("立即") || card.name?.includes("喵女")) &&
+  2482:       }
+  2483:     }
+  2484: 
+  2485:     // 喵喵賊立即/聯動自召喚效果
+  2486:     const isImmediateCat = (card.keywords?.includes("立即") || card.effect_text?.includes("立即") || card.name?.includes("立即") || card.name?.includes("喵女")) &&
+  2487:                            (card.faction === "喵喵賊" || card.id?.includes("CAT") || card.name.includes("喵"));
+  2488:     if (isImmediateCat && zone.startsWith("player_")) {
+  2489:       const validImmediateSummons = hand.filter(c => {
+  2490:         return c && (c.type === "unit" || c.type === "怪獸" || c.type === "怪獸") &&
+
+Line 2489: const validImmediateSummons = hand.filter(c => {
+  2485:     // 喵喵賊立即/聯動自召喚效果
+  2486:     const isImmediateCat = (card.keywords?.includes("立即") || card.effect_text?.includes("立即") || card.name?.includes("立即") || card.name?.includes("喵女")) &&
+  2487:                            (card.faction === "喵喵賊" || card.id?.includes("CAT") || card.name.includes("喵"));
+  2488:     if (isImmediateCat && zone.startsWith("player_")) {
+  2489:       const validImmediateSummons = hand.filter(c => {
+  2490:         return c && (c.type === "unit" || c.type === "怪獸" || c.type === "怪獸") &&
+  2491:                (c.keywords?.includes("偷襲") || c.effect_text?.includes("偷襲")) &&
+  2492:                Number(c.tribute || 0) <= 0;
+  2493:       });
+
+Line 2495: if (validImmediateSummons.length > 0) {
+  2491:                (c.keywords?.includes("偷襲") || c.effect_text?.includes("偷襲")) &&
+  2492:                Number(c.tribute || 0) <= 0;
+  2493:       });
+  2494: 
+  2495:       if (validImmediateSummons.length > 0) {
+  2496:         logDebug(`【立即連動】喵女/立即單位入場！偵測到手牌可連動偷襲單位：${validImmediateSummons.map(c => c.name).join(", ")}`);
+  2497:         setTimeout(async () => {
+  2498:           const userConfirmed = await showXLWConfirm(
+  2499:             "【立即連動】喵女/立即效果發動！",
+
+Line 2496: logDebug(`【立即連動】喵女/立即單位入場！偵測到手牌可連動偷襲單位：${validImmediateSummons.map(c => c.name).join(", ")}`);
+  2492:                Number(c.tribute || 0) <= 0;
+  2493:       });
+  2494: 
+  2495:       if (validImmediateSummons.length > 0) {
+  2496:         logDebug(`【立即連動】喵女/立即單位入場！偵測到手牌可連動偷襲單位：${validImmediateSummons.map(c => c.name).join(", ")}`);
+  2497:         setTimeout(async () => {
+  2498:           const userConfirmed = await showXLWConfirm(
+  2499:             "【立即連動】喵女/立即效果發動！",
+  2500:             "是否立刻從手牌特殊召喚一張免祭品且具「偷襲」特性的單位？（不佔用常規或戰術召喚額度）"
+
+Line 2503: const extraCard = validImmediateSummons[0];
+  2499:             "【立即連動】喵女/立即效果發動！",
+  2500:             "是否立刻從手牌特殊召喚一張免祭品且具「偷襲」特性的單位？（不佔用常規或戰術召喚額度）"
+  2501:           );
+  2502:           if (userConfirmed) {
+  2503:             const extraCard = validImmediateSummons[0];
+  2504:             window.XLW_bypassNormalSummonLimit = true;
+  2505:             selectedHandForSummon = hand.indexOf(extraCard);
+  2506:             setStatus("【立即連動】請點選我方一個空格進行特殊召喚！");
+  2507:             render();
+

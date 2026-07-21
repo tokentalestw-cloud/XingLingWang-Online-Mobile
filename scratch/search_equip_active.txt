@@ -1,0 +1,10 @@
+1083: window.XLW_equipSpellActive = false;
+1480: window.XLW_equipSpellActive = true;
+1554: window.XLW_equipSpellActive = true;
+1562: window.XLW_tempEquipSpellActive = true;
+4897: if (phase === "戰術佈陣" && zone.startsWith("player_") && !window.XLW_equipSpellActive && !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive) {
+4914: if (window.XLW_equipSpellActive) {
+4955: window.XLW_equipSpellActive = false;
+5016: if (window.XLW_tempEquipSpellActive) {
+5066: window.XLW_tempEquipSpellActive = false;
+9053: window.XLW_equipSpellActive = true;

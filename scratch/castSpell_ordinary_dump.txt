@@ -1,0 +1,181 @@
+1570:     // 普通魔法效果
+1571:     if (card.id === "ORC-0018" || card.name?.includes("賞金")) {
+1572:       let hasEnemyUnit = false;
+1573:       for (const z of ["enemy_front", "enemy_back"]) {
+1574:         if (field[z].some(u => u !== null)) hasEnemyUnit = true;
+1575:       }
+1576:       if (!hasEnemyUnit) {
+1577:         setStatus("敵方場上目前沒有任何單位可以施加賞金！");
+1578:         return;
+1579:       }
+1580:       window.XLW_tempEquipSpellActive = true;
+1581:       window.XLW_tempEquipSpellCard = card;
+1582:       setStatus("【賞金】請點選敵方場上一個單位以施加賞金狀態！");
+1583:       render();
+1584:       await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+1585:     } else if (isTempEquipMagic) {
+1586:       window.XLW_tempEquipSpellActive = true;
+1587:       window.XLW_tempEquipSpellCard = card;
+1588:       let promptText = `【${card.name}】`;
+1589:       if (card.name.includes("削弱藥水")) {
+1590:         promptText += "請選擇場上一個單位，賦予 -3 攻擊力直到本回合結束。";
+1591:       } else if (card.name.includes("振奮藥水")) {
+1592:         promptText += "請選擇場上一個單位，賦予 +3 攻擊力直到下個回合結束。";
+1593:       } else if (card.name.includes("塗毒")) {
+1594:         promptText += "請選擇場上一個單位，賦予劇毒。";
+1595:       } else if (card.name.includes("睡眠反擊拳")) {
+1596:         promptText += "請選擇我方場上一個防守單位（橫置單位），賦予 +3 攻擊力直到本回合結束。";
+1597:       }
+1598:       setStatus(promptText);
+1599:       render();
+1600:       await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+1601:     } else if (text.includes("抽2張")) {
+1602:       draw(2);
+1603:       logBattle(`發動魔法 ${card.name}：抽 2 張牌`);
+1604:     } else if (text.includes("抽1張")) {
+1605:       draw(1);
+1606:       logBattle(`發動魔法 ${card.name}：抽 1 張牌`);
+1607:     } else if (text.includes("加分") || text.includes("額外分")) {
+1608:       playerBonusScore += 1;
+1609:       logBattle(`發動魔法 ${card.name}：我方額外加 1 分`);
+1610:     } else {
+1611:       logBattle(`發動魔法 ${card.name}`);
+1612:     }
+1613:     graveyard.push(card);
+1614:   }
+1615: 
+1616:   clearModes();
+1617:   render();
+1618: }
+1619: 
+1620: // 點手牌的獻祭怪進入獻祭模式
+1621: // 點手牌的獻祭怪進入獻祭模式
+1622: async function startTributeSummon(handIndex) {
+1623:   const card = hand[handIndex];
+1624:   if (!card || card.type !== "unit" || Number(card.tribute || 0) <= 0) return;
+1625: 
+1626:   if (phase === "戰術佈陣") {
+1627:     setStatus("戰術佈陣階段只能召喚免祭品單位或小旅人，不能進行獻祭召喚。");
+1628:     return;
+1629:   }
+1630: 
+1631:   if (normalSummonUsed) {
+1632:     setStatus("本回合召喚階段已進行過普通/獻祭召喚。");
+1633:     return;
+1634:   }
+1635: 
+1636:   // 十八呎大人 特殊手牌折抵祭品效果
+1637:   if (card.name.includes("十八呎") || card.id === "VLG_011") {
+1638:     const yokaiInHand = hand.filter((c, idx) => idx !== handIndex && c && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
+1639:     if (yokaiInHand.length > 0) {
+1640:       const confirm = await showXLWConfirm(
+1641:         "十八呎大人 特殊獻祭",
+1642:         `手牌中偵測到其他妖怪村莊單位，是否從手牌棄置 1 張作為 2 個祭品？`,
+1643:         "是，棄置手牌",
+1644:         "否，使用場上單位"
+1645:       );
+1646:       if (confirm) {
+1647:         const choices = yokaiInHand.map(c => ({ text: `${c.name} (${c.id})`, value: hand.indexOf(c) }));
+1648:         const discardIdx = await showXLWChoiceModal("選擇折抵祭品", "請點選要作為祭品送入墓地的手牌卡片：", choices);
+1649:         if (discardIdx !== null && discardIdx !== undefined) {
+1650:           const discarded = hand[discardIdx];
+1651:           hand.splice(discardIdx, 1);
+1652:           graveyard.push(discarded);
+1653:           logBattle(`十八呎大人 效果：棄置手牌中的 ${discarded.name} 作為 2 個祭品。`);
+1654:           
+1655:           selectedTributes.push({ key: `hand_discard_dummy1_${Date.now()}`, zone: "dummy", idx: -1 });
+1656:           selectedTributes.push({ key: `hand_discard_dummy2_${Date.now()}`, zone: "dummy", idx: -1 });
+1657:           
+1658:           if (selectedTributes.length >= card.tribute) {
+1659:             const newHandIndex = hand.indexOf(card);
+1660:             if (newHandIndex >= 0) {
+1661:               selectedHandForTribute = newHandIndex;
+1662:               selectedTributeCard = card;
+1663:               confirmTribute();
+1664:               return;
+1665:             }
+1666:           }
+1667:         }
+1668:       }
+1669:     }
+1670:   }
+1671: 
+1672:   clearModes();
+1673:   selectedHandForTribute = handIndex;
+1674:   selectedTributeCard = card;
+1675:   logDebug(`【獻祭啟動】卡牌: ${card.name}, 需要祭品數: ${card.tribute}, 手牌位置: ${handIndex}`);
+1676:   setStatus(`【獻祭召喚】${card.name} 需要 ${card.tribute} 個祭品。請點選我方場上單位作為祭品。`);
+1677:   render();
+1678: }
+1679: 
+1680: function toggleTributeSelection(zone, idx) {
+1681:   if (selectedHandForTribute === null) return;
+1682:   if (!zone.startsWith("player_")) return;
+1683: 
+1684:   const unit = field[zone][idx];
+1685:   if (!unit) return;
+1686: 
+1687:   // 不可獻祭判定
+1688:   const c = unit.card || unit;
+1689:   if (isUnitConfined(zone, idx)) {
+1690:     setStatus(`【獻祭失敗】${c.name} 處於禁錮或不可獻祭狀態！`);
+1691:     return;
+1692:   }
+1693: 
+1694:   const key = `${zone}:${idx}`;
+1695:   const existIdx = selectedTributes.findIndex(t => t.key === key);
+1696: 
+1697:   if (existIdx >= 0) {
+1698:     selectedTributes.splice(existIdx, 1);
+1699:     const card = hand[selectedHandForTribute];
+1700:     logDebug(`【祭品取消】取消選取: ${key}, 當前祭品數: ${selectedTributes.length}/${card.tribute}`);
+1701:   } else {
+1702:     const card = hand[selectedHandForTribute];
+1703:     if (selectedTributes.length >= card.tribute) {
+1704:       setStatus(`祭品已選滿（${card.tribute}個）。若要更換，請先點擊已選祭品取消。`);
+1705:       return;
+1706:     }
+1707:     selectedTributes.push({ zone, idx, key });
+1708:     logDebug(`【祭品追加】追加選取: ${key}, 當前祭品數: ${selectedTributes.length}/${card.tribute}`);
+1709:   }
+1710: 
+1711:   const card = hand[selectedHandForTribute];
+1712:   if (selectedTributes.length >= card.tribute) {
+1713:     setStatus(`祭品已選滿。請點擊「確認獻祭」按鈕。`);
+1714:   } else {
+1715:     setStatus(`【獻祭召喚】已選祭品 ${selectedTributes.length}/${card.tribute}。`);
+1716:   }
+1717:   render();
+1718: }
+1719: 
+1720: function confirmTribute() {
+1721:   if (selectedHandForTribute === null) return;
+1722:   const card = hand[selectedHandForTribute];
+1723:   if (selectedTributes.length < card.tribute) {
+1724:     setStatus("祭品數量不足！");
+1725:     return;
+1726:   }
+1727: 
+1728:   // 祭品送墓前觸發效果
+1729:   const executeTributeEffects = async () => {
+1730:     for (const t of selectedTributes) {
+1731:       if (t.zone === "dummy") continue; 
+1732:       const unit = field[t.zone][t.idx];
+1733:       if (unit && unit.card) {
+1734:         // (a) 晴天娃娃: 破壞場地牌
+1735:         if (unit.card.name.includes("晴天娃娃")) {
+1736:           const choices = [];
+1737:           if ($("playerField").dataset.card) choices.push({ text: "破壞我方場地牌", value: "player" });
+1738:           if ($("enemyField").dataset.card) choices.push({ text: "破壞敵方場地牌", value: "enemy" });
+1739:           if (choices.length > 0) {
+1740:             const chosen = await showXLWChoiceModal("晴天娃娃 獻祭效果", "請選擇要破壞的場地牌：", choices);
+1741:             if (chosen === "player") {
+1742:               const fCard = JSON.parse($("playerField").dataset.card);
+1743:               const has貞美子 = field["player_front"].concat(field["player_back"]).some(u => u && (u.card?.id === "R-VLG-0010" || u.card?.name?.includes("貞美子")));
+1744:               if (fCard && fCard.name.includes("恐怖的井") && has貞美子) {
+1745:                 logBattle("晴天娃娃 效果：因我方場上有【貞美子】，【恐怖的井】獲得免疫保護，破壞無效！");
+1746:               } else if (fCard && fCard.indestructible) {
+1747:                 logBattle("晴天娃娃 效果：因【力場保護】效果，我方場地牌免疫破壞！");
+1748:               } else {
+1749:                 delete $("playerField").dataset.card;
+1750:                 graveyard.push(fCard);

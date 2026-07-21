@@ -1,0 +1,16 @@
+Listing all counter/spell-protection related cards:
+ID: NMG-0019                  | Name: 法術保護
+ID: NMG-0020                  | Name: 魔法反制
+ID: R-NMG-0019-2              | Name: 法術保護
+ID: R-NMG-0020                | Name: 魔法反制
+ID: R-NMG-0020-2              | Name: 魔法反制
+ID: R-NMS-0025                | Name: 魔法炸彈客
+ID: R-NMS-0025-3              | Name: 魔法炸彈客
+ID: R-NMS-0025-滑雪             | Name: 魔法炸彈客
+ID: SR-NMG-0026               | Name: 終極無效化
+ID: SR-NMG-0026-2             | Name: 終極無效化
+ID: SR-NMG-0026金              | Name: 終極無效化
+ID: SSR-NMG-0019              | Name: 法術保護
+ID: SSR-NMG-0025-特殊           | Name: 魔法炸彈客
+ID: SSR-NMS-0025              | Name: 魔法炸彈客
+ID: SSSR-NMG-0039             | Name: 法術解析

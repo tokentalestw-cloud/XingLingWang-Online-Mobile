@@ -1,0 +1,250 @@
+3901: 
+3902:   if (isMultiplayer) {
+3903:     isMyTurn = false;
+3904:     setStatus("我方回合結束，正在等待對手行動...");
+3905:     
+3906:     // 聯網同步：如果我方有宣告進攻單位，此處需先行調用 xlwResolveEnemyDefensePhaseSafe 模擬我方的進攻，以清理在戰鬥中死亡的我方/敵方單位
+3907:     let playerHasAttackers = false;
+3908:     ["player_front", "player_back"].forEach(zone => {
+3909:       field[zone].forEach(u => {
+3910:         if (u && u.attacking) playerHasAttackers = true;
+3911:       });
+3912:     });
+3913:     if (playerHasAttackers) {
+3914:       if (!isMultiplayer) {
+3915:         await xlwResolveEnemyDefensePhaseSafe();
+3916:       }
+3917:     }
+3918:     
+3919:     untapEnemy(); // 對手回合開始，本地也同步將對手的所有疲勞狀態單位轉正
+3920:     
+3921:     // Check Call Game resolution for enemy
+3922:     checkCallGameAtTurnStart(false);
+3923:     if (isGameOverFlag) return;
+3924:     
+3925:     turn++; // 保持雙方視覺回合數一致
+3926:     ws.send(JSON.stringify({
+3927:       action: "end_turn",
+3928:       next_turn: turn
+3929:     }));
+3930:     render();
+3931:   } else {
+3932:     // 進入對手回合
+3933:     await runEnemyTurn();
+3934: 
+3935:     // 檢查倒數階段
+3936:     handleTurnEndCountdownLogic();
+3937:     if (isGameOverFlag) return;
+3938: 
+3939:     // 結束階段，清理對手 AI 回合結束時到期的臨時狀態裝備
+3940:     xlwCleanExpiredTempEquips(turn);
+3941: 
+3942:     // 回到我方新回合
+3943:     turn++;
+3944:     window.XLW_turnSneakCount = 0;
+3945:     normalSummonUsed = false;
+3946:     tacticalSummonUsed = false;
+3947:     playerUntap();
+3948: 
+3949:     // Check Call Game resolution for player: only immediately if player does not need defense.
+3950:     let enemyHasAttackers = false;
+3951:     ["enemy_front", "enemy_back"].forEach(zone => {
+3952:       field[zone].forEach(u => {
+3953:         if (u && u.attacking) enemyHasAttackers = true;
+3954:       });
+3955:     });
+3956:     const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+3957:     if (!playerNeedsDefense) {
+3958:       checkCallGameAtTurnStart(true);
+3959:       if (isGameOverFlag) return;
+3960:     }
+3961: 
+3962:     // 回合開始自動抽 2 張
+3963:     draw(2);
+3964: 
+3965:     if (countdownActive && countdownRemaining === 1) {
+3966:       phase = "召喚階段";
+3967:       setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！已自動抽2張。`);
+3968:       render();
+3969:     } else {
+3970:       if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
+3971:         phase = "\u9632\u5b88\u968e\u6bb5";
+3972:         setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb\uff0c\u5df2\u81ea\u52d5\u62bd\u0032\u5f35\u3002\u524d\u4e00\u56de\u5408\u5c0d\u624b\u6709\u9032\u653b\u5ba3\u8a00\uff0c\u81ea\u52d5\u9032\u5165\u300c\u9632\u5b88\u968e\u6bb5\u300d\uff01`);
+3973:         render();
+3974:         setTimeout(() => {
+3975:           xlwResolvePlayerDefensePhase();
+3976:         }, 500);
+3977:       } else {
+3978:         const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
+3979:         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+3980:         phase = "\u53ec\u559a\u968e\u6bb5";
+3981:         setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb\uff0c\u5df2\u81ea\u52d5\u62bd\u0032\u5f35\u3002`);
+3982:         if (wasPending) {
+3983:           logBattle("\u6211\u65b9\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u5c0d\u624b\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
+3984:         }
+3985:         render();
+3986:       }
+3987:     }
+3988:   }
+3989: }
+3990: 
+3991: function playerUntap() {
+3992:   ["player_front", "player_back"].forEach(zone => {
+3993:     field[zone].forEach(u => {
+3994:       if (u) {
+3995:         u.attacking = false;
+3996:         u.target = null;
+3997:         u.tempAtkModifier = 0;
+3998:       }
+3999:     });
+4000:   });
+4001: }
+4002: 
+4003: function untapEnemy() {
+4004:   ["enemy_front", "enemy_back"].forEach(zone => {
+4005:     field[zone].forEach(u => {
+4006:       if (u) {
+4007:         u.attacking = false;
+4008:         u.target = null;
+4009:         u.tempAtkModifier = 0;
+4010:       }
+4011:     });
+4012:   });
+4013: }
+4014: 
+4015: // Render 安全版：種族宣言卡圖片路徑對照（避免中文檔名 / encode 後在 Linux 失效）
+4016: const XLW_RACE_CARD_FILES = {
+4017:   "喵喵賊": "%23U55b5%23U55b5%23U8cca.png",
+4018:   "妖怪村莊": "%23U5996%23U602a%23U6751%23U838a.png",
+4019:   "妖精": "%23U5996%23U7cbe.png",
+4020:   "山羊族": "%23U5c71%23U7f8a%23U65cf.png",
+4021:   "機械軍團": "%23U6a5f%23U68b0%23U8ecd%23U5718.png",
+4022:   "歡樂島": "%23U6b61%23U6a02%23U5cf6.png",
+4023:   "特殊旅人": "%23U7279%23U6b8a%23U65c5%23U4eba.png",
+4024:   "獸人": "%23U7378%23U4eba.png",
+4025:   "甜點王國": "%23U751c%23U9ede%23U738b%23U570b.png",
+4026:   "發電獸": "%23U767c%23U96fb%23U7378.png",
+4027:   "碳碳族": "%23U78b3%23U78b3%23U65cf.png",
+4028:   "蒸氣世界": "%23U84b8%23U6c23%23U4e16%23U754c.png",
+4029:   "藝術品": "%23U85dd%23U8853%23U54c1.png",
+4030:   "虛擬世界": "%23U865b%23U64ec%23U4e16%23U754c.png",
+4031:   "進化野人": "%23U9032%23U5316%23U91ce%23U4eba.png",
+4032:   "馬戲團": "%23U99ac%23U6232%23U5718.png",
+4033:   "骷髏人": "%23U9ab7%23U9acf%23U4eba.png"
+4034: };
+4035: function getRaceCardSrc(deckName) {
+4036:   const n = normDeckName(deckName || "喵喵賊");
+4037:   const f = XLW_RACE_CARD_FILES[n];
+4038:   if (f) return `/static/race_cards/${f}?v=20260613-mobile-realfix`;
+4039:   return `/static/race_cards/${encodeURIComponent(n)}.png?v=20260613-mobile-realfix`;
+4040: }
+4041: function raceCardImgHtml(name) {
+4042:   const n = normDeckName(name || "喵喵賊");
+4043:   const primary = getRaceCardSrc(n);
+4044:   const fallback = `/static/race_cards/${encodeURIComponent(n)}.png?v=20260613-mobile-realfix`;
+4045:   return `<img src="${primary}" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${fallback}';}else{this.onerror=null;this.src='/static/card_back.jpeg';}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="${n}" title="${n}">`;
+4046: }
+4047: 
+4048: // 渲染我方種族與對手種族宣言卡
+4049: function renderRaceCards() {
+4050:   const pRace = $("playerRace");
+4051:   const eRace = $("enemyRace");
+4052:   
+4053:   if (pRace) {
+4054:     const deckSelect = $("deckSelect");
+4055:     const deckName = deckSelect ? deckSelect.value : "喵喵賊";
+4056:     const normName = normDeckName(deckName);
+4057:     pRace.innerHTML = raceCardImgHtml(normName);
+4058:     
+4059:     // Apply rotation based on Call Game declaration
+4060:     pRace.className = "zone side blue";
+4061:     if (window.XLW_callGameDeclared && window.XLW_callGameDeclaringPlayer === "player") {
+4062:       if (window.XLW_callGameCondition === 1) {
+4063:         pRace.classList.add("xlw-race-ccw");
+4064:       } else if (window.XLW_callGameCondition === 2) {
+4065:         pRace.classList.add("xlw-race-cw");
+4066:       }
+4067:     }
+4068:   }
+4069:   
+4070:   if (eRace) {
+4071:     const oppDeck = window.XLW_ENEMY.deckName || "妖怪村莊";
+4072:     const normOppName = normDeckName(oppDeck);
+4073:     eRace.innerHTML = raceCardImgHtml(normOppName);
+4074:     
+4075:     // Apply rotation based on Call Game declaration
+4076:     eRace.className = "zone side red";
+4077:     if (window.XLW_callGameDeclared && window.XLW_callGameDeclaringPlayer === "enemy") {
+4078:       if (window.XLW_callGameCondition === 1) {
+4079:         eRace.classList.add("xlw-race-ccw");
+4080:       } else if (window.XLW_callGameCondition === 2) {
+4081:         eRace.classList.add("xlw-race-cw");
+4082:       }
+4083:     }
+4084:   }
+4085: }
+4086: 
+4087: // ===== 11. 高解析與單一 Efficient Render (高效渲染管線) =====
+4088: function render() {
+4089:   adjustBoardScale();
+4090:   // 更新狀態列數值
+4091:   const phaseDisplayText = $("phaseDisplayText") || $("phaseTextHard");
+4092:   const phaseHelpText = $("phaseHelpText") || $("phaseHelpHard");
+4093:   const phaseDisplayPanel = $("phaseDisplayPanel") || $("phaseDisplayPanelHard");
+4094:   
+4095:   if (phaseDisplayText) phaseDisplayText.textContent = phase;
+4096:   if (phaseHelpText) phaseHelpText.textContent = getPhaseHelpText(phase);
+4097:   if (phaseDisplayPanel) phaseDisplayPanel.dataset.phase = phase;
+4098: 
+4099:   document.body.dataset.phase = phase;
+4100: 
+4101:   const turnEl = $("turn");
+4102:   if (turnEl) turnEl.textContent = turn;
+4103:   const handCountEl = $("handCount");
+4104:   if (handCountEl) handCountEl.textContent = hand.length;
+4105:   $("playerDeck").innerHTML = `我方牌庫<br>${deck.length} 張`;
+4106:   renderGraveyard("playerGrave", graveyard, "我方墓地");
+4107:   renderGraveyard("enemyGrave", window.XLW_ENEMY.grave, "對手墓地");
+4108:   renderGraveyard("playerExile", playerExileZone, "我方除外");
+4109:   renderGraveyard("enemyExile", enemyExileZone, "對手除外");
+4110: 
+4111:   renderDeckVisuals();
+4112:   renderExtraDecks();
+4113:   renderStablePanel();
+4114:   renderHand();
+4115:   renderField();
+4116:   renderBattleLine();
+4117:   renderScore();
+4118:   renderEnemyPanel();
+4119:   renderRaceCards();
+4120:   saveLocalGameState();
+4121: }
+4122: 
+4123: function getPhaseHelpText(p) {
+4124:   switch (p) {
+4125:     case "起手換牌": return "可點選手牌標記（面朝下），確認換牌後重新洗牌，並進入第一回合自動抽牌。";
+4126:     case "防守階段":
+4127:       if (window.XLW_defenseCounterActive) {
+4128:         return "我方防守反制中：您可以打出魔法卡（如削弱藥水）進行反制。點擊右下角按鈕結束並結算戰鬥。";
+4129:       }
+4130:       return "前一回合對手宣告了進攻，系統正在為您自動結算戰鬥。";
+4131:     case "召喚階段": return "回合開始已自動抽牌。可點手牌進行召喚/發動魔法，完成後可選擇「戰術佈陣」或「進攻宣言」。";
+4132:     case "戰術佈陣": return "本回合已選擇戰術佈陣。可移動單位，或再額外進行一次小旅人/免祭品召喚；此路線無法進攻。";
+4133:     case "進攻宣言": return "本回合已選擇進攻宣言。點我方未橫置單位指向同戰線敵方非盾牌進行宣告，戰鬥會在對手回合防守結算。";
+4134:     case "結束階段": return "回合結束，可點擊「結束回合」進行棄牌，並讓對手進行 AI 行動回合。";
+4135:     default: return "請依照目前提示執行操作。";
+4136:   }
+4137: }
+4138: 
+4139: // 渲染雙方牌庫立體圖層
+4140: function renderDeckVisuals() {
+4141:   const pCount = deck.length;
+4142:   const eCount = window.XLW_ENEMY.deck.length;
+4143:   
+4144:   createDeckVisual("playerDeck", pCount, "我方");
+4145:   createDeckVisual("enemyDeck", eCount, "對手");
+4146: }
+4147: 
+4148: function createDeckVisual(zoneId, count, label) {
+4149:   const zone = $(zoneId);
+4150:   if (!zone) return;

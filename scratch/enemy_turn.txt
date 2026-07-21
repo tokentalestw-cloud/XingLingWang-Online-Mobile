@@ -1,0 +1,136 @@
+3845: async function runEnemyTurn() {
+3846:   if (window.XLW_ENEMY.running) return;
+3847:   window.XLW_ENEMY.running = true;
+3848: 
+3849:   try {
+3850:     // Check Call Game resolution for enemy (B)
+3851:     const playerHasAttackers = field["player_front"].concat(field["player_back"]).some(u => u && u.attacking);
+3852:     const enemyNeedsDefense = window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers;
+3853:     if (!enemyNeedsDefense) {
+3854:       checkCallGameAtTurnStart(false);
+3855:       if (isGameOverFlag) return;
+3856:     }
+3857: 
+3858:     logBattle("—— 對手回合開始 ——");
+3859:     setStatus("對手回合：妖怪村莊正在進行整備抽牌...");
+3860:     await sleep(700);
+3861: 
+3862:     // 1. 整備階段：對手單位轉正
+3863:     untapEnemy();
+3864:     
+3865:     // 2. 對手抽 2 張 (AI 抽牌階段)
+3866:     const enemyDrawn = [];
+3867:     for (let i = 0; i < 2; i++) {
+3868:       if (window.XLW_ENEMY.deck.length) {
+3869:         enemyDrawn.push(window.XLW_ENEMY.deck.pop());
+3870:       }
+3871:     }
+3872:     
+3873:     const hasSmartPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
+3874:     const hasAngryPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
+3875: 
+3876:     if (enemyDrawn.length > 0) {
+3877:       if (hasAngryPrajna) {
+3878:         // AI 選擇 1 張除外
+3879:         const exileIdx = Math.floor(Math.random() * enemyDrawn.length);
+3880:         const exiledCard = enemyDrawn[exileIdx];
+3881:         exileCard(exiledCard, "enemy");
+3882:         logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+3883:         
+3884:         enemyDrawn.forEach((c, idx) => {
+3885:           if (idx !== exileIdx) {
+3886:             window.XLW_ENEMY.hand.push(c);
+3887:           }
+3888:         });
+3889:       } else if (hasSmartPrajna) {
+3890:         // AI 選擇 1 張展示。AI 偏好選擇展示魔法卡以防我方進化
+3891:         let revealIdx = 0;
+3892:         if (enemyDrawn.length > 1) {
+3893:           const hasSpell = enemyDrawn.some(c => c && c.type !== "unit" && c.type !== "單位");
+3894:           const hasUnit = enemyDrawn.some(c => c && (c.type === "unit" || c.type === "單位"));
+3895:           if (hasSpell && hasUnit) {
+3896:             revealIdx = enemyDrawn.findIndex(c => c && c.type !== "unit" && c.type !== "單位");
+3897:           } else {
+3898:             revealIdx = Math.floor(Math.random() * enemyDrawn.length);
+3899:           }
+3900:         }
+3901:         
+3902:         const revealedCard = enemyDrawn[revealIdx];
+3903:         enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+3904:         
+3905:         logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
+3906:         
+3907:         // 展示給玩家看 (Popup)
+3908:         showRevealedCardModal(revealedCard, "對手");
+3909:         
+3910:         // 判斷是否為單位卡，若是則詢問玩家是否進化智慧的般若
+3911:         if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+3912:           const prajnaSlots = [];
+3913:           for (const zone of ["player_front", "player_back"]) {
+3914:             field[zone].forEach((u, idx) => {
+3915:               if (u && u.card && u.card.name.includes("智慧的般若")) {
+3916:                 prajnaSlots.push({ zone, idx, unit: u });
+3917:               }
+3918:             });
+3919:           }
+3920:           
+3921:           const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+3922:           if (prajnaSlots.length > 0 && angryCard) {
+3923:             const yes = await showXLWConfirm("智慧的般若 進化", `對手展示了單位卡【${revealedCard.name}】，是否消耗額外區的【憤怒的般若】使場上的【智慧的般若】升級進化？`);
+3924:             if (yes) {
+3925:               let selected = prajnaSlots[0];
+3926:               if (prajnaSlots.length > 1) {
+3927:                 const choices = prajnaSlots.map((h, i) => ({
+3928:                   text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 智慧的般若`,
+3929:                   value: i
+3930:                 }));
+3931:                 const chosenIdx = await showXLWChoiceModal("選擇要進化的智慧的般若", "請選擇場上的【智慧的般若】：", choices);
+3932:                 if (chosenIdx !== null && chosenIdx !== undefined) {
+3933:                   selected = prajnaSlots[chosenIdx];
+3934:                 }
+3935:               }
+3936:               
+3937:               const { zone, idx, unit } = selected;
+3938:               exileCard(unit.card, "player");
+3939:               playerExtraDeck.splice(playerExtraDeck.indexOf(angryCard), 1);
+3940:               field[zone][idx] = {
+3941:                 card: structuredClone(angryCard),
+3942:                 tapped: false,
+3943:                 attacking: false,
+3944:                 target: null,
+3945:                 summonedTurn: turn,
+3946:                 summonedZone: zone
+3947:               };
+3948:               logBattle(`✨ 額外進化：【智慧的般若】成功升級為【憤怒的般若】！`);
+3949:               enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+3950:               render();
+3951:             }
+3952:           }
+3953:         }
+3954:       } else {
+3955:         enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+3956:       }
+3957:     }
+3958:     logBattle(`對手整備：對手抽卡結算，單位全體轉正。`);
+3959:     render();
+3960:     await sleep(700);
+3961: 
+3962:     // 3. 對手防守階段 (若我方上回合有宣告攻擊，且我方場上仍有進攻單位 - 規則九第5條)
+3963:     if (window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers) {
+3964:       phase = "\u9632\u5b88\u968e\u6bb5";
+3965:       setStatus("\u5c0d\u624b\u56de\u5408\uff1a\u6b63\u5728\u81ea\u52d5\u7d50\u7b97\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u5c0d\u6c7a...");
+3966:       render();
+3967:       await xlwResolveEnemyDefensePhaseSafe();
+3968:     } else {
+3969:       window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+3970:       logBattle("\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u6211\u65b9\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
+3971:     }
+3972: 
+3973:     // 4. 對手召喚階段 (召喚一個免祭品單位，優先前排)
+3974:     phase = "\u53ec\u559a\u968e\u6bb5";
+3975:     render();
+3976:     const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+3977:     const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+3978:     // 加強 AI 的免祭品召喚判定，以支援小於等於 0 祭品的單位（如 -2 祭品等特規卡牌）
+3979:     const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+3980:       c && (c.type === "unit" || c.type === "單位") && Number(c.tribute || 0) <= 0

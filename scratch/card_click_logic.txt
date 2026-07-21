@@ -1,0 +1,150 @@
+4998:     cardEl.onclick = (e) => {
+4999:       e.stopPropagation();
+5000:       if (window.XLW_exileExcessHandActive) {
+5001:         const card = hand[idx];
+5002:         hand.splice(idx, 1);
+5003:         playerExileZone.push(card);
+5004:         logBattle(`我方手牌超限，將手牌中的【${card.name}】置於除外區。`);
+5005:         
+5006:         if (hand.length <= 10) {
+5007:           window.XLW_exileExcessHandActive = false;
+5008:           logBattle("手牌數量已符合上限，繼續回合結束流程。");
+5009:           render();
+5010:           endPlayerTurnAndRunEnemy();
+5011:         } else {
+5012:           setStatus(`手牌數量仍有 ${hand.length} 張，請繼續點選手牌置於除外區！`);
+5013:           render();
+5014:         }
+5015:         return;
+5016:       }
+5017: 
+5018:       if (mulliganActive) {
+5019:         toggleMulliganCard(idx);
+5020:         return;
+5021:       }
+5022: 
+5023:       if (tributeWaitingPosition) {
+5024:         showModal(card);
+5025:         setStatus("已完成獻祭，請點擊我方空格放置召喚的單位！");
+5026:         return;
+5027:       }
+5028: 
+5029:       if (isMultiplayer && !isMyTurn) {
+5030:         showModal(card);
+5031:         setStatus("對手回合中，請稍候！");
+5032:         return;
+5033:       }
+5034: 
+5035:       if (phase !== "召喚階段" && phase !== "戰術佈陣" && !(phase === "防守階段" && window.XLW_defenseCounterActive && card.type === "magic")) {
+5036:         showModal(card);
+5037:         return;
+5038:       }
+5039: 
+5040:       if (card.type === "magic") {
+5041:         castSpell(idx);
+5042:       } else if (Number(card.tribute || 0) > 0) {
+5043:         startTributeSummon(idx);
+5044:       } else {
+5045:         // 一般免祭品召喚
+5046:         if (selectedHandForSummon === idx) {
+5047:           clearModes();
+5048:           setStatus("已取消召喚選擇。");
+5049:         } else {
+5050:           clearModes();
+5051:           selectedHandForSummon = idx;
+5052:           cardEl.classList.add("selected-hand-summon");
+5053:           setStatus(`已選擇 ${card.name}。請點擊我方一個空格進行召喚。`);
+5054:           render();
+5055:         }
+5056:       }
+5057:     };
+5058: 
+5059:     container.appendChild(cardEl);
+5060:   });
+5061: }
+5062: 
+5063: // 渲染戰場格子
+5064: function renderField() {
+5065:   console.log("[XLW renderField Debug] tributeWaitingPosition =", tributeWaitingPosition, "selectedHandForSummon =", selectedHandForSummon, "selectedTributeCard =", selectedTributeCard);
+5066:   window.XLW_animatingSlots = window.XLW_animatingSlots || new Set();
+5067:   for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+5068:     document.querySelectorAll(`[data-zone="${zone}"]`).forEach(slot => {
+5069:       const idx = Number(slot.dataset.index);
+5070:       slot.innerHTML = `<span class="lane-badge">${idx + 1}</span>`;
+5071:       slot.className = "slot";
+5072:       // 重置所有內聯樣式以抵禦 CSS 快取與特異性覆蓋
+5073:       slot.style.border = "";
+5074:       slot.style.boxShadow = "";
+5075:       slot.style.cursor = "";
+5076:       slot.style.backgroundColor = "";
+5077: 
+5078:       const obj = field[zone][idx];
+5079:       if (obj) {
+5080:         slot.classList.add("has-card");
+5081:         if (phase === "戰術佈陣" && window.XLW_tacticalSelected && window.XLW_tacticalSelected.zone === zone && window.XLW_tacticalSelected.idx === idx) {
+5082:           slot.classList.add("xlw-tactical-selected");
+5083:         }
+5084:         if (obj.tapped) slot.classList.add("tapped-slot");
+5085:         if (isUnitConfined(zone, idx)) {
+5086:           slot.classList.add("xlw-confined-slot");
+5087:           const wallEl = document.createElement("div");
+5088:           wallEl.className = "xlw-confinement-wall";
+5089:           wallEl.innerHTML = `
+5090:             <div class="wall-segment wall-top"></div>
+5091:             <div class="wall-segment wall-bottom"></div>
+5092:             <div class="wall-segment wall-left"></div>
+5093:             <div class="wall-segment wall-right"></div>
+5094:             <div class="wall-glow"></div>
+5095:             <div class="wall-chains">⛓️ &#31105;&#37678; ⛓️</div>
+5096:           `;
+5097:           slot.appendChild(wallEl);
+5098:         }
+5099:         if (obj.attacking) {
+5100:           console.log(`[XLW Attacking Debug] Slot ${zone}[${idx}] (${obj.card.name}) is attacking. target:`, obj.target, "phase:", phase);
+5101:           slot.classList.add("attacking-slot");
+5102:           if (zone.startsWith("player_")) {
+5103:             slot.classList.add("xlw-my-attacker");
+5104:           } else {
+5105:             slot.classList.add("xlw-enemy-attacker");
+5106:           }
+5107:         }
+5108:         if (window.XLW_isShieldUnit(obj)) slot.classList.add("xlw-shield-unit");
+5109: 
+5110:         // 宣告進攻亮邊
+5111:         if (selectedAttacker && selectedAttacker.zone === zone && selectedAttacker.idx === idx) {
+5112:           slot.classList.add("xlw-player-attacker-selected");
+5113:         }
+5114:         if (obj.attacking && obj.target) {
+5115:           if (zone.startsWith("player_")) {
+5116:             slot.classList.add("xlw-player-declared-attacker");
+5117:             slot.classList.add("xlw-my-attacker");
+5118:           } else {
+5119:             slot.classList.add("xlw-enemy-declared-attacker");
+5120:             slot.classList.add("xlw-enemy-attacker");
+5121:           }
+5122:         }
+5123: 
+5124:         // 對手防守階段高亮
+5125:         if (phase === "防守階段" && obj.attacking) {
+5126:           slot.classList.add("xlw-defense-attacker");
+5127:         }
+5128: 
+5129:         // Check if this slot is targeted by any active attacker (for flat rotation and orange highlight)
+5130:         let isTargeted = false;
+5131:         for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+5132:           for (let i = 0; i < 5; i++) {
+5133:             const u = field[z][i];
+5134:             if (u && u.attacking && u.target && u.target.zone === zone && u.target.idx === idx) {
+5135:               isTargeted = true;
+5136:               break;
+5137:             }
+5138:           }
+5139:           if (isTargeted) break;
+5140:         }
+5141:         if (isTargeted) {
+5142:           slot.classList.add("xlw-defense-target");
+5143:         }
+5144:         if (window.XLW_blackCatChoosing && zone.startsWith("enemy_")) {
+5145:           slot.classList.add("xlw-black-cat-selectable");
+5146:         }
+5147: 

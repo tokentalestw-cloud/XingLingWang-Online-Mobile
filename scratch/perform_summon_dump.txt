@@ -1,0 +1,201 @@
+2380:           }, 500);
+2381:         }
+2382:       }
+2383:       // 獸人種族立即效果實作
+2384:       else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+2385:         function isHumanoid(unit) {
+2386:           if (!unit || !unit.card) return false;
+2387:           const name = unit.card.name || "";
+2388:           const race = unit.card.race || "";
+2389:           return race.includes("人") || race.includes("人類") || name.includes("獸人") || name.includes("爺爺") || name.includes("奶奶") || name.includes("戴比") || name.includes("卡煞") || name.includes("粉絲") || name.includes("公關");
+2390:         }
+2391:         let count = 0;
+2392:         for (const z of ["player_front", "player_back"]) {
+2393:           field[z].forEach(u => {
+2394:             if (u && isHumanoid(u) && u.tapped) {
+2395:               u.tapped = false;
+2396:               count++;
+2397:             }
+2398:           });
+2399:         }
+2400:         logBattle(`✨ 女獸人 卡煞 效果：使我方場上 ${count} 個人型單位轉正！`);
+2401:       }
+2402:       else if (card.name?.includes("天秤座") || card.id === "SSSR-NMS-0068") {
+2403:         let playerTotalStars = 0;
+2404:         let enemyTotalStars = 0;
+2405:         for (const z of ["player_front", "player_back"]) {
+2406:           for (let i = 0; i < 5; i++) {
+2407:             if (field[z][i]) playerTotalStars += getUnitStars(field[z][i], z, i);
+2408:           }
+2409:         }
+2410:         for (const z of ["enemy_front", "enemy_back"]) {
+2411:           for (let i = 0; i < 5; i++) {
+2412:             if (field[z][i]) enemyTotalStars += getUnitStars(field[z][i], z, i);
+2413:           }
+2414:         }
+2415:         const bonusToPlayer = Math.floor(enemyTotalStars / 2);
+2416:         const bonusToEnemy = Math.floor(playerTotalStars / 2);
+2417:         playerBonusScore += bonusToPlayer;
+2418:         enemyBonusScore += bonusToEnemy;
+2419:         logBattle(`✨ 星靈判官 天秤座 效果：我方場上星星加總 ${playerTotalStars}，對手場上星星加總 ${enemyTotalStars}。我方獲得 +${bonusToPlayer}★ 獎勵，對手獲得 +${bonusToEnemy}★ 獎勵！`);
+2420:         renderScore();
+2421:       }
+2422:       else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+2423:         window.XLW_debbieActive = true;
+2424:         logBattle("✨ 委託者 戴比 效果：準備在對手場上召喚小旅人，且我方場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+2425:         await runDebbiePlacementFlow();
+2426:       }
+2427:       else if (card.name?.includes("獸人奶奶") || card.id === "R-ORC-0048") {
+2428:         let otherOrcs = [];
+2429:         for (const z of ["player_front", "player_back"]) {
+2430:           for (let i = 0; i < 5; i++) {
+2431:             const u = field[z][i];
+2432:             if (u && u.card !== card && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC"))) {
+2433:               otherOrcs.push({ zone: z, idx: i, card: u.card });
+2434:             }
+2435:           }
+2436:         }
+2437:         let orcsInGrave = graveyard.filter(c => c && c.type === "unit" && (c.faction === "獸人" || c.race === "獸人" || c.id.includes("ORC") || c.id.includes("0RC")));
+2438:         
+2439:         if (otherOrcs.length > 0 && orcsInGrave.length > 0) {
+2440:           setTimeout(async () => {
+2441:             const fieldChoices = otherOrcs.map((o, idx) => ({ text: `${o.card.name} (場上 ${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: idx }));
+2442:             const chosenFieldIdx = await showXLWChoiceModal("獸人奶奶 效果：請選擇場上一個獸人單位回手", "選擇場上獸人：", fieldChoices);
+2443:             
+2444:             if (chosenFieldIdx !== null && chosenFieldIdx !== undefined) {
+2445:               const chosenField = otherOrcs[chosenFieldIdx];
+2446:               const graveChoices = orcsInGrave.map((c, idx) => ({ text: `${c.name} (墓地)`, value: idx }));
+2447:               const chosenGraveIdx = await showXLWChoiceModal("獸人奶奶 效果：請選擇墓地一個獸人單位回手", "選擇墓地獸人：", graveChoices);
+2448:               
+2449:               if (chosenGraveIdx !== null && chosenGraveIdx !== undefined) {
+2450:                 const chosenGrave = orcsInGrave[chosenGraveIdx];
+2451:                 field[chosenField.zone][chosenField.idx] = null;
+2452:                 hand.push(chosenField.card);
+2453:                 const gIdx = graveyard.indexOf(chosenGrave);
+2454:                 if (gIdx >= 0) graveyard.splice(gIdx, 1);
+2455:                 hand.push(chosenGrave);
+2456:                 playerBonusScore += 3;
+2457:                 logBattle(`✨ 獸人奶奶 效果：將場上 ${chosenField.card.name} 與墓地 ${chosenGrave.name} 收回手牌，我方額外獲得 +3★ 獎勵！`);
+2458:                 render();
+2459:                 renderScore();
+2460:               }
+2461:             }
+2462:           }, 500);
+2463:         } else {
+2464:           logBattle("獸人奶奶 效果：場上或墓地無其他獸人單位，無法觸發回手獎勵。");
+2465:         }
+2466:       }
+2467:     }
+2468:     
+2469:     // 次元突擊喵防守階段進攻效果
+2470:     if ((card.name?.includes("次元突擊喵") || card.id?.includes("CAT-0032")) && phase === "防守階段") {
+2471:       const oppZone = zone.includes("front") ? "enemy_front" : "enemy_back";
+2472:       const oppUnit = field[oppZone][idx] || field[oppZone === "enemy_front" ? "enemy_back" : "enemy_front"][idx];
+2473:       if (oppUnit) {
+2474:         setTimeout(async () => {
+2475:           const confirmAtk = await showXLWConfirm("次元突擊喵 效果發動", `是否立刻進攻同戰線的對手單位 ${oppUnit.card.name}？`);
+2476:           if (confirmAtk) {
+2477:             const battleRes = await resolveUnitCombat(zone, idx, oppUnit.summonedZone || "enemy_front", field[oppUnit.summonedZone || "enemy_front"].indexOf(oppUnit), "enemy");
+2478:             logBattle(`次元突擊喵 突擊結果：${battleRes}`);
+2479:             render();
+2480:           }
+2481:         }, 500);
+2482:       }
+2483:     }
+2484: 
+2485:     // 喵喵賊立即/聯動自召喚效果
+2486:     const isImmediateCat = (card.keywords?.includes("立即") || card.effect_text?.includes("立即") || card.name?.includes("立即") || card.name?.includes("喵女")) &&
+2487:                            (card.faction === "喵喵賊" || card.id?.includes("CAT") || card.name.includes("喵"));
+2488:     if (isImmediateCat && zone.startsWith("player_")) {
+2489:       const validImmediateSummons = hand.filter(c => {
+2490:         return c && (c.type === "unit" || c.type === "怪獸" || c.type === "怪獸") &&
+2491:                (c.keywords?.includes("偷襲") || c.effect_text?.includes("偷襲")) &&
+2492:                Number(c.tribute || 0) <= 0;
+2493:       });
+2494: 
+2495:       if (validImmediateSummons.length > 0) {
+2496:         logDebug(`【立即連動】喵女/立即單位入場！偵測到手牌可連動偷襲單位：${validImmediateSummons.map(c => c.name).join(", ")}`);
+2497:         setTimeout(async () => {
+2498:           const userConfirmed = await showXLWConfirm(
+2499:             "【立即連動】喵女/立即效果發動！",
+2500:             "是否立刻從手牌特殊召喚一張免祭品且具「偷襲」特性的單位？（不佔用常規或戰術召喚額度）"
+2501:           );
+2502:           if (userConfirmed) {
+2503:             const extraCard = validImmediateSummons[0];
+2504:             window.XLW_bypassNormalSummonLimit = true;
+2505:             selectedHandForSummon = hand.indexOf(extraCard);
+2506:             setStatus("【立即連動】請點選我方一個空格進行特殊召喚！");
+2507:             render();
+2508:           }
+2509:         }, 300);
+2510:       }
+2511:     }
+2512:     
+2513:     if (isTributeSummon) {
+2514:       playTributeSummonAnimation(zone, idx);
+2515:     }
+2516:   }
+2517: 
+2518:   if (isMultiplayer) {
+2519:     if (window.XLW_isFoodBallSummoning) {
+2520:       ws.send(JSON.stringify({
+2521:         action: "foodball_summon",
+2522:         zone: window.XLW_currentFoodBallZone,
+2523:         idx: window.XLW_currentFoodBallIdx,
+2524:         toZone: zone,
+2525:         toIdx: idx
+2526:       }));
+2527:     } else {
+2528:       const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+2529:                           selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
+2530:                           selectedHandForSummon !== "GRAVEYARD_WELL" &&
+2531:                           selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
+2532:       ws.send(JSON.stringify({
+2533:         action: "summon",
+2534:         card: field[zone][idx].card,
+2535:         zone: zone,
+2536:         idx: idx,
+2537:         fromHand: isFromHand,
+2538:         tributes: window.XLW_lastTributes || []
+2539:       }));
+2540:       window.XLW_lastTributes = null;
+2541:     }
+2542:   }
+2543: 
+2544:   if (window.XLW_summonPlacementResolve) {
+2545:       const resolve = window.XLW_summonPlacementResolve;
+2546:       window.XLW_summonPlacementResolve = null;
+2547:       resolve();
+2548:     }
+2549:   } finally {
+2550:     const isSummoningTributeCard = (selectedTributeCard !== null && card !== null && card.id === selectedTributeCard.id);
+2551:     const keepTribute = tributeWaitingPosition && !isSummoningTributeCard;
+2552:     clearModes(keepTribute);
+2553:     render();
+2554:   }
+2555: }
+2556: 
+2557: async function runLanternImpPlacementFlow() {
+2558:   const prevSelected = selectedHandForSummon;
+2559:   const prevBypass = window.XLW_bypassNormalSummonLimit;
+2560: 
+2561:   try {
+2562:     // 1. First Little Traveler on our side
+2563:     let emptySlotsMe = [];
+2564:     for (const z of ["player_front", "player_back"]) {
+2565:       for (let i = 0; i < 5; i++) {
+2566:         if (xlwCanLanternSummonToZone("player", z, i)) emptySlotsMe.push({ zone: z, idx: i });
+2567:       }
+2568:     }
+2569:     
+2570:     let firstPlacement = null;
+2571:     if (emptySlotsMe.length > 0) {
+2572:       window.XLW_lanternPlacementActive = "player";
+2573:       setStatus("【燈籠小鬼】請選擇我方一個空格放置第 1 個小旅人！");
+2574:       render();
+2575:       firstPlacement = await new Promise(r => { window.XLW_lanternResolve = r; });
+2576:       if (isMultiplayer && firstPlacement) {
+2577:         ws.send(JSON.stringify({
+2578:           action: "lantern_summon_single",
+2579:           zone: firstPlacement.zone,
+2580:           idx: firstPlacement.idx

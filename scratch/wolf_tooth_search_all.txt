@@ -1,0 +1,394 @@
+
+=== Searching in static/game.js ===
+Line 981: // 4. 血戰幫狼牙棒 (裝備)
+  977:       baseAtk += 3;
+  978:     }
+  979:   }
+  980: 
+  981:   // 4. 血戰幫狼牙棒 (裝備)
+  982:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  983:     let maceCount = 0;
+  984:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  985:       field[z].forEach(u => {
+  986:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  987:           maceCount++;
+  988:         }
+  989:       });
+----------------------------------------
+Line 982: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  978:     }
+  979:   }
+  980: 
+  981:   // 4. 血戰幫狼牙棒 (裝備)
+  982:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  983:     let maceCount = 0;
+  984:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  985:       field[z].forEach(u => {
+  986:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  987:           maceCount++;
+  988:         }
+  989:       });
+  990:     }
+----------------------------------------
+Line 986: if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  982:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  983:     let maceCount = 0;
+  984:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  985:       field[z].forEach(u => {
+  986:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  987:           maceCount++;
+  988:         }
+  989:       });
+  990:     }
+  991:     baseAtk += maceCount;
+  992:   }
+  993: 
+  994:   // 5. 爺爺 Buff 過期判斷
+----------------------------------------
+Line 3295: // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3291:   if (attackerSuccess) {
+  3292:     const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
+  3293:     await applyCombatSuccessReward(attacker, defender, successOwner, true);
+  3294: 
+  3295:     // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3296:     if (successOwner === "player") {
+  3297:       const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
+  3298:       const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3299:         if (eqName === "血戰幫狼牙棒") return false;
+  3300:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3301:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3302:         return true;
+  3303:       });
+----------------------------------------
+Line 3299: if (eqName === "血戰幫狼牙棒") return false;
+  3295:     // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3296:     if (successOwner === "player") {
+  3297:       const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
+  3298:       const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3299:         if (eqName === "血戰幫狼牙棒") return false;
+  3300:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3301:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3302:         return true;
+  3303:       });
+  3304:       const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3305: 
+  3306:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3307:         const confirmAdd = await showXLWConfirm(
+----------------------------------------
+Line 3304: const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3300:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3301:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3302:         return true;
+  3303:       });
+  3304:       const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3305: 
+  3306:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3307:         const confirmAdd = await showXLWConfirm(
+  3308:           "狼牙棒 效果觸發",
+  3309:           `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3310:           "是",
+  3311:           "否"
+  3312:         );
+----------------------------------------
+Line 3309: `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3305: 
+  3306:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3307:         const confirmAdd = await showXLWConfirm(
+  3308:           "狼牙棒 效果觸發",
+  3309:           `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3310:           "是",
+  3311:           "否"
+  3312:         );
+  3313:         if (confirmAdd) {
+  3314:           playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
+  3315:           hand.push(maceInExtra);
+  3316:           logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3317: 
+----------------------------------------
+Line 3316: logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3312:         );
+  3313:         if (confirmAdd) {
+  3314:           playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
+  3315:           hand.push(maceInExtra);
+  3316:           logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3317: 
+  3318:           if (isMultiplayer) {
+  3319:             ws.send(JSON.stringify({
+  3320:               action: "add_to_hand_sync"
+  3321:             }));
+  3322:           }
+  3323:           render();
+  3324:         }
+----------------------------------------
+Line 4634: logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+  4630:                 obj.steakBonus = true;
+  4631:                 logBattle(`✨ 戰斧牛排 效果：${obj.card.name} 攻擊力 +5 且進攻成功時額外獎勵 +5！`);
+  4632:               }
+  4633:               else if (spellCard.name?.includes("狼牙棒") || spellCard.id === "R-ORC-0054") {
+  4634:                 logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+  4635:               }
+  4636:               else if (spellCard.name === "法術保護-護盾") {
+  4637:                 obj.magicImmune = true;
+  4638:                 logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+  4639:               }
+  4640:               if (isMultiplayer) {
+  4641:                 ws.send(JSON.stringify({
+  4642:                   action: "equip_spell_resolved",
+----------------------------------------
+Line 6260: const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6256:       if (window.XLW_ENEMY.hand) {
+  6257:         window.XLW_ENEMY.hand.push(null);
+  6258:       }
+  6259:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+  6260:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6261:         if (idx !== -1) {
+  6262:           enemyExtraDeck.splice(idx, 1);
+  6263:         } else {
+  6264:           enemyExtraDeck.pop();
+  6265:         }
+  6266:       }
+  6267:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6268:       render();
+----------------------------------------
+Line 6404: const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6400:       if (window.XLW_ENEMY.hand) {
+  6401:         window.XLW_ENEMY.hand.push(null);
+  6402:       }
+  6403:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+  6404:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6405:         if (idx !== -1) {
+  6406:           enemyExtraDeck.splice(idx, 1);
+  6407:         } else {
+  6408:           enemyExtraDeck.pop();
+  6409:         }
+  6410:       }
+  6411:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6412:       render();
+----------------------------------------
+Line 8582: if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8578:           setStatus("【額外召喚】只能在召喚階段進行！");
+  8579:           return;
+  8580:         }
+  8581: 
+  8582:         if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8583:           overlay.remove(); // Close modal
+  8584:           window.XLW_equipSpellActive = true;
+  8585:           window.XLW_equipSpellCard = card;
+  8586:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8587:           render();
+  8588:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+  8589: 
+  8590:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+----------------------------------------
+Line 8586: setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8582:         if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8583:           overlay.remove(); // Close modal
+  8584:           window.XLW_equipSpellActive = true;
+  8585:           window.XLW_equipSpellCard = card;
+  8586:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8587:           render();
+  8588:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+  8589: 
+  8590:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+  8591:           render();
+  8592:           return;
+  8593:         }
+  8594: 
+----------------------------------------
+
+=== Searching in static/game_v8.js ===
+Line 982: // 4. 血戰幫狼牙棒 (裝備)
+  978:       baseAtk += 3;
+  979:     }
+  980:   }
+  981: 
+  982:   // 4. 血戰幫狼牙棒 (裝備)
+  983:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  984:     let maceCount = 0;
+  985:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  986:       field[z].forEach(u => {
+  987:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  988:           maceCount++;
+  989:         }
+  990:       });
+----------------------------------------
+Line 983: if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  979:     }
+  980:   }
+  981: 
+  982:   // 4. 血戰幫狼牙棒 (裝備)
+  983:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  984:     let maceCount = 0;
+  985:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  986:       field[z].forEach(u => {
+  987:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  988:           maceCount++;
+  989:         }
+  990:       });
+  991:     }
+----------------------------------------
+Line 987: if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  983:   if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  984:     let maceCount = 0;
+  985:     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+  986:       field[z].forEach(u => {
+  987:         if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
+  988:           maceCount++;
+  989:         }
+  990:       });
+  991:     }
+  992:     baseAtk += maceCount;
+  993:   }
+  994: 
+  995:   // 5. 爺爺 Buff 過期判斷
+----------------------------------------
+Line 3296: // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3292:   if (attackerSuccess) {
+  3293:     const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
+  3294:     await applyCombatSuccessReward(attacker, defender, successOwner, true);
+  3295: 
+  3296:     // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3297:     if (successOwner === "player") {
+  3298:       const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
+  3299:       const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3300:         if (eqName === "血戰幫狼牙棒") return false;
+  3301:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3302:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3303:         return true;
+  3304:       });
+----------------------------------------
+Line 3300: if (eqName === "血戰幫狼牙棒") return false;
+  3296:     // --- 血戰幫狼牙棒 額外啟動效果 ---
+  3297:     if (successOwner === "player") {
+  3298:       const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
+  3299:       const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
+  3300:         if (eqName === "血戰幫狼牙棒") return false;
+  3301:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3302:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3303:         return true;
+  3304:       });
+  3305:       const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3306: 
+  3307:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3308:         const confirmAdd = await showXLWConfirm(
+----------------------------------------
+Line 3305: const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3301:         if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
+  3302:         if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  3303:         return true;
+  3304:       });
+  3305:       const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  3306: 
+  3307:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3308:         const confirmAdd = await showXLWConfirm(
+  3309:           "狼牙棒 效果觸發",
+  3310:           `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3311:           "是",
+  3312:           "否"
+  3313:         );
+----------------------------------------
+Line 3310: `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3306: 
+  3307:       if (isOrc && hasOtherEquip && maceInExtra) {
+  3308:         const confirmAdd = await showXLWConfirm(
+  3309:           "狼牙棒 效果觸發",
+  3310:           `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+  3311:           "是",
+  3312:           "否"
+  3313:         );
+  3314:         if (confirmAdd) {
+  3315:           playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
+  3316:           hand.push(maceInExtra);
+  3317:           logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3318: 
+----------------------------------------
+Line 3317: logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3313:         );
+  3314:         if (confirmAdd) {
+  3315:           playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
+  3316:           hand.push(maceInExtra);
+  3317:           logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+  3318: 
+  3319:           if (isMultiplayer) {
+  3320:             ws.send(JSON.stringify({
+  3321:               action: "add_to_hand_sync"
+  3322:             }));
+  3323:           }
+  3324:           render();
+  3325:         }
+----------------------------------------
+Line 4659: logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+  4655:                 obj.steakBonus = true;
+  4656:                 logBattle(`✨ 戰斧牛排 效果：${obj.card.name} 攻擊力 +5 且進攻成功時額外獎勵 +5！`);
+  4657:               }
+  4658:               else if (spellCard.name?.includes("狼牙棒") || spellCard.id === "R-ORC-0054") {
+  4659:                 logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+  4660:               }
+  4661:               else if (spellCard.name === "法術保護-護盾") {
+  4662:                 obj.magicImmune = true;
+  4663:                 logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+  4664:               }
+  4665:               if (isMultiplayer) {
+  4666:                 ws.send(JSON.stringify({
+  4667:                   action: "equip_spell_resolved",
+----------------------------------------
+Line 6325: const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6321:       if (window.XLW_ENEMY.hand) {
+  6322:         window.XLW_ENEMY.hand.push(null);
+  6323:       }
+  6324:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+  6325:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6326:         if (idx !== -1) {
+  6327:           enemyExtraDeck.splice(idx, 1);
+  6328:         } else {
+  6329:           enemyExtraDeck.pop();
+  6330:         }
+  6331:       }
+  6332:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6333:       render();
+----------------------------------------
+Line 6469: const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6465:       if (window.XLW_ENEMY.hand) {
+  6466:         window.XLW_ENEMY.hand.push(null);
+  6467:       }
+  6468:       if (enemyExtraDeck && enemyExtraDeck.length > 0) {
+  6469:         const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+  6470:         if (idx !== -1) {
+  6471:           enemyExtraDeck.splice(idx, 1);
+  6472:         } else {
+  6473:           enemyExtraDeck.pop();
+  6474:         }
+  6475:       }
+  6476:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6477:       render();
+----------------------------------------
+Line 8655: if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8651:           setStatus("【額外召喚】只能在召喚階段進行！");
+  8652:           return;
+  8653:         }
+  8654: 
+  8655:         if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8656:           overlay.remove(); // Close modal
+  8657:           window.XLW_equipSpellActive = true;
+  8658:           window.XLW_equipSpellCard = card;
+  8659:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8660:           render();
+  8661:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+  8662: 
+  8663:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+----------------------------------------
+Line 8659: setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8655:         if (card.name === "血戰幫狼牙棒" || card.id === "R-ORC-0054") {
+  8656:           overlay.remove(); // Close modal
+  8657:           window.XLW_equipSpellActive = true;
+  8658:           window.XLW_equipSpellCard = card;
+  8659:           setStatus("【血戰幫狼牙棒】請點選我方一個獸人單位進行裝備！");
+  8660:           render();
+  8661:           await new Promise(r => { window.XLW_equipSpellResolve = r; });
+  8662: 
+  8663:           playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+  8664:           render();
+  8665:           return;
+  8666:         }
+  8667: 
+----------------------------------------

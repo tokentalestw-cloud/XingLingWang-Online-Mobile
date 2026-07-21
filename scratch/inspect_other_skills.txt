@@ -1,0 +1,96 @@
+12465:             }
+12466: 
+12467:             // ===== 蜘蛛魔盜團 (Spider Rogues) 主動技能 =====
+12468: 
+12469:             // 1. 千面 (R-ART-0052)
+12470:             const isQianmian = obj.card?.id === "R-ART-0052" || obj.card?.name?.includes("千面");
+12471:             if (isQianmian) {
+12472:               if (obj.tapped) {
+12473:                 setStatus("【千面】已橫置，無法發動效果！");
+12474:                 showModal(obj.card, obj.equipments);
+12475:                 return;
+12476:               }
+12477:               if (obj.qianmianEffectUsedTurn === turn) {
+12478:                 setStatus("【千面】的效果本回合已使用過。");
+12479:                 showModal(obj.card, obj.equipments);
+12480:                 return;
+12481:               }
+12482: 
+12483:               // Scan friendly field for humanoid artwork units (excluding this unit itself)
+12484:               const humanoidArtUnits = [];
+12485:               for (const z of ["player_front", "player_back"]) {
+12486:                 field[z].forEach((u, i) => {
+12487:                   if (u && u !== obj && isHumanoidArtworkCard(u.card)) {
+12488:                     humanoidArtUnits.push({ zone: z, idx: i, unit: u });
+12489:                   }
+12490:                 });
+12491:               }
+12492: 
+12493:               if (humanoidArtUnits.length === 0) {
+12494:                 setStatus("我方場上沒有其他「人型藝術品」單位！");
+12495:                 showModal(obj.card, obj.equipments);
+12496:                 return;
+12497:               }
+12498: 
+12499:               const confirmUse = await showXLWConfirm(
+12500:                 "千面 效果發動",
+12501:                 "是否發動【千面】效果：橫置此單位，使我方場上 1 個其他人型藝術品回手，並召喚等同其星級+1的小旅人？"
+12502:               );
+12503:               if (confirmUse) {
+12504:                 const choices = humanoidArtUnits.map((item, i) => ({
+12505:                   text: `${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1} 的 ${item.unit.card.name} (星級 ${item.unit.card.tribute || 0}⭐)`,
+12506:                   value: i
+12507:                 }));
+12508:                 const chosenIdx = await showXLWChoiceModal("選擇回手的人型藝術品", "請選擇一個我方人型藝術品：", choices);
+12509:                 if (chosenIdx !== null && chosenIdx !== undefined) {
+12510:                   const targetItem = humanoidArtUnits[chosenIdx];
+12511:                   const returnedCard = targetItem.unit.card;
+12512:                   const stars = Number(returnedCard.tribute || 0) + 1;
+12513: 
+12514:                   // If that unit has kidnapped cards, release them first to their owner's field (tapped)
+12515:                   const kidnapped = targetItem.unit.kidnappedCards || [];
+12516:                   for (const kCard of kidnapped) {
+12517:                     const ownerSide = kCard.originalOwner || "enemy";
+12518:                     const targetZones = ownerSide === "player" ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+12519:                     let placed = false;
+12520:                     for (const tz of targetZones) {
+12521:                       for (let slotI = 0; slotI < 5; slotI++) {
+12522:                         if (field[tz][slotI] === null) {
+12523:                           field[tz][slotI] = {
+12524:                             card: kCard,
+12525:                             tapped: true,
+12526:                             attacking: false,
+12527:                             target: null,
+12528:                             summonedTurn: turn,
+12529:                             summonedZone: tz
+12530:                           };
+12531:                           placed = true;
+12532:                           break;
+12533:                         }
+12534:                       }
+12535:                       if (placed) break;
+12536:                     }
+12537:                     if (!placed) {
+12538:                       if (ownerSide === "player") graveyard.push(kCard);
+12539:                       else enemyGraveyard.push(kCard);
+12540:                     }
+12541:                   }
+12542:                   targetItem.unit.kidnappedCards = [];
+12543: 
+12544:                   // Return unit to hand
+12545:                   hand.push(returnedCard);
+12546:                   field[targetItem.zone][targetItem.idx] = null;
+12547:                   
+12548:                   // Tap self
+12549:                   obj.tapped = true;
+12550:                   obj.qianmianEffectUsedTurn = turn;
+12551: 
+12552:                   logBattle(`✨ 千面 效果發動：橫置自身，使我方場上的人型藝術品【${returnedCard.name}】回手，並召喚 ${stars} 個小旅人！`);
+12553: 
+12554:                   // Summon Little Travelers
+12555:                   let summonedCount = 0;
+12556:                   for (const z of ["player_front", "player_back"]) {
+12557:                     for (let i = 0; i < 5; i++) {
+12558:                       if (summonedCount >= stars) break;
+12559:                       if (field[z][i] === null) {
+12560:                         const travelerCard = structuredClone(LITTLE_TRAVELER);

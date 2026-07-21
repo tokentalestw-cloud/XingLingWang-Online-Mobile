@@ -1,0 +1,33 @@
+L6508: } else if (data.action === "extra_summon_resolved") {
+  6504:       };
+  6505:       logBattle(`✨ 額外進化：對手的【智慧的般若】已升級進化為【憤怒的般若】！`);
+  6506:       playerBonusScore = Math.max(0, playerBonusScore - 1);
+  6507:       render();
+  6508:     } else if (data.action === "extra_summon_resolved") {
+  6509:       const oppZone = data.fromZone;
+  6510:       const oppIdx = data.fromIdx;
+  6511:       const angryHannya = data.angryHannya;
+  6512:       const oldUnit = field[oppZone][oppIdx];
+  6513:       if (oldUnit) {
+L8654: action: "extra_summon_resolved",
+  8650:           logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+  8651: 
+  8652:           if (isMultiplayer) {
+  8653:             ws.send(JSON.stringify({
+  8654:               action: "extra_summon_resolved",
+  8655:               fromZone: targetZone,
+  8656:               fromIdx: targetIdx,
+  8657:               angryHannya: card
+  8658:             }));
+  8659:           }
+L8736: action: "extra_summon_resolved",
+  8732:         logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+  8733: 
+  8734:         if (isMultiplayer) {
+  8735:           ws.send(JSON.stringify({
+  8736:             action: "extra_summon_resolved",
+  8737:             fromZone: targetZone,
+  8738:             fromIdx: targetIdx,
+  8739:             angryHannya: card
+  8740:           }));
+  8741:         }

@@ -1,0 +1,5 @@
+3040: sendFullGameStateToOpponent();
+4434: sendFullGameStateToOpponent();
+6346: sendFullGameStateToOpponent();
+8721: sendFullGameStateToOpponent();
+9349: function sendFullGameStateToOpponent() {

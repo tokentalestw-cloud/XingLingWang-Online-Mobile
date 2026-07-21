@@ -1,0 +1,108 @@
+Line 5212: obj.magicImmune = true;
+  5209:               obj.equipments.push(spellCard.name);
+  5210:               logBattle(`發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  5211:               if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  5212:                 obj.magicImmune = true;
+  5213:                 logBattle(`✨ 符咒帽 效果：${obj.card.name} 獲得永久敵方魔法抗性！`);
+  5214:               }
+  5215:               else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+
+Line 5237: obj.magicImmune = true;
+  5234:                 logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+  5235:               }
+  5236:               else if (spellCard.name === "法術保護-護盾") {
+  5237:                 obj.magicImmune = true;
+  5238:                 logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+  5239:               }
+  5240:               if (isMultiplayer) {
+
+Line 5324: if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+  5321:                 setStatus("天狗 具有免疫效果：不會被敵方的效果 and 魔法選為目標！");
+  5322:                 return;
+  5323:               }
+  5324:               if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+  5325:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+  5326:                 return;
+  5327:               }
+
+Line 5328: if (obj.magicImmune) {
+  5325:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+  5326:                 return;
+  5327:               }
+  5328:               if (obj.magicImmune) {
+  5329:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+  5330:                 return;
+  5331:               }
+
+Line 5397: if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+  5394:                 setStatus("天狗 具有免疫效果，無法被施加效果！");
+  5395:                 return;
+  5396:               }
+  5397:               if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+  5398:                 setStatus("該單位具有魔法免疫，無法被變為山羊！");
+  5399:                 return;
+  5400:               }
+
+Line 5446: obj.magicImmune = false;
+  5443:             obj.equipments = [];
+  5444:             obj.atkModifier = 0;
+  5445:             obj.piercing = false;
+  5446:             obj.magicImmune = false;
+  5447:             obj.hasRanged = false;
+  5448:             obj.steakBonus = false;
+  5449:             
+
+Line 5486: obj.magicImmuneUntilTurn = turn + 1;
+  5483:               );
+  5484:               if (opt !== null && opt !== undefined) {
+  5485:                 obj.atkModifier = (obj.atkModifier || 0) + opt;
+  5486:                 obj.magicImmuneUntilTurn = turn + 1;
+  5487:                 logBattle(`魔抗鐵拳 效果：使 ${obj.card.name} 攻擊力變更了 ${opt > 0 ? "+1" : "-1"}，並獲得對魔法免疫直至對手下個主要階段前！`);
+  5488:                 window.XLW_resistIronFistActive = false;
+  5489:                 if (window.XLW_resistIronFistResolve) {
+
+Line 5594: u.magicImmuneUntilTurn = turn + 2;
+  5591:                   for (const z of ["player_front", "player_back"]) {
+  5592:                     field[z].forEach(u => {
+  5593:                       if (u && isMeowCard(u.card)) {
+  5594:                         u.magicImmuneUntilTurn = turn + 2;
+  5595:                         logBattle(`✨【經理喵】賦予魔法免疫：我方場上單位 ${u.card.name} 獲得魔法免疫直到下回合敵方防守階段結束。`);
+  5596:                       }
+  5597:                     });
+
+Line 6793: obj.magicImmune = true;
+  6790:         logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  6791:         
+  6792:         if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  6793:           obj.magicImmune = true;
+  6794:         } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  6795:           obj.piercing = true;
+  6796:         } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+
+Line 6805: obj.magicImmune = true;
+  6802:         } else if (spellCard.name?.includes("迴旋飛斧") || spellCard.id === "R-ORC-0025") {
+  6803:           obj.piercing = true;
+  6804:         } else if (spellCard.name === "法術保護-護盾") {
+  6805:           obj.magicImmune = true;
+  6806:         }
+  6807:         render();
+  6808:       }
+
+Line 6850: obj.magicImmune = false;
+  6847:         obj.equipments = [];
+  6848:         obj.atkModifier = 0;
+  6849:         obj.piercing = false;
+  6850:         obj.magicImmune = false;
+  6851:         obj.hasRanged = false;
+  6852:         obj.steakBonus = false;
+  6853:         
+
+Line 7066: u.magicImmuneUntilTurn = turn + 2;
+  7063:       for (const z of ["enemy_front", "enemy_back"]) {
+  7064:         field[z].forEach(u => {
+  7065:           if (u && isMeowCard(u.card)) {
+  7066:             u.magicImmuneUntilTurn = turn + 2;
+  7067:           }
+  7068:         });
+  7069:       }
+

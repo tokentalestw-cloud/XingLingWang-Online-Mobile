@@ -1,0 +1,65 @@
+621:   selectedMulliganIndexes.clear();
+622:   
+623:   if (isMultiplayer) {
+624:     // 廣播給對手說我們 Mulligan 好了
+625:     ws.send(JSON.stringify({
+626:       action: "mulligan_confirm"
+627:     }));
+628:     setStatus("我方起手換牌已確認，正在等待對手換牌中...");
+629:     checkMulliganCompletion();
+630:   } else {
+631:     // 單人模式
+632:     if (isMyTurn) {
+633:       turn = 1;
+634:       phase = "召喚階段";
+635:       draw(2);
+636:       logBattle(`換牌完成（換了 ${replacedCards.length} 張），進入第 1 回合。已自動抽 2 張。`);
+637:       setStatus("起手換牌完成！目前為我方第 1 回合「召喚階段」，起手共 6 張。");
+638:       render();
+639:     } else {
+640:       // 對手 AI 先攻！
+641:       turn = 1;
+642:       phase = "召喚階段";
+643:       logBattle(`換牌完成（換了 ${replacedCards.length} 張），對手 AI 先攻！`);
+644:       render();
+645:       
+646:       // 延遲後執行對手回合
+647:       setTimeout(async () => {
+648:         await runEnemyTurn();
+649:         
+650:         // 對手回合結束，輪到我方回合 (後攻方回合)
+651:         turn = 2;
+652:         window.XLW_turnSneakCount = 0;
+653:         normalSummonUsed = false;
+654:         tacticalSummonUsed = false;
+655:         playerUntap();
+656:         isMyTurn = true;
+657:         draw(2);
+658:         phase = "召喚階段";
+659:         setStatus("對手回合結束。目前為我方第 2 回合「召喚階段」，已自動抽 2 張。");
+660:         render();
+661:       }, 1000);
+662:     }
+663:   }
+664: }
+665: 
+666: function checkMulliganCompletion() {
+667:   if (opponent_mulligan_done && !mulliganActive) {
+668:     // 雙方都 Mulligan 完畢，遊戲正式開始！
+669:     turn = 1;
+670:     window.XLW_turnSneakCount = 0;
+671:     phase = "召喚階段";
+672:     draw(2);
+673:     logBattle("雙方皆已完成起手換牌！第 1 回合對決正式開始。");
+674:     
+675:     const goFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
+676:     if (goFirst) {
+677:       isMyTurn = true;
+678:       setStatus("對決開始！第 1 回合為我方回合，召喚階段開始。");
+679:     } else {
+680:       isMyTurn = false;
+681:       setStatus("對決開始！第 1 回合為對手回合，等待對手行動...");
+682:     }
+683:     render();
+684:   }
+685: }

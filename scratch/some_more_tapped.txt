@@ -1,0 +1,36 @@
+3370:                       resolve();
+3371:                     }
+3372:                   }, 50);
+3373:                 });
+3374:               }
+3375:               const placement = window.XLW_opponentFoodBallSummon[key];
+3376:               field[placement.zone][placement.idx] = {
+3377:                 card: structuredClone(LITTLE_TRAVELER),
+3378:                 tapped: false,
+3379:                 attacking: false,
+3380:                 target: null,
+3381:                 summonedTurn: turn,
+3382:                 summonedZone: placement.zone
+3383:               };
+3384:               logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+3385:             }
+3386:           } else {
+3387:             // 單機 AI 模式：AI為進攻方，50% 機率發動並召喚到AI場上（我方的enemy_front/back）
+3388:             if (Math.random() < 0.5) {
+3389:               defenderShouldDie = false;
+3390:               window.XLW_foodBallTriggeredTurn = turn;
+3391:               let placed = false;
+3392:               for (const z of ["enemy_front", "enemy_back"]) {
+3393:                 for (let i = 0; i < 5; i++) {
+3394:                   if (!field[z][i]) {
+3395:                     field[z][i] = {
+3396:                       card: structuredClone(LITTLE_TRAVELER),
+3397:                       tapped: false,
+3398:                       attacking: false,
+3399:                       target: null,
+3400:                       summonedTurn: turn,
+3401:                       summonedZone: z
+3402:                     };
+3403:                     logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+3404:                     placed = true;
+3405:                     break;

@@ -1,0 +1,229 @@
+{
+  "id": "ART-0032",
+  "name": "實習畫家",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "2",
+  "score": 2,
+  "tribute": 0,
+  "keywords": [
+    "立即，顏料"
+  ],
+  "effect_text": "立即:從你牌庫或墓地尋找1顏料單位展示並加入手牌，然後重洗牌庫。此單位被破壞時,可棄掉手中1顏料單位代替破壞",
+  "image": "/static/card_images/art_0032.jpeg",
+  "original_file": "藝術品/IMG_6183.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "人型"
+}
+
+{
+  "id": "R-ART-0022",
+  "name": "紅色顏料",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "2",
+  "score": 0,
+  "tribute": 0,
+  "keywords": [
+    "顏料，藝術品"
+  ],
+  "effect_text": "若你墓地有其他顏料此卡可作為藝術品單位的兩個祭品",
+  "image": "/static/card_images/r_art_0022.jpeg",
+  "original_file": "藝術品/IMG_6171.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "顏料"
+}
+
+{
+  "id": "R-ART-0023",
+  "name": "綠色顏料",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "0",
+  "score": 2,
+  "tribute": 0,
+  "keywords": [
+    "顏料，藝術品"
+  ],
+  "effect_text": "若你場上有其他顏料此卡可作為藝術品單位的兩個祭品",
+  "image": "/static/card_images/r_art_0023.jpeg",
+  "original_file": "藝術品/IMG_6172.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "顏料"
+}
+
+{
+  "id": "R-ART-0024",
+  "name": "藍色顏料",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "1",
+  "score": 1,
+  "tribute": 0,
+  "keywords": [
+    "顏料，藝術品"
+  ],
+  "effect_text": "選擇祭品時若你展示手牌其他顏料,則此單位可作為 藝術品 單位的兩個祭品",
+  "image": "/static/card_images/r_art_0024.jpeg",
+  "original_file": "藝術品/IMG_6173.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "顏料"
+}
+
+{
+  "id": "R-ART-0032",
+  "name": "實習畫家",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "2",
+  "score": 2,
+  "tribute": 0,
+  "keywords": [
+    "立即，顏料"
+  ],
+  "effect_text": "立即:從你牌庫或墓地尋找1顏料單位展示並加入手牌，然後重洗牌庫。此單位被破壞時,可棄掉手中1顏料單位代替破壞",
+  "image": "/static/card_images/r_art_0032.jpeg",
+  "original_file": "藝術品/IMG_6182.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "人型"
+}
+
+{
+  "id": "R-ART-0033",
+  "name": "流浪畫家",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "3",
+  "score": 2,
+  "tribute": 0,
+  "keywords": [
+    "顏料，藝術品"
+  ],
+  "effect_text": "你的召喚階段選擇祭品時限一次,可將手牌1 顏料 單位作為非人型 藝術品 單位的1個祭品",
+  "image": "/static/card_images/r_art_0033.jpeg",
+  "original_file": "藝術品/IMG_6184.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "人型"
+}
+
+{
+  "id": "R-ART-0045",
+  "name": "調色盤",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "3",
+  "score": 2,
+  "tribute": 0,
+  "keywords": [
+    "顏料"
+  ],
+  "effect_text": "你的結束階段時，使你手牌或墓地的1張無需祭品的顏料單位卡被召喚",
+  "image": "/static/card_images/r_art_0045.jpeg",
+  "original_file": "藝術品/IMG_6197.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "顏料"
+}
+
+{
+  "id": "R-ART-0046",
+  "name": "牆壁上的塗鴉",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "盾",
+  "score": 12,
+  "tribute": 5,
+  "keywords": [
+    "敵方魔法抗性，敵方效果抗性，顏料"
+  ],
+  "effect_text": "阻擋。敵方魔法抗性。敵方效果抗性。此卡的祭品須為顏料單位",
+  "image": "/static/card_images/r_art_0046.jpeg",
+  "original_file": "藝術品/IMG_6198.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": ""
+}
+
+{
+  "id": "R-ART-0049",
+  "name": "顏料藝術家",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "3",
+  "score": 3,
+  "tribute": 0,
+  "keywords": [
+    "顏料"
+  ],
+  "effect_text": "你場上的顏料單位發動其效果作為2個祭品時，可改為使其作為3個祭品",
+  "image": "/static/card_images/r_art_0049.jpeg",
+  "original_file": "藝術品/IMG_6201.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "人型"
+}
+
+{
+  "id": "SSR-ART-0049",
+  "name": "顏料藝術家",
+  "deck": "藝術品",
+  "type": "unit",
+  "faction": "藝術品",
+  "race": "藝術品",
+  "attack": "3",
+  "score": 3,
+  "tribute": 0,
+  "keywords": [
+    "顏料"
+  ],
+  "effect_text": "你場上的顏料單位發動其效果作為2個祭品時，可改為使其作為3個祭品",
+  "image": "/static/card_images/ssr_art_0049.jpeg",
+  "original_file": "藝術品/IMG_6202.JPG",
+  "deck_eligible": true,
+  "mana": 0,
+  "usable_phases": [],
+  "trigger_condition": "",
+  "art_subtype": "人型"
+}
+

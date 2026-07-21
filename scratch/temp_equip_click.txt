@@ -1,0 +1,65 @@
+4731: 
+4732: 
+4733: 
+4734:           if (window.XLW_tempEquipSpellActive) {
+4735:             const spellCard = window.XLW_tempEquipSpellCard;
+4736: 
+4737:             if (spellCard.name.includes("睡眠反擊拳") || spellCard.id?.includes("0025")) {
+4738:               if (!zone.startsWith("player_")) {
+4739:                 setStatus("【睡眠反擊拳】只能施加在我方場上的單位！");
+4740:                 return;
+4741:               }
+4742:             }
+4743: 
+4744:             if (zone.startsWith("enemy_")) {
+4745:               if (obj.card.name.includes("天狗")) {
+4746:                 setStatus("天狗 具有免疫效果：不會被敵方的效果 and 魔法選為目標！");
+4747:                 return;
+4748:               }
+4749:               if (obj.magicImmuneUntilTurn && obj.magicImmuneUntilTurn >= turn) {
+4750:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+4751:                 return;
+4752:               }
+4753:               if (obj.magicImmune) {
+4754:                 setStatus("該單位具有魔法免疫，無法被魔法指定！");
+4755:                 return;
+4756:               }
+4757:             }
+4758: 
+4759:             if (!obj.equipments) obj.equipments = [];
+4760:             const spellNameClean = spellCard.name;
+4761:             if (!obj.equipments.includes(spellNameClean)) {
+4762:               obj.equipments.push(spellNameClean);
+4763:             }
+4764: 
+4765:             if (!obj.tempEquips) obj.tempEquips = {};
+4766:             if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+4767:               obj.tempEquips[spellNameClean] = turn;
+4768:             } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+4769:               obj.tempEquips[spellNameClean] = turn + 1;
+4770:             }
+4771: 
+4772:             logBattle(`✨ 發動魔法 ${spellCard.name}：賦予場上 ${obj.card.name} 該效果作為臨時裝備。`);
+4773: 
+4774:             if (isMultiplayer) {
+4775:               ws.send(JSON.stringify({
+4776:                 action: "temp_equip_spell_resolved",
+4777:                 zone: zone,
+4778:                 idx: idx,
+4779:                 spellCard: spellCard,
+4780:                 currentTurn: turn
+4781:               }));
+4782:             }
+4783: 
+4784:             window.XLW_tempEquipSpellActive = false;
+4785:             window.XLW_tempEquipSpellCard = null;
+4786:             if (window.XLW_tempEquipSpellResolve) {
+4787:               const resolve = window.XLW_tempEquipSpellResolve;
+4788:               window.XLW_tempEquipSpellResolve = null;
+4789:               resolve();
+4790:             }
+4791:             render();
+4792:             return;
+4793:           }
+4794: 
+4795:           if (window.XLW_confiningSpellActive) {

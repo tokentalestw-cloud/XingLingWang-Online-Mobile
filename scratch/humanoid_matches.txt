@@ -1,0 +1,36 @@
+2122: function isHumanoid(unit) {
+  2120: // 獸人種族立即效果實作
+  2121: else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+  2122: function isHumanoid(unit) {
+  2123: if (!unit || !unit.card) return false;
+  2124: const name = unit.card.name || "";
+  2125: const race = unit.card.race || "";
+  2126: return race.includes("人") || race.includes("人類") || name.includes("獸人") || name.includes("爺爺") || name.includes("奶奶") || name.includes("戴比") || name.includes("卡煞") || name.includes("粉絲") || name.includes("公關");
+  2127: }
+  2128: let count = 0;
+  2129: for (const z of ["player_front", "player_back"]) {
+------------------------------
+2131: if (u && isHumanoid(u) && u.tapped) {
+  2129: for (const z of ["player_front", "player_back"]) {
+  2130: field[z].forEach(u => {
+  2131: if (u && isHumanoid(u) && u.tapped) {
+  2132: u.tapped = false;
+  2133: count++;
+  2134: }
+  2135: });
+  2136: }
+  2137: logBattle(`✨ 女獸人 卡煞 效果：使我方場上 ${count} 個人型單位轉正！`);
+  2138: }
+------------------------------
+4480: function untapEnemy() {
+  4478: }
+  4479: 
+  4480: function untapEnemy() {
+  4481: ["enemy_front", "enemy_back"].forEach(zone => {
+  4482: field[zone].forEach(u => {
+  4483: if (u) {
+  4484: u.attacking = false;
+  4485: u.target = null;
+  4486: u.tempAtkModifier = 0;
+  4487: }
+------------------------------

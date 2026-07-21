@@ -1,0 +1,79 @@
+ID: ART-0002        | Name: 大鵰像                  | Subtype: 
+ID: ART-0004        | Name: 呐喊的人                 | Subtype: 
+ID: ART-0005        | Name: 鎧甲擺件                 | Subtype: 
+ID: ART-0007        | Name: 兩位陌生人                | Subtype: 
+ID: ART-0008        | Name: 珍珠少女                 | Subtype: 
+ID: ART-0009        | Name: 梵老爹                  | Subtype: 藝術品
+ID: ART-001         | Name: 萌娜麗莎的大笑              | Subtype: 
+ID: ART-0013        | Name: 創世男孩                 | Subtype: 
+ID: ART-0014        | Name: 創世老人                 | Subtype: 
+ID: ART-0015        | Name: 番茄之子                 | Subtype: 
+ID: ART-0016        | Name: 摩艾石巨像                | Subtype: 
+ID: ART-0017        | Name: 尿尿小男童                | Subtype: 
+ID: ART-0018        | Name: 畫框                   | Subtype: 消耗
+ID: ART-0019        | Name: 博物館                  | Subtype: 場地
+ID: ART-0020        | Name: 星空                   | Subtype: 消耗
+ID: ART-0032        | Name: 實習畫家                 | Subtype: 人型
+ID: ASSR-ART-0059   | Name: 始皇帝                  | Subtype: 神族
+ID: C-ART-0060      | Name: 戰士陶俑                 | Subtype: 陶俑
+ID: C-ART-0061      | Name: 三腳鼎                  | Subtype: 藝術品
+ID: R-ART-0001      | Name: 萌娜麗莎的大笑              | Subtype: 
+ID: R-ART-0003      | Name: 沉思的男人                | Subtype: 
+ID: R-ART-0003-新年   | Name: 沉思的男人                | Subtype: 
+ID: R-ART-0006      | Name: 刁鑽的藝術品收藏家            | Subtype: 
+ID: R-ART-0006-2    | Name: 刁鑽的藝術收藏家             | Subtype: 人型
+ID: R-ART-0010      | Name: 向日葵小妹                | Subtype: 
+ID: R-ART-0011      | Name: 拿波崙                  | Subtype: 
+ID: R-ART-0012      | Name: 頸部痠痛的女人              | Subtype: 
+ID: R-ART-0012-插畫   | Name: 頸部痠痛的女人              | Subtype: 
+ID: R-ART-0022      | Name: 紅色顏料                 | Subtype: 顏料
+ID: R-ART-0023      | Name: 綠色顏料                 | Subtype: 顏料
+ID: R-ART-0024      | Name: 藍色顏料                 | Subtype: 顏料
+ID: R-ART-0027      | Name: 最後的下午茶               | Subtype: 最後的
+ID: R-ART-0028      | Name: 最後的宵夜                | Subtype: 最後的
+ID: R-ART-0029      | Name: 最後的中餐                | Subtype: 最後的
+ID: R-ART-0030      | Name: 最後的早餐                | Subtype: 最後的
+ID: R-ART-0031      | Name: 博物館保全                | Subtype: 人型
+ID: R-ART-0032      | Name: 實習畫家                 | Subtype: 人型
+ID: R-ART-0033      | Name: 流浪畫家                 | Subtype: 人型
+ID: R-ART-0034      | Name: 前台服務生                | Subtype: 人型
+ID: R-ART-0035      | Name: 香蕉侯                  | Subtype: 香蕉，虛擬
+ID: R-ART-0036      | Name: 黑心網路賣家               | Subtype: 人型
+ID: R-ART-0038      | Name: 金衣服的女人               | Subtype: 
+ID: R-ART-0038-金    | Name: 金衣服的女人               | Subtype: 
+ID: R-ART-0040      | Name: 詛咒斷臂雕像               | Subtype: 
+ID: R-ART-0041      | Name: 博物館接待員               | Subtype: 人型
+ID: R-ART-0042      | Name: 哭泣女人                 | Subtype: 
+ID: R-ART-0045      | Name: 調色盤                  | Subtype: 顏料
+ID: R-ART-0046      | Name: 牆壁上的塗鴉               | Subtype: 
+ID: R-ART-0047      | Name: 最後的麵包與酒              | Subtype: 消耗
+ID: R-ART-0048      | Name: 守護的斷臂雕像              | Subtype: 
+ID: R-ART-0049      | Name: 顏料藝術家                | Subtype: 人型
+ID: R-ART-0050      | Name: 博物館剪票員               | Subtype: 
+ID: R-ART-0052      | Name: 蜘蛛魔盜團 千面             | Subtype: 強盜，人型
+ID: R-ART-0053      | Name: 蜘蛛魔盜團 銷贓             | Subtype: 強盜，人型
+ID: R-ART-0054      | Name: 蜘蛛魔盜團間諜 迪斯麥          | Subtype: 強盜，人型
+ID: R-ART-0055      | Name: 蜘蛛魔盜團  鎖頭            | Subtype: 強盜，人型
+ID: R-ART-0056      | Name: 蜘蛛魔盜團 換日             | Subtype: 強盜，人型
+ID: R-ART-0057      | Name: 蜘蛛魔盜團 扒手             | Subtype: 強盜，人型
+ID: R-ART-0058      | Name: 蜘蛛魔盜團 駭客             | Subtype: 強盜，人型
+ID: R-ART-0062      | Name: 害羞的斑點南瓜              | Subtype: 
+ID: SR-ART-0021     | Name: 拾穗者                  | Subtype: 
+ID: SR-ART-0021-2   | Name: 拾穗者                  | Subtype: 
+ID: SR-ART-0025     | Name: 牆壁上的香蕉               | Subtype: 香蕉
+ID: SR-ART-0026     | Name: 和平使者 耶叔              | Subtype: 神族
+ID: SR-ART-0037     | Name: 率性龐克                 | Subtype: 虛擬
+ID: SR-ART-0039     | Name: 博物館館長 迪斯麥            | Subtype: 人型
+ID: SR-ART-0044     | Name: 太極雕像                 | Subtype: 
+ID: SR-ART-0051     | Name: 翡翠白菜                 | Subtype: 
+ID: SR-ART-0059     | Name: 始皇帝                  | Subtype: 神族
+ID: SSR-ART-0001    | Name: 萌娜麗莎的大笑              | Subtype: 
+ID: SSR-ART-0009    | Name: 梵老爹                  | Subtype: 藝術品
+ID: SSR-ART-001-金   | Name: 萌娜麗莎的大笑              | Subtype: 
+ID: SSR-ART-0010    | Name: 向日葵小妹                | Subtype: 
+ID: SSR-ART-0012    | Name: 頸部痠痛的女人              | Subtype: 
+ID: SSR-ART-0025    | Name: 牆壁上的香蕉               | Subtype: 香蕉
+ID: SSR-ART-0043    | Name: 蜘蛛魔盜團團長 茉蘭           | Subtype: 強盜，人型
+ID: SSR-ART-0049    | Name: 顏料藝術家                | Subtype: 人型
+ID: SSR-ART-0054    | Name: 蜘蛛魔盜團間諜 迪斯麥          | Subtype: 強盜，人型
+ID: SSR-ART-0058    | Name: 蜘蛛魔盜團 駭客             | Subtype: 強盜，人型

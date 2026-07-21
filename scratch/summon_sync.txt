@@ -1,0 +1,41 @@
+2280:   if (isMultiplayer) {
+2281:     if (window.XLW_isFoodBallSummoning) {
+2282:       ws.send(JSON.stringify({
+2283:         action: "foodball_summon",
+2284:         zone: window.XLW_currentFoodBallZone,
+2285:         idx: window.XLW_currentFoodBallIdx,
+2286:         toZone: zone,
+2287:         toIdx: idx
+2288:       }));
+2289:     } else {
+2290:       const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+2291:                           selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
+2292:                           selectedHandForSummon !== "GRAVEYARD_WELL" &&
+2293:                           selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
+2294:       ws.send(JSON.stringify({
+2295:         action: "summon",
+2296:         card: field[zone][idx].card,
+2297:         zone: zone,
+2298:         idx: idx,
+2299:         fromHand: isFromHand,
+2300:         tributes: window.XLW_lastTributes || []
+2301:       }));
+2302:       window.XLW_lastTributes = null;
+2303:     }
+2304:   }
+2305: 
+2306:   if (window.XLW_summonPlacementResolve) {
+2307:       const resolve = window.XLW_summonPlacementResolve;
+2308:       window.XLW_summonPlacementResolve = null;
+2309:       resolve();
+2310:     }
+2311:   } finally {
+2312:     const isSummoningTributeCard = (selectedTributeCard !== null && card !== null && card.id === selectedTributeCard.id);
+2313:     const keepTribute = tributeWaitingPosition && !isSummoningTributeCard;
+2314:     clearModes(keepTribute);
+2315:     render();
+2316:   }
+2317: }
+2318: 
+2319: async function runLanternImpPlacementFlow() {
+2320:   const prevSelected = selectedHandForSummon;

@@ -1,0 +1,150 @@
+Line 4667: action: "equip_spell_resolved",
+  4665:               if (isMultiplayer) {
+  4666:                 ws.send(JSON.stringify({
+  4667:                   action: "equip_spell_resolved",
+  4668:                   zone: zone,
+  4669:                   idx: idx,
+  4670:                   spellCard: spellCard
+  4671:                 }));
+  4672:               }
+  4673:               window.XLW_equipSpellActive = false;
+  4674:               window.XLW_equipSpellCard = null;
+  4675:               if (window.XLW_equipSpellResolve) {
+  4676:                 const resolve = window.XLW_equipSpellResolve;
+  4677:                 window.XLW_equipSpellResolve = null;
+  4678:                 resolve();
+  4679:               }
+  4680:               render();
+  4681:             } else {
+  4682:               if (isShield) {
+  4683:                 setStatus("請點選我方場上的單位進行裝備！");
+  4684:               } else {
+  4685:                 setStatus("請點選我方場上的「獸人」單位進行裝備！");
+  4686:               }
+  4687:             }
+  4688:             return;
+  4689:           }
+  4690: 
+  4691:           if (phase === "防守階段" && zone.startsWith("player_")) {
+  4692:             const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
+----------------------------------------
+Line 4776: action: "temp_equip_spell_resolved",
+  4774:             if (isMultiplayer) {
+  4775:               ws.send(JSON.stringify({
+  4776:                 action: "temp_equip_spell_resolved",
+  4777:                 zone: zone,
+  4778:                 idx: idx,
+  4779:                 spellCard: spellCard,
+  4780:                 currentTurn: turn
+  4781:               }));
+  4782:             }
+  4783: 
+  4784:             window.XLW_tempEquipSpellActive = false;
+  4785:             window.XLW_tempEquipSpellCard = null;
+  4786:             if (window.XLW_tempEquipSpellResolve) {
+  4787:               const resolve = window.XLW_tempEquipSpellResolve;
+  4788:               window.XLW_tempEquipSpellResolve = null;
+  4789:               resolve();
+  4790:             }
+  4791:             render();
+  4792:             return;
+  4793:           }
+  4794: 
+  4795:           if (window.XLW_confiningSpellActive) {
+  4796:             if (zone.startsWith("enemy_")) {
+  4797:               if (obj.card.name.includes("天狗")) {
+  4798:                 setStatus("天狗 具有免疫效果：不會被敵方的效果和魔法選為目標！");
+  4799:                 return;
+  4800:               }
+  4801:               obj.confined = true;
+----------------------------------------
+Line 6105: } else if (data.action === "equip_spell_resolved") {
+  6103:     } else if (data.action === "spell_chain_resolve") {
+  6104:       resolveLocalSpellChain();
+  6105:     } else if (data.action === "equip_spell_resolved") {
+  6106:       const originalZone = data.zone;
+  6107:       const idx = data.idx;
+  6108:       const spellCard = data.spellCard;
+  6109:       const zone = originalZone.startsWith("player") ? originalZone.replace("player", "enemy") : originalZone.replace("enemy", "player");
+  6110: 
+  6111:       const obj = field[zone][idx];
+  6112:       if (obj) {
+  6113:         obj.equipments = obj.equipments || [];
+  6114:         obj.equipments.push(spellCard.name);
+  6115:         logBattle(`對手發動裝備卡 ${spellCard.name}，裝備於 ${obj.card.name} 上！`);
+  6116: 
+  6117:         if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  6118:           obj.magicImmune = true;
+  6119:         } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  6120:           obj.piercing = true;
+  6121:         } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+  6122:           obj.atkModifier = (obj.atkModifier || 0) + 1;
+  6123:           obj.hasRanged = true;
+  6124:         } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+  6125:           obj.atkModifier = (obj.atkModifier || 0) + 5;
+  6126:           obj.steakBonus = true;
+  6127:         } else if (spellCard.name === "法術保護-護盾") {
+  6128:           obj.magicImmune = true;
+  6129:         }
+  6130:         render();
+----------------------------------------
+Line 6334: } else if (data.action === "temp_equip_spell_resolved") {
+  6332:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6333:       render();
+  6334:     } else if (data.action === "temp_equip_spell_resolved") {
+  6335:       const targetUnit = field[data.zone]?.[data.idx];
+  6336:       if (targetUnit) {
+  6337:         if (!targetUnit.equipments) targetUnit.equipments = [];
+  6338:         const spellNameClean = data.spellCard.name;
+  6339:         if (!targetUnit.equipments.includes(spellNameClean)) {
+  6340:           targetUnit.equipments.push(spellNameClean);
+  6341:         }
+  6342:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+  6343:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  6344:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+  6345:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+  6346:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+  6347:         }
+  6348:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+  6349:         render();
+  6350:       }
+  6351:     } else if (data.action === "sneak_recall") {
+  6352:       const key = `${data.attZone}:${data.attIdx}`;
+  6353:       window.XLW_opponentSneakRecall[key] = data.recall;
+  6354:     } else if (data.action === "foodball_choice") {
+  6355:       const key = `${data.zone}:${data.idx}`;
+  6356:       window.XLW_opponentFoodBallChoice[key] = data.trigger;
+  6357:     } else if (data.action === "foodball_summon") {
+  6358:       const key = `${data.zone}:${data.idx}`;
+  6359:       window.XLW_opponentFoodBallSummon[key] = { zone: data.toZone, idx: data.toIdx };
+----------------------------------------
+Line 6478: } else if (data.action === "temp_equip_spell_resolved") {
+  6476:       logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+  6477:       render();
+  6478:     } else if (data.action === "temp_equip_spell_resolved") {
+  6479:       const targetUnit = field[data.zone]?.[data.idx];
+  6480:       if (targetUnit) {
+  6481:         if (!targetUnit.equipments) targetUnit.equipments = [];
+  6482:         const spellNameClean = data.spellCard.name;
+  6483:         if (!targetUnit.equipments.includes(spellNameClean)) {
+  6484:           targetUnit.equipments.push(spellNameClean);
+  6485:         }
+  6486:         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
+  6487:         if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  6488:           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
+  6489:         } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+  6490:           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
+  6491:         }
+  6492:         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
+  6493:         render();
+  6494:       }
+  6495:     } else if (data.action === "hannya_exile_drawn_card") {
+  6496:       const exiledCard = data.exiledCard;
+  6497:       const drawnCount = data.drawnCount;
+  6498:       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+  6499:         window.XLW_ENEMY.hand.pop();
+  6500:       }
+  6501:       enemyExileZone.push(exiledCard);
+  6502:       logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+  6503:       render();
+----------------------------------------

@@ -1,0 +1,16 @@
+2720:       }));
+2721:     }
+2722: 
+2723:     // --- 大耳賊效果觸發判定 ---
+2724:     const hasPiercing = unit.piercing || 
+2725:                         (unit.card && unit.card.keywords && unit.card.keywords.includes("貫穿")) || 
+2726:                         (unit.equipments && unit.equipments.some(e => e.includes("菜刀")));
+2727:     const baseAtkNum = Number(unit.card.attack || 0);
+2728:     const hasDoubleAtk = baseAtkNum > 0 && getUnitAtk(unit) === baseAtkNum * 2;
+2729:     const thiefInExtra = playerExtraDeck.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+2730: 
+2731:     if (hasPiercing && hasDoubleAtk && thiefInExtra) {
+2732:       const confirmSummon = await showXLWConfirm(
+2733:         "大耳賊 效果觸發",
+2734:         `我方進攻的 貫穿 單位 ${unit.card.name} 攻擊力剛好為其基礎值 (${baseAtkNum}) 的 2 倍！是否從我方額外牌庫召喚【大耳賊】至對手場上任意空位？`,
+2735:         "是",

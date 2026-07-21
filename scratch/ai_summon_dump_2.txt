@@ -1,0 +1,51 @@
+4380:       // 敵方如未進行進攻宣言，則必須進行戰術佈陣階段，若手牌無單位可召喚，強制召喚小旅人
+4381:       if (opponentAttackCount === 0) {
+4382:         phase = "\u6230\u8853\u4f48\u9663";
+4383:         setStatus("\u5c0d\u624b\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u9032\u5165\u5c0d\u624b\u300c\u6230\u8853\u4f48\u9663\u300d\u968e\u6bb5\u002e\u002e\u002e");
+4384:         render();
+4385:         await sleep(800);
+4386: 
+4387:         const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+4388:         const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+4389:         const hasEmptySlot = emptyFrontIdx >= 0 || emptyBackIdx >= 0;
+4390: 
+4391:         if (hasEmptySlot) {
+4392:           const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+4393:             c && (c.type === "unit" || c.type === "\u602a\u7378") && Number(c.tribute || 0) <= 0
+4394:           );
+4395: 
+4396:           const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+4397:           const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+4398: 
+4399:           if (summonHandIdx >= 0) {
+4400:             const card = window.XLW_ENEMY.hand[summonHandIdx];
+4401:             window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4402:             const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+4403:             field[destZone][destIdx] = {
+4404:               card: card,
+4405:               tapped: isLyingOrc,
+4406:               attacking: false,
+4407:               target: null,
+4408:               summonedTurn: turn,
+4409:               summonedZone: destZone
+4410:             };
+4411:             logBattle(`\u5c0d\u624b\u9032\u884c\u6230\u8853\u4f48\u9663\u53ec\u559a：${card.name}\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+4412:           } else {
+4413:             field[destZone][destIdx] = {
+4414:               card: structuredClone(LITTLE_TRAVELER),
+4415:               tapped: false,
+4416:               attacking: false,
+4417:               target: null,
+4418:               summonedTurn: turn,
+4419:               summonedZone: destZone
+4420:             };
+4421:             logBattle(`\u5c0d\u624b\u7121\u55ae\u4f4d\u53ef\u53ec\u559a，\u6230\u8853\u5f37\u5236\u53ec\u559a：小旅人\u0020\u5230\u0020${destZone === "enemy_front" ? "\u524d\u6392" : "\u5f8c\u6392"}${destIdx + 1}`);
+4422:             playTravelerSummonAnimation("#enemyForest", destZone, destIdx);
+4423:           }
+4424:           render();
+4425:           await sleep(800);
+4426:         }
+4427:       }
+4428:     }
+4429: 
+4430:     // 6. 對手 AI 結束階段宣告提早結束檢測

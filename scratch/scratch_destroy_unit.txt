@@ -1,0 +1,45 @@
+L3509: async function destroyUnit(zone, idx, owner, shouldExile) {
+    const unit = field[zone][idx];
+    if (!unit) return;
+  
+    // 1. 尋找格子並播放 CSS 碎裂與紅光粒子動畫
+    const slot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
+    if (slot) {
+      const cardEl = slot.querySelector(".card");
+      if (cardEl) {
+        cardEl.classList.add("xlw-card-shatter");
+  
+        const sparks = document.createElement("div");
+        sparks.className = "shatter-sparks";
+        slot.appendChild(sparks);
+      }
+    }
+  
+    // 2. 等待動畫完整播放結束 (0.8 秒)
+    await sleep(800);
+  
+    // 3. 清理火花層
+    if (slot) {
+      const sparks = slot.querySelector(".shatter-sparks");
+      if (sparks) sparks.remove();
+    }
+  
+    // 4. 送墓或除外並真正清空格子
+    if (unit.equipments && unit.equipments.length > 0) {
+      unit.equipments.forEach(eqName => {
+        const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+        if (isTempMagic) return;
+        const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+        const cloned = structuredClone(cardObj);
+        cloned.type = "magic";
+        if (owner === "player") {
+          graveyard.push(cloned);
+          logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被破壞進入我方墓地。`);
+        } else {
+          window.XLW_ENEMY.grave.push(cloned);
+          enemyGraveyard = window.XLW_ENEMY.grave;
+          logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被破壞進入對手墓地。`);
+        }
+      });
+      unit.equipments = [];
+    }

@@ -1,0 +1,50 @@
+114: let selectedHandForSummon = null;
+1072: selectedHandForSummon = null;
+1111: selectedHandForSummon = "TRAVELER";
+1822: selectedHandForSummon = targetIdx;
+1838: selectedHandForSummon = wallIdx;
+1858: selectedHandForSummon = "GRAVEYARD_UMBRELLA";
+1875: const isGraveyardSummon = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" ||
+1876: selectedHandForSummon === "GRAVEYARD_WELL" ||
+1877: selectedHandForSummon === "GRAVEYARD_GHOST_MEOW");
+1879: if (typeof selectedHandForSummon === "number" || (typeof selectedHandForSummon === "string" && !isNaN(selectedHandForSummon))) {
+1880: const currentCard = hand[Number(selectedHandForSummon)];
+1889: selectedHandForSummon = idxInHand;
+1890: logDebug(`【對象匹配】實體匹配成功！手牌 Index: ${selectedHandForSummon}`);
+1894: selectedHandForSummon = matchIdx;
+1895: logDebug(`【對象匹配】ID 匹配成功！手牌 Index: ${selectedHandForSummon}`);
+1899: selectedHandForSummon = foundIdx;
+1900: logDebug(`【對象匹配】兜底 Fallback 匹配成功！手牌 Index: ${selectedHandForSummon}`);
+1910: if (selectedHandForSummon === null) {
+1911: logDebug("【放置終止】當前 selectedHandForSummon 為 null！");
+1934: if (selectedHandForSummon === "TRAVELER") {
+1951: let handIndex = Number(selectedHandForSummon);
+1954: if (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || selectedHandForSummon === "GRAVEYARD_WELL" || selectedHandForSummon === "GRAVEYARD_GHOST_MEOW") {
+1984: const isExtraSum = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" ||
+1985: selectedHandForSummon === "GRAVEYARD_WELL" ||
+1986: selectedHandForSummon === "GRAVEYARD_GHOST_MEOW" ||
+1993: if (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || selectedHandForSummon === "GRAVEYARD_WELL" || selectedHandForSummon === "GRAVEYARD_GHOST_MEOW") {
+2242: selectedHandForSummon = hand.indexOf(extraCard);
+2265: const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+2266: selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
+2267: selectedHandForSummon !== "GRAVEYARD_WELL" &&
+2268: selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
+2295: const prevSelected = selectedHandForSummon;
+2370: selectedHandForSummon = prevSelected;
+2376: const prevSelected = selectedHandForSummon;
+2431: selectedHandForSummon = prevSelected;
+3333: selectedHandForSummon = "TRAVELER";
+4352: selectedHandForSummon = "GRAVEYARD_WELL";
+4694: if (selectedHandForSummon === idx) {
+4757: if (selectedHandForSummon === idx) {
+4762: selectedHandForSummon = idx;
+4776: console.log("[XLW renderField Debug] tributeWaitingPosition =", tributeWaitingPosition, "selectedHandForSummon =", selectedHandForSummon, "selectedTributeCard =", selectedTributeCard);
+5457: const tryingSummon = selectedHandForSummon !== null || tributeWaitingPosition;
+5478: if (selectedHandForSummon === "TRAVELER") {
+5482: } else if (selectedHandForSummon !== null) {
+5483: selectedCard = hand[selectedHandForSummon];
+5692: const currentTryingSummon = selectedHandForSummon !== null || tributeWaitingPosition;
+5947: cancelBtn.disabled = (selectedHandForSummon === null && selectedHandForTribute === null && selectedAttacker === null && !tributeWaitingPosition);
+6062: selectedHandForSummon = dragged.index;
+7302: selectedHandForSummon = currentIdx;
+7329: selectedHandForSummon = "GRAVEYARD_GHOST_MEOW";

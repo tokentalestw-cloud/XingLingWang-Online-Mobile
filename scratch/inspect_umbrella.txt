@@ -1,0 +1,111 @@
+3970:         }
+3971:       }
+3972:     }
+3973:   };
+3974: 
+3975:   executeTributeEffects().then(async () => {
+3976:     // 記錄被獻祭的祭品位置，供聯網召喚同步清除
+3977:     window.XLW_lastTributes = selectedTributes.map(t => ({ zone: t.zone, idx: t.idx }));
+3978: 
+3979:     // 檢查獻祭前墓地中是否已有雨傘妖怪 (防止雨傘妖怪自身被獻祭時觸發效果)
+3980:     const hadUmbrellaInGraveBefore = graveyard.some(c => c && c.name.includes("雨傘妖怪"));
+3981: 
+3982:     selectedTributes.forEach(t => {
+3983:       if (t.zone === "dummy") return;
+3984:       const unit = field[t.zone][t.idx];
+3985:       if (unit) {
+3986:         // 先處理裝備卡送入墓地
+3987:         if (unit.equipments && unit.equipments.length > 0) {
+3988:           unit.equipments.forEach(eqName => {
+3989:             const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+3990:             if (isTempMagic) return;
+3991:             const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+3992:             const cloned = structuredClone(cardObj);
+3993:             cloned.type = "magic";
+3994:             graveyard.push(cloned);
+3995:             logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被獻祭進入我方墓地。`);
+3996:           });
+3997:           unit.equipments = [];
+3998:         }
+3999: 
+4000:         if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+4001:     if (zone.startsWith("player_")) {
+4002:       enemyBonusScore += 2;
+4003:       logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
+4004:     } else {
+4005:       playerBonusScore += 2;
+4006:       logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+4007:     }
+4008:   }
+4009: 
+4010:   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+4011:           logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
+4012:         } else {
+4013:           graveyard.push(unit.card);
+4014:         }
+4015:         field[t.zone][t.idx] = null;
+4016:       }
+4017:     });
+4018: 
+4019:     const targetIdx = selectedHandForTribute;
+4020:     tributeWaitingPosition = true;
+4021:     selectedHandForSummon = targetIdx;
+4022:     selectedHandForTribute = null;
+4023:     selectedTributes = [];
+4024: 
+4025:     setStatus(`祭品已送入墓地！請點選我方空格召喚 ${card.name}（前排優先）。`);
+4026:     render();
+4027: 
+4028:     // 牆壁妖怪獻祭連召效果
+4029:     const wallIdx = hand.findIndex(c => c && c.name.includes("牆壁妖怪"));
+4030:     const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
+4031:     if (wallIdx >= 0 && hasEmptySlot) {
+4032:       setTimeout(async () => {
+4033:         const confirm = await showXLWConfirm("牆壁妖怪 效果發動", "偵測到場上有單位被獻祭，是否從手牌額外特殊召喚 牆壁妖怪？（不佔用常規召喚次數）");
+4034:         if (confirm) {
+4035:           window.XLW_bypassNormalSummonLimit = true;
+4036:           window.XLW_bypassTurnCheck = true;
+4037:           selectedHandForSummon = wallIdx;
+4038:           setStatus("【牆壁妖怪 召喚】請點選我方一個空格進行特殊召喚！");
+4039:           render();
+4040:           await new Promise(r => { window.XLW_summonPlacementResolve = r; });
+4041:           window.XLW_bypassTurnCheck = false;
+4042:         }
+4043:       }, 500);
+4044:     }
+4045: 
+4046:     // 雨傘妖怪自召效果 (唯有在獻祭前墓地已存在雨傘妖怪時始能發動)
+4047:     if (hadUmbrellaInGraveBefore && hasEmptySlot) {
+4048:       setTimeout(async () => {
+4049:         const confirm = await showXLWConfirm("雨傘妖怪 效果發動", "偵測到墓地中有雨傘妖怪且場上有單位被獻祭，是否將其自墓地特殊召喚？");
+4050:         if (confirm) {
+4051:           const graveIdx = graveyard.findIndex(c => c && c.name.includes("雨傘妖怪"));
+4052:           const card = graveyard[graveIdx];
+4053:           graveyard.splice(graveIdx, 1);
+4054:           window.XLW_bypassNormalSummonLimit = true;
+4055:           window.XLW_bypassTurnCheck = true;
+4056:           selectedHandForSummon = "GRAVEYARD_UMBRELLA";
+4057:           window.XLW_tempGraveCard = card;
+4058:           setStatus("【雨傘妖怪 復活】請點選我方一個空格進行特殊召喚！");
+4059:           render();
+4060:           await new Promise(r => { window.XLW_summonPlacementResolve = r; });
+4061:           window.XLW_bypassTurnCheck = false;
+4062:         }
+4063:       }, 800);
+4064:     }
+4065:   });
+4066: }
+4067: 
+4068: // 實行手牌召喚/小旅人召喚至格子上
+4069: async function performSummonToSlot(zone, idx) {
+4070:   logDebug(`【點選放置】目標格子: ${zone}:${idx + 1}`);
+4071:   // 獻祭召喚與位置放置之強大對象參考匹配與 Fallback 恢復機制
+4072:   if (tributeWaitingPosition && selectedTributeCard !== null) {
+4073:     const isGraveyardSummon = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || 
+4074:                                selectedHandForSummon === "GRAVEYARD_WELL" || 
+4075:                                selectedHandForSummon === "GRAVEYARD_GHOST_MEOW");
+4076:     let isDifferentHandCard = false;
+4077:     if (typeof selectedHandForSummon === "number" || (typeof selectedHandForSummon === "string" && !isNaN(selectedHandForSummon))) {
+4078:       const currentCard = hand[Number(selectedHandForSummon)];
+4079:       if (currentCard && currentCard.id !== selectedTributeCard.id) {
+4080:         isDifferentHandCard = true;

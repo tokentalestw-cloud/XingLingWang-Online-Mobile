@@ -1,0 +1,21 @@
+1190:   }
+1191: 
+1192:   const isTempEquipMagic = 
+1193:     card.name.includes("削弱藥水") || card.id?.includes("0003") ||
+1194:     card.name.includes("振奮藥水") || card.id?.includes("0002") ||
+1195:     card.name.includes("塗毒") || card.id?.includes("0004") ||
+1196:     card.name.includes("睡眠反擊拳") || card.id?.includes("0025");
+1197: 
+1198:   if (isTempEquipMagic) {
+1199:     if (phase !== "防守階段") {
+1200:       setStatus(`【${card.name}】只能在防守階段使用！`);
+1201:       return;
+1202:     }
+1203:     let hasAnyUnit = false;
+1204:     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+1205:       if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+1206:     }
+1207:     if (!hasAnyUnit) {
+1208:       setStatus(`場上沒有任何單位可以施放【${card.name}】！`);
+1209:       return;
+1210:     }

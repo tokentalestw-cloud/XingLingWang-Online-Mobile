@@ -1,0 +1,91 @@
+160: 
+161: // ===== 喵喵賊偷襲系統變數 =====
+162: window.XLW_turnSneakCount = 0;
+163: window.XLW_bypassNormalSummonLimit = false;
+164: 
+165: // 新增：全域禁錮與狀態判定函數
+166: function isUnitConfined(zone, idx) {
+167:   const slot = field[zone]?.[idx];
+168:   if (!slot) return false;
+169:   
+170:   if (slot.confined) return true;
+171: 
+172:   const c = slot.card;
+173:   if (!c) return false;
+174: 
+175:   const isConfinementSource = c.name && (c.name.includes("長脖子的女人") || c.name.includes("土蜘蛛") || c.name.includes("雪女") || c.name.includes("虎姑媽"));
+176:   if (!isConfinementSource) {
+177:     if ((c.keywords && (c.keywords.includes("禁錮") || c.keywords.includes("不可移動"))) ||
+178:         (c.effect_text && (c.effect_text.includes("不得被移動") || c.effect_text.includes("禁錮")))) {
+179:       return true;
+180:     }
+181:   }
+182: 
+183:   const oppPrefix = zone.startsWith("player") ? "enemy" : "player";
+184:   const oppFront = field[oppPrefix + "_front"][idx];
+185:   const oppBack = field[oppPrefix + "_back"][idx];
+186:   
+187:   // 土蜘蛛: 禁錮同星星戰線所有敵方單位
+188:   if (oppFront && oppFront.card && oppFront.card.name.includes("土蜘蛛")) return true;
+189:   if (oppBack && oppBack.card && oppBack.card.name.includes("土蜘蛛")) return true;
+190: 
+191:   // 長脖子的女人: 只會禁錮正前方1個敵方單位，且其在後排時不具禁錮效果
+192:   if (zone.includes("front")) {
+193:     if (oppFront && oppFront.card && oppFront.card.name.includes("長脖子的女人") && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
+194:   }
+195: 
+196:   if (zone.includes("front")) {
+197:     if (oppPrefix === "enemy" && window.XLW_playerFrontImprisonedUntilTurn && window.XLW_playerFrontImprisonedUntilTurn >= turn) {
+198:       return true;
+199:     }
+200:     if (oppPrefix === "player" && window.XLW_enemyFrontImprisonedUntilTurn && window.XLW_enemyFrontImprisonedUntilTurn >= turn) {
+201:       return true;
+202:     }
+203:   }
+204: 
+205:   return false;
+206: }
+207: 
+208: function populateLobbyDecksDropdown() {
+209:   const factionSelect = document.getElementById("factionSelect");
+210:   const deckSelect = document.getElementById("deckSelect");
+211:   if (!factionSelect || !deckSelect) return;
+212: 
+213:   const currentFaction = factionSelect.value;
+214:   const curVal = deckSelect.value;
+215: 
+216:   deckSelect.innerHTML = "";
+217: 
+218:   // The base faction deck is always a valid choice
+219:   const optBase = document.createElement("option");
+220:   optBase.value = currentFaction;
+221:   optBase.textContent = `${currentFaction} (基礎)`;
+222:   deckSelect.appendChild(optBase);
+223: 
+224:   // Filter other preset keys belonging to this faction
+225:   const presetKeys = Object.keys(decks).filter(key => 
+226:     !key.endsWith("_extra") && 
+227:     key !== "中立單位" && 
+228:     key !== currentFaction &&
+229:     key.includes(currentFaction)
+230:   );
+231: 
+232:   presetKeys.forEach(key => {
+233:     const opt = document.createElement("option");
+234:     opt.value = key;
+235:     opt.textContent = key;
+236:     deckSelect.appendChild(opt);
+237:   });
+238: 
+239:   if (curVal && (curVal === currentFaction || presetKeys.includes(curVal))) {
+240:     deckSelect.value = curVal;
+241:   }
+242: }
+243: 
+244: function populateDeckSelect() {
+245:   const factionSelect = document.getElementById("factionSelect");
+246:   if (factionSelect) {
+247:     populateLobbyDecksDropdown();
+248:   } else {
+249:     const select = document.getElementById("deckSelect");
+250:     if (!select) return;

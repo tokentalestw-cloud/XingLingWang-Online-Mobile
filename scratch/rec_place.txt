@@ -1,0 +1,31 @@
+6410:       playerBonusScore += 2;
+6411:       logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
+6412:     }
+6413:   }
+6414: 
+6415:   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+6416:               logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
+6417:             } else {
+6418:               window.XLW_ENEMY.grave.push(unit.card);
+6419:               enemyGraveyard = window.XLW_ENEMY.grave;
+6420:             }
+6421:             field[t.zone][t.idx] = null;
+6422:           }
+6423:         });
+6424:       }
+6425: 
+6426:       field[zone][idx] = {
+6427:         card: card,
+6428:         tapped: false,
+6429:         attacking: false,
+6430:         target: null,
+6431:         summonedTurn: turn,
+6432:         summonedZone: zone
+6433:       };
+6434:       // 動態遞減對手手牌數量以供顯示（僅限從手牌召喚的卡）
+6435:       if (data.fromHand !== false) {
+6436:         if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+6437:           window.XLW_ENEMY.hand.pop();
+6438:         }
+6439:       }
+6440: 

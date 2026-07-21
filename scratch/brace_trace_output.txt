@@ -1,0 +1,638 @@
+8123 (lvl  1): async function runEnemyTurn() {
+8124 (lvl  1):   window.XLW_enemySummonCountThisTurn = 0;
+8125 (lvl  1):   // Clear expired enemy flying status
+8126 (lvl  2):   for (const z of ["enemy_front", "enemy_back"]) {
+8127 (lvl  3):     field[z].forEach(u => {
+8128 (lvl  4):       if (u && u.hasFlying && u.flyingGrantedTurn !== undefined) {
+8129 (lvl  4):         u.hasFlying = false;
+8130 (lvl  4):         u.flyingGrantedTurn = undefined;
+8131 (lvl  4):         logBattle(`✨ 對手 ${u.card.name} 的臨時飛行效果已到期失效。`);
+8132 (lvl  3):       }
+8133 (lvl  2):     });
+8134 (lvl  1):   }
+8135 (lvl  1):   if (window.XLW_ENEMY.running) return;
+8136 (lvl  1):   window.XLW_ENEMY.running = true;
+8137 (lvl  1): 
+8138 (lvl  2):   try {
+8139 (lvl  2):     // Check Call Game resolution for enemy (B)
+8140 (lvl  2):     const playerHasAttackers = field["player_front"].concat(field["player_back"]).some(u => u && u.attacking);
+8141 (lvl  2):     const enemyNeedsDefense = window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers;
+8142 (lvl  3):     if (!enemyNeedsDefense) {
+8143 (lvl  3):       checkCallGameAtTurnStart(false);
+8144 (lvl  3):       if (isGameOverFlag) return;
+8145 (lvl  2):     }
+8146 (lvl  2): 
+8147 (lvl  2):     logBattle("—— 對手回合開始 ——");
+8148 (lvl  2):     setStatus("對手回合：妖怪村莊正在進行整備抽牌...");
+8149 (lvl  2):     await sleep(700);
+8150 (lvl  2): 
+8151 (lvl  2):     // 1. 整備階段：對手單位轉正
+8152 (lvl  2):     untapEnemy();
+8153 (lvl  2):     
+8154 (lvl  2):     // 2. 對手抽 2 張 (AI 抽牌階段)
+8155 (lvl  2):     const enemyDrawn = [];
+8156 (lvl  3):     for (let i = 0; i < 2; i++) {
+8157 (lvl  4):       if (window.XLW_ENEMY.deck.length) {
+8158 (lvl  4):         enemyDrawn.push(window.XLW_ENEMY.deck.pop());
+8159 (lvl  3):       }
+8160 (lvl  2):     }
+8161 (lvl  2):     
+8162 (lvl  2):     const hasSmartPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
+8163 (lvl  2):     const hasAngryPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
+8164 (lvl  2): 
+8165 (lvl  3):     if (enemyDrawn.length > 0) {
+8166 (lvl  4):       if (hasAngryPrajna) {
+8167 (lvl  4):         // AI 選擇 1 張除外
+8168 (lvl  4):         const exileIdx = Math.floor(Math.random() * enemyDrawn.length);
+8169 (lvl  4):         const exiledCard = enemyDrawn[exileIdx];
+8170 (lvl  4):         exileCard(exiledCard, "enemy");
+8171 (lvl  4):         logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+8172 (lvl  4):         
+8173 (lvl  5):         enemyDrawn.forEach((c, idx) => {
+8174 (lvl  6):           if (idx !== exileIdx) {
+8175 (lvl  6):             window.XLW_ENEMY.hand.push(c);
+8176 (lvl  5):           }
+8177 (lvl  4):         });
+8178 (lvl  4):       } else if (hasSmartPrajna) {
+8179 (lvl  4):         // AI 選擇 1 張展示。AI 偏好選擇展示魔法卡以防我方進化
+8180 (lvl  4):         let revealIdx = 0;
+8181 (lvl  5):         if (enemyDrawn.length > 1) {
+8182 (lvl  5):           const hasSpell = enemyDrawn.some(c => c && c.type !== "unit" && c.type !== "單位");
+8183 (lvl  5):           const hasUnit = enemyDrawn.some(c => c && (c.type === "unit" || c.type === "單位"));
+8184 (lvl  6):           if (hasSpell && hasUnit) {
+8185 (lvl  6):             revealIdx = enemyDrawn.findIndex(c => c && c.type !== "unit" && c.type !== "單位");
+8186 (lvl  6):           } else {
+8187 (lvl  6):             revealIdx = Math.floor(Math.random() * enemyDrawn.length);
+8188 (lvl  5):           }
+8189 (lvl  4):         }
+8190 (lvl  4):         
+8191 (lvl  4):         const revealedCard = enemyDrawn[revealIdx];
+8192 (lvl  4):         enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+8193 (lvl  4):         
+8194 (lvl  4):         logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
+8195 (lvl  4):         
+8196 (lvl  4):         // 展示給玩家看 (Popup)
+8197 (lvl  4):         showRevealedCardModal(revealedCard, "對手");
+8198 (lvl  4):         
+8199 (lvl  4):         // 判斷是否為單位卡，若是則詢問玩家是否進化智慧的般若
+8200 (lvl  5):         if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+8201 (lvl  5):           const prajnaSlots = [];
+8202 (lvl  6):           for (const zone of ["player_front", "player_back"]) {
+8203 (lvl  7):             field[zone].forEach((u, idx) => {
+8204 (lvl  8):               if (u && u.card && u.card.name.includes("智慧的般若")) {
+8205 (lvl  8):                 prajnaSlots.push({ zone, idx, unit: u });
+8206 (lvl  7):               }
+8207 (lvl  6):             });
+8208 (lvl  5):           }
+8209 (lvl  5):           
+8210 (lvl  5):           const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+8211 (lvl  6):           if (prajnaSlots.length > 0 && angryCard) {
+8212 (lvl  6):             const yes = await showXLWConfirm("智慧的般若 進化", `對手展示了單位卡【${revealedCard.name}】，是否消耗額外區的【憤怒的般若】使場上的【智慧的般若】升級進化？`);
+8213 (lvl  7):             if (yes) {
+8214 (lvl  7):               let selected = prajnaSlots[0];
+8215 (lvl  8):               if (prajnaSlots.length > 1) {
+8216 (lvl  9):                 const choices = prajnaSlots.map((h, i) => ({
+8217 (lvl  9):                   text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 智慧的般若`,
+8218 (lvl  9):                   value: i
+8219 (lvl  8):                 }));
+8220 (lvl  8):                 const chosenIdx = await showXLWChoiceModal("選擇要進化的智慧的般若", "請選擇場上的【智慧的般若】：", choices);
+8221 (lvl  9):                 if (chosenIdx !== null && chosenIdx !== undefined) {
+8222 (lvl  9):                   selected = prajnaSlots[chosenIdx];
+8223 (lvl  8):                 }
+8224 (lvl  7):               }
+8225 (lvl  7):               
+8226 (lvl  7):               const { zone, idx, unit } = selected;
+8227 (lvl  7):               exileCard(unit.card, "player");
+8228 (lvl  7):               playerExtraDeck.splice(playerExtraDeck.indexOf(angryCard), 1);
+8229 (lvl  8):               field[zone][idx] = {
+8230 (lvl  8):                 card: structuredClone(angryCard),
+8231 (lvl  8):                 tapped: false,
+8232 (lvl  8):                 attacking: false,
+8233 (lvl  8):                 target: null,
+8234 (lvl  8):                 summonedTurn: turn,
+8235 (lvl  8):                 summonedZone: zone
+8236 (lvl  7):               };
+8237 (lvl  7):               logBattle(`✨ 額外進化：【智慧的般若】成功升級為【憤怒的般若】！`);
+8238 (lvl  7):               enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+8239 (lvl  7):               render();
+8240 (lvl  6):             }
+8241 (lvl  5):           }
+8242 (lvl  4):         }
+8243 (lvl  4):       } else {
+8244 (lvl  4):         enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+8245 (lvl  3):       }
+8246 (lvl  2):     }
+8247 (lvl  2):     logBattle(`對手整備：對手抽卡結算，單位全體轉正。`);
+8248 (lvl  2):     render();
+8249 (lvl  2): 
+8250 (lvl  2):     // 對手 迷路的尋寶小旅人 手牌判定
+8251 (lvl  2):     let aiTravelerIndices = [];
+8252 (lvl  3):     window.XLW_ENEMY.hand.forEach((c, idx) => {
+8253 (lvl  4):       if (c && (c.id === "NEU-0010" || c.name?.includes("迷路的尋寶小旅人") || c.name?.includes("尋寶小旅人"))) {
+8254 (lvl  4):         aiTravelerIndices.push(idx);
+8255 (lvl  3):       }
+8256 (lvl  2):     });
+8257 (lvl  3):     if (aiTravelerIndices.length > 0) {
+8258 (lvl  4):       for (let idx = aiTravelerIndices.length - 1; idx >= 0; idx--) {
+8259 (lvl  4):         const hIdx = aiTravelerIndices[idx];
+8260 (lvl  4):         const card = window.XLW_ENEMY.hand.splice(hIdx, 1)[0];
+8261 (lvl  4):         enemyExileZone.push(card);
+8262 (lvl  4):         enemyBonusScore += 1;
+8263 (lvl  4):         logBattle(`✨ 對手 迷路的尋寶小旅人 效果觸發：回合開始抽牌時除外手牌，對手獲得 +1★ 獎勵！`);
+8264 (lvl  3):       }
+8265 (lvl  3):       renderScore();
+8266 (lvl  3):       render();
+8267 (lvl  2):     }
+8268 (lvl  2): 
+8269 (lvl  2):     await sleep(700);
+8270 (lvl  2): 
+8271 (lvl  2):     // 3. 對手防守階段 (若我方上回合有宣告攻擊，且我方場上仍有進攻單位 - 規則九第5條)
+8272 (lvl  3):     if (window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers) {
+8273 (lvl  3):       phase = "\u9632\u5b88\u968e\u6bb5";
+8274 (lvl  3):       setStatus("\u5c0d\u624b\u56de\u5408\uff1a\u6b63\u5728\u81ea\u52d5\u7d50\u7b97\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u5c0d\u6c7a...");
+8275 (lvl  3):       render();
+8276 (lvl  3):       await xlwResolveEnemyDefensePhaseSafe();
+8277 (lvl  3):     } else {
+8278 (lvl  3):       window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+8279 (lvl  3):       logBattle("\u5c0d\u624b\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u6211\u65b9\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
+8280 (lvl  2):     }
+8281 (lvl  2): 
+8282 (lvl  2):     // 4. 對手召喚階段 (召喚一個免祭品單位，優先前排)
+8283 (lvl  2):     phase = "\u53ec\u559a\u968e\u6bb5";
+8284 (lvl  2):     await checkCrazyFanSummon();
+8285 (lvl  2):     render();
+8286 (lvl  2):     await xlwCheckBananaMarquisMovement(false);
+8287 (lvl  2):     const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+8288 (lvl  2):     const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+8289 (lvl  2):     // 加強 AI 的免祭品召喚判定，以支援小於等於 0 祭品的單位（如 -2 祭品等特規卡牌）
+8290 (lvl  2):     const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+8291 (lvl  2):       c && (c.type === "unit" || c.type === "單位") && Number(c.tribute || 0) <= 0
+8292 (lvl  2):     );
+8293 (lvl  2): 
+8294 (lvl  2):     // AI 額外召喚邏輯：若場上有般若且額外牌庫有憤怒的般若，自動升級
+8295 (lvl  3):     if (enemyExtraDeck.length > 0) {
+8296 (lvl  3):       const angryHannya = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+8297 (lvl  4):       if (angryHannya) {
+8298 (lvl  4):         let hannyaSlot = null;
+8299 (lvl  5):         for (const zone of ["enemy_front", "enemy_back"]) {
+8300 (lvl  5):           const idx = field[zone].findIndex(u => u && u.card && u.card.name.includes("般若") && !u.card.name.includes("憤怒"));
+8301 (lvl  6):           if (idx >= 0) {
+8302 (lvl  6):             hannyaSlot = { zone, idx };
+8303 (lvl  6):             break;
+8304 (lvl  5):           }
+8305 (lvl  4):         }
+8306 (lvl  5):         if (hannyaSlot) {
+8307 (lvl  5):           const { zone, idx } = hannyaSlot;
+8308 (lvl  5):           const oldUnit = field[zone][idx];
+8309 (lvl  5):           exileCard(oldUnit.card, "enemy");
+8310 (lvl  5):           logBattle(`[對手 額外召喚] 對手將場上的【般若】作為素材除外。`);
+8311 (lvl  5):           
+8312 (lvl  5):           enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryHannya), 1);
+8313 (lvl  5):           
+8314 (lvl  6):           field[zone][idx] = {
+8315 (lvl  6):             card: structuredClone(angryHannya),
+8316 (lvl  6):             tapped: false,
+8317 (lvl  6):             attacking: false,
+8318 (lvl  6):             target: null,
+8319 (lvl  6):             summonedTurn: turn,
+8320 (lvl  6):             summonedZone: zone
+8321 (lvl  5):           };
+8322 (lvl  5):           logBattle(`✨ 對手 額外召喚：【憤怒的般若】降臨於對手 ${zone === "enemy_front" ? "前排" : "後排"}${idx + 1}！`);
+8323 (lvl  5):           
+8324 (lvl  5):           playerBonusScore = Math.max(0, playerBonusScore - 1);
+8325 (lvl  5):           logBattle(`💥 對手 憤怒的般若 效果：我方額外得分 -1 ★！`);
+8326 (lvl  5):           
+8327 (lvl  5):           render();
+8328 (lvl  5):           await sleep(800);
+8329 (lvl  4):         }
+8330 (lvl  3):       }
+8331 (lvl  2):     }
+8332 (lvl  2): 
+8333 (lvl  3):     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+8334 (lvl  3):       const card = window.XLW_ENEMY.hand[summonHandIdx];
+8335 (lvl  3):       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+8336 (lvl  3):       
+8337 (lvl  3):       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+8338 (lvl  3):       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+8339 (lvl  3):       
+8340 (lvl  3):       const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+8341 (lvl  4):       field[destZone][destIdx] = {
+8342 (lvl  4):         card: card,
+8343 (lvl  4):         tapped: isLyingOrc,
+8344 (lvl  4):         attacking: false,
+8345 (lvl  4):         target: null,
+8346 (lvl  4):         summonedTurn: turn,
+8347 (lvl  4):         summonedZone: destZone
+8348 (lvl  3):       };
+8349 (lvl  3):       logBattle(`對手召喚：${card.name} 到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}`);
+8350 (lvl  3): 
+8351 (lvl  3):             // 黑心網路賣家 (R-ART-0036) 對手召喚藝術品單位到我方場上時，對手額外得分 +1★
+8352 (lvl  4):             if (destZone.startsWith("player_") && hasBlackMerchantOnField("enemy")) {
+8353 (lvl  4):               const isArtwork = card && (card.faction === "藝術品" || card.deck === "藝術品" || card.id?.includes("ART"));
+8354 (lvl  5):               if (isArtwork) {
+8355 (lvl  5):                 enemyBonusScore += 1;
+8356 (lvl  5):                 logBattle("✨ 對手 黑心網路賣家 效果：對手將藝術品單位召喚至我方場上，對手得分 +1 ★！");
+8357 (lvl  4):               }
+8358 (lvl  3):             }
+8359 (lvl  3): 
+8360 (lvl  3):             // 博物館館長 迪斯麥 (SR-ART-0039) AI 版 (戰術召喚)
+8361 (lvl  4):             if (destZone.startsWith("enemy_") && isNonHumanoidArtworkCard(card)) {
+8362 (lvl  4):               let directorUnit = null;
+8363 (lvl  5):               for (const z of ["enemy_front", "enemy_back"]) {
+8364 (lvl  6):                 field[z].forEach(u => {
+8365 (lvl  7):                   if (u && (u.card?.id === "SR-ART-0039" || u.card?.name?.includes("博物館館長")) && !u.tapped && u.directorEffectUsedTurn !== turn) {
+8366 (lvl  7):                     directorUnit = u;
+8367 (lvl  6):                   }
+8368 (lvl  5):                 });
+8369 (lvl  4):               }
+8370 (lvl  5):               if (directorUnit) {
+8371 (lvl  5):                 directorUnit.tapped = true;
+8372 (lvl  5):                 directorUnit.directorEffectUsedTurn = turn;
+8373 (lvl  5):                 logBattle("✨ 對手 博物館館長 迪斯麥 效果：橫置自身！");
+8374 (lvl  4):               }
+8375 (lvl  3):             }
+8376 (lvl  3): 
+8377 (lvl  3):       // 黑心網路賣家 (R-ART-0036) 對手召喚藝術品單位到我方場上時，對手額外得分 +1★
+8378 (lvl  4):       if (destZone.startsWith("player_") && hasBlackMerchantOnField("enemy")) {
+8379 (lvl  4):         const isArtwork = card && (card.faction === "藝術品" || card.deck === "藝術品" || card.id?.includes("ART"));
+8380 (lvl  5):         if (isArtwork) {
+8381 (lvl  5):           enemyBonusScore += 1;
+8382 (lvl  5):           logBattle("✨ 對手 黑心網路賣家 效果：對手將藝術品單位召喚至我方場上，對手得分 +1 ★！");
+8383 (lvl  4):         }
+8384 (lvl  3):       }
+8385 (lvl  3): 
+8386 (lvl  3):       // 博物館館長 迪斯麥 (SR-ART-0039) AI 版 (常規召喚)
+8387 (lvl  4):       if (destZone.startsWith("enemy_") && isNonHumanoidArtworkCard(card)) {
+8388 (lvl  4):         let directorUnit = null;
+8389 (lvl  5):         for (const z of ["enemy_front", "enemy_back"]) {
+8390 (lvl  6):           field[z].forEach(u => {
+8391 (lvl  7):             if (u && (u.card?.id === "SR-ART-0039" || u.card?.name?.includes("博物館館長")) && !u.tapped && u.directorEffectUsedTurn !== turn) {
+8392 (lvl  7):               directorUnit = u;
+8393 (lvl  6):             }
+8394 (lvl  5):           });
+8395 (lvl  4):         }
+8396 (lvl  5):         if (directorUnit) {
+8397 (lvl  5):           directorUnit.tapped = true;
+8398 (lvl  5):           directorUnit.directorEffectUsedTurn = turn;
+8399 (lvl  5):           logBattle("✨ 對手 博物館館長 迪斯麥 效果：橫置自身！");
+8400 (lvl  4):         }
+8401 (lvl  3):       }
+8402 (lvl  3):       
+8403 (lvl  3):       let starryCountered = false;
+8404 (lvl  3):       const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8405 (lvl  4):       if (playerHasStarry) {
+8406 (lvl  4):         const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
+8407 (lvl  5):         if (useStarry) {
+8408 (lvl  5):           starryCountered = true;
+8409 (lvl  5):           const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8410 (lvl  5):           const sCard = hand.splice(sIdx, 1)[0];
+8411 (lvl  5):           graveyard.push(sCard);
+8412 (lvl  5):           logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
+8413 (lvl  5):           await destroyUnit(destZone, destIdx, "enemy", false);
+8414 (lvl  5):           render();
+8415 (lvl  4):         }
+8416 (lvl  3):       }
+8417 (lvl  3): 
+8418 (lvl  3):       let interruptCountered = false;
+8419 (lvl  4):       if (!starryCountered) {
+8420 (lvl  4):         const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+8421 (lvl  4):         const hasImm = hasImmediateEffect(card);
+8422 (lvl  5):         if (playerHasInterrupt && hasImm) {
+8423 (lvl  5):           const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
+8424 (lvl  6):           if (useInterrupt) {
+8425 (lvl  6):             interruptCountered = true;
+8426 (lvl  6):             const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+8427 (lvl  6):             const sCard = hand.splice(sIdx, 1)[0];
+8428 (lvl  6):             graveyard.push(sCard);
+8429 (lvl  6):             logBattle(`✨ 我方從手牌發動了【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
+8430 (lvl  6):             render();
+8431 (lvl  5):           }
+8432 (lvl  4):         }
+8433 (lvl  3):       }
+8434 (lvl  3): 
+8435 (lvl  4):       if (!starryCountered && !interruptCountered) {
+8436 (lvl  4):         await triggerAiSummonEffects(card, destZone, destIdx);
+8437 (lvl  3):       }
+8438 (lvl  4):       if (!starryCountered) {
+8439 (lvl  4):         await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
+8440 (lvl  3):       }
+8441 (lvl  3):     } else {
+8442 (lvl  3):       logBattle("對手本回合沒有進行召喚。");
+8443 (lvl  2):     }
+8444 (lvl  2):     render();
+8445 (lvl  2):     await sleep(800);
+8446 (lvl  2): 
+8447 (lvl  2):     // 5. 對手進攻宣言與戰術佈陣階段
+8448 (lvl  2):     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
+8449 (lvl  2):     const isAiFirstTurn = aiWentFirst && (turn === 1);
+8450 (lvl  2): 
+8451 (lvl  3):     if (countdownActive && countdownRemaining === 1) {
+8452 (lvl  3):       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+8453 (lvl  3):       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+8454 (lvl  3):       render();
+8455 (lvl  3):       await sleep(800);
+8456 (lvl  3):     } else if (isAiFirstTurn) {
+8457 (lvl  3):       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+8458 (lvl  3):       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+8459 (lvl  3):       render();
+8460 (lvl  3):       await sleep(800);
+8461 (lvl  3):     } else {
+8462 (lvl  3):       await checkPopulationCap(false);
+8463 (lvl  3):       phase = "進攻宣言";
+8464 (lvl  3):       render();
+8465 (lvl  3):       let opponentAttackCount = 0;
+8466 (lvl  3): 
+8467 (lvl  3):       const playerHasYeshu = ["player_front", "player_back"].some(pz => 
+8468 (lvl  3):         field[pz].some(u => u && u.card && (u.card.id === "SR-ART-0026" || u.card.name?.includes("和平使者 耶叔")))
+8469 (lvl  3):       );
+8470 (lvl  4):       if (playerHasYeshu) {
+8471 (lvl  4):         logBattle("和平使者 耶叔 效果生效：對手本回合無法進行任何進攻！");
+8472 (lvl  4):       } else if (window.XLW_enemyCannotAttackOnNextTurn) {
+8473 (lvl  4):         window.XLW_enemyCannotAttackOnNextTurn = false;
+8474 (lvl  4):         logBattle("座敷童子 效果生效：本回合對手無法進行任何進攻！");
+8475 (lvl  4):       } else {
+8476 (lvl  5):         for (let i = 0; i < 5; i++) {
+8477 (lvl  5):           const enemyAttacker = field.enemy_front[i] || field.enemy_back[i];
+8478 (lvl  5):           const enemyAttackerZone = field.enemy_front[i] ? "enemy_front" : "enemy_back";
+8479 (lvl  5):           if (!enemyAttacker || enemyAttacker.tapped) continue;
+8480 (lvl  5):           if (isUnitConfined(enemyAttackerZone, i)) continue;
+8481 (lvl  5):           if (window.XLW_isShieldUnit(enemyAttacker)) continue;
+8482 (lvl  5): 
+8483 (lvl  5):         const hasRanged = (enemyAttacker.card && (
+8484 (lvl  5):           (enemyAttacker.card.keywords && enemyAttacker.card.keywords.includes("遠程")) ||
+8485 (lvl  5):           (enemyAttacker.card.effect_text && enemyAttacker.card.effect_text.includes("遠程"))
+8486 (lvl  5):         ));
+8487 (lvl  5):         const isBoarKnight = enemyAttacker.card && (enemyAttacker.card.id === "R-NMS-0061" || enemyAttacker.card.name?.includes("野豬騎士"));
+8488 (lvl  5):         const targetsBackFirst = hasRanged || isBoarKnight;
+8489 (lvl  5): 
+8490 (lvl  5):         // 決定進攻目標
+8491 (lvl  5):         let targetZone = null;
+8492 (lvl  6):         if (targetsBackFirst) {
+8493 (lvl  6):           targetZone = field.player_back[i] ? "player_back" : (field.player_front[i] ? "player_front" : null);
+8494 (lvl  6):         } else {
+8495 (lvl  6):           targetZone = field.player_front[i] ? "player_front" : (field.player_back[i] ? "player_back" : null);
+8496 (lvl  5):         }
+8497 (lvl  5): 
+8498 (lvl  5):         if (!targetZone) continue; // 空戰線不能進攻
+8499 (lvl  5):         
+8500 (lvl  5):         const targetDefender = field[targetZone][i];
+8501 (lvl  5):         if (window.XLW_isShieldUnit(targetDefender)) continue; // 盾牌不可被直接進攻
+8502 (lvl  5):         if (targetDefender && isUnitAttackProtected(targetZone, i)) continue; // 受到牆壁上的香蕉保護，無法被進攻！
+8503 (lvl  5): 
+8504 (lvl  5):         enemyAttacker.attacking = true;
+8505 (lvl  5):         enemyAttacker.target = { zone: targetZone, idx: i };
+8506 (lvl  5):         opponentAttackCount++;
+8507 (lvl  5):         logBattle(`對手進攻宣言(遠程:${hasRanged})：星星戰線${i + 1}，對手 ${unitName(enemyAttacker)} 指向我方 ${unitName(targetDefender)}`);
+8508 (lvl  4):       }
+8509 (lvl  3):     }
+8510 (lvl  3): 
+8511 (lvl  3):       window.XLW_DEFENSE_RULE.playerNeedsDefense = opponentAttackCount > 0;
+8512 (lvl  3):       logBattle(`—— 對手回合結束，已宣告 ${opponentAttackCount} 條星星戰線進攻。 ——`);
+8513 (lvl  3):       render();
+8514 (lvl  3):       await sleep(700);
+8515 (lvl  3): 
+8516 (lvl  3):       // 敵方如未進行進攻宣言，則必須進行戰術佈陣階段，若手牌無單位可召喚，強制召喚小旅人
+8517 (lvl  4):       if (opponentAttackCount === 0) {
+8518 (lvl  4):         phase = "\u6230\u8853\u4f48\u9663";
+8519 (lvl  4):         setStatus("\u5c0d\u624b\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u9032\u5165\u5c0d\u624b\u300c\u6230\u8853\u4f48\u9663\u300d\u968e\u6bb5\u002e\u002e\u002e");
+8520 (lvl  4):         render();
+8521 (lvl  4):         await sleep(800);
+8522 (lvl  4): 
+8523 (lvl  4):         const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+8524 (lvl  4):         const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+8525 (lvl  4):         const hasEmptySlot = emptyFrontIdx >= 0 || emptyBackIdx >= 0;
+8526 (lvl  4): 
+8527 (lvl  5):         if (hasEmptySlot) {
+8528 (lvl  5):           const summonHandIdx = window.XLW_ENEMY.hand.findIndex(c =>
+8529 (lvl  5):             c && (c.type === "unit" || c.type === "\u602a\u7378") && Number(c.tribute || 0) <= 0
+8530 (lvl  5):           );
+8531 (lvl  5): 
+8532 (lvl  5):           const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+8533 (lvl  5):           const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+8534 (lvl  5): 
+8535 (lvl  6):           if (summonHandIdx >= 0) {
+8536 (lvl  6):             const card = window.XLW_ENEMY.hand[summonHandIdx];
+8537 (lvl  6):             window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+8538 (lvl  6):             const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+8539 (lvl  7):             field[destZone][destIdx] = {
+8540 (lvl  7):               card: card,
+8541 (lvl  7):               tapped: isLyingOrc,
+8542 (lvl  7):               attacking: false,
+8543 (lvl  7):               target: null,
+8544 (lvl  7):               summonedTurn: turn,
+8545 (lvl  7):               summonedZone: destZone
+8546 (lvl  6):             };
+8547 (lvl  6):             logBattle(`\\u5c0d\\u624b\\u9032\\u884c\\u6230\\u8853\\u4f48\\u9663\\u53ec\\u559aï¼${card.name}\\u0020\\u524d\\u0020${destZone === 'enemy_front' ? '\\u524d\\u6392' : '\\u5f8c\\u6392'}${destIdx + 1}`);
+8548 (lvl  6):             
+8549 (lvl  6):             let starryCountered = false;
+8550 (lvl  6):             const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8551 (lvl  7):             if (playerHasStarry) {
+8552 (lvl  7):               const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
+8553 (lvl  8):               if (useStarry) {
+8554 (lvl  8):                 starryCountered = true;
+8555 (lvl  8):                 const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8556 (lvl  8):                 const sCard = hand.splice(sIdx, 1)[0];
+8557 (lvl  8):                 graveyard.push(sCard);
+8558 (lvl  8):                 logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
+8559 (lvl  8):                 await destroyUnit(destZone, destIdx, "enemy", false);
+8560 (lvl  8):                 render();
+8561 (lvl  7):               }
+8562 (lvl  6):             }
+8563 (lvl  6): 
+8564 (lvl  6):             let interruptCountered = false;
+8565 (lvl  7):             if (!starryCountered) {
+8566 (lvl  7):               const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+8567 (lvl  7):               const hasImm = hasImmediateEffect(card);
+8568 (lvl  8):               if (playerHasInterrupt && hasImm) {
+8569 (lvl  8):                 const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
+8570 (lvl  9):                 if (useInterrupt) {
+8571 (lvl  9):                   interruptCountered = true;
+8572 (lvl  9):                   const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
+8573 (lvl  9):                   const sCard = hand.splice(sIdx, 1)[0];
+8574 (lvl  9):                   graveyard.push(sCard);
+8575 (lvl  9):                   logBattle(`✨ 我方從手牌發動了【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
+8576 (lvl  9):                   render();
+8577 (lvl  8):                 }
+8578 (lvl  7):               }
+8579 (lvl  6):             }
+8580 (lvl  6): 
+8581 (lvl  7):             if (!starryCountered && !interruptCountered) {
+8582 (lvl  7):               await triggerAiSummonEffects(card, destZone, destIdx);
+8583 (lvl  6):             }
+8584 (lvl  7):             if (!starryCountered) {
+8585 (lvl  7):               await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
+8586 (lvl  6):             }
+8587 (lvl  6):           } else {
+8588 (lvl  7):             field[destZone][destIdx] = {
+8589 (lvl  7):               card: structuredClone(LITTLE_TRAVELER),
+8590 (lvl  7):               tapped: false,
+8591 (lvl  7):               attacking: false,
+8592 (lvl  7):               target: null,
+8593 (lvl  7):               summonedTurn: turn,
+8594 (lvl  7):               summonedZone: destZone
+8595 (lvl  6):             };
+8596 (lvl  6):             logBattle(`\\u5c0d\\u624b\\u7121\\u55ae\\u4f4d\\u53ef\\u53ec\\u559aï¼\\u6230\\u8853\\u5f37\\u5236\\u53ec\\u559aï¼å°æ
+8597 (lvl  6): äºº\\u0020\\u524d\\u0020${destZone === 'enemy_front' ? '\\u524d\\u6392' : '\\u5f8c\\u6392'}${destIdx + 1}`);
+8598 (lvl  6):             playTravelerSummonAnimation("#enemyForest", destZone, destIdx);
+8599 (lvl  6):             
+8600 (lvl  6):             let starryCountered = false;
+8601 (lvl  6):             const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8602 (lvl  7):             if (playerHasStarry) {
+8603 (lvl  7):               const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【小旅人】，是否從手牌發動【星空】進行反制？`);
+8604 (lvl  8):               if (useStarry) {
+8605 (lvl  8):                 starryCountered = true;
+8606 (lvl  8):                 const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+8607 (lvl  8):                 const sCard = hand.splice(sIdx, 1)[0];
+8608 (lvl  8):                 graveyard.push(sCard);
+8609 (lvl  8):                 logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【小旅人】！`);
+8610 (lvl  8):                 await destroyUnit(destZone, destIdx, "enemy", false);
+8611 (lvl  8):                 render();
+8612 (lvl  7):               }
+8613 (lvl  6):             }
+8614 (lvl  7):             if (!starryCountered) {
+8615 (lvl  7):               await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
+8616 (lvl  6):             }
+8617 (lvl  5):           }
+8618 (lvl  5):           render();
+8619 (lvl  5):           await sleep(800);
+8620 (lvl  4):         }
+8621 (lvl  3):       }
+8622 (lvl  2):     }
+8623 (lvl  2): 
+8624 (lvl  2):     // 對手 AI 調色盤 結束階段效果
+8625 (lvl  2):     const hasEnemyPalette = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.card && (u.card.id === "R-ART-0045" || u.card.name?.includes("調色盤")));
+8626 (lvl  2):     const hasEnemyEmptySlot = ["enemy_front", "enemy_back"].some(zone => field[zone].some(u => u === null));
+8627 (lvl  3):     if (hasEnemyPalette && hasEnemyEmptySlot) {
+8628 (lvl  3):       const eligible = [];
+8629 (lvl  4):       window.XLW_ENEMY.hand.forEach((c, idx) => {
+8630 (lvl  5):         if (c && c.type === "unit" && isPigmentCard(c) && getCardTributeCost(c) <= 0) {
+8631 (lvl  5):           eligible.push({ card: c, source: "hand", idx });
+8632 (lvl  4):         }
+8633 (lvl  3):       });
+8634 (lvl  4):       window.XLW_ENEMY.grave.forEach((c, idx) => {
+8635 (lvl  5):         if (c && c.type === "unit" && isPigmentCard(c) && getCardTributeCost(c) <= 0) {
+8636 (lvl  5):           eligible.push({ card: c, source: "grave", idx });
+8637 (lvl  4):         }
+8638 (lvl  3):       });
+8639 (lvl  3):       
+8640 (lvl  4):       if (eligible.length > 0) {
+8641 (lvl  4):         const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+8642 (lvl  4):         const card = chosen.card;
+8643 (lvl  5):         if (chosen.source === "hand") {
+8644 (lvl  5):           window.XLW_ENEMY.hand.splice(chosen.idx, 1);
+8645 (lvl  5):         } else {
+8646 (lvl  5):           window.XLW_ENEMY.grave.splice(window.XLW_ENEMY.grave.indexOf(card), 1);
+8647 (lvl  4):         }
+8648 (lvl  4):         
+8649 (lvl  4):         let destZone = null;
+8650 (lvl  4):         let destIdx = -1;
+8651 (lvl  5):         for (const z of ["enemy_front", "enemy_back"]) {
+8652 (lvl  5):           const idx = field[z].indexOf(null);
+8653 (lvl  6):           if (idx >= 0) {
+8654 (lvl  6):             destZone = z;
+8655 (lvl  6):             destIdx = idx;
+8656 (lvl  6):             break;
+8657 (lvl  5):           }
+8658 (lvl  4):         }
+8659 (lvl  4):         
+8660 (lvl  5):         if (destZone) {
+8661 (lvl  6):           field[destZone][destIdx] = {
+8662 (lvl  6):             card: structuredClone(card),
+8663 (lvl  6):             tapped: false,
+8664 (lvl  6):             attacking: false,
+8665 (lvl  6):             target: null,
+8666 (lvl  6):             summonedTurn: turn,
+8667 (lvl  6):             summonedZone: destZone
+8668 (lvl  5):           };
+8669 (lvl  5):           logBattle(`✨ 對手 調色盤 效果：特殊召喚其手牌/墓地中的顏料單位【${card.name}】！`);
+8670 (lvl  5):           render();
+8671 (lvl  5):           await sleep(500);
+8672 (lvl  4):         }
+8673 (lvl  3):       }
+8674 (lvl  2):     }
+8675 (lvl  2):     await runNeutralEndPhaseEffects(false);
+8676 (lvl  2): 
+8677 (lvl  2):     applySculptureDecay();
+8678 (lvl  2):     await resolveDecayStatus();
+8679 (lvl  2): 
+8680 (lvl  2):     // 6. 對手 AI 結束階段宣告提早結束檢測
+8681 (lvl  3):     if (!window.XLW_callGameDeclared && !window.XLW_callGameNegatedThisTurn) {
+8682 (lvl  3):       let enemyCan1 = calculateTotalStars(false) >= 20;
+8683 (lvl  3):       let enemyCan2 = (calculateUnitCount(false) - calculateUnitCount(true)) >= 4;
+8684 (lvl  4):       if (enemyCan1 || enemyCan2) {
+8685 (lvl  4):         const playerHasReject = hand.some(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
+8686 (lvl  4):         let callGameSuccessful = true;
+8687 (lvl  5):         if (playerHasReject) {
+8688 (lvl  5):           const useReject = await showXLWConfirm("【駁回!!】手牌反制觸發", "對手 AI 宣告了提早結束 (Call Game)，是否從手牌發動【駁回!!】進行無效化？");
+8689 (lvl  6):           if (useReject) {
+8690 (lvl  6):             callGameSuccessful = false;
+8691 (lvl  6):             const rIdx = hand.findIndex(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
+8692 (lvl  6):             const rCard = hand.splice(rIdx, 1)[0];
+8693 (lvl  6):             graveyard.push(rCard);
+8694 (lvl  6):             
+8695 (lvl  6):             window.XLW_callGameDeclared = false;
+8696 (lvl  6):             window.XLW_callGameCondition = null;
+8697 (lvl  6):             window.XLW_callGameDeclaringPlayer = null;
+8698 (lvl  6):             window.XLW_callGameNegatedThisTurn = true;
+8699 (lvl  6):             logBattle("✨ 我方從手牌中發動了【駁回!!】，無效化了對手的提早結束宣告！對手本回合不得再次宣告提早結束。");
+8700 (lvl  6):             render();
+8701 (lvl  6):             await sleep(500);
+8702 (lvl  5):           }
+8703 (lvl  4):         }
+8704 (lvl  4):         
+8705 (lvl  5):         if (callGameSuccessful) {
+8706 (lvl  5):           window.XLW_callGameDeclared = true;
+8707 (lvl  5):           window.XLW_callGameDeclaringPlayer = "enemy";
+8708 (lvl  5):           window.XLW_callGameCondition = enemyCan1 ? 1 : 2;
+8709 (lvl  5):           window.XLW_callGameTurn = turn;
+8710 (lvl  5):         
+8711 (lvl  5):         const condStr = enemyCan1 
+8712 (lvl  5):           ? "\u5206\u6578\u52a0\u7e3d\u81f3\u5c11\u4e8c\u5341\u5206" 
+8713 (lvl  5):           : "\u5834\u4e0a\u55ae\u4f4d\u6578\u91cf\u81f3\u5c11\u6bd4\u6575\u65b9\u591a\u56db\u500b";
+8714 (lvl  5):         logBattle(`\u3010\u5c0d\u624b\u5ba3\u544a\u3011\u5c0d\u624b\u5ba3\u544a\u63d0\u65e9\u7d50\u675f (Call Game)\uff01\u689d\u4ef6\uff1a${condStr}\u3002`);
+8715 (lvl  5):         render();
+8716 (lvl  5):         await sleep(500);
+8717 (lvl  4):       }
+8718 (lvl  3):     }
+8719 (lvl  2):   }
+8720 (lvl  2): 
+8721 (lvl  2):     // 對手 AI 回合結束手牌超限自動除外處理
+8722 (lvl  3):     if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 10) {
+8723 (lvl  3):       const excessCount = window.XLW_ENEMY.hand.length - 10;
+8724 (lvl  3):       logBattle(`⚠️ 對手回合結束，手牌達 ${window.XLW_ENEMY.hand.length} 張（超過 10 張限額），對手必須自動除外 ${excessCount} 張手牌。`);
+8725 (lvl  4):       for (let i = 0; i < excessCount; i++) {
+8726 (lvl  4):         const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+8727 (lvl  4):         const card = window.XLW_ENEMY.hand[idx];
+8728 (lvl  4):         window.XLW_ENEMY.hand.splice(idx, 1);
+8729 (lvl  4):         enemyExileZone.push(card);
+8730 (lvl  4):         logBattle(`對手將手牌中的【${card ? card.name : "未知卡牌"}】置於除外區。`);
+8731 (lvl  3):       }
+8732 (lvl  3):       render();
+8733 (lvl  3):       await sleep(500);
+8734 (lvl  2):     }
+8735 (lvl  2):   } catch (err) {
+8736 (lvl  2):     console.error("對手 AI 運行出錯:", err);
+8737 (lvl  2):     logBattle(`對手行動出錯: ${err.message}`);
+8738 (lvl  2):   } finally {
+8739 (lvl  2):     window.XLW_ENEMY.running = false;
+8740 (lvl  1):   }
+8741 (lvl  0): }
+8742 (lvl  0): 
+8743 (lvl  0): // 結束我方回合，接管對手回合與我方新回合開始
+8744 (lvl  1): async function endPlayerTurnAndRunEnemy() {
+8745 (lvl  1):   window.XLW_enemySummonCountThisTurn = 0;
+8746 (lvl  1):   await checkPopulationCap(true);
+8747 (lvl  2):   if (hand.length > 10) {
+8748 (lvl  2):     window.XLW_exileExcessHandActive = true;
+8749 (lvl  2):     setStatus(`手牌數量 (${hand.length} 張) 超出10張上限，請點選手牌置於除外區，直到剩下 10 張手牌！`);
+8750 (lvl  2):     render();
+8751 (lvl  2):     return;
+8752 (lvl  1):   }
+8753 (lvl  1): 
+8754 (lvl  1):   phase = "\u7d50\u675f\u968e\u6bb5"; // 結束階段
+8755 (lvl  1):   xlwCleanExpiredTempEquips(turn);
+8756 (lvl  1):   render();
+8757 (lvl  1): 
+8758 (lvl  1):   // 檢測我方是否滿足提早結束的宣告條件，若滿足則彈出詢問視窗
+8759 (lvl  1):   let canDeclare1 = calculateTotalStars(true) >= 20;
+8760 (lvl  1):   let canDeclare2 = (calculateUnitCount(true) - calculateUnitCount(false)) >= 4;

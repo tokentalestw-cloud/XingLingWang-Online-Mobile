@@ -1,0 +1,51 @@
+721: tapped: false,
+1063: if (unit.tapped) return false; // 橫置狀態不可宣告攻擊
+1290: targetItem.unit.tapped = false;
+1938: tapped: false,
+1977: tapped: false,
+2131: if (u && isHumanoid(u) && u.tapped) {
+2132: u.tapped = false;
+2513: if (unit.tapped) {
+2569: attacker.tapped = true;
+2602: if (!playerAttacker || playerAttacker.tapped) continue;
+2624: playerAttacker.tapped = true;
+2659: unit.tapped = false;
+2674: if (unit.tapped) {
+2708: unit.tapped = true;
+2968: attacker.tapped = true; // 橫置單位維持橫置，不立直
+2982: attacker.tapped = true;
+3067: attacker.tapped = true; // 橫置單位維持橫置，不立直
+3087: attacker.tapped = true;
+3247: attacker.tapped = true;
+3378: tapped: false,
+3397: tapped: false,
+3596: attacker.tapped = true;
+3658: attacker.tapped = true;
+3679: attacker.tapped = true;
+3942: tapped: false,
+4005: tapped: false,
+4031: tapped: false,
+4070: if (!enemyAttacker || enemyAttacker.tapped) continue;
+4128: tapped: false,
+4138: tapped: false,
+4318: tapped: false,
+4795: if (obj.tapped) slot.classList.add("tapped-slot");
+5140: // 以我方山羊術卡片取代原單位，維持直立/橫置狀態 (不變更 obj.tapped)
+5538: tapped: false,
+5583: tapped: false,
+5603: tapped: false,
+6428: tapped: false,
+6624: attacker.tapped = true;
+6641: attacker.tapped = false;
+6658: u.tapped = false;
+6685: tapped: false,
+6780: unit.tapped = false;
+6918: tapped: false,
+6952: tapped: false,
+6975: tapped: false,
+7008: tapped: false,
+7021: tapped: false,
+7200: tapped: false,
+9123: tapped: false,
+9323: if (tapCount < 3) return; // upgrade condition requires at least 2 other units tapped (so 3 total tapped this turn)
+9328: if (u && u.tapped && (u.card?.id === "R-CAT-0033" || u.card?.name === "厭世喵")) {

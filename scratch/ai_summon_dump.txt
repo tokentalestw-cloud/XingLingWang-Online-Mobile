@@ -1,0 +1,41 @@
+4290:           
+4291:           render();
+4292:           await sleep(800);
+4293:         }
+4294:       }
+4295:     }
+4296: 
+4297:     if (summonHandIdx >= 0 && (emptyFrontIdx >= 0 || emptyBackIdx >= 0)) {
+4298:       const card = window.XLW_ENEMY.hand[summonHandIdx];
+4299:       window.XLW_ENEMY.hand.splice(summonHandIdx, 1);
+4300:       
+4301:       const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+4302:       const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
+4303:       
+4304:       const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+4305:       field[destZone][destIdx] = {
+4306:         card: card,
+4307:         tapped: isLyingOrc,
+4308:         attacking: false,
+4309:         target: null,
+4310:         summonedTurn: turn,
+4311:         summonedZone: destZone
+4312:       };
+4313:       logBattle(`對手召喚：${card.name} 到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}`);
+4314:     } else {
+4315:       logBattle("對手本回合沒有進行召喚。");
+4316:     }
+4317:     render();
+4318:     await sleep(800);
+4319: 
+4320:     // 5. 對手進攻宣言與戰術佈陣階段
+4321:     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
+4322:     const isAiFirstTurn = aiWentFirst && (turn === 1);
+4323: 
+4324:     if (countdownActive && countdownRemaining === 1) {
+4325:       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
+4326:       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+4327:       render();
+4328:       await sleep(800);
+4329:     } else if (isAiFirstTurn) {
+4330:       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
