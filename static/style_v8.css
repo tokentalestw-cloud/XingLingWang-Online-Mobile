@@ -4181,7 +4181,7 @@ body.xlw-iphone14-sim-active .game-shell #boardWrap {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  transform: translate(-50%, -50%) scale(0.36) !important;
+  transform: translate(-50%, -50%) scale(0.44) !important;
   transform-origin: center center !important;
 }
 
@@ -4383,7 +4383,7 @@ body.xlw-iphone14-sim-active .hand .card:active {
 }
 
 /* ==========================================================================
-   REAL MOBILE DEVICE LANDSCAPE RWD (黃金佈局：面板兩側縮放靠邊、手牌底部滿版露出)
+   REAL MOBILE DEVICE LANDSCAPE RWD (遊戲王 Master Duel 懸浮立體手牌與兩側極簡化排版)
    ========================================================================== */
 
 @media (max-width: 1024px) and (orientation: landscape) {
@@ -4393,16 +4393,14 @@ body.xlw-iphone14-sim-active .hand .card:active {
     overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
   }
 
-  /* 核心遊戲外殼夾在中間，保留底部手牌高度 */
+  /* 遊戲外殼滿版佔領 100% 畫面 */
   .game-shell {
     width: 100vw !important;
-    height: calc(100vh - 95px) !important;
-    min-height: calc(100vh - 95px) !important;
-    max-height: calc(100vh - 95px) !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
     position: relative !important;
     overflow: hidden !important;
     display: block !important;
@@ -4413,7 +4411,7 @@ body.xlw-iphone14-sim-active .hand .card:active {
     padding: 0 !important;
   }
 
-  /* 1. 最上排工具列 (Top Bar) 0.44 大幅微縮，100% 收納於頂部 */
+  /* 1. 最上排工具列 (Top Bar) 0.42 大幅微縮，完全收納於頂部 */
   .topbar-grouped-v9 {
     position: absolute !important;
     top: 2px !important;
@@ -4423,7 +4421,7 @@ body.xlw-iphone14-sim-active .hand .card:active {
     min-height: 28px !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    transform: scale(0.44) !important;
+    transform: scale(0.42) !important;
     transform-origin: top left !important;
     z-index: 10020 !important;
     background: rgba(12, 8, 20, 0.96) !important;
@@ -4432,7 +4430,7 @@ body.xlw-iphone14-sim-active .hand .card:active {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
   }
 
-  /* 2. 對戰棋盤使用 scale(0.36) 置中定位，保證左右兩側留出空間放置面板，0% 重疊 */
+  /* 2. 對戰棋盤放大為 scale(0.44) 絕對居中，極大化戰場視野 */
   .board-wrap {
     width: 100% !important;
     height: 100% !important;
@@ -4450,29 +4448,74 @@ body.xlw-iphone14-sim-active .hand .card:active {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.36) !important;
+    transform: translate(-50%, -50%) scale(0.44) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
 
-  /* 3. 雙方總分面板 (.score-badge-fixed) 縮小為 50% 並靠最左上角 */
-  .score-badge-fixed {
+  /* 3. 我方得分看板 (Master Duel 圓形浮動綠光效果) -> 靠左下角 */
+  .score-badge-fixed.score-p1 {
     position: absolute !important;
-    left: 6px !important;
-    top: 32px !important;
+    left: 12px !important;
+    bottom: 12px !important;
+    top: auto !important;
     right: auto !important;
-    bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.50) !important;
-    transform-origin: top left !important;
+    background: rgba(10, 8, 20, 0.88) !important;
+    border: 2.5px solid #52c41a !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 0 15px rgba(82, 196, 26, 0.5) !important;
+    transform: none !important;
     margin: 0 !important;
   }
 
-  /* 4. 對手狀態欄 (#xlwEnemyInfoPanel) 縮小為 50% 並靠左側，緊鄰分數下方 */
+  /* 4. 對手得分看板 (Master Duel 圓形浮動紅光效果) -> 靠右上角 */
+  .score-badge-fixed.score-p2 {
+    position: absolute !important;
+    right: 12px !important;
+    top: 12px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 10000 !important;
+    background: rgba(10, 8, 20, 0.88) !important;
+    border: 2.5px solid #ff4d4f !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 0 15px rgba(255, 77, 79, 0.5) !important;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  /* 圓形分數牌內部文字微縮 */
+  .score-badge-fixed .score-badge-label {
+    font-size: 8px !important;
+    color: #ffd76a !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
+  .score-badge-fixed .score-badge-num {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    margin-top: 2px !important;
+    line-height: 1 !important;
+  }
+
+  /* 5. 對手狀態欄 (#xlwEnemyInfoPanel) 縮小為 50% 並靠左側，分數板下方 */
   #xlwEnemyInfoPanel {
     position: absolute !important;
-    left: 6px !important;
-    top: 115px !important;
+    left: 12px !important;
+    top: 85px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -4482,41 +4525,43 @@ body.xlw-iphone14-sim-active .hand .card:active {
     display: block !important;
   }
 
-  /* 5. 右側操作按鈕面板 (#stableActionPanel) 縮小為 0.54 並靠最右側置中 */
+  /* 6. 右側操作按鈕面板 (#stableActionPanel) 轉為直立懸浮 pill 柱靠右下角 */
   #stableActionPanel {
     position: absolute !important;
-    right: 6px !important;
-    top: 50% !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    top: auto !important;
     left: auto !important;
-    bottom: auto !important;
     z-index: 10000 !important;
-    transform: translateY(-50%) scale(0.54) !important;
-    transform-origin: center right !important;
+    transform: scale(0.68) !important;
+    transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
-    background: rgba(15, 10, 25, 0.92) !important;
-    border: 1px solid rgba(255, 215, 106, 0.5) !important;
-    border-radius: 12px !important;
-    padding: 6px !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85) !important;
+    gap: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
     margin: 0 !important;
   }
 
   #stableActionPanel .stable-action-row {
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
+    gap: 5px !important;
   }
 
   #stableActionPanel .stable-action-btn {
-    width: 115px !important;
-    font-size: 13px !important;
-    padding: 6px 8px !important;
+    width: 120px !important;
+    font-size: 13.5px !important;
+    padding: 8px 10px !important;
+    border-radius: 50px !important;
+    border: 2px solid #ffd76a !important;
+    box-shadow: 0 0 12px rgba(255, 215, 106, 0.4) !important;
     white-space: nowrap !important;
   }
 
-  /* 6. 中上方階段提示面板 (#phaseDisplayPanelHard) 定位於工具列下方中軸 */
+  /* 7. 中上方階段提示面板 (#phaseDisplayPanelHard) 定位於工具列下方中軸 */
   #phaseDisplayPanelHard {
     position: absolute !important;
     top: 20px !important;
@@ -4527,69 +4572,75 @@ body.xlw-iphone14-sim-active .hand .card:active {
     display: flex !important;
   }
 
-  /* 7. 底部我方手牌專區 (.hand-panel) 強制底部置底，高度 95px */
+  /* 8. 懸浮 3D 立體我方手牌區 (移除任何實體底板與文字，直接浮於戰場底部) */
   .hand-panel {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 95px !important;
-    min-height: 95px !important;
-    max-height: 95px !important;
-    flex: 0 0 95px !important;
-    z-index: 10010 !important;
-    padding: 2px 8px !important;
-    background: rgba(12, 8, 24, 0.96) !important;
-    border-top: 1px solid rgba(255, 215, 106, 0.3) !important;
+    position: absolute !important;
+    bottom: 2px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
     display: flex !important;
-    align-items: center !important;
-    overflow: hidden !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8) !important;
-  }
-
-  .hand-title {
-    width: 32px !important;
-    flex: 0 0 32px !important;
-    font-size: 10px !important;
-    line-height: 1.15 !important;
+    align-items: flex-end !important;
+    overflow: visible !important;
+    z-index: 10010 !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  .hand {
-    flex: 1 !important;
-    height: 90px !important;
-    padding: 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 2px !important;
+  /* 拿掉「我方手牌」文字標題 */
+  .hand-title {
+    display: none !important;
   }
 
+  .hand {
+    flex: 1 !important;
+    height: 100% !important;
+    padding: 0 10px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-end !important;
+    gap: 3px !important;
+    overflow: visible !important;
+  }
+
+  /* 立體傾斜手牌 (perspective 3D rotateX) */
   .hand .card {
-    width: 62px !important;
-    height: 86px !important;
-    min-width: 50px !important;
-    flex: 0 0 62px !important;
-    margin-left: -10px !important;
-    transition: transform 0.2s ease, z-index 0.2s ease !important;
+    width: 48px !important;
+    height: 66px !important;
+    min-width: 42px !important;
+    flex: 0 0 48px !important;
+    margin-left: -6px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important;
+    transform: perspective(300px) rotateX(12deg) !important;
+    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0.15s ease !important;
+    transform-origin: bottom center !important;
   }
 
   .hand .card:first-child {
     margin-left: 0 !important;
   }
 
+  /* 手牌 Hover/Touch 浮起並放大 1.4 倍，拉高顯示 */
   .hand .card:hover,
   .hand .card:active {
     z-index: 200 !important;
-    transform: translateY(-12px) scale(1.22) !important;
+    transform: perspective(300px) rotateX(0deg) translateY(-24px) scale(1.4) !important;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 215, 106, 0.3) !important;
   }
 
   /* 左側卡牌放大預覽面板獨立彈出適配 */
   .xlw-left-card-panel, #xlwLeftCardPanel {
     position: absolute !important;
     left: 8px !important;
-    bottom: 105px !important; /* 浮在底部手牌面板上方 */
+    bottom: 80px !important;
     top: auto !important;
     z-index: 10050 !important;
     transform: scale(0.65) !important;

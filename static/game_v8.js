@@ -21489,6 +21489,7 @@ function logBattle(text) {
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
@@ -21503,8 +21504,8 @@ function adjustBoardScale() {
   let finalScale;
   if (isMobile) {
     if (isLandscapeMobile) {
-      // 📱 橫向手機黃金版面：以高度適配為基準，縮放設為 0.36 確保不重疊
-      finalScale = 0.36;
+      // 📱 橫向手機：最大化戰場 (0.44 比例置中)
+      finalScale = 0.44;
       document.documentElement.classList.add("xlw-mobile-layout");
       document.body.classList.add("xlw-mobile-layout");
     } else {
@@ -21553,8 +21554,8 @@ function adjustBoardScale() {
 
   if (isMobile && isLandscapeMobile) {
     if (shell) {
-      shell.style.height = "calc(100vh - 123px)";
-      shell.style.minHeight = "calc(100vh - 123px)";
+      shell.style.height = "100vh";
+      shell.style.minHeight = "100vh";
     }
     if (wrap) {
       wrap.style.height = "100%";
