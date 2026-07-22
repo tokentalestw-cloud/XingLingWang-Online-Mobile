@@ -4262,7 +4262,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
 
 /* ==========================================================================
-   REAL MOBILE DEVICE LANDSCAPE RWD (頂級優先權：懸浮立體手牌、兩側微縮極小按鈕)
+   REAL MOBILE DEVICE LANDSCAPE RWD (極致微縮置底 3D 懸浮手牌與兩側極簡化排版)
    ========================================================================== */
 
 @media (max-width: 1024px) and (orientation: landscape) {
@@ -4291,7 +4291,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     padding: 0 !important;
   }
 
-  /* 1. 最上排工具列 (Top Bar) 大幅縮放為 0.35 倍，且靠左對齊，寬度絕不超出畫面 */
+  /* 1. 最上排工具列 (Top Bar) 0.33 大幅微縮，完全收納於頂部，不擋戰線 */
   .topbar-grouped-v9 {
     position: absolute !important;
     top: 2px !important;
@@ -4302,7 +4302,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-height: 28px !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    transform: scale(0.35) !important;
+    transform: scale(0.33) !important;
     transform-origin: top left !important;
     z-index: 10020 !important;
     background: rgba(12, 8, 20, 0.96) !important;
@@ -4311,7 +4311,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
   }
 
-  /* 2. 對戰棋盤放大為 scale(0.44) 絕對置中，極大化戰場視野 */
+  /* 2. 對戰棋盤放大為 scale(0.46) 絕對置中，極大化戰場視野 */
   .board-wrap {
     width: 100% !important;
     height: 100% !important;
@@ -4329,12 +4329,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.44) !important;
+    transform: translate(-50%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
 
-  /* 3. 我方得分看板 (Master Duel 圓形浮動綠光效果) -> 靠左下角 */
+  /* 3. 我方得分看板 (極簡圓形霓虹數字，隱藏文字，直徑僅 40px) -> 靠左下角 */
   .score-badge-fixed.score-p1 {
     position: absolute !important;
     left: 12px !important;
@@ -4345,18 +4345,17 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(10, 8, 20, 0.88) !important;
     border: 2px solid #52c41a !important;
     border-radius: 50% !important;
-    width: 52px !important;
-    height: 52px !important;
+    width: 40px !important;
+    height: 40px !important;
     display: flex !important;
-    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 0 12px rgba(82, 196, 26, 0.5) !important;
+    box-shadow: 0 0 12px rgba(82, 196, 26, 0.6) !important;
     transform: none !important;
     margin: 0 !important;
   }
 
-  /* 4. 對手得分看板 (Master Duel 圓形浮動紅光效果) -> 靠右上角 */
+  /* 4. 對手得分看板 (極簡圓形霓虹數字，隱藏文字，直徑僅 40px) -> 靠右上角 */
   .score-badge-fixed.score-p2 {
     position: absolute !important;
     right: 12px !important;
@@ -4367,32 +4366,31 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(10, 8, 20, 0.88) !important;
     border: 2px solid #ff4d4f !important;
     border-radius: 50% !important;
-    width: 52px !important;
-    height: 52px !important;
+    width: 40px !important;
+    height: 40px !important;
     display: flex !important;
-    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 0 12px rgba(255, 77, 79, 0.5) !important;
+    box-shadow: 0 0 12px rgba(255, 77, 79, 0.6) !important;
     transform: none !important;
     margin: 0 !important;
   }
 
-  /* 圓形分數牌內部文字微縮 */
-  .score-badge-fixed .score-badge-label {
-    font-size: 7px !important;
-    color: #ffd76a !important;
+  /* 隱藏標籤文字，僅顯示霓虹數字 */
+  .score-badge-fixed .score-badge-label,
+  .score-badge-fixed .score-badge-stars,
+  .score-badge-fixed .score-badge-subrow {
+    display: none !important;
+  }
+  .score-badge-fixed .score-badge-num {
+    font-size: 13.5px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
     margin: 0 !important;
     line-height: 1 !important;
   }
-  .score-badge-fixed .score-badge-num {
-    font-size: 12.5px !important;
-    font-weight: 900 !important;
-    margin-top: 2px !important;
-    line-height: 1 !important;
-  }
 
-  /* 5. 對手狀態欄 (#xlwEnemyInfoPanel) 縮小為 45% 並靠左側，分數板下方 */
+  /* 5. 對手狀態欄 (#xlwEnemyInfoPanel) 大幅微縮為 42% 並靠左側，分數板下方 */
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 12px !important;
@@ -4400,13 +4398,13 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.45) !important;
+    transform: scale(0.42) !important;
     transform-origin: top left !important;
     margin: 0 !important;
     display: block !important;
   }
 
-  /* 6. 右側操作按鈕面板 (#stableActionPanel) 極致縮小為 0.52 倍並靠右下角 */
+  /* 6. 右側操作按鈕面板 (#stableActionPanel) 極致縮小為 0.44 倍並靠右下角，完全不擋格子 */
   #stableActionPanel {
     position: absolute !important;
     right: 12px !important;
@@ -4414,7 +4412,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.52) !important;
+    transform: scale(0.44) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4433,12 +4431,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   }
 
   #stableActionPanel .stable-action-btn {
-    width: 110px !important;
-    font-size: 13px !important;
+    width: 105px !important;
+    font-size: 12.5px !important;
     padding: 6px 8px !important;
     border-radius: 50px !important;
     border: 2px solid #ffd76a !important;
-    box-shadow: 0 0 10px rgba(255, 215, 106, 0.4) !important;
+    box-shadow: 0 0 8px rgba(255, 215, 106, 0.4) !important;
     white-space: nowrap !important;
   }
 
@@ -4446,8 +4444,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #phaseDisplayPanelHard {
     position: absolute !important;
     top: 20px !important;
-    left: 420px !important;
-    transform: scale(0.52) !important;
+    left: 450px !important;
+    transform: scale(0.50) !important;
     transform-origin: top left !important;
     z-index: 10000 !important;
     display: flex !important;
