@@ -21488,6 +21488,7 @@ function logBattle(text) {
 
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
@@ -21502,17 +21503,12 @@ function adjustBoardScale() {
   let finalScale;
   if (isMobile) {
     if (isLandscapeMobile) {
-      // 📱 橫向手機：改依螢幕高度與寬度取最小值，限制上限 0.38 確保不溢出
-      const topbarH = 34;
-      const padding = 8;
-      const availableHeight = Math.max(300, window.innerHeight - topbarH - padding);
-      const scaleH = availableHeight / boardNaturalHeight;
-      const scaleW = (window.innerWidth - 130) / boardNaturalWidth;
-      finalScale = Math.min(scaleH, scaleW, 0.38);
+      // 📱 橫向手機黃金版面：以高度適配為基準，縮放設為 0.36 確保不重疊
+      finalScale = 0.36;
       document.documentElement.classList.add("xlw-mobile-layout");
       document.body.classList.add("xlw-mobile-layout");
     } else {
-      // 📱 直向手機：依螢幕寬度盡量吃滿
+      // 📱 直向手機
       const safeSidePadding = 0;
       const availableWidth = Math.max(320, window.innerWidth - safeSidePadding);
       finalScale = Math.min((availableWidth / boardNaturalWidth), 0.94);
@@ -21537,7 +21533,7 @@ function adjustBoardScale() {
   document.documentElement.style.setProperty("--xlw-mobile-scale", String(finalScale));
   
   if (isMobile && isLandscapeMobile) {
-    board.style.transform = `translate(-50%, -46%) scale(${finalScale})`;
+    board.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
     board.style.transformOrigin = "center center";
     board.style.position = "absolute";
     board.style.top = "50%";
@@ -21557,8 +21553,8 @@ function adjustBoardScale() {
 
   if (isMobile && isLandscapeMobile) {
     if (shell) {
-      shell.style.height = "100vh";
-      shell.style.minHeight = "100vh";
+      shell.style.height = "calc(100vh - 123px)";
+      shell.style.minHeight = "calc(100vh - 123px)";
     }
     if (wrap) {
       wrap.style.height = "100%";
