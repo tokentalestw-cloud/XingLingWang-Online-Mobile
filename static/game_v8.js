@@ -21490,6 +21490,7 @@ function logBattle(text) {
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
