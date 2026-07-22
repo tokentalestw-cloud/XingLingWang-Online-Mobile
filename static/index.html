@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=15.50-js-scaling-engine-fixed">
+  <link rel="stylesheet" href="/static/style_v8.css?v=15.60-orientation-prompt-lock">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -344,7 +344,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=15.50-js-scaling-engine-fixed" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=15.60-orientation-prompt-lock" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
@@ -363,6 +363,14 @@
   <div id="xlwMobileFsBanner" class="xlw-mobile-fs-banner" onclick="window.xlwRequestFullScreen()">
     <span>📱 <b>點擊此處開啟手機全螢幕對戰</b>（或點擊 Safari 下方「分享 ➔ 加入主畫面」獲得 100% 滿版體驗）</span>
     <button class="fs-btn">進入全螢幕 ⛶</button>
+  </div>
+  <!-- 螢幕直向時的轉橫向提示遮罩 (Rotate to Landscape Prompt Overlay) -->
+  <div id="xlwOrientationOverlay" class="xlw-orientation-overlay">
+    <div class="orientation-box">
+      <div class="phone-rotate-icon"></div>
+      <h2>📱 請旋轉手機至橫向</h2>
+      <p>為了獲得最佳的星靈王對戰體驗，請開啟手機螢幕自動旋轉，並將手機橫放進行遊玩。</p>
+    </div>
   </div>
 </body>
 </html>

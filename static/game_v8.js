@@ -28414,3 +28414,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof window.xlwCheckStandalone === 'function') window.xlwCheckStandalone();
   }, 200);
 });
+
+// ===== 📱 橫向螢幕鎖定 API 執行引擎 =====
+window.xlwLockOrientation = function() {
+  try {
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock("landscape").catch(e => {
+        console.log("Screen orientation lock rejected by browser security constraint:", e);
+      });
+    } else if (screen.lockOrientation) {
+      screen.lockOrientation("landscape");
+    } else if (screen.webkitLockOrientation) {
+      screen.webkitLockOrientation("landscape");
+    }
+  } catch(e) {}
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  window.xlwLockOrientation();
+  document.body.addEventListener("click", window.xlwLockOrientation, { once: true });
+});
