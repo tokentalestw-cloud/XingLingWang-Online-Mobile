@@ -21492,6 +21492,7 @@ function logBattle(text) {
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
@@ -21506,8 +21507,8 @@ function adjustBoardScale() {
   let finalScale;
   if (isMobile) {
     if (isLandscapeMobile) {
-      // 📱 橫向手機：最大化戰場 (0.46 比例置中)
-      finalScale = 0.46;
+      // 📱 橫向手機：最大化戰場 (0.45 比例置中，以高度貼合螢幕為準)
+      finalScale = 0.45;
       document.documentElement.classList.add("xlw-mobile-layout");
       document.body.classList.add("xlw-mobile-layout");
     } else {

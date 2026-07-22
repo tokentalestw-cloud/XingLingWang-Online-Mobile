@@ -4262,7 +4262,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
 
 /* ==========================================================================
-   REAL MOBILE DEVICE LANDSCAPE RWD (極致微縮置底 3D 懸浮手牌與兩側極簡化排版)
+   REAL MOBILE DEVICE LANDSCAPE RWD (按鈕縮小至 1/3 以下、戰場極大化、手牌精確浮出)
    ========================================================================== */
 
 @media (max-width: 1024px) and (orientation: landscape) {
@@ -4302,7 +4302,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-height: 28px !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    transform: scale(0.33) !important;
+    transform: scale(0.32) !important;
     transform-origin: top left !important;
     z-index: 10020 !important;
     background: rgba(12, 8, 20, 0.96) !important;
@@ -4311,7 +4311,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
   }
 
-  /* 2. 對戰棋盤放大為 scale(0.46) 絕對置中，極大化戰場視野 */
+  /* 2. 對戰棋盤放大為 scale(0.45) 絕對置中，極大化戰場視野 */
   .board-wrap {
     width: 100% !important;
     height: 100% !important;
@@ -4329,12 +4329,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.46) !important;
+    transform: translate(-50%, -50%) scale(0.45) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
 
-  /* 3. 我方得分看板 (極簡圓形霓虹數字，隱藏文字，直徑僅 40px) -> 靠左下角 */
+  /* 3. 我方得分看板 (圓形霓虹數字，直徑 38px) -> 靠左下角 */
   .score-badge-fixed.score-p1 {
     position: absolute !important;
     left: 12px !important;
@@ -4345,8 +4345,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(10, 8, 20, 0.88) !important;
     border: 2px solid #52c41a !important;
     border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4355,7 +4355,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     margin: 0 !important;
   }
 
-  /* 4. 對手得分看板 (極簡圓形霓虹數字，隱藏文字，直徑僅 40px) -> 靠右上角 */
+  /* 4. 對手得分看板 (圓形霓虹數字，直徑 38px) -> 靠右上角 */
   .score-badge-fixed.score-p2 {
     position: absolute !important;
     right: 12px !important;
@@ -4366,8 +4366,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(10, 8, 20, 0.88) !important;
     border: 2px solid #ff4d4f !important;
     border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4383,28 +4383,28 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     display: none !important;
   }
   .score-badge-fixed .score-badge-num {
-    font-size: 13.5px !important;
+    font-size: 13px !important;
     font-weight: 900 !important;
     color: #ffffff !important;
     margin: 0 !important;
     line-height: 1 !important;
   }
 
-  /* 5. 對手狀態欄 (#xlwEnemyInfoPanel) 大幅微縮為 42% 並靠左側，分數板下方 */
+  /* 5. 對手狀態欄 (#xlwEnemyInfoPanel) 大幅微縮為 38% 並靠左側，分數板下方 */
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 12px !important;
-    top: 80px !important;
+    top: 75px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.42) !important;
+    transform: scale(0.38) !important;
     transform-origin: top left !important;
     margin: 0 !important;
     display: block !important;
   }
 
-  /* 6. 右側操作按鈕面板 (#stableActionPanel) 極致縮小為 0.44 倍並靠右下角，完全不擋格子 */
+  /* 6. 右側操作按鈕面板 (#stableActionPanel) 極致縮小為 0.30 倍 (低於 1/3)，完全不擋格子 */
   #stableActionPanel {
     position: absolute !important;
     right: 12px !important;
@@ -4412,7 +4412,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.44) !important;
+    transform: scale(0.30) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4431,8 +4431,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   }
 
   #stableActionPanel .stable-action-btn {
-    width: 105px !important;
-    font-size: 12.5px !important;
+    width: 100px !important;
+    font-size: 12px !important;
     padding: 6px 8px !important;
     border-radius: 50px !important;
     border: 2px solid #ffd76a !important;
@@ -4445,22 +4445,22 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 20px !important;
     left: 450px !important;
-    transform: scale(0.50) !important;
+    transform: scale(0.48) !important;
     transform-origin: top left !important;
     z-index: 10000 !important;
     display: flex !important;
   }
 
-  /* 8. 真正懸浮立體手牌專區 (無背景板、無文字、100% 懸浮透底) */
+  /* 8. 懸浮 3D 立體我方手牌區 (懸浮高度拉升至 bottom: 14px，保證在戰場之上 100% 完整露出) */
   .hand-panel {
     position: absolute !important;
-    bottom: 4px !important;
+    bottom: 14px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: auto !important;
-    height: 72px !important;
-    min-height: 72px !important;
-    max-height: 72px !important;
+    height: 80px !important;
+    min-height: 80px !important;
+    max-height: 80px !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -4489,12 +4489,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     overflow: visible !important;
   }
 
-  /* 3D 視角立體斜度手牌 (perspective + rotateX) */
+  /* 3D 視角立體斜度手牌 (54px x 74px 精緻大小，絕對可見) */
   .hand .card {
-    width: 48px !important;
-    height: 66px !important;
-    min-width: 42px !important;
-    flex: 0 0 48px !important;
+    width: 54px !important;
+    height: 74px !important;
+    min-width: 48px !important;
+    flex: 0 0 54px !important;
     margin-left: -8px !important;
     border-radius: 4px !important;
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important;
@@ -4519,7 +4519,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   .xlw-left-card-panel, #xlwLeftCardPanel {
     position: absolute !important;
     left: 8px !important;
-    bottom: 80px !important;
+    bottom: 95px !important;
     top: auto !important;
     z-index: 10050 !important;
     transform: scale(0.65) !important;
