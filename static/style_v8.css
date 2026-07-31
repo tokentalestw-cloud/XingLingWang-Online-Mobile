@@ -4327,9 +4327,9 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: 50% !important;
+    top: 45% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.68) !important;
+    transform: translate(-50%, -50%) scale(0.55) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
@@ -4515,7 +4515,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     margin-left: -15px !important;
     border-radius: 6px !important;
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important;
-    transform: perspective(300px) rotateX(15deg) !important;
+    transform: perspective(300px) rotateX(-15deg) !important;
     transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0.15s ease !important;
     transform-origin: bottom center !important;
   }
