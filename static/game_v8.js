@@ -28447,26 +28447,21 @@ window.xlwChooseMode = function(mode) {
   }
   
   if (mode === 'single') {
-    // 進入單人對決模式
-    const select = document.getElementById("factionSelect");
-    const faction = select ? select.value : "藝術品";
-    const oppSelect = document.getElementById("opponentSelect");
-    const oppFaction = oppSelect ? oppSelect.value : "隨機牌組";
-    
-    // 初始化單人對戰
-    isMultiplayer = false;
-    isMyTurn = true;
-    
-    // 觸發重新開始戰局
-    const restartBtn = document.getElementById("restartBtn");
-    if (restartBtn) restartBtn.click();
+    // 進入單人對決模式，直接調用全域的 newGame 啟動對戰
+    if (typeof newGame === 'function') {
+      newGame();
+    } else {
+      const newGameBtn = document.getElementById("newGameBtn");
+      if (newGameBtn) newGameBtn.click();
+    }
     console.log("Single-player AI Mode launched!");
   } else if (mode === 'multi') {
-    // 進入線上雙人對決模式
-    const multiPlayBtn = document.getElementById("multiPlayBtn");
-    if (multiPlayBtn) {
-      // 模擬點擊原本隱藏的線上雙人對決按鈕
-      multiPlayBtn.click();
+    // 進入線上雙人對決模式，直接調用全域的 showMultiplayerLobby 啟動大廳
+    if (typeof showMultiplayerLobby === 'function') {
+      showMultiplayerLobby();
+    } else {
+      const multiplayerBtn = document.getElementById("multiplayerBtn");
+      if (multiplayerBtn) multiplayerBtn.click();
     }
     console.log("Online Multiplayer Mode launched!");
   }
