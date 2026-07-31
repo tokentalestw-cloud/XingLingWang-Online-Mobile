@@ -21112,21 +21112,21 @@ function renderScore() {
   scoreBadge.innerHTML = `
     <div class="score-badge-section">
       <div class="score-badge-card player">
-        <div class="score-badge-row">
-          <span class="score-badge-label">我方</span>
-          <span class="score-badge-num player-num">${playerStars}★</span>
+        <div class="score-badge-row" style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="score-badge-label" style="font-size:8px;">我方</span>
+          <span class="score-badge-num player-num" style="font-size:10px;">${playerStars}★</span>
         </div>
-        <div class="score-badge-subrow">
-          <span>場上:${playerFieldStars}★|額外:${playerBonusScore}★</span>
+        <div class="score-badge-subrow" style="font-size:7px; opacity:0.8;">
+          <span>場:${playerFieldStars}|加:${playerBonusScore}</span>
         </div>
       </div>
-      <div class="score-badge-card enemy">
-        <div class="score-badge-row">
-          <span class="score-badge-label enemy-label">對手</span>
-          <span class="score-badge-num enemy-num">${enemyStars}★</span>
+      <div class="score-badge-card enemy" style="margin-top:2px;">
+        <div class="score-badge-row" style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="score-badge-label enemy-label" style="font-size:8px;">對手</span>
+          <span class="score-badge-num enemy-num" style="font-size:10px;">${enemyStars}★</span>
         </div>
-        <div class="score-badge-subrow">
-          <span>場上:${enemyFieldStars}★|額外:${enemyBonusScore}★</span>
+        <div class="score-badge-subrow" style="font-size:7px; opacity:0.8;">
+          <span>場:${enemyFieldStars}|加:${enemyBonusScore}</span>
         </div>
       </div>
     </div>
@@ -21163,10 +21163,10 @@ function renderEnemyPanel() {
 
   const deckName = window.XLW_ENEMY.deckName || "妖怪村莊";
   panel.innerHTML = `
-    <div class="enemy-info-title">對手 (${deckName})</div>
-    <div class="enemy-stats-row" style="display: flex; gap: 6px; margin-top: 3px;">
-      <div class="enemy-stat-badge">牌库:<span id="enemyDeckCountInfo">${window.XLW_ENEMY.deck.length}</span></div>
-      <div class="enemy-stat-badge">手牌:<span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span></div>
+    <div class="enemy-info-title" style="font-size:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AI (${deckName})</div>
+    <div class="enemy-stats-row" style="display: flex; flex-direction:column; gap: 1px; margin-top: 2px; font-size:7px;">
+      <div>牌:${window.XLW_ENEMY.deck.length}</div>
+      <div>手:${window.XLW_ENEMY.hand.length}</div>
     </div>
   `;
 }
