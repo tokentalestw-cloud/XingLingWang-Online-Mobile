@@ -330,7 +330,7 @@ button:disabled {
 #playerGrave { right: 454px !important; top: 627.5px !important; }
 #playerDeck { right: 454px !important; top: 781.5px !important; }
 #playerRace { right: 454px !important; top: 467.5px !important; }
-#playerExile { right: 330px !important; top: 781.5px !important; }
+#playerExile { right: 330px !important; top: 467.5px !important; }
 
 /* ===== 7. 星星戰線 (Battle Line) ===== */
 .battle-line-strip {
@@ -1998,7 +1998,7 @@ button:disabled {
 }
 
 #playerExtraDeck {
-  right: -90px !important;
+  right: 330px !important;
   top: 781.5px !important;
 }
 
@@ -4302,7 +4302,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-height: 28px !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    transform: scale(0.32) !important;
+    transform: scale(0.64) !important;
     transform-origin: top left !important;
     z-index: 10020 !important;
     background: rgba(12, 8, 20, 0.96) !important;
@@ -4541,8 +4541,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 左側卡牌放大預覽面板獨立彈出適配 */
   .xlw-left-card-panel, #xlwLeftCardPanel {
     position: fixed !important;
-    left: -15px !important;
-    bottom: 4px !important;
+    left: 0px !important;
+    bottom: 0px !important;
     top: auto !important;
     z-index: 10050 !important;
     transform: scale(1.30) !important;
