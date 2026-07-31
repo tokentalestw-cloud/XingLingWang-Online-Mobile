@@ -4329,7 +4329,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.90) !important;
+    transform: translate(-50%, -50%) scale(0.68) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
