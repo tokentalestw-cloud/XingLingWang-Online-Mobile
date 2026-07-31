@@ -28476,10 +28476,16 @@ window.xlwReturnToTitle = function() {
   console.log("Returned to Main Welcome Splash Screen successfully!");
 };
 
-// 確保點開頁面時自動調用首頁顯示
-document.addEventListener("DOMContentLoaded", () => {
+// 確保點開頁面時自動調用首頁顯示 (抗 Safari 競態條件載入引擎)
+function showWelcomeOverlayOnLoad() {
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.style.display = "flex";
+    console.log("Welcome overlay displayed on load!");
   }
-});
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", showWelcomeOverlayOnLoad);
+} else {
+  showWelcomeOverlayOnLoad();
+}
