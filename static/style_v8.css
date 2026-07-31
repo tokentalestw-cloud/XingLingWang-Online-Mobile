@@ -4337,18 +4337,18 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 3. 雙方分數看板 (#scoreBadgeFixed) 極度微縮、窄寬度、小字體，縮放為 32% */
   #scoreBadgeFixed {
     position: absolute !important;
-    left: 6px !important;
+    left: 8px !important;
     top: 32px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
     background: rgba(10, 8, 20, 0.85) !important;
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 3px 5px !important;
-    transform: scale(0.32) !important;
+    border-radius: 8px !important;
+    padding: 4px 6px !important;
+    transform: scale(0.36) !important;
     transform-origin: top left !important;
-    width: 55px !important; /* 寬度對半縮小至 55px */
+    width: 230px !important;
     height: auto !important;
     margin: 0 !important;
   }
@@ -4385,21 +4385,20 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 4. 對手狀態欄 (#xlwEnemyInfoPanel) 極度微縮、窄寬度、小字體，縮放為 32% */
   #xlwEnemyInfoPanel {
     position: absolute !important;
-    left: 6px !important;
-    top: 86px !important; /* 向上靠緊分數看板 */
+    left: 8px !important;
+    top: 100px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.32) !important;
+    transform: scale(0.36) !important;
     transform-origin: top left !important;
     background: rgba(15, 10, 25, 0.85) !important;
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 3px 5px !important;
-    width: 55px !important; /* 寬度對半縮小至 55px */
-    height: auto !important;
+    border-radius: 8px !important;
+    padding: 4px 6px !important;
     margin: 0 !important;
     display: block !important;
+    width: 230px !important;
   }
 
   #xlwEnemyInfoPanel .enemy-info-title {
@@ -4427,7 +4426,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.30) !important;
+    transform: scale(0.32) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4471,7 +4470,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 7. 我方手牌專區 (.hand-panel) 釘死於視窗底部，設定固定寬度以防 Safari 折疊 Bug */
   .hand-panel {
     position: fixed !important;
-    bottom: 220px !important;
+    bottom: 14px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 520px !important; /* 固定寬度，防範 iOS Safari 寬度崩塌 */
