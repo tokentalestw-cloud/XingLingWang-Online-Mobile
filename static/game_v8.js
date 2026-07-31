@@ -28434,3 +28434,57 @@ document.addEventListener("DOMContentLoaded", () => {
   window.xlwLockOrientation();
   document.body.addEventListener("click", window.xlwLockOrientation, { once: true });
 });
+
+
+// ===== 🏠 貓咪大戰爭風格登入首頁選單與模式控制引擎 =====
+window.xlwChooseMode = function(mode) {
+  const overlay = document.getElementById("xlwWelcomeOverlay");
+  if (overlay) {
+    overlay.classList.add("xlw-welcome-fadeout");
+    setTimeout(() => {
+      overlay.style.display = "none";
+    }, 450);
+  }
+  
+  if (mode === 'single') {
+    // 進入單人對決模式
+    const select = document.getElementById("factionSelect");
+    const faction = select ? select.value : "藝術品";
+    const oppSelect = document.getElementById("opponentSelect");
+    const oppFaction = oppSelect ? oppSelect.value : "隨機牌組";
+    
+    // 初始化單人對戰
+    isMultiplayer = false;
+    isMyTurn = true;
+    
+    // 觸發重新開始戰局
+    const restartBtn = document.getElementById("restartBtn");
+    if (restartBtn) restartBtn.click();
+    console.log("Single-player AI Mode launched!");
+  } else if (mode === 'multi') {
+    // 進入線上雙人對決模式
+    const multiPlayBtn = document.getElementById("multiPlayBtn");
+    if (multiPlayBtn) {
+      // 模擬點擊原本隱藏的線上雙人對決按鈕
+      multiPlayBtn.click();
+    }
+    console.log("Online Multiplayer Mode launched!");
+  }
+};
+
+window.xlwReturnToTitle = function() {
+  const overlay = document.getElementById("xlwWelcomeOverlay");
+  if (overlay) {
+    overlay.classList.remove("xlw-welcome-fadeout");
+    overlay.style.display = "flex";
+  }
+  console.log("Returned to Main Welcome Splash Screen successfully!");
+};
+
+// 確保點開頁面時自動調用首頁顯示
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("xlwWelcomeOverlay");
+  if (overlay) {
+    overlay.style.display = "flex";
+  }
+});
