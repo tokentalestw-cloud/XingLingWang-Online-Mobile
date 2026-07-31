@@ -28467,7 +28467,7 @@ window.xlwChooseMode = function(mode) {
   if (overlay) {
     overlay.classList.add("xlw-welcome-fadeout");
     setTimeout(() => {
-      overlay.style.display = "none";
+      overlay.style.setProperty("display", "none", "important");
     }, 450);
   }
   
@@ -28496,7 +28496,7 @@ window.xlwReturnToTitle = function() {
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.classList.remove("xlw-welcome-fadeout");
-    overlay.style.display = "flex";
+    overlay.style.setProperty("display", "flex", "important");
   }
   console.log("Returned to Main Welcome Splash Screen successfully!");
 };
@@ -28505,7 +28505,7 @@ window.xlwReturnToTitle = function() {
 function showWelcomeOverlayOnLoad() {
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
-    overlay.style.display = "flex";
+    overlay.style.setProperty("display", "flex", "important");
     console.log("Welcome overlay displayed on load!");
   }
 }
