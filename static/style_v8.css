@@ -4453,7 +4453,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
   /* 8. 懸浮 3D 立體我方手牌區 (懸浮高度拉升至 bottom: 14px，保證在戰場之上 100% 完整露出) */
   .hand-panel {
-    position: absolute !important;
+    position: fixed !important;
     bottom: 14px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
