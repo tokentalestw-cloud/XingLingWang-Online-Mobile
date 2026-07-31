@@ -17791,6 +17791,17 @@ function renderHand() {
       cardEl.innerHTML = `<div class="fallback"><b>${card.name}</b><br>${metaText}</div>`;
     }
 
+    // 動態撲克牌扇形展開效果 (Poker Fan-out)
+    const isMobileLandscape = window.matchMedia("(max-width: 1400px) and (orientation: landscape)").matches;
+    const rx = isMobileLandscape ? -15 : 0;
+    const N = hand.length;
+    const mid = (N - 1) / 2;
+    const diff = idx - mid;
+    const rot = diff * 5; // 每張牌旋轉 5 度
+    const ty = Math.abs(diff) * 3; // 兩側牌向下微調 3px 呈圓弧
+    const tx = diff * -4; // 微調間距使扇形收納緊湊
+    cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
+
     // 手牌點擊事件 (區分換牌、魔法、一般召喚與獻祭)
     cardEl.onclick = async (e) => {
       e.stopPropagation();

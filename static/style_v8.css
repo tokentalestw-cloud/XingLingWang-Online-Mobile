@@ -4329,7 +4329,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 30% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.46) !important;
+    transform: translate(-35%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
@@ -4540,9 +4540,9 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
   /* 左側卡牌放大預覽面板獨立彈出適配 */
   .xlw-left-card-panel, #xlwLeftCardPanel {
-    position: absolute !important;
+    position: fixed !important;
     left: 8px !important;
-    bottom: 95px !important;
+    bottom: 8px !important;
     top: auto !important;
     z-index: 10050 !important;
     transform: scale(0.65) !important;
