@@ -618,6 +618,30 @@ async function init() {
       window.addEventListener("orientationchange", () => setTimeout(adjustBoardScale, 250));
     } catch (e) {}
 
+    // 解除首頁按鈕的載入鎖定
+    try {
+      const aiBtn = document.getElementById("xlwWelcomeAiBtn");
+      const multiBtn = document.getElementById("xlwWelcomeMultiBtn");
+      const aiText = document.getElementById("xlwAiBtnText");
+      const multiText = document.getElementById("xlwMultiBtnText");
+
+      if (aiBtn) {
+        aiBtn.disabled = false;
+        aiBtn.style.opacity = "1";
+        aiBtn.style.cursor = "pointer";
+      }
+      if (multiBtn) {
+        multiBtn.disabled = false;
+        multiBtn.style.opacity = "1";
+        multiBtn.style.cursor = "pointer";
+      }
+      if (aiText) aiText.textContent = "單人對抗 AI";
+      if (multiText) multiText.textContent = "線上雙人對決";
+      console.log("Welcome buttons unlocked: card database loaded successfully!");
+    } catch (eUnlock) {
+      console.warn("Failed to unlock welcome buttons:", eUnlock);
+    }
+
     // 解析線上房間參數
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -928,6 +952,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLW_gameInProgress = true;
   // 確保重設為單人對抗 AI 模式，阻斷 any 線上同步邏輯與狀態鎖！
   isMultiplayer = false;
   isMyTurn = true; 
