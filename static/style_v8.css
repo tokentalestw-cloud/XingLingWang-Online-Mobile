@@ -330,7 +330,7 @@ button:disabled {
 #playerGrave { right: 454px !important; top: 627.5px !important; }
 #playerDeck { right: 454px !important; top: 781.5px !important; }
 #playerRace { right: 454px !important; top: 467.5px !important; }
-#playerExile { right: 330px !important; top: 467.5px !important; }
+#playerExile { right: 330px !important; top: 781.5px !important; }
 
 /* ===== 7. 星星戰線 (Battle Line) ===== */
 .battle-line-strip {
@@ -4329,7 +4329,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 30% !important;
     left: 50% !important;
-    transform: translate(-35%, -50%) scale(0.46) !important;
+    transform: translate(-42.5%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
     margin: 0 !important;
   }
@@ -4346,7 +4346,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
     border-radius: 8px !important;
     padding: 4px 6px !important;
-    transform: scale(0.36) !important;
+    transform: scale(0.72) !important;
     transform-origin: top left !important;
     width: 230px !important;
     height: auto !important;
@@ -4386,11 +4386,11 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 8px !important;
-    top: 100px !important;
+    top: 140px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.36) !important;
+    transform: scale(0.72) !important;
     transform-origin: top left !important;
     background: rgba(15, 10, 25, 0.85) !important;
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
@@ -4541,11 +4541,11 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 左側卡牌放大預覽面板獨立彈出適配 */
   .xlw-left-card-panel, #xlwLeftCardPanel {
     position: fixed !important;
-    left: 8px !important;
-    bottom: 8px !important;
+    left: -15px !important;
+    bottom: 4px !important;
     top: auto !important;
     z-index: 10050 !important;
-    transform: scale(0.65) !important;
+    transform: scale(1.30) !important;
     transform-origin: bottom left !important;
   }
 }
