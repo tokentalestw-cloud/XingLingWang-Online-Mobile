@@ -321,16 +321,16 @@ button:disabled {
 #enemyRace { left: 34px !important; top: 467.5px !important; }
 #enemyExile { left: -90px !important; top: 467.5px !important; }
 
-#enemyField { right: 34px !important; top: 301.5px !important; } /* Swapped to bottom */
-#enemyForest { right: 34px !important; top: 155.5px !important; } /* Swapped to top */
+#enemyField { right: 454px !important; top: 301.5px !important; } /* Swapped to bottom */
+#enemyForest { right: 454px !important; top: 155.5px !important; } /* Swapped to top */
 
 #playerField { left: 34px !important; top: 627.5px !important; }
 #playerForest { left: 34px !important; top: 781.5px !important; }
 
-#playerGrave { right: 34px !important; top: 627.5px !important; }
-#playerDeck { right: 34px !important; top: 781.5px !important; }
-#playerRace { right: 34px !important; top: 467.5px !important; }
-#playerExile { right: -90px !important; top: 467.5px !important; }
+#playerGrave { right: 454px !important; top: 627.5px !important; }
+#playerDeck { right: 454px !important; top: 781.5px !important; }
+#playerRace { right: 454px !important; top: 467.5px !important; }
+#playerExile { right: 330px !important; top: 467.5px !important; }
 
 /* ===== 7. 星星戰線 (Battle Line) ===== */
 .battle-line-strip {
@@ -4470,14 +4470,14 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 7. 我方手牌專區 (.hand-panel) 釘死於視窗底部，設定固定寬度以防 Safari 折疊 Bug */
   .hand-panel {
     position: fixed !important;
-    bottom: 14px !important;
+    bottom: 4px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 520px !important; /* 固定寬度，防範 iOS Safari 寬度崩塌 */
+    width: 650px !important; /* 固定寬度，防範 iOS Safari 寬度崩塌 */
     max-width: 90vw !important;
-    height: 80px !important;
-    min-height: 80px !important;
-    max-height: 80px !important;
+    height: 130px !important;
+    min-height: 130px !important;
+    max-height: 130px !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -4508,16 +4508,22 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
   /* 3D 視角立體斜度手牌 (54px x 74px) */
   .hand .card {
-    width: 54px !important;
-    height: 74px !important;
-    min-width: 48px !important;
-    flex: 0 0 54px !important;
-    margin-left: -8px !important;
-    border-radius: 4px !important;
+    width: 80px !important;
+    height: 110px !important;
+    min-width: 60px !important;
+    flex: 0 0 80px !important;
+    margin-left: -15px !important;
+    border-radius: 6px !important;
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important;
     transform: perspective(300px) rotateX(15deg) !important;
     transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0.15s ease !important;
     transform-origin: bottom center !important;
+  }
+  .hand .card .mini-meta {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    padding: 3px 2px !important;
+    background: rgba(8, 6, 12, 0.85) !important;
   }
 
   .hand .card:first-child {
@@ -4528,7 +4534,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   .hand .card:hover,
   .hand .card:active {
     z-index: 200 !important;
-    transform: perspective(300px) rotateX(0deg) translateY(-24px) scale(1.4) !important;
+    transform: perspective(300px) rotateX(0deg) translateY(-35px) scale(1.4) !important;
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 215, 106, 0.3) !important;
   }
 
