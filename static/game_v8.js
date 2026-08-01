@@ -21173,9 +21173,9 @@ function renderEnemyPanel() {
   })();
 
   panel.innerHTML = `
-    <div class="enemy-info-title" style="text-align: center; font-size: 10px !important; white-space: nowrap; font-weight: bold; color: #ffd76a; line-height: 1;">對手手牌</div>
-    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 2px;">
-      <div class="enemy-stat-badge" style="font-size: 13px !important; font-weight: bold; color: #ff7875 !important; padding: 1px 4px !important; margin: 0 !important; white-space: nowrap; border: 0.5px solid rgba(255, 215, 106, 0.2) !important; border-radius: 3px !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
+    <div class="enemy-info-title" style="text-align: center; font-size: 13px !important; font-weight: 900; color: #ffd76a; line-height: 1.1; white-space: nowrap;">對手<br>手牌</div>
+    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 3px;">
+      <div class="enemy-stat-badge" style="font-size: 15px !important; font-weight: bold; color: #ff7875 !important; padding: 1px 2px !important; margin: 0 !important; white-space: nowrap; border: 0.5px solid rgba(255, 215, 106, 0.2) !important; border-radius: 3px !important; width: 100% !important; text-align: center !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
     </div>
   `;
 }
@@ -21613,21 +21613,8 @@ function adjustBoardScale() {
 }
 
 function setupDebugToggle() {
-  let btn = document.getElementById("xlwDebugToggleBtn");
-  if (!btn) {
-    const topbar = document.querySelector(".topbar");
-    if (!topbar) return;
-    btn = document.createElement("button");
-    btn.id = "xlwDebugToggleBtn";
-    btn.type = "button";
-    btn.className = "topbar-setting-btn";
-    const returnBtn = document.getElementById("xlwReturnTitleBtn");
-    if (returnBtn && returnBtn.parentNode) {
-      returnBtn.parentNode.insertBefore(btn, returnBtn);
-    } else {
-      topbar.appendChild(btn);
-    }
-  }
+  const btn = document.getElementById("xlwDebugToggleBtn");
+  if (!btn) return;
 
   const refresh = () => {
     const on = localStorage.getItem("XLW_DEBUG_ALWAYS_ON") === "1";

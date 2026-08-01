@@ -4516,11 +4516,11 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #phaseDisplayPanelHard {
     position: absolute !important;
     top: 2px !important;
-    left: 320px !important;
+    left: 295px !important;
     width: 960px !important;
     transform: scale(0.60) !important;
     transform-origin: top left !important;
-    z-index: 10000 !important;
+    z-index: 999999 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -5007,4 +5007,30 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 /* 隱藏最上排原生的陣營與牌組下拉選單 (已由 Pre-Battle Modal 取代) */
 .topbar-group.deck-group {
   display: none !important;
+}
+
+
+/* ===== 獨立置頂最右上角功能按鈕列 ===== */
+.xlw-fixed-top-right-action-bar {
+  position: fixed !important;
+  top: 6px !important;
+  right: 8px !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: rgba(12, 8, 22, 0.92) !important;
+  border: 1.5px solid rgba(255, 215, 106, 0.45) !important;
+  border-radius: 50px !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7) !important;
+}
+
+.xlw-fixed-top-right-action-bar button {
+  height: 28px !important;
+  font-size: 12px !important;
+  padding: 2px 8px !important;
+  white-space: nowrap !important;
 }
