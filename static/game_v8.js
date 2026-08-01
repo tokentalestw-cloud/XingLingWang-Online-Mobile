@@ -21173,9 +21173,9 @@ function renderEnemyPanel() {
   })();
 
   panel.innerHTML = `
-    <div class="enemy-info-title" style="text-align: center; font-size: 13px !important;">👾 對手手牌</div>
-    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 4px;">
-      <div class="enemy-stat-badge" style="font-size: 15px !important; font-weight: bold; color: #ff7875 !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span> 張</div>
+    <div class="enemy-info-title" style="text-align: center; font-size: 11px !important; white-space: nowrap;">👾手牌</div>
+    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 2px;">
+      <div class="enemy-stat-badge" style="font-size: 13px !important; font-weight: bold; color: #ff7875 !important; padding: 0 !important; margin: 0 !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
     </div>
   `;
 }
