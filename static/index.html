@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.40-deletions-and-phase-enlarged">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20.50-phase-panel-cointoss-and-shift-left-40">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -128,7 +128,7 @@
   </header>
 
   <!-- 中上方獨立階段狀態提示板 -->
-  <div id="phaseDisplayPanelHard" class="phase-display-panel-hard">
+  <div id="phaseDisplayPanelHard" class="phase-display-panel-hard" style="display: none !important;">
     <div class="phase-hard-title">目前階段：<span id="phaseTextHard">召喚階段</span></div>
     <div class="phase-hard-help" id="phaseHelpHard">可進行單位召喚、祭品召喚或發動手牌魔法。</div>
   </div>
@@ -320,7 +320,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.40-deletions-and-phase-enlarged" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20.50-phase-panel-cointoss-and-shift-left-40" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->

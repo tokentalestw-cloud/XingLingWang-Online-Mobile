@@ -897,6 +897,8 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+  if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
   isMultiplayer = false;
   isMyTurn = true; 
   opponent_mulligan_done = true; 
@@ -26140,6 +26142,8 @@ async function rollSinglePlayerCoin(playerGuess) {
 }
 
 function startSinglePlayerGameActual(playerGoesFirst) {
+  const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+  if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
   const overlay = getOrCreateCoinTossOverlay();
   overlay.style.display = "none";
   
@@ -28543,6 +28547,8 @@ window.xlwConfirmPreBattle = function() {
 };
 
 window.xlwReturnToTitle = function() {
+  const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+  if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.classList.remove("xlw-welcome-fadeout");
