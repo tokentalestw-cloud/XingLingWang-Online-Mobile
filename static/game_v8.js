@@ -21173,9 +21173,9 @@ function renderEnemyPanel() {
   })();
 
   panel.innerHTML = `
-    <div class="enemy-info-title" style="text-align: center; font-size: 11px !important; white-space: nowrap;">👾手牌</div>
-    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 2px;">
-      <div class="enemy-stat-badge" style="font-size: 13px !important; font-weight: bold; color: #ff7875 !important; padding: 0 !important; margin: 0 !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
+    <div class="enemy-info-title" style="text-align: center; font-size: 14px !important; font-weight: bold; line-height: 1.15; color: #ffd76a;">對手<br>手牌</div>
+    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 4px;">
+      <div class="enemy-stat-badge" style="font-size: 17px !important; font-weight: bold; color: #ff7875 !important; padding: 0 !important; margin: 0 !important; white-space: nowrap;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
     </div>
   `;
 }
@@ -21532,7 +21532,7 @@ function adjustBoardScale() {
   if (!board) return;
 
   const isMobile = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
-  const isPortraitMobile = window.matchMedia("(max-width: 900px) and (orientation: portrait), (pointer: coarse) and (max-width: 900px)").matches;
+  const isPortraitMobile = false; // Forced to false to prevent portrait scaling recalculations and layout jumping on physical rotation
   const isLandscapeMobile = isMobile && !isPortraitMobile;
 
   const boardNaturalHeight = isPortraitMobile ? 920 : 940;
