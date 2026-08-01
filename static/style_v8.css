@@ -5014,19 +5014,27 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 /* ===== 獨立置頂最右上角功能按鈕列 ===== */
 .xlw-fixed-top-right-action-bar {
   position: fixed !important;
-  top: 6px !important;
-  right: 8px !important;
+  top: 4px !important;
+  right: 6px !important;
   left: auto !important;
   bottom: auto !important;
   z-index: 999999 !important;
-  display: flex !important;
+  display: none;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 4px !important;
   background: rgba(12, 8, 22, 0.92) !important;
-  border: 1.5px solid rgba(255, 215, 106, 0.45) !important;
+  border: 1px solid rgba(255, 215, 106, 0.4) !important;
   border-radius: 50px !important;
-  padding: 4px 10px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7) !important;
+  padding: 2px 6px !important;
+  transform: scale(0.82) !important;
+  transform-origin: top right !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+}
+.xlw-fixed-top-right-action-bar button {
+  height: 24px !important;
+  font-size: 11px !important;
+  padding: 1px 6px !important;
+  white-space: nowrap !important;
 }
 
 .xlw-fixed-top-right-action-bar button {
@@ -5039,4 +5047,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 /* 徹底移除對手手牌狀態欄、頂部品牌 Logo 與 Debug 按鈕 */
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel, .topbar-brand, #xlwDebugToggleBtn {
   display: none !important;
+}
+
+/* 徹底移除頂層工具列邊框與底色 */
+.topbar, .topbar-grouped-v9 {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }

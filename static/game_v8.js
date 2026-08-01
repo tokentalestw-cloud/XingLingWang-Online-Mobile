@@ -899,6 +899,8 @@ function strictSourceCards(deckName) {
 function initGameEmptyState() {
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
+  const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+  if (topBarBtn) topBarBtn.style.setProperty("display", "none", "important");
   isMultiplayer = false;
   isMyTurn = true; 
   opponent_mulligan_done = true; 
@@ -26144,6 +26146,8 @@ async function rollSinglePlayerCoin(playerGuess) {
 function startSinglePlayerGameActual(playerGoesFirst) {
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
+  const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+  if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
   const overlay = getOrCreateCoinTossOverlay();
   overlay.style.display = "none";
   
@@ -28549,6 +28553,8 @@ window.xlwConfirmPreBattle = function() {
 window.xlwReturnToTitle = function() {
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
+  const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+  if (topBarBtn) topBarBtn.style.setProperty("display", "none", "important");
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.classList.remove("xlw-welcome-fadeout");

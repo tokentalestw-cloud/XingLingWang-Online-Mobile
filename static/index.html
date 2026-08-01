@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.50-phase-panel-cointoss-and-shift-left-40">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20.60-clean-topbar-and-phase-shifted">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
 </head>
 <body>
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
-  <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar">
+  <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
     <button id="scoreBtn" class="topbar-setting-btn">📜 戰局紀錄</button>
     <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
     
@@ -320,7 +320,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.50-phase-panel-cointoss-and-shift-left-40" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20.60-clean-topbar-and-phase-shifted" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
