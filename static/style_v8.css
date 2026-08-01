@@ -4367,18 +4367,18 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   }
 
   .score-badge-label {
-    font-size: 9.5px !important; /* 字體縮小 */
+    font-size: 14.5px !important; /* 字體雙倍放大 */
     color: #ffd76a !important;
   }
 
   .score-badge-num {
-    font-size: 12px !important; /* 字體縮小 */
+    font-size: 17.0px !important; /* 字體雙倍放大 */
     font-weight: bold !important;
     color: #ffffff !important;
   }
 
   .score-badge-subrow {
-    font-size: 8px !important; /* 字體縮小 */
+    font-size: 12.0px !important; /* 字體雙倍放大 */
     opacity: 0.85 !important;
   }
 
@@ -4426,7 +4426,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.64) !important;
+    transform: scale(1.28) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4551,7 +4551,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     bottom: 0px !important;
     top: auto !important;
     z-index: 10050 !important;
-    transform: scale(1.60) !important;
+    transform: scale(0.80) !important;
     transform-origin: bottom left !important;
   }
 }
