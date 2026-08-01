@@ -4896,3 +4896,101 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     height: 100% !important;
   }
 }
+
+
+/* ===== 選擇出戰牌組遮罩樣式 (Pre-battle Modal) ===== */
+.xlw-prebattle-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(8, 6, 15, 0.96) !important;
+  backdrop-filter: blur(15px) !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.prebattle-container {
+  background: linear-gradient(145deg, rgba(30, 20, 45, 0.98) 0%, rgba(15, 10, 25, 0.99) 100%) !important;
+  border: 1.5px solid rgba(255, 215, 106, 0.45) !important;
+  border-radius: 20px !important;
+  padding: 24px 30px !important;
+  width: 460px !important;
+  max-width: 90% !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 215, 106, 0.15) !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.prebattle-title {
+  margin: 0 0 8px 0 !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  color: #ffd76a !important;
+  text-shadow: 0 0 10px rgba(255, 215, 106, 0.4) !important;
+}
+
+.prebattle-field-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.prebattle-label {
+  font-size: 13px !important;
+  font-weight: bold !important;
+  color: #ffe6a0 !important;
+}
+
+.prebattle-selects-row {
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.prebattle-select {
+  flex: 1 !important;
+  height: 38px !important;
+  font-size: 14px !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 215, 106, 0.4) !important;
+  background: rgba(20, 16, 32, 0.85) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  outline: none !important;
+}
+
+.prebattle-select:focus {
+  border-color: #ffd76a !important;
+  box-shadow: 0 0 8px rgba(255, 215, 106, 0.3) !important;
+}
+
+.prebattle-action-row {
+  display: flex !important;
+  justify-content: flex-end !important;
+  margin-top: 10px !important;
+}
+
+.prebattle-confirm-btn {
+  background: linear-gradient(135deg, #a67c1e 0%, #d4af37 50%, #f9d976 100%) !important;
+  border: 1px solid #ffffff !important;
+  color: #0b0713 !important;
+  font-weight: 900 !important;
+  font-size: 15px !important;
+  padding: 8px 20px !important;
+  border-radius: 50px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.prebattle-confirm-btn:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6) !important;
+}

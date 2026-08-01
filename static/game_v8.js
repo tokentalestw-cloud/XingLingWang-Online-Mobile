@@ -21173,9 +21173,9 @@ function renderEnemyPanel() {
   })();
 
   panel.innerHTML = `
-    <div class="enemy-info-title" style="text-align: center; font-size: 13px !important; white-space: nowrap; font-weight: bold; color: #ffd76a;">👾 對手手牌</div>
-    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 4px;">
-      <div class="enemy-stat-badge" style="font-size: 15px !important; font-weight: bold; color: #ff7875 !important; padding: 2px 6px !important; margin: 0 !important; white-space: nowrap; border: 0.5px solid rgba(255, 215, 106, 0.25) !important; border-radius: 4px !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span> 張</div>
+    <div class="enemy-info-title" style="text-align: center; font-size: 10px !important; white-space: nowrap; font-weight: bold; color: #ffd76a; line-height: 1;">對手手牌</div>
+    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 2px;">
+      <div class="enemy-stat-badge" style="font-size: 13px !important; font-weight: bold; color: #ff7875 !important; padding: 1px 4px !important; margin: 0 !important; white-space: nowrap; border: 0.5px solid rgba(255, 215, 106, 0.2) !important; border-radius: 3px !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
     </div>
   `;
 }
@@ -28472,6 +28472,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ===== 🏠 貓咪大戰爭風格登入首頁選單與模式控制引擎 =====
 window.xlwChooseMode = function(mode) {
+  window.XLW_ACTIVE_MODE = mode;
+  
+  const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
+  if (!modal) return;
+  
+  // Populate Factions
+  const factionSelect = document.getElementById("factionSelect");
+  const modalFactionSelect = document.getElementById("modalFactionSelect");
+  if (factionSelect && modalFactionSelect) {
+    modalFactionSelect.innerHTML = factionSelect.innerHTML;
+    modalFactionSelect.value = factionSelect.value;
+  }
+  
+  // Populate Decks
+  const deckSelect = document.getElementById("deckSelect");
+  const modalDeckSelect = document.getElementById("modalDeckSelect");
+  if (deckSelect && modalDeckSelect) {
+    modalDeckSelect.innerHTML = deckSelect.innerHTML;
+    modalDeckSelect.value = deckSelect.value;
+  }
+  
+  // Populate Opponent Decks
+  const aiDeckSelect = document.getElementById("aiDeckSelect");
+  const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
+  if (aiDeckSelect && modalAiDeckSelect) {
+    modalAiDeckSelect.innerHTML = aiDeckSelect.innerHTML;
+    modalAiDeckSelect.value = aiDeckSelect.value;
+  }
+  
+  // Set up event listeners for faction selection changes
+  if (modalFactionSelect && modalDeckSelect && factionSelect && deckSelect) {
+    modalFactionSelect.onchange = () => {
+      factionSelect.value = modalFactionSelect.value;
+      // Trigger base select change to update deck dropdown
+      const event = new Event('change');
+      factionSelect.dispatchEvent(event);
+      // Wait a fraction of a millisecond and copy options
+      setTimeout(() => {
+        modalDeckSelect.innerHTML = deckSelect.innerHTML;
+        modalDeckSelect.value = deckSelect.value;
+      }, 10);
+    };
+  }
+  
+  // Toggle enemy selection group
+  const enemyGroup = document.getElementById("prebattleEnemyGroup");
+  if (enemyGroup) {
+    enemyGroup.style.display = (mode === 'single') ? "block" : "none";
+  }
+  
+  // Show the modal
+  modal.style.setProperty("display", "flex", "important");
+};
+
+window.xlwConfirmPreBattle = function() {
+  const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
+  if (modal) {
+    modal.style.setProperty("display", "none", "important");
+  }
+  
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.classList.add("xlw-welcome-fadeout");
@@ -28480,24 +28540,40 @@ window.xlwChooseMode = function(mode) {
     }, 450);
   }
   
+  // Apply final selections to original selectors
+  const modalFactionSelect = document.getElementById("modalFactionSelect");
+  const factionSelect = document.getElementById("factionSelect");
+  if (modalFactionSelect && factionSelect) {
+    factionSelect.value = modalFactionSelect.value;
+  }
+  
+  const modalDeckSelect = document.getElementById("modalDeckSelect");
+  const deckSelect = document.getElementById("deckSelect");
+  if (modalDeckSelect && deckSelect) {
+    deckSelect.value = modalDeckSelect.value;
+  }
+  
+  const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
+  const aiDeckSelect = document.getElementById("aiDeckSelect");
+  if (modalAiDeckSelect && aiDeckSelect) {
+    aiDeckSelect.value = modalAiDeckSelect.value;
+  }
+  
+  const mode = window.XLW_ACTIVE_MODE;
   if (mode === 'single') {
-    // 進入單人對決模式，直接調用全域的 newGame 啟動對戰
     if (typeof newGame === 'function') {
       newGame();
     } else {
       const newGameBtn = document.getElementById("newGameBtn");
       if (newGameBtn) newGameBtn.click();
     }
-    console.log("Single-player AI Mode launched!");
   } else if (mode === 'multi') {
-    // 進入線上雙人對決模式，直接調用全域的 showMultiplayerLobby 啟動大廳
     if (typeof showMultiplayerLobby === 'function') {
       showMultiplayerLobby();
     } else {
       const multiplayerBtn = document.getElementById("multiplayerBtn");
       if (multiplayerBtn) multiplayerBtn.click();
     }
-    console.log("Online Multiplayer Mode launched!");
   }
 };
 
