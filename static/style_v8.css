@@ -4036,7 +4036,7 @@ html, body {
 
 /* 直向持握時顯示旋轉提示遮罩 */
 .xlw-mobile-rotate-prompt {
-  display: none;
+  display: none !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -4051,11 +4051,7 @@ html, body {
   box-sizing: border-box;
 }
 
-@media (max-width: 900px) and (orientation: portrait) {
-  .xlw-mobile-rotate-prompt {
-    display: flex !important;
-  }
-}
+/* Rotation prompt disabled on portrait mobile */
 
 .rotate-card {
   background: linear-gradient(145deg, rgba(25, 18, 38, 0.95), rgba(12, 8, 20, 0.98));
