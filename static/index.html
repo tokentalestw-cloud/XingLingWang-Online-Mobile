@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.00-performance-optimized">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20.10-enemy-panel-repositioned-topbar-decks-hidden">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -81,7 +81,7 @@
     </div>
 
     <!-- 1. 牌組選擇區塊 -->
-    <div class="topbar-group deck-group">
+    <div class="topbar-group deck-group" style="display: none !important;">
       <span class="group-label">🎴 我方:</span>
       <select id="factionSelect" aria-label="選擇種族">
         <option value="藝術品">藝術品</option>
@@ -325,7 +325,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.00-performance-optimized" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20.10-enemy-panel-repositioned-topbar-decks-hidden" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->

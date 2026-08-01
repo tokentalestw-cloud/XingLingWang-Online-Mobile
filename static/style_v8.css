@@ -4441,8 +4441,8 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   /* 4. 對手狀態欄 (#xlwEnemyInfoPanel) 極度微縮、窄寬度、小字體，縮放為 32% */
   #xlwEnemyInfoPanel {
     position: absolute !important;
-    left: 180px !important;
-    top: 32px !important;
+    left: 8px !important;
+    top: 85px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -5000,4 +5000,9 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   will-change: transform;
   backface-visibility: hidden;
   perspective: 1000px;
+}
+
+/* 隱藏最上排原生的陣營與牌組下拉選單 (已由 Pre-Battle Modal 取代) */
+.topbar-group.deck-group {
+  display: none !important;
 }
