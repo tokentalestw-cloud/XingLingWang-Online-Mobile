@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=19.00-final-layout-fixed">
+  <link rel="stylesheet" href="/static/style_v8.css?v=19.10-layout-micro-fixes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -152,16 +152,7 @@
         <!-- 左側卡牌詳細資訊看板 (極簡高清放大版) -->
         <!-- 左側卡牌詳細資訊看板 -->
         <!-- 左側卡牌詳細資訊看板 (分離裝備說明版) -->
-        <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" onclick="this.style.display='none'">
-          <div class="panel-inner">
-            <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大 4 倍顯示</div>
-            <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
-              <div class="detail-img-wrap">
-                <img id="leftPanelImg" src="" alt="card detail image">
-              </div>
-            </div>
-          </div>
-        </aside>
+
         
         <!-- 對手功能區域 (左側) -->
         <div id="enemyDeck" class="zone side dark">對手牌庫</div>
@@ -340,7 +331,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=19.00-final-layout-fixed" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=19.10-layout-micro-fixes" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
@@ -411,5 +402,15 @@
       </div>
     </div>
   </div>
+        <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" onclick="this.style.display='none'">
+          <div class="panel-inner">
+            <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大 4 倍顯示</div>
+            <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
+              <div class="detail-img-wrap">
+                <img id="leftPanelImg" src="" alt="card detail image">
+              </div>
+            </div>
+          </div>
+        </aside>
 </body>
 </html>

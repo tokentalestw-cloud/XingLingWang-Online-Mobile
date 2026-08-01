@@ -4426,7 +4426,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.32) !important;
+    transform: scale(0.64) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4461,10 +4461,16 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: absolute !important;
     top: 20px !important;
     left: 450px !important;
+    width: 960px !important;
     transform: scale(0.48) !important;
     transform-origin: top left !important;
     z-index: 10000 !important;
     display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  #phaseDisplayPanelHard .phase-hard-help {
+    white-space: nowrap !important;
   }
 
   /* 7. 我方手牌專區 (.hand-panel) 釘死於視窗底部，設定固定寬度以防 Safari 折疊 Bug */
@@ -4545,7 +4551,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     bottom: 0px !important;
     top: auto !important;
     z-index: 10050 !important;
-    transform: scale(1.30) !important;
+    transform: scale(1.60) !important;
     transform-origin: bottom left !important;
   }
 }
