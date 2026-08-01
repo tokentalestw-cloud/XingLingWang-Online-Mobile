@@ -28489,10 +28489,14 @@ window.xlwChooseMode = function(mode) {
     };
   }
   
-  // Toggle enemy selection group
+  // Toggle enemy selection group (Hidden for online multi-player)
   const enemyGroup = document.getElementById("prebattleEnemyGroup");
   if (enemyGroup) {
-    enemyGroup.style.display = (mode === 'single') ? "block" : "none";
+    if (mode === 'single') {
+      enemyGroup.style.setProperty("display", "block", "important");
+    } else {
+      enemyGroup.style.setProperty("display", "none", "important");
+    }
   }
   
   // Show the modal

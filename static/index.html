@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.60-clean-topbar-and-phase-shifted">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20.70-lobby-opaque-and-buttons-shortened">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -72,10 +72,10 @@
 <body>
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
-    <button id="scoreBtn" class="topbar-setting-btn">📜 戰局紀錄</button>
+    <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
     <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
     
-    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()" style="background: linear-gradient(135deg, #3c1e5c 0%, #1c0e2b 100%) !important; border: 2px solid #ffd76a !important; color: #ffe600 !important; font-weight: bold !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 50px !important; box-shadow: 0 0 10px rgba(255, 215, 106, 0.3) !important; cursor: pointer !important; white-space: nowrap !important;">🏠 返回首頁</button>
+    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()" style="background: linear-gradient(135deg, #3c1e5c 0%, #1c0e2b 100%) !important; border: 2px solid #ffd76a !important; color: #ffe600 !important; font-weight: bold !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 50px !important; box-shadow: 0 0 10px rgba(255, 215, 106, 0.3) !important; cursor: pointer !important; white-space: nowrap !important;">🏠 首頁</button>
   </div>
 
   <!-- 上方導航工具列 -->
@@ -320,7 +320,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.60-clean-topbar-and-phase-shifted" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20.70-lobby-opaque-and-buttons-shortened" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
