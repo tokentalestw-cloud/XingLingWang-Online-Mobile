@@ -897,6 +897,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
   const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
@@ -28555,6 +28556,7 @@ window.xlwConfirmPreBattle = function() {
 };
 
 window.xlwReturnToTitle = function() {
+  if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
   const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");

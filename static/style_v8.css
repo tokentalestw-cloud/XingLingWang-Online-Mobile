@@ -5066,7 +5066,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   height: 100vh !important;
   background: rgba(8, 6, 16, 0.98) !important;
   z-index: 9999999 !important;
-  display: flex !important;
+  display: none;
   justify-content: center !important;
   align-items: center !important;
 }
