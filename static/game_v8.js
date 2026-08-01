@@ -21164,20 +21164,8 @@ function renderScore() {
 }
 
 function renderEnemyPanel() {
-  const panel = $("xlwEnemyInfoPanel") || (() => {
-    const div = document.createElement("div");
-    div.id = "xlwEnemyInfoPanel";
-    div.className = "xlw-enemy-info-panel";
-    document.body.appendChild(div);
-    return div;
-  })();
-
-  panel.innerHTML = `
-    <div class="enemy-info-title" style="text-align: center; font-size: 13px !important; font-weight: 900; color: #ffd76a; line-height: 1.1; white-space: nowrap;">對手<br>手牌</div>
-    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 3px;">
-      <div class="enemy-stat-badge" style="font-size: 15px !important; font-weight: bold; color: #ff7875 !important; padding: 1px 2px !important; margin: 0 !important; white-space: nowrap; border: 0.5px solid rgba(255, 215, 106, 0.2) !important; border-radius: 3px !important; width: 100% !important; text-align: center !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span>張</div>
-    </div>
-  `;
+  const panel = $("xlwEnemyInfoPanel");
+  if (panel) panel.style.display = "none";
 }
 
 // 實作清爽的一體化右下主操作面板
@@ -21615,25 +21603,6 @@ function adjustBoardScale() {
 function setupDebugToggle() {
   const btn = document.getElementById("xlwDebugToggleBtn");
   if (!btn) return;
-
-  const refresh = () => {
-    const on = localStorage.getItem("XLW_DEBUG_ALWAYS_ON") === "1";
-    btn.textContent = on ? "Debug：開" : "Debug：關";
-    if (!on) {
-      const panel = document.getElementById("xlwDebugPanel");
-      if (panel) panel.remove();
-    } else {
-      createDebugPanel();
-    }
-  };
-
-  btn.onclick = () => {
-    const on = localStorage.getItem("XLW_DEBUG_ALWAYS_ON") === "1";
-    localStorage.setItem("XLW_DEBUG_ALWAYS_ON", on ? "0" : "1");
-    refresh();
-  };
-
-  refresh();
 }
 
 function setupWebSocketEvents() {
