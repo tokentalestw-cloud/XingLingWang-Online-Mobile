@@ -21172,12 +21172,10 @@ function renderEnemyPanel() {
     return div;
   })();
 
-  const deckName = window.XLW_ENEMY.deckName || "妖怪村莊";
   panel.innerHTML = `
-    <div class="enemy-info-title">👾 對手狀態：<span class="enemy-deck-tag">${deckName}</span></div>
-    <div class="enemy-stats-row" style="display: flex; gap: 8px; margin-top: 6px;">
-      <div class="enemy-stat-badge">🎴 牌庫：<span id="enemyDeckCountInfo">${window.XLW_ENEMY.deck.length}</span> 張</div>
-      <div class="enemy-stat-badge">🃏 手牌：<span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span> 張</div>
+    <div class="enemy-info-title" style="text-align: center; font-size: 13px !important;">👾 對手手牌</div>
+    <div class="enemy-stats-row" style="display: flex; justify-content: center; margin-top: 4px;">
+      <div class="enemy-stat-badge" style="font-size: 15px !important; font-weight: bold; color: #ff7875 !important;"><span id="enemyHandCountInfo">${window.XLW_ENEMY.hand.length}</span> 張</div>
     </div>
   `;
 }
