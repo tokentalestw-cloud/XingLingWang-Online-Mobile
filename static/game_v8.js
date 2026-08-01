@@ -28582,3 +28582,37 @@ if (document.readyState === "loading") {
 } else {
   showWelcomeOverlayOnLoad();
 }
+
+window.xlwStartOnlineHost = function(roomId, playerId) {
+  const deckSelect = document.getElementById("deckSelect");
+  const deckName = deckSelect ? deckSelect.value : "";
+  isMultiplayer = true;
+  isMyTurn = true;
+  room_id = roomId;
+  player_id = playerId;
+  player_role = "player1";
+  
+  const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const ws_url = `${ws_protocol}//${window.location.host}/ws/battle/${roomId}/${playerId}/player1`;
+  if (ws) { try { ws.close(); } catch(e){} }
+  ws = new WebSocket(ws_url);
+  setupWebSocketEvents();
+  console.log("Online Room created & WebSocket connected for Host:", roomId);
+};
+
+window.xlwStartOnlineGuest = function(roomId, playerId) {
+  const deckSelect = document.getElementById("deckSelect");
+  const deckName = deckSelect ? deckSelect.value : "";
+  isMultiplayer = true;
+  isMyTurn = false;
+  room_id = roomId;
+  player_id = playerId;
+  player_role = "player2";
+  
+  const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const ws_url = `${ws_protocol}//${window.location.host}/ws/battle/${roomId}/${playerId}/player2`;
+  if (ws) { try { ws.close(); } catch(e){} }
+  ws = new WebSocket(ws_url);
+  setupWebSocketEvents();
+  console.log("Online Room joined & WebSocket connected for Guest:", roomId);
+};

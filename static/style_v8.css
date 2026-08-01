@@ -5070,3 +5070,27 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   justify-content: center !important;
   align-items: center !important;
 }
+
+/* ===== 統一極致精美按鈕樣式 (.topbar-pill-btn) ===== */
+.topbar-pill-btn {
+  background: linear-gradient(135deg, rgba(30, 20, 45, 0.9) 0%, rgba(15, 10, 25, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 215, 106, 0.45) !important;
+  border-radius: 50px !important;
+  color: #ffd76a !important;
+  font-weight: bold !important;
+  font-size: 11px !important;
+  padding: 3px 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  height: 24px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+.topbar-pill-btn:hover {
+  border-color: #ffd76a !important;
+  box-shadow: 0 0 10px rgba(255, 215, 106, 0.4) !important;
+  transform: scale(1.05) !important;
+}

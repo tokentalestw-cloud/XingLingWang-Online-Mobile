@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.80-multiplayer-lobby-hidden-by-default">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20.90-unified-buttons-and-online-lobby">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -236,7 +236,10 @@
 
   <!-- 線上對戰大廳配對彈窗 -->
   <div id="multiplayerLobby" class="score-panel" style="display: none !important; justify-content: center; align-items: center; background: rgba(8,6,16,0.98); z-index: 9999999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
-    <div class="score-box" style="width: 420px; padding: 25px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif;">
+    <div class="score-box" style="position: relative; width: 440px; padding: 25px;
+      <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
+        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn">🏠 首頁</button>
+      </div> border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif;">
       <button onclick="hideMultiplayerLobby()" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 24px; cursor: pointer; float: right; margin-top: -10px;">×</button>
       <h2 style="color: #ffd76a; text-align: center; margin-bottom: 20px; font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
       
@@ -290,15 +293,26 @@
     function createOnlineRoom() {
       const roomId = Math.floor(1000 + Math.random() * 9000);
       const playerId = 'host_' + Math.floor(Math.random() * 10000);
-      const deckSelect = document.getElementById("deckSelect");
-      const deckName = deckSelect ? deckSelect.value : "";
       
-      document.getElementById('lobbyStatusArea').style.display = 'block';
-      document.getElementById('lobbyStatusText').textContent = `正在建立房號為 ${roomId} 的對戰房間，等待對手加入...`;
+      const statusArea = document.getElementById('lobbyStatusArea');
+      const statusText = document.getElementById('lobbyStatusText');
+      if (statusArea) statusArea.style.display = 'block';
+      if (statusText) {
+        statusText.innerHTML = `
+          <div style="font-size: 16px; color: #ffe600; margin-bottom: 6px;">👑 房間建立成功！房號：<span style="font-weight: 900; font-size: 22px; color: #ffffff; letter-spacing: 2px;">${roomId}</span></div>
+          <div style="font-size: 13px; color: #ffd76a;">正在等待對手輸入房號加入房間...</div>
+          <div style="margin-top: 10px;">
+            <button type="button" onclick="navigator.clipboard.writeText('${roomId}'); alert('房號已複製：${roomId}');" class="topbar-pill-btn" style="padding: 4px 12px !important;">📋 複製房號</button>
+          </div>
+        `;
+      }
       
-      setTimeout(() => {
-        window.location.href = `/?room=${roomId}&player=${playerId}&role=player1&deck=${encodeURIComponent(deckName)}`;
-      }, 1000);
+      const actions = document.querySelectorAll('.lobby-action-card');
+      actions.forEach(a => a.style.display = 'none');
+      
+      if (typeof window.xlwStartOnlineHost === 'function') {
+        window.xlwStartOnlineHost(roomId, playerId);
+      }
     }
     
     function joinOnlineRoom() {
@@ -309,21 +323,22 @@
         return;
       }
       
-      const deckSelect = document.getElementById("deckSelect");
-      const deckName = deckSelect ? deckSelect.value : "";
-      
       const playerId = 'guest_' + Math.floor(Math.random() * 10000);
-      document.getElementById('lobbyStatusArea').style.display = 'block';
-      document.getElementById('lobbyStatusText').textContent = `正在連接房號為 ${roomId} 的對戰房間，請稍候...`;
+      const statusArea = document.getElementById('lobbyStatusArea');
+      const statusText = document.getElementById('lobbyStatusText');
+      if (statusArea) statusArea.style.display = 'block';
+      if (statusText) {
+        statusText.innerHTML = `<div style="color: #ffd76a; font-size: 14px; font-weight: bold;">正在連接房號為 ${roomId} 的對戰房間，請稍候...</div>`;
+      }
       
-      setTimeout(() => {
-        window.location.href = `/?room=${roomId}&player=${playerId}&role=player2&deck=${encodeURIComponent(deckName)}`;
-      }, 1000);
+      if (typeof window.xlwStartOnlineGuest === 'function') {
+        window.xlwStartOnlineGuest(roomId, playerId);
+      }
     }
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.80-multiplayer-lobby-hidden-by-default" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20.90-unified-buttons-and-online-lobby" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
