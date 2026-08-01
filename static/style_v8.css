@@ -4888,4 +4888,11 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     transform-origin: top left !important;
     overflow: hidden !important;
   }
+  /* Force all wrappers to occupy the full rotated space of the body */
+  .game-shell,
+  .board-wrap,
+  .xlw-welcome-overlay {
+    width: 100% !important;
+    height: 100% !important;
+  }
 }
