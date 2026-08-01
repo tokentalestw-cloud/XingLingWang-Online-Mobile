@@ -4376,7 +4376,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #scoreBadgeFixed {
     position: absolute !important;
     left: 8px !important;
-    top: 32px !important;
+    top: 110px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -4424,7 +4424,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 180px !important;
-    top: 32px !important;
+    top: 110px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -4433,10 +4433,10 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(15, 10, 25, 0.85) !important;
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
     border-radius: 8px !important;
-    padding: 4px 6px !important;
+    padding: 2px 4px !important;
     margin: 0 !important;
     display: block !important;
-    width: 110px !important;
+    width: 55px !important;
   }
 
   #xlwEnemyInfoPanel .enemy-info-title {
@@ -4498,7 +4498,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #phaseDisplayPanelHard {
     position: absolute !important;
     top: 32px !important;
-    left: 270px !important;
+    left: 295px !important;
     width: 960px !important;
     transform: scale(0.48) !important;
     transform-origin: top left !important;
