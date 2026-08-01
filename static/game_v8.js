@@ -28643,12 +28643,12 @@ function renderEnemyFloatingHand() {
   
   for (let i = 0; i < handCount; i++) {
     const offset = i - midIndex;
-    const rotateDeg = (offset * 2.8).toFixed(1);
+    const rotateDeg = (offset * 3.5).toFixed(1);
     
     cardsHTML += `
       <img src="/static/card_back.jpeg" 
            class="floating-enemy-card-back" 
-           style="transform: rotateX(25deg) rotate(${rotateDeg}deg); transform-origin: bottom center;" 
+           style="transform: rotate(${rotateDeg}deg); transform-origin: bottom center;" 
            alt="對手手牌牌背">
     `;
   }

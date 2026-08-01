@@ -5133,54 +5133,58 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 
-/* ===== 頂部中央對手懸浮手牌 (3D立體垂直微縮 38x54px, top: -12px 絕不遮擋戰線) ===== */
+/* ===== 頂部中央對手懸浮手牌 (超清晰 60x84px 正確長寬比、top: 8px 零模糊無遮擋) ===== */
 .xlw-enemy-floating-hand {
   position: absolute !important;
-  top: -12px !important;
+  top: 8px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  z-index: 10000 !important;
+  z-index: 99999999 !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   pointer-events: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .floating-enemy-hand-wrap {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 1px !important;
+  gap: 2px !important;
 }
 
 .floating-enemy-count-badge {
-  font-size: 8.5px !important;
+  font-size: 10px !important;
   font-weight: bold !important;
   color: #ffd76a !important;
-  background: rgba(12, 8, 22, 0.9) !important;
-  border: 0.5px solid rgba(255, 215, 106, 0.3) !important;
-  border-radius: 10px !important;
-  padding: 1px 6px !important;
+  background: rgba(12, 8, 22, 0.95) !important;
+  border: 1px solid rgba(255, 215, 106, 0.4) !important;
+  border-radius: 12px !important;
+  padding: 2px 8px !important;
   white-space: nowrap !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
 }
 
 .floating-enemy-cards-row {
   display: flex !important;
   justify-content: center !important;
   align-items: flex-end !important;
-  perspective: 400px !important;
-  transform-style: preserve-3d !important;
+  padding-top: 2px !important;
 }
 
 .floating-enemy-card-back {
-  width: 38px !important;
-  height: 54px !important;
+  width: 60px !important;
+  height: 84px !important;
   object-fit: cover !important;
-  border-radius: 3px !important;
-  border: 1px solid rgba(255, 215, 106, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8) !important;
-  margin-left: -16px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(255, 215, 106, 0.5) !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85), 0 0 8px rgba(255, 215, 106, 0.2) !important;
+  margin-left: -26px !important;
   transition: all 0.2s ease !important;
+  filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .floating-enemy-card-back:first-child {
