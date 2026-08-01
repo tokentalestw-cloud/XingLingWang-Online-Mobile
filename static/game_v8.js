@@ -21613,11 +21613,21 @@ function adjustBoardScale() {
 }
 
 function setupDebugToggle() {
-  const topbar = document.querySelector(".topbar");
-  if (!topbar || document.getElementById("xlwDebugToggleBtn")) return;
-  const btn = document.createElement("button");
-  btn.id = "xlwDebugToggleBtn";
-  btn.type = "button";
+  let btn = document.getElementById("xlwDebugToggleBtn");
+  if (!btn) {
+    const topbar = document.querySelector(".topbar");
+    if (!topbar) return;
+    btn = document.createElement("button");
+    btn.id = "xlwDebugToggleBtn";
+    btn.type = "button";
+    btn.className = "topbar-setting-btn";
+    const returnBtn = document.getElementById("xlwReturnTitleBtn");
+    if (returnBtn && returnBtn.parentNode) {
+      returnBtn.parentNode.insertBefore(btn, returnBtn);
+    } else {
+      topbar.appendChild(btn);
+    }
+  }
 
   const refresh = () => {
     const on = localStorage.getItem("XLW_DEBUG_ALWAYS_ON") === "1";
@@ -21636,7 +21646,6 @@ function setupDebugToggle() {
     refresh();
   };
 
-  topbar.appendChild(btn);
   refresh();
 }
 
