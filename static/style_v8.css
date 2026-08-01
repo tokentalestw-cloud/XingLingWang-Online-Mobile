@@ -100,7 +100,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  backdrop-filter: blur(4px);
+  
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
 }
 
@@ -188,8 +188,7 @@ button:disabled {
   box-shadow:
     inset 0 0 120px rgba(0, 0, 0, 0.75), /* Deep high-contrast dark vignette boundaries */
     0 20px 60px rgba(0, 0, 0, 0.45);
-  background-color: rgba(16, 12, 32, 0.82) !important; /* Premium dark cosmic obsidian glass board */
-  backdrop-filter: blur(16px);
+  background-color: rgba(12, 8, 22, 0.96) !important; /* Premium dark cosmic obsidian glass board */
 }
 
 /* 戰場左/右側古樸插圖背景 */
@@ -262,7 +261,7 @@ button:disabled {
   font-size: 13px;
   font-weight: 900;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  backdrop-filter: blur(4px);
+  
   z-index: 2;
   color: #ffffff !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 5px rgba(0, 0, 0, 0.8) !important;
@@ -512,7 +511,7 @@ button:disabled {
   overflow: hidden;
   z-index: 5;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
 }
 
 .hand-title {
@@ -561,7 +560,7 @@ button:disabled {
   gap: 12px;
   z-index: 100;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
   pointer-events: auto !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -664,7 +663,7 @@ button:disabled {
   text-align: center;
   z-index: 100;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
   color: #ffffff !important;
 }
 
@@ -702,7 +701,7 @@ button:disabled {
   font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
   z-index: 100;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
 }
 
 .score-badge-section {
@@ -784,7 +783,7 @@ button:disabled {
   line-height: 1.8;
   z-index: 100;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
   color: #ffffff !important;
 }
 
@@ -810,7 +809,7 @@ button:disabled {
   font-size: 13px;
   z-index: 101;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
+  
   transition: all 0.3s ease;
   transform: translateX(-240px);
   opacity: 0;
@@ -1011,7 +1010,7 @@ button:disabled {
   text-align: center;
   z-index: 100;
   box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-  backdrop-filter: blur(10px);
+  
   display: none;
 }
 
@@ -1259,7 +1258,7 @@ button:disabled {
   border-radius: 16px;
   padding: 12px;
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
+  background-color: rgba(15, 10, 25, 0.96);
   z-index: 10000 !important;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -3293,7 +3292,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   width: 300px !important;
   padding: 14px 16px !important;
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.6), 0 12px 35px rgba(0, 0, 0, 0.92), 0 0 25px rgba(255, 230, 0, 0.4) !important;
-  backdrop-filter: blur(16px) !important;
+  background-color: rgba(15, 10, 25, 0.96) !important;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
 }
 
@@ -4993,4 +4992,12 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 .prebattle-confirm-btn:hover {
   transform: scale(1.05) !important;
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6) !important;
+}
+
+/* ===== GPU Hardware Acceleration and Performance Optimization ===== */
+.card, .slot, .zone, .bouncing-mascot, #boardWrap, .traveler-3d-img {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
