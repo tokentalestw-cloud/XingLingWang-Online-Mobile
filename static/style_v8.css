@@ -5128,3 +5128,56 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   box-shadow: 0 0 12px rgba(255, 215, 106, 0.5) !important;
   transform: scale(1.05) !important;
 }
+
+
+/* ===== 頂部中央對手懸浮手牌 (僅顯示牌背) ===== */
+.xlw-enemy-floating-hand {
+  position: absolute !important;
+  top: 2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  pointer-events: none !important;
+}
+
+.floating-enemy-hand-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+.floating-enemy-count-badge {
+  font-size: 10px !important;
+  font-weight: bold !important;
+  color: #ffd76a !important;
+  background: rgba(12, 8, 22, 0.85) !important;
+  border: 0.5px solid rgba(255, 215, 106, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 1px 6px !important;
+  white-space: nowrap !important;
+}
+
+.floating-enemy-cards-row {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.floating-enemy-card-back {
+  width: 28px !important;
+  height: 42px !important;
+  object-fit: cover !important;
+  border-radius: 3px !important;
+  border: 0.5px solid rgba(255, 215, 106, 0.4) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+  margin-left: -12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.floating-enemy-card-back:first-child {
+  margin-left: 0 !important;
+}

@@ -897,6 +897,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
@@ -17571,6 +17572,7 @@ function xlwSanitizeGoatCardTypes() {
 }
 
 function render() {
+  renderEnemyFloatingHand();
   // 易怒喵 (C-CAT-0055) 進入/移動偵測
   if (phase === "防守階段" && window.XLW_previousFrontRow) {
     for (let i = 0; i < 5; i++) {
@@ -26145,6 +26147,7 @@ async function rollSinglePlayerCoin(playerGuess) {
 }
 
 function startSinglePlayerGameActual(playerGoesFirst) {
+  renderEnemyFloatingHand();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
   const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
@@ -28556,6 +28559,7 @@ window.xlwConfirmPreBattle = function() {
 };
 
 window.xlwReturnToTitle = function() {
+  const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
@@ -28616,3 +28620,35 @@ window.xlwStartOnlineGuest = function(roomId, playerId) {
   setupWebSocketEvents();
   console.log("Online Room joined & WebSocket connected for Guest:", roomId);
 };
+
+function renderEnemyFloatingHand() {
+  let container = document.getElementById("xlwEnemyFloatingHand");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "xlwEnemyFloatingHand";
+    container.className = "xlw-enemy-floating-hand";
+    document.body.appendChild(container);
+  }
+  
+  if (!window.XLW_gameInProgress) {
+    container.style.display = "none";
+    return;
+  }
+  
+  container.style.display = "flex";
+  const handCount = window.XLW_ENEMY ? (window.XLW_ENEMY.hand ? window.XLW_ENEMY.hand.length : 0) : 0;
+  
+  let cardsHTML = '';
+  for (let i = 0; i < handCount; i++) {
+    cardsHTML += `<img src="/static/card_back.jpeg" class="floating-enemy-card-back" alt="對手手牌牌背">`;
+  }
+  
+  container.innerHTML = `
+    <div class="floating-enemy-hand-wrap">
+      <span class="floating-enemy-count-badge">👾 對手手牌 (${handCount}張)</span>
+      <div class="floating-enemy-cards-row">
+        ${cardsHTML}
+      </div>
+    </div>
+  `;
+}
