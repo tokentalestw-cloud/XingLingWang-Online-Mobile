@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20.90-unified-buttons-and-online-lobby">
+  <link rel="stylesheet" href="/static/style_v8.css?v=21.00-html-fixed-buttons-unified-phase-shrunk">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -216,30 +216,10 @@
   
   <!-- 戰對統計與歷史紀錄彈窗 -->
   <div id="scorePanel" class="score-panel">
-    <div class="score-box">
-      <button id="closeScorePanel" class="close">×</button>
-      <h2 style="color: #ffd76a; text-align: center; margin-top: 0; font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif;">BATTLE SCORE STATUS</h2>
-      
-      <div class="score-row">
-        <b>我方總得分</b>
-        <span><span id="xlwPlayerScore" style="color: #ffd76a; font-weight: bold;">0</span> ★</span>
-      </div>
-      <div class="score-row">
-        <b>對手總得分</b>
-        <span><span id="xlwEnemyScore" style="color: #ff5c5c; font-weight: bold;">0</span> ★</span>
-      </div>
-      
-      <h3 style="color: #cdaa52; margin-top: 20px;">戰鬥歷史紀錄</h3>
-      <div id="xlwBattleLogContent" class="battle-log"></div>
-    </div>
-  </div>
-
-  <!-- 線上對戰大廳配對彈窗 -->
-  <div id="multiplayerLobby" class="score-panel" style="display: none !important; justify-content: center; align-items: center; background: rgba(8,6,16,0.98); z-index: 9999999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
-    <div class="score-box" style="position: relative; width: 440px; padding: 25px;
+    <div class="score-box" style="position: relative; width: 440px; padding: 25px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
       <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
         <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn">🏠 首頁</button>
-      </div> border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif;">
+      </div>
       <button onclick="hideMultiplayerLobby()" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 24px; cursor: pointer; float: right; margin-top: -10px;">×</button>
       <h2 style="color: #ffd76a; text-align: center; margin-bottom: 20px; font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
       
@@ -338,7 +318,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20.90-unified-buttons-and-online-lobby" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=21.00-html-fixed-buttons-unified-phase-shrunk" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
