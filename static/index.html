@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=19.99-prebattle-deck-select-ready">
+  <link rel="stylesheet" href="/static/style_v8.css?v=19.99-prebattle-modal-fixed">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -325,7 +325,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=19.99-prebattle-deck-select-ready" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=19.99-prebattle-modal-fixed" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
@@ -345,6 +345,33 @@
     <span>📱 <b>點擊此處開啟手機全螢幕對戰</b>（或點擊 Safari 下方「分享 ➔ 加入主畫面」獲得 100% 滿版體驗）</span>
     <button class="fs-btn">進入全螢幕 ⛶</button>
   </div>
+    <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
+  <div id="xlwPreBattleDeckSelectOverlay" class="xlw-prebattle-overlay" style="display: none !important;">
+    <div class="prebattle-container">
+      <h2 class="prebattle-title">⚔️ 選擇出戰陣容</h2>
+      
+      <!-- 我方陣營與牌組選擇 -->
+      <div class="prebattle-field-group">
+        <div class="prebattle-label">我方出戰陣營與類型：</div>
+        <div class="prebattle-selects-row">
+          <select id="modalFactionSelect" class="prebattle-select"></select>
+          <select id="modalDeckSelect" class="prebattle-select"></select>
+        </div>
+      </div>
+      
+      <!-- 對手牌組選擇 (僅在單人模式顯示) -->
+      <div id="prebattleEnemyGroup" class="prebattle-field-group">
+        <div class="prebattle-label">對手 AI 牌組：</div>
+        <select id="modalAiDeckSelect" class="prebattle-select"></select>
+      </div>
+      
+      <!-- 確認按鈕 (位於右下角) -->
+      <div class="prebattle-action-row">
+        <button id="prebattleConfirmBtn" class="prebattle-confirm-btn" onclick="window.xlwConfirmPreBattle()">確認出戰 ➔</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 🐱 貓咪大戰爭風格之星靈王登入歡迎首頁 (Battle Cats Style Welcome Splash Screen) -->
   <div id="xlwWelcomeOverlay" class="xlw-welcome-overlay">
     <div class="welcome-background-glow"></div>
