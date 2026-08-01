@@ -4311,6 +4311,18 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
   }
 
+  /* 調整卡墊背景圖向左下方移動與格子對齊 */
+  .board::before {
+    left: -90px !important;
+    right: 330px !important;
+    height: 47% !important;
+  }
+  .board::after {
+    left: -90px !important;
+    right: 330px !important;
+    height: 47% !important;
+  }
+
   /* 最上排按鈕與工具列整齊美化樣式 */
   .topbar-grouped-v9 {
     display: flex !important;
@@ -4376,7 +4388,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #scoreBadgeFixed {
     position: absolute !important;
     left: 8px !important;
-    top: 110px !important;
+    top: 32px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -4424,7 +4436,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 180px !important;
-    top: 110px !important;
+    top: 32px !important;
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
@@ -4433,10 +4445,10 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(15, 10, 25, 0.85) !important;
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
     border-radius: 8px !important;
-    padding: 2px 4px !important;
+    padding: 4px 6px !important;
     margin: 0 !important;
     display: block !important;
-    width: 55px !important;
+    width: 110px !important;
   }
 
   #xlwEnemyInfoPanel .enemy-info-title {
@@ -4498,7 +4510,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   #phaseDisplayPanelHard {
     position: absolute !important;
     top: 32px !important;
-    left: 295px !important;
+    left: 270px !important;
     width: 960px !important;
     transform: scale(0.48) !important;
     transform-origin: top left !important;
