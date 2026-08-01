@@ -28639,8 +28639,19 @@ function renderEnemyFloatingHand() {
   const handCount = window.XLW_ENEMY ? (window.XLW_ENEMY.hand ? window.XLW_ENEMY.hand.length : 0) : 0;
   
   let cardsHTML = '';
+  const midIndex = (handCount - 1) / 2;
+  
   for (let i = 0; i < handCount; i++) {
-    cardsHTML += `<img src="/static/card_back.jpeg" class="floating-enemy-card-back" alt="對手手牌牌背">`;
+    const offset = i - midIndex;
+    const rotateDeg = (offset * 4.5).toFixed(1);
+    const translateY = (Math.abs(offset) * 1.5).toFixed(1);
+    
+    cardsHTML += `
+      <img src="/static/card_back.jpeg" 
+           class="floating-enemy-card-back" 
+           style="transform: rotate(${rotateDeg}deg) translateY(${translateY}px); transform-origin: bottom center;" 
+           alt="對手手牌牌背">
+    `;
   }
   
   container.innerHTML = `

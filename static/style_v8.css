@@ -4511,18 +4511,18 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .board #phaseDisplayPanelHard,
 #phaseDisplayPanelHard {
   position: absolute !important;
-  top: 467.5px !important;
-  right: 150px !important;
+  top: 40px !important;
+  right: 20px !important;
   left: auto !important;
-  width: 160px !important;
-  max-width: 160px !important;
-  transform: scale(0.90) !important;
-  transform-origin: top left !important;
+  width: 150px !important;
+  max-width: 150px !important;
+  transform: scale(0.85) !important;
+  transform-origin: top right !important;
   z-index: 999999 !important;
   display: none;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 6px 10px !important;
+  padding: 4px 8px !important;
   background: rgba(12, 8, 22, 0.95) !important;
   border: 1.5px solid rgba(255, 215, 106, 0.5) !important;
   border-radius: 8px !important;
@@ -5132,10 +5132,10 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 
-/* ===== 頂部中央對手懸浮手牌 (僅顯示牌背) ===== */
+/* ===== 頂部中央對手懸浮手牌 (撲克牌攤開、透視微縮 52x72px、貼頂) ===== */
 .xlw-enemy-floating-hand {
   position: absolute !important;
-  top: 2px !important;
+  top: 0px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 10000 !important;
@@ -5149,11 +5149,11 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 
 .floating-enemy-count-badge {
-  font-size: 10px !important;
+  font-size: 9px !important;
   font-weight: bold !important;
   color: #ffd76a !important;
   background: rgba(12, 8, 22, 0.85) !important;
@@ -5166,17 +5166,18 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .floating-enemy-cards-row {
   display: flex !important;
   justify-content: center !important;
-  align-items: center !important;
+  align-items: flex-end !important;
+  padding-top: 2px !important;
 }
 
 .floating-enemy-card-back {
-  width: 78px !important;
-  height: 108px !important;
+  width: 52px !important;
+  height: 72px !important;
   object-fit: cover !important;
-  border-radius: 6px !important;
-  border: 1.5px solid rgba(255, 215, 106, 0.5) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 106, 0.2) !important;
-  margin-left: -35px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 215, 106, 0.5) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 8px rgba(255, 215, 106, 0.2) !important;
+  margin-left: -22px !important;
   transition: all 0.2s ease !important;
 }
 
