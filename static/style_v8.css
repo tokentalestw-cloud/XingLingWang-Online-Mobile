@@ -4174,7 +4174,7 @@ body.xlw-iphone14-sim-active .game-shell #boardWrap {
   min-width: 1400px !important;
   min-height: 760px !important;
   position: absolute !important;
-  top: 50% !important;
+  top: calc(50% + 25px) !important;
   left: 50% !important;
   transform: translate(-50%, -50%) scale(0.44) !important;
   transform-origin: center center !important;
@@ -4372,7 +4372,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: 30% !important;
+    top: calc(30% + 25px) !important;
     left: 50% !important;
     transform: translate(-42.5%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
