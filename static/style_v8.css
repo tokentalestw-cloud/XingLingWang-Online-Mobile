@@ -4174,7 +4174,7 @@ body.xlw-iphone14-sim-active .game-shell #boardWrap {
   min-width: 1400px !important;
   min-height: 760px !important;
   position: absolute !important;
-  top: 50% !important;
+  top: calc(50% + 100px) !important;
   left: 50% !important;
   transform: translate(-50%, -50%) scale(0.44) !important;
   transform-origin: center center !important;
@@ -4372,7 +4372,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: 30% !important;
+    top: calc(30% + 100px) !important;
     left: 50% !important;
     transform: translate(-42.5%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
@@ -5136,7 +5136,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* ===== 頂部中央對手懸浮手牌 (超清晰 60x84px 正確長寬比、top: 8px 零模糊無遮擋) ===== */
 .xlw-enemy-floating-hand {
   position: absolute !important;
-  top: 8px !important;
+  top: -20px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 99999999 !important;
@@ -5152,19 +5152,11 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 2px !important;
+  gap: 0px !important;
 }
 
 .floating-enemy-count-badge {
-  font-size: 10px !important;
-  font-weight: bold !important;
-  color: #ffd76a !important;
-  background: rgba(12, 8, 22, 0.95) !important;
-  border: 1px solid rgba(255, 215, 106, 0.4) !important;
-  border-radius: 12px !important;
-  padding: 2px 8px !important;
-  white-space: nowrap !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+  display: none !important;
 }
 
 .floating-enemy-cards-row {
