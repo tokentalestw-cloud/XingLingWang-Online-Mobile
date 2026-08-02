@@ -28630,12 +28630,19 @@ function renderEnemyFloatingHand() {
     document.body.appendChild(container);
   }
   
-  if (!window.XLW_gameInProgress) {
-    container.style.display = "none";
+  const coinOverlay = document.getElementById("xlwCoinOverlay");
+  const coinShowing = coinOverlay && coinOverlay.style.display !== "none" && coinOverlay.style.display !== "";
+  const welcomeOverlay = document.getElementById("xlwWelcomeOverlay");
+  const welcomeShowing = welcomeOverlay && welcomeOverlay.style.display !== "none" && welcomeOverlay.style.display !== "";
+  const prebattleModal = document.getElementById("xlwPreBattleDeckSelectOverlay");
+  const prebattleShowing = prebattleModal && prebattleModal.style.display !== "none" && prebattleModal.style.display !== "";
+
+  if (!window.XLW_gameInProgress || coinShowing || welcomeShowing || prebattleShowing) {
+    container.style.setProperty("display", "none", "important");
     return;
   }
   
-  container.style.display = "flex";
+  container.style.setProperty("display", "flex", "important");
   const handCount = window.XLW_ENEMY ? (window.XLW_ENEMY.hand ? window.XLW_ENEMY.hand.length : 0) : 0;
   
   let cardsHTML = '';
