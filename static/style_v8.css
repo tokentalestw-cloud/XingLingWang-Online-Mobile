@@ -4174,7 +4174,7 @@ body.xlw-iphone14-sim-active .game-shell #boardWrap {
   min-width: 1400px !important;
   min-height: 760px !important;
   position: absolute !important;
-  top: calc(50% + 50px) !important;
+  top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) scale(0.44) !important;
   transform-origin: center center !important;
@@ -4372,7 +4372,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: calc(30% + 50px) !important;
+    top: 30% !important;
     left: 50% !important;
     transform: translate(-42.5%, -50%) scale(0.46) !important;
     transform-origin: center center !important;
@@ -5174,7 +5174,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   border-radius: 5px !important;
   border: 1.5px solid rgba(255, 215, 106, 0.5) !important;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.85), 0 0 8px rgba(255, 215, 106, 0.2) !important;
-  margin-left: -26px !important;
+  margin-left: -20px !important;
   transition: all 0.2s ease !important;
   filter: none !important;
   backdrop-filter: none !important;

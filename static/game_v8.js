@@ -28650,7 +28650,7 @@ function renderEnemyFloatingHand() {
   
   for (let i = 0; i < handCount; i++) {
     const offset = i - midIndex;
-    const rotateDeg = (offset * 3.5).toFixed(1);
+    const rotateDeg = (offset * 5.2).toFixed(1);
     
     cardsHTML += `
       <img src="/static/card_back.jpeg" 
