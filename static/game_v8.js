@@ -9434,8 +9434,11 @@ async function runDebbiePlacementFlow() {
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
 async function changeActionPhase(targetPhase) {
+  if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+    window.XLW_Tutorial.handleInteraction("click_phase_btn", { phase: targetPhase });
+  }
   window.xlwClearAllPendingResolvers();
-  if (turn === 1 || (countdownActive && countdownRemaining === 1)) {
+  if ((turn === 1 && (!window.XLW_Tutorial || !window.XLW_Tutorial.active)) || (countdownActive && countdownRemaining === 1)) {
     setStatus("第一回合或生死倒數最後一回合不能進行戰術佈陣或進攻宣言。");
     return;
   }
@@ -28597,6 +28600,338 @@ window.xlwReturnToTitle = function() {
     overlay.style.setProperty("display", "flex", "important");
   }
   console.log("Returned to Main Welcome Splash Screen successfully!");
+};
+
+// ===== 🎓 新手教學模式控制器 (Interactive Beginner Tutorial Engine) =====
+window.XLW_Tutorial = {
+  active: false,
+  currentStep: 0,
+  interactiveTarget: null,
+
+  steps: [
+    {
+      title: "🎓 歡迎來到星靈王新手導覽！",
+      content: "歡迎各位星靈使者！本教學將為您詳細介紹星靈王棋盤場地區域、手牌資源、卡牌資訊與實戰發動規則。點擊『下一步』開始探索！",
+      spotlightSelector: null,
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "⚔️ 戰場區域：前排戰線與後排戰線",
+      content: "棋盤中央是我方與對手的戰鬥單位區域。單位卡牌可召喚至前排戰線或後排戰線。前排單位為戰鬥第一線，當前排尚有空位時優先保護後排！",
+      spotlightSelector: ".field-row.player-front",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🌟 戰場區域：星星戰線",
+      content: "位於戰線兩側的星星戰線。可用於發動持續生效的場地魔法卡、放置特殊裝備，或提供額外星星★點數資源加成。",
+      spotlightSelector: "#playerField",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🪦 戰場區域：墓地區",
+      content: "放置戰敗破壞的單位卡與發動完畢的魔法卡。部分特定種族（如：亡靈、獸人）具備從墓地回收或還魂召喚的強大效果！",
+      spotlightSelector: "#playerGraveyard",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🌀 戰場區域：除外區",
+      content: "回合結束時，若手牌超過 10 張上限，多餘的手牌需放至除外區。被除外的卡牌一般情況下無法再被回收。",
+      spotlightSelector: "#playerExile",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "👑 戰場區域：種族卡槽",
+      content: "隊伍選擇的種族卡會安置於此。種族卡提供全場單位的主動與被動戰術天賦支援！",
+      spotlightSelector: "#playerRaceSlot",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🎴 戰場區域：牌組區",
+      content: "存放您精心建構的牌組。每回合開始時將自動從牌組區抽取卡牌至手牌。",
+      spotlightSelector: "#playerDeck",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🃏 戰術資源：我方手牌",
+      content: "下方展扇形攤開的為我方手牌。點擊卡牌可預覽詳細數值、發動魔法或進行單位打出與獻祭召喚！",
+      spotlightSelector: "#hand",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "👾 對手手牌",
+      content: "頂部浮動展示的是對手當前擁有的手牌張數與牌背。隨時留意對手的手牌變化，預判敵方攻勢！",
+      spotlightSelector: "#xlwEnemyFloatingHand",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "🔍 卡牌資訊代表意義解密",
+      content: "點擊卡牌時會開啟詳細資訊面板。卡牌主要包含：攻擊力(ATK)、盾牌/防護(DEF)、祭品需求(Tribute Cost)、★點數(Score Stars)與特殊效果！",
+      spotlightSelector: null,
+      anatomyModal: true,
+      interactive: null
+    },
+    {
+      title: "⚔️ 實戰演練：手把手操作體驗",
+      content: "接下來，我們將模擬一次真實的回合！系統已為您準備了起手卡牌，請跟隨導師指引動手操作吧！",
+      spotlightSelector: null,
+      anatomyModal: false,
+      setupBattle: true,
+      interactive: null
+    },
+    {
+      title: "🃏 實戰 Step 1：選取手牌單位卡",
+      content: "請點擊手牌中第一張單位卡【萌萌小貓】，將其準備打出至戰場！",
+      spotlightSelector: "#hand .card",
+      anatomyModal: false,
+      interactive: {
+        type: "click_card",
+        index: 0
+      }
+    },
+    {
+      title: "📍 實戰 Step 2：放置至前排戰線",
+      content: "太棒了！現在請點擊我方前排戰線的第一個空格 (前排1)，完成單位召喚！",
+      spotlightSelector: ".field-row.player-front .slot",
+      anatomyModal: false,
+      interactive: {
+        type: "click_slot",
+        zone: "player_front",
+        idx: 0
+      }
+    },
+    {
+      title: "⚔️ 實戰 Step 3：進入進攻宣言階段",
+      content: "單位已成功召喚！現在請點擊右下角操作面板上的【進攻宣言】按鈕，準備展開攻擊！",
+      spotlightSelector: "#stableActionAttack",
+      anatomyModal: false,
+      interactive: {
+        type: "click_phase_btn",
+        phase: "進攻宣言"
+      }
+    },
+    {
+      title: "🔥 實戰 Step 4：宣告戰鬥攻擊",
+      content: "最後一步！請點擊我方剛召喚的【萌萌小貓】，再點擊對手場上的敵方單位，發動震撼打擊！",
+      spotlightSelector: ".field-row.player-front .slot",
+      anatomyModal: false,
+      interactive: {
+        type: "click_slot",
+        zone: "player_front",
+        idx: 0
+      }
+    },
+    {
+      title: "🎉 恭喜完成新手教學！",
+      content: "太出色了！您已掌握《星靈王》的核心規則與戰術打法。現在，回到主選單開始您的正式星靈對決吧！",
+      spotlightSelector: null,
+      anatomyModal: false,
+      interactive: null
+    }
+  ],
+
+  start: function() {
+    this.active = true;
+    this.currentStep = 0;
+
+    const welcome = document.getElementById("xlwWelcomeOverlay");
+    if (welcome) welcome.style.setProperty("display", "none", "important");
+
+    const overlay = document.getElementById("xlwTutorialOverlay");
+    if (overlay) overlay.style.setProperty("display", "flex", "important");
+
+    if (typeof newGame === 'function') {
+      window.XLW_gameInProgress = true;
+      isMultiplayer = false;
+      isMyTurn = true;
+    }
+
+    this.renderStep();
+  },
+
+  setupDemoBattle: function() {
+    window.XLW_gameInProgress = true;
+    isMultiplayer = false;
+    isMyTurn = true;
+    phase = "召喚階段";
+    turn = 2;
+    normalSummonUsed = false;
+    tacticalSummonUsed = false;
+
+    const demoUnit = {
+      id: "R-CAT-0001",
+      name: "萌萌小貓",
+      type: "unit",
+      deck: "喵喵賊",
+      faction: "喵喵賊",
+      race: "喵喵賊",
+      attack: "3",
+      score: 1,
+      tribute: 0,
+      image: "/static/card_images/c_cat_0001.jpeg",
+      effect_text: "可愛又能幹的初階打手喵！"
+    };
+
+    hand = [demoUnit];
+    field = {
+      player_front: [null, null, null, null, null],
+      player_back: [null, null, null, null, null],
+      enemy_front: [
+        {
+          card: {
+            id: "DEMO_ENEMY",
+            name: "訓練用木人",
+            type: "unit",
+            attack: "1",
+            score: 1,
+            tribute: 0,
+            image: "/static/card_images/c_nms_0019.jpeg"
+          },
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: 1,
+          summonedZone: "enemy_front"
+        },
+        null, null, null, null
+      ],
+      enemy_back: [null, null, null, null, null]
+    };
+
+    const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+    if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
+    const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+    if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
+
+    render();
+  },
+
+  renderStep: function() {
+    const step = this.steps[this.currentStep];
+    if (!step) return;
+
+    if (step.setupBattle) {
+      this.setupDemoBattle();
+    }
+
+    const titleEl = document.getElementById("xlwTutorialTitle");
+    const contentEl = document.getElementById("xlwTutorialContent");
+    const counterEl = document.getElementById("xlwTutorialStepCounter");
+
+    if (titleEl) titleEl.textContent = step.title;
+    if (contentEl) contentEl.textContent = step.content;
+    if (counterEl) counterEl.textContent = `${this.currentStep + 1} / ${this.steps.length}`;
+
+    const prevBtn = document.getElementById("xlwTutorialPrevBtn");
+    const nextBtn = document.getElementById("xlwTutorialNextBtn");
+    if (prevBtn) prevBtn.disabled = (this.currentStep === 0);
+    if (nextBtn) {
+      if (this.currentStep === this.steps.length - 1) {
+        nextBtn.textContent = "完成並返回首頁 🎉";
+      } else {
+        nextBtn.textContent = "下一步 ►";
+      }
+    }
+
+    const anatomyModal = document.getElementById("xlwCardAnatomyModal");
+    if (anatomyModal) {
+      if (step.anatomyModal) {
+        anatomyModal.style.setProperty("display", "flex", "important");
+      } else {
+        anatomyModal.style.setProperty("display", "none", "important");
+      }
+    }
+
+    const spotlight = document.getElementById("xlwTutorialSpotlight");
+    if (spotlight) {
+      if (step.spotlightSelector) {
+        const target = document.querySelector(step.spotlightSelector);
+        if (target) {
+          const rect = target.getBoundingClientRect();
+          spotlight.style.display = "block";
+          spotlight.style.top = `${rect.top - 8}px`;
+          spotlight.style.left = `${rect.left - 8}px`;
+          spotlight.style.width = `${rect.width + 16}px`;
+          spotlight.style.height = `${rect.height + 16}px`;
+        } else {
+          spotlight.style.display = "none";
+        }
+      } else {
+        spotlight.style.display = "none";
+      }
+    }
+  },
+
+  nextStep: function() {
+    if (this.currentStep < this.steps.length - 1) {
+      this.currentStep++;
+      this.renderStep();
+    } else {
+      this.endTutorial();
+    }
+  },
+
+  prevStep: function() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.renderStep();
+    }
+  },
+
+  endTutorial: function() {
+    this.active = false;
+    const overlay = document.getElementById("xlwTutorialOverlay");
+    if (overlay) overlay.style.setProperty("display", "none", "important");
+
+    const anatomyModal = document.getElementById("xlwCardAnatomyModal");
+    if (anatomyModal) anatomyModal.style.setProperty("display", "none", "important");
+
+    const spotlight = document.getElementById("xlwTutorialSpotlight");
+    if (spotlight) spotlight.style.display = "none";
+
+    window.xlwReturnToTitle();
+  },
+
+  handleInteraction: function(actionType, payload) {
+    if (!this.active) return false;
+    const step = this.steps[this.currentStep];
+    if (!step || !step.interactive) return false;
+
+    if (step.interactive.type === actionType) {
+      if (actionType === "click_card" && payload.index === step.interactive.index) {
+        toggleSelectCard(payload.index);
+        setTimeout(() => this.nextStep(), 300);
+        return true;
+      }
+      if (actionType === "click_slot" && payload.zone === step.interactive.zone && payload.idx === step.interactive.idx) {
+        performSummonToSlot(payload.zone, payload.idx);
+        setTimeout(() => this.nextStep(), 300);
+        return true;
+      }
+      if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
+        changeActionPhase(payload.phase);
+        setTimeout(() => this.nextStep(), 300);
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+window.xlwStartTutorial = function() {
+  if (window.XLW_Tutorial) {
+    window.XLW_Tutorial.start();
+  } else {
+    console.error("XLW_Tutorial engine not loaded");
+  }
 };
 
 // 確保點開頁面時自動調用首頁顯示 (抗 Safari 競態條件載入引擎)
