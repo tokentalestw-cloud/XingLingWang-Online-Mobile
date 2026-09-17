@@ -622,8 +622,10 @@ async function init() {
     try {
       const aiBtn = document.getElementById("xlwWelcomeAiBtn");
       const multiBtn = document.getElementById("xlwWelcomeMultiBtn");
+      const tutBtn = document.getElementById("xlwWelcomeTutorialBtn");
       const aiText = document.getElementById("xlwAiBtnText");
       const multiText = document.getElementById("xlwMultiBtnText");
+      const tutText = document.getElementById("xlwTutorialBtnText");
 
       if (aiBtn) {
         aiBtn.disabled = false;
@@ -635,8 +637,14 @@ async function init() {
         multiBtn.style.opacity = "1";
         multiBtn.style.cursor = "pointer";
       }
+      if (tutBtn) {
+        tutBtn.disabled = false;
+        tutBtn.style.opacity = "1";
+        tutBtn.style.cursor = "pointer";
+      }
       if (aiText) aiText.textContent = "單人對抗 AI";
       if (multiText) multiText.textContent = "線上雙人對決";
+      if (tutText) tutText.textContent = "🎓 新手教學模式";
       console.log("Welcome buttons unlocked: card database loaded successfully!");
     } catch (eUnlock) {
       console.warn("Failed to unlock welcome buttons:", eUnlock);
@@ -17812,6 +17820,14 @@ function renderHand() {
     // 手牌點擊事件 (區分換牌、魔法、一般召喚與獻祭)
     cardEl.onclick = async (e) => {
       e.stopPropagation();
+      if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+        const handled = window.XLW_Tutorial.handleInteraction("click_card", { index: idx, card });
+        if (handled) {
+          selectedHandForSummon = idx;
+          render();
+          return;
+        }
+      }
       if (window.XLW_exileExcessHandActive) {
         const card = hand[idx];
         hand.splice(idx, 1);
@@ -18051,6 +18067,11 @@ function renderField() {
 
         cardEl.onclick = async (e) => {
           e.stopPropagation();
+          
+          if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+            const handled = window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx, obj });
+            if (handled) return;
+          }
           
           if (window.XLW_peepeeboyPlacementActive || window.XLW_receptionistPlacementActive) {
             setStatus("請點選我方場上的空格！");
@@ -20595,6 +20616,11 @@ function renderField() {
 
         slot.onclick = (e) => {
           e.stopPropagation();
+          
+          if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+            const handled = window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx });
+            if (handled) return;
+          }
           
           if (window.XLW_meowToyShopPlacementActive) {
             if (zone.startsWith("enemy_")) {

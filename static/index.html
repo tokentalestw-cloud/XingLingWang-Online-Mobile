@@ -401,6 +401,12 @@
           <span class="btn-shine"></span>
         </button>
         
+        <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwStartTutorial()" disabled style="opacity: 0.55; cursor: not-allowed;">
+          <span class="btn-icon">🎓</span>
+          <span class="btn-text" id="xlwTutorialBtnText">載入中...</span>
+          <span class="btn-shine"></span>
+        </button>
+
         <a href="/static/deck_builder.html" style="text-decoration: none; width: 100%; display: flex; justify-content: center;">
           <button class="menu-btn menu-builder" type="button">
             <span class="btn-icon">🎴</span>
@@ -416,15 +422,93 @@
       </div>
     </div>
   </div>
-        <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" onclick="this.style.display='none'">
-          <div class="panel-inner">
-            <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大 4 倍顯示</div>
-            <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
-              <div class="detail-img-wrap">
-                <img id="leftPanelImg" src="" alt="card detail image">
+
+  <!-- 新手教學引導遮罩與彈窗 (Tutorial Mode Spotlight & Guide Box) -->
+  <div id="xlwTutorialOverlay" class="xlw-tutorial-overlay" style="display: none !important;">
+    <!-- 全螢幕黑透攔截罩 (防誤觸未亮起區域) -->
+    <div id="xlwTutorialShield" class="xlw-tutorial-shield"></div>
+    
+    <!-- 亮區聚焦外框 -->
+    <div id="xlwTutorialSpotlight" class="xlw-tutorial-spotlight"></div>
+    
+    <!-- 導師對話提示框 -->
+    <div id="xlwTutorialBox" class="xlw-tutorial-box">
+      <div class="tutorial-box-header">
+        <div class="tutorial-mentor-info">
+          <span class="mentor-avatar">🎓</span>
+          <span class="mentor-name">星靈戰術導師</span>
+        </div>
+        <span id="xlwTutorialStepCounter" class="tutorial-step-counter">1 / 13</span>
+      </div>
+      <div id="xlwTutorialTitle" class="tutorial-title">歡迎來到星靈王！</div>
+      <div id="xlwTutorialContent" class="tutorial-content">...</div>
+      <div id="xlwTutorialActionGuide" class="tutorial-action-guide" style="display:none;"></div>
+      <div class="tutorial-box-footer">
+        <button id="xlwTutorialPrevBtn" onclick="window.XLW_Tutorial.prevStep()" class="tutorial-btn tutorial-btn-sub">◄ 上一步</button>
+        <button id="xlwTutorialSkipBtn" onclick="window.XLW_Tutorial.endTutorial()" class="tutorial-btn tutorial-btn-skip">✖️ 結束教學</button>
+        <button id="xlwTutorialNextBtn" onclick="window.XLW_Tutorial.nextStep()" class="tutorial-btn tutorial-btn-main">下一步 ►</button>
+      </div>
+    </div>
+
+    <!-- 卡牌構造解密特寫彈窗 (Card Anatomy Detail View) -->
+    <div id="xlwCardAnatomyModal" class="xlw-card-anatomy-modal" style="display: none !important;">
+      <div class="anatomy-container">
+        <h3 class="anatomy-header">🎴 卡牌詳細資訊代表意義解密</h3>
+        <div class="anatomy-body">
+          <!-- 卡牌視覺預覽示範 -->
+          <div class="anatomy-card-preview">
+            <div class="anatomy-card-inner">
+              <div class="anatomy-tag tag-cost" title="祭品需求">0 祭品</div>
+              <div class="anatomy-tag tag-stars" title="★點數">★ 3</div>
+              <div class="anatomy-card-name">萌萌小貓</div>
+              <div class="anatomy-card-faction">喵喵賊 • 單位卡</div>
+              <div class="anatomy-card-art">🐱</div>
+              <div class="anatomy-card-stats">
+                <span class="stat-atk">⚔️ ATK 3</span>
+                <span class="stat-def">🛡️ 盾 0</span>
               </div>
+              <div class="anatomy-card-desc">【登場發動】登場時，提升戰場優勢！得力的初階打手。</div>
             </div>
           </div>
-        </aside>
+          
+          <!-- 詳細解說清單 -->
+          <div class="anatomy-details-list">
+            <div class="anatomy-detail-item">
+              <span class="badge badge-yellow">1. 卡牌名稱與陣營</span>
+              <p>顯示卡牌名稱與所屬種族（如：喵喵賊、妖怪村莊、勇者公會）。同種族的卡牌常具備強效連攜能力！</p>
+            </div>
+            <div class="anatomy-detail-item">
+              <span class="badge badge-purple">2. ★點數 (星數/分數)</span>
+              <p>單位卡登場後能為該戰線累積星數得分！在對決對戰中分數最高者取得優勢。</p>
+            </div>
+            <div class="anatomy-detail-item">
+              <span class="badge badge-red">3. ⚔️ 攻擊力 (ATK) / 🛡️ 盾 (Shield)</span>
+              <p><b>⚔️ 攻擊力</b>：對決計算的主要戰鬥數值！<br><b>🛡️ 盾牌</b>：具備防禦護盾的單位，在防守時能優先替我方擋下敵人攻擊打擊！</p>
+            </div>
+            <div class="anatomy-detail-item">
+              <span class="badge badge-orange">4. 祭品需求 (Tribute Cost)</span>
+              <p>召喚高星級的強大卡牌時，需要先獻祭戰場上現有的低星單位（0隻 / 1隻 / 2隻）。</p>
+            </div>
+            <div class="anatomy-detail-item">
+              <span class="badge badge-green">5. 卡牌種類 (單位卡 vs 魔法卡)</span>
+              <p><b>單位卡</b>：可召喚並駐紮在戰場行進行攻防對決。<br><b>魔法卡</b>：可從手牌直接發動，提供強化、削弱或解場等強大戰術效果！</p>
+            </div>
+          </div>
+        </div>
+        <button class="anatomy-close-btn" onclick="document.getElementById('xlwCardAnatomyModal').style.setProperty('display', 'none', 'important'); if(window.XLW_Tutorial) window.XLW_Tutorial.updateSpotlight();">我知道了！繼續教學 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" onclick="this.style.display='none'">
+    <div class="panel-inner">
+      <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大 4 倍顯示</div>
+      <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
+        <div class="detail-img-wrap">
+          <img id="leftPanelImg" src="" alt="card detail image">
+        </div>
+      </div>
+    </div>
+  </aside>
 </body>
 </html>
