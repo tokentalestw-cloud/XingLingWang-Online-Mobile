@@ -2518,8 +2518,6 @@ button:disabled {
     min-height: 82px !important;
     font-size: 26px !important;
   }
-
-  .xlw-left-card-panel { display: none !important; }
 }
 
 
@@ -2589,7 +2587,8 @@ button:disabled {
   width: 340px !important;
   max-height: 590px !important;
   height: auto !important;
-  left: -450px !important;
+  left: 16px !important;
+  bottom: 20px !important;
   background: rgba(12, 8, 14, 0.95) !important;
   border: 2.5px solid #ffe600 !important;
   border-radius: 16px !important;

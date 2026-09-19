@@ -966,6 +966,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   window.XLW_gameInProgress = true;
   // 確保重設為單人對抗 AI 模式，阻斷 any 線上同步邏輯與狀態鎖！
   isMultiplayer = false;
@@ -17920,6 +17921,7 @@ function renderHand() {
           clearModes();
           selectedHandForSummon = idx;
           cardEl.classList.add("selected-hand-summon");
+          showModal(card);
           setStatus(`已選擇 ${card.name}。請點擊我方一個空格進行召喚。`);
           render();
         }
