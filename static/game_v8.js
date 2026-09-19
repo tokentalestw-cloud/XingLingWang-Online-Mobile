@@ -21468,6 +21468,10 @@ function showModal(card, equipments) {
   const placeholder = $("leftPanelPlaceholder");
   const detailView = $("leftCardDetailView");
 
+  if (leftPanel) {
+    leftPanel.style.setProperty("display", "block", "important");
+  }
+
   // 附加上放大預視窗 SR/SSR 雷射虹光圖層
   if (leftPanel) {
     let holoFoil = leftPanel.querySelector(".xlw-holo-foil");
@@ -28589,6 +28593,7 @@ window.xlwConfirmPreBattle = function() {
 
 window.xlwReturnToTitle = function() {
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
+  const lp = document.getElementById("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
