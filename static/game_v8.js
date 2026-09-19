@@ -28855,9 +28855,14 @@ window.XLW_Tutorial = {
       }
     }
 
+    this.updateSpotlight();
+  },
+
+  updateSpotlight: function() {
+    const step = this.steps[this.currentStep];
     const spotlight = document.getElementById("xlwTutorialSpotlight");
     if (spotlight) {
-      if (step.spotlightSelector) {
+      if (step && step.spotlightSelector) {
         const target = document.querySelector(step.spotlightSelector);
         if (target) {
           const rect = target.getBoundingClientRect();
