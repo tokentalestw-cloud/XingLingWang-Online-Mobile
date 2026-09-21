@@ -28543,6 +28543,13 @@ window.xlwChooseMode = function(mode) {
 };
 
 window.xlwConfirmPreBattle = function() {
+  if (typeof window.xlwRequestFullScreen === 'function') {
+    window.xlwRequestFullScreen();
+  }
+  if (typeof window.xlwLockOrientation === 'function') {
+    window.xlwLockOrientation();
+  }
+
   const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
   if (modal) {
     modal.style.setProperty("display", "none", "important");
@@ -28746,6 +28753,13 @@ window.XLW_Tutorial = {
   ],
 
   start: function() {
+    if (typeof window.xlwRequestFullScreen === 'function') {
+      window.xlwRequestFullScreen();
+    }
+    if (typeof window.xlwLockOrientation === 'function') {
+      window.xlwLockOrientation();
+    }
+    
     this.active = true;
     this.currentStep = 0;
 

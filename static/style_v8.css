@@ -1,14 +1,14 @@
-/**
- * 星靈王 Web Final - 核心視覺樣式系統 (重塑優化版)
- * 1. 導入現代暗黑星空卡牌美學變數 (Design Tokens)
- * 2. 實踐毛玻璃質感 (Glassmorphism) 與高級金邊陰影
- * 3. 整合為高度流暢、自適應的格線佈局，免除萬行覆蓋碼
- * 4. 新增進攻宣告、傷害撞擊、戰場召喚等高級微光與震動動畫
+﻿/**
+ * ????Web Final - ?詨?閬死璅??蝟餌絞 (???芸???
+ * 1. 撠?曆誨???征?∠?蝢飛霈 (Design Tokens)
+ * 2. 撖西?瘥?釭??(Glassmorphism) ??蝝??敶?
+ * 3. ?游??粹?摨行??Ｕ?拇??蝺?撅嚗??方銵??Ⅳ
+ * 4. ?啣??脫摰???摰單???游??擃?敺桀???????
  */
 
-/* ===== 1. 核心設計變數 (Design Tokens) ===== */
+/* ===== 1. ?詨?閮剛?霈 (Design Tokens) ===== */
 :root {
-  /* 基礎色調 */
+  /* ?箇??脰矽 */
   --bg-color: #f7f9fd;
   --panel-bg: rgba(14, 10, 24, 0.85);
   --bg-cosmic: radial-gradient(circle at 50% 25%, #1d1242 0%, #0e0924 40%, #060412 75%, #020106 100%);
@@ -16,7 +16,7 @@
   --text-primary: #ffffff;
   --text-muted: #ffe6a0;
   
-  /* 陣營色彩 */
+  /* ????脣蔗 */
   --gold-accent: #cdaa52;
   --gold-glow: rgba(205, 170, 82, 0.35);
   --player-blue: rgba(43, 90, 180, 0.72);
@@ -25,7 +25,7 @@
   --enemy-glow: rgba(232, 120, 120, 0.3);
   --green-accent: rgba(55, 120, 65, 0.72);
 
-  /* 卡牌大小 */
+  /* ?∠?憭批? */
   --cw: 110px;
   --ch: 135px;
   --gap: 8px;
@@ -33,7 +33,7 @@
   --board-h: 940px;
 }
 
-/* ===== 2. 基礎排版與滾動條 ===== */
+/* ===== 2. ?箇????遝?? ===== */
 * {
   box-sizing: border-box;
 }
@@ -45,7 +45,7 @@ html, body {
   padding: 0;
   background: var(--bg-cosmic);
   color: var(--text-primary);
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
   overflow: hidden !important;
 }
 
@@ -55,7 +55,7 @@ body {
   height: 100vh !important;
 }
 
-/* 現代精緻滾動條 */
+/* ?曆誨蝎曄溶皛曉?璇?*/
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -71,7 +71,7 @@ body {
   background: rgba(205, 170, 82, 0.6);
 }
 
-/* ===== 3. 上方頂欄 (Topbar) ===== */
+/* ===== 3. 銝?? (Topbar) ===== */
 .topbar {
   height: 48px;
   background: rgba(12, 8, 24, 0.9) !important; /* Premium dark translucent glass */
@@ -155,7 +155,7 @@ button:disabled {
   border-color: #444;
 }
 
-/* ===== 4. 戰場外層骨架 (Game Shell) ===== */
+/* ===== 4. ?啣憭惜撉冽 (Game Shell) ===== */
 .game-shell {
   flex: 1 1 auto;
   min-height: 1160px;
@@ -176,7 +176,7 @@ button:disabled {
   overflow: visible;
 }
 
-/* ===== 5. 核心對戰沙盤 (Board) ===== */
+/* ===== 5. ?詨?撠瘝 (Board) ===== */
 .board {
   position: relative;
   width: var(--board-w);
@@ -191,7 +191,7 @@ button:disabled {
   background-color: rgba(12, 8, 22, 0.96) !important; /* Premium dark cosmic obsidian glass board */
 }
 
-/* 戰場左/右側古樸插圖背景 */
+/* ?啣撌??喳?斗邪??? */
 .board::before {
   content: "";
   position: absolute;
@@ -226,9 +226,9 @@ button:disabled {
   box-shadow: inset 0 0 80px rgba(0,0,0,0.5) !important;
 }
 
-/* (CSS 螢幕適配等比縮放已移除，改由 JS 精確自適應引擎處理) */
+/* (CSS ?Ｗ??拚?蝑?蝮格撌脩宏?歹??寧 JS 蝎曄Ⅱ?芷?????? */
 
-/* ===== 6. 戰場四列主要格子 ===== */
+/* ===== 6. ?啣??銝餉??澆? ===== */
 .row {
   position: absolute;
   left: 199px;
@@ -246,7 +246,7 @@ button:disabled {
 .player-front { top: 627.5px !important; }
 .player-back { top: 781.5px !important; }
 
-/* 格子基礎與毛玻璃特效 */
+/* ?澆??箇????餌??寞? */
 .slot, .zone {
   width: var(--cw);
   height: var(--ch);
@@ -281,7 +281,7 @@ button:disabled {
     0 0 15px var(--gold-glow);
 }
 
-/* 陣營專屬背景 */
+/* ???撠惇? */
 .enemy-back .slot, .enemy-front .slot {
   background: linear-gradient(180deg, rgba(135, 60, 60, 0.28) 0%, rgba(85, 30, 30, 0.38) 100%); /* Softer pastel red tint */
   border-color: rgba(232, 120, 120, 0.28);
@@ -314,7 +314,7 @@ button:disabled {
   z-index: 2;
 }
 
-/* 左右功能格子精準定位 */
+/* 撌血??澆?蝎暹?摰? */
 #enemyDeck { left: 34px !important; top: 155.5px !important; }
 #enemyGrave { left: 34px !important; top: 301.5px !important; }
 #enemyRace { left: 34px !important; top: 467.5px !important; }
@@ -331,7 +331,7 @@ button:disabled {
 #playerRace { right: 454px !important; top: 467.5px !important; }
 #playerExile { right: 330px !important; top: 467.5px !important; }
 
-/* ===== 7. 星星戰線 (Battle Line) ===== */
+/* ===== 7. ???啁? (Battle Line) ===== */
 .battle-line-strip {
   position: absolute;
   left: 199px;
@@ -443,7 +443,7 @@ button:disabled {
   pointer-events: none;
 }
 
-/* ===== 8. 高級卡牌本體 (Card) ===== */
+/* ===== 8. 擃??∠??祇? (Card) ===== */
 .card {
   width: 100%;
   height: 100%;
@@ -457,9 +457,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  opacity: 1 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); transition: all 0.5s ease-out; opacity: 1 !important;
 }
 
 .card:hover {
@@ -500,7 +498,7 @@ button:disabled {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* ===== 9. 下方手牌區 (Hand Panel) ===== */
+/* ===== 9. 銝??? (Hand Panel) ===== */
 .hand-panel {
   height: 130px;
   flex: 0 0 130px;
@@ -544,11 +542,11 @@ button:disabled {
   flex: 0 0 85px;
 }
 
-/* ===== 10. 全新一體化右下主操作面板 (stableActionPanel) ===== */
+/* ===== 10. ?冽銝擃??喃?銝餅?雿??(stableActionPanel) ===== */
 #stableActionPanel {
   position: fixed;
   right: 20px;
-  top: 220px !important; /* 上移至中上方 */
+  top: 220px !important; /* 銝宏?喃葉銝 */
   bottom: auto !important;
   width: 260px;
   background: rgba(12, 8, 24, 0.9) !important;
@@ -566,7 +564,7 @@ button:disabled {
   opacity: 1 !important;
 }
 
-/* 橫向雙按鈕排 */
+/* 璈怠????? */
 .stable-action-row {
   display: flex;
   gap: 10px;
@@ -577,7 +575,7 @@ button:disabled {
   flex: 1;
 }
 
-/* 面板按鈕美化 */
+/* ?Ｘ??蝢? */
 .stable-action-btn {
   width: 100%;
   padding: 12px 18px;
@@ -603,7 +601,7 @@ button:disabled {
   border-color: #333;
 }
 
-/* 戰術階段按鈕 */
+/* ?啗??挾?? */
 .stable-action-btn.tactical.active,
 .stable-action-btn.tactical:hover:not(:disabled) {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
@@ -612,7 +610,7 @@ button:disabled {
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
 }
 
-/* 進攻宣言按鈕 */
+/* ?脫摰???? */
 .stable-action-btn.attack.active,
 .stable-action-btn.attack:hover:not(:disabled) {
   background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
@@ -621,19 +619,19 @@ button:disabled {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
 }
 
-/* 祭品獻祭確認 */
+/* 蟡剖??餌平蝣箄? */
 .stable-action-btn.tribute {
   background: linear-gradient(135deg, #996c1d 0%, #735114 100%);
   border-color: var(--gold-accent);
   color: #ffe6aa;
 }
 
-/* 取消選擇 */
+/* ???豢? */
 .stable-action-btn.tribute-cancel {
   background: rgba(50, 45, 45, 0.9);
 }
 
-/* 結束回合大按鈕 */
+/* 蝯???憭扳???*/
 .stable-action-btn.end {
   background: linear-gradient(135deg, #cdaa52 0%, #a0823d 100%);
   color: #120e07;
@@ -649,7 +647,7 @@ button:disabled {
   box-shadow: 0 4px 20px rgba(205, 170, 82, 0.45);
 }
 
-/* ===== 11. 中上方狀態提示 (Phase Display Panel) ===== */
+/* ===== 11. 銝凋??寧???蝷?(Phase Display Panel) ===== */
 .phase-display-panel-hard {
   position: fixed;
   left: 50%;
@@ -686,8 +684,8 @@ button:disabled {
   line-height: 1.4;
 }
 
-/* ===== 12. 右側浮動面板 (計分、對手狀態) ===== */
-/* 星數分數懸浮標記 */
+/* ===== 12. ?喳瘚桀??Ｘ (閮??????? ===== */
+/* ???豢筑璅? */
 .score-badge-fixed {
   position: fixed;
   left: 20px;
@@ -698,7 +696,7 @@ button:disabled {
   border: 1.5px solid var(--gold-accent) !important;
   border-radius: 12px;
   padding: 14px 18px !important; /* Compact padding */
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
   z-index: 100;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
   background-color: rgba(15, 10, 25, 0.96) !important;
@@ -707,7 +705,7 @@ button:disabled {
 .score-badge-section {
   display: flex;
   flex-direction: column;
-  gap: 10px !important; /* 增加間距 */
+  gap: 10px !important; /* 憓??? */
 }
 
 .score-badge-row {
@@ -717,10 +715,10 @@ button:disabled {
 }
 
 .score-badge-label {
-  font-size: 17px !important; /* 放大標籤字體 */
+  font-size: 17px !important; /* ?曉之璅惜摮? */
   font-weight: 900 !important;
   color: #ffd76a !important; /* High contrast gold */
-  width: 90px !important; /* 加寬標籤寬度 */
+  width: 90px !important; /* ?祝璅惜撖砍漲 */
 }
 
 .score-badge-stars {
@@ -749,7 +747,7 @@ button:disabled {
   font-weight: 900;
   color: #ffffff !important; /* High contrast white score */
   margin-left: 6px;
-  font-size: 20px !important; /* 放大總分數字 */
+  font-size: 20px !important; /* ?曉之蝮賢??詨? */
   width: 65px !important;
   text-align: right;
 }
@@ -769,17 +767,17 @@ button:disabled {
   100% { transform: scale(1.12); filter: brightness(1.3); }
 }
 
-/* 對手狀態面板 */
+/* 撠?????*/
 .xlw-enemy-info-panel {
   position: fixed;
   left: 20px;
-  top: 300px !important; /* 下移防止與高度變高且拓寬的分數看板重疊 */
-  width: 210px !important; /* 寬度縮短 */
+  top: 300px !important; /* 銝宏?脫迫??摨西?擃??祝???貊??輸???*/
+  width: 210px !important; /* 撖砍漲蝮桃 */
   background: rgba(12, 8, 24, 0.94) !important;
   border: 1.5px solid rgba(255, 100, 100, 0.55) !important;
   border-radius: 12px;
   padding: 14px 18px;
-  font-size: 16px !important; /* 放大字體 */
+  font-size: 16px !important; /* ?曉之摮? */
   line-height: 1.8;
   z-index: 100;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
@@ -790,13 +788,13 @@ button:disabled {
 .enemy-info-title {
   font-weight: 900;
   color: #ff8b8b !important;
-  font-size: 18px !important; /* 放大標題 */
+  font-size: 18px !important; /* ?曉之璅? */
   margin-bottom: 4px;
   border-bottom: 1px solid rgba(255, 100, 100, 0.25) !important;
   padding-bottom: 2px;
 }
 
-/* 戰鬥自動提示面板 */
+/* ?圈洛?芸??內?Ｘ */
 .xlw-opponent-step-panel {
   position: fixed;
   left: 20px;
@@ -834,7 +832,7 @@ button:disabled {
   line-height: 1.4;
 }
 
-/* 牌庫厚度立體圖層 */
+/* ?澈?漲蝡??惜 */
 .deck-stack-final-fixed {
   position: relative;
   width: 100%;
@@ -889,7 +887,7 @@ button:disabled {
   bottom: 8px;
 }
 
-/* ===== 13. 對話彈窗與其他舊視窗隱藏 ===== */
+/* ===== 13. 撠店敶??隞?閬??梯? ===== */
 .modal-inner {
   border: 1.5px solid var(--gold-accent) !important;
   background: #110e0d !important;
@@ -903,7 +901,7 @@ button:disabled {
   font-weight: 900;
 }
 
-/* 計分浮動對戰紀錄 */
+/* 閮?瘚桀?撠蝝??*/
 .score-panel {
   position: fixed;
   inset: 0;
@@ -950,7 +948,7 @@ button:disabled {
   line-height: 1.5;
 }
 
-/* 遊戲勝負彈窗 */
+/* ???敶? */
 .xlw-result-panel {
   position: fixed;
   inset: 0;
@@ -996,7 +994,7 @@ button:disabled {
   margin-bottom: 24px;
 }
 
-/* Mulligan 起手提示層 */
+/* Mulligan 韏瑟??內撅?*/
 .mulligan-panel {
   position: fixed;
   left: 50%;
@@ -1049,8 +1047,8 @@ button:disabled {
   min-width: 100px;
 }
 
-/* ===== 14. 核心遊戲交互亮邊狀態 ===== */
-/* 可普通召喚位置 (超亮螢光綠外發光) */
+/* ===== 14. ?詨??鈭支?鈭桅????===== */
+/* ?舀???蝵?(頞漁?Ｗ?蝬??澆?) */
 .slot.xlw-hand-front-legal,
 .player-front .slot.xlw-hand-front-legal,
 .player-back .slot.xlw-hand-front-legal {
@@ -1059,7 +1057,7 @@ button:disabled {
   cursor: pointer !important;
 }
 
-/* 前排優先阻擋位置 (超亮紅色外發光) */
+/* ???芸??餅?雿蔭 (頞漁蝝憭?? */
 .slot.xlw-hand-front-illegal,
 .player-front .slot.xlw-hand-front-illegal,
 .player-back .slot.xlw-hand-front-illegal {
@@ -1068,13 +1066,13 @@ button:disabled {
   cursor: not-allowed !important;
 }
 
-/* 被選取為祭品 */
+/* 鋡恍?蟡剖? */
 .tribute-selected {
   border-color: #faad14 !important;
   box-shadow: 0 0 15px rgba(250, 173, 20, 0.7) !important;
 }
 
-/* 宣告攻擊高亮 */
+/* 摰???餅?擃漁 */
 .xlw-player-attacker-selected {
   border-color: #1890ff !important;
   box-shadow: 0 0 15px rgba(24, 144, 255, 0.7) !important;
@@ -1085,27 +1083,27 @@ button:disabled {
   box-shadow: 0 0 15px rgba(250, 84, 28, 0.6) !important;
 }
 
-/* 合法攻擊目標 */
+/* ???餅??格? */
 .xlw-player-target-legal {
   border-color: #ff4d4f !important;
   box-shadow: 0 0 15px rgba(255, 77, 79, 0.7) !important;
   cursor: crosshair !important;
 }
 
-/* 不合法攻擊目標 */
+/* 銝?瘜?璅?*/
 .xlw-player-target-illegal {
   border-color: #555 !important;
   opacity: 0.5;
   cursor: not-allowed !important;
 }
 
-/* 空欄位與前排盾牌阻擋高亮 */
+/* 蝛箸?雿????曄??餅?擃漁 */
 .xlw-no-attack-final-rule {
   border-color: rgba(255, 255, 255, 0.15) !important;
   opacity: 0.55;
 }
 
-/* 盾牌卡片特製浮動外框 */
+/* ?曄??∠??寡ˊ瘚桀?憭? */
 .xlw-shield-unit {
   border-color: #d9d9d9 !important;
   box-shadow:
@@ -1113,13 +1111,13 @@ button:disabled {
     0 0 10px rgba(255, 255, 255, 0.25) !important;
 }
 
-/* 防守階段被攻擊高亮 */
+/* ?脣??挾鋡急??鈭?*/
 .xlw-defense-attacker {
   border-color: #ff4d4f !important;
   box-shadow: 0 0 18px rgba(255, 77, 79, 0.8) !important;
 }
 
-/* 5. 被進攻的橫置卡牌：維持90度橫置狀態，不被拉直為0度 */
+/* 5. 鋡恍脫?帖蝵桀??蝬剜?90摨行帖蝵桃???銝◤???摨?*/
 .slot.tapped-slot.xlw-defense-target .card,
 .slot.tapped-slot .xlw-defense-target .card {
   transform: rotate(90deg) !important;
@@ -1130,15 +1128,15 @@ button:disabled {
   box-shadow: 0 0 18px rgba(250, 140, 22, 0.7) !important;
 }
 
-/* ===== 15. 高級微動效與動畫 (Combat Animations) ===== */
-/* 卡片點選召喚待命 */
+/* ===== 15. 擃?敺桀???? (Combat Animations) ===== */
+/* ?∠?暺?砍?敺 */
 .selected-hand-summon {
   transform: translateY(-8px) scale(1.05);
   border-color: #52c41a !important;
   box-shadow: 0 0 16px rgba(82, 196, 26, 0.6) !important;
 }
 
-/* 起手換牌選取 */
+/* 韏瑟????詨? */
 .mulligan-card {
   transition: all 0.2s ease;
 }
@@ -1151,7 +1149,7 @@ button:disabled {
 }
 
 .mulligan-selected::after {
-  content: "換牌";
+  content: "??";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -1164,7 +1162,7 @@ button:disabled {
   border-radius: 4px;
 }
 
-/* 戰鬥撞擊閃光 */
+/* ?圈洛???? */
 .xlw-my-attack-flash {
   animation: playerAttackShake 0.6s ease;
 }
@@ -1180,7 +1178,7 @@ button:disabled {
 @keyframes playerAttackShake {
   0% { transform: translateY(0); }
   20% { transform: translateY(12px) scale(1.03); filter: brightness(1.2); }
-  45% { transform: translateY(-35px); } /* 向上獨當一面躍擊對手 */
+  45% { transform: translateY(-35px); } /* ???函銝?Ｚ?????*/
   70% { transform: translateY(5px); }
   100% { transform: translateY(0); }
 }
@@ -1188,7 +1186,7 @@ button:disabled {
 @keyframes enemyAttackShake {
   0% { transform: translateY(0); }
   20% { transform: translateY(-12px) scale(1.03); filter: brightness(1.2); }
-  45% { transform: translateY(35px); } /* 向下躍擊我方 */
+  45% { transform: translateY(35px); } /* ??頨?? */
   70% { transform: translateY(-5px); }
   100% { transform: translateY(0); }
 }
@@ -1199,7 +1197,7 @@ button:disabled {
   100% { filter: brightness(1); }
 }
 
-/* 星數額外分數標籤 */
+/* ?憿??璅惜 */
 .bonus-score-badge {
   position: absolute;
   right: 5px;
@@ -1215,7 +1213,7 @@ button:disabled {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* 場地區完整設置圖片 */
+/* ?游?摰閮剔蔭?? */
 .field-magic-full-fixed {
   position: absolute;
   inset: 0;
@@ -1245,7 +1243,7 @@ button:disabled {
   border-top: 1.5px solid var(--gold-accent);
 }
 
-/* ===== 16. 左側卡牌詳細資訊看板 ===== */
+/* ===== 16. 撌血?∠?閰喟敦鞈?? ===== */
 .xlw-left-card-panel {
   position: absolute !important;
   left: -530px !important; /* Pushed left to accommodate larger width and move left */
@@ -1303,9 +1301,9 @@ button:disabled {
   object-fit: fill;
 }
 
-/* ===== 17. 宣告進攻旋轅角度 ===== */
+/* ===== 17. 摰???脫??閫漲 ===== */
 
-/* 1. 普通常態舅防守目標：保持0度平直 */
+/* 1. ?桅虜???脣??格?嚗???摨血像??*/
 .slot:not(.xlw-my-attacker):not(.xlw-enemy-attacker):not(.xlw-player-attacker-selected):not(.xlw-player-declared-attacker):not(.xlw-enemy-declared-attacker):not(.tapped-slot) .card,
 .slot.xlw-defense-target:not(.tapped-slot) .card,
 .slot:not(.tapped-slot) .xlw-defense-target .card,
@@ -1315,7 +1313,7 @@ button:disabled {
   transition: transform 0.3s ease !important;
 }
 
-/* 2. 橫置卡牌：90度旋轅與灰度半透明 */
+/* 2. 璈怎蔭?∠?嚗?0摨行?頧??啣漲?? */
 .slot.tapped-slot .card,
 .tapped-slot .card {
   transform: rotate(90deg) !important;
@@ -1329,7 +1327,7 @@ button:disabled {
   filter: grayscale(0.12) brightness(0.82) !important;
 }
 
-/* 3. 我方主動進攻：優先級最高！不論是横置皆維持逆時針30度 */
+/* 3. ?銝餃??脫嚗???擃?銝??舀赤蝵桃?蝬剜?????0摨?*/
 .slot.xlw-my-attacker .card,
 .slot.tapped-slot.xlw-my-attacker .card,
 .xlw-my-attacker .card,
@@ -1346,7 +1344,7 @@ button:disabled {
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.15) !important;
 }
 
-/* 4. 對手主動進攻：優先級最高！不論是横置皆維持順時針30度 */
+/* 4. 撠?銝餃??脫嚗???擃?銝??舀赤蝵桃?蝬剜?????0摨?*/
 .slot.xlw-enemy-attacker .card,
 .slot.tapped-slot.xlw-enemy-attacker .card,
 .xlw-enemy-attacker .card,
@@ -1360,7 +1358,7 @@ button:disabled {
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.15) !important;
 }
 
-/* 戰鬥數值對決動畫面板 */
+/* ?圈洛?詨澆?瘙箏??恍??*/
 .xlw-combat-overlay {
   position: absolute;
   z-index: 9999;
@@ -1405,7 +1403,7 @@ button:disabled {
   animation: combatNumberRight 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 卡牌擊破碎裂與火花動畫 */
+/* ?∠??蝣???勗???*/
 .xlw-card-shatter {
   animation: cardShatterAnim 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
   pointer-events: none !important;
@@ -1471,7 +1469,7 @@ button:disabled {
   100% { opacity: 0; transform: scale(1.75); filter: blur(6px); }
 }
 
-/* ===== 18. 森林召喚按鈕 ===== */
+/* ===== 18. 璉格??砍??? ===== */
 .forest-summon-btn {
   margin-top: 6px;
   padding: 4px 10px;
@@ -1499,7 +1497,7 @@ button:disabled {
   box-shadow: none;
 }
 
-/* ===== 19. 窄螢幕 RWD 看板適配（防剪裁遮擋） ===== */
+/* ===== 19. 蝒撟?RWD ??拚?嚗?芾??格?嚗?===== */
 @media (max-width: 1500px) {
   .xlw-left-card-panel {
     position: fixed !important;
@@ -1522,7 +1520,7 @@ button:disabled {
   }
 }
 
-/* ===== 20. 3D 立體森林區與小旅人出走特效 ===== */
+/* ===== 20. 3D 蝡?璉格?????犖?箄粥?寞? ===== */
 #playerForest, #enemyForest {
   position: absolute;
   width: var(--cw) !important;
@@ -1562,7 +1560,7 @@ button:disabled {
   transform: translateY(-2px) scale(1.01) !important;
 }
 
-/* 森林立體多層背景與卡片 */
+/* 璉格?蝡?憭惜????*/
 .forest-3d-wrap {
   width: 100%;
   height: 100%;
@@ -1588,7 +1586,7 @@ button:disabled {
   pointer-events: none;
 }
 
-/* 3D 樹木剪影裝飾 */
+/* 3D 璅寞?芸蔣鋆ˇ */
 .forest-3d-trees {
   width: 100%;
   height: 100%;
@@ -1602,7 +1600,7 @@ button:disabled {
   pointer-events: none;
 }
 
-/* 小旅人立體人形 Standee */
+/* 撠?鈭箇?擃犖敶?Standee */
 .traveler-3d-standee {
   width: 75px !important; /* Enlarged width */
   height: 100px !important; /* Enlarged height */
@@ -1624,7 +1622,7 @@ button:disabled {
   box-shadow: 0 0 15px rgba(255, 215, 106, 0.5), inset 0 0 10px rgba(0, 255, 127, 0.3) !important;
 }
 
-/* 覆蓋文字與按鈕 */
+/* 閬???????*/
 .forest-3d-overlay {
   z-index: 10;
   text-align: center;
@@ -1648,7 +1646,7 @@ button:disabled {
   letter-spacing: 0.5px;
 }
 
-/* 浮動微動畫 */
+/* 瘚桀?敺桀???*/
 @keyframes travelerIdleFloat {
   0%, 100% {
     transform: translateZ(15px) rotateX(-10deg) translateY(0);
@@ -1658,7 +1656,7 @@ button:disabled {
   }
 }
 
-/* 綠色召喚閃光效果 */
+/* 蝬?砍????? */
 .xlw-summon-flash-green {
   animation: xlwGreenGlow 0.4s ease-out;
 }
@@ -1678,9 +1676,9 @@ button:disabled {
   }
 }
 
-/* ===== 21. 獻祭召喚豪華酷炫特效 (Tribute Summon Premium Visual Effects) ===== */
+/* ===== 21. ?餌平?砍?鞊芾?瑞?寞? (Tribute Summon Premium Visual Effects) ===== */
 
-/* 金黃色全屏爆裂閃光（Color Dodge 模式，極致耀眼） */
+/* ???脣撅?鋆???Color Dodge 璅∪?嚗扔?渲?潘? */
 .xlw-screen-flash-gold {
   position: fixed;
   inset: 0;
@@ -1696,7 +1694,7 @@ button:disabled {
   100% { opacity: 0; }
 }
 
-/* 巨型旋轉黃金魔法陣（視窗絕對定位，突破格子剪裁） */
+/* 撌典???暺?擳????閬?蝯?摰?嚗??湔摮鋆? */
 .xlw-tribute-portal-circle-large {
   position: absolute;
   width: 170px;
@@ -1732,7 +1730,7 @@ button:disabled {
   }
 }
 
-/* 巨型沖天能量光柱 */
+/* 撌典?瘝予?賡?? */
 .xlw-tribute-energy-pillar-large {
   position: absolute;
   width: 120px;
@@ -1766,7 +1764,7 @@ button:disabled {
   }
 }
 
-/* 膨脹爆裂衝擊波能量環 */
+/* ?刻??銵?瘜Ｚ? */
 .xlw-shockwave-ring {
   position: absolute;
   width: 100px;
@@ -1798,7 +1796,7 @@ button:disabled {
   }
 }
 
-/* 爆裂震動效果 */
+/* ?????? */
 .xlw-tribute-slam-shake {
   animation: xlwSlamShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   z-index: 12 !important;
@@ -1811,7 +1809,7 @@ button:disabled {
   40%, 60% { transform: translate3d(6px, 5px, 0) scale(1.03); }
 }
 
-/* 超級閃耀高亮度浮動粒子 */
+/* 頞??擃漁摨行筑??摮?*/
 .xlw-tribute-particle-super {
   position: absolute;
   z-index: 25000;
@@ -1823,7 +1821,7 @@ button:disabled {
   opacity: 1;
 }
 
-/* 剛召喚進場的卡牌震撼 3D 重擊 */
+/* ??脣?????3D ?? */
 .xlw-tribute-card-slam {
   animation: xlwCardSlamIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 }
@@ -1850,7 +1848,7 @@ button:disabled {
   }
 }
 
-/* ===== 22. 豪華玻璃擬態確認彈窗 (Premium Glassmorphism Confirm Overlay) ===== */
+/* ===== 22. 鞊芾?餌??祆?蝣箄?敶? (Premium Glassmorphism Confirm Overlay) ===== */
 @keyframes xlwFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1865,7 +1863,7 @@ button:disabled {
   animation: xlwFadeIn 0.25s ease-out forwards;
 }
 
-/* ===== 23. 額外得分與黑喵目標亮邊樣式 (PR Sister Meow & Black Cat choosing style) ===== */
+/* ===== 23. 憿?敺????萇璅漁?見撘?(PR Sister Meow & Black Cat choosing style) ===== */
 .score-badge-subrow {
   font-size: 12px !important;
   color: rgba(255, 255, 255, 0.55) !important; /* White subrow details */
@@ -1885,7 +1883,7 @@ button:disabled {
   filter: brightness(1.3) !important;
 }
 
-/* ===== 24. 魔法反制連鎖全屏玻璃擬態層 (Spell Counter Chain Premium Overlay) ===== */
+/* ===== 24. 擳??????典??餌??祆?撅?(Spell Counter Chain Premium Overlay) ===== */
 .xlw-chain-overlay {
   position: fixed;
   inset: 0;
@@ -1990,7 +1988,7 @@ button:disabled {
   margin-top: 10px;
 }
 
-/* ===== 22. 額外牌庫排版與高奢紫光主題 (Extra Deck Layout & Purple Glow) ===== */
+/* ===== 22. 憿??澈????憟Ｙ換?蜓憿?(Extra Deck Layout & Purple Glow) ===== */
 #enemyExtraDeck {
   left: -90px !important;
   top: 155.5px !important;
@@ -2021,26 +2019,26 @@ button:disabled {
   cursor: pointer;
 }
 
-/* ===== 23. 禁錮狀態卡牌視覺效果 (Spectral Iron Wall) ===== */
+/* ===== 23. 蝳????閬箸???(Spectral Iron Wall) ===== */
 .xlw-confined-slot {
   position: relative;
   z-index: 10;
 }
 
-/* 禁錮光暈與外框 */
+/* 蝳????獢?*/
 .xlw-confinement-wall {
   position: absolute;
   top: -6px;
   left: -6px;
   right: -6px;
   bottom: -6px;
-  pointer-events: none; /* 讓點擊事件穿透 */
+  pointer-events: none; /* 霈???隞嗥忽??*/
   box-sizing: border-box;
   z-index: 100;
   border-radius: 8px;
 }
 
-/* 圍牆的四個邊段：使用發光霓虹線條 */
+/* ??????畾蛛?雿輻?澆??蝺? */
 .xlw-confinement-wall .wall-segment {
   position: absolute;
   background: linear-gradient(90deg, #ff2a2a, #ff7a2a, #ff2a2a);
@@ -2077,7 +2075,7 @@ button:disabled {
   height: 100%;
 }
 
-/* 禁錮的背景牢籠格線光暈 */
+/* 蝳???舐蝐蝺???*/
 .xlw-confinement-wall .wall-glow {
   position: absolute;
   top: 4px;
@@ -2097,7 +2095,7 @@ button:disabled {
   border-radius: 4px;
 }
 
-/* 禁錮的鐵鍊與字體徽章 */
+/* 蝳???摮?敺賜? */
 .xlw-confinement-wall .wall-chains {
   position: absolute;
   top: 50%;
@@ -2118,7 +2116,7 @@ button:disabled {
   animation: chainsShake 2s infinite alternate ease-in-out;
 }
 
-/* 禁錮動畫 */
+/* 蝳? */
 @keyframes wallGlowMove {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -2304,20 +2302,20 @@ button:disabled {
 }
 
 @media (max-width: 0px) {
-/* 除外區移到底部 */
+/* ?文??蝘餃摨 */
 .exile-zone,.banish-zone,.removed-zone,[class*="exile"],[class*="banish"],[id*="exile"],[id*="banish"]{position:absolute!important;bottom:-90px!important;top:auto!important;transform:scale(.9)!important;}
-/* 戰場再縮小避免重疊 */
+/* ?啣?葬撠????*/
 .board{transform:scale(.78)!important;transform-origin:top center!important;}
 .game-shell{padding-bottom:140px!important;}
-/* 底部按鈕放大 */
+/* 摨???曉之 */
 #stableActionPanel .stable-action-btn{font-size:16px!important;min-height:52px!important;font-weight:800!important;}
 #stableActionPanel .stable-action-btn.end{font-size:18px!important;min-height:58px!important;}
 }
 
 
 /* ===== REAL iPhone portrait fix 2026-06-13 v4 =====
-   這段必須在檔案最後，覆蓋前面所有手機版舊規則。
-   目標：直立手機不橫向爆版、左右不重疊、除外區移到下方、底部按鈕放大。 */
+   ?挾敹??冽?獢?敺?閬?????璈?????
+   ?格?嚗蝡?璈?璈怠????椰?喃????憭?蝘餃銝???冽??憭扼?*/
 @media (max-width: 0px) {
   :root {
     --cw: 85px !important;
@@ -2522,17 +2520,17 @@ button:disabled {
 
 
 /* ==========================================================================
-   TARGETED 3D BUTTONS & SEPARATED EQUIPMENT PANEL (不改動任何戰場與卡牌比例)
+   TARGETED 3D BUTTONS & SEPARATED EQUIPMENT PANEL (銝?遙雿?渲??∠?瘥?)
    ========================================================================== */
 
-/* 1. 頂部工具列與按鈕 3D 高級質感 (Strictly Scoped) */
+/* 1. ?撌亙???? 3D 擃?鞈芣? (Strictly Scoped) */
 .topbar button, .topbar select, .topbar a button, #scoreBtn, .close, .score-box button {
   background: linear-gradient(180deg, #fff47d 0%, #ffe600 48%, #d6a700 100%) !important;
   color: #000000 !important;
   border: 2px solid #000000 !important;
   border-bottom: 5px solid #7a5f00 !important;
   border-radius: 10px !important;
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
   font-weight: 900 !important;
   letter-spacing: 0.5px !important;
   padding: 7px 16px !important;
@@ -2557,7 +2555,7 @@ button:disabled {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 2px 5px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 單人對抗 AI */
+/* ?桐犖撠? AI */
 #newGameBtn {
   background: linear-gradient(180deg, #fff7a0 0%, #ffd700 48%, #c99c00 100%) !important;
   color: #000000 !important;
@@ -2565,7 +2563,7 @@ button:disabled {
   border-bottom: 5px solid #695100 !important;
 }
 
-/* 線上雙人對決 */
+/* 蝺??犖撠捱 */
 #multiplayerBtn {
   background: linear-gradient(180deg, #ff6b8b 0%, #ff1f4c 48%, #b80024 100%) !important;
   color: #ffffff !important;
@@ -2574,7 +2572,7 @@ button:disabled {
   text-shadow: 1.5px 1.5px 0px #000000 !important;
 }
 
-/* 戰局紀錄、牌組編輯器、卡牌編輯器 */
+/* ?啣?蝝??蝯楊頛臬??楊頛臬 */
 #scoreBtn, .topbar a button {
   background: linear-gradient(180deg, #2e263d 0%, #1c1628 48%, #100c17 100%) !important;
   color: #ffe600 !important;
@@ -2582,7 +2580,7 @@ button:disabled {
   border-bottom: 5px solid #000000 !important;
 }
 
-/* 2. 左側卡牌放大面板 (尺寸適中，裝備說明獨立位於下方，絕不重疊) */
+/* 2. 撌血?∠??曉之?Ｘ (撠箏站?拐葉嚗??牧?蝡??潔??對?蝯???) */
 .xlw-left-card-panel {
   width: 340px !important;
   max-height: 590px !important;
@@ -2646,7 +2644,7 @@ button:disabled {
 
 
 /* ==========================================================================
-   SPELL & TRIBUTE ACTIVATION OVERLAYS (全螢幕精緻動畫彈窗居中)
+   SPELL & TRIBUTE ACTIVATION OVERLAYS (?刻撟移蝺餃??怠?蝒?銝?
    ========================================================================== */
 
 .xlw-spell-activation-overlay,
@@ -2669,7 +2667,7 @@ button:disabled {
 
 /* ==========================================================================
    FOREST STANDEE FULL-SLOT SIZING & LEFT PANEL OPACITY FIX
-   (將森林區小旅人圖片調至與戰場格子完全等大 100% 填滿)
+   (撠ㄝ??撠?鈭箏??矽?唾??啣?澆?摰蝑之 100% 憛急遛)
    ========================================================================== */
 
 #playerForest, #enemyForest {
@@ -2740,10 +2738,10 @@ button:disabled {
 
 /* ==========================================================================
    SLEEK & SMOOTH ULTRA-GLOSSY 3D TACTILE UI THEME
-   (徹底去除銳利粗糙邊框，打造圓潤平滑、奢華立體之高級介面)
+   (敺孵??駁?喳蝎???嚗???瞏文像皛失?舐?擃?擃?隞)
    ========================================================================== */
 
-/* 1. 全域按鈕圓角與平滑過渡 */
+/* 1. ?典??????像皛?皜?*/
 button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .topbar button {
   border-radius: 14px !important;
   font-family: inherit !important;
@@ -2751,7 +2749,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 2. 頂欄按鈕 (.topbar button) 圓潤光滑立體感 */
+/* 2. ???? (.topbar button) ?膜??蝡???*/
 .topbar button, .topbar select, .topbar a button {
   border: 1.5px solid rgba(255, 230, 100, 0.75) !important;
   border-radius: 14px !important;
@@ -2776,7 +2774,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 3. 單人/雙人對決按鈕光滑漸層 */
+/* 3. ?桐犖/?犖撠捱????瞍詨惜 */
 #newGameBtn {
   background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, #fff7a0 0%, #ffd700 50%, #c99c00 100%) !important;
   border: 1.5px solid rgba(255, 235, 120, 0.85) !important;
@@ -2792,7 +2790,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 31, 76, 0.4) !important;
 }
 
-/* 4. 中央狀態提示欄 (#status) 圓潤玻璃質感 */
+/* 4. 銝剖亢???蝷箸? (#status) ?膜?餌?鞈芣? */
 #status, .status-bar, .xlw-status-box {
   background: linear-gradient(180deg, rgba(32, 24, 44, 0.95) 0%, rgba(16, 12, 24, 0.97) 100%) !important;
   border: 1.5px solid rgba(255, 230, 100, 0.65) !important;
@@ -2806,7 +2804,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   backdrop-filter: blur(14px) !important;
 }
 
-/* 5. 結束回合按鈕 (#endTurnBtn) 圓潤奢華立體 */
+/* 5. 蝯????? (#endTurnBtn) ?膜憟Ｚ蝡? */
 #endTurnBtn, .end-turn-btn {
   background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, #ff7a7a 0%, #e61919 50%, #8c0000 100%) !important;
   color: #ffffff !important;
@@ -2831,7 +2829,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* 6. 雙方總分計分板 (.score-box) 圓潤光滑邊框 */
+/* 6. ?蝮賢?閮???(.score-box) ?膜???? */
 .score-box, #scoreBoard, #scorePanel .score-card, #enemyScore, #playerScore {
   background: linear-gradient(180deg, rgba(30, 22, 40, 0.95) 0%, rgba(14, 10, 20, 0.97) 100%) !important;
   border: 1.5px solid rgba(255, 230, 100, 0.65) !important;
@@ -2853,7 +2851,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   text-shadow: 0 0 12px rgba(255, 230, 0, 0.8), 1.5px 1.5px 0 #000 !important;
 }
 
-/* 7. 對手狀態欄位 (#xlwEnemyInfoPanel) 圓潤外框 */
+/* 7. 撠????雿?(#xlwEnemyInfoPanel) ?膜憭? */
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel {
   background: linear-gradient(180deg, rgba(38, 18, 28, 0.95) 0%, rgba(18, 8, 14, 0.97) 100%) !important;
   border: 1.5px solid rgba(255, 100, 100, 0.65) !important;
@@ -2879,7 +2877,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   text-shadow: 1px 1px 0 #000 !important;
 }
 
-/* 8. 右下主操作面板與按鈕 (#stableActionPanel) */
+/* 8. ?喃?銝餅?雿?輯??? (#stableActionPanel) */
 #stableActionPanel {
   background: linear-gradient(180deg, rgba(22, 16, 30, 0.96) 0%, rgba(12, 8, 18, 0.98) 100%) !important;
   border: 1.5px solid rgba(255, 230, 100, 0.65) !important;
@@ -2889,7 +2887,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   backdrop-filter: blur(14px) !important;
 }
 
-/* 戰術佈陣按鈕 (戰術水晶藍紫) */
+/* ?啗?雿?? (?啗?瘞湔?換) */
 #stableActionTactical, .stable-action-btn.tactical {
   background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, #ca9eff 0%, #9254de 45%, #531dab 100%) !important;
   color: #ffffff !important;
@@ -2919,7 +2917,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   box-shadow: inset 0 2px 4px #ffffff, 0 0 22px #ffe600, 0 6px 18px rgba(0,0,0,0.8) !important;
 }
 
-/* 進攻宣言按鈕 (朱紅烈焰) */
+/* ?脫摰???? (?梁??) */
 #stableActionAttack, .stable-action-btn.attack {
   background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, #ff9c9e 0%, #ff4d4f 45%, #cf1322 100%) !important;
   color: #ffffff !important;
@@ -2949,7 +2947,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   box-shadow: inset 0 2px 4px #ffffff, 0 0 22px #ffe600, 0 6px 18px rgba(0,0,0,0.8) !important;
 }
 
-/* 確認獻祭與取消選擇按鈕 */
+/* 蝣箄??餌平??瘨????*/
 #stableActionConfirm, .stable-action-btn.tribute {
   background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, #fff7a0 0%, #ffd700 45%, #c99c00 100%) !important;
   color: #000000 !important;
@@ -2966,7 +2964,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   font-weight: 900 !important;
 }
 
-/* 9. 種族提示卡 3D 光滑圓角 */
+/* 9. 蝔格??內??3D ???? */
 #enemyRace, #playerRace {
   border: 1.5px solid rgba(255, 230, 100, 0.7) !important;
   border-radius: 14px !important;
@@ -2980,10 +2978,10 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 /* ==========================================================================
    ULTRA-LEVELED 3D SCORE BOXES & OPPONENT STATUS PANEL
-   (對手狀態欄與雙方總分深度 3D 浮雕、立體徽章與金色光暈重構)
+   (撠???????寧蜇?楛摨?3D 瘚桅???擃噬蝡??????)
    ========================================================================== */
 
-/* 1. 對手狀態欄位 (#xlwEnemyInfoPanel) 立體與戰術徽章 */
+/* 1. 撠????雿?(#xlwEnemyInfoPanel) 蝡??銵噬蝡?*/
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel {
   background: radial-gradient(circle at 50% 20%, rgba(255, 77, 79, 0.22) 0%, transparent 75%), linear-gradient(180deg, rgba(48, 20, 32, 0.98) 0%, rgba(20, 8, 16, 0.99) 100%) !important;
   border: 2px solid #ff7875 !important;
@@ -3040,7 +3038,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   text-shadow: 0 0 8px rgba(255, 230, 0, 0.8), 1px 1px 0 #000 !important;
 }
 
-/* 2. 雙方總分對戰面板與歷史對話框 (.score-box & .score-row) */
+/* 2. ?蝮賢?撠?Ｘ?風?脣?閰望? (.score-box & .score-row) */
 .score-box {
   background: radial-gradient(circle at 50% 20%, rgba(255, 215, 0, 0.18) 0%, transparent 75%), linear-gradient(180deg, rgba(38, 28, 54, 0.98) 0%, rgba(16, 12, 24, 0.99) 100%) !important;
   border: 2.5px solid #ffe600 !important;
@@ -3108,7 +3106,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 /* ==========================================================================
    OPPONENT STATUS PANEL WIDENING & UNCLIPPED TYPOGRAPHY
-   (將對手狀態欄位寬度調寬，確保完美展現牌組名稱與動態數值)
+   (撠?????雿祝摨西矽撖穿?蝣箔?摰?撅???迂?????
    ========================================================================== */
 
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel {
@@ -3145,7 +3143,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 /* ==========================================================================
    ULTRA 3D FATE COIN TOSS DIALOG & STATUS BAR
-   (命運硬幣投擲對話框、3D 金屬狀態列與立體按鈕全套重構)
+   (?賡?蝖砍馳?撠店獢?D ?惇?????擃??憟?瑽?
    ========================================================================== */
 
 .xlw-coin-toss-box {
@@ -3153,8 +3151,12 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   border: 2.5px solid #ffe600 !important;
   border-bottom: 6px solid #8c6d00 !important;
   border-radius: 22px !important;
-  width: 440px !important;
-  padding: 28px !important;
+  width: auto !important;
+  min-width: 380px !important;
+  max-width: 90vw !important;
+  max-height: 95vh !important;
+  overflow-y: auto !important;
+  padding: 15px 20px !important;
   text-align: center !important;
   box-shadow: inset 0 2.5px 5px rgba(255, 255, 255, 0.65), inset 0 -5px 12px rgba(0, 0, 0, 0.7), 0 20px 50px rgba(0, 0, 0, 0.95), 0 0 35px rgba(255, 230, 0, 0.5) !important;
   box-sizing: border-box !important;
@@ -3162,18 +3164,19 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 .xlw-coin-toss-title {
   color: #ffe600 !important;
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
   margin-top: 0 !important;
-  margin-bottom: 18px !important;
-  font-size: 24px !important;
+  margin-bottom: 10px !important;
+  font-size: 20px !important;
   font-weight: 900 !important;
   text-shadow: 0 0 14px rgba(255, 230, 0, 0.8), 2px 2px 0 #000 !important;
   letter-spacing: 0.8px !important;
+  white-space: nowrap !important;
 }
 
 .xlw-coin-graphic {
-  font-size: 90px !important;
-  margin: 20px 0 !important;
+  font-size: 60px !important;
+  margin: 10px 0 !important;
   transition: transform 0.8s ease-in-out !important;
   display: inline-block !important;
   filter: drop-shadow(0 0 22px rgba(255, 230, 0, 0.85)) drop-shadow(0 10px 18px rgba(0,0,0,0.9)) !important;
@@ -3184,13 +3187,14 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   border: 1.5px solid rgba(255, 230, 100, 0.8) !important;
   border-bottom: 4px solid #7a6000 !important;
   border-radius: 14px !important;
-  padding: 14px 18px !important;
+  padding: 10px 14px !important;
   color: #fff6c2 !important;
   font-weight: 900 !important;
-  font-size: 15px !important;
-  line-height: 1.6 !important;
-  margin-bottom: 25px !important;
-  min-height: 58px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 15px !important;
+  min-height: 40px !important;
+  white-space: nowrap !important;
   text-shadow: 1px 1px 2px #000, 0 0 8px rgba(255, 230, 0, 0.4) !important;
   box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(0, 0, 0, 0.7) !important;
   display: flex !important;
@@ -3237,7 +3241,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 /* ==========================================================================
    FOREST CAN-SUMMON VS CANNOT-SUMMON VIVID VISUAL DISTINCTION
-   (我方森林區【可召喚】與【不可召喚】極致明顯視覺差異與霓虹脈衝動畫)
+   (?璉格????砍??????臬?扔?湔?憿航?閬箏榆?啗?????)
    ========================================================================== */
 
 #playerForest.active-summon-forest {
@@ -3280,7 +3284,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 /* ==========================================================================
    ULTRA 3D HUD TOTAL SCORE STATUS PANEL (.score-badge-fixed)
-   (主畫面左上角【我方總分】與【對手總分】3D 金屬水晶 HUD 重構)
+   (銝餌?Ｗ椰銝????寧蜇?????蜇??D ?惇瘞湔 HUD ??)
    ========================================================================== */
 
 .score-badge-fixed {
@@ -3384,7 +3388,7 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 
 /* ==========================================================================
-   STARRY COSMIC CELESTIAL BACKGROUND SYSTEM (「星靈王」燦爛星空主題)
+   STARRY COSMIC CELESTIAL BACKGROUND SYSTEM (???????蝛箔蜓憿?
    ========================================================================== */
 
 html, body {
@@ -3394,7 +3398,7 @@ html, body {
   overflow: hidden !important;
 }
 
-/* 燦爛星空與星雲塵埃層 */
+/* ?衣??征???脣△?惜 */
 body::before {
   content: "";
   position: fixed;
@@ -3419,7 +3423,7 @@ body::before {
   opacity: 0.85;
 }
 
-/* 宇宙神秘紫金極光塵埃層 */
+/* 摰?蟡?蝝恍?璆萄?憛萄?撅?*/
 body::after {
   content: "";
   position: fixed;
@@ -3451,19 +3455,19 @@ body::after {
 
 
 /* ==========================================================================
-   MODERN CLEAN ROUNDED SANS TYPOGRAPHY (微軟正黑體 / NOTO SANS 高清晰介面字體)
+   MODERN CLEAN ROUNDED SANS TYPOGRAPHY (敺株?甇??擃?/ NOTO SANS 擃??唬??Ｗ?擃?
    ========================================================================== */
 
 * {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
 }
 
 html, body, button, select, input, textarea, div, span, p, h1, h2, h3, h4, h5, h6,
 #status, .status-bar, .topbar, .score-badge-fixed, #xlwEnemyInfoPanel, #stableActionPanel, .confirm-box {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
 }
 
-/* 高清晰文字對比與微環境陰影 */
+/* 擃??唳?摮?瘥?敺桃憓敶?*/
 .topbar button, .topbar select, .topbar a button,
 #endTurnBtn, .end-turn-btn,
 #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel,
@@ -3477,11 +3481,11 @@ html, body, button, select, input, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
 /* ==========================================================================
    STRICT UNIFIED TYPOGRAPHY ACROSS ALL MODALS, OVERLAYS & JUMP SCREENS
-   (確保全遊戲所有彈窗、對話框、選單與跳轉畫面 100% 統一字體格式)
+   (蝣箔??券??脫???蝒?閰望???株?頝唾??恍 100% 蝯曹?摮??澆?)
    ========================================================================== */
 
 * {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
 }
 
 html, body, div, span, applet, object, iframe,
@@ -3500,17 +3504,17 @@ select, button,
 .score-box, .confirm-box, .xlw-modal-overlay, .xlw-choice-modal,
 .xlw-chain-overlay, .xlw-spell-activation-overlay, .xlw-tribute-activation-overlay,
 #xlwResultPanel, #xlwCorsWarningOverlay, #xlwDebugPanel, #multiplayerLobby {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif !important;
 }
 
 
 
 /* ==========================================================================
    HARMONIOUS DARK OBSIDIAN PALETTE & SUBDUED NON-DISTRACTING UI
-   (將按鈕與狀態欄調成沉穩高級黑曜石色調，突顯中央主要卡牌對戰畫面)
+   (撠??????隤踵?瘝帘擃?暺??唾隤選?蝒＊銝剖亢銝餉??∠?撠?恍)
    ========================================================================== */
 
-/* 1. 對手狀態欄 (#xlwEnemyInfoPanel) 沉穩暗紅黑曜石調 */
+/* 1. 撠???? (#xlwEnemyInfoPanel) 瘝帘??暺??唾矽 */
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel {
   background: linear-gradient(180deg, rgba(34, 18, 26, 0.95) 0%, rgba(16, 9, 13, 0.98) 100%) !important;
   border: 1.5px solid rgba(200, 90, 90, 0.55) !important;
@@ -3549,7 +3553,7 @@ select, button,
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* 2. 主畫面左上角 HUD 雙方總分欄 (.score-badge-fixed) 沉穩暗金黑曜石調 */
+/* 2. 銝餌?Ｗ椰銝? HUD ?蝮賢?甈?(.score-badge-fixed) 瘝帘??暺??唾矽 */
 .score-badge-fixed {
   background: linear-gradient(180deg, rgba(28, 22, 34, 0.95) 0%, rgba(12, 10, 16, 0.98) 100%) !important;
   border: 1.5px solid rgba(212, 175, 55, 0.55) !important;
@@ -3601,7 +3605,7 @@ select, button,
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.5) !important;
 }
 
-/* 3. 戰術佈陣與進攻宣言按鈕調成沉穩黑曜金屬調 */
+/* 3. ?啗?雿?脫摰????隤踵?瘝帘暺??惇隤?*/
 #stableActionTactical, .stable-action-btn.tactical {
   background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0) 45%), linear-gradient(180deg, #473819 0%, #291e0a 100%) !important;
   color: #fef08a !important;
@@ -3630,7 +3634,7 @@ select, button,
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 6px 16px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* 4. 結束回合按鈕調成沉穩暗紫黑曜石調 */
+/* 4. 蝯?????隤踵?瘝帘?換暺??唾矽 */
 #endTurnBtn, .end-turn-btn {
   background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0) 45%), linear-gradient(180deg, #362247 0%, #1a0d24 100%) !important;
   color: #e9d5ff !important;
@@ -3645,7 +3649,7 @@ select, button,
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* 5. 我方森林區可召喚脈衝光柔和自然化 */
+/* 5. ?璉格???臬??銵????芰??*/
 #playerForest.active-summon-forest {
   border: 2px solid #2ec4b6 !important;
   box-shadow: 0 0 16px rgba(46, 196, 182, 0.6), inset 0 0 12px rgba(46, 196, 182, 0.3) !important;
@@ -3670,7 +3674,7 @@ select, button,
 
 /* ==========================================================================
    3D TILT PARALLAX HOVER & SR/SSR HOLOGRAPHIC FOIL SHADER
-   (手牌與場上單位 3D 視差傾斜、陀螺儀動態光澤與 SR/SSR 雷射虹光箔膜)
+   (???銝雿?3D 閬榆?暹????箏????黎??SR/SSR ?瑕??孵?蝞?)
    ========================================================================== */
 
 .card, .unit-card, #xlwLeftCardPanel {
@@ -3678,7 +3682,7 @@ select, button,
   will-change: transform !important;
 }
 
-/* 放大預覽視窗與 SR/SSR 雷射虹光特效層 */
+/* ?曉之?汗閬???SR/SSR ?瑕??孵??寞?撅?*/
 #xlwLeftCardPanel {
   position: relative !important;
   overflow: hidden !important;
@@ -3723,7 +3727,7 @@ select, button,
 
 /* ==========================================================================
    FORCE RESTORE LEFT CARD PREVIEW PANEL ORIGINAL LOWER POSITION
-   (徹底修復：強制將左側卡牌放大預覽視窗降至底部原本位置 bottom: 20px)
+   (敺孵?靽桀儔嚗撥?嗅?撌血?∠??曉之?汗閬??摨?雿蔭 bottom: 20px)
    ========================================================================== */
 
 .xlw-left-card-panel, #xlwLeftCardPanel {
@@ -3751,17 +3755,17 @@ select, button,
 
 
 /* ==========================================================================
-   SAFE 3D STACK LAYER SHADOWS (完全不改變格子定位 position/transform)
+   SAFE 3D STACK LAYER SHADOWS (摰銝霈摮?雿?position/transform)
    ========================================================================== */
 
-/* 1 層堆疊厚度 */
+/* 1 撅文???摨?*/
 .xlw-stack-depth-1 {
   box-shadow: 
     1.5px 1.5px 0 #281d38,
     3px 3px 6px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* 2 層堆疊厚度 */
+/* 2 撅文???摨?*/
 .xlw-stack-depth-2 {
   box-shadow: 
     1.5px 1.5px 0 #281d38,
@@ -3769,7 +3773,7 @@ select, button,
     5px 5px 10px rgba(0, 0, 0, 0.85) !important;
 }
 
-/* 3 層堆疊厚度 */
+/* 3 撅文???摨?*/
 .xlw-stack-depth-3 {
   box-shadow: 
     1.5px 1.5px 0 #281d38,
@@ -3778,7 +3782,7 @@ select, button,
     6.5px 6.5px 14px rgba(0, 0, 0, 0.9) !important;
 }
 
-/* 4 層滿疊厚度 */
+/* 4 撅斗遛??摨?*/
 .xlw-stack-depth-4 {
   box-shadow: 
     1.5px 1.5px 0 rgba(212, 175, 55, 0.7),
@@ -3792,10 +3796,10 @@ select, button,
 
 /* ==========================================================================
    CONSTELLATION LANE DIVIDERS, PHASE ATMOSPHERE & AI SPEECH BUBBLES
-   (戰場前後排星軌分界線、動態階段情境光暈與 AI 戰術對話氣泡)
+   (?啣????頠???????畾菜?憓??? AI ?啗?撠店瘞?部)
    ========================================================================== */
 
-/* 1. 對手 AI 戰術氣氛對話氣泡 */
+/* 1. 撠? AI ?啗?瘞??撠店瘞?部 */
 #xlwEnemyInfoPanel {
   position: fixed !important;
 }
@@ -3825,7 +3829,7 @@ select, button,
   transform: translateX(-50%) scale(1) !important;
 }
 
-/* 2. 動態階段情境光暈 */
+/* 2. ???挾???? */
 #boardWrap, body {
   transition: box-shadow 0.5s ease, background 0.5s ease !important;
 }
@@ -3849,7 +3853,7 @@ select, button,
 
 
 /* ==========================================================================
-   REORGANIZED 3-MODULE GROUPED TOPBAR (最上排按鈕分組與一目瞭然高質感模組)
+   REORGANIZED 3-MODULE GROUPED TOPBAR (?銝????????桃?園?鞈芣?璅∠?)
    ========================================================================== */
 
 .topbar-grouped-v9 {
@@ -3981,7 +3985,7 @@ select, button,
 
 /* ==========================================================================
    ENLARGED & COMFORTABLY LEGIBLE TOPBAR BUTTON FONTS
-   (放大最上排按鈕與選單字體，確保清晰好辨識)
+   (?曉之?銝?????桀?擃?蝣箔?皜憟質儘霅?
    ========================================================================== */
 
 .topbar-grouped-v9 {
@@ -4021,10 +4025,10 @@ select, button,
 
 /* ==========================================================================
    MOBILE LANDSCAPE FULLSCREEN PWA & ORIENTATION PROMPT
-   (手機橫向全螢幕 PWA 與直向轉橫向提示遮罩)
+   (??璈怠??刻撟?PWA ???璈怠??內?桃蔗)
    ========================================================================== */
 
-/* 全螢幕 Viewport 滿版鎖定 */
+/* ?刻撟?Viewport 皛輻??? */
 html, body {
   width: 100vw !important;
   height: 100vh !important;
@@ -4032,7 +4036,7 @@ html, body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
 }
 
-/* 直向持握時顯示旋轉提示遮罩 */
+/* ?游???＊蝷箸?頧?蝷粹蝵?*/
 .xlw-mobile-rotate-prompt {
   display: none !important;
   position: fixed;
@@ -4102,7 +4106,7 @@ html, body {
 
 
 /* ==========================================================================
-   IPHONE 14 LANDSCAPE SIMULATOR (工具列 0.46 大幅縮放不溢出 + 棋盤大幅上移 -55px 完美居中)
+   IPHONE 14 LANDSCAPE SIMULATOR (撌亙??0.46 憭批?蝮格銝滯??+ 璉憭批?銝宏 -55px 摰?撅葉)
    ========================================================================== */
 
 body.xlw-iphone14-sim-active {
@@ -4115,7 +4119,7 @@ body.xlw-iphone14-sim-active {
   overflow: hidden !important;
 }
 
-/* iPhone 14 實體機身邊框 (844px x 390px) */
+/* iPhone 14 撖阡?璈澈?? (844px x 390px) */
 body.xlw-iphone14-sim-active .game-shell {
   width: 844px !important;
   height: 390px !important;
@@ -4137,7 +4141,7 @@ body.xlw-iphone14-sim-active .game-shell {
   background: #070505 !important;
 }
 
-/* 1. 工具列 (Top Bar) 0.46 大幅精確縮放，全數 10 個按鈕 100% 完全收納於 844px 內部，右側留白絕不溢出 */
+/* 1. 撌亙??(Top Bar) 0.46 憭批?蝎曄Ⅱ蝮格嚗??10 ????100% 摰?嗥???844px ?折嚗?渡??賜?銝滯??*/
 body.xlw-iphone14-sim-active .game-shell .topbar-grouped-v9 {
   position: absolute !important;
   top: 4px !important;
@@ -4156,7 +4160,7 @@ body.xlw-iphone14-sim-active .game-shell .topbar-grouped-v9 {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* 2. 對戰棋盤大幅向上拉升 55px (-55px margin-top)，敵我雙方區域與手牌全數垂直置中 */
+/* 2. 撠璉憭批????? 55px (-55px margin-top)嚗???孵??????冽?蝵桐葉 */
 body.xlw-iphone14-sim-active .game-shell .board-wrap {
   width: 100% !important;
   height: 390px !important;
@@ -4186,7 +4190,7 @@ body.xlw-iphone14-sim-active .game-shell #boardWrap {
   }
 }
 
-/* 3. 右下角對戰操作按鈕面板 (#stableActionPanel) 獨立定位於 iPhone 14 內部右下角 */
+/* 3. ?喃?閫??唳?雿????(#stableActionPanel) ?函?摰???iPhone 14 ?折?喃?閫?*/
 body.xlw-iphone14-sim-active .game-shell #stableActionPanel {
   position: absolute !important;
   right: 10px !important;
@@ -4219,10 +4223,10 @@ body.xlw-iphone14-sim-active .game-shell #stableActionPanel .stable-action-btn {
   white-space: nowrap !important;
 }
 
-/* 4. 中上方階段提示面板 (#phaseDisplayPanelHard) 定位於工具列右側下方 */
+/* 4. 銝凋??寥?畾菜?蝷粹??(#phaseDisplayPanelHard) 摰??澆極?瑕??喳銝 */
 
 
-/* 5. 左上方對手狀態欄 (#xlwEnemyInfoPanel) 定位於工具列下方左側 */
+/* 5. 撌虫??孵????? (#xlwEnemyInfoPanel) 摰??澆極?瑕?銝撌血 */
 body.xlw-iphone14-sim-active .game-shell #xlwEnemyInfoPanel {
   position: absolute !important;
   top: 22px !important;
@@ -4233,7 +4237,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwEnemyInfoPanel {
   display: block !important;
 }
 
-/* 6. 左側卡牌放大預覽面板獨立彈出適配 */
+/* 6. 撌血?∠??曉之?汗?Ｘ?函?敶?拚? */
 body.xlw-iphone14-sim-active .game-shell .xlw-left-card-panel,
 body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   position: absolute !important;
@@ -4248,7 +4252,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
 
 /* ==========================================================================
-   REAL MOBILE DEVICE LANDSCAPE RWD (按鈕縮至 1/3 以下、狀態欄極致微縮靠邊、手牌防縮小固定)
+   REAL MOBILE DEVICE LANDSCAPE RWD (??蝮株 1/3 隞乩?????璆菔敺桃葬?????蝮桀??箏?)
    ========================================================================== */
 
 @media (max-width: 1400px) {
@@ -4261,7 +4265,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     display: block !important;
   }
 
-  /* 遊戲外殼滿版佔領 100% 畫面 */
+  /* ?憭挺皛輻?雿? 100% ?恍 */
   .game-shell {
     width: 100vw !important;
     height: 100vh !important;
@@ -4277,7 +4281,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     padding: 0 !important;
   }
 
-  /* 1. 最上排工具列 (Top Bar) 0.32 大幅微縮，完全收納於頂部，不擋戰線 */
+  /* 1. ?銝?撌亙??(Top Bar) 0.32 憭批?敺桃葬嚗??冽蝝?嚗??蝺?*/
   .topbar-grouped-v9 {
     position: absolute !important;
     top: 2px !important;
@@ -4297,7 +4301,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
   }
 
-  /* 調整卡墊背景圖與外框向左下方移動與格子對齊 */
+  /* 隤踵?∪????憭??椰銝蝘餃??摮?朣?*/
   .board::before {
     left: -90px !important;
     right: 330px !important;
@@ -4317,7 +4321,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
   }
 
-  /* 最上排按鈕與工具列整齊美化樣式 */
+  /* ?銝????極?瑕??湧?蝢?璅?? */
   .topbar-grouped-v9 {
     display: flex !important;
     align-items: center !important;
@@ -4355,7 +4359,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: rgba(40, 30, 60, 0.9) !important;
   }
 
-  /* 2. 對戰棋盤放大為 scale(0.45) 絕對置中，極大化戰場視野 */
+  /* 2. 撠璉?曉之??scale(0.45) 蝯?蝵桐葉嚗扔憭批??啣閬? */
   .board-wrap {
     width: 100% !important;
     height: 100% !important;
@@ -4381,7 +4385,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     background: transparent !important;
   }
 
-  /* 3. 雙方分數看板 (#scoreBadgeFixed) 極度微縮、窄寬度、小字體，縮放為 32% */
+  /* 3. ??? (#scoreBadgeFixed) 璆萄漲敺桃葬??撖砍漲??摮?嚗葬?曄 32% */
   #scoreBadgeFixed {
     position: absolute !important;
     left: 8px !important;
@@ -4414,22 +4418,22 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   }
 
   .score-badge-label {
-    font-size: 14.5px !important; /* 字體雙倍放大 */
+    font-size: 14.5px !important; /* 摮??憭?*/
     color: #ffd76a !important;
   }
 
   .score-badge-num {
-    font-size: 17.0px !important; /* 字體雙倍放大 */
+    font-size: 17.0px !important; /* 摮??憭?*/
     font-weight: bold !important;
     color: #ffffff !important;
   }
 
   .score-badge-subrow {
-    font-size: 12.0px !important; /* 字體雙倍放大 */
+    font-size: 12.0px !important; /* 摮??憭?*/
     opacity: 0.85 !important;
   }
 
-  /* 4. 對手狀態欄 (#xlwEnemyInfoPanel) 極度微縮、窄寬度、小字體，縮放為 32% */
+  /* 4. 撠???? (#xlwEnemyInfoPanel) 璆萄漲敺桃葬??撖砍漲??摮?嚗葬?曄 32% */
   #xlwEnemyInfoPanel {
     position: absolute !important;
     left: 180px !important;
@@ -4449,7 +4453,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
   }
 
   #xlwEnemyInfoPanel .enemy-info-title {
-    font-size: 9.5px !important; /* 字體縮小 */
+    font-size: 9.5px !important; /* 摮?蝮桀? */
     margin: 0 !important;
     white-space: nowrap !important;
   }
@@ -4461,11 +4465,11 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
 
   #xlwEnemyInfoPanel .enemy-stat-badge {
     padding: 1px 3px !important;
-    font-size: 8px !important; /* 字體縮小 */
+    font-size: 8px !important; /* 摮?蝮桀? */
     white-space: nowrap !important;
   }
 
-  /* 5. 右側操作按鈕面板 (#stableActionPanel) 縮至最小並靠最右邊，縮放為 30% (確認換牌、重置新局等) */
+  /* 5. ?喳?????Ｘ (#stableActionPanel) 蝮株?撠蒂???喲?嚗葬?曄 30% (蝣箄?????蝵格撅蝑? */
   #stableActionPanel {
     position: absolute !important;
     right: 8px !important;
@@ -4503,7 +4507,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     white-space: nowrap !important;
   }
 
-  /* 6. 中上方階段提示面板 (#phaseDisplayPanelHard) 定位於工具列下方中軸 */
+  /* 6. 銝凋??寥?畾菜?蝷粹??(#phaseDisplayPanelHard) 摰??澆極?瑕?銝銝剛遘 */
   body #phaseDisplayPanelHard,
 body.xlw-iphone14-sim-active #phaseDisplayPanelHard,
 body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
@@ -4534,13 +4538,13 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     white-space: nowrap !important;
   }
 
-  /* 7. 我方手牌專區 (.hand-panel) 釘死於視窗底部，設定固定寬度以防 Safari 折疊 Bug */
+  /* 7. ???撠? (.hand-panel) ?香?潸?蝒??剁?閮剖??箏?撖砍漲隞仿 Safari ?? Bug */
   .hand-panel {
     position: fixed !important;
     bottom: 4px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 650px !important; /* 固定寬度，防範 iOS Safari 寬度崩塌 */
+    width: 650px !important; /* ?箏?撖砍漲嚗蝭?iOS Safari 撖砍漲撏拙? */
     max-width: 90vw !important;
     height: 90px !important;
     min-height: 90px !important;
@@ -4557,7 +4561,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     padding: 0 !important;
   }
 
-  /* 拿掉「我方手牌」文字標題 */
+  /* ?踵????寞???摮?憿?*/
   .hand-title {
     display: none !important;
   }
@@ -4573,17 +4577,9 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     overflow: visible !important;
   }
 
-  /* 3D 視角立體斜度手牌 (54px x 74px) */
+  /* 3D 閬?蝡??漲?? (54px x 74px) */
   .hand .card {
-    width: 66px !important;
-    height: 90px !important;
-    min-width: 50px !important;
-    flex: 0 0 66px !important;
-    margin-left: -10px !important;
-    border-radius: 5px !important;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important;
-    transform: perspective(300px) rotateX(-15deg) !important;
-    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0.15s ease !important;
+    width: 54px !important; height: 76px !important; min-width: 44px !important; flex: 0 0 54px !important; margin-left: -12px !important; border-radius: 5px !important; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important; transform: perspective(300px) rotateX(-15deg) !important; transition: transform 0.45s ease-out, z-index 0.2s ease !important;
     transform-origin: bottom center !important;
   }
   .hand .card .mini-meta {
@@ -4597,7 +4593,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     margin-left: 0 !important;
   }
 
-  /* 手牌 Hover/Touch 浮空拉起 24px 並放大 1.4 倍 */
+  /* ?? Hover/Touch 瘚桃征?絲 24px 銝行憭?1.4 ??*/
   .hand .card:hover,
   .hand .card:active {
     z-index: 200 !important;
@@ -4605,7 +4601,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 215, 106, 0.3) !important;
   }
 
-  /* 左側卡牌放大預覽面板獨立彈出適配 */
+  /* 撌血?∠??曉之?汗?Ｘ?函?敶?拚? */
   .xlw-left-card-panel, #xlwLeftCardPanel {
     position: fixed !important;
     left: 0px !important;
@@ -4619,7 +4615,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 
 
 /* ==========================================================================
-   BATTLE CATS STYLE WELCOME SPLASH SCREEN (貓咪大戰爭風格登入歡迎畫面樣式系統)
+   BATTLE CATS STYLE WELCOME SPLASH SCREEN (鞎憭扳?剝◢?潛?交迭餈?Ｘ見撘頂蝯?
    ========================================================================== */
 
 .xlw-welcome-overlay {
@@ -4634,10 +4630,10 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   align-items: center !important;
   justify-content: center !important;
   overflow: hidden !important;
-  font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+  font-family: "Microsoft JhengHei", "敺株?甇??擃?, sans-serif !important;
 }
 
-/* 漸層發光背景動畫 */
+/* 瞍詨惜?澆??? */
 .welcome-background-glow {
   position: absolute;
   top: 50%;
@@ -4655,7 +4651,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { opacity: 1.0; transform: translate(-50%, -50%) scale(1.05); }
 }
 
-/* 背景星光粒片漂浮效果 */
+/* ???蝎?瞍筑?? */
 .welcome-sparkles {
   position: absolute;
   width: 100%;
@@ -4675,7 +4671,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: translateY(-80px); }
 }
 
-/* 左右裝飾漂浮星靈卡牌 */
+/* 撌血鋆ˇ瞍筑???∠? */
 .floating-deco-card {
   position: absolute;
   width: 80px;
@@ -4711,7 +4707,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: translateY(-18px) rotate(22deg); }
 }
 
-/* 首頁容器 */
+/* 擐?摰孵 */
 .welcome-container {
   position: relative;
   z-index: 10;
@@ -4722,7 +4718,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   text-align: center;
 }
 
-/* 經典霓虹字型標題 */
+/* 蝬?摮?璅? */
 .welcome-title-box {
   animation: titlePulse 2s infinite alternate ease-in-out;
 }
@@ -4751,7 +4747,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: scale(1.02); }
 }
 
-/* 貓咪大戰爭風格：Bouncing 吉祥物容器 */
+/* 鞎憭扳?剝◢?潘?Bouncing ?孕?拙捆??*/
 .mascot-container {
   display: flex;
   gap: 32px;
@@ -4760,7 +4756,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   margin: 10px 0;
 }
 
-/* 萌萌卡哇伊 Bouncing 動畫 */
+/* ???∪?隡?Bouncing ? */
 .bouncing-mascot {
   width: 50px;
   height: 50px;
@@ -4768,7 +4764,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background-repeat: no-repeat;
   background-position: bottom center;
 }
-/* 貓貓吉祥物 */
+/* 鞎??孕??*/
 .mascot-cat {
   background-image: url('/static/icon-192.png');
   border-radius: 50%;
@@ -4787,7 +4783,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: translateY(-24px) scaleY(1.05); }
 }
 
-/* 歡迎選單與圓角按鈕 */
+/* 甇∟??詨??閫???*/
 .welcome-menu {
   display: flex;
   flex-direction: column;
@@ -4799,12 +4795,12 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   position: relative;
   width: 100%;
   padding: 14px 24px !important;
-  font-size: 22px !important; /* 大幅放大字體 */
+  font-size: 22px !important; /* 憭批??曉之摮? */
   font-weight: 900 !important;
   border-radius: 50px !important;
   cursor: pointer !important;
-  border: 3px solid #ffd76a !important; /* 加粗邊框 */
-  color: #ffe600 !important; /* 明亮金黃 */
+  border: 3px solid #ffd76a !important; /* ???? */
+  color: #ffe600 !important; /* ?漁?? */
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -4874,35 +4870,11 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 
-/* ===== 完美強制橫向螢幕鎖定 (Physical Orientation Lock to Landscape) ===== */
-@media (orientation: portrait) {
-  html {
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-    position: fixed !important;
-  }
-  body {
-    width: 100vh !important;
-    height: 100vw !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 100vw !important;
-    transform: rotate(90deg) !important;
-    transform-origin: top left !important;
-    overflow: hidden !important;
-  }
-  /* Force all wrappers to occupy the full rotated space of the body */
-  .game-shell,
-  .board-wrap,
-  .xlw-welcome-overlay {
-    width: 100% !important;
-    height: 100% !important;
-  }
-}
+/* ===== 摰?撘瑕璈怠??Ｗ??? (Physical Orientation Lock to Landscape) ===== */
+/* (Removed body rotate hack to prevent conflict with native screen.orientation API and jumping bugs) */
 
 
-/* ===== 選擇出戰牌組遮罩樣式 (Pre-battle Modal) ===== */
+/* ===== ?豢??箸???桃蔗璅?? (Pre-battle Modal) ===== */
 .xlw-prebattle-overlay {
   position: fixed !important;
   top: 0 !important;
@@ -5007,13 +4979,13 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   perspective: 1000px;
 }
 
-/* 隱藏最上排原生的陣營與牌組下拉選單 (已由 Pre-Battle Modal 取代) */
+/* ?梯??銝????????銝??詨 (撌脩 Pre-Battle Modal ?誨) */
 .topbar-group.deck-group {
   display: none !important;
 }
 
 
-/* ===== 獨立置頂最右上角功能按鈕列 ===== */
+/* ===== ?函?蝵桅???喃?閫??賣??? ===== */
 .xlw-fixed-top-right-action-bar {
   position: fixed !important;
   top: 4px !important;
@@ -5046,12 +5018,12 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   white-space: nowrap !important;
 }
 
-/* 徹底移除對手手牌狀態欄、頂部品牌 Logo 與 Debug 按鈕 */
+/* 敺孵?蝘駁撠?????????典???Logo ??Debug ?? */
 #xlwEnemyInfoPanel, .xlw-enemy-info-panel, .topbar-brand, #xlwDebugToggleBtn {
   display: none !important;
 }
 
-/* 徹底移除頂層工具列邊框與底色 */
+/* 敺孵?蝘駁?惜撌亙??獢?摨 */
 .topbar, .topbar-grouped-v9 {
   background: transparent !important;
   border: none !important;
@@ -5059,7 +5031,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   box-shadow: none !important;
 }
 
-/* 全螢幕不透明深色線上對戰大廳浮層 (#multiplayerLobby) */
+/* ?刻撟???瘛梯蝺?撠憭批輒瘚桀惜 (#multiplayerLobby) */
 #multiplayerLobby {
   position: fixed !important;
   top: 0 !important;
@@ -5073,7 +5045,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   align-items: center !important;
 }
 
-/* ===== 統一極致精美按鈕樣式 (.topbar-pill-btn) ===== */
+/* ===== 蝯曹?璆菔蝎曄???璅?? (.topbar-pill-btn) ===== */
 .topbar-pill-btn {
   background: linear-gradient(135deg, rgba(30, 20, 45, 0.9) 0%, rgba(15, 10, 25, 0.95) 100%) !important;
   border: 1px solid rgba(255, 215, 106, 0.45) !important;
@@ -5097,7 +5069,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   transform: scale(1.05) !important;
 }
 
-/* ===== 超高權重 100% 統一右上角按鈕樣式 (圓角金邊膠囊款) ===== */
+/* ===== 頞?甈? 100% 蝯曹??喃?閫??見撘?(??????甈? ===== */
 #xlwFixedTopRightActionBar button,
 #xlwFixedTopRightActionBar .topbar-pill-btn,
 #xlwFixedTopRightActionBar #scoreBtn,
@@ -5132,7 +5104,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 
-/* ===== 頂部中央對手懸浮手牌 (超清晰 60x84px 正確長寬比、top: 8px 零模糊無遮擋) ===== */
+/* ===== ?銝剖亢撠??豢筑?? (頞???60x84px 甇?Ⅱ?瑕祝瘥op: 8px ?嗆芋蝟?格?) ===== */
 .xlw-enemy-floating-hand {
   position: absolute !important;
   top: -40px !important;
@@ -5183,7 +5155,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   margin-left: 0 !important;
 }
 
-/* ===== 新手教學模式 (Beginner Tutorial Mode) 視覺與動態 CSS ===== */
+/* ===== ?唳??飛璅∪? (Beginner Tutorial Mode) 閬死????CSS ===== */
 .menu-tutorial {
   background: linear-gradient(135deg, #092834 0%, #0d5462 100%) !important;
   box-shadow: 0 4px 15px rgba(0, 229, 255, 0.25) !important;
@@ -5195,7 +5167,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   box-shadow: 0 6px 25px rgba(0, 229, 255, 0.5) !important;
 }
 
-/* 教學聚焦與引導遮罩 */
+/* ?飛???撠蝵?*/
 .xlw-tutorial-overlay {
   position: fixed !important;
   top: 0 !important;
@@ -5239,7 +5211,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   }
 }
 
-/* 導師對話框 (Dialogue Box) */
+/* 撠葦撠店獢?(Dialogue Box) */
 .xlw-tutorial-box {
   position: absolute !important;
   width: 440px !important;
@@ -5381,7 +5353,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   box-shadow: 0 4px 15px rgba(0, 229, 255, 0.6) !important;
 }
 
-/* 卡牌構造解密特寫彈窗 (Card Anatomy Detail Modal) */
+/* ?∠?瑽圾撖撖怠?蝒?(Card Anatomy Detail Modal) */
 .xlw-card-anatomy-modal {
   position: fixed !important;
   top: 0 !important;
@@ -5568,4 +5540,5 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .anatomy-close-btn:hover {
   transform: scale(1.05) !important;
 }
+
 
