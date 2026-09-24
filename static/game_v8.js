@@ -9661,7 +9661,7 @@ async function changeActionPhase(targetPhase) {
   if (phase !== "召喚階段" && phase !== "戰術佈陣" && phase !== "進攻宣言") return;
 
   if (targetPhase === "進攻宣言") {
-    if (phase === "戰術佈陣" && (tacticalSummonUsed || window.XLW_tacticalMoveUsed)) {
+    if (phase === "戰術佈陣") {
       setStatus("在戰術佈陣階段已執行過行動，無法改為執行進攻宣言。");
       return;
     }
@@ -18135,6 +18135,11 @@ function renderHand() {
       if (card.type === "magic") {
         castSpell(idx);
       } else if (getCardTributeCost(card) > 0) {
+        if (phase === "戰術佈陣") {
+          showModal(card);
+          setStatus("【戰術限制】戰術佈陣階段只能進行一般(免祭品)召喚，無法進行獻祭召喚！");
+          return;
+        }
         startTributeSummon(idx);
       } else {
         // 一般免祭品召喚
@@ -21604,7 +21609,7 @@ function renderStablePanel() {
     if (phase === "召喚階段" || phase === "進攻宣言") {
       canSwitchToAttack = true;
     } else if (phase === "戰術佈陣") {
-      canSwitchToAttack = (!tacticalSummonUsed && !window.XLW_tacticalMoveUsed);
+      canSwitchToAttack = false;
     }
     attackBtn.disabled = !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");

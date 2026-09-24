@@ -4385,7 +4385,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: 31% !important; left: 50% !important; transform: translate(-43%, -50%) scale(0.37) !important;
+    top: 31% !important; left: 50% !important; transform: translate(-44%, -50%) scale(0.37) !important;
     transform-origin: center center !important;
     margin: 0 !important;
     border: none !important;
@@ -4523,7 +4523,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 #phaseDisplayPanelHard {
   position: absolute !important;
   top: 38px !important;
-  right: 85px !important;
+  right: 5px !important;
   left: auto !important;
   width: auto !important;
   min-width: 120px !important;
@@ -5551,3 +5551,58 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 
 
 
+
+/* --- ADVANCED COSMIC TWINKLING BACKGROUND --- */
+@keyframes xlw-twinkle-1 {
+  0% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.9); }
+  100% { opacity: 0.8; transform: scale(1); }
+}
+
+@keyframes xlw-twinkle-2 {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.3; transform: scale(0.8); }
+}
+
+@keyframes xlw-twinkle-3 {
+  0% { opacity: 1; transform: scale(1.1); }
+  50% { opacity: 0.4; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Base deep space gradient */
+body {
+  background: radial-gradient(ellipse at bottom, #170a36 0%, #0d051c 40%, #05020a 100%) !important;
+}
+
+/* The starry layers */
+.game-shell::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: -2;
+  box-shadow: 71vw 94vh 1px 0px rgba(255,255,255,0.39),90vw 14vh 1px 0px rgba(255,255,255,0.64),26vw 41vh 1px 0px rgba(255,255,255,0.73),75vw 48vh 1px 0px rgba(255,255,255,0.49),62vw 60vh 1px 0px rgba(255,255,255,0.31),72vw 9vh 1px 0px rgba(255,255,255,0.55),35vw 57vh 1px 0px rgba(255,255,255,0.86),59vw 9vh 1px 0px rgba(255,255,255,0.83),15vw 14vh 1px 0px rgba(255,255,255,0.87),53vw 90vh 1px 0px rgba(255,255,255,0.58),25vw 8vh 1px 0px rgba(255,255,255,0.54),87vw 48vh 1px 0px rgba(255,255,255,0.58),67vw 63vh 1px 0px rgba(255,255,255,0.62),47vw 46vh 1px 0px rgba(255,255,255,0.63),6vw 38vh 1px 0px rgba(255,255,255,0.75),62vw 88vh 1px 0px rgba(255,255,255,0.49),80vw 56vh 1px 0px rgba(255,255,255,0.79),71vw 60vh 1px 0px rgba(255,255,255,0.75),30vw 9vh 1px 0px rgba(255,255,255,0.48),2vw 19vh 1px 0px rgba(255,255,255,0.39),57vw 3vh 1px 0px rgba(255,255,255,0.37),1vw 26vh 1px 0px rgba(255,255,255,0.33),39vw 38vh 1px 0px rgba(255,255,255,0.56),88vw 26vh 1px 0px rgba(255,255,255,0.55),87vw 54vh 1px 0px rgba(255,255,255,0.56),18vw 34vh 1px 0px rgba(255,255,255,0.72),42vw 26vh 1px 0px rgba(255,255,255,0.75),70vw 39vh 1px 0px rgba(255,255,255,0.72),62vw 66vh 1px 0px rgba(255,255,255,0.72),68vw 9vh 1px 0px rgba(255,255,255,0.89),23vw 42vh 1px 0px rgba(255,255,255,0.82),78vw 56vh 1px 0px rgba(255,255,255,0.54),30vw 13vh 1px 0px rgba(255,255,255,0.38),27vw 9vh 1px 0px rgba(255,255,255,0.54),82vw 17vh 1px 0px rgba(255,255,255,0.41),8vw 89vh 1px 0px rgba(255,255,255,0.6),60vw 43vh 1px 0px rgba(255,255,255,0.62),75vw 66vh 1px 0px rgba(255,255,255,0.37),22vw 92vh 1px 0px rgba(255,255,255,0.48),26vw 68vh 1px 0px rgba(255,255,255,0.8),22vw 12vh 1px 0px rgba(255,255,255,0.78),7vw 29vh 1px 0px rgba(255,255,255,0.48),28vw 10vh 1px 0px rgba(255,255,255,0.5),9vw 88vh 1px 0px rgba(255,255,255,0.75),70vw 2vh 1px 0px rgba(255,255,255,0.62),21vw 83vh 1px 0px rgba(255,255,255,0.64),94vw 35vh 1px 0px rgba(255,255,255,0.73),18vw 43vh 1px 0px rgba(255,255,255,0.76),11vw 52vh 1px 0px rgba(255,255,255,0.7),20vw 91vh 1px 0px rgba(255,255,255,0.75),32vw 82vh 1px 0px rgba(255,255,255,0.37),96vw 80vh 1px 0px rgba(255,255,255,0.82),32vw 82vh 1px 0px rgba(255,255,255,0.78),74vw 76vh 1px 0px rgba(255,255,255,0.69),7vw 32vh 1px 0px rgba(255,255,255,0.68),54vw 99vh 1px 0px rgba(255,255,255,0.78),45vw 83vh 1px 0px rgba(255,255,255,0.67),13vw 41vh 1px 0px rgba(255,255,255,0.34),87vw 57vh 1px 0px rgba(255,255,255,0.57),40vw 43vh 1px 0px rgba(255,255,255,0.79),33vw 42vh 1px 0px rgba(255,255,255,0.89),31vw 88vh 1px 0px rgba(255,255,255,0.32),76vw 34vh 1px 0px rgba(255,255,255,0.9),74vw 67vh 1px 0px rgba(255,255,255,0.82),83vw 80vh 1px 0px rgba(255,255,255,0.35),23vw 91vh 1px 0px rgba(255,255,255,0.48),70vw 6vh 1px 0px rgba(255,255,255,0.72),91vw 37vh 1px 0px rgba(255,255,255,0.74),57vw 98vh 1px 0px rgba(255,255,255,0.63),5vw 58vh 1px 0px rgba(255,255,255,0.81),63vw 17vh 1px 0px rgba(255,255,255,0.57),85vw 99vh 1px 0px rgba(255,255,255,0.47),11vw 10vh 1px 0px rgba(255,255,255,0.83),23vw 46vh 1px 0px rgba(255,255,255,0.7),23vw 51vh 1px 0px rgba(255,255,255,0.49),98vw 70vh 1px 0px rgba(255,255,255,0.55),32vw 35vh 1px 0px rgba(255,255,255,0.58),56vw 1vh 1px 0px rgba(255,255,255,0.64),86vw 53vh 1px 0px rgba(255,255,255,0.76),32vw 95vh 1px 0px rgba(255,255,255,0.53),43vw 58vh 1px 0px rgba(255,255,255,0.42),73vw 87vh 1px 0px rgba(255,255,255,0.58),47vw 28vh 1px 0px rgba(255,255,255,0.66),26vw 5vh 1px 0px rgba(255,255,255,0.67),56vw 64vh 1px 0px rgba(255,255,255,0.71),27vw 81vh 1px 0px rgba(255,255,255,0.32),79vw 18vh 1px 0px rgba(255,255,255,0.5),39vw 25vh 1px 0px rgba(255,255,255,0.56),9vw 24vh 1px 0px rgba(255,255,255,0.79),79vw 87vh 1px 0px rgba(255,255,255,0.33),92vw 86vh 1px 0px rgba(255,255,255,0.35),16vw 21vh 1px 0px rgba(255,255,255,0.32),32vw 37vh 1px 0px rgba(255,255,255,0.65),26vw 51vh 1px 0px rgba(255,255,255,0.81),67vw 1vh 1px 0px rgba(255,255,255,0.36),13vw 11vh 1px 0px rgba(255,255,255,0.85),79vw 14vh 1px 0px rgba(255,255,255,0.68),76vw 20vh 1px 0px rgba(255,255,255,0.88),65vw 65vh 1px 0px rgba(255,255,255,0.34),76vw 57vh 1px 0px rgba(255,255,255,0.52),94vw 11vh 1px 0px rgba(255,255,255,0.83),78vw 83vh 1px 0px rgba(255,255,255,0.55),32vw 65vh 1px 0px rgba(255,255,255,0.35),70vw 49vh 1px 0px rgba(255,255,255,0.67),50vw 94vh 1px 0px rgba(255,255,255,0.73),77vw 79vh 1px 0px rgba(255,255,255,0.87),45vw 7vh 1px 0px rgba(255,255,255,0.46),39vw 70vh 1px 0px rgba(255,255,255,0.83),56vw 83vh 1px 0px rgba(255,255,255,0.57),56vw 26vh 1px 0px rgba(255,255,255,0.68),83vw 81vh 1px 0px rgba(255,255,255,0.84),84vw 57vh 1px 0px rgba(255,255,255,0.46),71vw 61vh 1px 0px rgba(255,255,255,0.66),82vw 53vh 1px 0px rgba(255,255,255,0.36),77vw 13vh 1px 0px rgba(255,255,255,0.44),16vw 47vh 1px 0px rgba(255,255,255,0.59),53vw 68vh 1px 0px rgba(255,255,255,0.63),25vw 39vh 1px 0px rgba(255,255,255,0.31),6vw 99vh 1px 0px rgba(255,255,255,0.41),33vw 72vh 1px 0px rgba(255,255,255,0.42),56vw 38vh 1px 0px rgba(255,255,255,0.73),14vw 88vh 1px 0px rgba(255,255,255,0.74),24vw 68vh 1px 0px rgba(255,255,255,0.43),59vw 18vh 1px 0px rgba(255,255,255,0.58),3vw 80vh 1px 0px rgba(255,255,255,0.35),92vw 12vh 1px 0px rgba(255,255,255,0.41),52vw 40vh 1px 0px rgba(255,255,255,0.64),62vw 87vh 1px 0px rgba(255,255,255,0.79),90vw 28vh 1px 0px rgba(255,255,255,0.42),85vw 10vh 1px 0px rgba(255,255,255,0.37),88vw 4vh 1px 0px rgba(255,255,255,0.59),96vw 64vh 1px 0px rgba(255,255,255,0.63),3vw 92vh 1px 0px rgba(255,255,255,0.66),87vw 65vh 1px 0px rgba(255,255,255,0.39),92vw 66vh 1px 0px rgba(255,255,255,0.3),26vw 35vh 1px 0px rgba(255,255,255,0.81),60vw 9vh 1px 0px rgba(255,255,255,0.81),68vw 60vh 1px 0px rgba(255,255,255,0.77),12vw 81vh 1px 0px rgba(255,255,255,0.84),7vw 36vh 1px 0px rgba(255,255,255,0.35),82vw 6vh 1px 0px rgba(255,255,255,0.31),57vw 69vh 1px 0px rgba(255,255,255,0.41),86vw 64vh 1px 0px rgba(255,255,255,0.49),72vw 41vh 1px 0px rgba(255,255,255,0.43),57vw 66vh 1px 0px rgba(255,255,255,0.48),54vw 47vh 1px 0px rgba(255,255,255,0.37),15vw 8vh 1px 0px rgba(255,255,255,0.87),1vw 36vh 1px 0px rgba(255,255,255,0.34),91vw 92vh 1px 0px rgba(255,255,255,0.39),20vw 72vh 1px 0px rgba(255,255,255,0.34);
+  animation: xlw-twinkle-1 4s ease-in-out infinite;
+}
+
+.game-shell::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow: 59vw 86vh 1.5px 0.5px rgba(255,215,106,0.81),34vw 45vh 1.5px 0.5px rgba(255,215,106,0.59),44vw 66vh 1.5px 0.5px rgba(255,215,106,0.71),42vw 95vh 1.5px 0.5px rgba(255,215,106,0.8),24vw 86vh 1.5px 0.5px rgba(255,215,106,0.88),66vw 1vh 1.5px 0.5px rgba(255,215,106,0.72),65vw 8vh 1.5px 0.5px rgba(255,215,106,0.64),77vw 19vh 1.5px 0.5px rgba(255,215,106,0.63),47vw 75vh 1.5px 0.5px rgba(255,215,106,0.81),17vw 82vh 1.5px 0.5px rgba(255,215,106,0.88),61vw 84vh 1.5px 0.5px rgba(255,215,106,0.71),87vw 65vh 1.5px 0.5px rgba(255,215,106,0.59),32vw 40vh 1.5px 0.5px rgba(255,215,106,0.6),5vw 51vh 1.5px 0.5px rgba(255,215,106,0.93),15vw 79vh 1.5px 0.5px rgba(255,215,106,0.68),61vw 60vh 1.5px 0.5px rgba(255,215,106,0.82),6vw 32vh 1.5px 0.5px rgba(255,215,106,0.72),27vw 75vh 1.5px 0.5px rgba(255,215,106,0.63),60vw 20vh 1.5px 0.5px rgba(255,215,106,0.64),57vw 90vh 1.5px 0.5px rgba(255,215,106,0.94),55vw 22vh 1.5px 0.5px rgba(255,215,106,0.62),67vw 1vh 1.5px 0.5px rgba(255,215,106,0.85),84vw 37vh 1.5px 0.5px rgba(255,215,106,0.72),75vw 6vh 1.5px 0.5px rgba(255,215,106,0.87),82vw 97vh 1.5px 0.5px rgba(255,215,106,1.0),23vw 42vh 1.5px 0.5px rgba(255,215,106,0.51),16vw 80vh 1.5px 0.5px rgba(255,215,106,0.67),59vw 70vh 1.5px 0.5px rgba(255,215,106,0.97),29vw 7vh 1.5px 0.5px rgba(255,215,106,0.96),5vw 79vh 1.5px 0.5px rgba(255,215,106,0.55),98vw 71vh 1.5px 0.5px rgba(255,215,106,0.69),22vw 92vh 1.5px 0.5px rgba(255,215,106,0.78),30vw 11vh 1.5px 0.5px rgba(255,215,106,0.82),71vw 52vh 1.5px 0.5px rgba(255,215,106,0.59),16vw 59vh 1.5px 0.5px rgba(255,215,106,0.74),18vw 95vh 1.5px 0.5px rgba(255,215,106,1.0),17vw 68vh 1.5px 0.5px rgba(255,215,106,0.52),47vw 9vh 1.5px 0.5px rgba(255,215,106,0.77),27vw 69vh 1.5px 0.5px rgba(255,215,106,0.71),90vw 52vh 1.5px 0.5px rgba(255,215,106,0.73),98vw 34vh 1.5px 0.5px rgba(255,215,106,0.58),7vw 67vh 1.5px 0.5px rgba(255,215,106,0.63),80vw 65vh 1.5px 0.5px rgba(255,215,106,0.93),49vw 24vh 1.5px 0.5px rgba(255,215,106,0.78),65vw 54vh 1.5px 0.5px rgba(255,215,106,0.74),61vw 36vh 1.5px 0.5px rgba(255,215,106,0.96),38vw 39vh 1.5px 0.5px rgba(255,215,106,0.79),51vw 13vh 1.5px 0.5px rgba(255,215,106,0.52),15vw 89vh 1.5px 0.5px rgba(255,215,106,0.63),29vw 67vh 1.5px 0.5px rgba(255,215,106,0.85),28vw 36vh 1.5px 0.5px rgba(255,215,106,0.71),56vw 19vh 1.5px 0.5px rgba(255,215,106,0.84),19vw 80vh 1.5px 0.5px rgba(255,215,106,0.81),48vw 4vh 1.5px 0.5px rgba(255,215,106,0.78),99vw 88vh 1.5px 0.5px rgba(255,215,106,0.61),67vw 57vh 1.5px 0.5px rgba(255,215,106,0.99),22vw 93vh 1.5px 0.5px rgba(255,215,106,0.67),49vw 25vh 1.5px 0.5px rgba(255,215,106,0.54),39vw 30vh 1.5px 0.5px rgba(255,215,106,0.78),81vw 94vh 1.5px 0.5px rgba(255,215,106,0.51),45vw 44vh 1.5px 0.5px rgba(255,215,106,0.5),5vw 36vh 1.5px 0.5px rgba(255,215,106,0.63),47vw 8vh 1.5px 0.5px rgba(255,215,106,0.7),83vw 5vh 1.5px 0.5px rgba(255,215,106,0.9),62vw 71vh 1.5px 0.5px rgba(255,215,106,0.99),92vw 70vh 1.5px 0.5px rgba(255,215,106,0.75),63vw 67vh 1.5px 0.5px rgba(255,215,106,0.96),70vw 48vh 1.5px 0.5px rgba(255,215,106,0.66),52vw 80vh 1.5px 0.5px rgba(255,215,106,0.86),70vw 68vh 1.5px 0.5px rgba(255,215,106,0.78),28vw 75vh 1.5px 0.5px rgba(255,215,106,0.85),44vw 73vh 1.5px 0.5px rgba(255,215,106,0.53),7vw 42vh 1.5px 0.5px rgba(255,215,106,0.56),60vw 23vh 1.5px 0.5px rgba(255,215,106,0.89),26vw 47vh 1.5px 0.5px rgba(255,215,106,0.91),76vw 19vh 1.5px 0.5px rgba(255,215,106,0.82),41vw 48vh 1.5px 0.5px rgba(255,215,106,0.59),23vw 76vh 1.5px 0.5px rgba(255,215,106,0.6),59vw 81vh 1.5px 0.5px rgba(255,215,106,0.76),72vw 38vh 1.5px 0.5px rgba(255,215,106,0.62);
+  animation: xlw-twinkle-2 6s ease-in-out infinite;
+}
+
+.board-wrap::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow: 72vw 29vh 2px 1px rgba(200,220,255,0.76),4vw 47vh 2px 1px rgba(200,220,255,0.87),69vw 26vh 2px 1px rgba(200,220,255,0.94),15vw 10vh 2px 1px rgba(200,220,255,0.62),97vw 47vh 2px 1px rgba(200,220,255,0.95),22vw 57vh 2px 1px rgba(200,220,255,0.96),48vw 15vh 2px 1px rgba(200,220,255,0.8),21vw 72vh 2px 1px rgba(200,220,255,0.72),93vw 73vh 2px 1px rgba(200,220,255,0.88),99vw 57vh 2px 1px rgba(200,220,255,0.97),8vw 36vh 2px 1px rgba(200,220,255,0.65),85vw 68vh 2px 1px rgba(200,220,255,0.72),46vw 99vh 2px 1px rgba(200,220,255,0.77),71vw 27vh 2px 1px rgba(200,220,255,0.99),56vw 22vh 2px 1px rgba(200,220,255,0.81),35vw 37vh 2px 1px rgba(200,220,255,0.78),67vw 98vh 2px 1px rgba(200,220,255,0.72),13vw 50vh 2px 1px rgba(200,220,255,0.78),2vw 59vh 2px 1px rgba(200,220,255,0.91),3vw 92vh 2px 1px rgba(200,220,255,0.68),68vw 43vh 2px 1px rgba(200,220,255,0.75),94vw 15vh 2px 1px rgba(200,220,255,0.77),91vw 45vh 2px 1px rgba(200,220,255,0.92),66vw 73vh 2px 1px rgba(200,220,255,0.94),12vw 77vh 2px 1px rgba(200,220,255,0.91),68vw 20vh 2px 1px rgba(200,220,255,0.79),39vw 83vh 2px 1px rgba(200,220,255,0.63),83vw 45vh 2px 1px rgba(200,220,255,0.72),14vw 62vh 2px 1px rgba(200,220,255,0.85),33vw 32vh 2px 1px rgba(200,220,255,0.92);
+  animation: xlw-twinkle-3 5s ease-in-out infinite;
+}
