@@ -7021,12 +7021,12 @@ async function performSummonToSlot(zone, idx) {
         if (isPlayer && deck && deck.length > 0) {
           const drawn = deck.pop();
           hand.push(drawn);
-          logBattle(✨ 學會投資的野人 效果發動：我方抽了一張牌！);
+          logBattle("✨ 學會投資的野人 效果發動：我方抽了一張牌！");
         } else if (!isPlayer && window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
           const drawn = window.XLW_ENEMY.deck.pop();
           if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
           window.XLW_ENEMY.hand.push(drawn);
-          logBattle(✨ 學會投資的野人 效果發動：對手抽了一張牌！);
+          logBattle("✨ 學會投資的野人 效果發動：對手抽了一張牌！");
         }
         if (isMultiplayer) sendFullGameStateToOpponent();
         render();
@@ -7047,7 +7047,7 @@ async function performSummonToSlot(zone, idx) {
                   const chosenCard = magicCards[chosenIdx];
                   graveyard.splice(graveyard.indexOf(chosenCard), 1);
                   hand.push(chosenCard);
-                  logBattle(✨ 智慧野人 效果：將魔法卡【】回收至手牌！);
+                  logBattle("✨ 智慧野人 效果：將魔法卡【" + chosenCard.name + "】回收至手牌！");
                   if (isMultiplayer) sendFullGameStateToOpponent();
                   render();
                 }
@@ -7107,7 +7107,7 @@ async function performSummonToSlot(zone, idx) {
                 }
               }
               if (movedCount > 0) {
-                logBattle(✨ 女野人 效果發動：成功轉正並移動了  個野人單位！);
+                logBattle("✨ 女野人 效果發動：成功轉正並移動了 " + movedCount + " 個野人單位！");
                 if (isMultiplayer) sendFullGameStateToOpponent();
                 render();
               }
