@@ -7064,7 +7064,7 @@ async function performSummonToSlot(zone, idx) {
           const validSummons = hand.filter(c => c && c.type === "unit" && c.faction === "進化野人" && Number(c.tribute || 0) <= 0);
           if (validSummons.length > 0) {
             setTimeout(async () => {
-              const confirm = await showXLWConfirm("野人寶寶 效果發動", 你手牌中有  個無須祭品的野人單位。是否發動【野人寶寶】效果，使你本回合額外獲得2次不消耗祭品的召喚機會？);
+              const confirm = await showXLWConfirm("野人寶寶 效果發動", "你手牌中有 " + validSummons.length + " 個無須祭品的野人單位。是否發動【野人寶寶】效果，使你本回合額外獲得2次不消耗祭品的召喚機會？");
               if (confirm) {
                 window.XLW_extraSummonCount = (window.XLW_extraSummonCount || 0) + 2;
                 window.XLW_bypassNormalSummonLimit = true;
