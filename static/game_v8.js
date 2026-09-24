@@ -2078,6 +2078,23 @@ window.xlwRetrieveMagicFromGrave = async function(isPlayer, maxMana = 1) {
 
 window.xlwApplySageBuff = function(unit, amount, expiryTurn) {
   if (!unit) return;
+
+  // 進化野人: 超級賽野人II (SR-EWD-0025) 特殊召喚觸發
+  if (owner === "player" && unit.card && (unit.card.id === "EWD-0017" || unit.card.id === "SSR-EWD-0017" || unit.card.name === "超級賽野人")) {
+    const srIdx = hand.findIndex(c => c && (c.id === "SR-EWD-0025" || c.id === "SSSR-EWD-0025" || c.name === "超級賽野人II"));
+    if (srIdx >= 0) {
+      setTimeout(async () => {
+        const confirm = await showXLWConfirm("超級賽野人II 效果發動", "場上的超級賽野人被破壞！是否從手牌額外打出【超級賽野人II】？");
+        if (confirm) {
+          const srCard = hand[srIdx];
+          hand.splice(srIdx, 1);
+          await window.xlwSpecialSummonUnit(srCard, true);
+          logBattle("✨ 超級賽野人II 效果發動：從手牌額外特殊召喚成功！");
+        }
+      }, 800);
+    }
+  }
+
   unit.tempAtkModifier = (unit.tempAtkModifier || 0) + amount;
   unit.xlwSageBuffs = unit.xlwSageBuffs || [];
   unit.xlwSageBuffs.push({
@@ -2275,7 +2292,7 @@ window.hasImmediateEffect = function(card) {
   const kw = card.keywords || [];
   if (kw.includes("立即") || text.includes("立即") || name.includes("立即")) return true;
   
-  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽"];
+  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資的野人", "智慧野人", "野人寶寶", "女野人"];
   return immediateNames.some(n => name.includes(n));
 };
 
@@ -3180,7 +3197,39 @@ async function castSpell(handIndex) {
       renderScore();
       render();
     });
-  } else if (card.id === "SR-FMS-0016" || card.name?.includes("大三元")) {
+  } else if (card.id === "SPT-0017" || card.name?.includes("大大術")) {
+      const targets = [];
+      for (const z of ["player_front", "player_back"]) {
+          field[z].forEach((u, i) => {
+              if (u && u.card && (u.card.id === "TOKEN_TRAVELER" || u.card.name?.includes("小旅人"))) {
+                  targets.push({ zone: z, idx: i, name: u.card.name, unit: u });
+              }
+          });
+      }
+      if (targets.length === 0) {
+          setStatus("【大大術】我方場上沒有小旅人單位可供強化！");
+          hand.splice(handIndex, 0, card);
+          render();
+          return;
+      }
+      const choices = targets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front")?"前排":"後排"}${t.idx+1})`, value: i }));
+      const chosenIdx = await showXLWChoiceModal("大大術 效果發動", "請選擇我方一個小旅人賦予 +4 攻擊力：", choices);
+      if (chosenIdx === null || chosenIdx === undefined) {
+          hand.splice(handIndex, 0, card);
+          render();
+          return;
+      }
+      
+      const targetItem = targets[chosenIdx];
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await showSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+          targetItem.unit.atkModifier = (targetItem.unit.atkModifier || 0) + 4;
+          logBattle(`✨ 大大術 效果：我方 ${targetItem.name} 獲得 +4 攻擊力！`);
+          playerGrave.push(spellCard);
+          render();
+      });
+} else if (card.id === "SR-FMS-0016" || card.name?.includes("大三元")) {
     const ok = window.xlwCheckMahjongCombo(true, "大三元");
     if (!ok) {
       setStatus("我方場上未備齊紅中、白板、發財，無法發動大三元！");
@@ -6966,6 +7015,107 @@ async function performSummonToSlot(zone, idx) {
     }
 
     if (!immediateEffectNegated && card) {
+      // 進化野人: 學會投資的野人 (EWD-0006) 立即抽1張牌
+      if (card.id === "EWD-0006" || card.name?.includes("學會投資的野人")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer && deck && deck.length > 0) {
+          const drawn = deck.pop();
+          hand.push(drawn);
+          logBattle(✨ 學會投資的野人 效果發動：我方抽了一張牌！);
+        } else if (!isPlayer && window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+          const drawn = window.XLW_ENEMY.deck.pop();
+          if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
+          window.XLW_ENEMY.hand.push(drawn);
+          logBattle(✨ 學會投資的野人 效果發動：對手抽了一張牌！);
+        }
+        if (isMultiplayer) sendFullGameStateToOpponent();
+        render();
+      }
+
+      // 進化野人: 智慧野人 (R-EWD-0015) 立即:使你墓地1魔法卡回手牌
+      if (card.id === "R-EWD-0015" || card.name?.includes("智慧野人")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer) {
+          const magicCards = graveyard.filter(c => c && (c.type === "魔法" || c.type === "magic"));
+          if (magicCards.length > 0) {
+            setTimeout(async () => {
+              const confirm = await showXLWConfirm("智慧野人 效果發動", "是否發動【智慧野人】效果，使你墓地 1 魔法卡回手牌？");
+              if (confirm) {
+                const choices = magicCards.map((c, i) => ({ text: c.name, value: i }));
+                const chosenIdx = await showXLWChoiceModal("選擇回手牌的魔法卡", "請選擇一張魔法卡：", choices);
+                if (chosenIdx !== null && chosenIdx !== undefined) {
+                  const chosenCard = magicCards[chosenIdx];
+                  graveyard.splice(graveyard.indexOf(chosenCard), 1);
+                  hand.push(chosenCard);
+                  logBattle(✨ 智慧野人 效果：將魔法卡【】回收至手牌！);
+                  if (isMultiplayer) sendFullGameStateToOpponent();
+                  render();
+                }
+              }
+            }, 500);
+          }
+        }
+      }
+
+      // 進化野人: 野人寶寶 (R-EWD-0021) 立即:從手牌額外打出2個無須祭品的野人單位
+      if (card.id === "R-EWD-0021" || card.name?.includes("野人寶寶")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer) {
+          const validSummons = hand.filter(c => c && c.type === "unit" && c.faction === "進化野人" && Number(c.tribute || 0) <= 0);
+          if (validSummons.length > 0) {
+            setTimeout(async () => {
+              const confirm = await showXLWConfirm("野人寶寶 效果發動", 你手牌中有  個無須祭品的野人單位。是否發動【野人寶寶】效果，使你本回合額外獲得2次不消耗祭品的召喚機會？);
+              if (confirm) {
+                window.XLW_extraSummonCount = (window.XLW_extraSummonCount || 0) + 2;
+                window.XLW_bypassNormalSummonLimit = true;
+                logBattle("✨ 野人寶寶 效果發動：本回合獲得額外2次無須祭品的野人單位召喚機會！");
+              }
+            }, 500);
+          }
+        }
+      }
+
+      // 進化野人: 女野人 (SR-EWD-0024 / SSR-EWD-0024) 立即:使你場上2個野人單位移動至此卡左右邊並轉正
+      if (card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪" || card.name?.includes("女野人")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer) {
+          setTimeout(async () => {
+            const confirm = await showXLWConfirm("女野人 效果發動", "是否使你場上其他野人單位轉正並移動至女野人左右邊？");
+            if (confirm) {
+              const myFront = field["player_front"];
+              const myBack = field["player_back"];
+              let movedCount = 0;
+              const targetLanes = [idx - 1, idx + 1];
+              
+              for (const tl of targetLanes) {
+                if (tl >= 0 && tl < 5 && !field[zone][tl]) {
+                  let found = false;
+                  for (const z of ["player_front", "player_back"]) {
+                    for (let i = 0; i < 5; i++) {
+                      const u = field[z][i];
+                      if (u && u !== field[zone][idx] && u.card && u.card.faction === "進化野人" && u.tapped) {
+                        field[zone][tl] = u;
+                        field[z][i] = null;
+                        u.tapped = false;
+                        movedCount++;
+                        found = true;
+                        break;
+                      }
+                    }
+                    if (found) break;
+                  }
+                }
+              }
+              if (movedCount > 0) {
+                logBattle(✨ 女野人 效果發動：成功轉正並移動了  個野人單位！);
+                if (isMultiplayer) sendFullGameStateToOpponent();
+                render();
+              }
+            }
+          }, 500);
+        }
+      }
+
       // SSSR-NMS-0031 小女魔導士庫路路
       if (card.id === "SSSR-NMS-0031" || card.name?.includes("庫路路") || card.name?.includes("魔導士")) {
         await window.xlwTriggerKururuEffect(zone.startsWith("player_"));
@@ -7742,7 +7892,72 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
+      
+  // 特殊旅人預組 - SPT-0004 機械旅人 (進場召喚1小旅人)
+  if (card.id === "SPT-0004" || card.name?.includes("機械旅人")) {
+      const isPlayer = zone.startsWith("player_");
+      logBattle(`✨ ${isPlayer ? "我方" : "對手"} 機械旅人 效果觸發：進場時召喚 1 個小旅人！`);
+      await promptAndSummonTraveler(isPlayer ? "player" : "enemy", 1, "機械旅人");
+  }
+
+  // 特殊旅人預組 - SPT-0015 討拍旅人 (進場破壞正前方所有敵方小旅人)
+  if (card.id === "SPT-0015" || card.name?.includes("討拍旅人")) {
+      const isPlayer = zone.startsWith("player_");
+      const oppFront = isPlayer ? "enemy_front" : "player_front";
+      const oppBack = isPlayer ? "enemy_back" : "player_back";
+      let destroyedAny = false;
+      for (const z of [oppFront, oppBack]) {
+          const oppUnit = field[z][idx];
+          if (oppUnit && oppUnit.card && (oppUnit.card.id === "TOKEN_TRAVELER" || oppUnit.card.name?.includes("小旅人"))) {
+              logBattle(`✨ ${isPlayer ? "我方" : "對手"} 討拍旅人 效果觸發：破壞正前方的敵方小旅人【${oppUnit.card.name}】！`);
+              await destroyUnit(z, idx, isPlayer ? "enemy" : "player", false, false);
+              destroyedAny = true;
+          }
+      }
+      if (destroyedAny) render();
+  }
+
+  // 特殊旅人預組 - SPT-0012 多頭機械旅人 (合體時召喚 2 個小旅人)
+  if (card.id === "SPT-0012" || card.name?.includes("多頭機械旅人")) {
+      const isPlayer = zone.startsWith("player_");
+      const myZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+      let targets = [];
+      myZones.forEach(z => {
+          field[z].forEach((u, i) => {
+              if (u && (z !== zone || i !== idx) && (u.card.id === "TOKEN_TRAVELER" || u.card.name?.includes("小旅人") || u.card.name?.includes("旅人"))) {
+                  targets.push({ zone: z, idx: i, name: u.card.name, u });
+              }
+          });
+      });
+      if (targets.length > 0) {
+          if (isPlayer) {
+              const choices = targets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front")?"前排":"後排"}${t.idx+1})`, value: i }));
+              choices.push({ text: "不發動合體", value: -1 });
+              const chosen = await showXLWChoiceModal("多頭機械旅人 合體效果", "請選擇我方一個旅人單位進行合體：", choices);
+              if (chosen !== null && chosen !== -1) {
+                  const target = targets[chosen];
+                  logBattle(`✨ 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+                  target.u.equipments = target.u.equipments || [];
+                  target.u.equipments.push("多頭機械旅人 (合體)");
+                  target.u.bonusScore = (target.u.bonusScore || 0) + 1; // 假設合體給予+1獎勵
+                  field[zone][idx] = null; // 自己離場
+                  await promptAndSummonTraveler("player", 2, "多頭機械旅人");
+                  render();
+              }
+          } else {
+              const target = targets[0];
+              logBattle(`✨ 對手 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+              target.u.equipments = target.u.equipments || [];
+              target.u.equipments.push("多頭機械旅人 (合體)");
+              target.u.bonusScore = (target.u.bonusScore || 0) + 1;
+              field[zone][idx] = null;
+              await promptAndSummonTraveler("enemy", 2, "多頭機械旅人");
+              render();
+          }
+      }
+  }
+
+if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         let tappedCount = 0;
         for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
           field[z].forEach(u => {
@@ -13867,7 +14082,16 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     }
   }
 
-  // R-ORC-0023 阿姨獸人 敵方小旅人被擊破效果
+  // 特殊旅人預組 - SPT-0009 胖旅人 (被破壞時召喚 2 個小旅人)
+if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖旅人"))) {
+    const isPlayer = zone.startsWith("player_");
+    logBattle(`✨ ${isPlayer ? "我方" : "對手"} 胖旅人 被破壞效果觸發：召喚 2 個小旅人！`);
+    setTimeout(async () => {
+        await promptAndSummonTraveler(isPlayer ? "player" : "enemy", 2, "胖旅人");
+    }, 500);
+}
+
+// R-ORC-0023 阿姨獸人 敵方小旅人被擊破效果
   if (isCombatDestruction && unit.card && (unit.card.id === "TOKEN_TRAVELER" || unit.card.name?.includes("小旅人"))) {
     const isPlayerTraveler = zone.startsWith("player_");
     const checkSidePrefix = isPlayerTraveler ? "enemy_" : "player_";
@@ -19352,6 +19576,85 @@ function renderField() {
             }
 
             const isTicketCollector = obj.card?.id === "R-ART-0050" || obj.card?.name?.includes("博物館剪票員");
+
+// 特殊旅人預組 - SPT-0006 惡魔旅人
+if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
+    if (obj.tapped) {
+        setStatus("【惡魔旅人】已橫置，無法發動效果！");
+        return;
+    }
+    if (window.XLW_playerActionsPerformedThisTurn || obj.summonedTurn === turn) {
+        setStatus("【惡魔旅人】在剛召喚的回合無法發動效果，下一回合才能使用！");
+        showModal(obj.card, obj.equipments);
+        return;
+    }
+    const myUnits = [];
+    const zones = ["player_front", "player_back"];
+    zones.forEach((z) => {
+        field[z].forEach((u, i) => {
+            if (u && u !== obj) myUnits.push({ zone: z, idx: i, name: u.card.name, u });
+        });
+    });
+    if (myUnits.length < 2) {
+        setStatus("【惡魔旅人】我方場上其他單位不足 2 個，無法發動效果！");
+        showModal(obj.card, obj.equipments);
+        return;
+    }
+    if (playerGrave.filter(c => c && c.type === "unit").length === 0) {
+        setStatus("【惡魔旅人】墓地沒有單位可供特殊召喚！");
+        showModal(obj.card, obj.equipments);
+        return;
+    }
+    
+    setTimeout(async () => {
+        const confirmUse = await showXLWConfirm("惡魔旅人 效果", "是否發動【惡魔旅人】效果：橫置此單位，破壞我方 2 個其他單位，並從墓地特殊召喚 1 個單位？");
+        if (confirmUse) {
+            obj.tapped = true;
+            let choices1 = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front")?"前排":"後排"}${u.idx+1})`, value: i }));
+            let chosen1 = await showXLWChoiceModal("選擇第 1 個破壞單位", "請選擇：", choices1);
+            if (chosen1 === null || chosen1 === undefined) { obj.tapped = false; return; }
+            const target1 = myUnits[chosen1];
+            myUnits.splice(chosen1, 1);
+            
+            let choices2 = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front")?"前排":"後排"}${u.idx+1})`, value: i }));
+            let chosen2 = await showXLWChoiceModal("選擇第 2 個破壞單位", "請選擇：", choices2);
+            if (chosen2 === null || chosen2 === undefined) { obj.tapped = false; return; }
+            const target2 = myUnits[chosen2];
+            
+            await destroyUnit(target1.zone, target1.idx, "player", false, false);
+            await destroyUnit(target2.zone, target2.idx, "player", false, false);
+            
+            const graveChoices = playerGrave.filter(c => c && c.type === "unit").map((c, i) => ({ text: c.name, value: i }));
+            let chosenGrave = await showXLWChoiceModal("惡魔旅人 效果：從墓地特召", "請選擇要復活的單位：", graveChoices);
+            if (chosenGrave !== null && chosenGrave !== undefined) {
+                const unitCardsInGrave = playerGrave.map((c, idx) => ({ c, idx })).filter(item => item.c && item.c.type === "unit");
+                const realGraveIdx = unitCardsInGrave[chosenGrave].idx;
+                const revivedCard = playerGrave.splice(realGraveIdx, 1)[0];
+                
+                let emptySlot = null;
+                for (let z of ["player_front", "player_back"]) {
+                    const eIdx = field[z].findIndex(u => !u);
+                    if (eIdx !== -1) { emptySlot = { zone: z, idx: eIdx }; break; }
+                }
+                if (emptySlot) {
+                    field[emptySlot.zone][emptySlot.idx] = {
+                        card: revivedCard, tapped: false, attacking: false, target: null,
+                        summonedTurn: turn, summonedZone: emptySlot.zone, equipments: []
+                    };
+                    logBattle(`✨ 惡魔旅人 效果發動：橫置自身，破壞了 2 個單位，並從墓地特召了【${revivedCard.name}】！`);
+                    if (typeof animateCardDrop === 'function') animateCardDrop(emptySlot.zone, emptySlot.idx);
+                } else {
+                    playerGrave.push(revivedCard);
+                    logBattle("我方場上已滿，無法特召！");
+                }
+            }
+            window.XLW_playerActionsPerformedThisTurn = true;
+            render();
+        }
+    }, 100);
+    return;
+}
+
             if (isTicketCollector) {
               if (window.XLW_playerActionsPerformedThisTurn || obj.summonedTurn === turn) {
                 setStatus("【博物館剪票員】在被召喚或已執行行動的回合無法發動效果，必須等到下一回合主要階段開始時！");
@@ -27853,6 +28156,18 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
 };
 
 window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
+  // 特殊旅人預組 - SPT-0018 觀光樂園 (結束階段結束後召喚 3 個小旅人)
+  const sidePrefix = isPlayerSide ? "player_" : "enemy_";
+  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+      for (let i = 0; i < 5; i++) {
+          const u = field[z][i];
+          if (u && u.card && (u.card.id === "SPT-0018" || u.card.name?.includes("觀光樂園")) && !window.isUnitSilenced(u, z, i)) {
+              logBattle(`✨ ${isPlayerSide ? "我方" : "對手"} 觀光樂園 效果觸發：結束階段結束後召喚 3 個小旅人！`);
+              await promptAndSummonTraveler(isPlayerSide ? "player" : "enemy", 3, "觀光樂園");
+          }
+      }
+  }
+
   // Restore Mahjong original names
   for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     field[z].forEach(u => {
