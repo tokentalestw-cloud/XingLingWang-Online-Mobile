@@ -22036,21 +22036,28 @@ function setupWebSocketEvents() {
     
     if (data.type === "welcome") {
       setStatus(data.message);
-    } else if (data.type === "opponent_joined") {
-      // 只有在遊戲尚未開始時，才初始化新局
+        } else if (data.type === "opponent_joined") {
       if (!window.XLW_gameInProgress) {
         opponent_joined = true;
         logBattle(data.message);
-        setStatus("對手已進入房間！即將開始線上起手換牌...");
-        newGameMultiplayer();
+        setStatus("對手已進入房間！請選擇您的出戰牌組...");
+        if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
+        window.XLW_myMultiDeckSelected = false;
+        window.XLW_opponentMultiDeckSelected = false;
+        window.xlwChooseMode('multi_deck_select');
       } else {
         logBattle("對手重新進入房間，正在恢復對戰...");
       }
     } else if (data.type === "opponent_rejoined") {
-      window.xlwClearAllPendingResolvers();
+            window.xlwClearAllPendingResolvers();
       logBattle(data.message);
       setStatus("對手已重新連線！正在傳送戰局狀態進行同步...");
       sendFullGameStateToOpponent();
+    } else if (data.action === "multi_deck_selected") {
+      window.XLW_opponentMultiDeckSelected = true;
+      if (typeof window.checkMultiplayerDecksReady === 'function') {
+        window.checkMultiplayerDecksReady();
+      }
     } else if (data.type === "opponent_rejoined_ack") {
       logBattle(data.message);
       setStatus("已成功連回遊戲！正在等待對手同步狀態...");
@@ -28809,6 +28816,15 @@ document.addEventListener("DOMContentLoaded", () => {
 window.xlwChooseMode = function(mode) {
   window.XLW_ACTIVE_MODE = mode;
   
+  if (mode === 'multi') {
+    const overlay = document.getElementById("xlwWelcomeOverlay");
+    if (overlay) overlay.style.setProperty("display", "none", "important");
+    if (typeof showMultiplayerLobby === 'function') {
+      showMultiplayerLobby();
+    }
+    return;
+  }
+  
   const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
   if (!modal) return;
   
@@ -28913,16 +28929,16 @@ window.xlwConfirmPreBattle = function() {
       const newGameBtn = document.getElementById("newGameBtn");
       if (newGameBtn) newGameBtn.click();
     }
-  } else if (mode === 'multi') {
-    if (typeof showMultiplayerLobby === 'function') {
-      showMultiplayerLobby();
-    } else {
-      const multiplayerBtn = document.getElementById("multiplayerBtn");
-      if (multiplayerBtn) multiplayerBtn.click();
+  } else if (mode === 'multi_deck_select') {
+    window.XLW_myMultiDeckSelected = true;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ action: "multi_deck_selected" }));
+    }
+    if (typeof window.checkMultiplayerDecksReady === 'function') {
+      window.checkMultiplayerDecksReady();
     }
   }
-};
-
+};\n
 window.xlwReturnToTitle = function() {
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   const lp = document.getElementById("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
@@ -29379,3 +29395,14 @@ function renderEnemyFloatingHand() {
     </div>
   `;
 }
+
+window.checkMultiplayerDecksReady = function() {
+  if (window.XLW_myMultiDeckSelected && window.XLW_opponentMultiDeckSelected) {
+    setStatus("雙方皆已確認牌組！進入擲硬幣決定先後順序...");
+    const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
+    if (modal) modal.style.setProperty("display", "none", "important");
+    newGameMultiplayer();
+  } else if (window.XLW_myMultiDeckSelected) {
+    setStatus("等待對手選擇牌組中...");
+  }
+};
