@@ -2305,7 +2305,7 @@ button:disabled {
 /* ?文??蝘餃摨 */
 .exile-zone,.banish-zone,.removed-zone,[class*="exile"],[class*="banish"],[id*="exile"],[id*="banish"]{position:absolute!important;bottom:-90px!important;top:auto!important;transform:scale(.9)!important;}
 /* ?啣?葬撠????*/
-.board{transform:scale(.702)!important;transform-origin:top center!important;}
+.board{transform:scale(0.63) translateY(90px) !important;transform-origin:top center!important;}
 .game-shell{padding-bottom:140px!important;}
 /* 摨???曉之 */
 #stableActionPanel .stable-action-btn{font-size:16px!important;min-height:52px!important;font-weight:800!important;}
@@ -4395,7 +4395,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     border: 1px solid rgba(255, 215, 106, 0.3) !important;
     border-radius: 8px !important;
     padding: 4px 6px !important;
-    transform: scale(0.72) !important;
+    transform: scale(0.45) !important;
     transform-origin: top left !important;
     width: 230px !important;
     height: auto !important;
@@ -4439,7 +4439,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     right: auto !important;
     bottom: auto !important;
     z-index: 10000 !important;
-    transform: scale(0.72) !important;
+    transform: scale(0.45) !important;
     transform-origin: top left !important;
     background: rgba(15, 10, 25, 0.85) !important;
     border: 0.5px solid rgba(255, 215, 106, 0.3) !important;
@@ -4475,7 +4475,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     top: auto !important;
     left: auto !important;
     z-index: 10000 !important;
-    transform: scale(1.28) !important;
+    transform: scale(0.77) !important;
     transform-origin: bottom right !important;
     display: flex !important;
     flex-direction: column !important;

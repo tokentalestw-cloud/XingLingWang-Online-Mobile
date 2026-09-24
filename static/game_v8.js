@@ -21875,7 +21875,7 @@ function adjustBoardScale() {
   if (isMobile) {
     if (isLandscapeMobile) {
       // 📱 橫向手機：最大化戰場 (0.45 比例置中，以高度貼合螢幕為準)
-      finalScale = 0.45;
+      finalScale = 0.40;
       document.documentElement.classList.add("xlw-mobile-layout");
       document.body.classList.add("xlw-mobile-layout");
     } else {
@@ -21904,7 +21904,7 @@ function adjustBoardScale() {
   document.documentElement.style.setProperty("--xlw-mobile-scale", String(finalScale));
   
   if (isMobile && isLandscapeMobile) {
-    board.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
+    board.style.transform = `translate(-50%, calc(-50% + 25px)) scale(${finalScale})`;
     board.style.transformOrigin = "center center";
     board.style.position = "absolute";
     board.style.top = "50%";
