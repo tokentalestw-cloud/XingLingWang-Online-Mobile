@@ -11,7 +11,17 @@
   /* ?箇??脰矽 */
   --bg-color: #f7f9fd;
   --panel-bg: rgba(14, 10, 24, 0.85);
-  --bg-cosmic: radial-gradient(circle at 50% 25%, #1d1242 0%, #0e0924 40%, #060412 75%, #020106 100%);
+  --bg-cosmic: 
+    radial-gradient(1px 1px at 15% 25%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 25% 65%, #ffffff 100%, transparent),
+    radial-gradient(2px 2px at 35% 45%, #ffd76a 100%, transparent),
+    radial-gradient(1px 1px at 45% 85%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 55% 15%, #ffffff 100%, transparent),
+    radial-gradient(2px 2px at 65% 55%, #ffd76a 100%, transparent),
+    radial-gradient(1px 1px at 75% 35%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 85% 75%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 95% 25%, #ffffff 100%, transparent),
+    radial-gradient(circle at 50% -20%, #2b1c60 0%, #170d38 35%, #08031a 70%, #020108 100%);
   --panel-bg: rgba(255, 255, 255, 0.75);
   --text-primary: #ffffff;
   --text-muted: #ffe6a0;
@@ -2659,7 +2669,7 @@ button:disabled {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 99999 !important;
+  z-index: 1000000 !important;
   backdrop-filter: blur(8px) !important;
 }
 
@@ -4138,7 +4148,7 @@ body.xlw-iphone14-sim-active .game-shell {
   overflow: hidden !important;
   position: relative !important;
   display: block !important;
-  background: #070505 !important;
+  background: transparent !important;
 }
 
 /* 1. 撌亙??(Top Bar) 0.46 憭批?蝎曄Ⅱ蝮格嚗??10 ????100% 摰?嗥???844px ?折嚗?渡??賜?銝滯??*/
@@ -4274,7 +4284,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     position: relative !important;
     overflow: hidden !important;
     display: block !important;
-    background: #070505 !important;
+    background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     margin: 0 !important;
@@ -4375,7 +4385,7 @@ body.xlw-iphone14-sim-active .game-shell #xlwLeftCardPanel {
     min-width: 1400px !important;
     min-height: 760px !important;
     position: absolute !important;
-    top: 32% !important; left: 50% !important; transform: translate(-50%, -50%) scale(0.37) !important;
+    top: 31% !important; left: 50% !important; transform: translate(-43%, -50%) scale(0.37) !important;
     transform-origin: center center !important;
     margin: 0 !important;
     border: none !important;
@@ -5109,7 +5119,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   display: none;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  z-index: 99999999 !important;
+  z-index: 90000 !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
