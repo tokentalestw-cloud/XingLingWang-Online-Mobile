@@ -140,6 +140,17 @@ let selectedMulliganIndexes = new Set();
 
 // 延遲工具
 window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
+  let prefix = "";
+  if (text.includes("召喚階段") || text.includes("戰術佈陣") || text.includes("進攻宣言")) {
+    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "我方" : "對手";
+  } else if (text.includes("防守階段")) {
+    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "對手" : "我方";
+  }
+  let displayText = prefix + text;
+  
+  if (displayText === "我方進攻宣言") displayText = "我方進攻階段";
+  if (displayText === "對手進攻階段") displayText = "對手進攻宣言"; // fallback
+  
   let banner = document.getElementById("xlw-phase-banner");
   if (!banner) {
     banner = document.createElement("div");
@@ -152,7 +163,7 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   banner.style.borderTop = "2px solid " + color;
   banner.style.borderBottom = "2px solid " + color;
   banner.style.boxShadow = "0 0 30px " + color + "40, inset 0 0 30px " + color + "40";
-  banner.textContent = text;
+  banner.textContent = displayText;
   
   // Reset animation state
   banner.style.transition = "none";
