@@ -28800,14 +28800,20 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===== 📱 橫向螢幕鎖定 API 執行引擎 =====
 window.xlwLockOrientation = function() {
   try {
-    if (screen.orientation && typeof screen.orientation.lock === 'function') {
-      screen.orientation.lock("landscape").catch(e => {
-        console.log("Screen orientation lock rejected by browser security constraint:", e);
-      });
-    } else if (screen.lockOrientation) {
-      screen.lockOrientation("landscape");
-    } else if (screen.webkitLockOrientation) {
-      screen.webkitLockOrientation("landscape");
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          screen.orientation.lock("landscape").catch(e => console.log(e));
+        }
+      }).catch(e => console.log(e));
+    } else {
+      if (screen.orientation && typeof screen.orientation.lock === 'function') {
+        screen.orientation.lock("landscape").catch(e => console.log(e));
+      } else if (screen.lockOrientation) {
+        screen.lockOrientation("landscape");
+      } else if (screen.webkitLockOrientation) {
+        screen.webkitLockOrientation("landscape");
+      }
     }
   } catch(e) {}
 };
