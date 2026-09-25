@@ -70,6 +70,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
   
+
+  <style>
+    @media screen and (orientation: portrait) {
+      html, body {
+        width: 100vh !important;
+        height: 100vw !important;
+        overflow: hidden !important;
+        position: relative !important;
+      }
+      body {
+        transform: rotate(90deg) !important;
+        transform-origin: top left !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 100vw !important;
+      }
+    }
+  </style>
 </head>
 <body>
 

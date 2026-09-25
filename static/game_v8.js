@@ -60,7 +60,7 @@ let field = {
   enemy_back: [null, null, null, null, null],
 };
 
-let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
+let phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80"); // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
 let turn = 1;
 
 
@@ -139,7 +139,25 @@ let mulliganActive = false;
 let selectedMulliganIndexes = new Set();
 
 // 延遲工具
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
+  let banner = document.getElementById("xlw-phase-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "xlw-phase-banner";
+    banner.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); color:" + color + "; font-size:46px; font-weight:900; text-shadow:0 0 20px " + color + ", 3px 3px 0 #000; z-index:999999; pointer-events:none; opacity:0; transition:opacity 0.4s ease; text-align:center; white-space:nowrap; background:rgba(0,0,0,0.6); padding:20px 40px; border-radius:15px; border:3px solid " + color + ";";
+    document.body.appendChild(banner);
+  }
+  banner.style.color = color;
+  banner.style.textShadow = "0 0 20px " + color + ", 3px 3px 0 #000";
+  banner.style.borderColor = color;
+  banner.textContent = text;
+  banner.style.opacity = "1";
+  await new Promise(r => setTimeout(r, 1500));
+  banner.style.opacity = "0";
+  await new Promise(r => setTimeout(r, 400));
+};
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms * 2.5));
 const $ = (id) => document.getElementById(id);
 
 window.xlwClearAllPendingResolvers = function() {
@@ -1321,7 +1339,7 @@ async function confirmMulligan() {
     // 單人模式
     if (isMyTurn) {
       turn = 1;
-      phase = "召喚階段";
+      phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
       await performPlayerTurnStartDraw();
       logBattle(`換牌完成（換了 ${replacedCards.length} 張），進入第 1 回合。已自動抽 2 張。`);
       setStatus("起手換牌完成！目前為我方第 1 回合「召喚階段」，起手共 6 張。");
@@ -1329,7 +1347,7 @@ async function confirmMulligan() {
     } else {
       // 對手 AI 先攻！
       turn = 1;
-      phase = "召喚階段";
+      phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
       logBattle(`換牌完成（換了 ${replacedCards.length} 張），對手 AI 先攻！`);
       render();
       
@@ -1354,7 +1372,7 @@ async function confirmMulligan() {
         playerUntap();
         isMyTurn = true;
         await performPlayerTurnStartDraw();
-        phase = "召喚階段";
+        phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
         setStatus("對手回合結束。目前為我方第 2 回合「召喚階段」，已自動抽 2 張。");
         render();
       }, 1000);
@@ -1373,7 +1391,7 @@ async function checkMulliganCompletion() {
     window.XLW_enemyGoatResearcherTriggeredThisTurn = false;
     window.XLW_meowToyShopPlacementActive = false;
     window.XLW_meowToyShopCardToSummon = null;
-    phase = "召喚階段";
+    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     logBattle("雙方皆已完成起手換牌！第 1 回合對決正式開始。");
     
     const goFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
@@ -10625,7 +10643,7 @@ async function xlwResolvePlayerDefensePhase() {
     window.XLW_DEFENSE_RULE.resolving = false;
     
     xlwCleanDoubleClawBonus();
-    phase = "召喚階段";
+    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     await checkCrazyFanSummon();
     logBattle("—— 我方防守階段結束，進入召喚階段 ——");
     setStatus("防守階段結算完成！已進入「召喚階段」，您可以開始召喚單位。");
@@ -16669,7 +16687,7 @@ async function runEnemyTurn() {
     try {
       const playerHasAttackers = field["player_front"].concat(field["player_back"]).some(u => u && u.attacking);
       if (window.XLW_DEFENSE_RULE.enemyNeedsDefense && playerHasAttackers) {
-        phase = "防守階段";
+        phase = "防守階段"; window.xlwShowPhaseBanner("防守階段", "#3b82f6");
         setStatus("對手回合：正在自動結算對手防守階段對決...");
         render();
         await xlwResolveEnemyDefensePhaseSafe();
@@ -16680,7 +16698,7 @@ async function runEnemyTurn() {
     } catch (e) { console.warn("AI 防守階段異常:", e); }
 
     // 7. 召喚階段
-    phase = "召喚階段";
+    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     setStatus(`對手回合：${enemyDeckName} 正在進行召喚階段...`);
     render();
     
@@ -16890,7 +16908,7 @@ async function runEnemyTurn() {
       await sleep(800);
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
-      phase = "進攻宣言";
+      phase = "進攻宣言"; window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
       setStatus(`對手回合：${enemyDeckName} 正在進行進攻檢視與宣告...`);
       render();
 
@@ -16960,7 +16978,7 @@ async function runEnemyTurn() {
 
       // 10. ★ 戰術佈陣階段 (Tactical Phase & Fallback Summon) ★
       if (opponentAttackCount === 0) {
-        phase = "戰術佈陣";
+        phase = "戰術佈陣"; window.xlwShowPhaseBanner("戰術佈陣", "#a855f7");
         setStatus(`對手回合：${enemyDeckName} 正在進行戰術佈陣與單位佈局...`);
         render();
 
@@ -17499,7 +17517,7 @@ async function endPlayerTurnAndRunEnemy() {
     await performPlayerTurnStartDraw();
 
     if (countdownActive && countdownRemaining === 1) {
-      phase = "召喚階段";
+      phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
       await checkCrazyFanSummon();
       setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！已自動抽2張。`);
       render();
@@ -29134,7 +29152,7 @@ window.XLW_Tutorial = {
     window.XLW_gameInProgress = true;
     isMultiplayer = false;
     isMyTurn = true;
-    phase = "召喚階段";
+    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     turn = 2;
     normalSummonUsed = false;
     tacticalSummonUsed = false;
