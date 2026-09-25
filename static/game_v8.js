@@ -25725,7 +25725,7 @@ function xlwShowSpellActivationOverlay(card, side) {
 
     overlay.innerHTML = `
       <div class="xlw-spell-activation-title" style="color: ${titleColor}; font-size: 24px; font-weight: 900; margin-bottom: 12px; text-shadow: 0 0 10px ${titleColor}, 2px 2px 0 #000;">${titleText}</div>
-      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; box-sizing: border-box; text-align: center;">
+      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
         <img class="xlw-spell-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px; height: 240px; object-fit: fill; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px;">
         <div class="xlw-spell-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
         <div class="xlw-spell-activation-card-effect" style="font-size: 12px; color: #e0e0e0; line-height: 1.4;">${card.effect_text || ""}</div>
@@ -25792,7 +25792,7 @@ function xlwShowTributeSummonOverlay(card, side) {
         <div class="xlw-tribute-activation-title" style="font-size: 24px; font-weight: 900; color: #ffe600; text-shadow: 0 0 10px #ffe600, 2px 2px 0 #000;">${titleText}</div>
         <div class="xlw-tribute-activation-subtitle" style="color: ${subtitleColor}; font-size: 14px; font-weight: bold;">${subtitleText}</div>
       </div>
-      <div class="xlw-tribute-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; box-sizing: border-box; text-align: center;">
+      <div class="xlw-tribute-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
         <img class="xlw-tribute-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px; height: 240px; object-fit: fill; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px;">
         <div class="xlw-tribute-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
         <div class="xlw-tribute-activation-card-stats" style="display: flex; gap: 6px; margin-bottom: 8px;">

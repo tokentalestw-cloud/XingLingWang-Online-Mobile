@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
@@ -70,6 +70,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 </head>
 <body>
+  <style>
+    @media screen and (orientation: portrait) {
+      #rotateOverlay {
+        display: flex !important;
+      }
+    }
+  </style>
+  <div id="rotateOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0a0a0a; z-index: 2147483647; flex-direction: column; justify-content: center; align-items: center; color: #ffe600; font-family: sans-serif; text-align: center;">
+    <div style="font-size: 80px; margin-bottom: 20px; animation: rotateAnim 2s infinite ease-in-out;">🔄</div>
+    <div style="font-size: 28px; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">請將設備轉為橫向</div>
+    <div style="font-size: 16px; color: #aaa;">以獲得最佳的對戰體驗</div>
+    <style>
+      @keyframes rotateAnim {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(-90deg); }
+      }
+    </style>
+  </div>
+
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
     <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
@@ -216,7 +235,7 @@
   
   <!-- 戰對統計與歷史紀錄彈窗 -->
   <div id="multiplayerLobby" class="score-panel" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: center; justify-content: center; z-index: 10000; background: rgba(0,0,0,0.8);">
-    <div class="score-box" style="position: relative; width: 440px; padding: 25px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
+    <div class="score-box" style="position: relative; width: 440px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 25px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
       <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
         <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn">🏠 首頁</button>
       </div>
