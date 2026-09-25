@@ -5572,12 +5572,9 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 /* Base deep space gradient */
-body {
-  background: radial-gradient(ellipse at bottom, #170a36 0%, #0d051c 40%, #05020a 100%) !important;
-}
-
+body { background: #000 url("/static/detailed_stars_bg.jpg") center/cover no-repeat fixed !important; }
 /* The starry layers */
-.game-shell::before {
+.game-shell::before { display: none !important;
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -5587,7 +5584,7 @@ body {
   animation: xlw-twinkle-1 4s ease-in-out infinite;
 }
 
-.game-shell::after {
+.game-shell::after { display: none !important;
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;

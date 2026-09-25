@@ -142,9 +142,9 @@ let selectedMulliganIndexes = new Set();
 window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   let prefix = "";
   if (text.includes("召喚階段") || text.includes("戰術佈陣") || text.includes("進攻宣言")) {
-    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "我方" : "對手";
+    prefix = isMyTurn ? "我方" : "對手";
   } else if (text.includes("防守階段")) {
-    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "我方" : "對手";
+    prefix = isMyTurn ? "我方" : "對手";
   }
   let displayText = prefix + text;
   
@@ -26299,7 +26299,7 @@ function resolveLocalSpellChain() {
             logBattle(`[魔法炸彈客] 效果：我方牌庫頂的 ${topName} 被除外。`);
           }
         } else {
-          if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+          if (window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
             let topCard = window.XLW_ENEMY.deck.pop();
             if (!topCard) {
               topCard = { name: "對手卡牌", id: "UNKNOWN", type: "單位" };
@@ -26346,8 +26346,10 @@ function resolveLocalSpellChain() {
       }
     } else {
       if (S.wasRoared) {
-        if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-        window.XLW_ENEMY.hand.push(S.card);
+        if (window.XLW_ENEMY) {
+          if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
+          window.XLW_ENEMY.hand.push(S.card);
+        }
         window.XLW_enemyCannotUseCardIdThisTurn = S.card.id;
         logBattle(`對手的魔法卡 ${S.card.name} 被我方【怒吼】無效並退回其手牌！對手本回合不得再次使用該卡。`);
       } else if (S.wasExiledByBomb) {
