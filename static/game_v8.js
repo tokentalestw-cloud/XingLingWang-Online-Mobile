@@ -28938,7 +28938,8 @@ window.xlwConfirmPreBattle = function() {
       window.checkMultiplayerDecksReady();
     }
   }
-};\n
+};
+
 window.xlwReturnToTitle = function() {
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   const lp = document.getElementById("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
