@@ -17532,6 +17532,7 @@ async function endPlayerTurnAndRunEnemy() {
     window.playerReceptionistTriggeredThisTurn = false;
     window.enemyReceptionistTriggeredThisTurn = false;
     playerUntap();
+    isMyTurn = true; // Fix: ensure it's player's turn!
 
     // Check Call Game resolution for player: only immediately if player does not need defense.
     let enemyHasAttackers = false;
@@ -18342,6 +18343,16 @@ function renderField() {
           cardEl.innerHTML = `<div class="fallback"><b>${obj.card.name}</b><br>${metaText}</div>`;
         }
         
+
+        if (typeof selectedTributes !== "undefined" && selectedTributes.find(t => t.key === key)) {
+          const badge = document.createElement("div");
+          badge.innerHTML = "🎯 祭品";
+          badge.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; background: rgba(220, 38, 38, 0.9); color: white; text-align: center; font-weight: 900; z-index: 20; font-size: 16px; pointer-events: none; padding: 2px 0; border-top-left-radius: 8px; border-top-right-radius: 8px; text-shadow: 1px 1px 0px #000;";
+          cardEl.appendChild(badge);
+          cardEl.style.boxShadow = "0 0 20px rgba(220, 38, 38, 0.9)";
+          cardEl.style.border = "2px solid #ef4444";
+        }
+
         // 始皇帝技能橫置目標高亮
         if (window.XLW_emperorTapSelecting) {
           if (!obj.tapped) {
@@ -25915,6 +25926,10 @@ function showSpellChainUI(stack) {
     img.className = "chain-card-img";
     img.src = item.card.image || "/static/card_back.jpeg";
     img.alt = item.card.name;
+    img.style.cursor = "pointer";
+    img.onclick = () => {
+      showCardInfo(item.card);
+    };
     wrapper.appendChild(img);
     
     const ownerLabel = document.createElement("div");
