@@ -60,7 +60,7 @@ let field = {
   enemy_back: [null, null, null, null, null],
 };
 
-let phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80"); // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
+let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
 let turn = 1;
 
 
