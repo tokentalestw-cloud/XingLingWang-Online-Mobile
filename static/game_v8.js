@@ -26036,7 +26036,12 @@ function promptNextChainAction() {
       passBtn.style.height = "auto";
       passBtn.style.cursor = "pointer";
       passBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
-      passBtn.textContent = "❌ 不進行反制 (Pass)";
+      passBtn.textContent = "❌ 放棄反制 / 結算魔法";
+      passBtn.style.fontWeight = "bold";
+      passBtn.style.padding = "12px 24px";
+      passBtn.style.fontSize = "16px";
+      passBtn.style.width = "100%";
+      passBtn.style.marginTop = "10px";
       passBtn.onclick = () => {
         actionsDiv.innerHTML = "";
         statusText.textContent = "⌛ 正在送出連鎖決議...";
@@ -26131,28 +26136,6 @@ function promptNextChainAction() {
         };
         actionsDiv.appendChild(mushBtn);
       });
-
-      // Add Pass/Cancel Button
-      const passBtn = document.createElement("button");
-      passBtn.className = "forest-summon-btn";
-      passBtn.style.background = "#d93838";
-      passBtn.style.color = "#fff";
-      passBtn.style.borderColor = "#ff9999";
-      passBtn.style.padding = "8px 20px";
-      passBtn.style.fontSize = "14px";
-      passBtn.style.height = "auto";
-      passBtn.style.cursor = "pointer";
-      passBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
-      passBtn.textContent = "❌ 放棄反制 / 結算魔法";
-      passBtn.onclick = () => {
-        actionsDiv.innerHTML = "";
-        statusText.textContent = "等待魔法連鎖結算...";
-        if (isMultiplayer && ws) {
-          ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
-        }
-        resolveLocalSpellChain();
-      };
-      actionsDiv.appendChild(passBtn);
 
     } else {
       statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
