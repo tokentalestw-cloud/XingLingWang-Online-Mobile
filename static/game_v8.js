@@ -144,7 +144,7 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   if (text.includes("召喚階段") || text.includes("戰術佈陣") || text.includes("進攻宣言")) {
     prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "我方" : "對手";
   } else if (text.includes("防守階段")) {
-    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "對手" : "我方";
+    prefix = (typeof isMyTurn !== "undefined" ? isMyTurn : false) ? "我方" : "對手";
   }
   let displayText = prefix + text;
   
@@ -10466,6 +10466,8 @@ async function xlwCheckVirtualDefenseRedirectEffects() {
 }
 
 async function xlwResolvePlayerDefensePhase() {
+  phase = "防守階段";
+  window.xlwShowPhaseBanner("防守階段", "#3b82f6");
   if (window.XLW_DEFENSE_RULE.resolving) return;
   window.XLW_DEFENSE_RULE.resolving = true;
 
@@ -29479,3 +29481,22 @@ window.checkMultiplayerDecksReady = function() {
     setStatus("等待對手選擇牌組中...");
   }
 };
+
+
+// Handle orientation change gracefully to prevent "jumping" UI
+window.addEventListener("orientationchange", function() {
+  let mask = document.getElementById("xlw-orientation-mask");
+  if (!mask) {
+    mask = document.createElement("div");
+    mask.id = "xlw-orientation-mask";
+    mask.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 999999999; opacity: 1; transition: opacity 0.3s ease;";
+    document.body.appendChild(mask);
+  }
+  mask.style.opacity = "1";
+  mask.style.pointerEvents = "all";
+  
+  setTimeout(() => {
+    mask.style.opacity = "0";
+    mask.style.pointerEvents = "none";
+  }, 600);
+});
