@@ -144,14 +144,29 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   if (!banner) {
     banner = document.createElement("div");
     banner.id = "xlw-phase-banner";
-    banner.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); color:" + color + "; font-size:46px; font-weight:900; text-shadow:0 0 20px " + color + ", 3px 3px 0 #000; z-index:999999; pointer-events:none; opacity:0; transition:opacity 0.4s ease; text-align:center; white-space:nowrap; background:rgba(0,0,0,0.6); padding:20px 40px; border-radius:15px; border:3px solid " + color + ";";
+    banner.style.cssText = "position:fixed; top:50%; left:0; width:100%; transform:translateY(-50%); font-size:55px; font-weight:900; font-family:'Cinzel', sans-serif; z-index:999999; pointer-events:none; opacity:0; transition:opacity 0.4s ease, letter-spacing 1.5s ease-out; text-align:center; white-space:nowrap; background:linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.85) 70%, transparent 100%); padding:30px 0; letter-spacing: 0px;";
     document.body.appendChild(banner);
   }
   banner.style.color = color;
-  banner.style.textShadow = "0 0 20px " + color + ", 3px 3px 0 #000";
-  banner.style.borderColor = color;
+  banner.style.textShadow = "0 0 20px " + color + ", 0 0 40px " + color + ", 4px 4px 0 #000";
+  banner.style.borderTop = "2px solid " + color;
+  banner.style.borderBottom = "2px solid " + color;
+  banner.style.boxShadow = "0 0 30px " + color + "40, inset 0 0 30px " + color + "40";
   banner.textContent = text;
+  
+  // Reset animation state
+  banner.style.transition = "none";
+  banner.style.opacity = "0";
+  banner.style.letterSpacing = "0px";
+  
+  // Force reflow
+  void banner.offsetWidth;
+  
+  // Animate
+  banner.style.transition = "opacity 0.4s ease, letter-spacing 1.5s ease-out";
   banner.style.opacity = "1";
+  banner.style.letterSpacing = "12px";
+  
   await new Promise(r => setTimeout(r, 1500));
   banner.style.opacity = "0";
   await new Promise(r => setTimeout(r, 400));
@@ -16908,7 +16923,7 @@ async function runEnemyTurn() {
       await sleep(800);
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
-      phase = "進攻宣言"; window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
+      phase = "進攻宣言";
       setStatus(`對手回合：${enemyDeckName} 正在進行進攻檢視與宣告...`);
       render();
 
@@ -16971,6 +16986,11 @@ async function runEnemyTurn() {
         console.error("AI 進攻宣告階段異常:", errAtk);
       }
 
+            if (opponentAttackCount > 0) {
+        window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
+        await new Promise(r => setTimeout(r, 1900));
+      }
+      
       window.XLW_DEFENSE_RULE.playerNeedsDefense = opponentAttackCount > 0;
       logBattle(`—— 對手回合階段完成，已宣告 ${opponentAttackCount} 條星星戰線進攻。 ——`);
       render();
@@ -18141,7 +18161,18 @@ function renderHand() {
         }
       }
 
-      if (phase !== "召喚階段" && phase !== "戰術佈陣" && !(phase === "防守階段" && window.XLW_defenseCounterActive && card.type === "magic")) {
+            let canPlay = false;
+      if (card.type === "magic") {
+        const phases = card.usable_phases || ["Main Phase"];
+        if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
+        if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
+        if (phases.includes("Defense Phase") && phase === "防守階段" && window.XLW_defenseCounterActive) canPlay = true;
+        if (phases.includes("Enemy Phase") && window.XLW_defenseCounterActive) canPlay = true;
+      } else {
+        if (phase === "召喚階段" || phase === "戰術佈陣") canPlay = true;
+      }
+
+      if (!canPlay) {
         showModal(card);
         return;
       }
