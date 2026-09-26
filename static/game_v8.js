@@ -29130,7 +29130,7 @@ window.XLW_Tutorial = {
     {
       title: "⚔️ 戰場區域：前排戰線與後排戰線",
       content: "棋盤中央是我方與對手的戰鬥單位區域。單位卡牌可召喚至前排戰線或後排戰線。前排單位為戰鬥第一線，當前排尚有空位時優先保護後排！",
-      spotlightSelector: ".field-row.player-front",
+      spotlightSelector: ".row.player-front",
       anatomyModal: false,
       interactive: null
     },
@@ -29144,7 +29144,7 @@ window.XLW_Tutorial = {
     {
       title: "🪦 戰場區域：墓地區",
       content: "放置戰敗破壞的單位卡與發動完畢的魔法卡。部分特定種族（如：亡靈、獸人）具備從墓地回收或還魂召喚的強大效果！",
-      spotlightSelector: "#playerGraveyard",
+      spotlightSelector: "#playerGrave",
       anatomyModal: false,
       interactive: null
     },
@@ -29158,7 +29158,7 @@ window.XLW_Tutorial = {
     {
       title: "👑 戰場區域：種族卡槽",
       content: "隊伍選擇的種族卡會安置於此。種族卡提供全場單位的主動與被動戰術天賦支援！",
-      spotlightSelector: "#playerRaceSlot",
+      spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
     },
@@ -29284,19 +29284,19 @@ window.XLW_Tutorial = {
     normalSummonUsed = false;
     tacticalSummonUsed = false;
 
-    const demoUnit = {
-      id: "R-CAT-0001",
-      name: "萌萌小貓",
-      type: "unit",
-      deck: "喵喵賊",
-      faction: "喵喵賊",
-      race: "喵喵賊",
-      attack: "3",
-      score: 1,
-      tribute: 0,
-      image: "/static/card_images/c_cat_0001.jpeg",
-      effect_text: "可愛又能幹的初階打手喵！"
-    };
+          const demoUnit = {
+        id: "C-ORC-0012",
+        name: "寶寶獸人",
+        type: "unit",
+        deck: "獸人",
+        faction: "獸人",
+        race: "獸人",
+        attack: "2",
+        score: 2,
+        tribute: 0,
+        image: "/static/card_images/c_orc_0012.jpeg",
+        effect_text: "立即: 獎勵+1。此單位從場上回手牌前，獎勵+1"
+      };
 
     hand = [demoUnit];
     field = {
