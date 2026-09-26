@@ -12571,7 +12571,7 @@ async function resolveDecayStatus(isPlayerTurn) {
     for (let i = 0; i < 5; i++) {
       const u = field[zone][i];
       if (u) {
-        if (isDecayed(zone, idx)) {
+        if (isDecayed(zone, i)) {
           const c = u.card || u;
           if (!u.tapped) {
             u.tapped = true;
