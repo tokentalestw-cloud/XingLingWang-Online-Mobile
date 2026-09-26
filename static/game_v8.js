@@ -29389,24 +29389,17 @@ window.XLW_Tutorial = {
 
           if (tutorialBox) {
               const vh = window.innerHeight;
-              const vw = window.innerWidth;
               
               tutorialBox.style.top = '';
               tutorialBox.style.bottom = '';
-              tutorialBox.style.left = '';
+              tutorialBox.style.left = '50%';
               tutorialBox.style.right = '';
-              tutorialBox.style.transform = '';
+              tutorialBox.style.transform = 'translateX(-50%)';
 
               if (rect.top + rect.height / 2 < vh / 2) {
                   tutorialBox.style.bottom = '20px';
               } else {
                   tutorialBox.style.top = '60px';
-              }
-              
-              if (rect.left + rect.width / 2 < vw / 2) {
-                  tutorialBox.style.right = '20px';
-              } else {
-                  tutorialBox.style.left = '20px';
               }
           }
         } else {
@@ -29414,9 +29407,9 @@ window.XLW_Tutorial = {
           if (tutorialBox) {
               tutorialBox.style.top = '';
               tutorialBox.style.bottom = '20px';
-              tutorialBox.style.left = '';
-              tutorialBox.style.right = '20px';
-              tutorialBox.style.transform = '';
+              tutorialBox.style.left = '50%';
+              tutorialBox.style.right = '';
+              tutorialBox.style.transform = 'translateX(-50%)';
           }
         }
       } else {
@@ -29424,9 +29417,9 @@ window.XLW_Tutorial = {
         if (tutorialBox) {
             tutorialBox.style.top = '';
             tutorialBox.style.bottom = '20px';
-            tutorialBox.style.left = '';
-            tutorialBox.style.right = '20px';
-            tutorialBox.style.transform = '';
+            tutorialBox.style.left = '50%';
+            tutorialBox.style.right = '';
+            tutorialBox.style.transform = 'translateX(-50%)';
         }
       }
     }
