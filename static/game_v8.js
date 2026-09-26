@@ -29374,6 +29374,8 @@ window.XLW_Tutorial = {
   updateSpotlight: function() {
     const step = this.steps[this.currentStep];
     const spotlight = document.getElementById("xlwTutorialSpotlight");
+    const tutorialBox = document.getElementById("xlwTutorialBox");
+
     if (spotlight) {
       if (step && step.spotlightSelector) {
         const target = document.querySelector(step.spotlightSelector);
@@ -29384,11 +29386,48 @@ window.XLW_Tutorial = {
           spotlight.style.left = `${rect.left - 8}px`;
           spotlight.style.width = `${rect.width + 16}px`;
           spotlight.style.height = `${rect.height + 16}px`;
+
+          if (tutorialBox) {
+              const vh = window.innerHeight;
+              const vw = window.innerWidth;
+              
+              tutorialBox.style.top = '';
+              tutorialBox.style.bottom = '';
+              tutorialBox.style.left = '';
+              tutorialBox.style.right = '';
+              tutorialBox.style.transform = '';
+
+              if (rect.top + rect.height / 2 < vh / 2) {
+                  tutorialBox.style.bottom = '20px';
+              } else {
+                  tutorialBox.style.top = '60px';
+              }
+              
+              if (rect.left + rect.width / 2 < vw / 2) {
+                  tutorialBox.style.right = '20px';
+              } else {
+                  tutorialBox.style.left = '20px';
+              }
+          }
         } else {
           spotlight.style.display = "none";
+          if (tutorialBox) {
+              tutorialBox.style.top = '';
+              tutorialBox.style.bottom = '20px';
+              tutorialBox.style.left = '';
+              tutorialBox.style.right = '20px';
+              tutorialBox.style.transform = '';
+          }
         }
       } else {
         spotlight.style.display = "none";
+        if (tutorialBox) {
+            tutorialBox.style.top = '';
+            tutorialBox.style.bottom = '20px';
+            tutorialBox.style.left = '';
+            tutorialBox.style.right = '20px';
+            tutorialBox.style.transform = '';
+        }
       }
     }
   },

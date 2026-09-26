@@ -435,9 +435,9 @@
     <!-- 導師對話提示框 -->
     <div id="xlwTutorialBox" class="xlw-tutorial-box">
       <div class="tutorial-box-header">
-                <div class="tutorial-mentor-info">
-          <img src="/static/card_images/ssr_vlg_0012.jpeg" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #00e5ff; object-fit: cover; margin-right: 8px;">
-          <span class="mentor-name" style="font-weight: bold; font-size: 16px;">雪女</span>
+                <img id="xlwTutorialMentorSprite" src="/static/card_images/yuki_onna_portrait.jpg" style="position: absolute; bottom: 0; left: -120px; width: 120px; height: 180px; object-fit: cover; border-radius: 12px 0 0 12px; pointer-events: none; border: 2px solid #00e5ff; border-right: none; z-index: -1;">
+        <div class="tutorial-mentor-info">
+          <span class="mentor-name" style="font-weight: bold; font-size: 18px; color: #00e5ff;">雪女</span>
         </div>
         <span id="xlwTutorialStepCounter" class="tutorial-step-counter">1 / 13</span>
       </div>
@@ -457,19 +457,20 @@
         <h3 class="anatomy-header">🎴 卡牌詳細資訊代表意義解密</h3>
         <div class="anatomy-body">
           <!-- 卡牌視覺預覽示範 -->
-          <div class="anatomy-card-preview">
-            <div class="anatomy-card-inner">
-              <div class="anatomy-tag tag-cost" title="祭品需求">0 祭品</div>
-              <div class="anatomy-tag tag-stars" title="★點數">★ 3</div>
-              <div class="anatomy-card-name">萌萌小貓</div>
-              <div class="anatomy-card-faction">喵喵賊 • 單位卡</div>
-              <div class="anatomy-card-art">🐱</div>
-              <div class="anatomy-card-stats">
-                <span class="stat-atk">⚔️ ATK 3</span>
-                <span class="stat-def">🛡️ 盾 0</span>
-              </div>
-              <div class="anatomy-card-desc">【登場發動】登場時，提升戰場優勢！得力的初階打手。</div>
+                      <div class="anatomy-card-preview" style="position: relative; width: 220px; flex-shrink: 0;">
+              <img src="/static/card_images/ssr_art_0001.jpeg" style="width: 100%; border-radius: 12px; border: 2px solid #ffd76a; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
+              
+              <div style="position:absolute; top: 8%; left: -10px; background: rgba(0,0,0,0.85); color: #ffd76a; border: 1px solid #ffd76a; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">1. 名稱與陣營</div>
+              
+              <div style="position:absolute; top: 12%; right: -10px; background: rgba(0,0,0,0.85); color: #d4af37; border: 1px solid #d4af37; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">2. 星數與屬性</div>
+              
+              <div style="position:absolute; bottom: 15%; right: -10px; background: rgba(0,0,0,0.85); color: #ff4d4f; border: 1px solid #ff4d4f; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">3. 攻擊力/盾</div>
+              
+              <div style="position:absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #ff9800; border: 1px solid #ff9800; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">4. 祭品花費</div>
+              
+              <div style="position:absolute; bottom: 35%; left: -10px; background: rgba(0,0,0,0.85); color: #4ade80; border: 1px solid #4ade80; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">5. 技能說明</div>
             </div>
+            
           </div>
           
           <!-- 詳細解說清單 -->
