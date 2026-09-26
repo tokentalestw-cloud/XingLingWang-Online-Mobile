@@ -29375,7 +29375,12 @@ window.XLW_Tutorial = {
             { src: "/static/card_images/yuki_tutorial_2.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
             { src: "/static/card_images/yuki_tutorial_3.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
             { src: "/static/card_images/yuki_tutorial_4.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_5.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" }
+            { src: "/static/card_images/yuki_tutorial_5.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
+            { src: "/static/card_images/yuki_tutorial_6.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
+            { src: "/static/card_images/yuki_tutorial_7.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
+            { src: "/static/card_images/yuki_tutorial_8.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
+            { src: "/static/card_images/yuki_tutorial_9.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
+            { src: "/static/card_images/yuki_tutorial_10.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" }
         ];
         const imgData = images[this.currentStep % images.length];
         sprite.src = imgData.src;
