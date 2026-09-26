@@ -25084,11 +25084,10 @@ function triggerCallGameEnd(winner) {
     panel.className = "xlw-result-panel";
     document.body.appendChild(panel);
   }
-  
-  // hide opponent hand immediately
+    // hide opponent hand immediately
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
-  
+
   panel.innerHTML = `
     <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(255, 215, 106, 0.15); padding: 20px; text-align: center; width: 90vw; max-width: 360px; max-height: 90vh; overflow-y: auto;">
       <div class="xlw-result-title" style="color: #ffd76a; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255, 215, 106, 0.6); margin-bottom: 10px; text-transform: uppercase;">${result}</div>
@@ -25114,58 +25113,6 @@ function triggerCallGameEnd(winner) {
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.8);'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
         <button onclick="location.reload()" style="background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s;">返回首頁 / 重新開局</button>
-      </div>
-    </div>
-  `;
-  panel.classList.add("show");
-  logBattle(`遊戲結束！比分：我方 ${playerStars} ★ vs 對方 ${enemyStars} ★。${msg}`);
-}
-  panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 25px; text-align: center; width: 90vw; max-width: 400px; max-height: 85vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 36px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 15px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">${msg} <div style="font-size:14px; color:#aaa; margin-top:5px;">(${isCallGame ? '提早結束' : '正常結束'})</div></div>
-      <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-around;">
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #4ade80;">我方</div>
-          <div style="font-size: 28px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);">${playerStars} <span style="font-size: 16px;">★</span></div>
-          <small style="display: block; font-size: 11px; opacity: 0.7; margin-top: 5px;">(單位: ${playerFieldStars} | 額外: ${playerBonusScore})</small>
-        </div>
-        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #ff4d4f;">對方</div>
-          <div style="font-size: 28px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);">${enemyStars} <span style="font-size: 16px;">★</span></div>
-          <small style="display: block; font-size: 11px; opacity: 0.7; margin-top: 5px;">(單位: ${enemyFieldStars} | 額外: ${enemyBonusScore})</small>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 10px; font-size: 15px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 10px; font-size: 15px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
-      </div>
-    </div>
-  `;
-  panel.classList.add("show");
-  logBattle(`遊戲結束！比分：我方 ${playerStars} ★ vs 對方 ${enemyStars} ★。${msg}`);
-}
-  panel.innerHTML = `
-        <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 40px; text-align: center; max-width: 90vw; width: 450px;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 42px; font-weight: 900; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 25px; text-transform: uppercase;"></div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 26px; font-weight: bold; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;"> <div style="font-size:16px; color:#aaa; margin-top:8px;">(正常結束)</div></div>
-      <div class="xlw-result-score" style="font-size: 18px; line-height: 1.8; color: #fff; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; justify-content: space-around;">
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #4ade80;">我方</div>
-          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
-          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
-        </div>
-        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #ff4d4f;">對手</div>
-          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
-          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
       </div>
     </div>
   `;
@@ -25308,11 +25255,10 @@ function executeGameOverCalculations() {
     panel.className = "xlw-result-panel";
     document.body.appendChild(panel);
   }
-  
-  // hide opponent hand immediately
+    // hide opponent hand immediately
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
-  
+
   panel.innerHTML = `
     <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(255, 215, 106, 0.15); padding: 20px; text-align: center; width: 90vw; max-width: 360px; max-height: 90vh; overflow-y: auto;">
       <div class="xlw-result-title" style="color: #ffd76a; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255, 215, 106, 0.6); margin-bottom: 10px; text-transform: uppercase;">${result}</div>
@@ -25338,58 +25284,6 @@ function executeGameOverCalculations() {
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.8);'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
         <button onclick="location.reload()" style="background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s;">返回首頁 / 重新開局</button>
-      </div>
-    </div>
-  `;
-  panel.classList.add("show");
-  logBattle(`遊戲結束！比分：我方 ${playerStars} ★ vs 對方 ${enemyStars} ★。${msg}`);
-}
-  panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 25px; text-align: center; width: 90vw; max-width: 400px; max-height: 85vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 36px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 15px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">${msg} <div style="font-size:14px; color:#aaa; margin-top:5px;">(${isCallGame ? '提早結束' : '正常結束'})</div></div>
-      <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-around;">
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #4ade80;">我方</div>
-          <div style="font-size: 28px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);">${playerStars} <span style="font-size: 16px;">★</span></div>
-          <small style="display: block; font-size: 11px; opacity: 0.7; margin-top: 5px;">(單位: ${playerFieldStars} | 額外: ${playerBonusScore})</small>
-        </div>
-        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #ff4d4f;">對方</div>
-          <div style="font-size: 28px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);">${enemyStars} <span style="font-size: 16px;">★</span></div>
-          <small style="display: block; font-size: 11px; opacity: 0.7; margin-top: 5px;">(單位: ${enemyFieldStars} | 額外: ${enemyBonusScore})</small>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 10px; font-size: 15px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 10px; font-size: 15px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
-      </div>
-    </div>
-  `;
-  panel.classList.add("show");
-  logBattle(`遊戲結束！比分：我方 ${playerStars} ★ vs 對方 ${enemyStars} ★。${msg}`);
-}
-  panel.innerHTML = `
-        <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 40px; text-align: center; max-width: 90vw; width: 450px;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 42px; font-weight: 900; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 25px; text-transform: uppercase;"></div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 26px; font-weight: bold; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;"> <div style="font-size:16px; color:#aaa; margin-top:8px;">(正常結束)</div></div>
-      <div class="xlw-result-score" style="font-size: 18px; line-height: 1.8; color: #fff; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; justify-content: space-around;">
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #4ade80;">我方</div>
-          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
-          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
-        </div>
-        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
-        <div style="text-align: center;">
-          <div style="font-size: 14px; color: #ff4d4f;">對手</div>
-          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
-          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
       </div>
     </div>
   `;
