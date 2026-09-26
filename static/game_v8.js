@@ -7082,7 +7082,7 @@ async function performSummonToSlot(zone, idx) {
         const u = field[zone][idx];
         if (u) {
           u.confined = true;
-          logBattle(✨  效果：將自身禁錮！);
+          logBattle(`✨ ${card.name} 效果：將自身禁錮！`);
           render();
         }
       }
@@ -17265,23 +17265,19 @@ async function endPlayerTurnAndRunEnemy() {
 
   // === 妖怪村莊結束階段效果結算 ===
   const runYokaiEndPhaseEffects = async () => {
-    const hasYarnMonster = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name.includes("毛線怪"));
-    if (hasYarnMonster) {
-      let hasEnemyImprisoned = false;
-      for (const zone of ["enemy_front", "enemy_back"]) {
-        for (let i = 0; i < 5; i++) {
-          if (field[zone][i] && isUnitConfined(zone, i)) {
-            hasEnemyImprisoned = true;
-            break;
-          }
+    let yarnBonus = 0;
+    for (const zone of ["player_front", "player_back"]) {
+      for (let i = 0; i < 5; i++) {
+        const u = field[zone][i];
+        if (u && u.card && u.card.name.includes("毛線怪") && isUnitConfined(zone, i)) {
+          yarnBonus += 1;
         }
-        if (hasEnemyImprisoned) break;
       }
-      if (hasEnemyImprisoned) {
-        playerBonusScore += 1;
-        logBattle("毛線怪 效果：偵測到敵方場上有單位受到禁錮，我方額外獲得 +1★ 獎勵！");
-        renderScore();
-      }
+    }
+    if (yarnBonus > 0) {
+      playerBonusScore += yarnBonus;
+      logBattle(`✨ 毛線怪 效果：因自身處於禁錮狀態，我方額外獲得 +${yarnBonus}★ 獎勵！`);
+      renderScore();
     }
 
     const enemyFrontCount = field["enemy_front"].filter(u => u !== null).length;
