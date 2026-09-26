@@ -1,0 +1,133 @@
+L163: // 小旅人 Token 定義
+L166: name: "小旅人",
+L1241: // 迷路的尋寶小旅人 手牌判定
+L1244: if (c && (c.id === "NEU-0010" || c.name?.includes("迷路的尋寶小旅人") || c.name?.includes("尋寶小旅人"))) {
+L1254: logBattle(`✨ 迷路的尋寶小旅人 效果觸發：回合開始抽牌時除外手牌，我方獲得 +1★ 獎勵！`);
+L1420: const isTraveler = card.id === "NEU-0010" || card.id === "TOKEN_TRAVELER" || card.name?.includes("小旅人") || card.name?.includes("旅人");
+L1440: const isTraveler = card.id === "NEU-0010" || card.id === "TOKEN_TRAVELER" || card.name?.includes("小旅人") || card.name?.includes("旅人");
+L1644: // 綠色消費人 (CRB-0011): 每當你的小旅人回森林時, 獎勵+1 (一回合限一次）
+L1653: logBattle(`✨ 綠色消費人 效果：小旅人返回森林，獎勵 +1 分！`);
+L1693: logBattle(`🚌 【${unit.card?.name}】發動下車！下車 ${count} 名小旅人（剩餘乘客: ${unit.passengers}）。`);
+L1705: logBattle(`✨ 下車鈴旅人 效果：偵測到單位發動下車，額外召喚 1 個小旅人！`);
+L2015: return window.xlwCardHasKeyword(c, "合體") ||
+L2019: c.name?.includes("合體") || c.name?.includes("機甲") || c.name?.includes("背背");
+L3173: // 小旅人按鈕觸發
+L3182: setStatus("目前階段無法召喚小旅人。");
+L3188: setStatus("【小旅人】請點選我方一個空格進行召喚（前排優先）。");
+L5289: setStatus("戰術佈陣階段只能召喚免祭品單位或小旅人，不能進行獻祭召喚。");
+L5856: if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+L5915: if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+L6076: if (oppUnit && oppUnit.card && getCardTributeCost(oppUnit.card) === 0 && !(oppUnit.card.id === "NEU-0010" || oppUnit.card.id === "TOKEN_TRAVELER" || oppUnit.card.name?.includes("小旅人"))) {
+L6681: if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+L6751: // 實行手牌召喚/小旅人召喚至格子上
+L6828: // 召喚小旅人
+L6840: logBattle(`從森林召喚小旅人到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+L7721: const travelerCard = allCards.find(c => c && (c.id === "TOKEN_TRAVELER" || c.name.includes("小旅人"))) || { id: "TOKEN_TRAVELER", name: "小旅人", type: "unit", tribute: 0, attack: "1", score: 1 };
+L7730: logBattle(`✨ 札克 立即效果：為對手在 ${targetZone === oppFrontZone ? "前排" : "後排"}${idx + 1} 召喚了一個【小旅人】！`);
+L7733: logBattle("札克 立即效果：對手正前方及後方皆滿，無法召喚小旅人。");
+L7822: const travelerCard = allCards.find(c => c && (c.id === "TOKEN_TRAVELER" || c.name.includes("小旅人"))) || { id: "TOKEN_TRAVELER", name: "小旅人", type: "unit", tribute: 0, attack: "1", score: 1 };
+L7831: logBattle(`✨ 獸人王 加爾帝 立即效果：召喚了一個【小旅人】至其正前方！`);
+L8026: const chosenIdx = await showXLWChoiceModal("千面病毒 寄生效果", "請選擇一個場上的虛擬單位進行寄生合體：", choices);
+L8029: logBattle(`✨ 千面病毒 效果：寄生合體至 【${target.unit.card.name}】！`);
+L8788: logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
+L8912: logBattle("✨ 委託者 戴比 效果：準備在對手場上召喚小旅人，且我方場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+L9491: setStatus("【燈籠小鬼】請選擇我方一個空格放置第 1 個小旅人！");
+L9514: setStatus("【燈籠小鬼】請選擇我方一個空格放置第 2 個小旅人！");
+L9537: setStatus("【燈籠小鬼】請選擇對手場上一個空格放置 1 個小旅人！");
+L9574: setStatus("【委託者 戴比】請選擇對手場上一個空格放置第 1 個小旅人！");
+L9597: setStatus("【委託者 戴比】請選擇對手場上一個空格放置第 2 個小旅人！");
+L9664: setStatus("進入「戰術佈陣」：可拖曳我方單位調整位置，或額外進行1次免祭品/小旅人召喚。");
+L10123: // 送墓 (小旅人不進墓地，直接返回森林)
+L10124: if (targetUnit.card.name.includes("小旅人") || targetUnit.card.id === "TOKEN_TRAVELER") {
+L10602: // 戰鬥階段結束時，若對手有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+L10645: // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+L10795: // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+L11085: // 拆卸 (Disassemble) 效果應用：進攻合體單位時無視數值直接判定戰鬥成功且破壞對方
+L11093: logBattle(`✨ 笨手笨腳的維修員 效果：【${attackerCard.name}】發動拆卸效果，進攻對手合體單位【${defenderCard.name}】，直接判定戰鬥成功並將其破壞！`);
+L11122: const choice = await showXLWConfirm("漏食球 效果發動", "是否召喚 1 個小旅人到我方場上以代替破壞對手的 漏食球？");
+L11135: // 手動放置小旅人到我方場上
+L11192: logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+L11211: logBattle(`漏食球 效果：對手召喚 1 個小旅人代替破壞 漏食球。`);
+L11373: const isDefenderTraveler = defender.card.name.includes("小旅人") || defender.card.name.includes("尋寶小旅人") || defender.card.id === "TOKEN_TRAVELER" || defender.card.id === "NEU-0010";
+L12371: // 博物館接待員特殊召喚小旅人效果（支援玩家自選位置，前排優先）
+L12392: setStatus("【博物館接待員】請選擇我方一個空格特殊召喚小旅人！");
+L12405: logBattle(`✨ 【博物館接待員】效果：在我方 ${placement.zone.includes("front") ? "前排" : "後排"}${placement.idx + 1} 特殊召喚一個小旅人！`);
+L12432: logBattle(`✨ 對手的【博物館接待員】效果：在 ${selectedSlot.zone.includes("front") ? "前排" : "後排"}${selectedSlot.idx + 1} 特殊召喚一個小旅人！`);
+L12779: logBattle(`✨ 對手 千面病毒 效果：寄生合體至 【${target.unit.card.name}】！`);
+L13287: logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
+L13306: logBattle(`✨ 燈籠小鬼 效果：特殊召喚小旅人到對手 ${chosen.zone.includes("front") ? "前排" : "後排"}${chosen.idx + 1}`);
+L13329: logBattle(`✨ 燈籠小鬼 效果：特殊召喚小旅人到對手 ${chosen.zone.includes("front") ? "前排" : "後排"}${chosen.idx + 1}`);
+L13352: logBattle(`✨ 燈籠小鬼 效果：特殊召喚小旅人到我方 ${chosen.zone.includes("front") ? "前排" : "後排"}${chosen.idx + 1}`);
+L13360: logBattle("✨ 委託者 戴比 效果：準備在我方場上特殊召喚小旅人，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+L13379: logBattle(`✨ 委託者 戴比 效果：特殊召喚小旅人到我方 ${chosen.zone.includes("front") ? "前排" : "後排"}${chosen.idx + 1}`);
+L13402: logBattle(`✨ 委託者 戴比 效果：特殊召喚小旅人到我方 ${chosen.zone.includes("front") ? "前排" : "後排"}${chosen.idx + 1}`);
+L14058: // R-ORC-0023 阿姨獸人 敵方小旅人被擊破效果
+L14059: if (isCombatDestruction && unit.card && (unit.card.id === "TOKEN_TRAVELER" || unit.card.name?.includes("小旅人"))) {
+L14068: logBattle("✨ 對手 阿姨獸人 效果發動：我方小旅人被戰鬥破壞，對手額外獎勵 +1★！");
+L14071: logBattle("✨ 我方 阿姨獸人 效果發動：對手小旅人被戰鬥破壞，我方額外獎勵 +1★！");
+L14442: if (unit.card.name.includes("小旅人") || unit.card.name.includes("尋寶小旅人") || unit.card.id === "TOKEN_TRAVELER" || unit.card.id === "NEU-0010") {
+L14449: logBattle("✨ 我方的 恐怖的房東阿伯 效果觸發：偵測到小旅人被破壞，我方獲得 +3★ 房租獎勵！");
+L14454: logBattle("✨ 對手的 恐怖的房東阿伯 效果觸發：偵測到小旅人被破壞，對手獲得 +3★ 房租獎勵！");
+L14544: // 虛擬酒館 (VRT-0013) 效果：我方非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
+L14546: const isTraveler = unit.card && (unit.card.name?.includes("小旅人") || unit.card.id?.includes("TRAVELER"));
+L14600: // 虛擬酒館 (VRT-0013) 效果：對手非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
+L14602: const isTraveler = unit.card && (unit.card.name?.includes("小旅人") || unit.card.id?.includes("TRAVELER"));
+L14863: logBattle("✨ 菇菇魔法師 效果：召喚小旅人成功，我方獎勵 +1★！");
+L14867: logBattle("✨ 對手 菇菇魔法師 效果：召喚小旅人成功，對手獎勵 +1★！");
+L14872: logBattle("場上已無空格，無法召喚小旅人。");
+L14996: const chosenIdx = await showXLWChoiceModal("千面病毒 轉移效果", "請選擇轉移寄生合體的虛擬單位：", choices);
+L15354: const isTraveler = targetUnit.card.id === "TOKEN_TRAVELER" || targetUnit.card.name?.includes("小旅人");
+L15501: "是否發動 居酒屋老闆娘 效果，在雙方場上各召喚一個【迷路的尋寶小旅人】？"
+L15518: logBattle(`✨ 居酒屋老闆娘：在 ${isPlayerTurn ? "我方" : "對手"} 場上 ${ownerEmptyZone.includes("front") ? "前排" : "後排"}${ownerEmptyIdx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+L15531: logBattle(`✨ 居酒屋老闆娘：在 ${isPlayerTurn ? "對手" : "我方"} 場上 ${oppEmptyZone.includes("front") ? "前排" : "後排"}${oppEmptyIdx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+L15629: setStatus("【觀光阿姨】請點選我方場上一個空格以召喚小旅人！");
+L15641: logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+L15671: logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+L15693: if (u && u.card && (u.card.name.includes("小旅人") || u.card.name.includes("尋寶小旅人") || u.card.id === "TOKEN_TRAVELER" || u.card.id === "NEU-0010")) {
+L15706: const chosenIdx = await showXLWChoiceModal("恐怖的房東阿姨 效果發動", "選擇要破壞的 迷路的尋寶小旅人：", choices);
+L15717: logBattle(`✨ 恐怖的房東阿姨 效果：因場上沒有任何尋寶小旅人可供收租，房東阿姨自毀！`);
+L16691: // 5. 迷路的尋寶小旅人
+L16695: if (c && (c.id === "NEU-0010" || c.name?.includes("迷路的尋寶小旅人") || c.name?.includes("尋寶小旅人"))) {
+L16705: logBattle("✨ 對手 迷路的尋寶小旅人 效果觸發：回合開始抽牌時除外手牌，對手獲得 +1★ 獎勵！");
+L16710: } catch (e) { console.warn("AI 小旅人手牌判定異常:", e); }
+L16874: // 保底機制：若手牌無常規免祭品單位，自動特殊召喚【小旅人】建立戰線！
+L16909: logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手的【小旅人】！`);
+L17104: // 保底召喚小旅人
+L17129: logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【小旅人】！`);
+L17138: console.error("小旅人觸發效果出錯:", errTravelerTrig);
+L17985: case "戰術佈陣": return "本回合已選擇戰術佈陣。可移動單位，或再額外進行一次小旅人/免祭品召喚；此路線無法進攻。";
+L18303: // 如果該位置正處於小旅人召喚動畫中或獻祭召喚動畫中，暫時隱藏實際卡牌，以防瞬間定位穿幫
+L19071: // (o-beibei) 背背獸人 R-ORC-0042 / R-ORC-0042-繪畫 合體寄生主動技能
+L19094: setStatus("我方場上沒有其他獸人單位可以進行寄生合體！");
+L19098: const confirmCombine = await showXLWConfirm("背背獸人 合體效果", "是否發動【背背獸人】效果，對我方場上另一個獸人單位發動寄生合體？（合體後此單位將離場，宿主戰鬥成功獎勵 +2★）");
+L19101: const chosenIdx = await showXLWChoiceModal("選擇合體宿主", "請選擇一個獸人宿主：", choices);
+L19108: logBattle(`✨ 背背獸人 效果：成功寄生合體至【${targetHost.unit.card.name}】！`);
+L19655: `是否橫置【博物館剪票員】並召喚 ${nonHumanoidArtCount} 個小旅人？（X=場上非人型藝術品數：${nonHumanoidArtCount}）`
+L19661: logBattle(`✨ 博物館剪票員 效果：橫置自身並召喚 ${nonHumanoidArtCount} 個小旅人！`);
+L19726: "是否發動【千面】效果：橫置此單位，使我方場上 1 個其他人型藝術品回手，並召喚等同其星級+1的小旅人？"
+L19778: logBattle(`✨ 千面 效果發動：橫置自身，使我方場上的人型藝術品【${returnedCard.name}】回手，並召喚 ${stars} 個小旅人！`);
+L20033: "是否發動【鎖頭】效果：召喚兩個小旅人？（此單位已處於橫置狀態）"
+L20038: logBattle("✨ 鎖頭 效果：召喚 2 個小旅人！");
+L21086: logBattle(`${window.XLW_lanternSummonSourceText || "燈籠小鬼 效果"}：召喚小旅人到我方 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+L21106: logBattle(`${window.XLW_lanternSummonSourceText || "燈籠小鬼 效果"}：召喚小旅人到對手 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+L21603: forestOverlay.innerHTML = `✨ 我方森林區<br><span style="color: #00ff7f; font-weight: 900; text-shadow: 0 0 8px #00ff7f;">▶ 點擊召喚 小旅人 ◀</span>`;
+L21624: txt.includes("召喚") || txt.includes("獻祭") || txt.includes("小旅人") ||
+L22164: if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
+L22315: logBattle("✨ 委託者 戴比 效果：對手召喚了 委託者 戴比，我方可決定對手召喚的小旅人的位置，且對手場上所有獎勵單位的戰鬥成功額外獎勵 +1！");
+L23456: logBattle(`燈籠小鬼 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+L23469: logBattle(`委託者 戴比 效果：對手在 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 召喚了小旅人。`);
+L23508: // ===== 21. 小旅人 3D 躍出森林軌跡飛行特效 =====
+L23540: // 創建飛行中的 3D 小旅人複製品
+L23739: const confirmUse = await showXLWConfirm("導遊喵 效果發動", "是否發動【導遊喵】效果：召喚 3 個小旅人？");
+L23741: logBattle("🥷 導遊喵 效果發動：準備召喚 3 個小旅人...");
+L24146: logBattle("✨ 對手 導遊喵 效果發動：召喚 3 個小旅人！");
+L25303: logBattle(`✨ 背背獸人 合體效果：我方額外獎勵 +2★！`);
+L25449: logBattle(`✨ 尿尿小男童 效果：進攻成功，準備召喚 1 個小旅人！`);
+L25458: setStatus("【尿尿小男童 效果】請點選我方一個空格以特殊召喚小旅人！");
+L25475: logBattle(`✨ 尿尿小男童 效果：在我方 ${target.zone.includes("front") ? "前排" : "後排"}${target.idx + 1} 召喚了小旅人。`);
+L25486: logBattle("尿尿小男童 效果：我方場上已滿，無法召喚小旅人。");
+L25489: logBattle(`✨ 對手 尿尿小男童 效果：進攻成功，對手召喚了 1 個小旅人！`);
+L25506: logBattle(`✨ 對手 尿尿小男童 效果：在對手 ${target.zone.includes("front") ? "前排" : "後排"}${target.idx + 1} 召喚了小旅人。`);
+L27973: const chosen = await showXLWChoiceModal("選擇變身小旅人的目標", "請選擇一個敵方單位：", choices);
+L27979: logBattle(`✨ 尪仔標 效果：對手【${t.unit.card.name}】變身為【小旅人】！`);
+L27988: logBattle(`✨ 對手 尪仔標 效果：我方【${t.unit.card.name}】變身為【小旅人】！`);

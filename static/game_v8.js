@@ -142,14 +142,15 @@ let selectedMulliganIndexes = new Set();
 window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   let prefix = "";
   if (text.includes("召喚階段") || text.includes("戰術佈陣") || text.includes("進攻宣言")) {
-    prefix = isMyTurn ? "我方" : "對手";
+    prefix = isMyTurn ? "我方" : "對方";
   } else if (text.includes("防守階段")) {
-    prefix = isMyTurn ? "我方" : "對手";
+    prefix = isMyTurn ? "我方" : "對方";
   }
   let displayText = prefix + text;
   
   if (displayText === "我方進攻宣言") displayText = "我方進攻階段";
-  if (displayText === "對手進攻階段") displayText = "對手進攻宣言"; // fallback
+  if (displayText === "對方進攻階段") displayText = "對方進攻宣言"; // fallback
+  if (displayText === "對手進攻階段") displayText = "對方進攻宣言"; // old fallback
   
   let banner = document.getElementById("xlw-phase-banner");
   if (!banner) {
@@ -7074,6 +7075,16 @@ async function performSummonToSlot(zone, idx) {
         }
         if (isMultiplayer) sendFullGameStateToOpponent();
         render();
+      }
+
+      // 毛線怪自我禁錮
+      if (card.name && card.name.includes("毛線怪")) {
+        const u = field[zone][idx];
+        if (u) {
+          u.confined = true;
+          logBattle(✨  效果：將自身禁錮！);
+          render();
+        }
       }
 
       // 進化野人: 智慧野人 (R-EWD-0015) 立即:使你墓地1魔法卡回手牌
@@ -17194,7 +17205,7 @@ async function endPlayerTurnAndRunEnemy() {
   let canDeclare1 = calculateTotalStars(true) >= scoreReq;
   let canDeclare2 = (calculateUnitCount(true) - calculateUnitCount(false)) >= diffReq;
   
-  if (!window.xlwIsShenaOnField() && !window.XLW_callGameDeclared && (canDeclare1 || canDeclare2)) {
+  if (!window.xlwIsShenaOnField() && !window.XLW_callGameDeclared && !countdownActive && (canDeclare1 || canDeclare2)) {
     let choices = [];
     if (canDeclare1) {
       choices.push({ text: `以條件 (1) 宣告提早結束：總分數達到 ${scoreReq} 分以上`, value: "1" });
@@ -18173,7 +18184,7 @@ function renderHand() {
 
             let canPlay = false;
       if (card.type === "magic") {
-        const phases = card.usable_phases || ["Main Phase"];
+        const phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
         if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
         if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
         if (phases.includes("Defense Phase") && phase === "防守階段" && window.XLW_defenseCounterActive) canPlay = true;
@@ -25065,14 +25076,26 @@ function triggerCallGameEnd(winner) {
     document.body.appendChild(panel);
   }
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border-color: #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #110e0d 100%);">
-      <div class="xlw-result-title" style="color: #ffd76a; text-shadow: 0 0 15px rgba(255, 215, 106, 0.5);">${result}</div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 22px; font-weight: bold; margin-bottom: 20px;">${msg} (\u63d0\u65e9\u7d50\u675f Call Game \u6210\u529f)</div>
-      <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff;">
-        \u6211\u65b9 ${playerStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${playerFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${playerBonusScore} \u2605)</small>
-        \u5c0d\u624b ${enemyStars} \u2605 <small style="display: block; font-size: 12px; opacity: 0.85;">(\u5834\u4e0a\u55ae\u4f4d: ${enemyFieldStars} \u2605 | \u984d\u5916\u52a0\u5206: ${enemyBonusScore} \u2605)</small>
+        <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 40px; text-align: center; max-width: 90vw; width: 450px;">
+      <div class="xlw-result-title" style="color: #ffd76a; font-size: 42px; font-weight: 900; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 25px; text-transform: uppercase;"></div>
+      <div class="xlw-result-msg" style="color: #fff; font-size: 26px; font-weight: bold; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;"> <div style="font-size:16px; color:#aaa; margin-top:8px;">(正常結束)</div></div>
+      <div class="xlw-result-score" style="font-size: 18px; line-height: 1.8; color: #fff; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; justify-content: space-around;">
+        <div style="text-align: center;">
+          <div style="font-size: 14px; color: #4ade80;">我方</div>
+          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
+          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
+        </div>
+        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-size: 14px; color: #ff4d4f;">對手</div>
+          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
+          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
+        </div>
       </div>
-      <button onclick="document.getElementById('xlwResultPanel').classList.remove('show')" style="margin-top:20px; background: #cdaa52; color:#fff; border:1px solid #ffe6aa; border-radius:6px; padding: 8px 20px; cursor:pointer;">\u95dc\u9589</button>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
+        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
+      </div>
     </div>
   `;
   panel.classList.add("show");
@@ -25215,14 +25238,26 @@ function executeGameOverCalculations() {
     document.body.appendChild(panel);
   }
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border-color: #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #110e0d 100%);">
-      <div class="xlw-result-title" style="color: #ffd76a; text-shadow: 0 0 15px rgba(255, 215, 106, 0.5);">${result}</div>
-      <div class="xlw-result-msg" style="color: #fff; font-size: 22px; font-weight: bold; margin-bottom: 20px;">${msg} (生死倒數結束)</div>
-      <div class="xlw-result-score" style="font-size: 16px; line-height: 1.6; color: #fff;">
-        我方 ${playerStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${playerFieldStars} ★ | 額外加分: ${playerBonusScore} ★)</small>
-        對手 ${enemyStars} ★ <small style="display: block; font-size: 12px; opacity: 0.85;">(場上單位: ${enemyFieldStars} ★ | 額外加分: ${enemyBonusScore} ★)</small>
+        <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #2a2220 0%, #110e0d 100%); border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 215, 106, 0.1); padding: 40px; text-align: center; max-width: 90vw; width: 450px;">
+      <div class="xlw-result-title" style="color: #ffd76a; font-size: 42px; font-weight: 900; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255, 215, 106, 0.6), 0 0 40px rgba(255, 215, 106, 0.2); margin-bottom: 25px; text-transform: uppercase;"></div>
+      <div class="xlw-result-msg" style="color: #fff; font-size: 26px; font-weight: bold; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;"> <div style="font-size:16px; color:#aaa; margin-top:8px;">(正常結束)</div></div>
+      <div class="xlw-result-score" style="font-size: 18px; line-height: 1.8; color: #fff; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; margin-bottom: 35px; display: flex; justify-content: space-around;">
+        <div style="text-align: center;">
+          <div style="font-size: 14px; color: #4ade80;">我方</div>
+          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
+          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
+        </div>
+        <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-size: 14px; color: #ff4d4f;">對手</div>
+          <div style="font-size: 32px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.3);"> <span style="font-size: 20px;">★</span></div>
+          <small style="display: block; font-size: 12px; opacity: 0.7; margin-top: 5px;">(單位:  | 額外: )</small>
+        </div>
       </div>
-      <button onclick="document.getElementById('xlwResultPanel').classList.remove('show')" style="margin-top:20px; background: #cdaa52; color:#fff; border:1px solid #ffe6aa; border-radius:6px; padding: 8px 20px; cursor:pointer;">關閉</button>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
+        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #cdaa52, #a68132); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;">返回首頁 / 重新開局</button>
+      </div>
     </div>
   `;
   panel.classList.add("show");
@@ -29459,7 +29494,7 @@ function renderEnemyFloatingHand() {
   const prebattleModal = document.getElementById("xlwPreBattleDeckSelectOverlay");
   const prebattleShowing = prebattleModal && prebattleModal.style.display !== "none" && prebattleModal.style.display !== "";
 
-  if (!window.XLW_gameInProgress || coinShowing || welcomeShowing || prebattleShowing) {
+  if (!window.XLW_gameInProgress || isGameOverFlag || coinShowing || welcomeShowing || prebattleShowing) {
     container.style.setProperty("display", "none", "important");
     return;
   }

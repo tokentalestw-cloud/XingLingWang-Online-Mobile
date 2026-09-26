@@ -1,0 +1,201 @@
+
+======================================
+[NMG-0004] 塗毒
+TEXT: 使場上1單位被賦予 劇毒
+
+======================================
+[NMG-0006] 以小博大
+TEXT: 若敵方進攻單位攻擊力大於等於你的防守單位3點,使該單位被破壞
+  [L3698] } else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
+  [L3700] setStatus("【以小博大】只能在防守反制階段發動！");
+  [L4194] else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
+  [L4204] logBattle(`✨ 以小博大 效果：破壞對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】！`);
+
+======================================
+[NMG-0011] 招魂
+TEXT: 使你墓地1單位回手牌
+  [L3752] } else if (card.id === "NMG-0011" || card.id === "R-NMG-0011" || card.id === "SSSR-NMG-0011" || card.name?.includes("希翁") || card.name?.includes("招魂")) {
+  [L4825] } else if (card.id === "NMG-0011" || card.id === "R-NMG-0011" || card.id === "SSSR-NMG-0011" || card.name?.includes("希翁") || card.name?.includes("招魂")) {
+
+======================================
+[NMG-0012-2] 山羊術
+TEXT: 使場上1單位變為此卡
+(此卡在場時視為單位)
+  [L3469] } else if (card.name.includes("山羊術")) {
+  [L3471] setStatus("敵方場上有【山羊勇者魔羯座】，我方被限制無法施展山羊術！");
+  [L4385] // 2. 山羊術：使場上1單位變為山羊
+  [L4386] else if (card.name.includes("山羊術")) {
+  [L4388] setStatus("敵方場上有【山羊勇者魔羯座】，我方被限制無法施展山羊術！");
+  [L4398] setStatus("【山羊術】請點選場上一個單位將其變為山羊！");
+  [L9118] if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
+  [L9123] if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
+  [L9134] const chosenIdxVal = await showXLWChoiceModal("馴羊使者 牡羊座 效果", "選擇一張 山羊術 加入手牌：", choices);
+  [L9158] logBattle("馴羊使者 牡羊座 效果：我方牌庫與墓地中無任何山羊術卡牌。");
+  [L13472] if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
+  [L13477] if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
+  [L13497] logBattle("對手 馴羊使者 牡羊座 效果：對手牌庫與墓地中無任何山羊術卡牌。");
+  [L14444] if (unit.card.name.includes("山羊術")) {
+  [L16292] // (3) 山羊術：若玩家單位極強（攻擊力 >= 4），將其變為 3 攻 1 星的中立山羊
+  [L16293] const goatIdx = hand.findIndex(c => c && (c.id === "SSR-NMG-0012" || c.name?.includes("山羊術")));
+  [L16301] logBattle(`✨ 對手 AI 從手牌發動了【山羊術】！將我方進攻單位 ${attacker.card.name} 變為山羊！`);
+  [L16315] const goatSpellCard = allCards.find(c => c && c.name?.includes("山羊術")) || { name: "山羊術", id: "SSR-NMG-0012", type: "magic", effect_text: "山羊術" };
+  [L17754] if (c && c.name && c.name.includes("山羊術")) {
+  [L18798] const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
+  [L18799] logBattle(`山羊術 效果：將場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+  [L18829] // 以我方山羊術卡片取代原單位，維持直立/橫置狀態 (不變更 obj.tapped)
+  [L22380] logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
+
+======================================
+[NMG-0013] 盾牌人偶
+TEXT: 使敵方1進攻單位進攻無效並橫放
+  [L3710] } else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
+  [L3712] setStatus("【盾牌人偶】只能在防守反制階段發動！");
+  [L4210] else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
+  [L4214] logBattle(`✨ 盾牌人偶 效果：使對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】進攻無效化並橫置！`);
+
+======================================
+[NMS-0017-2] 觀光阿姨
+TEXT: 你的結束階段時
+召喚1個小旅人
+  [L14956] let playerGraveFans = graveyard.filter(c => c && (c.id === "R-NMS-0017" || c.name?.includes("瘋狂粉絲") || c.id === "NEU-0017" || c.id === "SSSR-NEU-0017"));
+  [L14993] let enemyGraveFans = window.XLW_ENEMY.grave.filter(c => c && (c.id === "R-NMS-0017" || c.name?.includes("瘋狂粉絲") || c.id === "NEU-0017" || c.id === "SSSR-NEU-0017"));
+  [L15519] // 1. 觀光阿姨 (NEU-0004 / R-NEU-0004)
+  [L15522] if (u && u.card && (u.card.id === "NEU-0004" || u.card.name?.includes("觀光阿姨"))) {
+  [L15542] setStatus("【觀光阿姨】請點選我方場上一個空格以召喚小旅人！");
+  [L15554] logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+  [L15561] logBattle("觀光阿姨 效果：我方場地已滿，無法召喚。");
+  [L15584] logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+
+======================================
+[R-NMG-0023-2] 法力回收壺
+TEXT: 使你墓地1魔法卡回手牌
+  [L3491] } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+  [L4432] } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+  [L4442] logBattle(`✨ 對手發動【法力回收壺】效果：將墓地魔法卡【${recycled.name}】回收至對手手牌！`);
+  [L4445] logBattle("✨ 對手發動【法力回收壺】：其墓地無魔法卡可回收。");
+  [L4454] const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices);
+  [L4460] logBattle(`✨ 法力回收壺 效果：將墓地魔法卡 ${chosenSpell.name} 回收至手牌！`);
+
+======================================
+[R-SPT-0008] 旅店常客
+TEXT: 你的主要階段開始實，召喚1個小旅人
+  [L27862] // 特殊旅人預組 - R-SPT-0008 旅店常客 (主要階段開始，召喚 1 個小旅人)
+  [L27866] if (u && u.card && (u.card.id === "R-SPT-0008" || u.card.name?.includes("旅店常客")) && !window.isUnitSilenced(u, z, i)) {
+  [L27867] logBattle(`✨ ${isPlayerSide ? "我方" : "對手"} 旅店常客 效果觸發：主要階段開始，召喚 1 個小旅人！`);
+  [L27868] await promptAndSummonTraveler(isPlayerSide ? "player" : "enemy", 1, "旅店常客");
+
+======================================
+[R-SPT-0014] 魔法旅人
+TEXT: 使你場上所有的小旅人不會被敵方魔法卡選為目標
+  [L12041] // 特殊旅人預組 - R-SPT-0014 魔法旅人 (小旅人獲得魔法抗性)
+  [L12044] const hasMagicTraveler = field[side + "front"].concat(field[side + "back"]).some(u => u && u.card && (u.card.id === "R-SPT-0014" || u.card.name?.includes("魔法旅人")) && !window.isUnitSilenced(u, side, field[side+"front"].includes(u)?field[side+"front"].indexOf(u):field[side+"back"].indexOf(u)));
+
+======================================
+[SPT-0001] 金白蘭旅人
+TEXT: 使你場上與此卡同排的所有小旅人+1攻擊立及+1星星
+  [L2521] // 檢查 SPT-0001 (金白蘭旅人) 與 SPT-0016 (派對旅人) 的 Buff 效果
+  [L2523] // SPT-0001 金白蘭旅人: 同排小旅人 +1
+  [L2525] const hasGolden = field[zone].some((u, i) => u && i !== lane && (u.card.id === "SPT-0001" || u.card.name?.includes("金白蘭旅人")) && !window.isUnitSilenced(u, zone, i));
+  [L2921] // 檢查 SPT-0001 (金白蘭旅人) 與 SPT-0016 (派對旅人) 的 Buff 效果
+  [L2923] // SPT-0001 金白蘭旅人: 同排小旅人 +1
+  [L2925] const hasGolden = field[zone].some((u, i) => u && i !== lane && (u.card.id === "SPT-0001" || u.card.name?.includes("金白蘭旅人")) && !window.isUnitSilenced(u, zone, i));
+
+======================================
+[SPT-0004] 機械旅人
+TEXT: 立即:召喚一個小旅人
+  [L7847] // 特殊旅人預組 - SPT-0004 機械旅人 (進場召喚1小旅人)
+  [L7848] if (card.id === "SPT-0004" || card.name?.includes("機械旅人")) {
+  [L7850] logBattle(`✨ ${isPlayer ? "我方" : "對手"} 機械旅人 效果觸發：進場時召喚 1 個小旅人！`);
+  [L7851] await promptAndSummonTraveler(isPlayer ? "player" : "enemy", 1, "機械旅人");
+  [L7871] // 特殊旅人預組 - SPT-0012 多頭機械旅人 (合體時召喚 2 個小旅人)
+  [L7872] if (card.id === "SPT-0012" || card.name?.includes("多頭機械旅人")) {
+  [L7887] const chosen = await showXLWChoiceModal("多頭機械旅人 合體效果", "請選擇我方一個旅人單位進行合體：", choices);
+  [L7890] logBattle(`✨ 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+  [L7892] target.u.equipments.push("多頭機械旅人 (合體)");
+  [L7895] await promptAndSummonTraveler("player", 2, "多頭機械旅人");
+  [L7900] logBattle(`✨ 對手 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+  [L7902] target.u.equipments.push("多頭機械旅人 (合體)");
+  [L7905] await promptAndSummonTraveler("enemy", 2, "多頭機械旅人");
+
+======================================
+[SPT-0006] 惡魔旅人
+TEXT: 你的主要階段，可破壞你場上2個單位，使你墓地1單位被召喚(一回合限一次)
+  [L19540] // 特殊旅人預組 - SPT-0006 惡魔旅人
+  [L19541] if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
+  [L19543] setStatus("【惡魔旅人】已橫置，無法發動效果！");
+  [L19547] setStatus("【惡魔旅人】在剛召喚的回合無法發動效果，下一回合才能使用！");
+  [L19559] setStatus("【惡魔旅人】我方場上其他單位不足 2 個，無法發動效果！");
+  [L19564] setStatus("【惡魔旅人】墓地沒有單位可供特殊召喚！");
+  [L19570] const confirmUse = await showXLWConfirm("惡魔旅人 效果", "是否發動【惡魔旅人】效果：橫置此單位，破壞我方 2 個其他單位，並從墓地特殊召喚 1 個單位？");
+  [L19588] let chosenGrave = await showXLWChoiceModal("惡魔旅人 效果：從墓地特召", "請選擇要復活的單位：", graveChoices);
+  [L19604] logBattle(`✨ 惡魔旅人 效果發動：橫置自身，破壞了 2 個單位，並從墓地特召了【${revivedCard.name}】！`);
+
+======================================
+[SPT-0009] 胖旅人
+TEXT: 此卡被破壞時，召喚2個小旅人
+  [L14045] // 特殊旅人預組 - SPT-0009 胖旅人 (被破壞時召喚 2 個小旅人)
+  [L14046] if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖旅人"))) {
+  [L14048] logBattle(`✨ ${isPlayer ? "我方" : "對手"} 胖旅人 被破壞效果觸發：召喚 2 個小旅人！`);
+  [L14050] await promptAndSummonTraveler(isPlayer ? "player" : "enemy", 2, "胖旅人");
+
+======================================
+[SPT-0012] 多頭機械旅人
+TEXT: 機械合體。此卡合體時召喚2個小旅人
+  [L7871] // 特殊旅人預組 - SPT-0012 多頭機械旅人 (合體時召喚 2 個小旅人)
+  [L7872] if (card.id === "SPT-0012" || card.name?.includes("多頭機械旅人")) {
+  [L7887] const chosen = await showXLWChoiceModal("多頭機械旅人 合體效果", "請選擇我方一個旅人單位進行合體：", choices);
+  [L7890] logBattle(`✨ 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+  [L7892] target.u.equipments.push("多頭機械旅人 (合體)");
+  [L7895] await promptAndSummonTraveler("player", 2, "多頭機械旅人");
+  [L7900] logBattle(`✨ 對手 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
+  [L7902] target.u.equipments.push("多頭機械旅人 (合體)");
+  [L7905] await promptAndSummonTraveler("enemy", 2, "多頭機械旅人");
+
+======================================
+[SPT-0013] 黃金旅人
+TEXT: 此卡的祭品必須為小旅人
+  [L5508] // 特殊旅人預組 - SPT-0013 黃金旅人
+  [L5509] const isGoldenTraveler = card && (card.id === "SPT-0013" || card.name?.includes("黃金旅人"));
+  [L5511] setStatus("【獻祭失敗】黃金旅人的祭品必須為小旅人！");
+
+======================================
+[SPT-0015] 討拍旅人
+TEXT: 立即:使此卡前方所有敵方小旅人被破壞
+  [L7854] // 特殊旅人預組 - SPT-0015 討拍旅人 (進場破壞正前方所有敵方小旅人)
+  [L7855] if (card.id === "SPT-0015" || card.name?.includes("討拍旅人")) {
+  [L7863] logBattle(`✨ ${isPlayer ? "我方" : "對手"} 討拍旅人 效果觸發：破壞正前方的敵方小旅人【${oppUnit.card.name}】！`);
+
+======================================
+[SPT-0016] 派對旅人
+TEXT: 此卡左右邊的小旅人攻擊力及星星皆+1
+  [L2521] // 檢查 SPT-0001 (金白蘭旅人) 與 SPT-0016 (派對旅人) 的 Buff 效果
+  [L2531] // SPT-0016 派對旅人: 左右邊的小旅人 +1
+  [L2536] if (uLeft && (uLeft.card.id === "SPT-0016" || uLeft.card.name?.includes("派對旅人")) && !window.isUnitSilenced(uLeft, zone, lane - 1)) {
+  [L2542] if (uRight && (uRight.card.id === "SPT-0016" || uRight.card.name?.includes("派對旅人")) && !window.isUnitSilenced(uRight, zone, lane + 1)) {
+  [L2921] // 檢查 SPT-0001 (金白蘭旅人) 與 SPT-0016 (派對旅人) 的 Buff 效果
+  [L2931] // SPT-0016 派對旅人: 左右邊的小旅人 +1
+  [L2936] if (uLeft && (uLeft.card.id === "SPT-0016" || uLeft.card.name?.includes("派對旅人")) && !window.isUnitSilenced(uLeft, zone, lane - 1)) {
+  [L2942] if (uRight && (uRight.card.id === "SPT-0016" || uRight.card.name?.includes("派對旅人")) && !window.isUnitSilenced(uRight, zone, lane + 1)) {
+
+======================================
+[SPT-0017] 大大術
+TEXT: 使你場上1小旅人被賦予+4攻擊力
+  [L3245] } else if (card.id === "SPT-0017" || card.name?.includes("大大術")) {
+  [L3255] setStatus("【大大術】我方場上沒有小旅人單位可供強化！");
+  [L3261] const chosenIdx = await showXLWChoiceModal("大大術 效果發動", "請選擇我方一個小旅人賦予 +4 攻擊力：", choices);
+  [L3273] logBattle(`✨ 大大術 效果：我方 ${targetItem.name} 獲得 +4 攻擊力！`);
+
+======================================
+[SPT-0018] 觀光樂園
+TEXT: 你的結束階段結束後，召喚3個小旅人
+  [L28193] // 特殊旅人預組 - SPT-0018 觀光樂園 (結束階段結束後召喚 3 個小旅人)
+  [L28198] if (u && u.card && (u.card.id === "SPT-0018" || u.card.name?.includes("觀光樂園")) && !window.isUnitSilenced(u, z, i)) {
+  [L28199] logBattle(`✨ ${isPlayerSide ? "我方" : "對手"} 觀光樂園 效果觸發：結束階段結束後召喚 3 個小旅人！`);
+  [L28200] await promptAndSummonTraveler(isPlayerSide ? "player" : "enemy", 3, "觀光樂園");
+
+======================================
+[SR-SPT-0029] 樹葉旅人
+TEXT: 一回合限一次，你召喚小旅人時，召喚1個小旅人
+  [L27802] // 檢查 SR-SPT-0029 (樹葉旅人) 效果：召喚小旅人時追加召喚 1 個
+  [L27809] if (u && u.card && (u.card.id === "SR-SPT-0029" || u.card.name?.includes("樹葉旅人")) && !window.isUnitSilenced(u, z, field[z].indexOf(u))) {
+  [L27817] logBattle(`✨ ${isPlayer ? "我方" : "對手"} 樹葉旅人 效果發動：追加召喚 1 個小旅人！`);

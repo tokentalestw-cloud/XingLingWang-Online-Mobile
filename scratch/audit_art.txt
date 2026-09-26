@@ -1,0 +1,174 @@
+
+======================================
+[R-ART-0006] 刁鑽的藝術品收藏家
+TEXT: 立即:查看牌庫頂2張牌，使其中任意藝術品牌展示並加入手牌，其餘以任意順序放回牌庫頂
+  [L8330] else if (card.id === "R-ART-0006" || card.id === "R-ART-0006-2" || card.name?.includes("刁鑽的藝術收藏家") || card.name?.includes("刁鑽的藝術品收藏家")) {
+  [L8493] else if (card.id === "R-ART-0006" || card.id === "R-ART-0006-2" || card.name?.includes("刁鑽的藝術收藏家") || card.name?.includes("刁鑽的藝術品收藏家")) {
+  [L13090] else if (card.id === "R-ART-0006" || card.id === "R-ART-0006-2" || card.name?.includes("刁鑽的藝術收藏家") || card.name?.includes("刁鑽的藝術品收藏家")) {
+
+======================================
+[ART-0007] 兩位陌生人
+TEXT: 立即:使場上1單位橫放
+  [L2278] const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽"];
+  [L8263] else if (card.id === "ART-0007" || card.name?.includes("兩位陌生人")) {
+  [L8270] setStatus("【兩位陌生人】請點選場上任一個單位將其橫置！");
+  [L8275] logBattle("兩位陌生人 效果：場上無單位，效果無效。");
+  [L13024] else if (card.name?.includes("兩位陌生人") || card.id === "ART-0007") {
+  [L13041] logBattle(`✨ 兩位陌生人 效果：對手使我方 ${field[target.zone][target.idx].card.name} 橫放！`);
+  [L18382] logBattle(`✨ 兩位陌生人 效果：使場上 ${obj.card.name} 橫置！`);
+  [L23476] logBattle(`✨ 兩位陌生人 效果：對手將我方 ${field[zone][idx].card.name} 橫置！`);
+
+======================================
+[ART-0008] 珍珠少女
+TEXT: 橫放時，此卡可作為藝術品單位的兩個祭品
+  [L12639] const isTappedPearl = (card.id === "ART-0008" || card.name?.includes("珍珠少女")) && unit.tapped;
+
+======================================
+[SSR-ART-0001] 萌娜麗莎的大笑
+TEXT: 此卡不會被敵方魔法卡選為目標且若處於橫放，將不會被破壞
+  [L12015] // 萌娜麗莎的大笑 (R-ART-0001) 橫置時不會被破壞
+
+======================================
+[SSR-ART-0009] 梵老爹
+TEXT: 敵方魔法抗性
+破壞抗性
+  [L12018] // 梵老爹 (ART-0009) 破壞抗性
+  [L12019] if (c.id === "ART-0009" || c.name?.includes("梵老爹")) return true;
+  [L12101] c.id === "ART-0009" || c.name?.includes("梵老爹") ||
+
+======================================
+[SSR-ART-0010] 向日葵小妹
+TEXT: 立即:使敵方場地卡被破壞
+  [L8307] else if (card.id === "R-ART-0010" || card.name?.includes("向日葵小妹")) {
+  [L8313] logBattle("向日葵小妹 效果：因對手場上有【貞美子】，對手【恐怖的井】獲得免疫保護，破壞無效！");
+  [L8315] logBattle("向日葵小妹 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+  [L8319] logBattle(`✨ 向日葵小妹 效果：破壞了敵方的場地卡【${fCard.name}】！`);
+  [L8327] logBattle("向日葵小妹 效果：敵方場上沒有場地卡，效果無效。");
+  [L13081] else if (card.name?.includes("向日葵小妹") || card.id === "R-ART-0010") {
+  [L13087] logBattle(`✨ 向日葵小妹 效果：對手破壞了我方的場地卡【${fCard.name}】！`);
+  [L23485] logBattle(`✨ 向日葵小妹 效果：我方場地卡【${fCard.name}】被對手破壞！`);
+
+======================================
+[R-ART-0011] 拿波崙
+TEXT: 此卡前方所有敵方單位-2攻擊力
+  [L2883] // 拿波崙 (R-ART-0011) 同列敵方單位減攻效果
+  [L2891] if (oc && (oc.id === "R-ART-0011" || oc.name?.includes("拿波崙"))) {
+
+======================================
+[ART-0013] 創世男孩
+TEXT: 「創世老人」在此卡右邊時，使此卡+3⭐且被賦予不會被敵方魔法卡選為目標
+  [L2717] // 2. 創世老人 (ART-0014) 連動：創世男孩在左邊時 +4 攻擊力
+  [L2721] if (leftCard && leftCard.id === "ART-0013") {
+  [L3040] // 創世男孩 (ART-0013) 連動：創世老人在右邊時 +3⭐
+  [L3041] if (c.id === "ART-0013" && lane < 4) {
+
+======================================
+[ART-0014] 創世老人
+TEXT: 「創世男孩」在此卡左邊時，使此卡+4攻擊力且被賦予不會被敵方魔法卡選為目標
+  [L2717] // 2. 創世老人 (ART-0014) 連動：創世男孩在左邊時 +4 攻擊力
+  [L2718] if (c.id === "ART-0014" && lane > 0) {
+  [L3040] // 創世男孩 (ART-0013) 連動：創世老人在右邊時 +3⭐
+  [L3044] if (rightCard && rightCard.id === "ART-0014") {
+
+======================================
+[ART-0016] 摩艾石巨像
+TEXT: 此卡不會被敵方魔法卡選為目標且戰鬥成功時，使場上1單位橫放
+  [L12103] c.id === "ART-0016" || c.name?.includes("摩艾石巨像") ||
+
+======================================
+[ART-0019] 博物館
+TEXT: 戰鬥時,使你場上的藝術品防守單位+1攻擊力
+  [L2902] // 博物館 (ART-0019) 防守加成效果
+  [L2909] const isMuseum = fieldCard.id === "ART-0019" || fieldCard.name?.includes("博物館");
+  [L6942] // 博物館館長 迪斯麥 (SR-ART-0039) 主要階段限一次，打出/召喚非人型藝術品時可將館長橫置
+  [L6947] if (u && (u.card?.id === "SR-ART-0039" || u.card?.name?.includes("博物館館長")) && !u.tapped && u.directorEffectUsedTurn !== turn) {
+  [L6953] const confirmTap = await showXLWConfirm("博物館館長 迪斯麥 效果", `我方召喚了非人型藝術品，是否發動【博物館館長 迪斯麥】效果將其橫放？`);
+  [L6957] logBattle("✨ 博物館館長 迪斯麥 效果：橫置自身！");
+  [L10602] // 戰鬥階段結束時，若對手有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L10645] // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L10795] // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L12293] if (u && (u.card?.id === "R-ART-0031" || u.card?.name?.includes("博物館保全"))) {
+  [L12359] // 2. 博物館接待員 (R-ART-0041)
+  [L12371] // 博物館接待員特殊召喚小旅人效果（支援玩家自選位置，前排優先）
+  [L12373] const receptionistCount = countUnitOnField(side, "R-ART-0041", "博物館接待員");
+  [L12392] setStatus("【博物館接待員】請選擇我方一個空格特殊召喚小旅人！");
+  [L12405] logBattle(`✨ 【博物館接待員】效果：在我方 ${placement.zone.includes("front") ? "前排" : "後排"}${placement.idx + 1} 特殊召喚一個小旅人！`);
+  [L12432] logBattle(`✨ 對手的【博物館接待員】效果：在 ${selectedSlot.zone.includes("front") ? "前排" : "後排"}${selectedSlot.idx + 1} 特殊召喚一個小旅人！`);
+  [L19625] const isTicketCollector = obj.card?.id === "R-ART-0050" || obj.card?.name?.includes("博物館剪票員");
+  [L19628] setStatus("【博物館剪票員】在被召喚或已執行行動的回合無法發動效果，必須等到下一回合主要階段開始時！");
+  [L19638] setStatus("博物館剪票員 的效果本回合已使用過。");
+  [L19654] "博物館剪票員 效果發動",
+  [L19655] `是否橫置【博物館剪票員】並召喚 ${nonHumanoidArtCount} 個小旅人？（X=場上非人型藝術品數：${nonHumanoidArtCount}）`
+  [L19661] logBattle(`✨ 博物館剪票員 效果：橫置自身並召喚 ${nonHumanoidArtCount} 個小旅人！`);
+
+======================================
+[SR-ART-0021] 拾穗者
+TEXT: 立即:使你墓地1張無須祭品的藝術品單位被召喚
+  [L8396] else if (card.id === "SR-ART-0021" || card.id === "SR-ART-0021-2" || card.name?.includes("拾穗者")) {
+  [L8401] const chosenIdx = await showXLWChoiceModal("拾穗者 效果：特殊召喚墓地的一個免費藝術品單位", "請選擇要特殊召喚的單位：", choices);
+  [L8427] logBattle(`✨ 拾穗者 效果：特殊召喚了墓地中的【${chosenCard.name}】！`);
+  [L8438] logBattle("拾穗者 效果：我方墓地無無須祭品的藝術品單位。");
+  [L8519] else if (card.id === "SR-ART-0021" || card.id === "SR-ART-0021-2" || card.name?.includes("拾穗者")) {
+  [L8543] logBattle(`✨ 對手 拾穗者 效果：特殊召喚了墓地中的【${chosenCard.name}】！`);
+  [L13116] else if (card.id === "SR-ART-0021" || card.id === "SR-ART-0021-2" || card.name?.includes("拾穗者")) {
+  [L13140] logBattle(`✨ 對手 拾穗者 效果：特殊召喚了墓地中的【${chosenCard.name}】！`);
+
+======================================
+[R-ART-0041] 博物館接待員
+TEXT: 一回合限一次，你場上的藝術品單位被橫放時，你召喚1個小旅人
+  [L10602] // 戰鬥階段結束時，若對手有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L10645] // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L10795] // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
+  [L12359] // 2. 博物館接待員 (R-ART-0041)
+  [L12371] // 博物館接待員特殊召喚小旅人效果（支援玩家自選位置，前排優先）
+  [L12373] const receptionistCount = countUnitOnField(side, "R-ART-0041", "博物館接待員");
+  [L12392] setStatus("【博物館接待員】請選擇我方一個空格特殊召喚小旅人！");
+  [L12405] logBattle(`✨ 【博物館接待員】效果：在我方 ${placement.zone.includes("front") ? "前排" : "後排"}${placement.idx + 1} 特殊召喚一個小旅人！`);
+  [L12432] logBattle(`✨ 對手的【博物館接待員】效果：在 ${selectedSlot.zone.includes("front") ? "前排" : "後排"}${selectedSlot.idx + 1} 特殊召喚一個小旅人！`);
+
+======================================
+[SR-ART-0051] 翡翠白菜
+TEXT: 你場上的每個人型藝術品單位使你手牌的此卡所需祭品數-3
+  [L12589] // 翡翠白菜 (SR-ART-0051) 祭品折抵
+  [L12590] if (card.id === "SR-ART-0051" || card.name?.includes("翡翠白菜")) {
+
+======================================
+[R-ART-0031] 博物館保全
+TEXT: 你的 藝術品 單位可打出或召喚在後排戰線
+  [L12293] if (u && (u.card?.id === "R-ART-0031" || u.card?.name?.includes("博物館保全"))) {
+
+======================================
+[R-ART-0050] 博物館剪票員
+TEXT: 你的主要階段開始時限一次，可使此單位被橫放，若成功則你召喚X個小旅人。X=你場上非人型藝術品數量單位
+  [L19625] const isTicketCollector = obj.card?.id === "R-ART-0050" || obj.card?.name?.includes("博物館剪票員");
+  [L19628] setStatus("【博物館剪票員】在被召喚或已執行行動的回合無法發動效果，必須等到下一回合主要階段開始時！");
+  [L19638] setStatus("博物館剪票員 的效果本回合已使用過。");
+  [L19654] "博物館剪票員 效果發動",
+  [L19655] `是否橫置【博物館剪票員】並召喚 ${nonHumanoidArtCount} 個小旅人？（X=場上非人型藝術品數：${nonHumanoidArtCount}）`
+  [L19661] logBattle(`✨ 博物館剪票員 效果：橫置自身並召喚 ${nonHumanoidArtCount} 個小旅人！`);
+
+======================================
+[SSR-ART-0058] 蜘蛛魔盜團 駭客
+TEXT: 此卡可打出或召喚至後排戰線。使你場上所有強盜單位被賦予敵方魔髮抗性及敵方效果抗性
+  [L1512] if (card && (card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+  [L1525] if (card && (card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+  [L12256] if (u && u.card && (u.card.id === "R-ART-0058" || u.card.id === "SSR-ART-0058" || u.card.name?.includes("駭客")) && !window.isUnitSilenced(u, testZone, i)) {
+
+======================================
+[R-ART-0058] 蜘蛛魔盜團 駭客
+TEXT: 此卡可打出或召喚至後排戰線。使你場上所有強盜單位被賦予敵方魔髮抗性及敵方效果抗性
+  [L1512] if (card && (card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+  [L1525] if (card && (card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+  [L12256] if (u && u.card && (u.card.id === "R-ART-0058" || u.card.id === "SSR-ART-0058" || u.card.name?.includes("駭客")) && !window.isUnitSilenced(u, testZone, i)) {
+
+======================================
+[R-ART-0057] 蜘蛛魔盜團 扒手
+TEXT: 你的主要階段限一次，可使你場上1個非人型藝術品單位被綁架，若該單位為橫放，則獎勵+2
+  [L20236] // 6. 扒手 (R-ART-0057)
+  [L20237] const isPashou = obj.card?.id === "R-ART-0057" || obj.card?.name?.includes("扒手");
+
+======================================
+[R-ART-0040] 詛咒斷臂雕像
+TEXT: 使此單位前後方的第一個單位被賦予衰退
+  [L12457] if (c && (c.keywords?.includes("衰退") || c.effect_text?.includes("衰退") || c.name?.includes("詛咒斷臂雕像") || c.id === "R-ART-0040")) hasDecayStatus = true;
+  [L12493] return c && (c.id === "R-ART-0040" || c.name?.includes("詛咒斷臂雕像"));

@@ -1,0 +1,255 @@
+
+======================================
+[ART-0002] 大鵰像
+TEXT: 阻擋。此卡左右邊的單位+2攻擊力
+  [L2701] // 1. 大鵰像 (ART-0002) 相鄰強化：左右邊的單位 +2 攻擊力
+  [L2705] if (leftCard && leftCard.id === "ART-0002") {
+  [L2712] if (rightCard && rightCard.id === "ART-0002") {
+
+======================================
+[R-ART-0010] 向日葵小妹
+TEXT: 立即:使敵方場地卡被破壞
+  [L8307] else if (card.id === "R-ART-0010" || card.name?.includes("向日葵小妹")) {
+  [L8313] logBattle("向日葵小妹 效果：因對手場上有【貞美子】，對手【恐怖的井】獲得免疫保護，破壞無效！");
+  [L8315] logBattle("向日葵小妹 效果：因【力場保護】效果，敵方場地牌免疫破壞！");
+  [L8319] logBattle(`✨ 向日葵小妹 效果：破壞了敵方的場地卡【${fCard.name}】！`);
+  [L8327] logBattle("向日葵小妹 效果：敵方場上沒有場地卡，效果無效。");
+  [L13081] else if (card.name?.includes("向日葵小妹") || card.id === "R-ART-0010") {
+  [L13087] logBattle(`✨ 向日葵小妹 效果：對手破壞了我方的場地卡【${fCard.name}】！`);
+  [L23485] logBattle(`✨ 向日葵小妹 效果：我方場地卡【${fCard.name}】被對手破壞！`);
+
+======================================
+[R-ART-0003] 沉思的男人
+TEXT: 阻擋。此卡可打出或召喚至敵方場上,此單位不得被獻祭或移動
+  [L1474] if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思的男人")) return true;
+  [L5485] if (c.id === "R-ART-0035" || c.name?.includes("香蕉侯") || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思的男人")) {
+
+======================================
+[ART-0015] 番茄之子
+TEXT: 此卡不會被敵方魔法卡選為目標且若處於橫放，將不會被破壞
+  [L12021] // 番茄之子 (ART-0015) 橫放時不會被破壞
+  [L12022] if ((c.id === "ART-0015" || c.name?.includes("番茄之子")) && unit.tapped) return true;
+  [L12102] c.id === "ART-0015" || c.name?.includes("番茄之子") ||
+
+======================================
+[R-ART-0012] 頸部痠痛的女人
+TEXT: 敵方魔法抗性，若此單位處於橫放，則被賦予破壞抗性
+  [L12024] // 頸部痠痛的女人 (R-ART-0012) 橫放時被賦予破壞抗性
+  [L12025] if ((c.id === "R-ART-0012" || c.name?.includes("頸部痠痛的女人")) && unit.tapped) return true;
+  [L12106] c.id === "R-ART-0012" || c.name?.includes("頸部痠痛的女人") ||
+  [L12209] c.id === "R-ART-0012" || c.id === "SSR-ART-0012" || c.name?.includes("頸部痠痛的女人") ||
+
+======================================
+[ART-0017] 尿尿小男童
+TEXT: 遠程攻擊。進攻時戰鬥成功召喚1個小旅人
+  [L25446] // 尿尿小男童 (ART-0017) 戰鬥成功召喚旅人效果
+  [L25447] if ((cid === "ART-0017" || name?.includes("尿尿小男童")) && isAttacker) {
+  [L25449] logBattle(`✨ 尿尿小男童 效果：進攻成功，準備召喚 1 個小旅人！`);
+  [L25458] setStatus("【尿尿小男童 效果】請點選我方一個空格以特殊召喚小旅人！");
+  [L25475] logBattle(`✨ 尿尿小男童 效果：在我方 ${target.zone.includes("front") ? "前排" : "後排"}${target.idx + 1} 召喚了小旅人。`);
+  [L25486] logBattle("尿尿小男童 效果：我方場上已滿，無法召喚小旅人。");
+  [L25489] logBattle(`✨ 對手 尿尿小男童 效果：進攻成功，對手召喚了 1 個小旅人！`);
+  [L25506] logBattle(`✨ 對手 尿尿小男童 效果：在對手 ${target.zone.includes("front") ? "前排" : "後排"}${target.idx + 1} 召喚了小旅人。`);
+
+======================================
+[ART-001] 萌娜麗莎的大笑
+TEXT: 此卡不會被敵方魔法卡選為目標且若處於橫放，將不會被破壞
+  [L2717] // 2. 創世老人 (ART-0014) 連動：創世男孩在左邊時 +4 攻擊力
+  [L2718] if (c.id === "ART-0014" && lane > 0) {
+  [L2721] if (leftCard && leftCard.id === "ART-0013") {
+  [L2883] // 拿波崙 (R-ART-0011) 同列敵方單位減攻效果
+  [L2891] if (oc && (oc.id === "R-ART-0011" || oc.name?.includes("拿波崙"))) {
+  [L2902] // 博物館 (ART-0019) 防守加成效果
+  [L2909] const isMuseum = fieldCard.id === "ART-0019" || fieldCard.name?.includes("博物館");
+  [L3040] // 創世男孩 (ART-0013) 連動：創世老人在右邊時 +3⭐
+  [L3041] if (c.id === "ART-0013" && lane < 4) {
+  [L3044] if (rightCard && rightCard.id === "ART-0014") {
+  [L4028] else if (card.name.includes("畫框") || card.id === "ART-0018") {
+  [L8307] else if (card.id === "R-ART-0010" || card.name?.includes("向日葵小妹")) {
+  [L12015] // 萌娜麗莎的大笑 (R-ART-0001) 橫置時不會被破壞
+  [L12021] // 番茄之子 (ART-0015) 橫放時不會被破壞
+  [L12022] if ((c.id === "ART-0015" || c.name?.includes("番茄之子")) && unit.tapped) return true;
+  [L12024] // 頸部痠痛的女人 (R-ART-0012) 橫放時被賦予破壞抗性
+  [L12025] if ((c.id === "R-ART-0012" || c.name?.includes("頸部痠痛的女人")) && unit.tapped) return true;
+  [L12102] c.id === "ART-0015" || c.name?.includes("番茄之子") ||
+  [L12103] c.id === "ART-0016" || c.name?.includes("摩艾石巨像") ||
+  [L12106] c.id === "R-ART-0012" || c.name?.includes("頸部痠痛的女人") ||
+  [L12209] c.id === "R-ART-0012" || c.id === "SSR-ART-0012" || c.name?.includes("頸部痠痛的女人") ||
+  [L13081] else if (card.name?.includes("向日葵小妹") || card.id === "R-ART-0010") {
+  [L25446] // 尿尿小男童 (ART-0017) 戰鬥成功召喚旅人效果
+  [L25447] if ((cid === "ART-0017" || name?.includes("尿尿小男童")) && isAttacker) {
+
+======================================
+[ART-0009] 梵老爹
+TEXT: 敵方魔法抗性
+破壞抗性
+  [L12018] // 梵老爹 (ART-0009) 破壞抗性
+  [L12019] if (c.id === "ART-0009" || c.name?.includes("梵老爹")) return true;
+  [L12101] c.id === "ART-0009" || c.name?.includes("梵老爹") ||
+
+======================================
+[R-ART-0011] 拿波崙
+TEXT: 此卡前方所有敵方單位-2攻擊力
+  [L2883] // 拿波崙 (R-ART-0011) 同列敵方單位減攻效果
+  [L2891] if (oc && (oc.id === "R-ART-0011" || oc.name?.includes("拿波崙"))) {
+
+======================================
+[SR-ART-0025] 牆壁上的香蕉
+TEXT: 此卡左右邊的單位不會被破壞及被進攻；此卡被破壞時獎勵+3
+  [L3110] if (leftUnit && (leftUnit.card?.id === "SR-ART-0025" || leftUnit.card?.id === "SSR-ART-0025" || leftUnit.card?.name?.includes("牆壁上的香蕉"))) {
+  [L3117] if (rightUnit && (rightUnit.card?.id === "SR-ART-0025" || rightUnit.card?.id === "SSR-ART-0025" || rightUnit.card?.name?.includes("牆壁上的香蕉"))) {
+  [L3133] // 牆壁上的香蕉 (SR-ART-0025 / SSR-ART-0025) 左右保護
+  [L10062] setStatus("【進攻失敗】敵方單位受到 牆壁上的香蕉 保護，無法被進攻！");
+  [L12033] // 牆壁上的香蕉 (SR-ART-0025 / SSR-ART-0025) 左右保護
+  [L12037] if (leftUnit && (leftUnit.card?.id === "SR-ART-0025" || leftUnit.card?.id === "SSR-ART-0025" || leftUnit.card?.name?.includes("牆壁上的香蕉"))) {
+  [L12043] if (rightUnit && (rightUnit.card?.id === "SR-ART-0025" || rightUnit.card?.id === "SSR-ART-0025" || rightUnit.card?.name?.includes("牆壁上的香蕉"))) {
+  [L14361] // 牆壁上的香蕉 (SR-ART-0025 / SSR-ART-0025) 被破壞得分
+  [L14362] if (unit.card.id === "SR-ART-0025" || unit.card.id === "SSR-ART-0025" || unit.card.name?.includes("牆壁上的香蕉")) {
+  [L14365] logBattle(`💥 我方 牆壁上的香蕉 被破壞：我方額外獎勵 +3 ★！`);
+  [L14368] logBattle(`💥 對手 牆壁上的香蕉 被破壞：對手額外獎勵 +3 ★！`);
+
+======================================
+[R-ART-0042] 哭泣女人
+TEXT: 敵方魔法抗性，若此單位處於橫放，則被賦予破壞抗性
+  [L12027] // 哭泣女人 (R-ART-0042) 橫放時被賦予破壞抗性
+  [L12028] if ((c.id === "R-ART-0042" || c.name?.includes("哭泣女人")) && unit.tapped) return true;
+  [L12108] c.id === "R-ART-0042" || c.name?.includes("哭泣女人") ||
+  [L12208] c.id === "R-ART-0042" || c.name?.includes("哭泣女人") ||
+
+======================================
+[R-NMG-0023-2] 法力回收壺
+TEXT: 使你墓地1魔法卡回手牌
+  [L3488] } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+  [L4429] } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
+  [L4439] logBattle(`✨ 對手發動【法力回收壺】效果：將墓地魔法卡【${recycled.name}】回收至對手手牌！`);
+  [L4442] logBattle("✨ 對手發動【法力回收壺】：其墓地無魔法卡可回收。");
+  [L4451] const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices);
+  [L4457] logBattle(`✨ 法力回收壺 效果：將墓地魔法卡 ${chosenSpell.name} 回收至手牌！`);
+
+======================================
+[NMG-0003] 削弱藥水
+TEXT: 使場上1單位被賦予
+-3攻擊力直到
+本回合結束
+  [L2827] // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
+  [L2829] if (unit.equipments.includes("削弱藥水")) {
+  [L3505] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L3871] card.name.includes("削弱藥水") || card.id?.includes("0003") ||
+  [L4613] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L4681] if (card.name.includes("削弱藥水")) {
+  [L4777] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L6660] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L10438] `對手在星星戰線 ${lane + 1} 的 ${attacker.card.name} 發動了進攻，是否在此戰線戰鬥前發動防守反制魔法卡（如削弱藥水等）？`,
+  [L11636] if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+  [L11691] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L11718] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L14334] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L16341] // (1) 削弱藥水：使玩家進攻單位攻擊力 -3
+  [L16342] const weakenIdx = hand.findIndex(c => c && (c.id === "SSSR-NMG-0003" || c.name?.includes("削弱藥水")));
+  [L16350] attacker.equipments.push("削弱藥水(-3)");
+  [L16351] logBattle(`✨ 對手 AI 從手牌發動了【削弱藥水】！使我方進攻單位 ${attacker.card.name} 攻擊力 -3！`);
+  [L16393] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L17296] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L17981] return "我方防守反制中：您可以打出魔法卡（如削弱藥水）進行反制。點擊右下角按鈕結束並結算戰鬥。";
+  [L18557] if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+  [L18699] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L18900] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L20707] else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水 (-3)";
+  [L21790] else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水：攻擊力-3";
+  [L22142] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L22394] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L22519] const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+  [L23055] if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+  [L23264] logBattle(`削弱藥水 效果：對手使場上的 ${obj.card.name} 攻擊力 -3，維持到回合結束。`);
+
+======================================
+[NMG-0009] 和平巨人
+TEXT: 使敵方玩家
+下個回合不得發動進攻
+  [L5252] } else if (card.id === "NMG-0009" || card.id === "R-NMG-0009" || card.name?.includes("和平巨人")) {
+  [L5254] logBattle(`✨ 和平巨人 效果：下個回合對手玩家不得發動進攻！`);
+  [L9859] logBattle("座敷童子/和平巨人 效果生效：本回合我方無法進行進攻！");
+  [L9860] setStatus("座敷童子/和平巨人 效果生效：本回合我方無法進行進攻！");
+  [L9946] setStatus("座敷童子/和平巨人 效果生效：本回合我方無法進行任何進攻！");
+  [L16951] logBattle("座敷童子/和平巨人 效果生效：本回合對手無法進行任何進攻！");
+  [L17605] logBattle("座敷童子/和平巨人 效果生效：本回合我方無法進行進攻！");
+  [L17711] logBattle("座敷童子/和平巨人 效果生效：本回合對手無法進行進攻！");
+
+======================================
+[NMG-0013] 盾牌人偶
+TEXT: 使敵方1進攻單位進攻無效並橫放
+  [L3707] } else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
+  [L3709] setStatus("【盾牌人偶】只能在防守反制階段發動！");
+  [L4207] else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
+  [L4211] logBattle(`✨ 盾牌人偶 效果：使對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】進攻無效化並橫置！`);
+
+======================================
+[NMG-0006] 以小博大
+TEXT: 若敵方進攻單位攻擊力大於等於你的防守單位3點,使該單位被破壞
+  [L3695] } else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
+  [L3697] setStatus("【以小博大】只能在防守反制階段發動！");
+  [L4191] else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
+  [L4201] logBattle(`✨ 以小博大 效果：破壞對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】！`);
+
+======================================
+[NMG-0001] 地震術
+TEXT: 使敵方1進攻單位改為
+進攻你另一條星星戰線上
+前排戰線的單位
+  [L3584] } else if (card.name.includes("地震術") || card.id === "NMG-0001" || card.id === "R-NMG-0001") {
+  [L3586] setStatus("【地震術】只能在防守反制階段發動！");
+  [L4839] } else if (card.name.includes("地震術") || card.id === "NMG-0001" || card.id === "R-NMG-0001") {
+  [L4852] const chosenLane = await showXLWChoiceModal("地震術 效果發動", "選擇一個前排單位以轉移對手攻擊目標：", choices);
+  [L4857] logBattle(`✨ 地震術 效果：使對手星星戰線 ${defenseLane + 1} 的進攻單位【${attacker.card.name}】攻擊目標轉移至星星戰線 ${chosenLane + 1} 的我方前排單位【${field.player_front[chosenLane].card.name}】！`);
+  [L4867] reason: "地震術"
+
+======================================
+[NMG-0019] 法術保護
+TEXT: 使敵方1魔法卡無效化(須在打出當下使用)或是使1單位被賦予不會被敵方魔法卡選為目標
+  [L4556] } else if (card.name?.includes("法術保護") || card.id === "SSR-NMG-0019" || card.id === "NMG-0019") {
+  [L4558] "法術保護 效果選擇",
+  [L4561] { text: "🛡️ 使我方 1 單位獲得法術保護（不會被敵方魔法卡選為目標）", value: "protect_unit" },
+  [L4566] await showXLWConfirm("法術保護", "【提示】無效化效果必須在對手打出魔法卡的當下，於反制提示框中發動。目前無法直接打出。", "確定");
+  [L4576] await showXLWConfirm("法術保護", "我方場上目前沒有任何單位可以施加法術保護！", "確定");
+  [L4583] window.XLW_equipSpellCard = { ...card, name: "法術保護-護盾" };
+  [L4584] setStatus("【法術保護】請點選我方場上一個單位以賦予法術保護（對魔抗性）！");
+  [L18425] const isShield = window.XLW_equipSpellCard && (window.XLW_equipSpellCard.name === "法術保護-護盾" || window.XLW_equipSpellCard.name?.includes("盾牌") || window.XLW_equipSpellCard.name?.includes("戰錘"));
+  [L18456] else if (spellCard.name === "法術保護-護盾") {
+  [L18458] logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+  [L18885] const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
+  [L20712] else if (eqName.includes("法術保護")) displayText = "\ud83d\udee1\ufe0f \u6cd5\u8853\u4fdd\u8b77 (\u9b54\u514d)"; // 🛡️ 法術保護 (魔免)
+  [L21795] else if (eqName.includes("法術保護")) displayText = "🛡️ 法術保護：魔法無效";
+  [L22376] } else if (spellCard.name === "法術保護-護盾") {
+  [L25866] name.includes("法術保護") || cid.includes("NMG-0019") ||
+  [L25958] name.includes("法術保護") || cid.includes("NMG-0019") ||
+
+======================================
+[NMS-0017-2] 觀光阿姨
+TEXT: 你的結束階段時
+召喚1個小旅人
+  [L15043] let playerGraveFans = graveyard.filter(c => c && (c.id === "R-NMS-0017" || c.name?.includes("瘋狂粉絲") || c.id === "NEU-0017" || c.id === "SSSR-NEU-0017"));
+  [L15080] let enemyGraveFans = window.XLW_ENEMY.grave.filter(c => c && (c.id === "R-NMS-0017" || c.name?.includes("瘋狂粉絲") || c.id === "NEU-0017" || c.id === "SSSR-NEU-0017"));
+  [L15606] // 1. 觀光阿姨 (NEU-0004 / R-NEU-0004)
+  [L15609] if (u && u.card && (u.card.id === "NEU-0004" || u.card.name?.includes("觀光阿姨"))) {
+  [L15629] setStatus("【觀光阿姨】請點選我方場上一個空格以召喚小旅人！");
+  [L15641] logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+  [L15648] logBattle("觀光阿姨 效果：我方場地已滿，無法召喚。");
+  [L15671] logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+
+======================================
+[ART-0020] 星空
+TEXT: 敵方打出單位時使該單位被破壞且無效化該單位立即效果
+  [L3227] const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+  [L3229] if (card.id === "ART-0020" || card.name.includes("星空")) {
+  [L7011] const hasStarry = oppHand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L7016] const sIdx = oppHand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L16832] const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L16837] const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L16901] const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L16906] const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L17063] const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L17068] const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L17121] const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L17126] const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L22207] const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
+  [L22212] const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));

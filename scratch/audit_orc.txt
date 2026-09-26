@@ -1,0 +1,195 @@
+
+======================================
+[SSSR-ORC-0006] 女獸人 卡煞
+TEXT: 立即:使你場上所有人型單位轉正
+  [L8872] else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+
+======================================
+[SSR-ORC-0010] 委託者 戴比
+TEXT: 立即: 召喚2個小旅人至敵方場上任意位置。你場上所有獎勵單位獎勵額外+1
+  [L8910] else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+  [L13358] else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+  [L22313] else if (card.name?.includes("戴比") || card.id === "SSR-ORC-0010") {
+
+======================================
+[R-ORC-0015] 獸人弓箭手
+TEXT: 遠程攻擊。進攻時戰鬥成功獎勵+2
+  [L18442] logBattle(`✨ 獸人弓箭手的弓箭 效果：${obj.card.name} 攻擊力 +1 並獲得遠程攻擊！`);
+  [L25393] if ((cid === "R-ORC-0015" || name?.includes("獸人弓箭手")) && isAttacker) {
+
+======================================
+[R-ORC-0029] 符咒獸人
+TEXT: 不會被敵方魔法卡選為目標。戰鬥成功時，獎勵+1
+  [L25397] if (cid === "R-ORC-0029" || name?.includes("符咒獸人")) {
+
+======================================
+[R-ORC-0034] 3星菜刀
+TEXT: 使你場上1獸人單位被賦予貫穿
+  [L3755] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+  [L4588] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" ||
+  [L18435] else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+  [L18437] logBattle(`✨ 3星菜刀 效果：${obj.card.name} 獲得貫穿效果！`);
+  [L20704] else if (eqName.includes("菜刀")) displayText = "🔪 3\u661f\u83dc\u5200 (\u8cab\u7a7f)"; // 🔪 3星菜刀 (貫穿)
+  [L21787] else if (eqName.includes("菜刀")) displayText = "🔪 3星菜刀：攻擊力+3，獲得貫穿";
+  [L22366] } else if (spellCard.name?.includes("菜刀") || spellCard.id === "R-ORC-0034") {
+
+======================================
+[R-ORC--0035] 武器繳納
+TEXT: 使你墓地或被賦予在你場上獸人單位的1裝備魔法卡回手牌
+  [L3494] } else if (card.id === "R-ORC--0035" || card.name?.includes("武器繳納")) {
+  [L3756] card.id === "R-ORC--0035" || card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
+  [L4766] } else if (card.id === "R-ORC--0035" || card.name?.includes("武器繳納")) {
+  [L4796] const chosenIdx = await showXLWChoiceModal("武器繳納 效果發動", "請選擇一張裝備卡回收至手牌：", choices);
+  [L4804] logBattle(`✨ 武器繳納 效果：將墓地中的裝備卡【${cardToReturn.name}】回收至手牌！`);
+  [L4814] logBattle(`✨ 武器繳納 效果：將場上【${u.card.name}】附著的裝備【${eqName}】卸下並回收至手牌！`);
+
+======================================
+[R-ROC-0040] 獸人血戰幫 嗜血獸人
+TEXT: 此單位進攻時戰鬥成功，你獎勵+3
+  [L25401] if ((cid === "R-ROC-0040" || cid === "R-ORC-0040" || name?.includes("嗜血獸人")) && isAttacker) {
+
+======================================
+[R-ORC-0048] 獸人奶奶
+TEXT: 立即:可使你場上1獸人單位與你墓地1張獸人單位卡回手牌，若成功則使你獎勵+3
+  [L8915] else if (card.name?.includes("獸人奶奶") || card.id === "R-ORC-0048") {
+  [L8930] const chosenFieldIdx = await showXLWChoiceModal("獸人奶奶 效果：請選擇場上一個獸人單位回手", "選擇場上獸人：", fieldChoices);
+  [L8935] const chosenGraveIdx = await showXLWChoiceModal("獸人奶奶 效果：請選擇墓地一個獸人單位回手", "選擇墓地獸人：", graveChoices);
+  [L8946] logBattle(`✨ 獸人奶奶 效果：將場上 ${chosenField.card.name} 與墓地 ${chosenGrave.name} 收回手牌，我方額外獲得 +3★ 獎勵！`);
+  [L8953] logBattle("獸人奶奶 效果：場上或墓地無其他獸人單位，無法觸發回手獎勵。");
+
+======================================
+[SR-ORC-0043] 傳說武器 戰斧牛排
+TEXT: 使你場上/墓地加總2張裝備卡被除外，若成功則使你場上1個獸人單位被賦予+5攻擊力及此單位進攻時戰鬥成功，你獎勵+5
+  [L3755] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+  [L4588] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" ||
+  [L4601] if (card.name?.includes("戰斧牛排") || card.id === "SR-ORC-0043") {
+  [L18444] else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+  [L22371] } else if (spellCard.name?.includes("戰斧牛排") || spellCard.id === "SR-ORC-0043") {
+
+======================================
+[R-0RC-0044] 符咒獸人的符咒帽
+TEXT: 使你場上1個獸人單位被賦予敵方魔法抗性
+  [L3755] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+  [L4588] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" ||
+  [L18431] if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+  [L22364] if (spellCard.name?.includes("符咒帽") || spellCard.id === "R-0RC-0044") {
+
+======================================
+[R-ORC-0056] 獸人弓箭手的弓箭
+TEXT: 使你場上1個獸人單位被賦予+1攻擊力及遠程攻擊
+  [L3755] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+  [L4588] } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" ||
+  [L18439] else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+  [L18442] logBattle(`✨ 獸人弓箭手的弓箭 效果：${obj.card.name} 攻擊力 +1 並獲得遠程攻擊！`);
+  [L22368] } else if (spellCard.name?.includes("弓箭") || spellCard.id === "R-ORC-0056") {
+
+======================================
+[R-ORC-0051] 獸人粉絲
+TEXT: 你的獸人單位戰鬥成功時，若其攻擊力至少比其戰鬥的單位攻擊力多3，則使你獎勵+2
+  [L25512] // 獸人粉絲被動效果
+  [L25518] if (field[z].some(u => u && (u.card?.id === "R-ORC-0051" || u.card?.name?.includes("獸人粉絲")))) {
+  [L25529] logBattle(`✨ 獸人粉絲 被動：獸人單位 ${card.name} 戰鬥成功且攻擊力超出對方 3 點以上，我方獲得 +2★ 獎勵！`);
+  [L25532] logBattle(`✨ 獸人粉絲 被動：對手獸人單位 ${card.name} 戰鬥成功且攻擊力超出我方 3 點以上，對手獲得 +2★ 獎勵！`);
+
+======================================
+[SR-ORC-0052] 獸人爺爺
+TEXT: 你的主要階段限一次，可使你場上1個其他獸人單位回手牌，若成功則使此單位被賦予+2攻擊力直到下回合結束時。此單位戰鬥成功時，使你獎勵+2
+  [L20638] const isGrandpa = obj.card?.id === "SR-ORC-0052" || obj.card?.name?.includes("獸人爺爺");
+  [L20641] setStatus("獸人爺爺 效果本回合已使用過。");
+  [L20659] const confirmUse = await showXLWConfirm("獸人爺爺 效果發動", "是否使我方場上一個其他獸人單位回手，使獸人爺爺獲得 +2 攻擊力？");
+  [L20670] logBattle(`✨ 獸人爺爺 效果：使場上 ${chosenOrc.card.name} 回手，獸人爺爺獲得 +2 攻擊力直到下個回合結束！`);
+  [L25421] if (cid === "SR-ORC-0052" || name?.includes("獸人爺爺")) {
+
+======================================
+[R-ORC-0046] 獸人武器商
+TEXT: 你的主要階段限1次，若你獎勵至少為2，則可獎勵-2，若成功則使你墓地1張獸人裝備魔法卡回手牌
+  [L20602] const isWeaponMerchant = obj.card?.id === "R-ORC-0046" || obj.card?.name?.includes("武器商");
+  [L20605] setStatus("獸人武器商 效果本回合已使用過。");
+  [L20620] const confirmUse = await showXLWConfirm("獸人武器商 效果發動", "是否消費 2★ 獎勵，回收墓地一張獸人裝備卡？");
+  [L20631] logBattle(`✨ 獸人武器商 效果：消費 2★ 獎勵，將墓地的裝備卡 ${chosenCard.name} 回收至手牌！`);
+
+======================================
+[SSR-ORC-0057] 禁衛軍獸人
+TEXT: 你的防守階段限1次，可使敵方1個進攻單位改為進攻此單位。你的防守階段，使此單位被賦予+2攻擊力。此單位戰鬥成功時，使你獎勵+2
+  [L2794] // 3. 禁衛軍獸人 (SSR-ORC-0057) 被攻擊時 +2 攻擊力
+  [L2795] if (c.id === "SSR-ORC-0057" || c.name?.includes("禁衛軍獸人")) {
+  [L10170] // 1. 尋找我方場上的「禁衛軍獸人」單位
+  [L10175] if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
+  [L10181] if (guards.length === 0) return; // 場上沒有禁衛軍獸人
+  [L10183] // 2. 尋找所有進攻目標不是這些禁衛軍獸人的敵方進攻單位
+  [L10200] const confirmUse = await showXLWConfirm("禁衛軍獸人 效果發動", "我方場上有禁衛軍獸人，是否發動其能力使一個敵方單位的攻擊目標改為攻擊該禁衛軍獸人？");
+  [L10203] // 4. 若有多個禁衛軍獸人，選擇要讓哪一個防守
+  [L10207] const chosenGuardIdx = await showXLWChoiceModal("選擇防守的禁衛軍獸人", "選擇我方禁衛軍獸人：", guardChoices);
+  [L10225] logBattle(`✨ 禁衛軍獸人 效果：使對手 ${targetEnemy.unit.card.name} 的攻擊目標轉移為我方的 禁衛軍獸人！`);
+  [L10395] // 在結算開始前，檢查禁衛軍獸人的效果發動
+  [L10822] // AI 禁衛軍獸人自動轉移攻擊目標 logic (僅單機/AI模式)
+  [L10828] if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
+  [L10853] logBattle(`✨ 對手發動 禁衛軍獸人 效果：使我方 ${targetPlayerAttacker.unit.card.name} 的攻擊目標轉移為對方的 禁衛軍獸人！`);
+  [L18487] const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
+  [L18490] setStatus("禁衛軍獸人 效果本回合已使用過。");
+  [L18511] const confirmUse = await showXLWConfirm("禁衛軍獸人 效果發動", "是否使敵方一個進攻單位改為進攻此禁衛軍獸人？");
+  [L18519] logBattle(`✨ 禁衛軍獸人 效果：使對手 ${targetItem.unit.card.name} 的攻擊目標轉移為我方的 禁衛軍獸人！`);
+  [L22735] logBattle(`✨ 對手發動 禁衛軍獸人 效果：使我方 ${attacker.card?.name || ""} 的攻擊目標轉移為對手的 禁衛軍獸人！`);
+  [L25425] if (cid === "SSR-ORC-0057" || name?.includes("禁衛軍獸人")) {
+
+======================================
+[SSR-NMG-0019] 法術保護
+TEXT: 使敵方1魔法卡無效化(須在打出當下使用)或是使1單位被賦予不會被敵方魔法卡選為目標
+  [L4556] } else if (card.name?.includes("法術保護") || card.id === "SSR-NMG-0019" || card.id === "NMG-0019") {
+  [L4558] "法術保護 效果選擇",
+  [L4561] { text: "🛡️ 使我方 1 單位獲得法術保護（不會被敵方魔法卡選為目標）", value: "protect_unit" },
+  [L4566] await showXLWConfirm("法術保護", "【提示】無效化效果必須在對手打出魔法卡的當下，於反制提示框中發動。目前無法直接打出。", "確定");
+  [L4576] await showXLWConfirm("法術保護", "我方場上目前沒有任何單位可以施加法術保護！", "確定");
+  [L4583] window.XLW_equipSpellCard = { ...card, name: "法術保護-護盾" };
+  [L4584] setStatus("【法術保護】請點選我方場上一個單位以賦予法術保護（對魔抗性）！");
+  [L18425] const isShield = window.XLW_equipSpellCard && (window.XLW_equipSpellCard.name === "法術保護-護盾" || window.XLW_equipSpellCard.name?.includes("盾牌") || window.XLW_equipSpellCard.name?.includes("戰錘"));
+  [L18456] else if (spellCard.name === "法術保護-護盾") {
+  [L18458] logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
+  [L18885] const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
+  [L20712] else if (eqName.includes("法術保護")) displayText = "\ud83d\udee1\ufe0f \u6cd5\u8853\u4fdd\u8b77 (\u9b54\u514d)"; // 🛡️ 法術保護 (魔免)
+  [L21795] else if (eqName.includes("法術保護")) displayText = "🛡️ 法術保護：魔法無效";
+  [L22376] } else if (spellCard.name === "法術保護-護盾") {
+  [L25866] name.includes("法術保護") || cid.includes("NMG-0019") ||
+  [L25958] name.includes("法術保護") || cid.includes("NMG-0019") ||
+
+======================================
+[SSSR-NMS-0068] 星靈判官 天秤座
+TEXT: 立即:使雙方玩家各自獲得另一方場上所有單位星星加總一半的獎勵(向下取整)
+  [L8890] else if (card.name?.includes("天秤座") || card.id === "SSSR-NMS-0068") {
+
+======================================
+[R-NMG-0031-2] 魔抗鐵拳
+TEXT: 使場上1單位被賦予魔法抗性 及+1或-1攻擊力直到下個敵方主要階段開始前
+  [L2691] // 魔抗鐵拳等動態加減攻
+  [L3479] } else if (card.name.includes("魔抗鐵拳")) {
+  [L3485] setStatus("場上無單位可施加魔抗鐵拳！");
+  [L4403] // 3. 魔抗鐵拳：+1/-1攻擊力，且獲得魔法免疫效果
+  [L4404] else if (card.name.includes("魔抗鐵拳")) {
+  [L4411] setStatus("【魔抗鐵拳】請點選場上一個單位施加魔抗鐵拳！");
+  [L4415] setStatus("場上無單位可附加魔抗鐵拳！");
+  [L18967] "魔抗鐵拳 效果選擇",
+  [L18968] `請選擇要為 ${obj.card.name} 施加的魔抗鐵拳效果：`,
+  [L18977] logBattle(`魔抗鐵拳 效果：使 ${obj.card.name} 攻擊力變更了 ${opt > 0 ? "+1" : "-1"}，並獲得對魔法免疫直至對手下個主要階段前！`);
+
+======================================
+[R-NMG-0020-2] 魔法反制
+TEXT: 使敵方1魔法卡無效化
+(須在打出當下使用)
+  [L123] // 魔法反制連鎖變數
+  [L3227] const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+  [L10437] `戰線 ${lane + 1} 魔法反制`,
+  [L10446] logBattle(`我方選擇在星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
+  [L10455] logBattle(`我方選擇不對星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
+  [L25592] // ===== 🔮 魔法反制連鎖系統 (Spell Counter Chain System) =====
+  [L25603] <div class="chain-title">🔮 魔法反制連鎖 🔮</div>
+  [L25865] return name.includes("魔法反制") || cid.includes("NMG-0020") ||
+  [L25941] // 魔法炸彈客是單位卡，不能被可以克制魔法卡的卡片（魔法反制、終極無效化等）所克制
+  [L25955] return name.includes("魔法反制") || cid.includes("NMG-0020") ||
+
+======================================
+[SR-NMG-0026] 終極無效化
+TEXT: 使該魔法卡無效化
+  [L3227] const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+  [L25867] name.includes("終極無效化") || cid.includes("NMG-0026") ||
+  [L25941] // 魔法炸彈客是單位卡，不能被可以克制魔法卡的卡片（魔法反制、終極無效化等）所克制
+  [L25956] name.includes("終極無效化") || cid.includes("NMG-0026") ||
