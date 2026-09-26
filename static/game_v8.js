@@ -12539,23 +12539,18 @@ function isDecayed(zone, idx) {
 
   if (hasDecayStatus) return true;
 
-  if (zone === "player_back") {
-    const fUnit = field["player_front"][idx];
-    if (fUnit && isCursedStatue(fUnit)) return true;
-  } else if (zone === "player_front") {
-    const bUnit = field["player_back"][idx];
-    if (bUnit && isCursedStatue(bUnit)) return true;
+  if (zone === "player_front") {
     const oppFUnit = field["enemy_front"][idx];
     if (oppFUnit && isCursedStatue(oppFUnit)) return true;
+    const oppBUnit = field["enemy_back"][idx];
+    if (oppBUnit && isCursedStatue(oppBUnit)) return true; // Allow backline statue to decay frontline enemy
   } else if (zone === "enemy_front") {
-    const bUnit = field["enemy_back"][idx];
-    if (bUnit && isCursedStatue(bUnit)) return true;
     const oppFUnit = field["player_front"][idx];
     if (oppFUnit && isCursedStatue(oppFUnit)) return true;
-  } else if (zone === "enemy_back") {
-    const fUnit = field["enemy_front"][idx];
-    if (fUnit && isCursedStatue(fUnit)) return true;
+    const oppBUnit = field["player_back"][idx];
+    if (oppBUnit && isCursedStatue(oppBUnit)) return true;
   }
+
 
   return false;
 }
@@ -17504,6 +17499,7 @@ async function endPlayerTurnAndRunEnemy() {
     render();
   } else {
     // 進入對手回合
+    isMyTurn = false; // Fix: Set to false before AI turn
     await runEnemyTurn();
 
     // 檢查倒數階段
@@ -18371,6 +18367,14 @@ function renderField() {
           badge.className = "bonus-score-badge";
           badge.textContent = "+" + obj.bonusScore;
           slot.appendChild(badge);
+        }
+
+        if (isDecayed(zone, i)) {
+          const badge = document.createElement("div");
+          badge.innerHTML = "💀 衰退";
+          badge.style.cssText = "position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: rgba(128, 0, 128, 0.9); color: white; text-align: center; font-weight: 900; z-index: 20; font-size: 14px; pointer-events: none; padding: 2px 8px; border-radius: 12px; border: 1px solid #fff; text-shadow: 1px 1px 0px #000; white-space: nowrap;";
+          slot.appendChild(badge);
+          cardEl.style.boxShadow = "0 0 15px rgba(128, 0, 128, 0.8)";
         }
 
         cardEl.onclick = async (e) => {
