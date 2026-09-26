@@ -12571,7 +12571,7 @@ async function resolveDecayStatus(isPlayerTurn) {
     for (let i = 0; i < 5; i++) {
       const u = field[zone][i];
       if (u) {
-        if (isDecayed(zone, i)) {
+        if (isDecayed(zone, idx)) {
           const c = u.card || u;
           if (!u.tapped) {
             u.tapped = true;
@@ -18369,7 +18369,7 @@ function renderField() {
           slot.appendChild(badge);
         }
 
-        if (isDecayed(zone, i)) {
+        if (isDecayed(zone, idx)) {
           const badge = document.createElement("div");
           badge.innerHTML = "💀 衰退";
           badge.style.cssText = "position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: rgba(128, 0, 128, 0.9); color: white; text-align: center; font-weight: 900; z-index: 20; font-size: 14px; pointer-events: none; padding: 2px 8px; border-radius: 12px; border: 1px solid #fff; text-shadow: 1px 1px 0px #000; white-space: nowrap;";
