@@ -17288,7 +17288,7 @@ async function endPlayerTurnAndRunEnemy() {
       
       if (hasEnemyConfined) {
         playerBonusScore += yarnCount;
-        logBattle(✨ 毛線怪 效果：對手場上存在被禁錮的單位，我方獲得 +★ 獎勵！);
+        logBattle(`✨ 毛線怪 效果：對手場上存在被禁錮的單位，我方獲得 +${yarnCount}★ 獎勵！`);
         renderScore();
       }
     }
