@@ -5222,7 +5222,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* 撠葦撠店獢?(Dialogue Box) */
 .xlw-tutorial-box {
   position: absolute !important;
-  width: 320px !important;
+  width: 280px !important;
   max-width: calc(100% - 40px) !important;
   background: rgba(12, 9, 26, 0.96) !important;
   border: 2px solid #00e5ff !important;

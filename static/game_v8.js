@@ -29389,38 +29389,34 @@ window.XLW_Tutorial = {
 
           if (tutorialBox) {
               const vh = window.innerHeight;
+              const vw = window.innerWidth;
               
               tutorialBox.style.top = '';
               tutorialBox.style.bottom = '';
-              tutorialBox.style.left = '50%';
+              tutorialBox.style.left = '';
               tutorialBox.style.right = '';
-              tutorialBox.style.transform = 'translateX(-50%)';
+              tutorialBox.style.transform = '';
 
-              if (rect.top + rect.height / 2 < vh / 2) {
-                  tutorialBox.style.bottom = '20px';
+              const isTopHalf = (rect.top + rect.height / 2) < (vh / 2);
+              const isLeftHalf = (rect.left + rect.width / 2) < (vw / 2);
+
+              if (isTopHalf) {
+                  tutorialBox.style.bottom = '10px';
               } else {
                   tutorialBox.style.top = '60px';
+              }
+
+              if (isLeftHalf) {
+                  tutorialBox.style.right = '10px';
+              } else {
+                  tutorialBox.style.left = '70px';
               }
           }
         } else {
           spotlight.style.display = "none";
-          if (tutorialBox) {
-              tutorialBox.style.top = '';
-              tutorialBox.style.bottom = '20px';
-              tutorialBox.style.left = '50%';
-              tutorialBox.style.right = '';
-              tutorialBox.style.transform = 'translateX(-50%)';
-          }
         }
       } else {
         spotlight.style.display = "none";
-        if (tutorialBox) {
-            tutorialBox.style.top = '';
-            tutorialBox.style.bottom = '20px';
-            tutorialBox.style.left = '50%';
-            tutorialBox.style.right = '';
-            tutorialBox.style.transform = 'translateX(-50%)';
-        }
       }
     }
   },

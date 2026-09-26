@@ -435,7 +435,7 @@
     <!-- 導師對話提示框 -->
     <div id="xlwTutorialBox" class="xlw-tutorial-box">
       <div class="tutorial-box-header">
-                <img id="xlwTutorialMentorSprite" src="/static/card_images/ssr_vlg_0012.jpeg" style="position: absolute; bottom: 0; left: -100px; width: 100px; height: 140px; object-fit: cover; border-radius: 12px 0 0 12px; pointer-events: none; border: 2px solid #00e5ff; border-right: none; z-index: -1;">
+                <img id="xlwTutorialMentorSprite" src="/static/card_images/ssr_vlg_0012.jpeg" style="position: absolute; bottom: 0; left: -80px; width: 140px; height: 180px; object-fit: cover; pointer-events: none; z-index: -1; clip-path: inset(10% 10% 45% 10%); transform: scale(1.2); transform-origin: bottom right;">
         <div class="tutorial-mentor-info">
           <span class="mentor-name" style="font-weight: bold; font-size: 18px; color: #00e5ff;">雪女</span>
         </div>
@@ -457,21 +457,19 @@
         <h3 class="anatomy-header">🎴 卡牌詳細資訊代表意義解密</h3>
         <div class="anatomy-body">
           <!-- 卡牌視覺預覽示範 -->
-                      <div class="anatomy-card-preview" style="position: relative; width: 220px; flex-shrink: 0;">
-              <img src="/static/card_images/ssr_art_0001.jpeg" style="width: 100%; border-radius: 12px; border: 2px solid #ffd76a; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
-              
-              <div style="position:absolute; top: 8%; left: -10px; background: rgba(0,0,0,0.85); color: #ffd76a; border: 1px solid #ffd76a; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">1. 名稱與陣營</div>
-              
-              <div style="position:absolute; top: 12%; right: -10px; background: rgba(0,0,0,0.85); color: #d4af37; border: 1px solid #d4af37; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">2. 星數與屬性</div>
-              
-              <div style="position:absolute; bottom: 15%; right: -10px; background: rgba(0,0,0,0.85); color: #ff4d4f; border: 1px solid #ff4d4f; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">3. 攻擊力/盾</div>
-              
-              <div style="position:absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #ff9800; border: 1px solid #ff9800; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">4. 祭品花費</div>
-              
-              <div style="position:absolute; bottom: 35%; left: -10px; background: rgba(0,0,0,0.85); color: #4ade80; border: 1px solid #4ade80; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">5. 技能說明</div>
-            </div>
-            
-          </div>
+                                    <div class="anatomy-card-preview" style="position: relative; width: 220px; flex-shrink: 0;">
+                <img src="/static/card_images/ssr_art_0001.jpeg" style="width: 100%; border-radius: 12px; border: 2px solid #ffd76a; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
+                
+                <div style="position:absolute; top: 10%; left: -10px; background: rgba(0,0,0,0.85); color: #ffd76a; border: 1px solid #ffd76a; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">1. 名稱與陣營</div>
+                
+                <div style="position:absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #ff4d4f; border: 1px solid #ff4d4f; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">2. 攻擊力</div>
+                
+                <div style="position:absolute; top: 5%; right: -15px; background: rgba(0,0,0,0.85); color: #ff9800; border: 1px solid #ff9800; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">3. 獻祭數量</div>
+                
+                <div style="position:absolute; bottom: 35%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #4ade80; border: 1px solid #4ade80; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">4. 卡牌效果</div>
+                
+                <div style="position:absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #d4af37; border: 1px solid #d4af37; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">5. 星星數</div>
+              </div>
           
           <!-- 詳細解說清單 -->
           <div class="anatomy-details-list">
