@@ -29437,7 +29437,7 @@ window.XLW_Tutorial = {
 
     if (titleEl) titleEl.textContent = step.title;
     if (contentEl) contentEl.textContent = step.content;
-    if (counterEl) counterEl.textContent = ${this.currentStep + 1} / ;
+    if (counterEl) counterEl.textContent = `${this.currentStep + 1} / ${this.steps.length}`;
 
     const prevBtn = document.getElementById("xlwTutorialPrevBtn");
     const nextBtn = document.getElementById("xlwTutorialNextBtn");
