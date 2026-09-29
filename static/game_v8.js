@@ -29121,184 +29121,175 @@ window.XLW_Tutorial = {
 
         steps: [
     {
-      title: "🎓 歡迎來到星靈王新手導覽！",
-      content: "歡迎各位星靈使者！本教學將為您詳細介紹星靈王棋盤場地區域、手牌資源、卡牌資訊與實戰發動規則。點擊『下一步』開始探索！",
+      title: "1. 歡迎來到星靈王新手導覽",
+      content: "歡迎！我是精靈使者「雪女」。我將帶領您詳細了解星靈王對戰的場地佈局、資源、卡牌資訊與實戰教學。請點擊『下一步』開始探索！",
       spotlightSelector: null,
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "⚔️ 戰場區域：前排戰線與後排戰線",
-      content: "棋盤中央是我方與對手的戰鬥單位區域。單位卡牌可召喚至前排戰線或後排戰線。前排單位為戰鬥第一線，當前排尚有空位時優先保護後排！",
+      title: "2. 場地介紹：前排戰線與後排戰線",
+      content: "棋盤中央是雙方交戰的戰鬥單位區。您的場地分為前排戰線與後排戰線。前排通常是交戰第一線，後排則用來保護脆弱單位或提供支援。",
       spotlightSelector: ".row.player-front",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🌟 戰場區域：星星戰線",
-      content: "位於戰線兩側的星星戰線。可用於發動持續生效的場地魔法卡、放置特殊裝備，或提供額外星星★點數資源加成。",
+      title: "3. 場地介紹：法術與結界區",
+      content: "戰線兩側是法術與結界區。您可以將法術卡或結界卡放置於此，提供額外的戰術支援或點數資源。",
       spotlightSelector: "#playerField",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🪦 戰場區域：墓地區",
-      content: "放置戰敗破壞的單位卡與發動完畢的魔法卡。部分特定種族（如：亡靈、獸人）具備從墓地回收或還魂召喚的強大效果！",
+      title: "4. 場地介紹：墓地",
+      content: "放置被破壞的單位卡或發動完畢的魔法卡。部分特定種族（如亡靈、獸人）可以從墓地中獲得額外的強大效果。",
       spotlightSelector: "#playerGrave",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🌀 戰場區域：除外區",
-      content: "回合結束時，若手牌超過 10 張上限，多餘的手牌需放至除外區。被除外的卡牌一般情況下無法再被回收。",
+      title: "5. 場地介紹：除外區",
+      content: "回合結束時，若手牌超過 10 張，多餘的牌會被移至除外區。被除外的卡牌通常無法被回收。",
       spotlightSelector: "#playerExile",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "👑 戰場區域：種族卡槽",
-      content: "隊伍選擇的種族卡會安置於此。種族卡提供全場單位的主動與被動戰術天賦支援！",
+      title: "6. 場地介紹：種族卡槽",
+      content: "您的專屬種族卡放置於此。種族卡能為場上同族主要單位提供被動天賦支援。",
       spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🎴 戰場區域：牌組區",
-      content: "存放您精心建構的牌組。每回合開始時將自動從牌組區抽取卡牌至手牌。",
+      title: "7. 場地介紹：專屬牌組",
+      content: "存放您精心建構的牌組。每回合開始時將自動從牌組中抽牌。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🃏 戰術資源：我方手牌",
-      content: "下方展扇形攤開的為我方手牌。點擊卡牌可預覽詳細數值、發動魔法或進行單位打出與獻祭召喚！",
+      title: "8. 資源：手牌",
+      content: "下方扇形攤開的是您的手牌。點擊卡牌可預覽詳細數值、發動法術或進行召喚。",
       spotlightSelector: "#hand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "👾 對手手牌",
-      content: "頂部浮動展示的是對手當前擁有的手牌張數與牌背。隨時留意對手的手牌變化，預判敵方攻勢！",
+      title: "9. 對手手牌",
+      content: "頂部浮動展示的是對手手牌的張數，會隨著對手抽牌與出牌變化，請隨時留意敵方資源。",
       spotlightSelector: "#xlwEnemyFloatingHand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "🔍 卡牌資訊代表意義解密",
-      content: "點擊卡牌時會開啟詳細資訊面板。卡牌主要包含：攻擊力(ATK)、盾牌/防護(DEF)、祭品需求(Tribute Cost)、★點數(Score Stars)與特殊效果！",
+      title: "10. 卡牌資訊與意義",
+      content: "點擊卡牌會彈出詳細資訊面板。卡牌主要關注：攻擊力(ATK)、防禦/護盾(DEF)、祭品需求(Tribute Cost)、星星點數(Score Stars)與特殊效果。",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null
     },
     {
-      title: "⚔️ 實戰演練：手把手操作體驗",
-      content: "接下來，我們將模擬一次真實的回合！請跟隨導師指引動手操作，親自體驗抽卡、召喚、獻祭、進攻與防守的過程！",
+      title: "11. 實戰演練：準備戰鬥",
+      content: "接下來，我們將模擬一次真實對戰！請跟隨指示，親身體驗抽牌、召喚、獻祭、進攻與結算！",
       spotlightSelector: null,
       anatomyModal: false,
       setupBattle: true,
       interactive: null
     },
     {
-      title: "🃏 實戰 Step 1：回合開始抽卡",
-      content: "回合開始時您的手牌已經有4張獸人卡了。我的回合，抽卡！請點擊右下角的「牌組區」，抽取本回合的卡牌！",
+      title: "實戰 Step 1：回合開始抽牌",
+      content: "回合開始時您的手牌已經有4張了。現在該抽牌了！請點擊右下角的牌組，抽取2張牌。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
-      interactive: {
-        type: "click_deck"
-      }
+      interactive: { type: "click_deck" }
     },
     {
-      title: "📍 實戰 Step 2：選取手牌單位卡",
-      content: "太好了，我們抽到了卡片。現在請點擊手牌中剛抽到的【寶寶獸人】，準備將其打出至戰場！",
+      title: "實戰 Step 2：選擇召喚單位",
+      content: "太好了！我們抽到了關鍵卡片。現在，點擊發光的【寶寶獸人】，準備將其派上戰場。",
       spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
-      interactive: {
-        type: "click_card",
-        index: 4
-      }
+      interactive: { type: "click_card", index: 4 }
     },
     {
-      title: "📍 實戰 Step 3：一般召喚至前排",
-      content: "現在請點擊我方前排戰線的第一個空格 (前排1)，完成寶寶獸人的召喚！",
+      title: "實戰 Step 3：普通召喚",
+      content: "現在，點擊前排戰線的第一個空位，將寶寶獸人召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
-      interactive: {
-        type: "click_slot",
-        zone: "player_front",
-        idx: 0
-      }
+      interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "🔥 實戰 Step 4：高階單位獻祭準備",
-      content: "我們剛抽到的另一張高階單位【胖獸人】，他需要 1 個祭品才能召喚。請點擊手牌中的【胖獸人】！",
-      spotlightSelector: "#hand .card:nth-child(5)", // It becomes 5th child because baby orc was removed from hand!
+      title: "實戰 Step 4：準備獻祭召喚",
+      content: "我們手牌中還有一張高階的【禁衛軍獸人】，它需要 1 個祭品才能上場。請點擊手牌中的【禁衛軍獸人】。",
+      spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
-      interactive: {
-        type: "click_card",
-        index: 4
-      }
+      interactive: { type: "click_card", index: 4 }
     },
     {
-      title: "🩸 實戰 Step 5：選擇場上祭品",
-      content: "獻祭召喚需要犧牲場上的單位。請點擊剛才召喚在場上的【寶寶獸人】，將其標記為祭品！",
+      title: "實戰 Step 5：選擇祭品",
+      content: "請點擊場上的【寶寶獸人】，將它作為祭品！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
-      interactive: {
-        type: "click_slot",
-        zone: "player_front",
-        idx: 0,
-        action: "tribute_select"
-      }
+      interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tribute_select" }
     },
     {
-      title: "✅ 實戰 Step 6：確認獻祭",
-      content: "已標記祭品！現在請點擊畫面中間的「確認獻祭」按鈕！",
+      title: "實戰 Step 6：確認獻祭",
+      content: "祭品選擇完畢，請點擊右側的【確認獻祭】按鈕！",
       spotlightSelector: "#stableActionConfirm",
       anatomyModal: false,
-      interactive: {
-        type: "click_tribute_confirm"
-      }
+      interactive: { type: "click_tribute_confirm" }
     },
     {
-      title: "📍 實戰 Step 7：獻祭召喚上場",
-      content: "獻祭完成！寶寶獸人已經離開戰場，現在請再次點擊前排第一個空格，將【胖獸人】威風凜凜地召喚上場！",
+      title: "實戰 Step 7：獻祭召喚上場",
+      content: "獻祭完成！寶寶獸人已經離開戰場，現在請再次點擊前排第一個空格，將【禁衛軍獸人】威風凜凜地召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
-      interactive: {
-        type: "click_slot",
-        zone: "player_front",
-        idx: 0
-      }
+      interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "⚔️ 實戰 Step 8：進入進攻宣言階段",
-      content: "強大的單位已上場，是時候反擊了！請點擊右下角的【進攻宣言】按鈕。系統將會自動為單位宣告進攻路線！",
+      title: "實戰 Step 8：進攻宣言",
+      content: "我方準備就緒！點擊右側的【進攻宣言】按鈕。系統將自動為前排單位宣告進攻！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
-      interactive: {
-        type: "click_phase_btn",
-        phase: "進攻宣言"
-      }
+      interactive: { type: "click_phase_btn", phase: "進攻宣言" }
     },
     {
-      title: "🛡️ 實戰 Step 9：結束戰鬥與防守準備",
-      content: "進攻宣告完畢！請點擊【結束進攻並結算傷害】。在敵方回合，若敵方發動攻擊，遊戲將進入防守階段，屆時我們需要佈署防線！",
-      spotlightSelector: "#stableActionAttack",
+      title: "實戰 Step 9：結束回合",
+      content: "進攻完畢後，點擊右側的【結束回合】按鈕，將回合交給對手。對決結算會在對手的【防守階段】自動進行。",
+      spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
-      interactive: {
-        type: "click_phase_btn",
-        phase: "結束進攻"
-      }
+      interactive: { type: "click_end_turn" }
     },
     {
-      title: "🎉 恭喜完成新手教學！",
-      content: "太出色了！您已親自體驗並掌握《星靈王》的核心規則與戰術打法。現在，回到主選單開始您的正式星靈對決吧！",
-      spotlightSelector: null,
+      title: "實戰 Step 10：戰鬥與勝負判定",
+      content: "在對手的防守階段，剛才宣告進攻的單位會與對手自動進行戰鬥！戰鬥結算後，若有單位被破壞，將根據卡牌下方的【星星數】扣除雙方的戰線點數（生命值）。",
+      spotlightSelector: "",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "實戰 Step 11：星星戰線倒數",
+      content: "當遊戲進行到一定回合，會觸發【星星戰線倒數】。倒數結束時，星數（生命值）較高的一方將直接獲得勝利！",
+      spotlightSelector: "",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "實戰 Step 12：Call Game (提早結束)",
+      content: "如果你的星數優勢達到15/20分，或者場上單位數量遠超對手，你可以在回合結束時宣告【Call Game】。若對手在下個回合無法破解你的優勢，你將直接獲勝！",
+      spotlightSelector: "",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "教學完成！",
+      content: "這就是《星靈王》的基本對戰流程。掌握了抽牌、召喚、獻祭、攻擊與規則，你已經準備好迎接真正的挑戰了。點擊畫面結束教學！",
+      spotlightSelector: "",
       anatomyModal: false,
       interactive: null
     }
   ],
-
   start: function() {
     if (typeof window.xlwRequestFullScreen === 'function') {
       window.xlwRequestFullScreen();
@@ -29361,10 +29352,10 @@ window.XLW_Tutorial = {
         image: "/static/card_images/c_orc_0016.jpeg"
     };
 
-    const hand1 = { id: "ORC-0002", name: "狗獸人", type: "unit", deck: "獸人", attack: "2", score: 3, tribute: 0, image: "/static/card_images/orc_0002.jpeg" };
-    const hand2 = { id: "ORC-0004", name: "石獸人", type: "unit", deck: "獸人", attack: "3", score: 3, tribute: 0, image: "/static/card_images/orc_0004.jpeg" };
-    const hand3 = { id: "ORC-0008", name: "小兵", type: "unit", deck: "獸人", attack: "3", score: 1, tribute: 0, image: "/static/card_images/orc_0008.jpeg" };
-    const hand4 = { id: "ORC-0013", name: "弓獸人", type: "unit", deck: "獸人", attack: "2", score: 3, tribute: 0, image: "/static/card_images/orc_0013.jpeg" };
+    const hand1 = { id: "ORC-0011", name: "盾牌獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "3", score: 2, tribute: 0, image: "/static/card_images/orc_0011.jpeg" };
+    const hand2 = { id: "R-ORC-0033", name: "阿庫瑪的戰錘", type: "magic", deck: "獸人", faction: "獸人", race: "法術", attack: "0", score: 0, tribute: 0, magic_point: "-", image: "/static/card_images/r_orc_0033.jpeg" };
+    const hand3 = { id: "NMG-0019", name: "法術保護", type: "magic", deck: "中立", faction: "中立", race: "法術", attack: "0", score: 0, tribute: 0, magic_point: "-", image: "/static/card_images/nmg_0019.jpeg" };
+    const hand4 = { id: "R-ORC-0057", name: "禁衛軍獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "3", score: 4, tribute: 1, image: "/static/card_images/r_orc_0057.jpeg" };
 
     hand = [hand1, hand2, hand3, hand4];
     deck = [demoUnit2, demoUnit1]; // Will pop backwards so demoUnit1 (寶寶獸人) is drawn first (index 4), then demoUnit2 (胖獸人) is drawn second (index 5)
@@ -29601,6 +29592,9 @@ window.XLW_Tutorial = {
       }
       else if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
         changeActionPhase(payload.phase);
+      }
+      else if (actionType === "click_end_turn") {
+        endPlayerTurnAndRunEnemy();
       }
       else if (actionType === "click_tribute_confirm") {
         confirmTribute();
