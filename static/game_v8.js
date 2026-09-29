@@ -29119,7 +29119,7 @@ window.XLW_Tutorial = {
   currentStep: 0,
   interactiveTarget: null,
 
-    steps: [
+      steps: [
     {
       title: "🎓 歡迎來到星靈王新手導覽！",
       content: "歡迎各位星靈使者！本教學將為您詳細介紹星靈王棋盤場地區域、手牌資源、卡牌資訊與實戰發動規則。點擊『下一步』開始探索！",
@@ -29272,7 +29272,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "⚔️ 實戰 Step 8：進入進攻宣言階段",
-      content: "強大的單位已上場，是時候反擊了！請點擊右下角的【進攻宣言】按鈕切換階段！",
+      content: "強大的單位已上場，是時候反擊了！請點擊右下角的【進攻宣言】按鈕。系統將會自動為單位宣告進攻路線！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: {
@@ -29281,32 +29281,8 @@ window.XLW_Tutorial = {
       }
     },
     {
-      title: "🎯 實戰 Step 9：選擇我方攻擊者",
-      content: "請點擊我方場上的【獸人戰將】，宣示他將發動攻擊！",
-      spotlightSelector: ".field-row.player-front .slot",
-      anatomyModal: false,
-      interactive: {
-        type: "click_slot",
-        zone: "player_front",
-        idx: 0,
-        action: "select_attacker"
-      }
-    },
-    {
-      title: "🎯 實戰 Step 10：指定敵方目標",
-      content: "最後，請點擊對手場上的【訓練用木人】給予痛擊！",
-      spotlightSelector: ".field-row.enemy-front .slot",
-      anatomyModal: false,
-      interactive: {
-        type: "click_slot",
-        zone: "enemy_front",
-        idx: 0,
-        action: "attack_target"
-      }
-    },
-    {
-      title: "🛡️ 實戰 Step 11：結束戰鬥與防守準備",
-      content: "攻擊完成！接下來請點擊【結束進攻並結算傷害】。在敵方回合，若敵方發動攻擊，遊戲將進入防守階段，屆時我們需要佈署防線！",
+      title: "🛡️ 實戰 Step 9：結束戰鬥與防守準備",
+      content: "進攻宣告完畢！請點擊【結束進攻並結算傷害】。在敵方回合，若敵方發動攻擊，遊戲將進入防守階段，屆時我們需要佈署防線！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: {
@@ -29402,7 +29378,7 @@ window.XLW_Tutorial = {
             attack: "4",
             score: 2,
             tribute: 0,
-            image: "/static/card_images/art_0004.jpeg" // Changed to mona lisa art card as requested before? No wait, user requested mona lisa for modal, and art card for enemy dummy
+            image: "/static/card_images/art_0004.jpeg"
           },
           tapped: false,
           attacking: false,
@@ -29423,7 +29399,7 @@ window.XLW_Tutorial = {
     render();
   },
 
-    renderStep: function() {
+      renderStep: function() {
     const step = this.steps[this.currentStep];
     if (!step) return;
 
@@ -29443,6 +29419,8 @@ window.XLW_Tutorial = {
     const nextBtn = document.getElementById("xlwTutorialNextBtn");
     if (prevBtn) prevBtn.disabled = (this.currentStep === 0);
     
+    const spotlight = document.getElementById("xlwTutorialSpotlight");
+
     // Clear old custom bindings
     if (this.currentInteractionCleanup) {
         this.currentInteractionCleanup();
@@ -29453,21 +29431,18 @@ window.XLW_Tutorial = {
       if (step.interactive) {
         nextBtn.style.display = "none";
         
-        if (step.interactive.type === "click_deck") {
-            const deckEl = document.getElementById("playerDeck");
-            if (deckEl) {
-                const handler = () => { this.handleInteraction("click_deck"); };
-                deckEl.addEventListener("click", handler);
-                this.currentInteractionCleanup = () => deckEl.removeEventListener("click", handler);
-            }
-        }
-        else if (step.interactive.type === "click_tribute_confirm") {
-            const btnEl = document.getElementById("stableActionConfirm");
-            if (btnEl) {
-                const handler = () => { this.handleInteraction("click_tribute_confirm"); };
-                btnEl.addEventListener("click", handler);
-                this.currentInteractionCleanup = () => btnEl.removeEventListener("click", handler);
-            }
+        if (spotlight) {
+            spotlight.style.setProperty("pointer-events", "auto", "important");
+            spotlight.style.setProperty("cursor", "pointer", "important");
+            const handler = () => {
+                this.handleInteraction(step.interactive.type, step.interactive);
+            };
+            spotlight.addEventListener("click", handler);
+            this.currentInteractionCleanup = () => {
+                spotlight.removeEventListener("click", handler);
+                spotlight.style.setProperty("pointer-events", "none", "important");
+                spotlight.style.setProperty("cursor", "default", "important");
+            };
         }
       } else {
         nextBtn.style.display = "inline-block";
