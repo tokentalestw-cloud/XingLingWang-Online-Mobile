@@ -29119,7 +29119,7 @@ window.XLW_Tutorial = {
   currentStep: 0,
   interactiveTarget: null,
 
-      steps: [
+        steps: [
     {
       title: "🎓 歡迎來到星靈王新手導覽！",
       content: "歡迎各位星靈使者！本教學將為您詳細介紹星靈王棋盤場地區域、手牌資源、卡牌資訊與實戰發動規則。點擊『下一步』開始探索！",
@@ -29200,7 +29200,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "🃏 實戰 Step 1：回合開始抽卡",
-      content: "我的回合，抽卡！請點擊右下角的「牌組區」，抽取本回合的卡牌！",
+      content: "回合開始時您的手牌已經有4張獸人卡了。我的回合，抽卡！請點擊右下角的「牌組區」，抽取本回合的卡牌！",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: {
@@ -29209,18 +29209,18 @@ window.XLW_Tutorial = {
     },
     {
       title: "📍 實戰 Step 2：選取手牌單位卡",
-      content: "太好了，我們抽到了卡片。現在請點擊手牌中的第一張單位卡【寶寶獸人】，準備將其打出至戰場！",
-      spotlightSelector: "#hand .card",
+      content: "太好了，我們抽到了卡片。現在請點擊手牌中剛抽到的【寶寶獸人】，準備將其打出至戰場！",
+      spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
       interactive: {
         type: "click_card",
-        index: 0
+        index: 4
       }
     },
     {
       title: "📍 實戰 Step 3：一般召喚至前排",
       content: "現在請點擊我方前排戰線的第一個空格 (前排1)，完成寶寶獸人的召喚！",
-      spotlightSelector: ".field-row.player-front .slot",
+      spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: {
         type: "click_slot",
@@ -29230,18 +29230,18 @@ window.XLW_Tutorial = {
     },
     {
       title: "🔥 實戰 Step 4：高階單位獻祭準備",
-      content: "我們手牌中還有一張高階單位【獸人戰將】，他需要 1 個祭品才能召喚。請點擊手牌中的【獸人戰將】！",
-      spotlightSelector: "#hand .card",
+      content: "我們剛抽到的另一張高階單位【胖獸人】，他需要 1 個祭品才能召喚。請點擊手牌中的【胖獸人】！",
+      spotlightSelector: "#hand .card:nth-child(5)", // It becomes 5th child because baby orc was removed from hand!
       anatomyModal: false,
       interactive: {
         type: "click_card",
-        index: 1
+        index: 4
       }
     },
     {
       title: "🩸 實戰 Step 5：選擇場上祭品",
       content: "獻祭召喚需要犧牲場上的單位。請點擊剛才召喚在場上的【寶寶獸人】，將其標記為祭品！",
-      spotlightSelector: ".field-row.player-front .slot",
+      spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: {
         type: "click_slot",
@@ -29261,8 +29261,8 @@ window.XLW_Tutorial = {
     },
     {
       title: "📍 實戰 Step 7：獻祭召喚上場",
-      content: "獻祭完成！現在請再次點擊前排第一個空格，將【獸人戰將】威風凜凜地召喚上場！",
-      spotlightSelector: ".field-row.player-front .slot",
+      content: "獻祭完成！寶寶獸人已經離開戰場，現在請再次點擊前排第一個空格，將【胖獸人】威風凜凜地召喚上場！",
+      spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: {
         type: "click_slot",
@@ -29333,6 +29333,7 @@ window.XLW_Tutorial = {
     turn = 2;
     normalSummonUsed = false;
     tacticalSummonUsed = false;
+    window.XLW_bypassNormalSummonLimit = true; // ensure tutorial doesn't block second summon
 
     const demoUnit1 = {
         id: "C-ORC-0012",
@@ -29344,13 +29345,12 @@ window.XLW_Tutorial = {
         attack: "2",
         score: 2,
         tribute: 0,
-        image: "/static/card_images/c_orc_0012.jpeg",
-        effect_text: "立即: 獎勵+1。此單位從場上回手牌前，獎勵+1"
+        image: "/static/card_images/c_orc_0012.jpeg"
     };
 
     const demoUnit2 = {
-        id: "SR-ORC-0001",
-        name: "獸人戰將",
+        id: "C-ORC-0016",
+        name: "胖獸人",
         type: "unit",
         deck: "獸人",
         faction: "獸人",
@@ -29358,13 +29358,16 @@ window.XLW_Tutorial = {
         attack: "4",
         score: 4,
         tribute: 1,
-        image: "/static/card_images/sr_orc_0001.jpeg",
-        effect_text: "強大的近戰單位",
-        keywords: ["立即"]
+        image: "/static/card_images/c_orc_0016.jpeg"
     };
 
-    hand = [];
-    deck = [demoUnit2, demoUnit1]; // Will pop backwards so demoUnit1 is at index 0 and demoUnit2 is at index 1
+    const hand1 = { id: "ORC-0002", name: "狗獸人", type: "unit", deck: "獸人", attack: "2", score: 3, tribute: 0, image: "/static/card_images/orc_0002.jpeg" };
+    const hand2 = { id: "ORC-0004", name: "石獸人", type: "unit", deck: "獸人", attack: "3", score: 3, tribute: 0, image: "/static/card_images/orc_0004.jpeg" };
+    const hand3 = { id: "ORC-0008", name: "小兵", type: "unit", deck: "獸人", attack: "3", score: 1, tribute: 0, image: "/static/card_images/orc_0008.jpeg" };
+    const hand4 = { id: "ORC-0013", name: "弓獸人", type: "unit", deck: "獸人", attack: "2", score: 3, tribute: 0, image: "/static/card_images/orc_0013.jpeg" };
+
+    hand = [hand1, hand2, hand3, hand4];
+    deck = [demoUnit2, demoUnit1]; // Will pop backwards so demoUnit1 (寶寶獸人) is drawn first (index 4), then demoUnit2 (胖獸人) is drawn second (index 5)
 
     field = {
       player_front: [null, null, null, null, null],
