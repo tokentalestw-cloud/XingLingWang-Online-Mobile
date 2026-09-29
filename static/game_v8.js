@@ -29567,7 +29567,7 @@ window.XLW_Tutorial = {
     window.xlwReturnToTitle();
   },
 
-    handleInteraction: function(actionType, payload) {
+      handleInteraction: function(actionType, payload) {
     if (!this.active) return false;
     const step = this.steps[this.currentStep];
     if (!step || !step.interactive) return false;
@@ -29579,7 +29579,14 @@ window.XLW_Tutorial = {
           return true;
       }
       if (actionType === "click_card" && payload.index === step.interactive.index) {
-        toggleSelectCard(payload.index);
+        const card = hand[payload.index];
+        if (getCardTributeCost(card) > 0) {
+            startTributeSummon(payload.index);
+        } else {
+            selectedHandForSummon = payload.index;
+            showModal(card);
+            render();
+        }
         setTimeout(() => this.nextStep(), 300);
         return true;
       }
@@ -29588,12 +29595,6 @@ window.XLW_Tutorial = {
             toggleTributeSelection(payload.zone, payload.idx);
             setTimeout(() => this.nextStep(), 300);
             return true;
-        } else if (step.interactive.action === "attack_target") {
-            setTimeout(() => this.nextStep(), 800);
-            return false; // let game handle it naturally
-        } else if (step.interactive.action === "select_attacker") {
-            setTimeout(() => this.nextStep(), 300);
-            return false; // let game handle selecting attacker naturally
         } else {
             performSummonToSlot(payload.zone, payload.idx);
             setTimeout(() => this.nextStep(), 300);
