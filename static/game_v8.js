@@ -29570,18 +29570,19 @@ window.XLW_Tutorial = {
     window.xlwReturnToTitle();
   },
 
-      handleInteraction: function(actionType, payload) {
+        handleInteraction: function(actionType, payload) {
     if (!this.active) return false;
     const step = this.steps[this.currentStep];
     if (!step || !step.interactive) return false;
 
     if (step.interactive.type === actionType) {
+      if (this._inAction) return false;
+      this._inAction = true;
+
       if (actionType === "click_deck") {
           performPlayerTurnStartDraw();
-          setTimeout(() => this.nextStep(), 300);
-          return true;
       }
-      if (actionType === "click_card" && payload.index === step.interactive.index) {
+      else if (actionType === "click_card" && payload.index === step.interactive.index) {
         const card = hand[payload.index];
         if (getCardTributeCost(card) > 0) {
             startTributeSummon(payload.index);
@@ -29590,30 +29591,27 @@ window.XLW_Tutorial = {
             showModal(card);
             render();
         }
-        setTimeout(() => this.nextStep(), 300);
-        return true;
       }
-      if (actionType === "click_slot" && payload.zone === step.interactive.zone && payload.idx === step.interactive.idx) {
+      else if (actionType === "click_slot" && payload.zone === step.interactive.zone && payload.idx === step.interactive.idx) {
         if (step.interactive.action === "tribute_select") {
             toggleTributeSelection(payload.zone, payload.idx);
-            setTimeout(() => this.nextStep(), 300);
-            return true;
         } else {
             performSummonToSlot(payload.zone, payload.idx);
-            setTimeout(() => this.nextStep(), 300);
-            return true;
         }
       }
-      if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
+      else if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
         changeActionPhase(payload.phase);
-        setTimeout(() => this.nextStep(), 300);
-        return true;
       }
-      if (actionType === "click_tribute_confirm") {
+      else if (actionType === "click_tribute_confirm") {
         confirmTribute();
-        setTimeout(() => this.nextStep(), 300);
-        return true;
+      } else {
+        this._inAction = false;
+        return false;
       }
+
+      this._inAction = false;
+      setTimeout(() => this.nextStep(), 300);
+      return true;
     }
     return false;
   }
