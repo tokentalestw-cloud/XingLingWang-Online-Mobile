@@ -29119,7 +29119,7 @@ window.XLW_Tutorial = {
   currentStep: 0,
   interactiveTarget: null,
 
-  steps: [
+    steps: [
     {
       title: "🎓 歡迎來到星靈王新手導覽！",
       content: "歡迎各位星靈使者！本教學將為您詳細介紹星靈王棋盤場地區域、手牌資源、卡牌資訊與實戰發動規則。點擊『下一步』開始探索！",
@@ -29192,15 +29192,24 @@ window.XLW_Tutorial = {
     },
     {
       title: "⚔️ 實戰演練：手把手操作體驗",
-      content: "接下來，我們將模擬一次真實的回合！系統已為您準備了起手卡牌，請跟隨導師指引動手操作吧！",
+      content: "接下來，我們將模擬一次真實的回合！請跟隨導師指引動手操作，親自體驗抽卡、召喚、獻祭、進攻與防守的過程！",
       spotlightSelector: null,
       anatomyModal: false,
       setupBattle: true,
       interactive: null
     },
     {
-      title: "🃏 實戰 Step 1：選取手牌單位卡",
-      content: "請點擊手牌中第一張單位卡【萌萌小貓】，將其準備打出至戰場！",
+      title: "🃏 實戰 Step 1：回合開始抽卡",
+      content: "我的回合，抽卡！請點擊右下角的「牌組區」，抽取本回合的卡牌！",
+      spotlightSelector: "#playerDeck",
+      anatomyModal: false,
+      interactive: {
+        type: "click_deck"
+      }
+    },
+    {
+      title: "📍 實戰 Step 2：選取手牌單位卡",
+      content: "太好了，我們抽到了卡片。現在請點擊手牌中的第一張單位卡【寶寶獸人】，準備將其打出至戰場！",
       spotlightSelector: "#hand .card",
       anatomyModal: false,
       interactive: {
@@ -29209,8 +29218,8 @@ window.XLW_Tutorial = {
       }
     },
     {
-      title: "📍 實戰 Step 2：放置至前排戰線",
-      content: "太棒了！現在請點擊我方前排戰線的第一個空格 (前排1)，完成單位召喚！",
+      title: "📍 實戰 Step 3：一般召喚至前排",
+      content: "現在請點擊我方前排戰線的第一個空格 (前排1)，完成寶寶獸人的召喚！",
       spotlightSelector: ".field-row.player-front .slot",
       anatomyModal: false,
       interactive: {
@@ -29220,8 +29229,50 @@ window.XLW_Tutorial = {
       }
     },
     {
-      title: "⚔️ 實戰 Step 3：進入進攻宣言階段",
-      content: "單位已成功召喚！現在請點擊右下角操作面板上的【進攻宣言】按鈕，準備展開攻擊！",
+      title: "🔥 實戰 Step 4：高階單位獻祭準備",
+      content: "我們手牌中還有一張高階單位【獸人戰將】，他需要 1 個祭品才能召喚。請點擊手牌中的【獸人戰將】！",
+      spotlightSelector: "#hand .card",
+      anatomyModal: false,
+      interactive: {
+        type: "click_card",
+        index: 1
+      }
+    },
+    {
+      title: "🩸 實戰 Step 5：選擇場上祭品",
+      content: "獻祭召喚需要犧牲場上的單位。請點擊剛才召喚在場上的【寶寶獸人】，將其標記為祭品！",
+      spotlightSelector: ".field-row.player-front .slot",
+      anatomyModal: false,
+      interactive: {
+        type: "click_slot",
+        zone: "player_front",
+        idx: 0,
+        action: "tribute_select"
+      }
+    },
+    {
+      title: "✅ 實戰 Step 6：確認獻祭",
+      content: "已標記祭品！現在請點擊畫面中間的「確認獻祭」按鈕！",
+      spotlightSelector: "#stableActionConfirm",
+      anatomyModal: false,
+      interactive: {
+        type: "click_tribute_confirm"
+      }
+    },
+    {
+      title: "📍 實戰 Step 7：獻祭召喚上場",
+      content: "獻祭完成！現在請再次點擊前排第一個空格，將【獸人戰將】威風凜凜地召喚上場！",
+      spotlightSelector: ".field-row.player-front .slot",
+      anatomyModal: false,
+      interactive: {
+        type: "click_slot",
+        zone: "player_front",
+        idx: 0
+      }
+    },
+    {
+      title: "⚔️ 實戰 Step 8：進入進攻宣言階段",
+      content: "強大的單位已上場，是時候反擊了！請點擊右下角的【進攻宣言】按鈕切換階段！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: {
@@ -29230,19 +29281,42 @@ window.XLW_Tutorial = {
       }
     },
     {
-      title: "🔥 實戰 Step 4：宣告戰鬥攻擊",
-      content: "最後一步！請點擊我方剛召喚的【萌萌小貓】，再點擊對手場上的敵方單位，發動震撼打擊！",
+      title: "🎯 實戰 Step 9：選擇我方攻擊者",
+      content: "請點擊我方場上的【獸人戰將】，宣示他將發動攻擊！",
       spotlightSelector: ".field-row.player-front .slot",
       anatomyModal: false,
       interactive: {
         type: "click_slot",
         zone: "player_front",
-        idx: 0
+        idx: 0,
+        action: "select_attacker"
+      }
+    },
+    {
+      title: "🎯 實戰 Step 10：指定敵方目標",
+      content: "最後，請點擊對手場上的【訓練用木人】給予痛擊！",
+      spotlightSelector: ".field-row.enemy-front .slot",
+      anatomyModal: false,
+      interactive: {
+        type: "click_slot",
+        zone: "enemy_front",
+        idx: 0,
+        action: "attack_target"
+      }
+    },
+    {
+      title: "🛡️ 實戰 Step 11：結束戰鬥與防守準備",
+      content: "攻擊完成！接下來請點擊【結束進攻並結算傷害】。在敵方回合，若敵方發動攻擊，遊戲將進入防守階段，屆時我們需要佈署防線！",
+      spotlightSelector: "#stableActionAttack",
+      anatomyModal: false,
+      interactive: {
+        type: "click_phase_btn",
+        phase: "結束進攻"
       }
     },
     {
       title: "🎉 恭喜完成新手教學！",
-      content: "太出色了！您已掌握《星靈王》的核心規則與戰術打法。現在，回到主選單開始您的正式星靈對決吧！",
+      content: "太出色了！您已親自體驗並掌握《星靈王》的核心規則與戰術打法。現在，回到主選單開始您的正式星靈對決吧！",
       spotlightSelector: null,
       anatomyModal: false,
       interactive: null
@@ -29284,7 +29358,7 @@ window.XLW_Tutorial = {
     normalSummonUsed = false;
     tacticalSummonUsed = false;
 
-          const demoUnit = {
+    const demoUnit1 = {
         id: "C-ORC-0012",
         name: "寶寶獸人",
         type: "unit",
@@ -29296,22 +29370,39 @@ window.XLW_Tutorial = {
         tribute: 0,
         image: "/static/card_images/c_orc_0012.jpeg",
         effect_text: "立即: 獎勵+1。此單位從場上回手牌前，獎勵+1"
-      };
+    };
 
-    hand = [demoUnit];
+    const demoUnit2 = {
+        id: "SR-ORC-0001",
+        name: "獸人戰將",
+        type: "unit",
+        deck: "獸人",
+        faction: "獸人",
+        race: "獸人",
+        attack: "4",
+        score: 4,
+        tribute: 1,
+        image: "/static/card_images/sr_orc_0001.jpeg",
+        effect_text: "強大的近戰單位",
+        keywords: ["立即"]
+    };
+
+    hand = [];
+    deck = [demoUnit2, demoUnit1]; // Will pop backwards so demoUnit1 is at index 0 and demoUnit2 is at index 1
+
     field = {
       player_front: [null, null, null, null, null],
       player_back: [null, null, null, null, null],
       enemy_front: [
         {
           card: {
-            id: "DEMO_ENEMY",
-            name: "訓練用木人",
+            id: "ART-0004",
+            name: "藝術品單位",
             type: "unit",
-            attack: "1",
-            score: 1,
+            attack: "4",
+            score: 2,
             tribute: 0,
-            image: "/static/card_images/c_nms_0019.jpeg"
+            image: "/static/card_images/art_0004.jpeg" // Changed to mona lisa art card as requested before? No wait, user requested mona lisa for modal, and art card for enemy dummy
           },
           tapped: false,
           attacking: false,
@@ -29332,7 +29423,7 @@ window.XLW_Tutorial = {
     render();
   },
 
-  renderStep: function() {
+    renderStep: function() {
     const step = this.steps[this.currentStep];
     if (!step) return;
 
@@ -29346,16 +29437,45 @@ window.XLW_Tutorial = {
 
     if (titleEl) titleEl.textContent = step.title;
     if (contentEl) contentEl.textContent = step.content;
-    if (counterEl) counterEl.textContent = `${this.currentStep + 1} / ${this.steps.length}`;
+    if (counterEl) counterEl.textContent = ${this.currentStep + 1} / ;
 
     const prevBtn = document.getElementById("xlwTutorialPrevBtn");
     const nextBtn = document.getElementById("xlwTutorialNextBtn");
     if (prevBtn) prevBtn.disabled = (this.currentStep === 0);
+    
+    // Clear old custom bindings
+    if (this.currentInteractionCleanup) {
+        this.currentInteractionCleanup();
+        this.currentInteractionCleanup = null;
+    }
+
     if (nextBtn) {
-      if (this.currentStep === this.steps.length - 1) {
-        nextBtn.textContent = "完成並返回首頁 🎉";
+      if (step.interactive) {
+        nextBtn.style.display = "none";
+        
+        if (step.interactive.type === "click_deck") {
+            const deckEl = document.getElementById("playerDeck");
+            if (deckEl) {
+                const handler = () => { this.handleInteraction("click_deck"); };
+                deckEl.addEventListener("click", handler);
+                this.currentInteractionCleanup = () => deckEl.removeEventListener("click", handler);
+            }
+        }
+        else if (step.interactive.type === "click_tribute_confirm") {
+            const btnEl = document.getElementById("stableActionConfirm");
+            if (btnEl) {
+                const handler = () => { this.handleInteraction("click_tribute_confirm"); };
+                btnEl.addEventListener("click", handler);
+                this.currentInteractionCleanup = () => btnEl.removeEventListener("click", handler);
+            }
+        }
       } else {
-        nextBtn.textContent = "下一步 ►";
+        nextBtn.style.display = "inline-block";
+        if (this.currentStep === this.steps.length - 1) {
+          nextBtn.textContent = "完成並返回首頁 🎉";
+        } else {
+          nextBtn.textContent = "下一步 ►";
+        }
       }
     }
 
@@ -29472,24 +29592,46 @@ window.XLW_Tutorial = {
     window.xlwReturnToTitle();
   },
 
-  handleInteraction: function(actionType, payload) {
+    handleInteraction: function(actionType, payload) {
     if (!this.active) return false;
     const step = this.steps[this.currentStep];
     if (!step || !step.interactive) return false;
 
     if (step.interactive.type === actionType) {
+      if (actionType === "click_deck") {
+          performPlayerTurnStartDraw();
+          setTimeout(() => this.nextStep(), 300);
+          return true;
+      }
       if (actionType === "click_card" && payload.index === step.interactive.index) {
         toggleSelectCard(payload.index);
         setTimeout(() => this.nextStep(), 300);
         return true;
       }
       if (actionType === "click_slot" && payload.zone === step.interactive.zone && payload.idx === step.interactive.idx) {
-        performSummonToSlot(payload.zone, payload.idx);
-        setTimeout(() => this.nextStep(), 300);
-        return true;
+        if (step.interactive.action === "tribute_select") {
+            toggleTributeSelection(payload.zone, payload.idx);
+            setTimeout(() => this.nextStep(), 300);
+            return true;
+        } else if (step.interactive.action === "attack_target") {
+            setTimeout(() => this.nextStep(), 800);
+            return false; // let game handle it naturally
+        } else if (step.interactive.action === "select_attacker") {
+            setTimeout(() => this.nextStep(), 300);
+            return false; // let game handle selecting attacker naturally
+        } else {
+            performSummonToSlot(payload.zone, payload.idx);
+            setTimeout(() => this.nextStep(), 300);
+            return true;
+        }
       }
       if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
         changeActionPhase(payload.phase);
+        setTimeout(() => this.nextStep(), 300);
+        return true;
+      }
+      if (actionType === "click_tribute_confirm") {
+        confirmTribute();
         setTimeout(() => this.nextStep(), 300);
         return true;
       }
