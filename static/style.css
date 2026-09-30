@@ -2522,3 +2522,41 @@ button:disabled {
 
   .xlw-left-card-panel { display: none !important; }
 }
+
+
+/* === Epic Space BG Override === */
+body {
+    background: url('/static/custom_bg/epic_space_bg.jpg') center/cover no-repeat !important;
+}
+
+.board {
+    background-color: rgba(10, 10, 20, 0.2) !important;
+    backdrop-filter: blur(2px) !important;
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.6), 0 20px 60px rgba(0, 0, 0, 0.45) !important;
+    border: 1.5px solid rgba(255, 215, 106, 0.5) !important;
+}
+
+.board::before, .board::after {
+    display: none !important;
+}
+
+/* Also make slots slightly more transparent so the bg shines through */
+.slot {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(120, 180, 255, 0.3) !important;
+}
+
+.zone.side {
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+/* More UI transparency for the epic space background */
+.score-badge-fixed, 
+.xlw-fixed-top-right-action-bar, 
+.phase-display-panel-hard,
+.hand-panel,
+#logPanel {
+    background: rgba(12, 8, 24, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+}
