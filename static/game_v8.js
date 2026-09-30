@@ -29222,9 +29222,9 @@ window.XLW_Tutorial = {
     {
       title: "實戰 Step 4：準備獻祭召喚",
       content: "我們手牌中還有一張高階的【禁衛軍獸人】，它需要 1 個祭品才能上場。請點擊手牌中的【禁衛軍獸人】。",
-      spotlightSelector: "#hand .card:nth-child(5)",
+      spotlightSelector: "#hand .card:nth-child(4)",
       anatomyModal: false,
-      interactive: { type: "click_card", index: 4 }
+      interactive: { type: "click_card", index: 3 }
     },
     {
       title: "實戰 Step 5：選擇祭品",
