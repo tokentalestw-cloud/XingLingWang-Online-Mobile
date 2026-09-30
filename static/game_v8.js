@@ -25044,6 +25044,7 @@ function calculateUnitCount(isPlayer) {
 }
 
 function triggerCallGameEnd(winner) {
+  const isCallGame = true;
   isGameOverFlag = true;
   
   let playerStars = playerBonusScore;
@@ -25202,7 +25203,7 @@ function handleTurnEndCountdownLogic() {
   }
 }
 
-function executeGameOverCalculations() {
+function executeGameOverCalculations(isCallGame = false) {
   isGameOverFlag = true;
   
   let playerStars = playerBonusScore;
