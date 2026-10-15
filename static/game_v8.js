@@ -5344,7 +5344,7 @@ async function startTributeSummon(handIndex) {
     }
   }
 
-  if (normalSummonUsed) {
+  if (normalSummonUsed && !(window.XLW_Tutorial && window.XLW_Tutorial.active)) {
     setStatus("本回合召喚階段已進行過普通/獻祭召喚。");
     return;
   }
@@ -6631,7 +6631,7 @@ function confirmTribute() {
     }
   };
 
-  executeTributeEffects().then(async () => {
+  return executeTributeEffects().then(async () => {
     // 記錄被獻祭的祭品位置，供聯網召喚同步清除
     window.XLW_lastTributes = selectedTributes.map(t => ({ zone: t.zone, idx: t.idx }));
     
@@ -6822,7 +6822,8 @@ async function performSummonToSlot(zone, idx) {
     return;
   }
 
-  const canSum = window.XLW_bypassNormalSummonLimit ||
+  const canSum = (window.XLW_Tutorial && window.XLW_Tutorial.active) ||
+                 window.XLW_bypassNormalSummonLimit ||
                  (phase === "召喚階段" && !normalSummonUsed) || 
                  (phase === "戰術佈陣" && !tacticalSummonUsed);
   if (!canSum) {
@@ -18118,10 +18119,8 @@ function renderHand() {
     cardEl.onclick = async (e) => {
       e.stopPropagation();
       if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-        const handled = window.XLW_Tutorial.handleInteraction("click_card", { index: idx, card });
+        const handled = await window.XLW_Tutorial.handleInteraction("click_card", { index: idx, card });
         if (handled) {
-          selectedHandForSummon = idx;
-          render();
           return;
         }
       }
@@ -21861,9 +21860,10 @@ function setupGlobalEvents() {
   // 全域點擊點空處重置選擇
   document.addEventListener("click", (e) => {
     if (isMultiplayer && !isMyTurn) return;
+    if (window.XLW_Tutorial && window.XLW_Tutorial.active) return;
     // 防禦：如果點擊的元素已經被從 DOM 中移除（例如重新渲染銷毀），防禦性地不予重置
     if (e.target && !document.body.contains(e.target)) return;
-    if (e.target.closest(".card") || e.target.closest(".slot") || e.target.closest("#stableActionPanel")) return;
+    if (e.target.closest(".card") || e.target.closest(".slot") || e.target.closest("#stableActionPanel") || e.target.closest("#xlwTutorialOverlay") || e.target.closest("#xlwTutorialSpotlight") || e.target.closest(".xlw-tutorial-spotlight")) return;
     clearModes();
     render();
   });
@@ -29429,7 +29429,11 @@ window.XLW_Tutorial = {
         if (spotlight) {
             spotlight.style.setProperty("pointer-events", "auto", "important");
             spotlight.style.setProperty("cursor", "pointer", "important");
-            const handler = () => {
+            const handler = (e) => {
+                if (e) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }
                 this.handleInteraction(step.interactive.type, step.interactive);
             };
             spotlight.addEventListener("click", handler);
@@ -29562,7 +29566,7 @@ window.XLW_Tutorial = {
     window.xlwReturnToTitle();
   },
 
-        handleInteraction: function(actionType, payload) {
+        handleInteraction: async function(actionType, payload) {
     if (!this.active) return false;
     const step = this.steps[this.currentStep];
     if (!step || !step.interactive) return false;
@@ -29574,31 +29578,32 @@ window.XLW_Tutorial = {
       if (actionType === "click_deck") {
           performPlayerTurnStartDraw();
       }
-      else if (actionType === "click_card" && payload.index === step.interactive.index) {
-        const card = hand[payload.index];
+      else if (actionType === "click_card" && (!payload || payload.index === step.interactive.index)) {
+        const targetIdx = step.interactive.index;
+        const card = hand[targetIdx];
         if (getCardTributeCost(card) > 0) {
-            startTributeSummon(payload.index);
+            await startTributeSummon(targetIdx);
         } else {
-            selectedHandForSummon = payload.index;
+            selectedHandForSummon = targetIdx;
             showModal(card);
             render();
         }
       }
-      else if (actionType === "click_slot" && payload.zone === step.interactive.zone && payload.idx === step.interactive.idx) {
+      else if (actionType === "click_slot" && (!payload || (payload.zone === step.interactive.zone && payload.idx === step.interactive.idx))) {
         if (step.interactive.action === "tribute_select") {
-            toggleTributeSelection(payload.zone, payload.idx);
+            toggleTributeSelection(step.interactive.zone, step.interactive.idx);
         } else {
-            performSummonToSlot(payload.zone, payload.idx);
+            await performSummonToSlot(step.interactive.zone, step.interactive.idx);
         }
       }
-      else if (actionType === "click_phase_btn" && payload.phase === step.interactive.phase) {
-        changeActionPhase(payload.phase);
+      else if (actionType === "click_phase_btn" && (!payload || payload.phase === step.interactive.phase)) {
+        await changeActionPhase(step.interactive.phase);
       }
       else if (actionType === "click_end_turn") {
-        endPlayerTurnAndRunEnemy();
+        await endPlayerTurnAndRunEnemy();
       }
       else if (actionType === "click_tribute_confirm") {
-        confirmTribute();
+        await confirmTribute();
       } else {
         this._inAction = false;
         return false;
