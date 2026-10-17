@@ -22037,6 +22037,13 @@ function showModal(card, equipments) {
   }
 }
 
+function showCardInfo(card, equipments) {
+  if (typeof showModal === "function") {
+    showModal(card, equipments);
+  }
+}
+window.showCardInfo = showCardInfo;
+
 function setStatus(t) {
   const s = $("status");
   if (s) s.textContent = t;
@@ -26107,7 +26114,11 @@ function showSpellChainUI(stack) {
     img.alt = item.card.name;
     img.style.cursor = "pointer";
     img.onclick = () => {
-      showCardInfo(item.card);
+      if (typeof showModal === "function") {
+        showModal(item.card);
+      } else if (typeof showCardInfo === "function") {
+        showCardInfo(item.card);
+      }
     };
     wrapper.appendChild(img);
     
