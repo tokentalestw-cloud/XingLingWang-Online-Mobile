@@ -29485,21 +29485,21 @@ window.XLW_Tutorial = {
     },
     {
       title: "10. 卡牌資訊與意義",
-      content: "點擊卡牌會彈出詳細資訊面板。卡牌主要關注：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 特殊效果、⑤ ⭐ ★星數得分。",
+      content: "點擊卡牌可查看詳情：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 特殊效果、⑤ ⭐ 星數得分。",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null
     },
     {
       title: "11. 勝利條件介紹",
-      content: "在開始對戰前，請記住《星靈王》的兩大勝利條件：①【星星戰線倒數】當回合推進觸發倒數並結束時，總星數（★）較高者直接獲勝！②【Call Game 提早結束】回合結束時若總星數達 20★（特定角色 15★）以上，或場上單位數比對手多 4 個以上，可宣告提早結束，若對手下回合無法破解則直接獲勝！",
+      content: "兩大勝利條件：①【星星戰線倒數】倒數結束時，總星數（★）較高者獲勝！②【Call Game 提早結束】回合結束時若總星數達 20★ 以上，或場上單位數比對手多 4 個以上，可宣告提早結束，對手下回合無法破解即獲勝！",
       spotlightSelector: "#scoreBtn",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "12. 開局準備：宣言種族與起手調度",
-      content: "對戰開始前，雙方會同時亮出【種族宣言卡】宣告各自使用的種族，並抽取 4 張起始手牌。此時可進行【起手調度（換牌）】，先把初期用不到或需要祭品的高階卡牌替換掉！請點擊手牌最右側需要祭品的【胖獸人】將它換掉！",
+      content: "開局雙方同時亮出【種族宣言卡】並抽 4 張起手牌。此時可【起手調度】將初期用不到的祭品怪換掉！請點擊手牌最右側需要祭品的【胖獸人】替換。",
       spotlightSelector: "#hand .card:nth-child(4)",
       anatomyModal: false,
       setupBattle: true,
@@ -29507,7 +29507,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "13. 遊戲開始！認識每回合流程",
-      content: "【遊戲開始！】在《星靈王》中，每個回合都會依序經歷五個階段：①【抽牌階段】 ➔ ②【防守階段】 ➔ ③【召喚階段】 ➔ ④【戰術階段（進攻宣言／戰術佈陣 2選1）】 ➔ ⑤【結束階段】，完成後再換到對手回合！現在開始您的第一回合，請點擊『下一步』。",
+      content: "【遊戲開始！】每回合依序經歷五階段：①抽牌 ➔ ②防守 ➔ ③召喚 ➔ ④戰術（進攻／佈陣 2選1）➔ ⑤結束，完成後換對手回合！請點擊『下一步』。",
       spotlightSelector: null,
       anatomyModal: false,
       showGameStartBanner: true,
@@ -29515,70 +29515,70 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 1：抽牌階段",
-      content: "進入第一回合的【抽牌階段】！每回合開始時需從牌組抽取 2 張牌（手牌超過 10 張需除外）。現在請點擊右下角的【專屬牌組】抽取 2 張牌！",
+      content: "進入第一回合【抽牌階段】！每回合開始時從牌組抽 2 張牌（手牌上限 10 張）。請點擊右下角的【專屬牌組】抽牌！",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: { type: "click_deck" }
     },
     {
-      title: "實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭概念）",
-      content: "抽完牌後會經過【防守階段】（因第一回合對手尚未進攻故直接略過），進入【召喚階段】！每回合有 1 次常規召喚機會：① 從手牌打出 0 祭品單位、② 點擊右側綠色的【我方森林區】免費召喚 1 隻【小旅人】上場、或 ③ 將場上單位作為「祭品獻祭」來召喚高階單位（如禁衛軍獸人）！",
+      title: "實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭）",
+      content: "經過【防守階段】後進入【召喚階段】！每回合可常規召喚 1 次：①打出 0 祭品單位、②點擊右側綠色【我方森林區】召喚【小旅人】、或 ③將場上單位「獻祭」召喚高階單位！",
       spotlightSelector: "#playerForest",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "實戰 Step 3：召喚階段（選擇寶寶獸人）",
-      content: "因為第一回合場上還沒有單位可以當作祭品，我們先從手牌召喚 0 祭品的基礎單位！請點擊手牌中發光的【寶寶獸人】。",
+      content: "第一回合場上尚無祭品，我們先從手牌召喚 0 祭品單位！請點擊手牌中框選的【寶寶獸人】。",
       spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 4 }
     },
     {
       title: "實戰 Step 4：召喚階段（打出單位上場）",
-      content: "召喚單位時需遵守「前排優先」原則。現在請點擊前排戰線的第一個空位，將【寶寶獸人】召喚上場！",
+      content: "召喚單位須遵守「前排優先」原則。請點擊前排戰線第一個空位，將【寶寶獸人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
       title: "實戰 Step 5：戰術階段（第一回合跳過）",
-      content: "召喚完成後會進入【戰術階段】，但根據規則，【先攻的第一回合跳過戰術階段】（無法進行進攻宣言或佈陣移動）！請點擊右側的【結束回合】按鈕，結束第一回合並換對手行動。",
+      content: "接著進入【戰術階段】，依規則【先攻第一回合跳過戰術階段】（無法進攻或佈陣）！請點擊右側【結束回合】按鈕換對手行動。",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_first_turn_end" }
     },
     {
       title: "實戰 Step 6：戰術階段 2 選 1（進攻宣言）",
-      content: "對手在他的回合經歷了抽牌、防守、召喚【創世老人】（攻擊力 1）並結束回合。現在輪到我方第 2 回合！在【戰術階段】可在「戰術佈陣」與「進攻宣言」中 2 選 1。請點擊右側的【進攻宣言】按鈕，讓寶寶獸人發起進攻！",
+      content: "對手回合抽牌、防守並召喚了【創世老人】。輪到我方第 2 回合【戰術階段】，可在「戰術佈陣」與「進攻宣言」2 選 1。請點擊右側【進攻宣言】發起進攻！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "進攻宣言" }
     },
     {
       title: "實戰 Step 7：結束回合（打倒對手與敵方反擊）",
-      content: "進攻宣言完成！請點擊右側的【結束回合】按鈕。接下來將換到對方回合：對手會在【防守階段】被我方寶寶獸人打倒，接著對手會抽牌、召喚一隻新單位【呐喊的人】，並在戰術 2 選 1 選擇【進攻】向我們反擊！",
+      content: "進攻宣言完成！請點擊右側【結束回合】。接下來對手會在防守階段被寶寶獸人打倒，接著抽牌、召喚【呐喊的人】並選擇【進攻】向我們反擊！",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_end_turn" }
     },
     {
-      title: "實戰 Step 8：輪到我方進行防守（使用盾牌人偶反制）",
-      content: "對手單位被打倒後，輪到對方回合抽牌、防守、召喚了高攻擊力的【呐喊的人】並選擇戰術 2 選 1 的【進攻】！現在輪到我方進行【防守階段】，請點擊手牌中的【盾牌人偶】作為反制，使對手的進攻無效化並橫置！",
+      title: "實戰 Step 8：輪到我方防守（使用盾牌人偶反制）",
+      content: "對手召喚了【呐喊的人】並向我方發起進攻！現在進入我方【防守階段】，請點擊手牌中的【盾牌人偶】進行反制，使對手進攻無效並橫置！",
       spotlightSelector: "#hand .card:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_defense_spell", index: 2 }
     },
     {
       title: "實戰 Step 9：召喚階段（準備獻祭召喚）",
-      content: "成功用盾牌人偶擋下攻擊！輪到我方回合的【召喚階段】，我們將把場上的寶寶獸人獻祭，來召喚高階的【禁衛軍獸人】（需 1 個祭品）。請點擊手牌中的【禁衛軍獸人】。",
+      content: "成功擋下攻擊！輪到我方【召喚階段】，我們將獻祭場上的寶寶獸人，升級召喚高階的【禁衛軍獸人】（需 1 祭品）。請點擊手牌中的【禁衛軍獸人】。",
       spotlightSelector: "#hand .card:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 2 }
     },
     {
       title: "實戰 Step 10：選擇祭品（獻祭寶寶獸人）",
-      content: "請點擊場上的【寶寶獸人】，將它作為祭品！",
+      content: "請點擊場上的【寶寶獸人】，將它選為祭品！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tribute_select" }
@@ -29592,21 +29592,21 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 12：獻祭召喚上場",
-      content: "獻祭完成！寶寶獸人已經離開戰場，現在請點擊前排第一個空格，將【禁衛軍獸人】威風凜凜地召喚上場！",
+      content: "獻祭完成！請點擊前排第一個空格，將【禁衛軍獸人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
       title: "實戰 Step 13：戰術階段 2 選 1（進行防守佈陣）",
-      content: "召喚完成後，這次我們在【戰術階段 2 選 1】中選擇進行防守佈陣！請點擊右側的【戰術佈陣】按鈕。在此階段可額外召喚 1 個小旅人（或免祭品單位），並自由移動調整場上單位的位置。",
+      content: "這次在【戰術階段 2 選 1】我們選擇防守佈陣！請點擊右側【戰術佈陣】按鈕，可額外召喚 1 隻小旅人並自由移動調整場上單位位置。",
       spotlightSelector: "#stableActionTactical",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "戰術佈陣" }
     },
     {
       title: "實戰 Step 14：召喚小旅人",
-      content: "進入佈陣階段後，請點擊右側綠色的【我方森林區】，準備從森林召喚一個【小旅人】協防！",
+      content: "進入佈陣階段後，請點擊右側綠色的【我方森林區】，準備召喚【小旅人】協防！",
       spotlightSelector: "#playerForest",
       anatomyModal: false,
       interactive: { type: "click_forest" }
@@ -29620,14 +29620,14 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 16：調整禁衛軍獸人位置 (1/2)",
-      content: "現在我們將禁衛軍獸人與小旅人調整位置！請先點擊前排第一格的【禁衛軍獸人】選取它。",
+      content: "現在調整禁衛軍獸人與小旅人的位置！請先點擊前排第一格的【禁衛軍獸人】選取它。",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_select" }
     },
     {
       title: "實戰 Step 17：調整禁衛軍獸人位置 (2/2)",
-      content: "請點擊前排第三個空格，將【禁衛軍獸人】移動過去，騰出第一格的位置！",
+      content: "請點擊前排第三個空格，將【禁衛軍獸人】移動過去，騰出第一格！",
       spotlightSelector: ".row.player-front .slot:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 2, action: "tactical_move" }
@@ -29641,21 +29641,21 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 19：調整小旅人位置 (2/2)",
-      content: "請點擊前排第一個空格，將【小旅人】移動至第一格阻擋對手單位！",
+      content: "請點擊前排第一個空格，將【小旅人】移至第一格阻擋對手單位！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_move" }
     },
     {
       title: "實戰總結：勝負判定、星星戰線倒數與 Call Game",
-      content: "防守佈陣與位置調整完成！在實戰中，隨著雙方攻防推進，您可以透過累積場上星數在【星星戰線倒數】結束時獲勝，或是在達成 15/20★ 分數與單位數量優勢時宣告【Call Game 提早結束】直接贏得勝利！",
+      content: "防守佈陣完成！實戰中您可累積星數在【星星戰線倒數】結束時獲勝，或在總星數達 20★ 以上、或場上單位數領先 4 個以上時宣告【Call Game 提早結束】贏得勝利！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "教學完成！",
-      content: "這就是《星靈王》的完整對戰流程！您已掌握場面配置、起手調度、五階段流程、普通與獻祭召喚、小旅人、戰術 2 選 1（進攻與佈陣移動）以及防守反制。點擊下方按鈕返回首頁開始挑戰吧！",
+      content: "恭喜完成《星靈王》完整教學！您已掌握場面配置、起手調度、五階段流程、獻祭召喚、小旅人、戰術 2 選 1（進攻與佈陣）及防守反制。點擊下方按鈕開始挑戰吧！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
@@ -29678,21 +29678,20 @@ window.XLW_Tutorial = {
     const overlay = document.getElementById("xlwTutorialOverlay");
     if (overlay) overlay.style.setProperty("display", "flex", "important");
 
-    if (typeof newGame === 'function') {
-      window.XLW_gameInProgress = true;
-      isMultiplayer = false;
-      isMyTurn = true;
-    }
+    // 預先初始化教學桌面與雙方手牌（確保介紹手牌與對手手牌區時畫面上有卡牌可框選）
+    this.setupDemoBattle(true);
 
     this.renderStep();
   },
 
-  setupDemoBattle: function() {
+  setupDemoBattle: function(silentInit) {
     window.XLW_gameInProgress = true;
     isMultiplayer = false;
     isMyTurn = true;
     phase = "召喚階段";
-    window.xlwShowPhaseBanner("起手調度", "#a855f7");
+    if (!silentInit) {
+      window.xlwShowPhaseBanner("起手調度", "#a855f7");
+    }
     turn = 1;
     normalSummonUsed = false;
     tacticalSummonUsed = false;
@@ -29760,7 +29759,9 @@ window.XLW_Tutorial = {
     const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
     if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
 
-    setStatus("【起手調度】請點擊手牌最右側需要祭品的【胖獸人】將它替換掉！");
+    if (!silentInit) {
+      setStatus("【起手調度】請點擊手牌最右側需要祭品的【胖獸人】將它替換掉！");
+    }
     render();
   },
 
@@ -29902,16 +29903,38 @@ window.XLW_Tutorial = {
     const spotlight = document.getElementById("xlwTutorialSpotlight");
     const tutorialBox = document.getElementById("xlwTutorialBox");
 
+    // 進入正式遊戲展示階段（Step 12 起，index >= 11）不再將整個背景變黑，改為清晰介面僅框選目標位置
+    const isBattleDemoPhase = this.currentStep >= 11;
+
     if (spotlight) {
+      spotlight.classList.toggle("battle-clear-mode", isBattleDemoPhase);
+
+      if (step && step.spotlightSelector === "#xlwEnemyFloatingHand" && typeof renderEnemyFloatingHand === "function") {
+        renderEnemyFloatingHand();
+      }
+
       if (step && step.spotlightSelector) {
         const target = document.querySelector(step.spotlightSelector);
         if (target) {
           const rect = target.getBoundingClientRect();
           spotlight.style.display = "block";
-          spotlight.style.top = `${rect.top - 8}px`;
-          spotlight.style.left = `${rect.left - 8}px`;
-          spotlight.style.width = `${rect.width + 16}px`;
-          spotlight.style.height = `${rect.height + 16}px`;
+
+          if (step.spotlightSelector === "#xlwEnemyFloatingHand") {
+            // 對手懸浮手牌位於畫面最上方（top 為負值），將框選範圍修正至畫面頂部可見區域
+            const visibleTop = Math.max(4, rect.top);
+            const visibleHeight = Math.max(42, rect.bottom - visibleTop + 10);
+            const boxWidth = Math.max(180, rect.width + 24);
+            const boxLeft = (rect.width > 0) ? (rect.left - 12) : ((window.innerWidth - boxWidth) / 2);
+            spotlight.style.top = `${visibleTop}px`;
+            spotlight.style.left = `${boxLeft}px`;
+            spotlight.style.width = `${boxWidth}px`;
+            spotlight.style.height = `${visibleHeight}px`;
+          } else {
+            spotlight.style.top = `${rect.top - 8}px`;
+            spotlight.style.left = `${rect.left - 8}px`;
+            spotlight.style.width = `${rect.width + 16}px`;
+            spotlight.style.height = `${rect.height + 16}px`;
+          }
 
           if (tutorialBox) {
               const vh = window.innerHeight;
@@ -29927,13 +29950,13 @@ window.XLW_Tutorial = {
               const isLeftHalf = (rect.left + rect.width / 2) < (vw / 2);
 
               if (isTopHalf) {
-                  tutorialBox.style.bottom = '10px';
+                  tutorialBox.style.bottom = '12px';
               } else {
-                  tutorialBox.style.top = '60px';
+                  tutorialBox.style.top = '14px';
               }
 
               if (isLeftHalf) {
-                  tutorialBox.style.right = '10px';
+                  tutorialBox.style.right = '14px';
               } else {
                   tutorialBox.style.left = '70px';
               }
@@ -29943,6 +29966,13 @@ window.XLW_Tutorial = {
         }
       } else {
         spotlight.style.display = "none";
+        if (tutorialBox) {
+          tutorialBox.style.top = '';
+          tutorialBox.style.bottom = '14px';
+          tutorialBox.style.left = '';
+          tutorialBox.style.right = '16px';
+          tutorialBox.style.transform = '';
+        }
       }
     }
   },

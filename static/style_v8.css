@@ -5234,6 +5234,11 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   animation: tutorialSpotlightPulse 2.2s infinite ease-in-out !important;
 }
 
+.xlw-tutorial-spotlight.battle-clear-mode {
+  box-shadow: 0 0 22px #00e5ff, inset 0 0 14px rgba(0, 229, 255, 0.45) !important;
+  animation: tutorialSpotlightClearPulse 1.8s infinite ease-in-out !important;
+}
+
 @keyframes tutorialSpotlightPulse {
   0%, 100% {
     border-color: #00e5ff;
@@ -5245,15 +5250,26 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   }
 }
 
-/* 撠葦撠店獢?(Dialogue Box) */
+@keyframes tutorialSpotlightClearPulse {
+  0%, 100% {
+    border-color: #00e5ff;
+    box-shadow: 0 0 20px #00e5ff, inset 0 0 12px rgba(0, 229, 255, 0.4);
+  }
+  50% {
+    border-color: #ffd76a;
+    box-shadow: 0 0 32px #ffd76a, inset 0 0 16px rgba(255, 215, 106, 0.55);
+  }
+}
+
+/* 導師對話框 (Dialogue Box) */
 .xlw-tutorial-box {
   position: absolute !important;
-  width: 280px !important;
+  width: 340px !important;
   max-width: calc(100% - 40px) !important;
   background: rgba(12, 9, 26, 0.96) !important;
   border: 2px solid #00e5ff !important;
-  border-radius: 16px !important;
-  padding: 16px 20px !important;
+  border-radius: 14px !important;
+  padding: 10px 15px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(0, 229, 255, 0.35) !important;
   pointer-events: auto !important;
   z-index: 999920 !important;
@@ -5261,17 +5277,17 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   backdrop-filter: blur(16px) !important;
   color: #fff !important;
   font-family: inherit !important;
-  bottom: 20px !important;
-  right: 20px !important;
+  bottom: 14px !important;
+  right: 16px !important;
 }
 
 .tutorial-box-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 6px !important;
   border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
-  padding-bottom: 8px !important;
+  padding-bottom: 5px !important;
 }
 
 .tutorial-mentor-info {
@@ -5306,29 +5322,29 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 .tutorial-title {
-  font-size: 17px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
   color: #ffd76a !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 4px !important;
   text-shadow: 0 0 10px rgba(255, 215, 106, 0.3) !important;
 }
 
 .tutorial-content {
-  font-size: 14px !important;
-  line-height: 1.6 !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
   color: #e2e8f0 !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 8px !important;
 }
 
 .tutorial-action-guide {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(255, 215, 106, 0.15)) !important;
   border: 1px solid #00e5ff !important;
   border-radius: 10px !important;
-  padding: 8px 12px !important;
-  font-size: 13px !important;
+  padding: 6px 10px !important;
+  font-size: 12.5px !important;
   font-weight: bold !important;
   color: #ffe600 !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 8px !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
@@ -5345,13 +5361,13 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   justify-content: space-between !important;
   align-items: center !important;
   gap: 8px !important;
-  margin-top: 6px !important;
+  margin-top: 4px !important;
 }
 
 .tutorial-btn {
-  padding: 6px 14px !important;
+  padding: 5px 12px !important;
   border-radius: 20px !important;
-  font-size: 13px !important;
+  font-size: 12.5px !important;
   font-weight: bold !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
