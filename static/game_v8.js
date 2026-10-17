@@ -29491,156 +29491,171 @@ window.XLW_Tutorial = {
       interactive: null
     },
     {
-      title: "11. 實戰演練：準備戰鬥",
-      content: "接下來，我們將模擬一次真實對戰！請跟隨指示，親身體驗抽牌、召喚、獻祭、進攻與結算！",
-      spotlightSelector: null,
+      title: "11. 勝利條件介紹",
+      content: "在開始對戰前，請記住《星靈王》的兩大勝利條件：①【星星戰線倒數】當回合推進觸發倒數並結束時，總星數（★）較高者直接獲勝！②【Call Game 提早結束】回合結束時若總星數達 20★（特定角色 15★）以上，或場上單位數比對手多 4 個以上，可宣告提早結束，若對手下回合無法破解則直接獲勝！",
+      spotlightSelector: "#scoreBtn",
       anatomyModal: false,
-      setupBattle: true,
       interactive: null
     },
     {
-      title: "實戰 Step 1：回合開始抽牌",
-      content: "回合開始時您的手牌已經有4張了。現在該抽牌了！請點擊右下角的牌組，抽取2張牌。",
+      title: "12. 開局準備：宣言種族與起手調度",
+      content: "對戰開始前，雙方會同時亮出【種族宣言卡】宣告各自使用的種族，並抽取 4 張起始手牌。此時可進行【起手調度（換牌）】，先把初期用不到或需要祭品的高階卡牌替換掉！請點擊手牌最右側需要祭品的【胖獸人】將它換掉！",
+      spotlightSelector: "#hand .card:nth-child(4)",
+      anatomyModal: false,
+      setupBattle: true,
+      interactive: { type: "click_mulligan_card", index: 3 }
+    },
+    {
+      title: "13. 遊戲開始！認識每回合流程",
+      content: "【遊戲開始！】在《星靈王》中，每個回合都會依序經歷五個階段：①【抽牌階段】 ➔ ②【防守階段】 ➔ ③【召喚階段】 ➔ ④【戰術階段（進攻宣言／戰術佈陣 2選1）】 ➔ ⑤【結束階段】，完成後再換到對手回合！現在開始您的第一回合，請點擊『下一步』。",
+      spotlightSelector: null,
+      anatomyModal: false,
+      showGameStartBanner: true,
+      interactive: null
+    },
+    {
+      title: "實戰 Step 1：抽牌階段",
+      content: "進入第一回合的【抽牌階段】！每回合開始時需從牌組抽取 2 張牌（手牌超過 10 張需除外）。現在請點擊右下角的【專屬牌組】抽取 2 張牌！",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: { type: "click_deck" }
     },
     {
-      title: "實戰 Step 2：選擇召喚單位",
-      content: "太好了！我們抽到了關鍵卡片。現在，點擊發光的【寶寶獸人】，準備將其派上戰場。",
+      title: "實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭概念）",
+      content: "抽完牌後會經過【防守階段】（因第一回合對手尚未進攻故直接略過），進入【召喚階段】！每回合有 1 次常規召喚機會：① 從手牌打出 0 祭品單位、② 點擊右側綠色的【我方森林區】免費召喚 1 隻【小旅人】上場、或 ③ 將場上單位作為「祭品獻祭」來召喚高階單位（如禁衛軍獸人）！",
+      spotlightSelector: "#playerForest",
+      anatomyModal: false,
+      interactive: null
+    },
+    {
+      title: "實戰 Step 3：召喚階段（選擇寶寶獸人）",
+      content: "因為第一回合場上還沒有單位可以當作祭品，我們先從手牌召喚 0 祭品的基礎單位！請點擊手牌中發光的【寶寶獸人】。",
       spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 4 }
     },
     {
-      title: "實戰 Step 3：普通召喚",
-      content: "現在，點擊前排戰線的第一個空位，將寶寶獸人召喚上場！",
+      title: "實戰 Step 4：召喚階段（打出單位上場）",
+      content: "召喚單位時需遵守「前排優先」原則。現在請點擊前排戰線的第一個空位，將【寶寶獸人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "實戰 Step 4：進攻宣言",
-      content: "寶寶獸人已就位！請點擊右側的【進攻宣言】按鈕，系統將自動為前排的寶寶獸人宣告進攻！",
+      title: "實戰 Step 5：戰術階段（第一回合跳過）",
+      content: "召喚完成後會進入【戰術階段】，但根據規則，【先攻的第一回合跳過戰術階段】（無法進行進攻宣言或佈陣移動）！請點擊右側的【結束回合】按鈕，結束第一回合並換對手行動。",
+      spotlightSelector: "#stableActionEnd",
+      anatomyModal: false,
+      interactive: { type: "click_first_turn_end" }
+    },
+    {
+      title: "實戰 Step 6：戰術階段 2 選 1（進攻宣言）",
+      content: "對手在他的回合經歷了抽牌、防守、召喚【創世老人】（攻擊力 1）並結束回合。現在輪到我方第 2 回合！在【戰術階段】可在「戰術佈陣」與「進攻宣言」中 2 選 1。請點擊右側的【進攻宣言】按鈕，讓寶寶獸人發起進攻！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "進攻宣言" }
     },
     {
-      title: "實戰 Step 5：結束回合與擊倒對手",
-      content: "進攻宣告完成！點擊右側的【結束回合】按鈕，將在對手的防守階段自動結算戰鬥並打倒對手單位！",
+      title: "實戰 Step 7：結束回合（打倒對手與敵方反擊）",
+      content: "進攻宣言完成！請點擊右側的【結束回合】按鈕。接下來將換到對方回合：對手會在【防守階段】被我方寶寶獸人打倒，接著對手會抽牌、召喚一隻新單位【呐喊的人】，並在戰術 2 選 1 選擇【進攻】向我們反擊！",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_end_turn" }
     },
     {
-      title: "實戰 Step 6：使用盾牌人偶反制",
-      content: "對手單位被打倒後，對手派出了新單位並向我們發起進攻！現在進入我方【防守階段】，請點擊手牌中的【盾牌人偶】作為反制，使對手進攻無效化並橫置！",
+      title: "實戰 Step 8：輪到我方進行防守（使用盾牌人偶反制）",
+      content: "對手單位被打倒後，輪到對方回合抽牌、防守、召喚了高攻擊力的【呐喊的人】並選擇戰術 2 選 1 的【進攻】！現在輪到我方進行【防守階段】，請點擊手牌中的【盾牌人偶】作為反制，使對手的進攻無效化並橫置！",
       spotlightSelector: "#hand .card:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_defense_spell", index: 2 }
     },
     {
-      title: "實戰 Step 7：準備獻祭召喚",
-      content: "成功用盾牌人偶擋下攻擊！輪到我方回合，手牌中的高階單位【禁衛軍獸人】需要 1 個祭品才能上場。請點擊手牌中的【禁衛軍獸人】。",
+      title: "實戰 Step 9：召喚階段（準備獻祭召喚）",
+      content: "成功用盾牌人偶擋下攻擊！輪到我方回合的【召喚階段】，我們將把場上的寶寶獸人獻祭，來召喚高階的【禁衛軍獸人】（需 1 個祭品）。請點擊手牌中的【禁衛軍獸人】。",
       spotlightSelector: "#hand .card:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 2 }
     },
     {
-      title: "實戰 Step 8：選擇祭品",
+      title: "實戰 Step 10：選擇祭品（獻祭寶寶獸人）",
       content: "請點擊場上的【寶寶獸人】，將它作為祭品！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tribute_select" }
     },
     {
-      title: "實戰 Step 9：確認獻祭",
+      title: "實戰 Step 11：確認獻祭",
       content: "祭品選擇完畢，請點擊右側的【確認獻祭】按鈕！",
       spotlightSelector: "#stableActionConfirm",
       anatomyModal: false,
       interactive: { type: "click_tribute_confirm" }
     },
     {
-      title: "實戰 Step 10：獻祭召喚上場",
+      title: "實戰 Step 12：獻祭召喚上場",
       content: "獻祭完成！寶寶獸人已經離開戰場，現在請點擊前排第一個空格，將【禁衛軍獸人】威風凜凜地召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "實戰 Step 11：進行防守佈陣",
-      content: "召喚完成後，我們來進行防守佈陣！請點擊右側的【戰術佈陣】按鈕。在此階段可額外召喚 1 個小旅人，並調整場上單位的位置。",
+      title: "實戰 Step 13：戰術階段 2 選 1（進行防守佈陣）",
+      content: "召喚完成後，這次我們在【戰術階段 2 選 1】中選擇進行防守佈陣！請點擊右側的【戰術佈陣】按鈕。在此階段可額外召喚 1 個小旅人（或免祭品單位），並自由移動調整場上單位的位置。",
       spotlightSelector: "#stableActionTactical",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "戰術佈陣" }
     },
     {
-      title: "實戰 Step 12：召喚小旅人",
+      title: "實戰 Step 14：召喚小旅人",
       content: "進入佈陣階段後，請點擊右側綠色的【我方森林區】，準備從森林召喚一個【小旅人】協防！",
       spotlightSelector: "#playerForest",
       anatomyModal: false,
       interactive: { type: "click_forest" }
     },
     {
-      title: "實戰 Step 13：放置小旅人",
+      title: "實戰 Step 15：放置小旅人",
       content: "請點擊前排戰線的第二個空格，將【小旅人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 1, isTraveler: true }
     },
     {
-      title: "實戰 Step 14：調整禁衛軍獸人位置 (1/2)",
+      title: "實戰 Step 16：調整禁衛軍獸人位置 (1/2)",
       content: "現在我們將禁衛軍獸人與小旅人調整位置！請先點擊前排第一格的【禁衛軍獸人】選取它。",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_select" }
     },
     {
-      title: "實戰 Step 15：調整禁衛軍獸人位置 (2/2)",
+      title: "實戰 Step 17：調整禁衛軍獸人位置 (2/2)",
       content: "請點擊前排第三個空格，將【禁衛軍獸人】移動過去，騰出第一格的位置！",
       spotlightSelector: ".row.player-front .slot:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 2, action: "tactical_move" }
     },
     {
-      title: "實戰 Step 16：調整小旅人位置 (1/2)",
+      title: "實戰 Step 18：調整小旅人位置 (1/2)",
       content: "接著調整小旅人的位置！請點擊前排第二格的【小旅人】選取它。",
       spotlightSelector: ".row.player-front .slot:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 1, action: "tactical_select" }
     },
     {
-      title: "實戰 Step 17：調整小旅人位置 (2/2)",
+      title: "實戰 Step 19：調整小旅人位置 (2/2)",
       content: "請點擊前排第一個空格，將【小旅人】移動至第一格阻擋對手單位！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_move" }
     },
     {
-      title: "實戰 Step 18：戰鬥與勝負判定",
-      content: "防守佈陣與位置調整完成！在對戰中，若有單位被戰鬥破壞，將根據卡牌下方的【星星數】獲得戰線分數。",
-      spotlightSelector: "",
-      anatomyModal: false,
-      interactive: null
-    },
-    {
-      title: "實戰 Step 19：星星戰線倒數",
-      content: "當遊戲進行到一定回合，會觸發【星星戰線倒數】。倒數結束時，星數較高的一方將直接獲得勝利！",
-      spotlightSelector: "",
-      anatomyModal: false,
-      interactive: null
-    },
-    {
-      title: "實戰 Step 20：Call Game (提早結束)",
-      content: "如果你的星數優勢達到15/20分，或者場上單位數量遠超對手，你可以在回合結束時宣告【Call Game】。若對手在下個回合無法破解你的優勢，你將直接獲勝！",
+      title: "實戰總結：勝負判定、星星戰線倒數與 Call Game",
+      content: "防守佈陣與位置調整完成！在實戰中，隨著雙方攻防推進，您可以透過累積場上星數在【星星戰線倒數】結束時獲勝，或是在達成 15/20★ 分數與單位數量優勢時宣告【Call Game 提早結束】直接贏得勝利！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "教學完成！",
-      content: "這就是《星靈王》的基本對戰流程。掌握了抽牌、召喚、進攻、防守反制、獻祭與防守佈陣，你已經準備好迎接真正的挑戰了。點擊畫面結束教學！",
+      content: "這就是《星靈王》的完整對戰流程！您已掌握場面配置、起手調度、五階段流程、普通與獻祭召喚、小旅人、戰術 2 選 1（進攻與佈陣移動）以及防守反制。點擊下方按鈕返回首頁開始挑戰吧！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
@@ -29676,8 +29691,9 @@ window.XLW_Tutorial = {
     window.XLW_gameInProgress = true;
     isMultiplayer = false;
     isMyTurn = true;
-    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-    turn = 2;
+    phase = "召喚階段";
+    window.xlwShowPhaseBanner("起手調度", "#a855f7");
+    turn = 1;
     normalSummonUsed = false;
     tacticalSummonUsed = false;
     window.XLW_tacticalSelected = null;
@@ -29713,36 +29729,29 @@ window.XLW_Tutorial = {
     const hand1 = { id: "ORC-0011", name: "盾牌獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "3", score: 2, tribute: 0, image: "/static/card_images/orc_0011.jpeg" };
     const hand2 = { id: "R-ORC-0033", name: "阿庫瑪的戰錘", type: "magic", deck: "獸人", faction: "獸人", race: "法術", attack: "0", score: 0, tribute: 0, magic_point: "-", image: "/static/card_images/r_orc_0033.jpeg" };
     const hand3 = { id: "NMG-0013", name: "盾牌人偶", type: "magic", deck: "中立", faction: "中立", race: "中立", attack: "0", score: 0, tribute: 1, usable_phases: ["Defense Phase"], effect_text: "使敵方1進攻單位進攻無效並橫放", image: "/static/card_images/nmg_0013.jpeg" };
-    const hand4 = { id: "R-ORC-0057", name: "禁衛軍獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "3", score: 4, tribute: 1, image: "/static/card_images/r_orc_0057.jpeg" };
+    const mulliganTributeCard = structuredClone(demoUnit2);
 
-    hand = [hand1, hand2, hand3, hand4];
-    deck = [structuredClone(hand1), structuredClone(demoUnit2), demoUnit2, demoUnit1]; // Pops backwards: Turn 1 draws demoUnit1 (index 4) & demoUnit2 (index 5); Turn 2 draws 2 more
+    // 起始 4 張手牌，第 4 張為需要祭品的【胖獸人】，供起手調度強制換成【禁衛軍獸人】
+    hand = [hand1, hand2, hand3, mulliganTributeCard];
+    deck = [
+      structuredClone(hand1),
+      structuredClone(hand2),
+      structuredClone(hand1),
+      structuredClone(demoUnit2),
+      structuredClone(hand1),
+      structuredClone(demoUnit2),
+      demoUnit2,
+      demoUnit1
+    ];
+
+    if (window.XLW_ENEMY) {
+      window.XLW_ENEMY.hand = [structuredClone(hand1), structuredClone(hand2), structuredClone(demoUnit1), structuredClone(demoUnit2)];
+    }
 
     field = {
       player_front: [null, null, null, null, null],
       player_back: [null, null, null, null, null],
-      enemy_front: [
-        {
-          card: {
-            id: "ART-0014",
-            name: "創世老人",
-            type: "unit",
-            deck: "藝術品",
-            faction: "藝術品",
-            race: "藝術品",
-            attack: "1",
-            score: 3,
-            tribute: 0,
-            image: "/static/card_images/art_0014.jpeg"
-          },
-          tapped: false,
-          attacking: false,
-          target: null,
-          summonedTurn: 1,
-          summonedZone: "enemy_front"
-        },
-        null, null, null, null
-      ],
+      enemy_front: [null, null, null, null, null],
       enemy_back: [null, null, null, null, null]
     };
 
@@ -29751,6 +29760,7 @@ window.XLW_Tutorial = {
     const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
     if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
 
+    setStatus("【起手調度】請點擊手牌最右側需要祭品的【胖獸人】將它替換掉！");
     render();
   },
 
@@ -29760,6 +29770,11 @@ window.XLW_Tutorial = {
 
     if (step.setupBattle) {
       this.setupDemoBattle();
+    }
+    if (step.showGameStartBanner) {
+      window.xlwShowPhaseBanner("遊戲開始", "#f59e0b");
+      setStatus("🎉 遊戲開始！每回合依序經歷：抽牌 ➔ 防守 ➔ 召喚 ➔ 戰術 ➔ 結束階段。");
+      logBattle("🎉 —— 遊戲開始！先攻第一回合 ——");
     }
 
     const titleEl = document.getElementById("xlwTutorialTitle");
@@ -29834,7 +29849,7 @@ window.XLW_Tutorial = {
                 transform: "translateY(-10px)"
             });
         }
-        // 精心對應 20 張雪女引導員表情至 32 個教學步驟
+        // 精心對應 20 張雪女引導員表情至教學步驟
         const stepImageMap = [
             1,  // 1. 歡迎來到星靈王新手導覽
             7,  // 2. 場地介紹：前排戰線與後排戰線
@@ -29846,27 +29861,29 @@ window.XLW_Tutorial = {
             20, // 8. 資源：手牌
             19, // 9. 對手手牌
             5,  // 10. 卡牌資訊與意義
-            8,  // 11. 實戰演練：準備戰鬥
-            13, // 實戰 Step 1：回合開始抽牌
-            17, // 實戰 Step 2：選擇召喚單位
-            3,  // 實戰 Step 3：普通召喚
-            13, // 實戰 Step 4：進攻宣言
-            11, // 實戰 Step 5：結束回合與擊倒對手
-            2,  // 實戰 Step 6：使用盾牌人偶反制
-            18, // 實戰 Step 7：準備獻祭召喚
-            4,  // 實戰 Step 8：選擇祭品
-            2,  // 實戰 Step 9：確認獻祭
-            6,  // 實戰 Step 10：獻祭召喚上場
-            15, // 實戰 Step 11：進行防守佈陣
-            9,  // 實戰 Step 12：召喚小旅人
-            3,  // 實戰 Step 13：放置小旅人
-            7,  // 實戰 Step 14：調整禁衛軍獸人位置 (1/2)
-            20, // 實戰 Step 15：調整禁衛軍獸人位置 (2/2)
-            17, // 實戰 Step 16：調整小旅人位置 (1/2)
-            12, // 實戰 Step 17：調整小旅人位置 (2/2)
-            14, // 實戰 Step 18：戰鬥與勝負判定
-            12, // 實戰 Step 19：星星戰線倒數
-            10, // 實戰 Step 20：Call Game (提早結束)
+            12, // 11. 勝利條件介紹
+            4,  // 12. 開局準備：宣言種族與起手調度
+            8,  // 13. 遊戲開始！認識每回合流程
+            13, // 實戰 Step 1：抽牌階段
+            15, // 實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭概念）
+            17, // 實戰 Step 3：召喚階段（選擇寶寶獸人）
+            3,  // 實戰 Step 4：召喚階段（打出單位上場）
+            11, // 實戰 Step 5：戰術階段（第一回合跳過）
+            13, // 實戰 Step 6：戰術階段 2 選 1（進攻宣言）
+            14, // 實戰 Step 7：結束回合（打倒對手與敵方反擊）
+            2,  // 實戰 Step 8：輪到我方進行防守（使用盾牌人偶反制）
+            18, // 實戰 Step 9：召喚階段（準備獻祭召喚）
+            4,  // 實戰 Step 10：選擇祭品（獻祭寶寶獸人）
+            2,  // 實戰 Step 11：確認獻祭
+            6,  // 實戰 Step 12：獻祭召喚上場
+            15, // 實戰 Step 13：戰術階段 2 選 1（進行防守佈陣）
+            9,  // 實戰 Step 14：召喚小旅人
+            3,  // 實戰 Step 15：放置小旅人
+            7,  // 實戰 Step 16：調整禁衛軍獸人位置 (1/2)
+            20, // 實戰 Step 17：調整禁衛軍獸人位置 (2/2)
+            17, // 實戰 Step 18：調整小旅人位置 (1/2)
+            12, // 實戰 Step 19：調整小旅人位置 (2/2)
+            10, // 實戰總結：勝負判定、星星戰線倒數與 Call Game
             16  // 教學完成！
         ];
         const imgIndex = stepImageMap[this.currentStep] || ((this.currentStep % 20) + 1);
@@ -29967,15 +29984,92 @@ window.XLW_Tutorial = {
 
     const expectedType = step.interactive.type;
     const isDefenseSpellClick = (expectedType === "click_defense_spell" && (actionType === "click_defense_spell" || actionType === "click_card"));
+    const isMulliganClick = (expectedType === "click_mulligan_card" && (actionType === "click_mulligan_card" || actionType === "click_card"));
 
-    if (expectedType === actionType || isDefenseSpellClick) {
+    if (expectedType === actionType || isDefenseSpellClick || isMulliganClick) {
       if (this._inAction) return false;
       this._inAction = true;
 
       let stepDelay = 300;
 
-      if (actionType === "click_deck") {
+      if (isMulliganClick && (!payload || payload.index === undefined || payload.index === step.interactive.index)) {
+        $("cardModal")?.classList.remove("show");
+        const idx = step.interactive.index;
+        hand[idx] = {
+          id: "R-ORC-0057",
+          name: "禁衛軍獸人",
+          type: "unit",
+          deck: "獸人",
+          faction: "獸人",
+          race: "獸人",
+          attack: "3",
+          score: 4,
+          tribute: 1,
+          image: "/static/card_images/r_orc_0057.jpeg"
+        };
+        logBattle("🔄 起手調度：將暫時用不到的祭品怪【胖獸人】替換，重新抽到了【禁衛軍獸人】！");
+        setStatus("起手調度完成！已將卡手的祭品怪替換。");
+        render();
+      }
+      else if (actionType === "click_deck") {
           performPlayerTurnStartDraw();
+          phase = "召喚階段";
+          window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+          render();
+      }
+      else if (actionType === "click_first_turn_end") {
+        $("cardModal")?.classList.remove("show");
+        logBattle("—— 我方第一回合結束（先攻第一回合跳過戰術階段）——");
+        isMyTurn = false;
+        phase = "抽牌階段";
+        window.xlwShowPhaseBanner("對手回合：抽牌與防守", "#38bdf8");
+        setStatus("對手回合：對手進行抽牌階段與防守階段...");
+        if (window.XLW_ENEMY && window.XLW_ENEMY.hand) {
+          window.XLW_ENEMY.hand.push({ name: "手牌" }, { name: "手牌" });
+        }
+        render();
+        await sleep(650);
+
+        phase = "召喚階段";
+        window.xlwShowPhaseBanner("對手回合：召喚階段", "#4ade80");
+        field.enemy_front[0] = {
+          card: {
+            id: "ART-0014",
+            name: "創世老人",
+            type: "unit",
+            deck: "藝術品",
+            faction: "藝術品",
+            race: "藝術品",
+            attack: "1",
+            score: 3,
+            tribute: 0,
+            image: "/static/card_images/art_0014.jpeg"
+          },
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: 1,
+          summonedZone: "enemy_front"
+        };
+        if (window.XLW_ENEMY && window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          window.XLW_ENEMY.hand.pop();
+        }
+        logBattle("🤖 對手回合：對手於前排 1 召喚了【創世老人】(攻擊力 1)！");
+        setStatus("對手回合：對手召喚了【創世老人】(攻擊力 1) 並結束回合！");
+        render();
+        await sleep(750);
+
+        // 進入我方第 2 回合
+        turn = 2;
+        isMyTurn = true;
+        normalSummonUsed = false;
+        tacticalSummonUsed = false;
+        playerUntap();
+        await performPlayerTurnStartDraw();
+        phase = "召喚階段";
+        window.xlwShowPhaseBanner("我方回合", "#4ade80");
+        setStatus("第 2 回合開始！已自動抽 2 張牌，現在可選擇進入「戰術階段 2 選 1」！");
+        render();
       }
       else if (isDefenseSpellClick && (!payload || payload.index === undefined || payload.index === step.interactive.index)) {
         $("cardModal")?.classList.remove("show");
@@ -30057,11 +30151,14 @@ window.XLW_Tutorial = {
       }
       else if (actionType === "click_end_turn") {
         $("cardModal")?.classList.remove("show");
-        // 1. 結算我方寶寶獸人進攻並打倒對手創世老人
+        // 1. 輪到對手回合：對手抽牌並進入防守階段，我方寶寶獸人打倒對手創世老人
         isMyTurn = false;
+        if (window.XLW_ENEMY && window.XLW_ENEMY.hand) {
+          window.XLW_ENEMY.hand.push({ name: "手牌" }, { name: "手牌" });
+        }
         phase = "防守階段";
-        window.xlwShowPhaseBanner("防守階段", "#3b82f6");
-        setStatus("對手防守階段：我方【寶寶獸人】進攻對手【創世老人】！");
+        window.xlwShowPhaseBanner("對手防守階段", "#3b82f6");
+        setStatus("對手回合（抽牌與防守階段）：我方【寶寶獸人】進攻對手【創世老人】！");
         render();
         flashBattle("player_front", 0, "enemy_front", 0);
         await sleep(650);
@@ -30071,9 +30168,9 @@ window.XLW_Tutorial = {
         render();
         await sleep(750);
 
-        // 2. 對手回合召喚新單位並向我方發起進攻
+        // 2. 對手召喚階段：召喚一隻新單位【呐喊的人】
         phase = "召喚階段";
-        window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+        window.xlwShowPhaseBanner("對手召喚階段", "#4ade80");
         field.enemy_front[0] = {
           card: {
             id: "ART-0004",
@@ -30093,22 +30190,26 @@ window.XLW_Tutorial = {
           summonedTurn: turn,
           summonedZone: "enemy_front"
         };
-        setStatus("對手回合：對手召喚了【呐喊的人】(攻擊力 4)！");
-        logBattle("🤖 對手召喚了【呐喊的人】(攻擊力 4) 到前排 1！");
+        if (window.XLW_ENEMY && window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          window.XLW_ENEMY.hand.pop();
+        }
+        setStatus("對手召喚階段：對手召喚了【呐喊的人】(攻擊力 4)！");
+        logBattle("🤖 對手於召喚階段召喚了【呐喊的人】(攻擊力 4) 到前排 1！");
         render();
         await sleep(750);
 
+        // 3. 對手戰術階段 2 選 1：選擇進攻宣言
         phase = "進攻宣言";
-        window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
+        window.xlwShowPhaseBanner("對手戰術：進攻宣言", "#ef4444");
         field.enemy_front[0].attacking = true;
         field.enemy_front[0].target = { zone: "player_front", idx: 0 };
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
-        setStatus("對手回合：對手【呐喊的人】對我方【寶寶獸人】宣告進攻！");
-        logBattle("⚔️ 對手【呐喊的人】宣告進攻星星戰線 1！");
+        setStatus("對手戰術階段（2選1）：對手選擇【進攻宣言】，向我方【寶寶獸人】發起進攻！");
+        logBattle("⚔️ 對手於戰術階段選擇【進攻宣言】，宣告進攻星星戰線 1！");
         render();
         await sleep(800);
 
-        // 3. 輪到我方回合，進入我方防守階段準備使用盾牌人偶反制
+        // 4. 輪到我方回合，進入我方防守階段準備使用盾牌人偶反制
         turn++;
         isMyTurn = true;
         normalSummonUsed = false;
@@ -30117,9 +30218,9 @@ window.XLW_Tutorial = {
         playerUntap();
         await performPlayerTurnStartDraw();
         phase = "防守階段";
-        window.xlwShowPhaseBanner("防守階段", "#3b82f6");
+        window.xlwShowPhaseBanner("我方防守階段", "#3b82f6");
         window.XLW_defenseCounterActive = true;
-        setStatus("🛡️ 我方防守階段：請點擊手牌中的【盾牌人偶】反制對手的進攻！");
+        setStatus("🛡️ 輪到我方防守階段：請點擊手牌中的【盾牌人偶】反制對手的進攻！");
         logBattle("—— 我方防守階段開始：開啟防守魔法反制時機 ——");
         render();
       }
