@@ -5288,6 +5288,87 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   margin-bottom: 6px !important;
   border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
   padding-bottom: 5px !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+.tutorial-box-header:active {
+  cursor: grabbing !important;
+}
+
+.tutorial-min-btn {
+  background: rgba(0, 229, 255, 0.14) !important;
+  border: 1px solid rgba(0, 229, 255, 0.45) !important;
+  color: #79f2ff !important;
+  padding: 1px 7px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  line-height: 1.4 !important;
+}
+
+.tutorial-min-btn:hover {
+  background: rgba(0, 229, 255, 0.28) !important;
+  color: #fff !important;
+}
+
+/* 後半段實戰演練專屬：輕巧側邊指引小卡模式，不遮擋中央戰場 */
+.xlw-tutorial-box.battle-compact-mode {
+  width: 240px !important;
+  padding: 7px 11px !important;
+  background: rgba(10, 8, 22, 0.84) !important;
+  border-width: 1.5px !important;
+  border-radius: 11px !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8), 0 0 14px rgba(0, 229, 255, 0.28) !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-box-header {
+  margin-bottom: 4px !important;
+  padding-bottom: 3px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .mentor-name {
+  font-size: 13.5px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-step-counter {
+  font-size: 10.5px !important;
+  padding: 1px 7px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-title {
+  font-size: 13px !important;
+  margin-bottom: 3px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-content {
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+  margin-bottom: 5px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-box-footer {
+  margin-top: 2px !important;
+  gap: 5px !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-btn {
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+}
+
+/* 一鍵收合模式：僅保留標題列與步驟名稱，完全釋放戰場視野 */
+.xlw-tutorial-box.minimized .tutorial-content,
+.xlw-tutorial-box.minimized .tutorial-action-guide {
+  display: none !important;
+}
+
+.xlw-tutorial-box.minimized {
+  width: 215px !important;
+  padding: 6px 10px !important;
+  background: rgba(10, 8, 22, 0.78) !important;
 }
 
 .tutorial-mentor-info {

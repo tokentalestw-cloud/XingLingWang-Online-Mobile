@@ -29887,15 +29887,96 @@ window.XLW_Tutorial = {
             10, // 實戰總結：勝負判定、星星戰線倒數與 Call Game
             16  // 教學完成！
         ];
+        const isCompactBattle = (this.currentStep >= 11 && this.currentStep < this.steps.length - 2);
         const imgIndex = stepImageMap[this.currentStep] || ((this.currentStep % 20) + 1);
         const imgData = images[imgIndex - 1] || images[0];
         sprite.src = imgData.src;
         sprite.style.clipPath = imgData.clip;
-        sprite.style.width = imgData.width;
-        sprite.style.height = imgData.height;
-        sprite.style.transform = imgData.transform;
+        if (isCompactBattle) {
+          sprite.style.width = "64px";
+          sprite.style.height = "86px";
+          sprite.style.left = "-48px";
+          sprite.style.transform = "translateY(-4px)";
+        } else {
+          sprite.style.width = imgData.width;
+          sprite.style.height = imgData.height;
+          sprite.style.left = "-80px";
+          sprite.style.transform = imgData.transform;
+        }
     }
+    this.initDrag();
     this.updateSpotlight();
+  },
+
+  toggleMinimize: function(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const tutorialBox = document.getElementById("xlwTutorialBox");
+    const minBtn = document.getElementById("xlwTutorialMinBtn");
+    if (!tutorialBox) return;
+    const isMin = tutorialBox.classList.toggle("minimized");
+    if (minBtn) {
+      minBtn.textContent = isMin ? "➕ 展開" : "➖ 收合";
+    }
+  },
+
+  initDrag: function() {
+    if (this._dragInitialized) return;
+    const handle = document.getElementById("xlwTutorialDragHandle");
+    const box = document.getElementById("xlwTutorialBox");
+    if (!handle || !box) return;
+    this._dragInitialized = true;
+
+    let isDragging = false;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+    const onStart = (clientX, clientY, targetEl) => {
+      if (targetEl && targetEl.closest && targetEl.closest("button")) return;
+      isDragging = true;
+      const rect = box.getBoundingClientRect();
+      startX = clientX;
+      startY = clientY;
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      box.style.transition = "none";
+    };
+
+    const onMove = (clientX, clientY) => {
+      if (!isDragging) return;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      const newLeft = Math.max(8, Math.min(window.innerWidth - box.offsetWidth - 8, initialLeft + dx));
+      const newTop = Math.max(6, Math.min(window.innerHeight - box.offsetHeight - 6, initialTop + dy));
+      box.style.bottom = "";
+      box.style.right = "";
+      box.style.left = `${newLeft}px`;
+      box.style.top = `${newTop}px`;
+    };
+
+    const onEnd = () => {
+      if (isDragging) {
+        isDragging = false;
+        box.style.transition = "";
+      }
+    };
+
+    handle.addEventListener("mousedown", (e) => onStart(e.clientX, e.clientY, e.target));
+    window.addEventListener("mousemove", (e) => onMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", onEnd);
+
+    handle.addEventListener("touchstart", (e) => {
+      if (e.touches && e.touches[0]) {
+        onStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+      }
+    }, { passive: true });
+    window.addEventListener("touchmove", (e) => {
+      if (isDragging && e.touches && e.touches[0]) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+    window.addEventListener("touchend", onEnd);
   },
 
   updateSpotlight: function() {
@@ -29905,6 +29986,11 @@ window.XLW_Tutorial = {
 
     // 進入正式遊戲展示階段（Step 12 起，index >= 11）不再將整個背景變黑，改為清晰介面僅框選目標位置
     const isBattleDemoPhase = this.currentStep >= 11;
+    const isCompactBattle = (this.currentStep >= 11 && this.currentStep < this.steps.length - 2);
+
+    if (tutorialBox) {
+      tutorialBox.classList.toggle("battle-compact-mode", isCompactBattle);
+    }
 
     if (spotlight) {
       spotlight.classList.toggle("battle-clear-mode", isBattleDemoPhase);
@@ -29946,19 +30032,31 @@ window.XLW_Tutorial = {
               tutorialBox.style.right = '';
               tutorialBox.style.transform = '';
 
-              const isTopHalf = (rect.top + rect.height / 2) < (vh / 2);
-              const isLeftHalf = (rect.left + rect.width / 2) < (vw / 2);
-
-              if (isTopHalf) {
-                  tutorialBox.style.bottom = '12px';
+              if (isCompactBattle) {
+                // 實戰演練階段：固定停靠在畫面左上角外側（完全避開中央 5x4 戰場、下方手牌與右側階段按鈕）
+                // 若目標剛好在左上角，則自動改停靠左下角外側
+                const overlapsTopLeft = (rect.top < 150 && rect.left < 310);
+                tutorialBox.style.left = '50px';
+                if (overlapsTopLeft) {
+                  tutorialBox.style.bottom = '10px';
+                } else {
+                  tutorialBox.style.top = '8px';
+                }
               } else {
-                  tutorialBox.style.top = '14px';
-              }
+                const isTopHalf = (rect.top + rect.height / 2) < (vh / 2);
+                const isLeftHalf = (rect.left + rect.width / 2) < (vw / 2);
 
-              if (isLeftHalf) {
-                  tutorialBox.style.right = '14px';
-              } else {
-                  tutorialBox.style.left = '70px';
+                if (isTopHalf) {
+                    tutorialBox.style.bottom = '12px';
+                } else {
+                    tutorialBox.style.top = '14px';
+                }
+
+                if (isLeftHalf) {
+                    tutorialBox.style.right = '14px';
+                } else {
+                    tutorialBox.style.left = '70px';
+                }
               }
           }
         } else {
