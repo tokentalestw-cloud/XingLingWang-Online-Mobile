@@ -29759,19 +29759,45 @@ window.XLW_Tutorial = {
 
     const sprite = document.getElementById("xlwTutorialMentorSprite");
     if (sprite) {
-        const images = [
-            { src: "/static/card_images/yuki_tutorial_1.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_2.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_3.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_4.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_5.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_6.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_7.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_8.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_9.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" },
-            { src: "/static/card_images/yuki_tutorial_10.jpg", clip: "none", width: "120px", height: "160px", transform: "translateY(-10px)" }
+        const images = [];
+        for (let i = 1; i <= 20; i++) {
+            images.push({
+                src: `/static/card_images/yuki_tutorial_${i}.jpg`,
+                clip: "none",
+                width: "120px",
+                height: "160px",
+                transform: "translateY(-10px)"
+            });
+        }
+        // 精心對應 20 張雪女引導員表情至 24 個教學步驟
+        const stepImageMap = [
+            1,  // 1. 歡迎來到星靈王新手導覽 (雙手合十/開朗歡迎)
+            7,  // 2. 場地介紹：前排戰線與後排戰線 (食指點指示範)
+            9,  // 3. 場地介紹：法術與結界區 (熱情揮手)
+            15, // 4. 場地介紹：墓地 (食指點下巴思考)
+            2,  // 5. 場地介紹：除外區 (手掌向前阻止注意)
+            10, // 6. 場地介紹：種族卡槽 (雙手環抱自信)
+            6,  // 7. 場地介紹：專屬牌組 (單手握拳充滿幹勁)
+            20, // 8. 資源：手牌 (伸出右手引導)
+            19, // 9. 對手手牌 (托腮注視敵情)
+            5,  // 10. 卡牌資訊與意義 (捧頰驚訝解密)
+            8,  // 11. 實戰演練：準備戰鬥 (雙手置胸雀躍)
+            13, // 實戰 Step 1：回合開始抽牌 (開槍手勢抽牌)
+            17, // 實戰 Step 2：選擇召喚單位 (回眸冷靜挑選)
+            3,  // 實戰 Step 3：普通召喚 (眨眼比V登場)
+            18, // 實戰 Step 4：準備獻祭召喚 (食指放唇前神祕)
+            4,  // 實戰 Step 5：選擇祭品 (抓腮滴汗/寶寶要被獻祭了)
+            2,  // 實戰 Step 6：確認獻祭 (堅定確認)
+            6,  // 實戰 Step 7：獻祭召喚上場 (禁衛軍威風握拳)
+            13, // 實戰 Step 8：進攻宣言 (指尖出擊)
+            11, // 實戰 Step 9：結束回合 (閉眼小憩/等待對手行動)
+            14, // 實戰 Step 10：戰鬥與勝負判定 (回眸觀察結算)
+            12, // 實戰 Step 11：星星戰線倒數 (比愛心守護戰線)
+            10, // 實戰 Step 12：Call Game (提早結束自信笑)
+            16  // 教學完成！(閉眼高興慶祝)
         ];
-        const imgData = images[this.currentStep % images.length];
+        const imgIndex = stepImageMap[this.currentStep] || ((this.currentStep % 20) + 1);
+        const imgData = images[imgIndex - 1] || images[0];
         sprite.src = imgData.src;
         sprite.style.clipPath = imgData.clip;
         sprite.style.width = imgData.width;
