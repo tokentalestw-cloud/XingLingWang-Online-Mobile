@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ????Web Final - ?詨?閬死璅??蝟餌絞 (???芸???
  * 1. 撠?曆誨???征?∠?蝢飛霈 (Design Tokens)
  * 2. 撖西?瘥?釭??(Glassmorphism) ??蝝??敶?
@@ -2672,6 +2672,32 @@ button:disabled {
   z-index: 1000000 !important;
   backdrop-filter: blur(8px) !important;
 }
+
+.xlw-spell-activation-card-box,
+.xlw-tribute-activation-card-box {
+  width: 80vw !important;
+  max-width: 280px !important;
+  max-height: 65vh !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.xlw-spell-activation-card-img,
+.xlw-tribute-activation-card-img {
+  width: 170px !important;
+  height: 240px !important;
+  max-width: 170px !important;
+  max-height: 240px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  display: block !important;
+}
+
 
 
 

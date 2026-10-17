@@ -292,29 +292,51 @@ window.xlwShowRevealOverlay = function(card, side) {
       document.body.appendChild(overlay);
     }
 
+    // 保底強制 Fixed 全螢幕居中樣式與安全邊界防爆圖
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.right = "0";
+    overlay.style.bottom = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(0, 0, 0, 0.75)";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "99999";
+    overlay.style.pointerEvents = "none";
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+    overlay.style.transform = "scale(0.85)";
+
     const isPlayer = side === "player" || side === "me" || side === "player_front" || side === "player_back";
-    const titleText = isPlayer ? "🔮 我方展示牌庫卡牌！" : "🔮 對手展示牌庫卡牌！";
+    const titleText = isPlayer ? "🔮 我方展示卡牌！" : "🔮 對手展示卡牌！";
     const titleColor = isPlayer ? "#00ff7f" : "#ff4d4f";
 
     overlay.innerHTML = `
-      <div class="xlw-spell-activation-title" style="color: ${titleColor};">${titleText}</div>
-      <div class="xlw-spell-activation-card-box">
-        <img class="xlw-spell-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}">
-        <div class="xlw-spell-activation-card-name">${card.name}</div>
-        <div class="xlw-spell-activation-card-effect">${card.effect_text || ""}</div>
+      <div class="xlw-spell-activation-title" style="color: ${titleColor}; font-size: 22px; font-weight: 900; margin-bottom: 12px; text-shadow: 0 0 10px ${titleColor}, 2px 2px 0 #000;">${titleText}</div>
+      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 260px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
+        <img class="xlw-spell-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px !important; height: 240px !important; max-width: 170px !important; max-height: 240px !important; object-fit: cover !important; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px; display: block;">
+        <div class="xlw-spell-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
+        <div class="xlw-spell-activation-card-effect" style="font-size: 12px; color: #e0e0e0; line-height: 1.4; word-break: break-word;">${card.effect_text || ""}</div>
       </div>
     `;
 
     requestAnimationFrame(() => {
-      overlay.classList.add("active");
+      overlay.style.opacity = "1";
+      overlay.style.transform = "scale(1)";
     });
 
     setTimeout(() => {
-      overlay.classList.remove("active");
+      overlay.style.opacity = "0";
+      overlay.style.transform = "scale(0.85)";
       setTimeout(() => {
+        if (overlay && overlay.parentNode) overlay.remove();
         resolve();
-      }, 400);
-    }, 1800);
+      }, 250);
+    }, 1500);
   });
 };
 
