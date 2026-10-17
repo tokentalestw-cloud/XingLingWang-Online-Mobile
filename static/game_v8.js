@@ -29452,8 +29452,8 @@ window.XLW_Tutorial = {
       interactive: null
     },
     {
-      title: "6. 場地介紹：種族卡槽",
-      content: "您的專屬種族卡放置於此。種族卡能為場上同族主要單位提供被動天賦支援。",
+      title: "6. 場地介紹：種族宣言卡",
+      content: "宣告我方使用的種族，對手也會同時放在相對位置宣告對手的使用的種族。可作為後續調整牌組的依據。",
       spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
