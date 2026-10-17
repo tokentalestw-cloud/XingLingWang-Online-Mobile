@@ -29309,7 +29309,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "10. 卡牌資訊與意義",
-      content: "點擊卡牌會彈出詳細資訊面板。卡牌主要關注：攻擊力(ATK)、防禦/護盾(DEF)、祭品需求(Tribute Cost)、星星點數(Score Stars)與特殊效果。",
+      content: "點擊卡牌會彈出詳細資訊面板。卡牌主要關注：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 特殊效果、⑤ ⭐ ★星數得分。",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null

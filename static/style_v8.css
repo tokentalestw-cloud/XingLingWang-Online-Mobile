@@ -5558,7 +5558,68 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .badge-purple { background: rgba(156, 39, 176, 0.2) !important; color: #ea80fc !important; border: 1px solid #ea80fc !important; }
 .badge-red { background: rgba(255, 82, 82, 0.2) !important; color: #ff8a80 !important; border: 1px solid #ff8a80 !important; }
 .badge-orange { background: rgba(255, 152, 0, 0.2) !important; color: #ffe082 !important; border: 1px solid #ffe082 !important; }
+.badge-blue { background: rgba(0, 229, 255, 0.2) !important; color: #00e5ff !important; border: 1px solid #00e5ff !important; }
 .badge-green { background: rgba(76, 175, 80, 0.2) !important; color: #b9f6ca !important; border: 1px solid #b9f6ca !important; }
+
+.anatomy-pin {
+  position: absolute !important;
+  background: rgba(10, 8, 24, 0.94) !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.85) !important;
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  letter-spacing: 0.5px !important;
+}
+
+.anatomy-pin-1 {
+  top: -14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  color: #ff5252 !important;
+  border: 1.5px solid #ff5252 !important;
+  box-shadow: 0 0 12px rgba(255, 82, 82, 0.5) !important;
+}
+
+.anatomy-pin-2 {
+  top: 8px !important;
+  right: -24px !important;
+  color: #ff9800 !important;
+  border: 1.5px solid #ff9800 !important;
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.5) !important;
+}
+
+.anatomy-pin-3 {
+  top: 48% !important;
+  left: -24px !important;
+  transform: translateY(-50%) !important;
+  color: #00e5ff !important;
+  border: 1.5px solid #00e5ff !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.5) !important;
+}
+
+.anatomy-pin-4 {
+  bottom: 24% !important;
+  right: -24px !important;
+  color: #4ade80 !important;
+  border: 1.5px solid #4ade80 !important;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.5) !important;
+}
+
+.anatomy-pin-5 {
+  bottom: -14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  color: #ffd76a !important;
+  border: 1.5px solid #ffd76a !important;
+  box-shadow: 0 0 12px rgba(255, 215, 106, 0.5) !important;
+}
 
 .anatomy-close-btn {
   background: linear-gradient(135deg, #d4af37 0%, #ffd76a 100%) !important;

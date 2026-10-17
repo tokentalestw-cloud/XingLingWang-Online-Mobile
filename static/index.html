@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=21.92-multiplayer-lobby">
+  <link rel="stylesheet" href="/static/style_v8.css?v=21.94-tutorial-card-anatomy">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -319,7 +319,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=21.93-multiplayer-lobby" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=21.94-tutorial-card-anatomy" charset="utf-8"></script>
   </div>
 
   <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
@@ -457,41 +457,37 @@
         <h3 class="anatomy-header">🎴 卡牌詳細資訊代表意義解密</h3>
         <div class="anatomy-body">
           <!-- 卡牌視覺預覽示範 -->
-                                    <div class="anatomy-card-preview" style="position: relative; width: 220px; flex-shrink: 0;">
-                <img src="/static/card_images/ssr_art_0001.jpeg" style="width: 100%; border-radius: 12px; border: 2px solid #ffd76a; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
-                
-                <div style="position:absolute; top: 10%; left: -10px; background: rgba(0,0,0,0.85); color: #ffd76a; border: 1px solid #ffd76a; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">1. 名稱與陣營</div>
-                
-                <div style="position:absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #ff4d4f; border: 1px solid #ff4d4f; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">2. 攻擊力</div>
-                
-                <div style="position:absolute; top: -15px; right: -15px; background: rgba(0,0,0,0.85); color: #ff9800; border: 1px solid #ff9800; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">3. 獻祭數量</div>
-                
-                <div style="position:absolute; bottom: 35%; left: -45px; background: rgba(0,0,0,0.85); color: #4ade80; border: 1px solid #4ade80; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">4. 卡牌效果</div>
-                
-                <div style="position:absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #d4af37; border: 1px solid #d4af37; padding: 4px 8px; border-radius: 6px; font-size:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); pointer-events:none; white-space:nowrap;">5. 星星數</div>
-              </div>
+          <div class="anatomy-card-preview" style="position: relative; width: 220px; flex-shrink: 0; margin: 15px 25px;">
+            <img src="/static/card_images/ssr_art_0001.jpeg" alt="卡牌構造解密" style="width: 100%; border-radius: 12px; border: 2px solid #ffd76a; box-shadow: 0 4px 20px rgba(0,0,0,0.85); display: block;">
+            
+            <div class="anatomy-pin anatomy-pin-1">① ⚔️ 攻擊力 (ATK)</div>
+            <div class="anatomy-pin anatomy-pin-2">② 🩸 祭品需求</div>
+            <div class="anatomy-pin anatomy-pin-3">③ 🏷️ 名稱與陣營</div>
+            <div class="anatomy-pin anatomy-pin-4">④ 📜 卡牌效果</div>
+            <div class="anatomy-pin anatomy-pin-5">⑤ ⭐ ★星數 (分數)</div>
+          </div>
           
           <!-- 詳細解說清單 -->
           <div class="anatomy-details-list">
             <div class="anatomy-detail-item">
-              <span class="badge badge-yellow">1. 卡牌名稱與陣營</span>
-              <p>顯示卡牌名稱與所屬種族（如：喵喵賊、妖怪村莊、勇者公會）。同種族的卡牌常具備強效連攜能力！</p>
+              <span class="badge badge-red">① ⚔️ 攻擊力 (ATK) / 🛡️ 防禦護盾 (Shield)</span>
+              <p><b>⚔️ 攻擊力</b>：對決計算時的主要戰鬥數值！數字越大，進攻時越能威脅並擊潰敵方單位。<br><b>🛡️ 護盾/防禦</b>：具備護盾或阻擋特性的單位，防守時能優先抵擋傷害或阻截對手直擊！</p>
             </div>
             <div class="anatomy-detail-item">
-              <span class="badge badge-purple">2. ★點數 (星數/分數)</span>
-              <p>單位卡登場後能為該戰線累積星數得分！在對決對戰中分數最高者取得優勢。</p>
+              <span class="badge badge-orange">② 🩸 祭品需求 (Tribute Cost)</span>
+              <p>召喚高階強力單位時需獻祭我方場上現存的低星單位（0隻 / 1隻 / 2隻 / 3隻）。0 祭品單位可直接出擊，高階單位需選取場上祭品送墓後方可登場！</p>
             </div>
             <div class="anatomy-detail-item">
-              <span class="badge badge-red">3. ⚔️ 攻擊力 (ATK) / 🛡️ 盾 (Shield)</span>
-              <p><b>⚔️ 攻擊力</b>：對決計算的主要戰鬥數值！<br><b>🛡️ 盾牌</b>：具備防禦護盾的單位，在防守時能優先替我方擋下敵人攻擊打擊！</p>
+              <span class="badge badge-blue">③ 🏷️ 卡牌名稱與陣營 (Name & Faction)</span>
+              <p>卡面中央為<b>卡牌名稱</b>，左下角為所屬<b>陣營/種族</b>（如：藝術品、妖怪村莊、勇者公會、歡樂島）。同陣營單位具備豐富強大的技能羈絆與連鎖效果！</p>
             </div>
             <div class="anatomy-detail-item">
-              <span class="badge badge-orange">4. 祭品需求 (Tribute Cost)</span>
-              <p>召喚高星級的強大卡牌時，需要先獻祭戰場上現有的低星單位（0隻 / 1隻 / 2隻）。</p>
+              <span class="badge badge-green">④ 📜 卡牌效果與特性 (Card Effect & Keywords)</span>
+              <p>下半部文字框顯示卡牌的獨特技能（登場立即發動、被動光環、回合觸發等）及核心特性，如：<b>貫穿</b>（溢位傷害）、<b>遠程</b>（先發制人）、<b>破甲</b>（無視護盾）、<b>橫放</b>（特殊防禦）。</p>
             </div>
             <div class="anatomy-detail-item">
-              <span class="badge badge-green">5. 卡牌種類 (單位卡 vs 魔法卡)</span>
-              <p><b>單位卡</b>：可召喚並駐紮在戰場行進行攻防對決。<br><b>魔法卡</b>：可從手牌直接發動，提供強化、削弱或解場等強大戰術效果！</p>
+              <span class="badge badge-yellow">⑤ ⭐ ★星數 (Score Stars / 終局分數)</span>
+              <p>卡片底部金色大星星代表單位駐紮在戰線上所能為我方累積的<b>星數得分</b>！在對決與終局結算時，戰線累積總星數較高的一方將贏得該戰線的勝點！</p>
             </div>
           </div>
         </div>
