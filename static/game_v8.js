@@ -29431,8 +29431,8 @@ window.XLW_Tutorial = {
       interactive: null
     },
     {
-      title: "3. 場地介紹：法術與結界區",
-      content: "戰線兩側是法術與結界區。您可以將法術卡或結界卡放置於此，提供額外的戰術支援或點數資源。",
+      title: "3. 場地介紹：場地魔法區",
+      content: "發動場地魔法卡後，會將場地魔法卡持續顯示在該處，場地魔法卡會持續存在直到被破壞，其效果在符合條件時，會持續存在。",
       spotlightSelector: "#playerField",
       anatomyModal: false,
       interactive: null
@@ -29446,7 +29446,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "5. 場地介紹：除外區",
-      content: "回合結束時，若手牌超過 10 張，多餘的牌會被移至除外區。被除外的卡牌通常無法被回收。",
+      content: "卡片因為卡片效果或是進行升級被除外，會將卡牌放在此處，手牌超過十張也會將超過數量的手牌放置在此處，此處的卡片不能重新回到遊戲中。",
       spotlightSelector: "#playerExile",
       anatomyModal: false,
       interactive: null
