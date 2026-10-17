@@ -5693,18 +5693,35 @@ body { background: #000 url("/static/detailed_stars_bg.jpg") center/cover no-rep
   animation: xlw-twinkle-3 5s ease-in-out infinite;
 }
 
-@media screen and (orientation: portrait) {
-  html, body {
-    width: 100vh !important;
-    height: 100vw !important;
-    overflow: hidden !important;
-    position: relative !important;
-  }
-  body {
-    transform: rotate(90deg) !important;
-    transform-origin: top left !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 100vw !important;
-  }
+/* ===== 🐱 貓咪大戰爭風格：手機自動全畫面橫向轉向引擎 (Auto Landscape Fullscreen Engine) ===== */
+html.xlw-force-landscape,
+html.xlw-force-landscape body {
+  width: 100vh !important;
+  width: 100dvh !important;
+  height: 100vw !important;
+  height: 100dvw !important;
+  max-width: 100vh !important;
+  max-height: 100vw !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html.xlw-force-landscape body {
+  left: 100vw !important;
+  left: 100dvw !important;
+  transform-origin: 0 0 !important;
+  transform: rotate(90deg) !important;
+}
+
+/* 徹底移除所有轉向提示與全螢幕橫條（零提示、零跳轉） */
+.xlw-mobile-rotate-prompt,
+.xlw-mobile-fs-banner {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }

@@ -29021,75 +29021,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// ===== 📱 手機一鍵切換全螢幕與 iOS PWA 啟動引擎 =====
-window.xlwRequestFullScreen = function() {
+// ===== 🐱 貓咪大戰爭風格：點擊即自動全畫面轉橫向引擎 (Instant Fullscreen & Landscape Engine) =====
+window.xlwAutoLandscapeFullscreen = function() {
   const docEl = document.documentElement;
-  try {
-    if (docEl.requestFullscreen) {
-      docEl.requestFullscreen().catch(e => {});
-    } else if (docEl.webkitRequestFullscreen) {
-      docEl.webkitRequestFullscreen();
-    } else if (docEl.mozRequestFullScreen) {
-      docEl.mozRequestFullScreen();
-    } else if (docEl.msRequestFullscreen) {
-      docEl.msRequestFullscreen();
-    }
-  } catch(e) {}
 
-  const banner = document.getElementById("xlwMobileFsBanner");
-  if (banner) banner.style.display = "none";
+  // 1. 嘗試調用全螢幕 API
+  try {
+    const rfs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+    if (rfs && !document.fullscreenElement && !document.webkitFullscreenElement) {
+      const p = rfs.call(docEl);
+      if (p && p.catch) p.catch(() => {});
+    }
+  } catch (e) {}
+
+  // 2. 嘗試調用螢幕方向鎖定 API (Android Chrome / Edge / PWA)
+  try {
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock("landscape").catch(() => {});
+    } else if (screen.lockOrientation) {
+      screen.lockOrientation("landscape");
+    } else if (screen.webkitLockOrientation) {
+      screen.webkitLockOrientation("landscape");
+    }
+  } catch (e) {}
+
+  // 3. 即時檢查並套用虛擬橫向轉換
+  window.xlwCheckLandscapeOrientation();
 };
 
-window.xlwCheckStandalone = function() {
-  const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const banner = document.getElementById("xlwMobileFsBanner");
-  
-  if (banner) {
-    if (isStandalone) {
-      banner.style.display = "none";
-    } else if (isIOS) {
-      // iPhone Safari does not support requestFullscreen on standard HTML elements.
-      // Dynamically display PWA installation guide on the banner to avoid non-functional clicks.
-      banner.innerHTML = `<span>💡 <b>iPhone 滿版提示：</b>點擊 Safari 下方「<b>分享 ➔</b>」按鈕，選擇「<b>加入主畫面</b>」即可開啟全螢幕 App！</span>`;
-      banner.removeAttribute("onclick");
-      banner.style.background = "linear-gradient(90deg, #1b0d2b 0%, #fa541c 50%, #1b0d2b 100%)";
-      banner.style.color = "#ffffff";
-      banner.style.justifyContent = "center";
-    }
+window.xlwRequestFullScreen = window.xlwAutoLandscapeFullscreen;
+window.xlwLockOrientation = window.xlwAutoLandscapeFullscreen;
+
+window.xlwCheckLandscapeOrientation = function() {
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  if (isTouchDevice && isPortrait) {
+    document.documentElement.classList.add("xlw-force-landscape");
+    document.body.classList.add("xlw-force-landscape");
+  } else {
+    document.documentElement.classList.remove("xlw-force-landscape");
+    document.body.classList.remove("xlw-force-landscape");
+  }
+
+  if (typeof adjustBoardScale === 'function') {
+    adjustBoardScale();
   }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => {
-    if (typeof window.xlwCheckStandalone === 'function') window.xlwCheckStandalone();
-  }, 200);
+// 全局點擊/觸控即刻啟動全畫面橫向（不需任何提示、不需經過跳轉）
+window.addEventListener("click", window.xlwAutoLandscapeFullscreen, { passive: true });
+window.addEventListener("touchstart", window.xlwAutoLandscapeFullscreen, { passive: true });
+window.addEventListener("resize", window.xlwCheckLandscapeOrientation);
+window.addEventListener("orientationchange", () => {
+  setTimeout(window.xlwCheckLandscapeOrientation, 150);
 });
 
-// ===== 📱 橫向螢幕鎖定 API 執行引擎 =====
-window.xlwLockOrientation = function() {
-  try {
-    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        if (screen.orientation && typeof screen.orientation.lock === 'function') {
-          screen.orientation.lock("landscape").catch(e => console.log(e));
-        }
-      }).catch(e => console.log(e));
-    } else {
-      if (screen.orientation && typeof screen.orientation.lock === 'function') {
-        screen.orientation.lock("landscape").catch(e => console.log(e));
-      } else if (screen.lockOrientation) {
-        screen.lockOrientation("landscape");
-      } else if (screen.webkitLockOrientation) {
-        screen.webkitLockOrientation("landscape");
-      }
-    }
-  } catch(e) {}
-};
-
 document.addEventListener("DOMContentLoaded", () => {
-  window.xlwLockOrientation();
-  document.body.addEventListener("click", window.xlwLockOrientation, { once: true });
+  window.xlwCheckLandscapeOrientation();
 });
 
 

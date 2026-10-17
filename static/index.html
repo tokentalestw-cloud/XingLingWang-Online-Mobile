@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=21.94-tutorial-card-anatomy">
+  <link rel="stylesheet" href="/static/style_v8.css?v=21.95-auto-landscape-fullscreen">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -319,27 +319,10 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=21.94-tutorial-card-anatomy" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=21.95-auto-landscape-fullscreen" charset="utf-8"></script>
   </div>
 
-  <!-- 手機直向旋轉提示遮罩 (Mobile Portrait Rotate Prompt) -->
-  <div id="xlwMobileRotatePrompt" class="xlw-mobile-rotate-prompt">
-    <div class="rotate-card">
-      <div class="rotate-icon">📱 ↷</div>
-      <h2>請旋轉手機至橫向螢幕</h2>
-      <p>《星靈王》專為手機橫向全螢幕對戰打造<br>請將手機轉為橫向以獲得最佳對戰視角</p>
-      <div class="ios-install-tip">
-        💡 <b>iPhone 桌面 App 設定提示：</b><br>
-        點擊 Safari 下方「<b>分享</b>」按鈕 ➔ 選擇「<b>加入主畫面</b>」<br>即可像原生 App 一樣全螢幕開啟！
-      </div>
-    </div>
-  </div>
-  <!-- 手機瀏覽器點擊全螢幕提示橫條 (Tap to Fullscreen Banner) -->
-  <div id="xlwMobileFsBanner" class="xlw-mobile-fs-banner" onclick="window.xlwRequestFullScreen()">
-    <span>📱 <b>點擊此處開啟手機全螢幕對戰</b>（或點擊 Safari 下方「分享 ➔ 加入主畫面」獲得 100% 滿版體驗）</span>
-    <button class="fs-btn">進入全螢幕 ⛶</button>
-  </div>
-    <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
+  <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
   <div id="xlwPreBattleDeckSelectOverlay" class="xlw-prebattle-overlay" style="display: none !important;">
     <div class="prebattle-container">
       <h2 class="prebattle-title">⚔️ 選擇出戰陣容</h2>
