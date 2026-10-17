@@ -2312,50 +2312,70 @@ window.xlwOnMagicCardCast = async function(isPlayer) {
 };
 
 window.xlwGetDefensePhaseCombatants = function(isPlayerCasting) {
+  const getForLane = function(l) {
+    let attacker = null;
+    let defender = null;
+    let attZone = "";
+    let defZone = "";
+
+    if (isPlayerCasting) {
+      if (field.enemy_front[l] && field.enemy_front[l].attacking) {
+        attacker = field.enemy_front[l];
+        attZone = "enemy_front";
+      } else if (field.enemy_back[l] && field.enemy_back[l].attacking) {
+        attacker = field.enemy_back[l];
+        attZone = "enemy_back";
+      }
+
+      if (attacker && attacker.target && attacker.target.redirected) {
+        defZone = attacker.target.zone;
+        defender = field[defZone]?.[attacker.target.idx];
+      } else {
+        if (field.player_front[l]) {
+          defender = field.player_front[l];
+          defZone = "player_front";
+        } else if (field.player_back[l]) {
+          defender = field.player_back[l];
+          defZone = "player_back";
+        }
+      }
+    } else {
+      if (field.player_front[l] && field.player_front[l].attacking) {
+        attacker = field.player_front[l];
+        attZone = "player_front";
+      } else if (field.player_back[l] && field.player_back[l].attacking) {
+        attacker = field.player_back[l];
+        attZone = "player_back";
+      }
+
+      if (attacker && attacker.target && attacker.target.redirected) {
+        defZone = attacker.target.zone;
+        defender = field[defZone]?.[attacker.target.idx];
+      } else {
+        if (field.enemy_front[l]) {
+          defender = field.enemy_front[l];
+          defZone = "enemy_front";
+        } else if (field.enemy_back[l]) {
+          defender = field.enemy_back[l];
+          defZone = "enemy_back";
+        }
+      }
+    }
+
+    if (attacker && defender) {
+      return { attacker, defender, attZone, defZone, lane: l };
+    }
+    return null;
+  };
+
   const lane = window.XLW_currentDefenseLane;
-  if (lane === undefined || lane === null) return null;
-
-  let attacker = null;
-  let defender = null;
-  let attZone = "";
-  let defZone = "";
-
-  if (isPlayerCasting) {
-    if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
-      attacker = field.enemy_front[lane];
-      attZone = "enemy_front";
-    } else if (field.enemy_back[lane] && field.enemy_back[lane].attacking) {
-      attacker = field.enemy_back[lane];
-      attZone = "enemy_back";
-    }
-
-    if (field.player_front[lane]) {
-      defender = field.player_front[lane];
-      defZone = "player_front";
-    } else if (field.player_back[lane]) {
-      defender = field.player_back[lane];
-      defZone = "player_back";
-    }
-  } else {
-    if (field.player_front[lane] && field.player_front[lane].attacking) {
-      attacker = field.player_front[lane];
-      attZone = "player_front";
-    } else if (field.player_back[lane] && field.player_back[lane].attacking) {
-      attacker = field.player_back[lane];
-      attZone = "player_back";
-    }
-
-    if (field.enemy_front[lane]) {
-      defender = field.enemy_front[lane];
-      defZone = "enemy_front";
-    } else if (field.enemy_back[lane]) {
-      defender = field.enemy_back[lane];
-      defZone = "enemy_back";
-    }
+  if (lane !== undefined && lane !== null) {
+    return getForLane(lane);
   }
 
-  if (attacker && defender) {
-    return { attacker, defender, attZone, defZone, lane };
+  for (let l = 0; l < 5; l++) {
+    const res = getForLane(l);
+    if (res) return res;
   }
   return null;
 };
@@ -3617,34 +3637,50 @@ async function castSpell(handIndex) {
       return;
     }
   } else if (card.name.includes("地震術") || card.id === "NMG-0001" || card.id === "R-NMG-0001") {
-    if (!window.XLW_defenseCounterActive || window.XLW_currentDefenseLane === undefined || window.XLW_currentDefenseLane === null) {
+    if (!window.XLW_defenseCounterActive) {
       setStatus("【地震術】只能在防守反制階段發動！");
       return;
     }
-    const defenseLane = window.XLW_currentDefenseLane;
-    const eligibleLanes = [];
-    for (let i = 0; i < 5; i++) {
-      if (i !== defenseLane && field.player_front[i]) {
-        eligibleLanes.push(i);
-      }
+    const attackingUnits = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u.attacking && !isUnitMagicImmune(u, z, i)) {
+          attackingUnits.push({ zone: z, idx: i, unit: u });
+        }
+      });
     }
-    if (eligibleLanes.length === 0) {
-      setStatus("場上無其他前排單位可轉移攻擊目標！");
+    if (attackingUnits.length === 0) {
+      setStatus("場上無對手進攻單位可轉移目標！");
+      return;
+    }
+    const hasFrontUnit = field.player_front.some(u => u !== null);
+    if (!hasFrontUnit) {
+      setStatus("我方前排無單位可作為轉移目標！");
       return;
     }
   } else if (card.id === "R-BRV-0049" || card.name?.includes("以小欺大")) {
-    if (!window.XLW_defenseCounterActive || window.XLW_currentDefenseLane === undefined || window.XLW_currentDefenseLane === null) {
+    if (!window.XLW_defenseCounterActive) {
       setStatus("【以小欺大】只能在防守階段對決前作為防守反制魔法使用！");
       return;
     }
-    const combat = window.xlwGetDefensePhaseCombatants(true);
-    if (!combat) {
-      setStatus("目前星星戰線沒有正在進行對決的雙方單位！");
-      return;
-    }
     const isDemon = u => u && u.card && (u.card.art_subtype?.includes("魔族") || u.card.name?.includes("魔族"));
-    if (!isDemon(combat.defender)) {
-      setStatus("我方的防守單位必須是【魔族】單位，才能發動此卡！");
+    let hasEligibleDemonCombat = false;
+    for (let l = 0; l < 5; l++) {
+      let attacker = (field.enemy_front[l] && field.enemy_front[l].attacking) ? field.enemy_front[l] : ((field.enemy_back[l] && field.enemy_back[l].attacking) ? field.enemy_back[l] : null);
+      if (!attacker) continue;
+      let defender = null;
+      if (attacker.target && attacker.target.redirected) {
+        defender = field[attacker.target.zone]?.[attacker.target.idx];
+      } else {
+        defender = field.player_front[l] || field.player_back[l];
+      }
+      if (defender && isDemon(defender)) {
+        hasEligibleDemonCombat = true;
+        break;
+      }
+    }
+    if (!hasEligibleDemonCombat) {
+      setStatus("場上沒有我方【魔族】防守單位正在進行對決！");
       return;
     }
   } else if (card.name.includes("託夢") || card.id === "R-NMG-0030") {
@@ -3728,35 +3764,60 @@ async function castSpell(handIndex) {
       return;
     }
   } else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
-    if (!window.XLW_defenseCounterActive || window.XLW_currentDefenseLane === undefined || window.XLW_currentDefenseLane === null) {
+    if (!window.XLW_defenseCounterActive) {
       setStatus("【以小博大】只能在防守反制階段發動！");
       return;
     }
-    const lane = window.XLW_currentDefenseLane;
-    const attacker = field.enemy_front[lane] || field.enemy_back[lane];
-    const attZone = field.enemy_front[lane] ? "enemy_front" : "enemy_back";
-    const defender = field.player_front[lane] || field.player_back[lane];
-    const defZone = field.player_front[lane] ? "player_front" : "player_back";
-    if (!attacker || !defender) {
-      setStatus("反制發動失敗：該戰線無對手進攻單位或我方防守單位！");
-      return;
+    const eligiblePairs = [];
+    for (let l = 0; l < 5; l++) {
+      let attacker = (field.enemy_front[l] && field.enemy_front[l].attacking) ? field.enemy_front[l] : ((field.enemy_back[l] && field.enemy_back[l].attacking) ? field.enemy_back[l] : null);
+      let attZone = (field.enemy_front[l] && field.enemy_front[l].attacking) ? "enemy_front" : "enemy_back";
+      if (!attacker || isUnitMagicImmune(attacker, attZone, l)) continue;
+
+      let defender = null;
+      let defZone = "";
+      let defIdx = l;
+      if (attacker.target && attacker.target.redirected) {
+        defZone = attacker.target.zone;
+        defIdx = attacker.target.idx;
+        defender = field[defZone]?.[defIdx];
+      } else {
+        if (field.player_front[l]) {
+          defender = field.player_front[l];
+          defZone = "player_front";
+        } else if (field.player_back[l]) {
+          defender = field.player_back[l];
+          defZone = "player_back";
+        }
+      }
+      if (!defender) continue;
+
+      const attAtk = getUnitAtk(attacker, attZone, l);
+      const defAtk = getUnitAtk(defender, defZone, defIdx, true);
+      if (attAtk - defAtk >= 3) {
+        eligiblePairs.push({ attacker, defender, attZone, defZone, lane: l });
+      }
     }
-    const attAtk = getUnitAtk(attacker, attZone, lane);
-    const defAtk = getUnitAtk(defender, defZone, lane);
-    if (attAtk - defAtk < 3) {
-      setStatus("敵方單位攻擊力沒有比我方多3或以上，不能發動！");
+    if (eligiblePairs.length === 0) {
+      setStatus("敵方單位攻擊力沒有比我方防守單位多 3 點或以上，不能發動！");
       return;
     }
 
   } else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
-    if (!window.XLW_defenseCounterActive || window.XLW_currentDefenseLane === undefined || window.XLW_currentDefenseLane === null) {
+    if (!window.XLW_defenseCounterActive) {
       setStatus("【盾牌人偶】只能在防守反制階段發動！");
       return;
     }
-    const lane = window.XLW_currentDefenseLane;
-    const attacker = field.enemy_front[lane] || field.enemy_back[lane];
-    if (!attacker) {
-      setStatus("反制發動失敗：該戰線無對手進攻單位！");
+    const attackingUnits = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u.attacking && !isUnitMagicImmune(u, z, i)) {
+          attackingUnits.push({ zone: z, idx: i, unit: u });
+        }
+      });
+    }
+    if (attackingUnits.length === 0) {
+      setStatus("反制發動失敗：場上無可指定的對手進攻單位！");
       return;
     }
   } else if (card.name.includes("小雷擊") || card.id === "NMG-0015" || card.id === "R-NMG-0015") {
@@ -4025,13 +4086,49 @@ async function castSpell(handIndex) {
     render();
   }
   else if (card.id === "R-BRV-0049" || card.name?.includes("以小欺大")) {
-    const combat = window.xlwGetDefensePhaseCombatants(true);
-    if (combat) {
-      const atkPower = getUnitAtk(combat.attacker, combat.attZone, combat.lane);
-      const defPower = getUnitAtk(combat.defender, combat.defZone, combat.lane);
+    const isDemon = u => u && u.card && (u.card.art_subtype?.includes("魔族") || u.card.name?.includes("魔族"));
+    const eligibleCombats = [];
+    for (let l = 0; l < 5; l++) {
+      let attacker = (field.enemy_front[l] && field.enemy_front[l].attacking) ? field.enemy_front[l] : ((field.enemy_back[l] && field.enemy_back[l].attacking) ? field.enemy_back[l] : null);
+      let attZone = (field.enemy_front[l] && field.enemy_front[l].attacking) ? "enemy_front" : "enemy_back";
+      if (!attacker) continue;
+      let defender = null;
+      let defZone = "";
+      let defIdx = l;
+      if (attacker.target && attacker.target.redirected) {
+        defZone = attacker.target.zone;
+        defIdx = attacker.target.idx;
+        defender = field[defZone]?.[defIdx];
+      } else {
+        if (field.player_front[l]) {
+          defender = field.player_front[l];
+          defZone = "player_front";
+        } else if (field.player_back[l]) {
+          defender = field.player_back[l];
+          defZone = "player_back";
+        }
+      }
+      if (defender && isDemon(defender)) {
+        eligibleCombats.push({ attacker, defender, attZone, defZone, lane: l, defIdx });
+      }
+    }
+    let chosenCombat = eligibleCombats[0];
+    if (eligibleCombats.length > 1) {
+      const choices = eligibleCombats.map((c, idx) => ({
+        text: `星星戰線 ${c.lane + 1}：對手【${c.attacker.card.name}】⚔ 我方【${c.defender.card.name}】`,
+        value: idx
+      }));
+      const picked = await showXLWChoiceModal("以小欺大 選擇對決", "請選擇要獲得攻擊力差額分數的對決：", choices);
+      if (picked !== null && picked !== undefined) {
+        chosenCombat = eligibleCombats[picked];
+      }
+    }
+    if (chosenCombat) {
+      const atkPower = getUnitAtk(chosenCombat.attacker, chosenCombat.attZone, chosenCombat.lane);
+      const defPower = getUnitAtk(chosenCombat.defender, chosenCombat.defZone, chosenCombat.defIdx, true);
       const X = Math.max(0, atkPower - defPower);
       playerBonusScore += X;
-      logBattle(`✨ 以小欺大 效果發動：我方額外獲得與對戰攻擊力差額 ${X}★ 的分數！`);
+      logBattle(`✨ 以小欺大 效果發動：我方額外獲得星星戰線 ${chosenCombat.lane + 1} 對戰攻擊力差額 ${X}★ 的分數！`);
       renderScore();
       render();
     }
@@ -4233,31 +4330,85 @@ async function castSpell(handIndex) {
     await new Promise(r => { window.XLW_beerResolve = r; });
   }
   else if (card.name.includes("以小博大") || card.id === "NMG-0006" || card.id === "R-NMG-0006") {
-    const lane = window.XLW_currentDefenseLane;
-    let attacker = field.enemy_front[lane] || field.enemy_back[lane];
-    let attZone = field.enemy_front[lane] ? "enemy_front" : (field.enemy_back[lane] ? "enemy_back" : "");
-    let defender = field.player_front[lane] || field.player_back[lane];
-    let defZone = field.player_front[lane] ? "player_front" : (field.player_back[lane] ? "player_back" : "");
-    
-    const attAtk = getUnitAtk(attacker, attZone, lane);
-    const defAtk = getUnitAtk(defender, defZone, lane);
-    
-    logBattle(`✨ 以小博大 效果：破壞對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】！`);
-    await destroyUnit(attZone, lane, "enemy", false);
-    if (isMultiplayer) {
-      sendFullGameStateToOpponent();
+    const eligiblePairs = [];
+    for (let l = 0; l < 5; l++) {
+      let attacker = (field.enemy_front[l] && field.enemy_front[l].attacking) ? field.enemy_front[l] : ((field.enemy_back[l] && field.enemy_back[l].attacking) ? field.enemy_back[l] : null);
+      let attZone = (field.enemy_front[l] && field.enemy_front[l].attacking) ? "enemy_front" : "enemy_back";
+      if (!attacker || isUnitMagicImmune(attacker, attZone, l)) continue;
+
+      let defender = null;
+      let defZone = "";
+      let defIdx = l;
+      if (attacker.target && attacker.target.redirected) {
+        defZone = attacker.target.zone;
+        defIdx = attacker.target.idx;
+        defender = field[defZone]?.[defIdx];
+      } else {
+        if (field.player_front[l]) {
+          defender = field.player_front[l];
+          defZone = "player_front";
+        } else if (field.player_back[l]) {
+          defender = field.player_back[l];
+          defZone = "player_back";
+        }
+      }
+      if (!defender) continue;
+
+      const attAtk = getUnitAtk(attacker, attZone, l);
+      const defAtk = getUnitAtk(defender, defZone, defIdx, true);
+      if (attAtk - defAtk >= 3) {
+        eligiblePairs.push({ attacker, defender, attZone, defZone, lane: l, attAtk, defAtk });
+      }
+    }
+    let chosenPair = eligiblePairs[0];
+    if (eligiblePairs.length > 1) {
+      const choices = eligiblePairs.map((p, idx) => ({
+        text: `星星戰線 ${p.lane + 1} 對手【${p.attacker.card.name}】(攻 ${p.attAtk} vs 我方 ${p.defender.card.name} 攻 ${p.defAtk})`,
+        value: idx
+      }));
+      const picked = await showXLWChoiceModal("以小博大 選擇目標", "請選擇要破壞的對手進攻單位：", choices);
+      if (picked !== null && picked !== undefined) {
+        chosenPair = eligiblePairs[picked];
+      }
+    }
+    if (chosenPair) {
+      logBattle(`✨ 以小博大 效果：破壞對手星星戰線 ${chosenPair.lane + 1} 的進攻單位【${chosenPair.attacker.card.name}】！`);
+      await destroyUnit(chosenPair.attZone, chosenPair.lane, "enemy", false);
+      if (isMultiplayer) {
+        sendFullGameStateToOpponent();
+      }
+      render();
     }
   }
   else if (card.name.includes("盾牌人偶") || card.id === "NMG-0013" || card.id === "R-NMG-0013") {
-    const lane = window.XLW_currentDefenseLane;
-    let attacker = field.enemy_front[lane] || field.enemy_back[lane];
-    
-    logBattle(`✨ 盾牌人偶 效果：使對手星星戰線 ${lane + 1} 的進攻單位【${attacker.card.name}】進攻無效化並橫置！`);
-    attacker.attacking = false;
-    attacker.target = null;
-    attacker.tapped = true;
-    if (isMultiplayer) {
-      sendFullGameStateToOpponent();
+    const attackingUnits = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u.attacking && !isUnitMagicImmune(u, z, i)) {
+          attackingUnits.push({ zone: z, idx: i, unit: u });
+        }
+      });
+    }
+    let target = attackingUnits[0];
+    if (attackingUnits.length > 1) {
+      const choices = attackingUnits.map((item, idx) => ({
+        text: `星星戰線 ${item.idx + 1} (${item.zone.includes("front") ? "前排" : "後排"})【${item.unit.card.name}】`,
+        value: idx
+      }));
+      const picked = await showXLWChoiceModal("盾牌人偶 選擇目標", "請選擇要使其進攻無效化並橫置的對手單位：", choices);
+      if (picked !== null && picked !== undefined) {
+        target = attackingUnits[picked];
+      }
+    }
+    if (target && target.unit) {
+      logBattle(`✨ 盾牌人偶 效果：使對手星星戰線 ${target.idx + 1} 的進攻單位【${target.unit.card.name}】進攻無效化並橫置！`);
+      target.unit.attacking = false;
+      target.unit.target = null;
+      target.unit.tapped = true;
+      if (isMultiplayer) {
+        sendFullGameStateToOpponent();
+      }
+      render();
     }
   }
   else if (card.name.includes("小雷擊") || card.id === "NMG-0015" || card.id === "R-NMG-0015") {
@@ -4881,10 +5032,32 @@ async function castSpell(handIndex) {
         }
       }
     } else if (card.name.includes("地震術") || card.id === "NMG-0001" || card.id === "R-NMG-0001") {
-      const defenseLane = window.XLW_currentDefenseLane;
+      const attackingUnits = [];
+      for (const z of ["enemy_front", "enemy_back"]) {
+        field[z].forEach((u, i) => {
+          if (u && u.attacking && !isUnitMagicImmune(u, z, i)) {
+            attackingUnits.push({ zone: z, idx: i, unit: u });
+          }
+        });
+      }
+      let selectedAttacker = attackingUnits[0];
+      if (attackingUnits.length > 1) {
+        const attChoices = attackingUnits.map((item, idx) => ({
+          text: `星星戰線 ${item.idx + 1} (${item.zone.includes("front") ? "前排" : "後排"})【${item.unit.card.name}】`,
+          value: idx
+        }));
+        const pickedAtt = await showXLWChoiceModal("地震術 選擇進攻單位", "請選擇要轉移攻擊目標的對手進攻單位：", attChoices);
+        if (pickedAtt === null || pickedAtt === undefined) {
+          hand.splice(handIndex, 0, card);
+          render();
+          return;
+        }
+        selectedAttacker = attackingUnits[pickedAtt];
+      }
+
       const eligibleLanes = [];
       for (let i = 0; i < 5; i++) {
-        if (i !== defenseLane && field.player_front[i]) {
+        if (field.player_front[i]) {
           eligibleLanes.push(i);
         }
       }
@@ -4893,27 +5066,26 @@ async function castSpell(handIndex) {
         value: laneIdx
       }));
       
-      const chosenLane = await showXLWChoiceModal("地震術 效果發動", "選擇一個前排單位以轉移對手攻擊目標：", choices);
-      if (chosenLane !== null && chosenLane !== undefined) {
-        let attacker = field.enemy_front[defenseLane] || field.enemy_back[defenseLane];
-        if (attacker) {
-          attacker.target = { zone: "player_front", idx: chosenLane, redirected: true };
-          logBattle(`✨ 地震術 效果：使對手星星戰線 ${defenseLane + 1} 的進攻單位【${attacker.card.name}】攻擊目標轉移至星星戰線 ${chosenLane + 1} 的我方前排單位【${field.player_front[chosenLane].card.name}】！`);
-          
-          if (isMultiplayer) {
-            const attZone = field.enemy_front[defenseLane] ? "enemy_front" : "enemy_back";
-            ws.send(JSON.stringify({
-              action: "redirect_attack_target",
-              attZone: attZone.replace("enemy", "player"),
-              attIdx: defenseLane,
-              zone: "enemy_front",
-              idx: chosenLane,
-              reason: "地震術"
-            }));
-          }
-          graveyard.push(card);
-          render();
+      const chosenLane = await showXLWChoiceModal("地震術 選擇轉移目標", "選擇一個前排單位以轉移對手攻擊目標：", choices);
+      if (chosenLane !== null && chosenLane !== undefined && selectedAttacker) {
+        let attacker = selectedAttacker.unit;
+        let defenseLane = selectedAttacker.idx;
+        attacker.target = { zone: "player_front", idx: chosenLane, redirected: true };
+        logBattle(`✨ 地震術 效果：使對手星星戰線 ${defenseLane + 1} 的進攻單位【${attacker.card.name}】攻擊目標轉移至星星戰線 ${chosenLane + 1} 的我方前排單位【${field.player_front[chosenLane].card.name}】！`);
+        
+        if (isMultiplayer) {
+          const attZone = selectedAttacker.zone;
+          ws.send(JSON.stringify({
+            action: "redirect_attack_target",
+            attZone: attZone.replace("enemy", "player"),
+            attIdx: defenseLane,
+            zone: "enemy_front",
+            idx: chosenLane,
+            reason: "地震術"
+          }));
         }
+        graveyard.push(card);
+        render();
       } else {
         hand.splice(handIndex, 0, card);
         render();
@@ -10570,7 +10742,41 @@ async function xlwResolvePlayerDefensePhase() {
       ws.send(JSON.stringify({ action: "start_defense_phase" }));
     }
 
-    logBattle("—— 我方防守階段開始 (依戰線 1 -> 5 詢問並結算) ——");
+    logBattle("—— 我方防守階段開始 ——");
+
+    // 檢查對手場上是否有宣告進攻的單位
+    let hasAnyAttacker = false;
+    for (const z of ["enemy_front", "enemy_back"]) {
+      if (field[z].some(u => u && u.attacking)) {
+        hasAnyAttacker = true;
+        break;
+      }
+    }
+
+    if (hasAnyAttacker) {
+      // 剛進入防守階段一口氣進行防守反制魔法判定，可依序打出多張魔法卡
+      const wantCounter = await showXLWConfirm(
+        "🛡️ 防守階段反制魔法",
+        "對手宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡（可依序打出多張，如盾牌人偶、削弱藥水、塗毒等）？",
+        "發動防守魔法",
+        "不發動，直接開始戰鬥"
+      );
+      if (wantCounter) {
+        window.XLW_defenseCounterActive = true;
+        setStatus("🛡️ 防守魔法發動中：可從手牌依序打出防守反制魔法卡（對手可即時反制）。打完所有反制卡後請點擊右下角「結束防守魔法並開始戰鬥結算」。");
+        logBattle("—— 我方防守階段：開啟防守魔法反制時機 ——");
+        render();
+        await new Promise(resolve => {
+          window.XLW_defenseCounterResolve = resolve;
+        });
+        window.XLW_defenseCounterActive = false;
+        render();
+      } else {
+        logBattle("我方選擇不發動防守反制魔法，直接進行戰鬥結算。");
+      }
+    }
+
+    logBattle("—— 依序進行星星戰線 1 -> 5 戰鬥運算 ——");
     setStatus("我方防守判定，系統正在依序結算各星星戰線戰鬥...");
 
     for (let lane = 0; lane < 5; lane++) {
@@ -10598,29 +10804,6 @@ async function xlwResolvePlayerDefensePhase() {
         // Check if the attacker still exists and is still attacking
         if (!field[attZone][lane] || !field[attZone][lane].attacking) {
           continue;
-        }
-
-        // 詢問玩家是否要在這條戰線發動防守反制魔法
-        const wantCounter = await showXLWConfirm(
-          `戰線 ${lane + 1} 魔法反制`,
-          `對手在星星戰線 ${lane + 1} 的 ${attacker.card.name} 發動了進攻，是否在此戰線戰鬥前發動防守反制魔法卡（如削弱藥水等）？`,
-          "是",
-          "否"
-        );
-        if (wantCounter) {
-          window.XLW_defenseCounterActive = true;
-          window.XLW_currentDefenseLane = lane;
-          setStatus(`戰線 ${lane + 1} 反制中：您可以從手牌中打出魔法卡。完成後請點擊右下角「結束反制並開始戰鬥結算」按鈕。`);
-          logBattle(`我方選擇在星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
-          render();
-          await new Promise(resolve => {
-            window.XLW_defenseCounterResolve = resolve;
-          });
-          window.XLW_defenseCounterActive = false;
-          window.XLW_currentDefenseLane = null;
-          render();
-        } else {
-          logBattle(`我方選擇不對星星戰線 ${lane + 1} 進行防守階段魔法反制。`);
         }
 
         // 檢查進攻單位是否在反制階段被破壞或移除進攻狀態
@@ -21714,7 +21897,7 @@ function renderStablePanel() {
 
   if (window.XLW_defenseCounterActive) {
     panel.innerHTML = `
-      <button class="stable-action-btn primary" style="background: linear-gradient(135deg, #fa8c16, #fa541c); border-color: #ffd76a; color: #fff; height: auto; padding: 12px; font-size: 15px; cursor: pointer;" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">結束反制並開始戰鬥結算</button>
+      <button class="stable-action-btn primary" style="background: linear-gradient(135deg, #fa8c16, #fa541c); border-color: #ffd76a; color: #fff; height: auto; padding: 12px; font-size: 15px; cursor: pointer;" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">結束防守魔法並開始戰鬥結算</button>
     `;
     return;
   }
