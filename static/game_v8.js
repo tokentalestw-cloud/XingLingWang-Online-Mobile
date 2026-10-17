@@ -29762,7 +29762,7 @@ window.XLW_Tutorial = {
         const images = [];
         for (let i = 1; i <= 20; i++) {
             images.push({
-                src: `/static/card_images/yuki_tutorial_${i}.jpg`,
+                src: `/static/card_images/yuki_tutorial_${i}.png`,
                 clip: "none",
                 width: "120px",
                 height: "160px",
