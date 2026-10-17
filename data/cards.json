@@ -6638,6 +6638,7 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
+      "Main Phase",
       "Defense Phase"
     ],
     "trigger_condition": "",

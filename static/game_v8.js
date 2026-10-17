@@ -345,6 +345,14 @@ window.xlwRevealCard = async function(card, isPlayer) {
   await window.xlwShowRevealOverlay(card, isPlayer ? "player" : "enemy");
   logBattle(`✨ 展示卡牌：【${card.name}】（${isPlayer ? "我方" : "對手"}）`);
   
+  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN && !window.XLW_isRevealSyncing) {
+    ws.send(JSON.stringify({
+      action: "card_reveal_sync",
+      card: card,
+      isPlayer: isPlayer
+    }));
+  }
+  
   let triggered = false;
   
   // R-FMS-0026 V領黑熊
@@ -2782,19 +2790,19 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
   // R-FMS-0005 臭豆腐屍 正前方攻擊降低 2
   if (zone && lane !== undefined && lane >= 0) {
-    const sidePrefix = zone.startsWith("player_") ? "player_" : "enemy_";
     const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
-    let oppStinky = false;
-    
-    // Check direct opposite row
-    const oppositeRow = zone.includes("front") ? "front" : "back";
-    const oppUnit = field[oppPrefix + oppositeRow][lane];
-    if (oppUnit && oppUnit.card && (oppUnit.card.id === "R-FMS-0005" || oppUnit.card.name?.includes("臭豆腐屍")) && !window.isUnitSilenced(oppUnit, oppPrefix + oppositeRow, lane)) {
-      oppStinky = true;
-    }
+    const thisPrefix = zone.startsWith("player_") ? "player_" : "enemy_";
+    const oppFront = field[oppPrefix + "front"][lane];
+    const oppBack = field[oppPrefix + "back"][lane];
+    const oppStinky = (oppFront && (oppFront.card?.id === "R-FMS-0005" || oppFront.card?.name?.includes("臭豆腐屍")) && !window.isUnitSilenced(oppFront, oppPrefix + "front", lane)) ||
+      (!oppFront && oppBack && (oppBack.card?.id === "R-FMS-0005" || oppBack.card?.name?.includes("臭豆腐屍")) && !window.isUnitSilenced(oppBack, oppPrefix + "back", lane));
     
     if (oppStinky) {
-      baseAtk = Math.max(0, baseAtk - 2);
+      const thisFront = field[thisPrefix + "front"][lane];
+      // Affects front unit, or back unit if front is empty
+      if (zone.includes("front") || !thisFront) {
+        baseAtk = Math.max(0, baseAtk - 2);
+      }
     }
   }
   // R-ORC-0033 阿庫瑪的戰錘
@@ -3259,7 +3267,7 @@ async function castSpell(handIndex) {
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
       playerBonusScore += 8;
-      exileCard(spellCard);
+      exileCard(spellCard, "player");
       logBattle("✨ 小四喜 效果發動：我方成功胡牌，額外分數 +8★！此卡被除外。");
       renderScore();
       render();
@@ -3293,10 +3301,10 @@ async function castSpell(handIndex) {
       await castSpellChain(spellCard, async () => {
           targetItem.unit.atkModifier = (targetItem.unit.atkModifier || 0) + 4;
           logBattle(`✨ 大大術 效果：我方 ${targetItem.name} 獲得 +4 攻擊力！`);
-          playerGrave.push(spellCard);
+          graveyard.push(spellCard);
           render();
       });
-} else if (card.id === "SR-FMS-0016" || card.name?.includes("大三元")) {
+  } else if (card.id === "SR-FMS-0016" || card.name?.includes("大三元")) {
     const ok = window.xlwCheckMahjongCombo(true, "大三元");
     if (!ok) {
       setStatus("我方場上未備齊紅中、白板、發財，無法發動大三元！");
@@ -3306,7 +3314,7 @@ async function castSpell(handIndex) {
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
       playerBonusScore += 8;
-      exileCard(spellCard);
+      exileCard(spellCard, "player");
       logBattle("✨ 大三元 效果發動：我方成功胡牌，額外分數 +8★！此卡被除外。");
       renderScore();
       render();
@@ -3340,9 +3348,10 @@ async function castSpell(handIndex) {
           targetUnit.originalName = targetUnit.card.name;
           targetUnit.card.name = newName;
           logBattle(`✨ 詐胡 效果：【${target.name}】更名為【${newName}】直到回合結束！`);
-          render();
         }
       }
+      graveyard.push(spellCard);
+      render();
     });
   } else if (card.id === "R-FMS-0018" || card.name?.includes("聽牌")) {
     const myHuCards = hand.filter(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
@@ -3391,15 +3400,14 @@ async function castSpell(handIndex) {
         
         if (ok) {
           logBattle("✨ 聽牌 成功！所有提及的麻將單位均在場上或已被展示，額外特殊召喚展示的單位卡！");
-          const emptySlots = window.xlwGetEmptyPlayerSlots();
           
           // Special summon any revealed units that are in hand or deck
           const unitsToSummon = [];
           toReveal.forEach(c => {
-            if (c.type === "unit") unitsToSummon.push(c);
+            if (c.type === "unit" || c.type === "單位") unitsToSummon.push(c);
           });
           revDeck.forEach(c => {
-            if (c.type === "unit" && !unitsToSummon.includes(c)) unitsToSummon.push(c);
+            if ((c.type === "unit" || c.type === "單位") && !unitsToSummon.includes(c)) unitsToSummon.push(c);
           });
           
           for (const c of unitsToSummon) {
@@ -3411,18 +3419,19 @@ async function castSpell(handIndex) {
             const success = await window.xlwSpecialSummonUnit(c, true);
             if (!success) break;
           }
-          render();
         } else {
           logBattle("聽牌 效果結束：未湊齊所有對應的麻將單位。");
         }
       }
+      graveyard.push(spellCard);
+      render();
     });
   } else if (card.id === "R-FMS-0023" || card.name?.includes("星駭隧道")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
       const rev = await window.xlwRevealTopCards(1, true);
-      if (rev.length > 0 && rev[0].type === "unit") {
+      if (rev.length > 0 && (rev[0].type === "unit" || rev[0].type === "單位")) {
         const revAtk = rev[0].attack ?? rev[0].atk ?? rev[0].power ?? 0;
         let count = 0;
         for (const z of ["enemy_front", "enemy_back"]) {
@@ -3440,45 +3449,46 @@ async function castSpell(handIndex) {
         }
         if (count > 0) {
           logBattle(`✨ 星駭隧道：對手有 ${count} 個進攻單位被迫轉正取消進攻！`);
-          render();
+        } else {
+          logBattle("星駭隧道 效果：對手無攻擊力小於等於展示卡牌的進攻單位。");
         }
+      } else {
+        logBattle("星駭隧道 效果：展示的卡牌非單位卡，效果未觸發。");
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+  } else if (card.id === "R-FMS-0024" || card.name?.includes("民熊鬼屋")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const playerField = $("playerField");
+      if (playerField) {
+        if (playerField.dataset.card) {
+          try {
+            const oldCard = JSON.parse(playerField.dataset.card);
+            if (oldCard) graveyard.push(oldCard);
+          } catch(e) {}
+        }
+        playerField.dataset.card = JSON.stringify(spellCard);
+        playerField.innerHTML = `
+          <div style="width:100%; height:100%; position:relative; overflow:hidden; border-radius:8px;">
+            <img src="${spellCard.image || '/static/card_back.jpeg'}" style="width:100%; height:100%; object-fit:cover;">
+            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); font-size:11px; color:#ffe600; text-align:center; padding:2px; font-weight:bold;">${spellCard.name}</div>
+          </div>
+        `;
+        logBattle(`✨ 我方成功發動場地魔法卡【${spellCard.name}】！主要階段開始時將可展示牌庫頂卡牌並重洗。`);
+        if (isMultiplayer) {
+          ws.send(JSON.stringify({
+            action: "field_spell_sync",
+            card: spellCard,
+            side: "player"
+          }));
+          sendFullGameStateToOpponent();
+        }
+        render();
       }
     });
-  } else if (card.id === "SR-FMS-0036" || card.name?.includes("麻祖")) {
-    // Check exile zone
-    const hasHu = exileZone.some(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
-    if (!hasHu) {
-      setStatus("除外區沒有大三元或小四喜等胡牌，無法打出麻祖！");
-      return;
-    }
-    // Proceed with regular unit play
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0030" || card.id === "SSR-FMS-0030" || card.name?.includes("高塔101號")) {
-    const ok = window.xlwCheckMahjongCombo(true, "小四喜");
-    if (!ok) {
-      setStatus("我方場上未備齊東、南、西、北，無法召喚高塔101號！");
-      return;
-    }
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0031" || card.id === "R-FMS-0032" || card.id === "R-FMS-0033" || card.id === "R-FMS-0034" || card.id === "SR-FMS-0033") {
-    // Normal Happy Island unit play
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0021" || card.name?.includes("西南季風") || card.name?.includes("東北季風")) {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0007" || card.id === "R-FMS-0009" || card.id === "R-FMS-0010" || card.id === "R-FMS-0011") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0013" || card.id === "R-FMS-0014" || card.id === "R-FMS-0015") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0001" || card.id === "R-FMS-0002" || card.id === "R-FMS-0005" || card.id === "R-FMS-0006") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0026" || card.id === "R-FMS-0027" || card.id === "R-FMS-0029" || card.id === "SR-FMS-0004") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "SR-FMS-0025" || card.id === "SR-FMS-0028" || card.id === "SR-FMS-0020") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0022" || card.id === "SR-FMS-0036") {
-    await performSummonToSlot(card, handIndex);
-  } else if (card.id === "R-FMS-0012") {
-    await performSummonToSlot(card, handIndex);
   } else if (card.id === "ORC-0019" || card.name.includes("天下第一獸人作弊大會")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
@@ -6797,7 +6807,7 @@ async function performSummonToSlot(zone, idx) {
   let immediateEffectNegated = false;
   logDebug(`【點選放置】目標格子: ${zone}:${idx + 1}`);
   // 獻祭召喚與位置放置之強大對象參考匹配與 Fallback 恢復機制
-  if (tributeWaitingPosition && selectedTributeCard !== null) {
+  if (!isSpecialSummon && tributeWaitingPosition && selectedTributeCard !== null) {
     const isGraveyardSummon = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || 
                                selectedHandForSummon === "GRAVEYARD_WELL" || 
                                selectedHandForSummon === "GRAVEYARD_GHOST_MEOW");
@@ -6833,18 +6843,19 @@ async function performSummonToSlot(zone, idx) {
     }
   }
 
-  if (selectedHandForSummon === null) {
+  if (!isSpecialSummon && selectedHandForSummon === null) {
     logDebug("【放置終止】當前 selectedHandForSummon 為 null！");
     return;
   }
 
-  if (isMultiplayer && !isMyTurn && !window.XLW_bypassTurnCheck) {
+  if (!isSpecialSummon && isMultiplayer && !isMyTurn && !window.XLW_bypassTurnCheck) {
     setStatus("對手回合中，請稍候！");
     logDebug("【放置終止】非我方回合！");
     return;
   }
 
-  const canSum = (window.XLW_Tutorial && window.XLW_Tutorial.active) ||
+  const canSum = isSpecialSummon ||
+                 (window.XLW_Tutorial && window.XLW_Tutorial.active) ||
                  window.XLW_bypassNormalSummonLimit ||
                  (phase === "召喚階段" && !normalSummonUsed) || 
                  (phase === "戰術佈陣" && !tacticalSummonUsed);
@@ -6859,7 +6870,28 @@ async function performSummonToSlot(zone, idx) {
   let card = null;
   try {
 
-  if (selectedHandForSummon === "TRAVELER") {
+  if (isSpecialSummon) {
+    card = specialCard;
+    if (!field[zone][idx]) {
+      field[zone][idx] = {
+        card: structuredClone(card),
+        tapped: false,
+        attacking: false,
+        target: null,
+        summonedTurn: turn,
+        summonedZone: zone
+      };
+    }
+    field[zone][idx].card.creator = zone.startsWith("player_") ? "player" : "enemy";
+    if (zone.startsWith("player_")) {
+      window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
+      window.XLW_turnExtraSummonsCount = (window.XLW_turnExtraSummonsCount || 0) + 1;
+      window.XLW_playerActionsPerformedThisTurn = true;
+    } else {
+      window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
+    }
+    logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+  } else if (selectedHandForSummon === "TRAVELER") {
     // 召喚小旅人
     field[zone][idx] = {
       card: structuredClone(LITTLE_TRAVELER),
@@ -7262,7 +7294,8 @@ async function performSummonToSlot(zone, idx) {
             if (isBrother && rName !== card.name) {
               const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
               if (emptySlots.length > 0) {
-                myDeck.pop(); // remove from top
+                const dIdx = myDeck.indexOf(rev[0]);
+                if (dIdx >= 0) myDeck.splice(dIdx, 1);
                 await window.xlwSpecialSummonUnit(rev[0], isPlayer);
                 logBattle(`✨ 麻將兄弟連動：成功特殊召喚了【${rev[0].name}】！`);
                 render();
@@ -7307,7 +7340,7 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
         const myDeck = isPlayer ? deck : (window.XLW_ENEMY.deck || []);
-        const islandUnits = myGrave.filter(c => c && (c.faction === "歡樂島" || c.deck === "歡樂島" || c.id?.includes("FMS")));
+        const islandUnits = myGrave.filter(c => c && (c.faction === "歡樂島" || c.deck === "歡樂島" || c.id?.includes("FMS")) && (c.type === "unit" || c.type === "單位"));
         if (islandUnits.length > 0) {
           if (isPlayer) {
             const choices = islandUnits.map((c, i) => ({ text: `${c.name}`, value: i }));
@@ -7342,7 +7375,8 @@ async function performSummonToSlot(zone, idx) {
             const isMahjong = window.isMahjongUnit(rev[0]);
             const isHu = rev[0].id === "SR-FMS-0016" || rev[0].id === "R-FMS-0017" || rev[0].name?.includes("大三元") || rev[0].name?.includes("小四喜");
             if (isMahjong || isHu) {
-              myDeck.pop(); // remove from top
+              const dIdx = myDeck.indexOf(rev[0]);
+              if (dIdx >= 0) myDeck.splice(dIdx, 1);
               myHand.push(rev[0]);
               logBattle(`✨ 南大姊 效果：將展示的【${rev[0].name}】加入手牌！`);
               render();
@@ -7429,13 +7463,20 @@ async function performSummonToSlot(zone, idx) {
       if (card.id === "R-FMS-0030" || card.id === "SSR-FMS-0030" || card.name?.includes("高塔101號")) {
         const isPlayer = zone.startsWith("player_");
         if (isPlayer) {
-          const confirm101 = await showXLWConfirm("高塔101號 效果發動", "是否展示任意張手牌以觸發被展示效果？");
-          if (confirm101) {
-            const choices = hand.map((c, i) => ({ text: `${c.name}`, value: i }));
-            const chosen = await showXLWChoiceModal("選擇要展示的手牌", "請選擇任意卡牌展示（可多選/單選）：", choices);
-            if (chosen !== null && chosen !== undefined) {
-              // Note: choice modal might return single value or array depending on config, usually single choice
-              await window.xlwRevealCard(hand[chosen], true);
+          if (hand.length > 0) {
+            const choices = [
+              { text: "🌟 全部展示手牌", value: "all" }
+            ];
+            hand.forEach((c, i) => {
+              choices.push({ text: `🃏 展示【${c.name}】`, value: i });
+            });
+            const chosenMode = await showXLWChoiceModal("高塔101號 效果發動", "請選擇要展示的手牌：", choices);
+            if (chosenMode === "all") {
+              for (const c of [...hand]) {
+                await window.xlwRevealCard(c, true);
+              }
+            } else if (chosenMode !== null && chosenMode !== undefined) {
+              await window.xlwRevealCard(hand[chosenMode], true);
             }
           }
         } else {
@@ -7456,7 +7497,8 @@ async function performSummonToSlot(zone, idx) {
           if (rev.length > 0 && window.isMahjongUnit(rev[0])) {
             const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
             if (emptySlots.length > 0) {
-              myDeck.pop(); // remove from top
+              const dIdx = myDeck.indexOf(rev[0]);
+              if (dIdx >= 0) myDeck.splice(dIdx, 1);
               await window.xlwSpecialSummonUnit(rev[0], isPlayer);
               logBattle(`✨ 詐胡牌 連動效果：成功召喚【${rev[0].name}】！`);
               render();
@@ -7470,16 +7512,29 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         const myHand = isPlayer ? hand : (window.XLW_ENEMY.hand || []);
         if (isPlayer) {
-          const confirmChicken = await showXLWConfirm("好大雞牌 效果發動", "展示 2 張手牌（確定）還是展示牌庫頂 2 張卡牌（取消）？");
-          if (confirmChicken) {
-            if (myHand.length >= 2) {
-              // Reveal first 2 hand cards
-              await window.xlwRevealCard(myHand[0], true);
-              await window.xlwRevealCard(myHand[1], true);
-            } else if (myHand.length > 0) {
-              await window.xlwRevealCard(myHand[0], true);
+          const choices = [
+            { text: "🎴 展示牌庫頂 2 張卡牌", value: "deck" }
+          ];
+          if (myHand.length > 0) {
+            choices.unshift({ text: `✋ 展示手牌 ${Math.min(2, myHand.length)} 張卡牌`, value: "hand" });
+          }
+          const chosenMode = await showXLWChoiceModal("好大雞牌 效果發動", "請選擇要展示的來源：", choices);
+          if (chosenMode === "hand") {
+            if (myHand.length <= 2) {
+              for (const c of myHand) await window.xlwRevealCard(c, true);
+            } else {
+              const handChoices = myHand.map((c, i) => ({ text: c.name, value: i }));
+              const c1 = await showXLWChoiceModal("選擇展示的第一張手牌", "請選擇手牌：", handChoices);
+              if (c1 !== null && c1 !== undefined) {
+                await window.xlwRevealCard(myHand[c1], true);
+                const remChoices = myHand.map((c, i) => ({ text: c.name, value: i })).filter(item => item.value !== c1);
+                const c2 = await showXLWChoiceModal("選擇展示的第二張手牌", "請選擇第二張手牌：", remChoices);
+                if (c2 !== null && c2 !== undefined) {
+                  await window.xlwRevealCard(myHand[c2], true);
+                }
+              }
             }
-          } else {
+          } else if (chosenMode === "deck") {
             await window.xlwRevealTopCards(2, true);
           }
         } else {
@@ -13740,7 +13795,8 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
         if (isBrother && rName !== card.name) {
           const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
           if (emptySlots.length > 0) {
-            myDeck.pop(); // remove from top
+            const dIdx = myDeck.indexOf(rev[0]);
+            if (dIdx >= 0) myDeck.splice(dIdx, 1);
             await window.xlwSpecialSummonUnit(rev[0], isPlayer);
             logBattle(`✨ 麻將兄弟連動：成功特殊召喚了【${rev[0].name}】！`);
             render();
@@ -13781,7 +13837,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   else if (card.id === "R-FMS-0014" || card.name?.includes("西小弟")) {
     const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
     const myDeck = isPlayer ? deck : (window.XLW_ENEMY.deck || []);
-    const islandUnits = myGrave.filter(c => c && (c.faction === "歡樂島" || c.deck === "歡樂島" || c.id?.includes("FMS")));
+    const islandUnits = myGrave.filter(c => c && (c.type === "unit" || c.type === "單位") && (c.faction === "歡樂島" || c.deck === "歡樂島" || c.id?.includes("FMS")));
     if (islandUnits.length > 0) {
       if (isPlayer) {
         const choices = islandUnits.map((c, i) => ({ text: `${c.name}`, value: i }));
@@ -13814,7 +13870,8 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
         const isMahjong = window.isMahjongUnit(rev[0]);
         const isHu = rev[0].id === "SR-FMS-0016" || rev[0].id === "R-FMS-0017" || rev[0].name?.includes("大三元") || rev[0].name?.includes("小四喜");
         if (isMahjong || isHu) {
-          myDeck.pop(); // remove from top
+          const dIdx = myDeck.indexOf(rev[0]);
+          if (dIdx >= 0) myDeck.splice(dIdx, 1);
           myHand.push(rev[0]);
           logBattle(`✨ 南大姊 效果：將展示的【${rev[0].name}】加入手牌！`);
           render();
@@ -13891,12 +13948,20 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   // R-FMS-0030 高塔101號
   else if (card.id === "R-FMS-0030" || card.id === "SSR-FMS-0030" || card.name?.includes("高塔101號")) {
     if (isPlayer) {
-      const confirm101 = await showXLWConfirm("高塔101號 效果發動", "是否展示任意張手牌以觸發被展示效果？");
-      if (confirm101) {
-        const choices = hand.map((c, i) => ({ text: `${c.name}`, value: i }));
-        const chosen = await showXLWChoiceModal("選擇要展示的手牌", "請選擇任意卡牌展示（可多選/單選）：", choices);
-        if (chosen !== null && chosen !== undefined) {
-          await window.xlwRevealCard(hand[chosen], true);
+      if (hand.length > 0) {
+        const choices = [
+          { text: "🌟 全部展示手牌", value: "all" }
+        ];
+        hand.forEach((c, i) => {
+          choices.push({ text: `🃏 展示【${c.name}】`, value: i });
+        });
+        const chosenMode = await showXLWChoiceModal("高塔101號 效果發動", "請選擇要展示的手牌：", choices);
+        if (chosenMode === "all") {
+          for (const c of [...hand]) {
+            await window.xlwRevealCard(c, true);
+          }
+        } else if (chosenMode !== null && chosenMode !== undefined) {
+          await window.xlwRevealCard(hand[chosenMode], true);
         }
       }
     } else {
@@ -13914,7 +13979,8 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
       if (rev.length > 0 && window.isMahjongUnit(rev[0])) {
         const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
         if (emptySlots.length > 0) {
-          myDeck.pop(); // remove from top
+          const dIdx = myDeck.indexOf(rev[0]);
+          if (dIdx >= 0) myDeck.splice(dIdx, 1);
           await window.xlwSpecialSummonUnit(rev[0], isPlayer);
           logBattle(`✨ 詐胡牌 連動效果：成功召喚【${rev[0].name}】！`);
           render();
@@ -13926,15 +13992,19 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   else if (card.id === "R-FMS-0032" || card.name?.includes("好大雞牌")) {
     const myHand = isPlayer ? hand : (window.XLW_ENEMY.hand || []);
     if (isPlayer) {
-      const confirmChicken = await showXLWConfirm("好大雞牌 效果發動", "展示 2 張手牌（確定）還是展示牌庫頂 2 張卡牌（取消）？");
-      if (confirmChicken) {
+      const chickenChoices = [
+        { text: "展示 2 張手牌", value: "hand" },
+        { text: "展示牌庫頂 2 張卡牌", value: "deck" }
+      ];
+      const chickenMode = await showXLWChoiceModal("好大雞牌 效果發動", "請選擇展示方式：", chickenChoices);
+      if (chickenMode === "hand") {
         if (myHand.length >= 2) {
           await window.xlwRevealCard(myHand[0], true);
           await window.xlwRevealCard(myHand[1], true);
         } else if (myHand.length > 0) {
           await window.xlwRevealCard(myHand[0], true);
         }
-      } else {
+      } else if (chickenMode === "deck") {
         await window.xlwRevealTopCards(2, true);
       }
     } else {
@@ -23047,6 +23117,26 @@ function setupWebSocketEvents() {
       showRevealedCardModal(data.card, "對手");
       logBattle(`✨ 對手【最後的早餐】效果：對手展示該卡並抽 1 張牌，然後洗回牌庫！`);
       render();
+    } else if (data.action === "card_reveal_sync") {
+      if (data.card) {
+        window.XLW_isRevealSyncing = true;
+        await window.xlwShowRevealOverlay(data.card, data.isPlayer ? "enemy" : "player");
+        logBattle(`✨ 對手同步展示卡牌：【${data.card.name}】`);
+        window.XLW_isRevealSyncing = false;
+      }
+    } else if (data.action === "field_spell_sync") {
+      const targetEl = data.side === "player" ? $("enemyField") : $("playerField");
+      if (targetEl && data.card) {
+        targetEl.dataset.card = JSON.stringify(data.card);
+        targetEl.innerHTML = `
+          <div style="width:100%; height:100%; position:relative; overflow:hidden; border-radius:8px;">
+            <img src="${data.card.image || '/static/card_back.jpeg'}" style="width:100%; height:100%; object-fit:cover;">
+            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); font-size:11px; color:#ffe600; text-align:center; padding:2px; font-weight:bold;">${data.card.name}</div>
+          </div>
+        `;
+        logBattle(`✨ 對手設置場地魔法卡：【${data.card.name}】！`);
+        render();
+      }
     } else if (data.action === "cpu_overload_destroy_sync") {
       const tUnit = field[data.targetZone][data.targetIdx];
       if (tUnit) {
