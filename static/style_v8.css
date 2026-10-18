@@ -5685,25 +5685,29 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 .anatomy-pin-2 {
-  top: 8px !important;
-  right: -24px !important;
+  top: -8px !important;
+  right: -42px !important;
   color: #ff9800 !important;
   border: 1.5px solid #ff9800 !important;
   box-shadow: 0 0 12px rgba(255, 152, 0, 0.5) !important;
 }
 
 .anatomy-pin-3 {
-  top: 48% !important;
-  left: -24px !important;
-  transform: translateY(-50%) !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, -50%) !important;
   color: #00e5ff !important;
   border: 1.5px solid #00e5ff !important;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.5) !important;
 }
 
 .anatomy-pin-4 {
-  bottom: 24% !important;
-  right: -24px !important;
+  top: 64% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
   color: #4ade80 !important;
   border: 1.5px solid #4ade80 !important;
   box-shadow: 0 0 12px rgba(74, 222, 128, 0.5) !important;
