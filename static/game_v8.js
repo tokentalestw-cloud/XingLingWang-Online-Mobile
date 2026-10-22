@@ -18384,9 +18384,9 @@ function renderHand() {
       : `魔法 | 點 ${card.magic_point || "-"}`;
 
     if (card.image) {
-      cardEl.innerHTML = `<img src="${card.image}" alt="${card.name}"><div class="mini-meta">${card.name}<br>${metaText}</div>`;
+      cardEl.innerHTML = `<img src="${card.image}" alt="${card.name}"><div class="mini-meta"><div class="mini-meta-name" title="${card.name}">${card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
     } else {
-      cardEl.innerHTML = `<div class="fallback"><b>${card.name}</b><br>${metaText}</div>`;
+      cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${card.name}">${card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
     }
 
     // 動態撲克牌扇形展開效果 (Poker Fan-out)
@@ -18638,9 +18638,9 @@ function renderField() {
           : `魔法`;
 
         if (obj.card.image) {
-          cardEl.innerHTML = `<img src="${obj.card.image}" alt="${obj.card.name}"><div class="mini-meta">${obj.card.name}<br>${metaText}</div>`;
+          cardEl.innerHTML = `<img src="${obj.card.image}" alt="${obj.card.name}"><div class="mini-meta"><div class="mini-meta-name" title="${obj.card.name}">${obj.card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
         } else {
-          cardEl.innerHTML = `<div class="fallback"><b>${obj.card.name}</b><br>${metaText}</div>`;
+          cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${obj.card.name}">${obj.card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
         }
         
 
@@ -25192,9 +25192,9 @@ function renderGraveyard(zoneId, graveList, label) {
     : `魔法`;
     
   if (topCard.image) {
-    cardEl.innerHTML = `<img src="${topCard.image}" alt="${topCard.name}"><div class="mini-meta">${topCard.name}<br>${metaText} (${graveList.length}張)</div>`;
+    cardEl.innerHTML = `<img src="${topCard.image}" alt="${topCard.name}"><div class="mini-meta"><div class="mini-meta-name" title="${topCard.name}">${topCard.name}</div><div class="mini-meta-stats">${metaText} (${graveList.length}張)</div></div>`;
   } else {
-    cardEl.innerHTML = `<div class="fallback" style="font-size:10px;"><b>${topCard.name}</b><br>${metaText} (${graveList.length}張)</div>`;
+    cardEl.innerHTML = `<div class="fallback" style="font-size:10px;"><div class="fallback-name" title="${topCard.name}">${topCard.name}</div><div class="fallback-stats">${metaText} (${graveList.length}張)</div></div>`;
   }
   
   zone.onclick = (e) => {
@@ -29556,14 +29556,14 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 5：戰術階段（第一回合跳過）",
-      content: "接著進入【戰術階段】，依規則【先攻第一回合跳過戰術階段】（無法進攻或佈陣）！請點擊右側【結束回合】按鈕換對手行動。",
+      content: "接著進入【戰術階段】，依規則【先攻第一回合跳過戰術階段】（無法進攻或佈陣）！請點擊右側【結束回合】按鈕換對手行動。後攻的對手在召喚後，將示範進行「戰術佈陣」召喚第二個單位！",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_first_turn_end" }
     },
     {
       title: "實戰 Step 6：第 2 回合召喚階段（選擇盾牌獸人）",
-      content: "對手回合完成了抽牌、防守並於召喚階段打出了【創世老人】。輪到我方第 2 回合！在進行進攻宣言前，請先完成本回合的【召喚階段】，點擊手牌最左側的【盾牌獸人】。",
+      content: "對手回合完成了抽牌、防守，於召喚階段打出【創世老人】，並在戰術階段選擇「戰術佈陣」召喚了第 2 個單位【小旅人】！現在輪到我方第 2 回合，請先完成本回合的【召喚階段】，點擊手牌最左側的【盾牌獸人】。",
       spotlightSelector: "#hand .card:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 0 }
@@ -30109,7 +30109,7 @@ window.XLW_Tutorial = {
                 if (isTopHalf) {
                     tutorialBox.style.bottom = '12px';
                 } else {
-                    tutorialBox.style.top = '14px';
+                    tutorialBox.style.top = '78px';
                 }
 
                 if (isLeftHalf) {
@@ -30256,9 +30256,30 @@ window.XLW_Tutorial = {
           window.XLW_ENEMY.hand.pop();
         }
         logBattle("🤖 對手召喚階段：於前排 1 召喚了【創世老人】(攻擊力 1)！");
-        setStatus("對手召喚階段：召喚了【創世老人】(攻擊力 1) 並結束回合！");
+        setStatus("對手召喚階段：召喚了【創世老人】(攻擊力 1)！");
         render();
-        await sleep(800);
+        await sleep(700);
+
+        // 對手戰術階段：選擇「戰術佈陣」召喚第 2 個單位
+        phase = "戰術佈陣";
+        setStatus("對手戰術階段：對手選擇「戰術佈陣」，額外召喚第 2 個單位！");
+        render();
+        await window.xlwShowPhaseBanner("對手戰術佈陣", "#3b82f6");
+        field.enemy_front[1] = {
+          card: structuredClone(LITTLE_TRAVELER),
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: 1,
+          summonedZone: "enemy_front"
+        };
+        if (window.XLW_ENEMY && window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
+          window.XLW_ENEMY.hand.pop();
+        }
+        logBattle("🤖 對手戰術佈陣：額外召喚了第 2 個單位【小旅人】至前排 2！");
+        setStatus("對手戰術階段：召喚第 2 個單位【小旅人】，完成佈陣並結束回合！");
+        render();
+        await sleep(900);
 
         // 進入我方第 2 回合
         turn = 2;
