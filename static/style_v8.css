@@ -5446,12 +5446,13 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* 導師對話框 (Dialogue Box) */
 .xlw-tutorial-box {
   position: absolute !important;
-  width: 340px !important;
-  max-width: calc(100% - 40px) !important;
+  width: fit-content !important;
+  max-width: min(315px, calc(100vw - 32px)) !important;
+  min-width: 200px !important;
   background: rgba(12, 9, 26, 0.96) !important;
   border: 2px solid #00e5ff !important;
   border-radius: 14px !important;
-  padding: 10px 15px !important;
+  padding: 8px 12px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(0, 229, 255, 0.35) !important;
   pointer-events: auto !important;
   z-index: 1000030 !important;
@@ -5461,15 +5462,50 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   font-family: inherit !important;
   bottom: 14px !important;
   right: 16px !important;
+  box-sizing: border-box !important;
+}
+
+#xlwTutorialMentorSprite {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: -76px !important;
+  width: 115px !important;
+  height: 154px !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  filter: drop-shadow(0 4px 12px rgba(0, 229, 255, 0.4)) !important;
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) !important;
+  animation: yukiCoherentBreath 3.2s infinite ease-in-out !important;
+}
+
+@keyframes yukiCoherentBreath {
+  0%, 100% {
+    transform: translateY(-8px) scale(1);
+  }
+  50% {
+    transform: translateY(-13px) scale(1.02);
+  }
+}
+
+.yuki-hop {
+  animation: yukiHopAnim 0.35s ease-out !important;
+}
+
+@keyframes yukiHopAnim {
+  0% { transform: translateY(-4px) scale(0.96); }
+  50% { transform: translateY(-16px) scale(1.03); }
+  100% { transform: translateY(-8px) scale(1); }
 }
 
 .tutorial-box-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  margin-bottom: 6px !important;
+  gap: 10px !important;
+  margin-bottom: 5px !important;
   border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
-  padding-bottom: 5px !important;
+  padding-bottom: 4px !important;
   cursor: grab !important;
   user-select: none !important;
 }
@@ -5669,35 +5705,40 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 /* ?∠?瑽圾撖撖怠?蝒?(Card Anatomy Detail Modal) */
+/* 卡牌構造解密特寫彈窗 (Card Anatomy Detail Modal) */
 .xlw-card-anatomy-modal {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  background: rgba(4, 2, 12, 0.88) !important;
-  backdrop-filter: blur(12px) !important;
-  z-index: 999930 !important;
+  background: rgba(4, 2, 12, 0.9) !important;
+  backdrop-filter: blur(14px) !important;
+  z-index: 1000060 !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
   pointer-events: auto !important;
   padding: 15px !important;
+  touch-action: auto !important;
 }
 
 .anatomy-container {
-  background: rgba(16, 12, 32, 0.96) !important;
+  background: rgba(16, 12, 32, 0.98) !important;
   border: 2px solid #ffd76a !important;
   border-radius: 18px !important;
-  width: 680px !important;
+  width: 720px !important;
   max-width: 95vw !important;
-  max-height: 90vh !important;
-  padding: 22px 26px !important;
+  max-height: 88vh !important;
+  padding: 20px 24px !important;
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 215, 106, 0.3) !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
+  gap: 14px !important;
   overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  pointer-events: auto !important;
 }
 
 .anatomy-header {

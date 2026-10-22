@@ -22180,6 +22180,11 @@ window.xlwCloseLeftPanel = function(e) {
 function showModal(card, equipments) {
   if (!card) return;
   const leftPanel = $("xlwLeftCardPanel");
+  // 教學模式進行中：絕對不開啟左側卡牌放大面板，防止遮蔽戰場格子與操作引導！
+  if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+    if (leftPanel) leftPanel.style.setProperty("display", "none", "important");
+    return;
+  }
   const leftImg = $("leftPanelImg");
   const placeholder = $("leftPanelPlaceholder");
   const detailView = $("leftCardDetailView");
@@ -22187,14 +22192,7 @@ function showModal(card, equipments) {
 
   if (leftPanel) {
     leftPanel.style.setProperty("display", "block", "important");
-    // 教學模式且為實戰演練時（Step 12 起，即 currentStep >= 11），預設以精巧縮小模式展示，避免遮擋戰場；玩家可點擊「➕ 放大」隨時展開，亦可隨時再縮小或關閉！
-    if (window.XLW_Tutorial && window.XLW_Tutorial.active && window.XLW_Tutorial.currentStep >= 11) {
-      leftPanel.classList.add("minimized");
-      if (toggleBtn) {
-        toggleBtn.textContent = "➕ 放大";
-        toggleBtn.title = "放大卡牌特寫";
-      }
-    } else if (!leftPanel.classList.contains("minimized") && toggleBtn) {
+    if (!leftPanel.classList.contains("minimized") && toggleBtn) {
       toggleBtn.textContent = "➖ 縮小";
       toggleBtn.title = "縮小卡牌特寫";
     }
@@ -29923,87 +29921,60 @@ window.XLW_Tutorial = {
 
     const anatomyModal = document.getElementById("xlwCardAnatomyModal");
     const tutorialBox = document.getElementById("xlwTutorialBox");
+    const tutorialShield = document.getElementById("xlwTutorialShield");
     if (anatomyModal) {
       if (step.anatomyModal) {
         anatomyModal.style.setProperty("display", "flex", "important");
         if (tutorialBox) {
           tutorialBox.style.setProperty("display", "none", "important");
         }
+        if (tutorialShield) {
+          tutorialShield.style.setProperty("display", "none", "important");
+        }
       } else {
         anatomyModal.style.setProperty("display", "none", "important");
         if (tutorialBox) {
           tutorialBox.style.setProperty("display", "block", "important");
+        }
+        if (tutorialShield) {
+          tutorialShield.style.setProperty("display", "block", "important");
         }
       }
     }
 
     const sprite = document.getElementById("xlwTutorialMentorSprite");
     if (sprite) {
-        const images = [];
-        for (let i = 1; i <= 20; i++) {
-            images.push({
-                src: `/static/card_images/yuki_tutorial_${i}.png?v=22.05`,
-                clip: "none",
-                width: "120px",
-                height: "160px",
-                transform: "translateY(-10px)"
-            });
+        // 使用風格姿態 100% 契合的兩組雪女立繪實現連貫動畫：
+        // Pose 1 (yuki_tutorial_1.png)：雙手合十甜笑（傾聽／說明／待機）
+        // Pose 2 (yuki_tutorial_7.png)：右手食指上指指引、左手前迎手勢（專注引導／指示操作）
+        // 最後一步勝利：Pose 3 (yuki_tutorial_3.png)：開心比YA歡呼慶祝
+        const isLastStep = (this.currentStep === this.steps.length - 1);
+        const isInteractive = Boolean(step.interactive);
+
+        let targetSrc = "/static/card_images/yuki_tutorial_1.png?v=22.09";
+        if (isLastStep) {
+          targetSrc = "/static/card_images/yuki_tutorial_3.png?v=22.09";
+        } else if (isInteractive || (this.currentStep % 2 === 1)) {
+          targetSrc = "/static/card_images/yuki_tutorial_7.png?v=22.09";
         }
-        // 精心對應 20 張雪女引導員表情至教學步驟
-        const stepImageMap = [
-            1,  // 1. 歡迎來到星靈王新手導覽
-            7,  // 2. 場地介紹：前排戰線與後排戰線
-            9,  // 3. 場地介紹：場地魔法區
-            15, // 4. 場地介紹：墓地
-            2,  // 5. 場地介紹：除外區
-            10, // 6. 場地介紹：種族宣言卡
-            6,  // 7. 場地介紹：專屬牌組
-            20, // 8. 資源：手牌
-            19, // 9. 對手手牌
-            5,  // 10. 卡牌資訊與意義
-            12, // 11. 勝利條件介紹
-            4,  // 12. 開局準備：宣言種族與起手調度 (1/2)
-            11, // 12. 開局準備：確認換牌 (2/2)
-            8,  // 13. 遊戲開始！認識每回合流程
-            13, // 實戰 Step 1：抽牌階段
-            15, // 實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭概念）
-            17, // 實戰 Step 3：召喚階段（選擇寶寶獸人）
-            3,  // 實戰 Step 4：召喚階段（打出單位上場）
-            11, // 實戰 Step 5：戰術階段（第一回合跳過）
-            18, // 實戰 Step 6：第 2 回合召喚階段（選擇盾牌獸人）
-            6,  // 實戰 Step 7：第 2 回合召喚階段（打出單位上場）
-            13, // 實戰 Step 8：戰術階段 2 選 1（進攻宣言）
-            14, // 實戰 Step 9：結束回合（打倒對手與敵方反擊）
-            2,  // 實戰 Step 10：輪到我方防守（使用盾牌人偶反制）
-            18, // 實戰 Step 11：召喚階段（準備獻祭召喚）
-            4,  // 實戰 Step 12：選擇祭品（獻祭寶寶獸人）
-            2,  // 實戰 Step 13：確認獻祭
-            6,  // 實戰 Step 14：獻祭召喚上場
-            15, // 實戰 Step 15：戰術階段 2 選 1（進行防守佈陣）
-            9,  // 實戰 Step 16：召喚小旅人
-            3,  // 實戰 Step 17：放置小旅人
-            7,  // 實戰 Step 18：調整禁衛軍獸人位置 (1/2)
-            20, // 實戰 Step 19：調整禁衛軍獸人位置 (2/2)
-            17, // 實戰 Step 20：調整小旅人位置 (1/2)
-            12, // 實戰 Step 21：調整小旅人位置 (2/2)
-            10, // 實戰總結：勝負判定、星星戰線倒數與 Call Game
-            16  // 教學完成！
-        ];
-        const isCompactBattle = (this.currentStep >= 11 && this.currentStep < this.steps.length - 2);
-        const imgIndex = stepImageMap[this.currentStep] || ((this.currentStep % 20) + 1);
-        const imgData = images[imgIndex - 1] || images[0];
-        sprite.src = imgData.src;
-        sprite.style.clipPath = imgData.clip;
+
+        if (!sprite.src.includes(targetSrc)) {
+          sprite.src = targetSrc;
+          // 動作連貫跳動回饋 (Smooth Hop)
+          sprite.classList.remove("yuki-hop");
+          void sprite.offsetWidth; // 強制重繪觸發流暢跳動效果
+          sprite.classList.add("yuki-hop");
+        }
+
+        const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
         if (isCompactBattle) {
-          sprite.style.width = "64px";
-          sprite.style.height = "86px";
-          sprite.style.left = "-48px";
-          sprite.style.transform = "translateY(-4px)";
+          sprite.style.width = "62px";
+          sprite.style.height = "84px";
+          sprite.style.left = "-46px";
         } else {
-          sprite.style.width = imgData.width;
-          sprite.style.height = imgData.height;
-          sprite.style.left = "-80px";
-          sprite.style.transform = imgData.transform;
+          sprite.style.width = "115px";
+          sprite.style.height = "154px";
+          sprite.style.left = "-76px";
         }
     }
     this.initDrag();
@@ -30372,7 +30343,8 @@ window.XLW_Tutorial = {
             await startTributeSummon(targetIdx);
         } else {
             selectedHandForSummon = targetIdx;
-            showModal(card);
+            const lp = $("xlwLeftCardPanel");
+            if (lp) lp.style.setProperty("display", "none", "important");
             render();
         }
       }
