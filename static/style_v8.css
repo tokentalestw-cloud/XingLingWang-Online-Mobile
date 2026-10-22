@@ -2665,18 +2665,118 @@ button:disabled {
 
 /* 2. 撌血?∠??曉之?Ｘ (撠箏站?拐葉嚗??牧?蝡??潔??對?蝯???) */
 .xlw-left-card-panel {
-  width: 340px !important;
-  max-height: 590px !important;
+  width: 280px !important;
+  max-height: 520px !important;
   height: auto !important;
-  left: 16px !important;
-  bottom: 20px !important;
-  background: rgba(12, 8, 14, 0.95) !important;
-  border: 2.5px solid #ffe600 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(255, 230, 0, 0.3) !important;
-  padding: 10px !important;
+  left: 14px !important;
+  bottom: 16px !important;
+  background: rgba(14, 10, 24, 0.96) !important;
+  border: 2px solid #ffd76a !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(255, 215, 106, 0.3) !important;
+  padding: 8px !important;
   backdrop-filter: blur(14px) !important;
   overflow: hidden !important;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) !important;
+  z-index: 9500 !important;
+}
+
+.left-panel-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 2px 4px 6px 4px !important;
+  border-bottom: 1px solid rgba(255, 215, 106, 0.3) !important;
+  margin-bottom: 6px !important;
+}
+
+.left-panel-title {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: #ffd76a !important;
+  letter-spacing: 0.5px !important;
+}
+
+.left-panel-ctrls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.left-panel-pill-btn {
+  background: linear-gradient(180deg, #2a1f3d 0%, #171124 100%) !important;
+  border: 1px solid #ffd76a !important;
+  border-radius: 14px !important;
+  color: #ffd76a !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  padding: 1px 7px !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, background 0.15s ease !important;
+}
+
+.left-panel-pill-btn:hover {
+  transform: scale(1.06) !important;
+  background: #ffd76a !important;
+  color: #0b0713 !important;
+}
+
+.left-panel-close-btn {
+  background: rgba(220, 38, 38, 0.25) !important;
+  border: 1px solid rgba(248, 113, 113, 0.6) !important;
+  border-radius: 50% !important;
+  color: #fca5a5 !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  transition: transform 0.15s ease, background 0.15s ease !important;
+}
+
+.left-panel-close-btn:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
+}
+
+/* 縮小模式：僅在畫面最左下角顯示微型收納列，完全釋放戰場視野，點擊可隨時再度放大！ */
+.xlw-left-card-panel.minimized {
+  width: 135px !important;
+  max-height: 38px !important;
+  height: auto !important;
+  padding: 4px 8px !important;
+  background: rgba(14, 10, 22, 0.92) !important;
+  border: 1.5px solid #ffd76a !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7) !important;
+  bottom: 12px !important;
+  left: 10px !important;
+  z-index: 9500 !important;
+  cursor: pointer !important;
+}
+
+.xlw-left-card-panel.minimized .left-panel-header {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+.xlw-left-card-panel.minimized .left-panel-title {
+  font-size: 11px !important;
+}
+
+.xlw-left-card-panel.minimized .placeholder-text,
+.xlw-left-card-panel.minimized .card-detail-view,
+.xlw-left-card-panel.minimized .xlw-holo-foil,
+.xlw-left-card-panel.minimized .xlw-left-panel-equipments-container {
+  display: none !important;
 }
 
 .xlw-left-card-panel .card-detail-view {

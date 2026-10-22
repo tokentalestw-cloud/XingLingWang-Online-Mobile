@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=22.08-tutorial-hand-fix">
+  <link rel="stylesheet" href="/static/style_v8.css?v=22.09-tutorial-yuki-reading-fix">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -319,7 +319,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=22.08-tutorial-hand-fix" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=22.09-tutorial-yuki-reading-fix" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -457,36 +457,46 @@
           <div class="anatomy-details-list">
             <div class="anatomy-detail-item">
               <span class="badge badge-red">① ⚔️ 攻擊力 (ATK) / 🛡️ 防禦護盾 (Shield)</span>
-              <p><b>⚔️ 攻擊力</b>：對決計算時的主要戰鬥數值！數字越大，進攻時越能威脅並擊潰敵方單位。<br><b>🛡️ 護盾/防禦</b>：具備護盾或阻擋特性的單位，防守時能優先抵擋傷害或阻截對手直擊！</p>
+              <p><b>⚔️ 攻擊力</b>：戰鬥時的主要數值！數字越大，越能擊潰敵方單位。<br><b>🛡️ 護盾/防禦</b>：具備護盾或阻擋特性的單位，防守時能優先抵擋傷害或阻截對手直擊！</p>
             </div>
             <div class="anatomy-detail-item">
               <span class="badge badge-orange">② 🩸 祭品需求 (Tribute Cost)</span>
-              <p>召喚高階強力單位時需獻祭我方場上現存的低星單位（0隻 / 1隻 / 2隻 / 3隻）。0 祭品單位可直接出擊，高階單位需選取場上祭品送墓後方可登場！</p>
+              <p>召喚高階強力單位時需獻祭我方場上的單位（0 / 1 / 2 / 3 隻）。0 祭品單位可直接登場，高階單位需將場上指定數量的祭品送入墓地才能召喚！</p>
             </div>
             <div class="anatomy-detail-item">
               <span class="badge badge-blue">③ 🏷️ 卡牌名稱與陣營 (Name & Faction)</span>
-              <p>卡面中央為<b>卡牌名稱</b>，左下角為所屬<b>陣營/種族</b>（如：藝術品、妖怪村莊、勇者公會、歡樂島）。同陣營單位具備豐富強大的技能羈絆與連鎖效果！</p>
+              <p>卡面中央為<b>卡牌名稱</b>，左下角為所屬<b>陣營</b>（如：藝術品、妖怪村莊、勇者公會、歡樂島）。同陣營單位常具備強大的技能羈絆效果！</p>
             </div>
             <div class="anatomy-detail-item">
               <span class="badge badge-green">④ 📜 卡牌效果與特性 (Card Effect & Keywords)</span>
-              <p>下半部文字框顯示卡牌的獨特技能（登場立即發動、被動光環、回合觸發等）及核心特性，如：<b>貫穿</b>（溢位傷害）、<b>遠程</b>（先發制人）、<b>破甲</b>（無視護盾）、<b>橫放</b>（特殊防禦）。</p>
+              <p>下半部顯示卡牌技能（登場發動、被動光環、回合觸發等）及核心特性，如：<b>貫穿</b>（溢位傷害）、<b>遠程</b>（先發制人）、<b>破甲</b>（無視護盾）。</p>
             </div>
             <div class="anatomy-detail-item">
               <span class="badge badge-yellow">⑤ ⭐ ★星數 (Score Stars / 終局分數)</span>
-              <p>卡片底部金色大星星代表單位駐紮在戰線上所能為我方累積的<b>星數得分</b>！在對決與終局結算時，戰線累積總星數較高的一方將贏得該戰線的勝點！</p>
+              <p>卡片底部金色星星代表此單位提供的<b>星數分數</b>！回合倒數結束時，場上總星數較高的一方獲勝。</p>
             </div>
           </div>
         </div>
-        <button class="anatomy-close-btn" onclick="document.getElementById('xlwCardAnatomyModal').style.setProperty('display', 'none', 'important'); if(window.XLW_Tutorial) window.XLW_Tutorial.nextStep();">我知道了！繼續教學 ➔</button>
+        <div style="display: flex; gap: 14px; justify-content: center; width: 100%; margin-top: 10px;">
+          <button class="anatomy-prev-btn" style="background: rgba(35, 25, 55, 0.95); border: 1.5px solid rgba(255, 215, 106, 0.4); color: #e2e8f0; font-size: 14px; font-weight: bold; border-radius: 50px; padding: 8px 24px; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('xlwCardAnatomyModal').style.setProperty('display', 'none', 'important'); if(window.XLW_Tutorial) window.XLW_Tutorial.prevStep();">⬅ 上一步</button>
+          <button class="anatomy-close-btn" onclick="document.getElementById('xlwCardAnatomyModal').style.setProperty('display', 'none', 'important'); if(window.XLW_Tutorial) window.XLW_Tutorial.nextStep();">我知道了！繼續教學 ➔</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" style="display: none !important;" onclick="this.style.setProperty('display', 'none', 'important')">
+  <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" style="display: none !important;">
     <div class="panel-inner">
-      <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大 4 倍顯示</div>
+      <div class="left-panel-header" id="xlwLeftPanelHeader">
+        <span class="left-panel-title">🔍 卡牌特寫</span>
+        <div class="left-panel-ctrls">
+          <button id="xlwLeftPanelToggleBtn" class="left-panel-pill-btn" type="button" title="切換放大/縮小" onclick="window.xlwToggleLeftPanelSize(event)">➖ 縮小</button>
+          <button id="xlwLeftPanelCloseBtn" class="left-panel-close-btn" type="button" title="關閉卡牌特寫" onclick="window.xlwCloseLeftPanel(event)">✕</button>
+        </div>
+      </div>
+      <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大顯示</div>
       <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
-        <div class="detail-img-wrap">
+        <div class="detail-img-wrap" onclick="window.xlwToggleLeftPanelSize(event)">
           <img id="leftPanelImg" src="" alt="card detail image">
         </div>
       </div>

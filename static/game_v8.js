@@ -22154,15 +22154,50 @@ function setupGlobalEvents() {
   });
 }
 
+window.xlwToggleLeftPanelSize = function(e) {
+  if (e) e.stopPropagation();
+  const panel = $("xlwLeftCardPanel");
+  const btn = $("xlwLeftPanelToggleBtn");
+  if (!panel) return;
+  const isMin = panel.classList.toggle("minimized");
+  if (btn) {
+    btn.textContent = isMin ? "➕ 放大" : "➖ 縮小";
+    btn.title = isMin ? "放大卡牌特寫" : "縮小卡牌特寫";
+  }
+};
+
+window.xlwCloseLeftPanel = function(e) {
+  if (e) e.stopPropagation();
+  const panel = $("xlwLeftCardPanel");
+  if (panel) {
+    panel.style.setProperty("display", "none", "important");
+    panel.classList.remove("minimized");
+    const btn = $("xlwLeftPanelToggleBtn");
+    if (btn) btn.textContent = "➖ 縮小";
+  }
+};
+
 function showModal(card, equipments) {
   if (!card) return;
   const leftPanel = $("xlwLeftCardPanel");
   const leftImg = $("leftPanelImg");
   const placeholder = $("leftPanelPlaceholder");
   const detailView = $("leftCardDetailView");
+  const toggleBtn = $("xlwLeftPanelToggleBtn");
 
   if (leftPanel) {
     leftPanel.style.setProperty("display", "block", "important");
+    // 教學模式且為實戰演練時（Step 12 起，即 currentStep >= 11），預設以精巧縮小模式展示，避免遮擋戰場；玩家可點擊「➕ 放大」隨時展開，亦可隨時再縮小或關閉！
+    if (window.XLW_Tutorial && window.XLW_Tutorial.active && window.XLW_Tutorial.currentStep >= 11) {
+      leftPanel.classList.add("minimized");
+      if (toggleBtn) {
+        toggleBtn.textContent = "➕ 放大";
+        toggleBtn.title = "放大卡牌特寫";
+      }
+    } else if (!leftPanel.classList.contains("minimized") && toggleBtn) {
+      toggleBtn.textContent = "➖ 縮小";
+      toggleBtn.title = "縮小卡牌特寫";
+    }
   }
 
   // 附加上放大預視窗 SR/SSR 雷射虹光圖層
@@ -29427,85 +29462,85 @@ window.XLW_Tutorial = {
 
         steps: [
     {
-      title: "1. 歡迎來到星靈王新手導覽",
-      content: "歡迎！我是精靈使者「雪女」。我將帶領您詳細了解星靈王對戰的場地佈局、資源、卡牌資訊與實戰教學。請點擊『下一步』開始探索！",
+      title: "1. 歡迎來到《星靈王》！",
+      content: "你好！我是精靈導師「雪女」。接下來將帶您快速認識戰場配置、核心資源與對戰流程，點擊『下一步』一起出發吧！",
       spotlightSelector: null,
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "2. 場地介紹：前排戰線與後排戰線",
-      content: "棋盤中央是雙方交戰的戰鬥單位區。您的場地分為前排戰線與後排戰線。前排通常是交戰第一線，後排則用來保護脆弱單位或提供支援。",
+      title: "2. 場地介紹：前排與後排戰線",
+      content: "中央為交戰區域，分為前排與後排戰線。前排是正面交鋒的主戰線，後排則能保護關鍵單位並提供支援能力。",
       spotlightSelector: ".row.player-front",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "3. 場地介紹：場地魔法區",
-      content: "發動場地魔法卡後，會將場地魔法卡持續顯示在該處，場地魔法卡會持續存在直到被破壞，其效果在符合條件時，會持續存在。",
+      content: "發動後的「場地魔法卡」會常駐在此區，只要符合條件，加成效果便會持續生效，直到被破壞為止。",
       spotlightSelector: "#playerField",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "4. 場地介紹：墓地",
-      content: "放置被破壞的單位卡或發動完畢的魔法卡。部分特定種族（如亡靈、獸人）可以從墓地中獲得額外的強大效果。",
+      content: "被擊敗的單位與發動完畢的法術卡都會進入墓地。特定種族還能從墓地發動死者復甦或強化效果！",
       spotlightSelector: "#playerGrave",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "5. 場地介紹：除外區",
-      content: "卡片因為卡片效果或是進行升級被除外，會將卡牌放在此處，手牌超過十張也會將超過數量的手牌放置在此處，此處的卡片不能重新回到遊戲中。",
+      content: "因卡牌效果被除外、升級消耗或手牌超過 10 張丟棄的卡片都會送至此區。除外區的卡牌將無法重回戰局。",
       spotlightSelector: "#playerExile",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "6. 場地介紹：種族宣言卡",
-      content: "宣告我方使用的種族，對手也會同時放在相對位置宣告對手的使用的種族。可作為後續調整牌組的依據。",
+      content: "雙方在此亮出代表自身陣營的種族宣言卡，讓您一眼掌握彼此牌組的核心特性。",
       spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "7. 場地介紹：專屬牌組",
-      content: "存放您精心建構的牌組。每回合開始時將自動從牌組中抽牌。",
+      content: "我方的主要牌庫。每回合開始時將自動從此處抽取 2 張卡牌補充手牌（手牌上限 10 張）。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "8. 資源：手牌",
-      content: "下方扇形攤開的是您的手牌。點擊卡牌可預覽詳細數值、發動法術或進行召喚。",
+      title: "8. 資源：手牌區域",
+      content: "下方展開的是您的手牌。點擊卡牌可查看完整技能數值、發動魔法或進行召喚出擊！",
       spotlightSelector: "#hand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "9. 對手手牌",
-      content: "頂部浮動展示的是對手手牌的張數，會隨著對手抽牌與出牌變化，請隨時留意敵方資源。",
+      title: "9. 對手資源：對手手牌",
+      content: "上方顯示對手持有的手牌張數，隨時留意敵方的資源變化，能幫助您做出最佳判斷。",
       spotlightSelector: "#xlwEnemyFloatingHand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "10. 卡牌資訊與意義",
-      content: "點擊卡牌可查看詳情：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 特殊效果、⑤ ⭐ 星數得分。",
+      title: "10. 卡牌資訊與意義解密",
+      content: "卡牌包含五大核心資訊：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 技能效果、⑤ ⭐ ★星數得分。請詳閱特寫解說！",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null
     },
     {
-      title: "11. 勝利條件介紹",
-      content: "兩大勝利條件：①【星星戰線倒數】倒數結束時，總星數（★）較高者獲勝！②【Call Game 提早結束】回合結束時若總星數達 20★ 以上，或場上單位數比對手多 4 個以上，可宣告提早結束，對手下回合無法破解即獲勝！",
+      title: "11. 勝利條件說明",
+      content: "兩大獲勝方式：①【星星倒數結束】回合倒數歸零時，場上總星數高者奪勝！②【Call Game 提前勝出】總星數達 20★ 以上，或單位比對手多 4 隻以上即可宣告，若對手下回合無法反制便直接獲勝！",
       spotlightSelector: "#scoreBtn",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "12. 開局準備：宣言種族與起手調度 (1/2)",
-      content: "開局雙方同時亮出【種族宣言卡】並抽 4 張起手牌。此時可【起手調度】將初期用不到的祭品怪換掉！請先點擊手牌最右側需要祭品的【胖獸人】選取它。",
+      title: "12. 開局準備：起手調度 (1/2)",
+      content: "開局先抽 4 張起始牌，可進行一次「起手調度」換掉初期用不到的高階怪！請點擊手牌最右側需祭品的【胖獸人】選取替換。",
       spotlightSelector: "#hand .card:nth-child(4)",
       anatomyModal: false,
       setupBattle: true,
@@ -29513,14 +29548,14 @@ window.XLW_Tutorial = {
     },
     {
       title: "12. 開局準備：確認換牌 (2/2)",
-      content: "已選取要替換的卡牌（面朝下標記），請點擊右側的【確認換牌】按鈕完成起手調度！",
+      content: "選定要替換的卡牌後，點擊右側的【確認換牌】按鈕，完成起手調度並補滿手牌！",
       spotlightSelector: "#stableActionMulliganConfirm",
       anatomyModal: false,
       interactive: { type: "click_mulligan_confirm", index: 3 }
     },
     {
-      title: "13. 遊戲開始！認識每回合流程",
-      content: "【遊戲開始！】每回合依序經歷五階段：①抽牌 ➔ ②防守 ➔ ③召喚 ➔ ④戰術（進攻／佈陣 2選1）➔ ⑤結束，完成後換對手回合！請點擊『下一步』。",
+      title: "13. 遊戲開始！每回合五階段流程",
+      content: "對戰正式開始！每回合依序經歷五大階段：①抽牌 ➔ ②防守 ➔ ③召喚 ➔ ④戰術（進攻或佈陣 2選1）➔ ⑤結束。點擊『下一步』開始實戰！",
       spotlightSelector: null,
       anatomyModal: false,
       showGameStartBanner: true,
@@ -29528,161 +29563,161 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 1：抽牌階段",
-      content: "進入第一回合【抽牌階段】！每回合開始時從牌組抽 2 張牌（手牌上限 10 張）。請點擊右下角的【專屬牌組】抽牌！",
+      content: "第一回合【抽牌階段】！每回合開始自動補牌，請點擊右下角的【專屬牌組】抽取 2 張手牌。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: { type: "click_deck" }
     },
     {
-      title: "實戰 Step 2：防守階段 ➔ 召喚階段（小旅人與獻祭）",
-      content: "經過【防守階段】後進入【召喚階段】！每回合可常規召喚 1 次：①打出 0 祭品單位、②點擊右側綠色【我方森林區】召喚【小旅人】、或 ③將場上單位「獻祭」召喚高階單位！",
+      title: "實戰 Step 2：認識召喚階段（小旅人與獻祭）",
+      content: "通過【防守階段】後進入【召喚階段】！每回合可常規召喚 1 次：①打出 0 祭品單位、②點擊右側綠色【森林區】召喚萬用【小旅人】、或 ③獻祭場上單位召喚高星怪獸！",
       spotlightSelector: "#playerForest",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "實戰 Step 3：召喚階段（選擇寶寶獸人）",
-      content: "第一回合場上尚無祭品，我們先從手牌召喚 0 祭品單位！請點擊手牌中框選的【寶寶獸人】。",
+      content: "第一回合場上尚無祭品，我們先召喚 0 祭品單位！請點擊手牌中框選的【寶寶獸人】。",
       spotlightSelector: "#hand .card:nth-child(5)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 4 }
     },
     {
-      title: "實戰 Step 4：召喚階段（打出單位上場）",
-      content: "召喚單位須遵守「前排優先」原則。請點擊前排戰線第一個空位，將【寶寶獸人】召喚上場！",
+      title: "實戰 Step 4：打出單位上場",
+      content: "召喚單位須遵守「前排優先」原則。請點擊前排戰線第 1 個空位，將【寶寶獸人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "實戰 Step 5：戰術階段（第一回合跳過）",
-      content: "接著進入【戰術階段】，依規則【先攻第一回合跳過戰術階段】（無法進攻或佈陣）！請點擊右側【結束回合】按鈕換對手行動。後攻的對手在召喚後，將示範進行「戰術佈陣」召喚第二個單位！",
+      title: "實戰 Step 5：戰術階段（先攻首回合跳過）",
+      content: "依規則【先攻首回合跳過戰術階段】（無法進攻或佈陣）。請點擊右側【結束回合】換對手行動。後攻的對手在召喚後，將示範「戰術佈陣」額外召喚第 2 隻單位！",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_first_turn_end" }
     },
     {
-      title: "實戰 Step 6：第 2 回合召喚階段（選擇盾牌獸人）",
-      content: "對手回合完成了抽牌、防守，於召喚階段打出【創世老人】，並在戰術階段選擇「戰術佈陣」召喚了第 2 個單位【小旅人】！現在輪到我方第 2 回合，請先完成本回合的【召喚階段】，點擊手牌最左側的【盾牌獸人】。",
+      title: "實戰 Step 6：第 2 回合召喚（選擇盾牌獸人）",
+      content: "對手召喚了【創世老人】，並以戰術佈陣召喚了【小旅人】！輪到我方第 2 回合，進入【召喚階段】，請點擊手牌最左側的【盾牌獸人】準備登場。",
       spotlightSelector: "#hand .card:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 0 }
     },
     {
-      title: "實戰 Step 7：第 2 回合召喚階段（打出單位上場）",
-      content: "請點擊前排戰線第五個空位，將【盾牌獸人】召喚上場，完成本回合的召喚階段！",
+      title: "實戰 Step 7：放置盾牌獸人",
+      content: "請點擊前排戰線第 5 個空格，將【盾牌獸人】召喚上場，完成召喚階段！",
       spotlightSelector: ".row.player-front .slot:nth-child(5)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 4 }
     },
     {
-      title: "實戰 Step 8：戰術階段 2 選 1（進攻宣言）",
-      content: "完成召喚階段後進入【戰術階段】，可在「戰術佈陣」與「進攻宣言」2 選 1。請點擊右側【進攻宣言】發起進攻！",
+      title: "實戰 Step 8：戰術 2 選 1（進攻宣言）",
+      content: "召喚完畢進入【戰術階段】！此時可在「進攻宣言」與「戰術佈陣」2 選 1。請點擊右側【進攻宣言】對敵方陣線發起正面進攻！",
       spotlightSelector: "#stableActionAttack",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "進攻宣言" }
     },
     {
-      title: "實戰 Step 9：結束回合（打倒對手與敵方反擊）",
-      content: "進攻宣言完成！請點擊右側【結束回合】。接下來進入對手回合：對手會在【對手防守階段】被寶寶獸人打倒，接著在【對手召喚階段】打出新單位【呐喊的人】，再進入【進攻宣言】向我們反擊！",
+      title: "實戰 Step 9：結束回合（打倒敵方與敵方反擊）",
+      content: "進攻宣言完成！請點擊右側【結束回合】。輪到對手時，我方寶寶獸人將擊潰對手【創世老人】，對手隨後會召喚新單位【呐喊的人】並對我們發起反擊！",
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_end_turn" }
     },
     {
-      title: "實戰 Step 10：輪到我方防守（使用盾牌人偶反制）",
-      content: "對手於召喚階段打出了【呐喊的人】並宣告進攻！現在進入我方【防守階段】，請點擊手牌中的【盾牌人偶】進行反制，使對手進攻無效並橫置！",
+      title: "實戰 Step 10：我方防守（使用盾牌人偶反制）",
+      content: "對手正朝我們進攻！現在進入我方【防守階段】，請點擊手牌中的防守法術【盾牌人偶】，化解攻擊並使敵方單位橫置疲勞！",
       spotlightSelector: "#hand .card:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_defense_spell", index: 1 }
     },
     {
       title: "實戰 Step 11：召喚階段（準備獻祭召喚）",
-      content: "成功擋下攻擊！輪到我方【召喚階段】，我們將獻祭場上的寶寶獸人，升級召喚高階的【禁衛軍獸人】（需 1 祭品）。請點擊手牌中的【禁衛軍獸人】。",
+      content: "成功防守！現在將場上的寶寶獸人作為祭品，升級召喚高星級的【禁衛軍獸人】（需 1 祭品）。請點擊手牌中的【禁衛軍獸人】。",
       spotlightSelector: "#hand .card:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_card", index: 1 }
     },
     {
-      title: "實戰 Step 12：選擇祭品（獻祭寶寶獸人）",
-      content: "請點擊場上的【寶寶獸人】，將它選為祭品！",
+      title: "實戰 Step 12：指定祭品（寶寶獸人）",
+      content: "請點擊前排場上的【寶寶獸人】，指定它為登場祭品！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tribute_select" }
     },
     {
       title: "實戰 Step 13：確認獻祭",
-      content: "祭品選擇完畢，請點擊右側的【確認獻祭】按鈕！",
+      content: "祭品選定完畢！請點擊右側的【確認獻祭】按鈕執行送墓！",
       spotlightSelector: "#stableActionConfirm",
       anatomyModal: false,
       interactive: { type: "click_tribute_confirm" }
     },
     {
-      title: "實戰 Step 14：獻祭召喚上場",
-      content: "獻祭完成！請點擊前排第一個空格，將【禁衛軍獸人】召喚上場！",
+      title: "實戰 Step 14：高階單位登場",
+      content: "獻祭完成！請點擊前排第 1 個空格，將強大的【禁衛軍獸人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0 }
     },
     {
-      title: "實戰 Step 15：戰術階段 2 選 1（進行防守佈陣）",
-      content: "這次在【戰術階段 2 選 1】我們選擇防守佈陣！請點擊右側【戰術佈陣】按鈕，可額外召喚 1 隻小旅人並自由移動調整場上單位位置。",
+      title: "實戰 Step 15：戰術 2 選 1（戰術佈陣）",
+      content: "本回合在【戰術階段】我們改選「戰術佈陣」！點擊右側【戰術佈陣】後，可額外召喚 1 隻單位（如小旅人），並能自由調整場上單位的站位！",
       spotlightSelector: "#stableActionTactical",
       anatomyModal: false,
       interactive: { type: "click_phase_btn", phase: "戰術佈陣" }
     },
     {
-      title: "實戰 Step 16：召喚小旅人",
-      content: "進入佈陣階段後，請點擊右側綠色的【我方森林區】，準備召喚【小旅人】協防！",
+      title: "實戰 Step 16：召喚小旅人支援",
+      content: "進入佈陣狀態！請點擊右側綠色的【我方森林區】，準備召喚通用單位【小旅人】協防！",
       spotlightSelector: "#playerForest",
       anatomyModal: false,
       interactive: { type: "click_forest" }
     },
     {
       title: "實戰 Step 17：放置小旅人",
-      content: "請點擊前排戰線的第二個空格，將【小旅人】召喚上場！",
+      content: "請點擊前排戰線第 2 個空格，將【小旅人】召喚上場！",
       spotlightSelector: ".row.player-front .slot:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 1, isTraveler: true }
     },
     {
-      title: "實戰 Step 18：調整禁衛軍獸人位置 (1/2)",
-      content: "現在調整禁衛軍獸人與小旅人的位置！請先點擊前排第一格的【禁衛軍獸人】選取它。",
+      title: "實戰 Step 18：戰術換位佈陣 (1/4)",
+      content: "佈陣時可任意調動單位！請先點擊前排第 1 格的【禁衛軍獸人】選取它。",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_select" }
     },
     {
-      title: "實戰 Step 19：調整禁衛軍獸人位置 (2/2)",
-      content: "請點擊前排第三個空格，將【禁衛軍獸人】移動過去，騰出第一格！",
+      title: "實戰 Step 19：戰術換位佈陣 (2/4)",
+      content: "點擊前排第 3 個空格，將【禁衛軍獸人】移過去，把第 1 格騰出來！",
       spotlightSelector: ".row.player-front .slot:nth-child(3)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 2, action: "tactical_move" }
     },
     {
-      title: "實戰 Step 20：調整小旅人位置 (1/2)",
-      content: "接著調整小旅人的位置！請點擊前排第二格的【小旅人】選取它。",
+      title: "實戰 Step 20：戰術換位佈陣 (3/4)",
+      content: "接著點擊前排第 2 格的【小旅人】選取它。",
       spotlightSelector: ".row.player-front .slot:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 1, action: "tactical_select" }
     },
     {
-      title: "實戰 Step 21：調整小旅人位置 (2/2)",
-      content: "請點擊前排第一個空格，將【小旅人】移至第一格阻擋對手單位！",
+      title: "實戰 Step 21：戰術換位佈陣 (4/4)",
+      content: "點擊前排第 1 個空格，將【小旅人】移至第一線抵擋敵軍！",
       spotlightSelector: ".row.player-front .slot:nth-child(1)",
       anatomyModal: false,
       interactive: { type: "click_slot", zone: "player_front", idx: 0, action: "tactical_move" }
     },
     {
-      title: "實戰總結：勝負判定、星星戰線倒數與 Call Game",
-      content: "防守佈陣完成！實戰中您可累積星數在【星星戰線倒數】結束時獲勝，或在總星數達 20★ 以上、或場上單位數領先 4 個以上時宣告【Call Game 提早結束】贏得勝利！",
+      title: "實戰總結：勝利條件快速複習",
+      content: "防守佈陣大功告成！實戰中只要在【星星倒數結束】時總星數領先，或達成【總星數 ≥ 20★】或【單位數領先 ≥ 4 隻】即可發動 Call Game 提前獲勝！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "教學完成！",
-      content: "恭喜完成《星靈王》完整教學！您已掌握場面配置、起手調度、五階段流程、獻祭召喚、小旅人、戰術 2 選 1（進攻與佈陣）及防守反制。點擊下方按鈕開始挑戰吧！",
+      title: "🎉 恭喜完成新手教學！",
+      content: "太棒了！您已精通場面配置、起手調度、五大回合流程、獻祭升級、戰術進攻與佈陣換位！準備好迎戰真正的對手了嗎？點擊下方開始挑戰！",
       spotlightSelector: "",
       anatomyModal: false,
       interactive: null
@@ -29887,11 +29922,18 @@ window.XLW_Tutorial = {
     }
 
     const anatomyModal = document.getElementById("xlwCardAnatomyModal");
+    const tutorialBox = document.getElementById("xlwTutorialBox");
     if (anatomyModal) {
       if (step.anatomyModal) {
         anatomyModal.style.setProperty("display", "flex", "important");
+        if (tutorialBox) {
+          tutorialBox.style.setProperty("display", "none", "important");
+        }
       } else {
         anatomyModal.style.setProperty("display", "none", "important");
+        if (tutorialBox) {
+          tutorialBox.style.setProperty("display", "block", "important");
+        }
       }
     }
 
@@ -30129,7 +30171,8 @@ window.XLW_Tutorial = {
           tutorialBox.style.bottom = '14px';
           tutorialBox.style.left = '';
           tutorialBox.style.right = '16px';
-          tutorialBox.style.transform = '';
+        if (step && step.anatomyModal && tutorialBox) {
+          tutorialBox.style.setProperty("display", "none", "important");
         }
       }
     }
@@ -30179,6 +30222,7 @@ window.XLW_Tutorial = {
       this._inAction = true;
 
       let stepDelay = 300;
+      if (typeof window.xlwCloseLeftPanel === "function") window.xlwCloseLeftPanel();
 
       if (isMulliganClick && (!payload || payload.index === undefined || payload.index === step.interactive.index)) {
         $("cardModal")?.classList.remove("show");
