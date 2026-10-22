@@ -30142,8 +30142,9 @@ window.XLW_Tutorial = {
           tutorialBox.style.bottom = '14px';
           tutorialBox.style.left = '';
           tutorialBox.style.right = '16px';
-        if (step && step.anatomyModal && tutorialBox) {
-          tutorialBox.style.setProperty("display", "none", "important");
+          if (step && step.anatomyModal && tutorialBox) {
+            tutorialBox.style.setProperty("display", "none", "important");
+          }
         }
       }
     }
