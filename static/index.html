@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=22.14-pvp-phase-and-zoom-fix">
+  <link rel="stylesheet" href="/static/style_v8.css?v=22.15-starlight-playmat">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -134,9 +134,21 @@
     <div class="phase-hard-help" id="phaseHelpHard">可進行單位召喚、祭品召喚或發動手牌魔法。</div>
   </div>
 
+  <!-- 全畫面星光閃爍氛圍層 (柔和深藍微光與多頻率星光點點) -->
+  <div id="xlwStarlightAtmosphere" class="xlw-starlight-atmosphere">
+    <div class="starlight-glow-ambient"></div>
+    <div class="starlight-particles layer-1"></div>
+    <div class="starlight-particles layer-2"></div>
+    <div class="starlight-particles layer-3"></div>
+  </div>
+
   <div class="game-shell">
     <div class="board-wrap">
       <section id="boardWrap" class="board">
+        <!-- 決鬥場地區桌墊架構 (對方與我方桌墊圖) -->
+        <div id="enemyPlaymat" class="board-playmat enemy-playmat"></div>
+        <div id="playerPlaymat" class="board-playmat player-playmat"></div>
+
         <!-- 左側卡牌詳細資訊看板 -->
         <!-- 左側卡牌詳細資訊看板 (Arcade Comic Style) -->
         <!-- 左側卡牌詳細資訊看板 (極簡高清放大版) -->
@@ -319,7 +331,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=22.14-pvp-phase-and-zoom-fix" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=22.15-starlight-playmat" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
