@@ -1574,122 +1574,6 @@ button:disabled {
   }
 }
 
-/* ===== 20. 3D 蝡?璉格?????犖?箄粥?寞? ===== */
-#playerForest, #enemyForest {
-  position: absolute;
-  width: var(--cw) !important;
-  height: var(--ch) !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: linear-gradient(135deg, #0d2818 0%, #020f08 100%) !important;
-  border: 1.5px solid rgba(0, 255, 127, 0.45) !important;
-  box-shadow: 0 0 15px rgba(0, 255, 127, 0.25), inset 0 0 20px rgba(0, 255, 127, 0.15) !important;
-  perspective: 800px !important;
-  transform-style: preserve-3d !important;
-  transition: all 0.3s ease !important;
-}
-
-#playerForest {
-  cursor: pointer;
-}
-
-#enemyForest {
-  cursor: default;
-  pointer-events: none !important;
-}
-
-#playerForest:hover:not(.disabled-forest) {
-  border-color: rgba(0, 255, 127, 0.95) !important;
-  box-shadow: 0 0 30px rgba(0, 255, 127, 0.55), inset 0 0 30px rgba(0, 255, 127, 0.35) !important;
-  transform: translateY(-6px) scale(1.04) rotateY(-6deg) !important;
-}
-
-#enemyForest:hover {
-  border-color: rgba(0, 255, 127, 0.8) !important;
-  box-shadow: 0 0 25px rgba(0, 255, 127, 0.45), inset 0 0 25px rgba(0, 255, 127, 0.25) !important;
-  transform: translateY(-2px) scale(1.01) !important;
-}
-
-/* 璉格?蝡?憭惜????*/
-.forest-3d-wrap {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transform-style: preserve-3d;
-  pointer-events: none;
-}
-
-.forest-3d-trees {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-  background: transparent !important;
-  transform: none !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-}
-
-.traveler-3d-standee {
-  width: 46px !important;
-  height: 64px !important;
-  position: absolute !important;
-  bottom: 22px !important;
-  left: calc(50% - 23px) !important;
-  right: auto !important;
-  top: auto !important;
-  pointer-events: none !important;
-  z-index: 3 !important;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9)) drop-shadow(0 0 8px rgba(0, 255, 127, 0.4)) !important;
-  animation: travelerIdleFloat 4s ease-in-out infinite !important;
-}
-
-.traveler-3d-img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  border-radius: 6px !important;
-  border: 1.5px solid #ffd76a !important;
-  box-shadow: 0 0 10px rgba(255, 215, 106, 0.5), inset 0 0 5px rgba(0, 255, 127, 0.3) !important;
-  display: block !important;
-}
-
-/* 閬???????*/
-.forest-3d-overlay {
-  z-index: 10;
-  text-align: center;
-  color: #e6ffee;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0, 255, 127, 0.4);
-  font-size: 13px;
-  font-weight: 800;
-  pointer-events: auto;
-  position: absolute;
-  bottom: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  width: 100%;
-}
-
-.forest-3d-overlay span {
-  margin-bottom: 25px;
-  letter-spacing: 0.5px;
-}
-
-/* 瘚桀?敺桀???*/
 @keyframes travelerIdleFloat {
   0%, 100% {
     transform: translateZ(15px) rotateX(-10deg) translateY(0);
@@ -2843,13 +2727,50 @@ button:disabled {
 
 
 /* ==========================================================================
-   FOREST STANDEE FULL-SLOT SIZING & LEFT PANEL OPACITY FIX
-   (撠ㄝ??撠?鈭箏??矽?唾??啣?澆?摰蝑之 100% 憛急遛)
+   ENCHANTED 3D FOREST & VIBRANT ATMOSPHERIC SPECIAL EFFECTS
+   (3D 奇幻立體森林神木群、小旅人立牌座與發光螢火蟲特效)
    ========================================================================== */
 
 #playerForest, #enemyForest {
-  overflow: hidden !important;
   position: absolute !important;
+  width: var(--cw) !important;
+  height: var(--ch) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #072a1a 0%, #02140c 100%) !important;
+  border: 1.5px solid rgba(52, 211, 153, 0.55) !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35), inset 0 0 12px rgba(52, 211, 153, 0.2) !important;
+  perspective: 800px !important;
+  transform-style: preserve-3d !important;
+  transition: all 0.3s ease !important;
+  z-index: 10 !important;
+}
+
+#playerForest {
+  cursor: pointer;
+}
+
+#enemyForest {
+  cursor: default;
+  pointer-events: none !important;
+}
+
+.forest-3d-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transform-style: preserve-3d !important;
+  pointer-events: none !important;
 }
 
 .forest-3d-trees {
@@ -2873,6 +2794,7 @@ button:disabled {
   pointer-events: none !important;
 }
 
+/* 3D 樹枝微風徐拂搖曳動態 */
 .tree-left-group {
   transform-origin: 18px 115px;
   animation: forestTreeSwayLeft 5s ease-in-out infinite alternate;
@@ -2885,25 +2807,26 @@ button:disabled {
 
 @keyframes forestTreeSwayLeft {
   0% { transform: rotate(0deg); }
-  100% { transform: rotate(2.2deg); }
+  100% { transform: rotate(2.4deg); }
 }
 
 @keyframes forestTreeSwayRight {
   0% { transform: rotate(0deg); }
-  100% { transform: rotate(-2deg); }
+  100% { transform: rotate(-2.2deg); }
 }
 
+/* 小旅人 3D 立體紙雕立牌 (置於兩棵神木正中間的青苔法陣上) */
 .traveler-3d-standee {
-  width: 46px !important;
-  height: 64px !important;
+  width: 44px !important;
+  height: 60px !important;
   position: absolute !important;
-  bottom: 22px !important;
-  left: calc(50% - 23px) !important;
+  bottom: 24px !important;
+  left: calc(50% - 22px) !important;
   right: auto !important;
   top: auto !important;
   pointer-events: none !important;
-  z-index: 3 !important;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9)) drop-shadow(0 0 8px rgba(0, 255, 127, 0.4)) !important;
+  z-index: 4 !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(52, 211, 153, 0.6)) !important;
   animation: travelerIdleFloat 4s ease-in-out infinite !important;
 }
 
@@ -2913,26 +2836,96 @@ button:disabled {
   object-fit: cover !important;
   border-radius: 6px !important;
   border: 1.5px solid #ffd76a !important;
-  box-shadow: 0 0 10px rgba(255, 215, 106, 0.5), inset 0 0 5px rgba(0, 255, 127, 0.3) !important;
+  box-shadow: 0 0 10px rgba(255, 215, 106, 0.6), inset 0 0 6px rgba(0, 255, 127, 0.4) !important;
   display: block !important;
 }
 
+/* 森林發光螢火蟲與靈氣孢子動態特效 */
+.forest-firefly {
+  filter: drop-shadow(0 0 4px #4ade80) drop-shadow(0 0 8px #fef08a);
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  animation-direction: alternate;
+}
+
+.ff-1 { animation: fireflyFloat1 3.5s infinite; }
+.ff-2 { animation: fireflyFloat2 4.2s infinite; }
+.ff-3 { animation: fireflyFloat3 3.8s infinite; }
+.ff-4 { animation: fireflyFloat1 4.5s infinite 1s; }
+.ff-5 { animation: fireflyFloat2 3.2s infinite 0.5s; }
+.ff-6 { animation: fireflyFloat3 4.0s infinite 1.5s; }
+
+@keyframes fireflyFloat1 {
+  0% { transform: translate(0, 0); opacity: 0.3; }
+  50% { transform: translate(3px, -8px); opacity: 1; }
+  100% { transform: translate(-2px, -15px); opacity: 0.4; }
+}
+
+@keyframes fireflyFloat2 {
+  0% { transform: translate(0, 0); opacity: 0.4; }
+  50% { transform: translate(-4px, -10px); opacity: 1; }
+  100% { transform: translate(3px, -18px); opacity: 0.2; }
+}
+
+@keyframes fireflyFloat3 {
+  0% { transform: translate(0, 0); opacity: 0.8; }
+  50% { transform: translate(2px, -6px); opacity: 0.2; }
+  100% { transform: translate(-3px, -12px); opacity: 0.9; }
+}
+
+/* 底部精巧狀態提示條 (緊貼底緣，高僅 24px，絕不遮蔽上方神木景色) */
 .forest-3d-overlay {
   position: absolute !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  background: rgba(4, 20, 14, 0.88) !important;
+  height: 24px !important;
+  background: linear-gradient(0deg, rgba(2, 24, 14, 0.95) 0%, rgba(2, 24, 14, 0.7) 70%, transparent 100%) !important;
   color: #e6ffee !important;
-  font-size: 10px !important;
-  font-weight: bold !important;
-  padding: 3px 2px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   text-align: center !important;
-  border-top: 1px solid rgba(0, 255, 127, 0.5) !important;
-  z-index: 5 !important;
+  border-top: 1px solid rgba(52, 211, 153, 0.5) !important;
+  z-index: 10 !important;
   pointer-events: none !important;
-  line-height: 1.2 !important;
-  text-shadow: 0 1px 2px #000 !important;
+  line-height: 1 !important;
+  text-shadow: 0 1px 3px #000, 0 0 6px rgba(16, 185, 129, 0.9) !important;
+  letter-spacing: 0.5px !important;
+}
+
+#playerForest.active-summon-forest {
+  border: 2px solid #00ff7f !important;
+  box-shadow: 0 0 25px rgba(0, 255, 127, 0.85), inset 0 0 18px rgba(0, 255, 127, 0.45) !important;
+  animation: forestActivePulse 2s infinite ease-in-out !important;
+  cursor: pointer !important;
+}
+
+#playerForest.active-summon-forest:hover {
+  transform: translateY(-4px) scale(1.05) !important;
+  box-shadow: 0 0 32px rgba(0, 255, 127, 1), inset 0 0 25px rgba(0, 255, 127, 0.6) !important;
+}
+
+#playerForest.disabled-forest {
+  border: 1.5px solid rgba(52, 211, 153, 0.45) !important;
+  opacity: 1 !important; /* 永遠保持色彩生機盎然，絕不灰階變暗 */
+  filter: none !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25) !important;
+  animation: none !important;
+  cursor: default !important;
+}
+
+@keyframes forestActivePulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(0, 255, 127, 0.6), inset 0 0 12px rgba(0, 255, 127, 0.3);
+    border-color: #00ff7f;
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(0, 255, 127, 0.95), inset 0 0 22px rgba(0, 255, 127, 0.55);
+    border-color: #6ee7b7;
+  }
 }
 
 .xlw-premium-confirm-overlay,
@@ -3468,154 +3461,6 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
 
 
 /* ==========================================================================
-   FOREST CAN-SUMMON VS CANNOT-SUMMON VIVID VISUAL DISTINCTION
-   (?璉格????砍??????臬?扔?湔?憿航?閬箏榆?啗?????)
-   ========================================================================== */
-
-#playerForest.active-summon-forest {
-  border: 2.5px solid #00ff7f !important;
-  box-shadow: 0 0 25px rgba(0, 255, 127, 0.9), inset 0 0 20px rgba(0, 255, 127, 0.45) !important;
-  animation: forestCanSummonPulse 1.8s infinite ease-in-out !important;
-  cursor: pointer !important;
-}
-
-#playerForest.active-summon-forest:hover {
-  transform: translateY(-5px) scale(1.06) !important;
-  box-shadow: 0 0 35px rgba(0, 255, 127, 1), inset 0 0 30px rgba(0, 255, 127, 0.65) !important;
-}
-
-#playerForest.disabled-forest {
-  border: 2px solid #555555 !important;
-  opacity: 0.45 !important;
-  filter: grayscale(0.85) brightness(0.45) !important;
-  box-shadow: none !important;
-  animation: none !important;
-  cursor: not-allowed !important;
-}
-
-@keyframes forestCanSummonPulse {
-  0% {
-    box-shadow: 0 0 15px rgba(0, 255, 127, 0.6), inset 0 0 12px rgba(0, 255, 127, 0.3);
-    border-color: #00ff7f;
-  }
-  50% {
-    box-shadow: 0 0 32px rgba(0, 255, 127, 1), inset 0 0 25px rgba(0, 255, 127, 0.65);
-    border-color: #80ffc2;
-  }
-  100% {
-    box-shadow: 0 0 15px rgba(0, 255, 127, 0.6), inset 0 0 12px rgba(0, 255, 127, 0.3);
-    border-color: #00ff7f;
-  }
-}
-
-
-
-/* ==========================================================================
-   ULTRA 3D HUD TOTAL SCORE STATUS PANEL (.score-badge-fixed)
-   (銝餌?Ｗ椰銝????寧蜇?????蜇??D ?惇瘞湔 HUD ??)
-   ========================================================================== */
-
-.score-badge-fixed {
-  background: radial-gradient(circle at 50% 20%, rgba(255, 215, 0, 0.18) 0%, transparent 75%), linear-gradient(180deg, rgba(32, 24, 44, 0.97) 0%, rgba(14, 10, 22, 0.99) 100%) !important;
-  border: 2px solid #ffe600 !important;
-  border-bottom: 5.5px solid #8c6d00 !important;
-  border-radius: 18px !important;
-  width: 300px !important;
-  padding: 14px 16px !important;
-  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.6), 0 12px 35px rgba(0, 0, 0, 0.92), 0 0 25px rgba(255, 230, 0, 0.4) !important;
-  background-color: rgba(15, 10, 25, 0.96) !important;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
-}
-
-.score-badge-fixed:hover {
-  transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: inset 0 2.5px 5px rgba(255, 255, 255, 0.75), inset 0 -4px 8px rgba(0, 0, 0, 0.6), 0 16px 40px rgba(0, 0, 0, 0.98), 0 0 32px rgba(255, 230, 0, 0.6) !important;
-}
-
-.score-badge-section {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-}
-
-.score-badge-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.45) 100%) !important;
-  border: 1.5px solid rgba(255, 230, 100, 0.6) !important;
-  border-bottom: 3.5px solid #665000 !important;
-  border-radius: 14px !important;
-  padding: 8px 12px !important;
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.6) !important;
-  transition: transform 0.2s ease !important;
-}
-
-.score-badge-card.enemy {
-  border-color: rgba(255, 100, 100, 0.65) !important;
-  border-bottom-color: #870003 !important;
-  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(30,10,15,0.5) 100%) !important;
-}
-
-.score-badge-card:hover {
-  transform: translateY(-2px) !important;
-}
-
-.score-badge-row {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  margin-bottom: 4px !important;
-}
-
-.score-badge-label {
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  color: #ffe600 !important;
-  text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255, 230, 0, 0.5) !important;
-  width: auto !important;
-}
-
-.score-badge-label.enemy-label {
-  color: #ff7875 !important;
-  text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255, 77, 79, 0.5) !important;
-}
-
-.score-badge-num {
-  display: inline-block !important;
-  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0.5) 100%) !important;
-  border: 1.5px solid #ffe600 !important;
-  border-bottom: 3px solid #8c6d00 !important;
-  border-radius: 10px !important;
-  padding: 2px 10px !important;
-  color: #ffe600 !important;
-  font-weight: 900 !important;
-  font-size: 17px !important;
-  text-shadow: 0 0 10px rgba(255, 230, 0, 0.9), 1.5px 1.5px 0 #000 !important;
-  box-shadow: inset 0 1.5px 0 #ffffff, 0 3px 8px rgba(0,0,0,0.6), 0 0 12px rgba(255,230,0,0.5) !important;
-  width: auto !important;
-  text-align: center !important;
-}
-
-.score-badge-num.enemy-num {
-  border-color: #ff4d4f !important;
-  border-bottom-color: #870003 !important;
-  color: #ff7875 !important;
-  text-shadow: 0 0 10px rgba(255, 77, 79, 0.9), 1.5px 1.5px 0 #000 !important;
-  box-shadow: inset 0 1.5px 0 #ffffff, 0 3px 8px rgba(0,0,0,0.6), 0 0 12px rgba(255,77,79,0.5) !important;
-}
-
-.score-badge-subrow {
-  background: rgba(0, 0, 0, 0.45) !important;
-  border: 1px solid rgba(255, 230, 100, 0.35) !important;
-  border-radius: 8px !important;
-  padding: 4px 8px !important;
-  font-size: 11.5px !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: bold !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5) !important;
-}
-
-
-
-/* ==========================================================================
    LUMINOUS TWINKLING STARLIGHT & PLAYMAT SYSTEM (星光點點閃爍與決鬥桌墊系統)
    ========================================================================== */
 
@@ -3952,27 +3797,6 @@ select, button,
   background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(0,0,0,0) 45%), linear-gradient(180deg, #462c5c 0%, #241233 100%) !important;
   border-color: #e9d5ff !important;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(0, 0, 0, 0.75) !important;
-}
-
-/* 5. ?璉格???臬??銵????芰??*/
-#playerForest.active-summon-forest {
-  border: 2px solid #2ec4b6 !important;
-  box-shadow: 0 0 16px rgba(46, 196, 182, 0.6), inset 0 0 12px rgba(46, 196, 182, 0.3) !important;
-}
-
-@keyframes forestCanSummonPulse {
-  0% {
-    box-shadow: 0 0 10px rgba(46, 196, 182, 0.4), inset 0 0 8px rgba(46, 196, 182, 0.2);
-    border-color: #2ec4b6;
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(46, 196, 182, 0.75), inset 0 0 15px rgba(46, 196, 182, 0.4);
-    border-color: #80e5ff;
-  }
-  100% {
-    box-shadow: 0 0 10px rgba(46, 196, 182, 0.4), inset 0 0 8px rgba(46, 196, 182, 0.2);
-    border-color: #2ec4b6;
-  }
 }
 
 

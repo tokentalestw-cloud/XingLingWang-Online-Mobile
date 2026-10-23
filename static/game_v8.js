@@ -22036,30 +22036,28 @@ function renderStablePanel() {
     endBtn.disabled = phase === "防守階段";
   }
 
-  // 森林召喚區域同步狀態 (清晰區分可召喚與不可召喚狀態)
+  // 森林召喚區域同步狀態 (清晰區分可召喚與不可召喚狀態，但永遠保持森林立體神木群生機盎然)
   const pForest = $("playerForest");
   if (pForest) {
     const canSum = isMyTurn && ((phase === "召喚階段" && !normalSummonUsed) || (phase === "戰術佈陣" && !tacticalSummonUsed));
     const forestOverlay = pForest.querySelector(".forest-3d-overlay");
+    pForest.style.opacity = "1";
+    pForest.style.filter = "none";
     if (canSum) {
       pForest.style.pointerEvents = "auto";
       pForest.style.cursor = "pointer";
-      pForest.style.opacity = "1";
-      pForest.style.filter = "none";
       pForest.classList.remove("disabled-forest");
       pForest.classList.add("active-summon-forest");
       if (forestOverlay) {
-        forestOverlay.innerHTML = `✨ 我方森林區<br><span style="color: #00ff7f; font-weight: 900; text-shadow: 0 0 8px #00ff7f;">▶ 點擊召喚 小旅人 ◀</span>`;
+        forestOverlay.innerHTML = `<span>✨ 點擊召喚小旅人 ✨</span>`;
       }
     } else {
       pForest.style.pointerEvents = "none";
-      pForest.style.cursor = "not-allowed";
-      pForest.style.opacity = "0.45";
-      pForest.style.filter = "grayscale(0.85) brightness(0.45)";
+      pForest.style.cursor = "default";
       pForest.classList.add("disabled-forest");
       pForest.classList.remove("active-summon-forest");
       if (forestOverlay) {
-        forestOverlay.innerHTML = `🔒 我方森林區<br><span style="color: #aaaaaa; font-weight: bold;">(已使用本回合召喚)</span>`;
+        forestOverlay.innerHTML = `<span>🌲 我方森林區 🌲</span>`;
       }
     }
   }
