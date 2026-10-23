@@ -2863,17 +2863,59 @@ button:disabled {
   position: absolute !important;
 }
 
-.traveler-3d-standee {
+.forest-3d-trees {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  pointer-events: none !important;
+  transform-style: preserve-3d !important;
+}
+
+.forest-trees-svg {
   width: 100% !important;
   height: 100% !important;
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  transform: none !important;
   pointer-events: none !important;
-  z-index: 1 !important;
+}
+
+.tree-left-group {
+  transform-origin: 16px 110px;
+  animation: forestTreeSwayLeft 5s ease-in-out infinite alternate;
+}
+
+.tree-right-group {
+  transform-origin: 83px 110px;
+  animation: forestTreeSwayRight 4.2s ease-in-out infinite alternate;
+}
+
+@keyframes forestTreeSwayLeft {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(2.5deg); }
+}
+
+@keyframes forestTreeSwayRight {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-2.2deg); }
+}
+
+.traveler-3d-standee {
+  width: 58px !important;
+  height: 80px !important;
+  position: absolute !important;
+  top: 10px !important;
+  left: calc(50% - 29px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform-style: preserve-3d !important;
+  transform: translateZ(16px) rotateX(-6deg) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.85)) drop-shadow(0 0 10px rgba(0, 255, 127, 0.45)) !important;
+  animation: travelerIdleFloat 4s ease-in-out infinite !important;
 }
 
 .traveler-3d-img {
@@ -2881,6 +2923,8 @@ button:disabled {
   height: 100% !important;
   object-fit: cover !important;
   border-radius: 8px !important;
+  border: 1.5px solid #ffd76a !important;
+  box-shadow: 0 0 12px rgba(255, 215, 106, 0.5), inset 0 0 6px rgba(0, 255, 127, 0.3) !important;
   display: block !important;
 }
 
@@ -2889,14 +2933,14 @@ button:disabled {
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  background: rgba(10, 8, 8, 0.78) !important;
+  background: rgba(10, 8, 8, 0.82) !important;
   color: #ffe6a0 !important;
   font-size: 11px !important;
   font-weight: bold !important;
   padding: 3px 2px !important;
   text-align: center !important;
   border-top: 1.5px solid rgba(0, 255, 127, 0.6) !important;
-  z-index: 3 !important;
+  z-index: 5 !important;
   pointer-events: none !important;
 }
 
@@ -5497,6 +5541,18 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     border-color: #ffd76a;
     box-shadow: 0 0 32px #ffd76a, inset 0 0 16px rgba(255, 215, 106, 0.55);
   }
+}
+
+/* 登場與魔法發動全螢幕特效層級保證（置於最頂層，絕不被藍框遮擋） */
+.xlw-tribute-activation-overlay,
+.xlw-spell-activation-overlay,
+.xlw-tribute-portal-circle-large,
+.xlw-tribute-energy-pillar-large,
+.xlw-screen-flash-gold,
+.xlw-shockwave-ring,
+.card-summon-animation,
+.card-entrance-wrapper {
+  z-index: 2000050 !important;
 }
 
 /* 導師對話框 (Dialogue Box) */

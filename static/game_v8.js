@@ -2869,8 +2869,8 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
-  // 3. 禁衛軍獸人 (SSR-ORC-0057) 被攻擊時 +2 攻擊力
-  if (c.id === "SSR-ORC-0057" || c.name?.includes("禁衛軍獸人")) {
+  // 3. 禁衛軍獸人 (SR-ORC-0057 / SSR-ORC-0057) 被攻擊時 +2 攻擊力
+  if (c.id === "SSR-ORC-0057" || c.id === "SR-ORC-0057" || c.id === "R-ORC-0057" || c.name?.includes("禁衛軍獸人")) {
     if (isBeingAttacked) {
       baseAtk += 2;
     }
@@ -10526,7 +10526,7 @@ async function xlwCheckDefenderGuardEffect() {
   for (const z of ["player_front", "player_back"]) {
     for (let i = 0; i < 5; i++) {
       const u = field[z][i];
-      if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
+      if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.id === "SR-ORC-0057" || u.card?.id === "R-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
         guards.push({ zone: z, idx: i, unit: u });
       }
     }
@@ -11192,7 +11192,7 @@ async function xlwResolveEnemyDefensePhaseSafe() {
       for (const z of ["enemy_front", "enemy_back"]) {
         for (let i = 0; i < 5; i++) {
           const u = field[z][i];
-          if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
+          if (u && (u.card?.id === "SSR-ORC-0057" || u.card?.id === "SR-ORC-0057" || u.card?.id === "R-ORC-0057" || u.card?.name?.includes("禁衛軍獸人"))) {
             enemyGuards.push({ zone: z, idx: i, unit: u });
           }
         }
@@ -18854,7 +18854,7 @@ function renderField() {
           }
 
           if (phase === "防守階段" && zone.startsWith("player_")) {
-            const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
+            const isDefenderGuard = obj.card?.id === "SSR-ORC-0057" || obj.card?.id === "SR-ORC-0057" || obj.card?.id === "R-ORC-0057" || obj.card?.name?.includes("禁衛軍獸人");
             if (isDefenderGuard) {
               if (window.XLW_defenderGuardUsedTurn === turn) {
                 setStatus("禁衛軍獸人 效果本回合已使用過。");
@@ -24903,6 +24903,11 @@ async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
   const key = `${zone}:${idx}`;
   window.XLW_animatingTributeSlots.add(key);
   
+  // 隱藏教學模式 spotlight 與選取邊框，避免藍色方框遮擋出場動畫
+  const spotlight = document.getElementById("xlwTutorialSpotlight");
+  if (spotlight) spotlight.style.display = "none";
+  document.querySelectorAll(".selected-slot, .slot-highlight").forEach(el => el.classList.remove("selected-slot", "slot-highlight"));
+
   // 1. 先重繪，讓格子卡牌暫時隱藏，播放魔法陣與光束特效
   render();
   
@@ -26028,7 +26033,7 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
     baseReward += 2;
     hasRewardEffect = true;
   }
-  if (cid === "SSR-ORC-0057" || name?.includes("禁衛軍獸人")) {
+  if (cid === "SSR-ORC-0057" || cid === "SR-ORC-0057" || cid === "R-ORC-0057" || name?.includes("禁衛軍獸人")) {
     baseReward += 2;
     hasRewardEffect = true;
   }
@@ -29704,8 +29709,8 @@ window.XLW_Tutorial = {
       interactive: { type: "click_end_turn" }
     },
     {
-      title: "實戰 Step 10：我方防守（使用盾牌人偶反制）",
-      content: "對手正朝我們進攻！現在進入我方【防守階段】，請點擊手牌中的防守法術【盾牌人偶】，化解攻擊並使敵方單位橫置疲勞！",
+      title: "實戰 Step 10：我方防守（使用削弱藥水反制）",
+      content: "對手【呐喊的人】(攻擊力 4) 正朝我方【寶寶獸人】(攻擊力 3) 進攻！現在進入我方【防守階段】，請點擊手牌中的防守法術【削弱藥水】，使對手攻擊力 -3 化解危機！",
       spotlightSelector: "#hand .card:nth-child(2)",
       anatomyModal: false,
       interactive: { type: "click_defense_spell", index: 1 }
@@ -29875,7 +29880,7 @@ window.XLW_Tutorial = {
     // 獸人預組牌組不重複卡牌
     const hand1 = { id: "ORC-0011", name: "盾牌獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "盾", score: 2, tribute: 0, keywords: ["阻擋"], effect_text: "阻擋。此卡左右邊的單位若戰鬥成功獎勵+1", image: "/static/card_images/orc_0011.jpeg" };
     const hand2 = { id: "R-ORC-0033", name: "阿庫瑪的戰錘", type: "magic", deck: "獸人", faction: "獸人", race: "法術", attack: "0", score: 0, tribute: 0, magic_point: "-", image: "/static/card_images/r_orc_0033.jpeg" };
-    const hand3 = { id: "NMG-0013", name: "盾牌人偶", type: "magic", deck: "中立", faction: "中立", race: "中立", attack: "0", score: 0, tribute: 1, usable_phases: ["Defense Phase"], effect_text: "使敵方1進攻單位進攻無效並橫放", image: "/static/card_images/nmg_0013.jpeg" };
+    const hand3 = { id: "NMG-0003", name: "削弱藥水", type: "magic", deck: "中立", faction: "中立", race: "中立", attack: "0", score: 0, tribute: 0, usable_phases: ["Defense Phase"], effect_text: "使場上1單位被賦予 -3 攻擊力直到本回合結束", image: "/static/card_images/nmg_0003.jpeg" };
     const mulliganTributeCard = structuredClone(demoUnit2);
 
     const orcBackstab = { id: "ORC-0002", name: "背刺獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "2", score: 3, tribute: 0, image: "/static/card_images/orc_0002.jpeg" };
@@ -30295,7 +30300,7 @@ window.XLW_Tutorial = {
         $("cardModal")?.classList.remove("show");
         const idx = step.interactive.index ?? 3;
         hand[idx] = {
-          id: "SSR-ORC-0057",
+          id: "SR-ORC-0057",
           name: "禁衛軍獸人",
           type: "unit",
           deck: "獸人",
@@ -30304,7 +30309,8 @@ window.XLW_Tutorial = {
           attack: "3",
           score: 4,
           tribute: 1,
-          image: "/static/card_images/ssr_orc_0057.jpeg"
+          rarity: "SR",
+          image: "/static/card_images/r_orc_0057.jpeg"
         };
         mulliganActive = false;
         selectedMulliganIndexes.clear();
@@ -30399,28 +30405,57 @@ window.XLW_Tutorial = {
       else if (isDefenseSpellClick && (!payload || payload.index === undefined || payload.index === step.interactive.index)) {
         $("cardModal")?.classList.remove("show");
         const spellIdx = step.interactive.index;
-        const spellCard = hand[spellIdx];
-        if (spellCard) {
+        const spellCard = hand[spellIdx] || {
+          id: "NMG-0003",
+          name: "削弱藥水",
+          type: "magic",
+          image: "/static/card_images/nmg_0003.jpeg",
+          effect_text: "使場上1單位被賦予 -3 攻擊力直到本回合結束"
+        };
+        
+        // 1. 播放與一般防守魔法完全相同的全螢幕金色魔法發動特效
+        await xlwShowSpellActivationOverlay(spellCard, "player");
+
+        if (hand[spellIdx]) {
           hand.splice(spellIdx, 1);
           graveyard.push(spellCard);
         }
+
+        // 2. 削弱藥水效果：使對手進攻單位【呐喊的人】攻擊力 -3 (4 -> 1)
         if (field.enemy_front[0]) {
-          field.enemy_front[0].attacking = false;
-          field.enemy_front[0].target = null;
-          field.enemy_front[0].tapped = true;
+          field.enemy_front[0].atkModifier = (field.enemy_front[0].atkModifier || 0) - 3;
+          field.enemy_front[0].equipments = field.enemy_front[0].equipments || [];
+          if (!field.enemy_front[0].equipments.includes("削弱藥水(-3)")) {
+            field.enemy_front[0].equipments.push("削弱藥水(-3)");
+          }
         }
         window.XLW_defenseCounterActive = false;
         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
-        logBattle("✨ 我方發動防守反制魔法【盾牌人偶】：使對手【呐喊的人】進攻無效化並橫置！");
-        setStatus("✨ 盾牌人偶發動成功！對手進攻已無效化並橫置。");
+        logBattle("✨ 我方發動防守反制魔法【削弱藥水】：使對手【呐喊的人】攻擊力 -3（4 ➔ 1）！");
+        setStatus("✨ 削弱藥水發動成功！對手【呐喊的人】攻擊力降為 1。進行防守戰鬥結算...");
         render();
-        await sleep(600);
+        await sleep(750);
+
+        // 3. 戰鬥交鋒動畫與結算：我方寶寶獸人 (3 ATK) 成功守住並擊潰對手呐喊的人 (1 ATK)
+        flashBattle("enemy_front", 0, "player_front", 0);
+        await sleep(550);
+        logBattle("⚔️ 戰鬥結算：我方【寶寶獸人】(攻擊力 3) 成功防守並擊潰對手【呐喊的人】(攻擊力 1)！");
+        if (field.enemy_front[0]) {
+          if (window.XLW_ENEMY && window.XLW_ENEMY.grave) {
+            window.XLW_ENEMY.grave.push(field.enemy_front[0].card);
+          }
+          field.enemy_front[0] = null;
+        }
+        render();
+        await sleep(700);
+
+        // 4. 進入我方召喚階段
         phase = "召喚階段";
         window.xlwShowPhaseBanner("召喚階段", "#4ade80");
         normalSummonUsed = false;
         tacticalSummonUsed = false;
         window.XLW_bypassNormalSummonLimit = true;
-        setStatus("防守階段結束，進入我方「召喚階段」！");
+        setStatus("防守階段結束，進入我方「召喚階段」！準備進行獻祭召喚！");
         render();
       }
       else if (actionType === "click_card" && (!payload || payload.index === step.interactive.index)) {
@@ -30456,6 +30491,10 @@ window.XLW_Tutorial = {
                 moveFieldUnit(fromZ, fromI, toZ, toI);
             }
         } else {
+            // 召喚時立即隱藏 spotlight，避免藍色方框遮擋登場動畫
+            const sp = document.getElementById("xlwTutorialSpotlight");
+            if (sp) sp.style.display = "none";
+            document.querySelectorAll(".selected-slot, .slot-highlight").forEach(el => el.classList.remove("selected-slot", "slot-highlight"));
             await performSummonToSlot(step.interactive.zone, step.interactive.idx);
             if (step.interactive.isTraveler) {
                 stepDelay = 950;
@@ -30547,10 +30586,18 @@ window.XLW_Tutorial = {
         await performPlayerTurnStartDraw();
         phase = "防守階段";
         window.XLW_defenseCounterActive = true;
-        setStatus("🛡️ 輪到我方防守階段：請點擊手牌中的【盾牌人偶】反制對手的進攻！");
+        setStatus("🛡️ 輪到我方防守階段：請點擊手牌中的【削弱藥水】反制對手的進攻！");
         logBattle("—— 我方防守階段開始：開啟防守魔法反制時機 ——");
         render();
         await window.xlwShowPhaseBanner("我方防守階段", "#3b82f6");
+
+        // 如一般防守階段一樣跳出反制魔法提示
+        await showXLWConfirm(
+          "🛡️ 防守階段反制魔法",
+          "對手【呐喊的人】(攻擊力 4) 宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡【削弱藥水】？",
+          "發動防守魔法",
+          "發動防守魔法"
+        );
       }
       else if (actionType === "click_tribute_confirm") {
         await confirmTribute();
