@@ -12,7 +12,10 @@ function xlwCleanExpiredTempEquips(currentTurn) {
         }
         if (keysToDelete.length > 0) {
           keysToDelete.forEach(eqName => {
-            u.equipments = u.equipments.filter(x => x !== eqName);
+            u.equipments = u.equipments.filter(x => {
+              const xStr = typeof x === "string" ? x : (x?.name || "");
+              return x !== eqName && !xStr.includes(eqName) && !eqName.includes(xStr);
+            });
             delete u.tempEquips[eqName];
             logBattle(`✨ ${eqName} 的時效已到，該效果從 ${u.card?.name || "單位"} 身上消失。`);
           });
@@ -2900,33 +2903,36 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
 
   // 5. 臨時非裝備狀態魔法效果 (削弱藥水、振奮藥水、睡眠反擊拳)
-  if (unit.equipments) {
-    if (unit.equipments.includes("削弱藥水")) {
-      baseAtk = baseAtk - 3;
-    }
-    if (unit.equipments.includes("振奮藥水")) {
-      baseAtk += 3;
-    }
-    if (unit.equipments.includes("睡眠反擊拳")) {
-      baseAtk += 3;
-    }
-    if (unit.equipments.includes("酒意魔菇(+3)")) {
-      baseAtk += 3;
-    }
-    if (unit.equipments.includes("惡意程式 伯格(-4)")) {
-      baseAtk -= 4;
-    }
-    // Wave 7 Neutral Spells Buffs/Debuffs
-    if (unit.equipments.includes("天黑黑")) {
-      baseAtk = baseAtk - 1;
-    }
-    if (unit.equipments.includes("一根香蕉")) {
-      baseAtk = baseAtk - 1;
-    }
-    if (unit.equipments.includes("前線號角") && unit.attacking) {
+  if (unit.equipments && Array.isArray(unit.equipments)) {
+    unit.equipments.forEach(eq => {
+      const eqStr = typeof eq === "string" ? eq : (eq?.name || "");
+      if (eqStr.includes("削弱藥水")) {
+        baseAtk -= 3;
+      }
+      if (eqStr.includes("振奮藥水")) {
+        baseAtk += 3;
+      }
+      if (eqStr.includes("睡眠反擊拳")) {
+        baseAtk += 3;
+      }
+      if (eqStr.includes("酒意魔菇(+3)")) {
+        baseAtk += 3;
+      }
+      if (eqStr.includes("惡意程式 伯格(-4)")) {
+        baseAtk -= 4;
+      }
+      // Wave 7 Neutral Spells Buffs/Debuffs
+      if (eqStr.includes("天黑黑")) {
+        baseAtk -= 1;
+      }
+      if (eqStr.includes("一根香蕉")) {
+        baseAtk -= 1;
+      }
+    });
+    if (unit.equipments.some(e => (typeof e === "string" ? e : (e?.name || "")).includes("前線號角")) && unit.attacking) {
       baseAtk += 1;
     }
-    if (unit.equipments.some(e => e.includes("我要打5個"))) {
+    if (unit.equipments.some(e => (typeof e === "string" ? e : (e?.name || "")).includes("我要打5個"))) {
       if (zone) {
         const isPlayer = zone.startsWith("player_");
         const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
@@ -2996,7 +3002,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     baseAtk = baseAtk * 2;
   }
 
-  return baseAtk + rainbowBonus;
+  return Math.max(0, baseAtk + rainbowBonus);
 }
 
 // 單位星數分數 (加入加成)
@@ -16635,9 +16641,12 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
     await xlwShowSpellActivationOverlay(spellCard, "enemy");
     
     await aiCastSpell(spellCard, async () => {
-      attacker.atkModifier = (attacker.atkModifier || 0) - 3;
       attacker.equipments = attacker.equipments || [];
-      attacker.equipments.push("削弱藥水(-3)");
+      if (!attacker.equipments.includes("削弱藥水(-3)")) {
+        attacker.equipments.push("削弱藥水(-3)");
+      }
+      attacker.tempEquips = attacker.tempEquips || {};
+      attacker.tempEquips["削弱藥水(-3)"] = turn;
       logBattle(`✨ 對手 AI 從手牌發動了【削弱藥水】！使我方進攻單位 ${attacker.card.name} 攻擊力 -3！`);
       render();
       await sleep(650);
@@ -18247,13 +18256,25 @@ function render() {
   }
 
   adjustBoardScale();
-  // 更新狀態列數值
   const phaseDisplayText = $("phaseDisplayText") || $("phaseTextHard");
   const phaseHelpText = $("phaseHelpText") || $("phaseHelpHard");
   const phaseDisplayPanel = $("phaseDisplayPanel") || $("phaseDisplayPanelHard");
   
-  if (phaseDisplayText) phaseDisplayText.textContent = phase;
-  if (phaseHelpText) phaseHelpText.textContent = getPhaseHelpText(phase);
+  if (phaseDisplayPanel && phase && (!window.XLW_Tutorial || !window.XLW_Tutorial.active)) {
+    phaseDisplayPanel.style.setProperty("display", "flex", "important");
+    phaseDisplayPanel.dataset.phase = phase;
+  }
+  
+  if (phaseDisplayText) {
+    if (isMultiplayer) {
+      phaseDisplayText.textContent = isMyTurn ? `我方回合 - ${phase}` : `對手回合 - ${phase}`;
+    } else {
+      phaseDisplayText.textContent = phase;
+    }
+  }
+  if (phaseHelpText) {
+    phaseHelpText.textContent = isMultiplayer && !isMyTurn ? "等待對手操作中..." : getPhaseHelpText(phase);
+  }
   if (phaseDisplayPanel) phaseDisplayPanel.dataset.phase = phase;
 
   document.body.dataset.phase = phase;
@@ -18687,6 +18708,15 @@ function renderField() {
           if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
             const handled = window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx, obj });
             if (handled) return;
+          }
+
+          // 任何階段點選場上單位皆在左側特寫面板預覽大圖、數值與所有裝備/狀態效果
+          showModal(obj.card, obj.equipments, obj);
+
+          // 若正處於從手牌召喚的選位階段（且非獻祭目標選取），點選已佔用格子的單位僅作檢視，防止誤觸主動技能或卡住
+          if (selectedHandForSummon !== null && selectedHandForTribute === null && !tributeWaitingPosition) {
+            setStatus(`【${obj.card.name}】此位置已有單位。若要召喚手牌單位，請點選空格。`);
+            return;
           }
           
           if (window.XLW_peepeeboyPlacementActive || window.XLW_receptionistPlacementActive) {
@@ -22177,7 +22207,7 @@ window.xlwCloseLeftPanel = function(e) {
   }
 };
 
-function showModal(card, equipments) {
+function showModal(card, equipments, unitObj) {
   if (!card) return;
   const leftPanel = $("xlwLeftCardPanel");
   // 教學模式進行中：絕對不開啟左側卡牌放大面板，防止遮蔽戰場格子與操作引導！
@@ -22228,32 +22258,71 @@ function showModal(card, equipments) {
     detailView.style.flexDirection = "column";
     detailView.style.alignItems = "center";
 
-    // 若該單位有加裝裝備卡，將裝備效果說明獨立放在圖片下方（不與圖片重疊）
-    if (equipments && equipments.length > 0) {
+    // 若該單位有加裝裝備卡或傳入實例狀態，將效果說明顯示於圖片下方
+    const hasEquips = equipments && equipments.length > 0;
+    const hasUnitObj = unitObj && typeof unitObj === "object";
+    if (hasEquips || hasUnitObj) {
       const eqContainer = document.createElement("div");
       eqContainer.id = "leftPanelEquipmentsContainer";
       eqContainer.className = "xlw-left-panel-equipments-container";
 
-      equipments.forEach((eqName) => {
-        let displayText = eqName;
-        if (eqName.includes("符咒帽")) displayText = "🎩 符咒帽：魔法無效";
-        else if (eqName.includes("菜刀")) displayText = "🔪 3星菜刀：攻擊力+3，獲得貫穿";
-        else if (eqName.includes("弓箭")) displayText = "🏹 弓箭：獲得遠程+1";
-        else if (eqName.includes("戰斧牛排")) displayText = "🥩 戰斬牛排：攻擊力+5";
-        else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水：攻擊力-3";
-        else if (eqName.includes("振奮藥水")) displayText = "🧪 振奮藥水：攻擊力+3";
-        else if (eqName.includes("塗毒")) displayText = "🤢 塗毒：獲得劇毒效果";
-        else if (eqName.includes("睡眠反擊拳")) displayText = "🥊 睡眠反擊拳：攻擊力+3";
-        else if (eqName.includes("狼牙棒")) displayText = "🔨 狼牙棒：動態攻擊力加成";
-        else if (eqName.includes("法術保護")) displayText = "🛡️ 法術保護：魔法無效";
-        else if (eqName.includes("冰霜法師(-3)")) displayText = "❄️ 冰霜法師：星數-3⭐";
+      if (hasUnitObj && unitObj.card) {
+        const statBadge = document.createElement("div");
+        statBadge.className = "xlw-left-panel-equipment-badge";
+        statBadge.style.background = "linear-gradient(135deg, #2a1f3d, #171124)";
+        statBadge.style.border = "1.5px solid #ffd76a";
+        statBadge.style.color = "#ffd76a";
+        statBadge.textContent = `⚔️ 當前戰鬥力：攻 ${getUnitAtk(unitObj)} | 星 ${getUnitStars(unitObj)}★`;
+        eqContainer.appendChild(statBadge);
 
-        const badge = document.createElement("div");
-        badge.className = "xlw-left-panel-equipment-badge";
-        badge.textContent = displayText;
+        if (unitObj.confined) {
+          const b = document.createElement("div");
+          b.className = "xlw-left-panel-equipment-badge";
+          b.style.background = "linear-gradient(135deg, #7f1d1d, #450a0a)";
+          b.style.color = "#fecaca";
+          b.textContent = "⛓️ 處於禁錮狀態";
+          eqContainer.appendChild(b);
+        }
+        if (unitObj.decay) {
+          const b = document.createElement("div");
+          b.className = "xlw-left-panel-equipment-badge";
+          b.style.background = "linear-gradient(135deg, #581c87, #3b0764)";
+          b.style.color = "#e9d5ff";
+          b.textContent = "💀 處於衰退狀態";
+          eqContainer.appendChild(b);
+        }
+        if (unitObj.tapped) {
+          const b = document.createElement("div");
+          b.className = "xlw-left-panel-equipment-badge";
+          b.style.background = "linear-gradient(135deg, #374151, #1f2937)";
+          b.style.color = "#d1d5db";
+          b.textContent = "💤 處於橫置（疲勞）狀態";
+          eqContainer.appendChild(b);
+        }
+      }
 
-        eqContainer.appendChild(badge);
-      });
+      if (hasEquips) {
+        equipments.forEach((eqName) => {
+          let displayText = eqName;
+          if (eqName.includes("符咒帽")) displayText = "🎩 符咒帽：魔法無效";
+          else if (eqName.includes("菜刀")) displayText = "🔪 3星菜刀：攻擊力+3，獲得貫穿";
+          else if (eqName.includes("弓箭")) displayText = "🏹 弓箭：獲得遠程+1";
+          else if (eqName.includes("戰斧牛排")) displayText = "🥩 戰斬牛排：攻擊力+5";
+          else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水：攻擊力-3";
+          else if (eqName.includes("振奮藥水")) displayText = "🧪 振奮藥水：攻擊力+3";
+          else if (eqName.includes("塗毒")) displayText = "🤢 塗毒：獲得劇毒效果";
+          else if (eqName.includes("睡眠反擊拳")) displayText = "🥊 睡眠反擊拳：攻擊力+3";
+          else if (eqName.includes("狼牙棒")) displayText = "🔨 狼牙棒：動態攻擊力加成";
+          else if (eqName.includes("法術保護")) displayText = "🛡️ 法術保護：魔法無效";
+          else if (eqName.includes("冰霜法師(-3)")) displayText = "❄️ 冰霜法師：星數-3⭐";
+
+          const badge = document.createElement("div");
+          badge.className = "xlw-left-panel-equipment-badge";
+          badge.textContent = displayText;
+
+          eqContainer.appendChild(badge);
+        });
+      }
 
       detailView.appendChild(eqContainer);
     }
@@ -23531,7 +23600,14 @@ function setupWebSocketEvents() {
       logBattle(`對手發動 始皇帝 效果：橫置了 【${tappedUnit ? tappedUnit.card.name : "單位"}】，特殊召喚【戰士陶俑】到其場上！`);
       render();
     } else if (data.action === "temp_equip_spell_resolved") {
-      const targetUnit = field[data.zone]?.[data.idx];
+      const flipZone = (z) => {
+        if (!z) return null;
+        if (z.startsWith("player_")) return z.replace("player_", "enemy_");
+        if (z.startsWith("enemy_")) return z.replace("enemy_", "player_");
+        return z;
+      };
+      const resolvedZone = flipZone(data.zone);
+      const targetUnit = field[resolvedZone]?.[data.idx];
       if (targetUnit) {
         if (!targetUnit.equipments) targetUnit.equipments = [];
         const spellNameClean = data.spellCard.name;
@@ -27130,6 +27206,11 @@ function applyCoinTossChoice(winnerRole, choice) {
 }
 
 function startMultiplayerGameActual() {
+  renderEnemyFloatingHand();
+  const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+  if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
+  const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+  if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
   draw(4);
   mulliganActive = true;
   selectedMulliganIndexes.clear();
@@ -29460,77 +29541,77 @@ window.XLW_Tutorial = {
 
         steps: [
     {
-      title: "1. 歡迎來到《星靈王》！",
+      title: "歡迎來到《星靈王》！",
       content: "我是精靈導師「雪女」。帶您快速認識戰場配置與對戰流程，點擊『下一步』出發！",
       spotlightSelector: null,
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "2. 場地：前排與後排戰線",
+      title: "前排與後排戰線",
       content: "中央交戰區。前排正面交鋒，後排提供掩護與支援能力。",
       spotlightSelector: ".row.player-front",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "3. 場地：場地魔法區",
+      title: "場地魔法區",
       content: "場地魔法常駐在此，持續提供全場或陣營被動增益。",
       spotlightSelector: "#playerField",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "4. 場地：墓地區",
+      title: "墓地區",
       content: "陣亡單位與耗盡法術送入此處，部分種族可死者復甦。",
       spotlightSelector: "#playerGrave",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "5. 場地：除外區",
+      title: "除外區",
       content: "遭除外或棄置的卡片移至此區，無法重回戰局。",
       spotlightSelector: "#playerExile",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "6. 場地：種族宣言卡",
+      title: "種族宣言卡",
       content: "展示雙方陣營核心特性與代表種族宣言卡。",
       spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "7. 場地：專屬牌組",
+      title: "專屬牌組",
       content: "我方主要牌庫。每回合自動抽 2 張補充手牌（上限10張）。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "8. 資源：我方手牌",
+      title: "我方手牌",
       content: "下方展開為手牌。點擊可檢視數值、施放法術或打出召喚。",
       spotlightSelector: "#hand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "9. 資源：對手手牌",
+      title: "對手手牌",
       content: "上方顯示對手手牌張數，隨時掌握敵方資源變化。",
       spotlightSelector: "#xlwEnemyFloatingHand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "10. 卡牌資訊代表意義",
+      title: "卡牌資訊代表意義",
       content: "卡牌包含攻防、祭品、陣營、技能效果與★星數得分！",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null
     },
     {
-      title: "11. 勝利條件說明",
+      title: "勝利條件說明",
       content: "①【星星倒數結束】總星數高者勝！②【Call Game】星數領先≥20★或單位多4隻可宣告勝出！",
       spotlightSelector: "#scoreBtn",
       anatomyModal: false,
@@ -29538,7 +29619,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "12. 開局準備：起手調度 (1/2)",
-      content: "開局可調度換牌一次！點擊最右側需祭品的【胖獸人】選取替換。",
+      content: "開局可調度換牌一次！點擊最右側需祭品的【駭獸人】選取替換。",
       spotlightSelector: "#hand .card:nth-child(4)",
       anatomyModal: false,
       setupBattle: true,
@@ -29780,7 +29861,7 @@ window.XLW_Tutorial = {
 
     const demoUnit2 = {
         id: "C-ORC-0016",
-        name: "胖獸人",
+        name: "駭獸人",
         type: "unit",
         deck: "獸人",
         faction: "獸人",
@@ -29812,7 +29893,7 @@ window.XLW_Tutorial = {
     const orcBlood = { id: "R-ORC-0040", name: "獸人血戰幫 嗜血獸人", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "5", score: 3, tribute: 1, image: "/static/card_images/r_orc_0040.jpeg" };
     const orcKing = { id: "ORC-0009", name: "獸人王 加爾帝", type: "unit", deck: "獸人", faction: "獸人", race: "獸人", attack: "7", score: 6, tribute: 2, image: "/static/card_images/orc_0009.jpeg" };
 
-    // 起始 4 張手牌（皆不重複），第 4 張為需要祭品的【胖獸人】，供起手調度換成【禁衛軍獸人】
+    // 起始 4 張手牌（皆不重複），第 4 張為需要祭品的【駭獸人】，供起手調度換成【禁衛軍獸人】
     hand = [hand1, hand2, hand3, mulliganTributeCard];
     // 牌庫中每張卡皆為獸人預組的不同卡牌（draw 會從陣列尾端 pop）
     deck = [
@@ -29850,7 +29931,7 @@ window.XLW_Tutorial = {
     if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
 
     if (!silentInit) {
-      setStatus("【起手換牌】請點選手牌最右側需要祭品的【胖獸人】，再點擊右側「確認換牌」！");
+      setStatus("【起手換牌】請點選手牌最右側需要祭品的【駭獸人】，再點擊右側「確認換牌」！");
     }
     render();
   },
@@ -29878,7 +29959,14 @@ window.XLW_Tutorial = {
 
     const prevBtn = document.getElementById("xlwTutorialPrevBtn");
     const nextBtn = document.getElementById("xlwTutorialNextBtn");
-    if (prevBtn) prevBtn.disabled = (this.currentStep === 0);
+    if (prevBtn) {
+      if (this.currentStep === 0) {
+        prevBtn.style.display = "none";
+      } else {
+        prevBtn.style.display = "inline-block";
+        prevBtn.disabled = false;
+      }
+    }
     
     const spotlight = document.getElementById("xlwTutorialSpotlight");
 
@@ -30221,7 +30309,7 @@ window.XLW_Tutorial = {
         mulliganActive = false;
         selectedMulliganIndexes.clear();
         phase = "召喚階段";
-        logBattle("🔄 起手調度確認：將暫時用不到的祭品怪【胖獸人】替換，重新抽到了【禁衛軍獸人】！");
+        logBattle("🔄 起手調度確認：將暫時用不到的祭品怪【駭獸人】替換，重新抽到了【禁衛軍獸人】！");
         setStatus("起手換牌完成！已將卡手的祭品怪替換。");
         render();
       }

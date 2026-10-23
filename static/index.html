@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=22.12-compact-tutorial-ui">
+  <link rel="stylesheet" href="/static/style_v8.css?v=22.14-pvp-phase-and-zoom-fix">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -319,7 +319,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=22.12-compact-tutorial-ui" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=22.14-pvp-phase-and-zoom-fix" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -424,16 +424,13 @@
         </div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <span id="xlwTutorialStepCounter" class="tutorial-step-counter">1 / 37</span>
-          <button id="xlwTutorialMinBtn" onclick="window.XLW_Tutorial.toggleMinimize(event)" class="tutorial-min-btn" title="收合/展開說明文字">➖</button>
           <button id="xlwTutorialCloseHeaderBtn" onclick="window.XLW_Tutorial.endTutorial()" class="tutorial-close-header-btn" title="結束教學">✕</button>
         </div>
       </div>
       <div id="xlwTutorialTitle" class="tutorial-title">歡迎來到星靈王！</div>
       <div id="xlwTutorialContent" class="tutorial-content">...</div>
-      <div id="xlwTutorialActionGuide" class="tutorial-action-guide" style="display:none;"></div>
       <div class="tutorial-box-footer">
         <button id="xlwTutorialPrevBtn" onclick="window.XLW_Tutorial.prevStep()" class="tutorial-btn tutorial-btn-sub">◄ 上一步</button>
-        <button id="xlwTutorialSkipBtn" onclick="window.XLW_Tutorial.endTutorial()" class="tutorial-btn tutorial-btn-skip" style="display: none !important;">✖️ 結束教學</button>
         <button id="xlwTutorialNextBtn" onclick="window.XLW_Tutorial.nextStep()" class="tutorial-btn tutorial-btn-main">下一步 ►</button>
       </div>
     </div>
@@ -496,9 +493,9 @@
         </div>
       </div>
       <div id="leftPanelPlaceholder" class="placeholder-text">點擊卡牌<br>在此放大顯示</div>
-      <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;">
-        <div class="detail-img-wrap" onclick="window.xlwToggleLeftPanelSize(event)">
-          <img id="leftPanelImg" src="" alt="card detail image">
+      <div id="leftCardDetailView" class="card-detail-view" style="display: none !important;" onclick="if(event.target===this||event.target.closest('.detail-img-wrap'))window.xlwCloseLeftPanel(event);">
+        <div class="detail-img-wrap" onclick="window.xlwCloseLeftPanel(event)" title="點擊卡牌關閉特寫" style="cursor: pointer;">
+          <img id="leftPanelImg" src="" alt="card detail image" onclick="window.xlwCloseLeftPanel(event)">
         </div>
       </div>
     </div>
