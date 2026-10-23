@@ -25280,6 +25280,58 @@ function exileCard(card, owner) {
 function renderGraveyard(zoneId, graveList, label) {
   const zone = $(zoneId);
   if (!zone) return;
+
+  const wrap3d = zone.querySelector(".grave-3d-wrap");
+  const overlay3d = zone.querySelector(".grave-3d-overlay");
+
+  if (wrap3d) {
+    // 移除舊的墓地頂層卡片
+    const oldCard = zone.querySelector(".card");
+    if (oldCard) oldCard.remove();
+
+    if (graveList.length === 0) {
+      zone.classList.remove("has-card");
+      if (overlay3d) {
+        overlay3d.innerHTML = `<span>🪦 ${label} 🪦<br><small style="font-size:10px; opacity:0.85;">(空)</small></span>`;
+      }
+      zone.onclick = null;
+      return;
+    }
+
+    zone.classList.add("has-card");
+    if (overlay3d) {
+      overlay3d.innerHTML = `<span>🪦 ${label} (${graveList.length}張) 🪦</span>`;
+    }
+
+    const topCard = graveList[graveList.length - 1];
+    const cardEl = document.createElement("div");
+    cardEl.className = "card grave-card-top";
+    cardEl.style.width = "100%";
+    cardEl.style.height = "100%";
+    cardEl.style.position = "absolute";
+    cardEl.style.top = "0";
+    cardEl.style.left = "0";
+    cardEl.style.zIndex = "3";
+
+    const metaText = topCard.type === "unit"
+      ? `攻 ${getUnitAtk(topCard)} | 星 ${getUnitStars(topCard)}`
+      : `魔法`;
+
+    if (topCard.image) {
+      cardEl.innerHTML = `<img src="${topCard.image}" alt="${topCard.name}"><div class="mini-meta"><div class="mini-meta-name" title="${topCard.name}">${topCard.name}</div><div class="mini-meta-stats">${metaText} (${graveList.length}張)</div></div>`;
+    } else {
+      cardEl.innerHTML = `<div class="fallback" style="font-size:10px;"><div class="fallback-name" title="${topCard.name}">${topCard.name}</div><div class="fallback-stats">${metaText} (${graveList.length}張)</div></div>`;
+    }
+
+    zone.appendChild(cardEl);
+    zone.onclick = (e) => {
+      e.stopPropagation();
+      showGraveyardDetailModal(label, graveList);
+    };
+    return;
+  }
+
+  // 傳統無 3D 背景回退邏輯
   zone.innerHTML = "";
   
   if (graveList.length === 0) {
@@ -25316,6 +25368,7 @@ function renderGraveyard(zoneId, graveList, label) {
   
   zone.appendChild(cardEl);
 }
+
 
 function showGraveyardDetailModal(title, graveList) {
   const overlay = document.createElement("div");
