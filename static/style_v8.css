@@ -13,8 +13,8 @@
   --panel-bg: rgba(14, 10, 24, 0.85);
   --bg-cosmic: 
     radial-gradient(ellipse at 50% 12%, #1e2756 0%, #131a3d 45%, #0c1228 85%, #080c1e 100%);
-  --enemy-playmat-bg: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c');
-  --player-playmat-bg: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c');
+  --enemy-playmat-bg: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023d');
+  --player-playmat-bg: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023d');
   --panel-bg: rgba(255, 255, 255, 0.75);
   --text-primary: #ffffff;
   --text-muted: #ffe6a0;
@@ -3682,37 +3682,38 @@ html, body {
 /* ===== 決鬥場地區桌墊架構 (Playmats) ===== */
 .board-playmat {
   position: absolute;
-  left: 14px;
-  right: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 635px;
+  height: 308px;
   pointer-events: none;
   z-index: 1;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   transition: all 0.3s ease;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   opacity: 0.92;
+  border-radius: 14px;
 }
 
-/* 對手桌墊區 (頂部場地區) */
+/* 對手桌墊區 (頂部場地區 - 縮小1/3並同步往下移動一個格子) */
 .enemy-playmat {
-  top: 14px;
-  height: 462px;
-  background-image: var(--enemy-playmat-bg, url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c')) !important;
+  top: 156px;
+  height: 308px;
+  background-image: var(--enemy-playmat-bg, url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023d')) !important;
   background-color: transparent;
   border: 1.5px solid rgba(255, 90, 95, 0.45);
-  border-radius: 20px 20px 8px 8px;
 }
 
-/* 我方桌墊區 (底部場地區) */
+/* 我方桌墊區 (底部場地區 - 縮小1/3並同步往下移動一個格子) */
 .player-playmat {
-  bottom: 14px;
-  height: 462px;
-  background-image: var(--player-playmat-bg, url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c')) !important;
+  top: 610px;
+  height: 308px;
+  background-image: var(--player-playmat-bg, url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023d')) !important;
   background-color: transparent;
   border: 1.5px solid rgba(78, 148, 255, 0.45);
-  border-radius: 8px 8px 20px 20px;
 }
 
 
