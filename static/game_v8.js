@@ -30708,10 +30708,10 @@ window.addEventListener("orientationchange", function() {
     const opp = document.getElementById("enemyPlaymat");
     const ply = document.getElementById("playerPlaymat");
     if (opp) {
-      opp.style.setProperty("background-image", "url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023d')", "important");
+      opp.style.setProperty("background-image", "url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261024-transparency')", "important");
     }
     if (ply) {
-      ply.style.setProperty("background-image", "url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023d')", "important");
+      ply.style.setProperty("background-image", "url('/static/custom_bg/new_mat_player_2026.jpg?v=20261024-transparency')", "important");
     }
   }
   if (document.readyState === "loading") {
