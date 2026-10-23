@@ -3683,7 +3683,8 @@ html, body {
 .board-playmat {
   position: absolute;
   left: calc(50% - 1.5 * (var(--cw) + var(--gap)));
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(1.1);
+  transform-origin: right center;
   width: 635px;
   height: 308px;
   pointer-events: none;
