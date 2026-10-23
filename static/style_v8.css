@@ -936,7 +936,61 @@ button:disabled {
   bottom: 8px;
 }
 
-/* ===== 13. 撠店敶??隞?閬??梯? ===== */
+/* 牌組手動抽牌待命高亮與提示徽章 */
+#playerDeck {
+  cursor: pointer !important;
+}
+
+.deck-stack-final-fixed.player-deck-needs-draw {
+  cursor: pointer !important;
+}
+
+.deck-stack-final-fixed.player-deck-needs-draw .deck-fixed-card {
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.95), 0 0 28px rgba(245, 158, 11, 0.7) !important;
+  border-color: #facc15 !important;
+  animation: deckPulseGlow 1.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes deckPulseGlow {
+  0% {
+    transform: translate(0, 0) scale(1);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.8), 0 0 20px rgba(245, 158, 11, 0.5);
+  }
+  100% {
+    transform: translate(0, -3px) scale(1.05);
+    box-shadow: 0 0 18px rgba(250, 204, 21, 1), 0 0 35px rgba(245, 158, 11, 0.9);
+  }
+}
+
+.deck-click-to-draw-badge {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 14px rgba(250, 204, 21, 0.85);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 25;
+  animation: deckBadgeBounce 1.2s ease-in-out infinite alternate;
+  letter-spacing: 0.5px;
+}
+
+@keyframes deckBadgeBounce {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-5px) scale(1.06);
+  }
+}
+
+/* ===== 13. 彈出視窗與其他介面樣式 ===== */
 .modal-inner {
   border: 1.5px solid var(--gold-accent) !important;
   background: #110e0d !important;
@@ -2770,6 +2824,13 @@ button:disabled {
   justify-content: center !important;
   transform-style: preserve-3d !important;
   pointer-events: none !important;
+  opacity: 0.52 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+#playerForest:hover .forest-3d-wrap,
+#playerForest.active-summon-forest .forest-3d-wrap {
+  opacity: 0.88 !important;
 }
 
 .forest-3d-trees {
@@ -2814,20 +2875,19 @@ button:disabled {
   100% { transform: rotate(-2.2deg); }
 }
 
-/* 小旅人 3D 立體紙雕立牌 (放大加亮，立體璀璨，極致顯眼) */
+/* 小旅人 3D 立體紙雕立牌 (適度縮小軟化陰影，精緻不刺眼) */
 .traveler-3d-standee {
-  width: 54px !important; /* 放大比例，成為森林絕對焦點 */
-  height: 75px !important;
+  width: 50px !important;
+  height: 70px !important;
   position: absolute !important;
   bottom: 18px !important;
-  left: calc(50% - 27px) !important;
+  left: calc(50% - 25px) !important;
   right: auto !important;
   top: auto !important;
   pointer-events: none !important;
   z-index: 5 !important;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.95))
-          drop-shadow(0 0 14px rgba(255, 215, 106, 0.9))
-          drop-shadow(0 0 24px rgba(0, 255, 127, 0.8)) !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8))
+          drop-shadow(0 0 8px rgba(255, 215, 106, 0.45)) !important;
   animation: travelerIdleFloat 4s ease-in-out infinite !important;
 }
 
@@ -2836,8 +2896,8 @@ button:disabled {
   height: 100% !important;
   object-fit: cover !important;
   border-radius: 7px !important;
-  border: 2px solid #ffd76a !important; /* 金燦外框 */
-  box-shadow: 0 0 14px rgba(255, 215, 106, 0.85), inset 0 0 8px rgba(0, 255, 127, 0.5) !important;
+  border: 1.5px solid rgba(255, 215, 106, 0.8) !important;
+  box-shadow: 0 0 10px rgba(255, 215, 106, 0.5) !important;
   display: block !important;
 }
 
@@ -2970,6 +3030,13 @@ button:disabled {
   justify-content: center !important;
   pointer-events: none !important;
   z-index: 1 !important;
+  opacity: 0.48 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+#playerGrave:hover .grave-3d-wrap,
+#enemyGrave:hover .grave-3d-wrap {
+  opacity: 0.80 !important;
 }
 
 .grave-3d-bg {

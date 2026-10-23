@@ -819,6 +819,7 @@ function newGameMultiplayer() {
   window.XLW_enemyDefenderGuardUsedTurn = null;
   enemyBonusScore = 0;
   
+  window.XLW_playerNeedsToDraw = false;
   window.XLW_defenderGuardUsedTurn = null;
   window.XLW_enemyDefenderGuardUsedTurn = null;
   field.player_front = [null, null, null, null, null];
@@ -1115,6 +1116,7 @@ function newGame() {
 
   // 重置標記
   turn = 0;
+  window.XLW_playerNeedsToDraw = false;
   window.XLW_playerActionsPerformedThisTurn = false;
   window.XLW_opponentSneakRecall = {};
   window.XLW_opponentFoodBallChoice = {};
@@ -1350,6 +1352,68 @@ async function performPlayerTurnStartDraw() {
   await window.xlwResolveTurnStartEffects(true);
 }
 
+// 全局玩家點選牌組抽牌處理函式
+window.XLW_playerNeedsToDraw = false;
+window.xlwHandlePlayerDeckClick = async function(event) {
+  if (event) {
+    event.stopPropagation();
+  }
+
+  // 教學模式特判
+  if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
+    const handled = await window.XLW_Tutorial.handleInteraction("click_deck", {});
+    if (handled) return;
+  }
+
+  if (window.XLW_playerNeedsToDraw) {
+    window.XLW_playerNeedsToDraw = false;
+    logBattle(`—— 我方點選牌庫抽牌，抽取 2 張卡牌 ——`);
+    await performPlayerTurnStartDraw();
+
+    let enemyHasAttackers = false;
+    ["enemy_front", "enemy_back"].forEach(zone => {
+      field[zone].forEach(u => {
+        if (u && u.attacking) enemyHasAttackers = true;
+      });
+    });
+
+    if (countdownActive && countdownRemaining === 1) {
+      phase = "召喚階段";
+      window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+      await checkCrazyFanSummon();
+      setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！`);
+      render();
+    } else if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
+      phase = "防守階段";
+      window.xlwShowPhaseBanner("防守階段", "#3b82f6");
+      setStatus(`抽牌完成！前一回合對手有進攻宣言，自動進入「防守階段」！`);
+      render();
+      setTimeout(() => {
+        xlwResolvePlayerDefensePhase();
+      }, 500);
+    } else {
+      const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
+      window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+      phase = "召喚階段";
+      window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+      await checkCrazyFanSummon();
+      setStatus(`抽牌完成！第 ${turn} 回合「召喚階段」開始！`);
+      if (wasPending) {
+        logBattle("我方防守階段開始前，因對手無進攻單位，跳過防守階段。");
+      }
+      render();
+    }
+    return;
+  }
+
+  // 非待抽牌狀態點擊牌庫
+  if (deck.length > 0) {
+    setStatus(`我方牌庫目前尚餘 ${deck.length} 張卡牌。`);
+  } else {
+    setStatus("我方牌庫已空。");
+  }
+};
+
 // ===== 4. Mulligan (起手換牌) 流程 =====
 function startMulliganPhase() {
   mulliganActive = true;
@@ -1405,10 +1469,11 @@ async function confirmMulligan() {
     // 單人模式
     if (isMyTurn) {
       turn = 1;
-      phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-      await performPlayerTurnStartDraw();
-      logBattle(`換牌完成（換了 ${replacedCards.length} 張），進入第 1 回合。已自動抽 2 張。`);
-      setStatus("起手換牌完成！目前為我方第 1 回合「召喚階段」，起手共 6 張。");
+      window.XLW_playerNeedsToDraw = true;
+      phase = "抽牌階段";
+      window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
+      logBattle(`換牌完成（換了 ${replacedCards.length} 張），進入第 1 回合。請點選右下角【我方牌庫】抽牌！`);
+      setStatus("起手換牌完成！目前為我方第 1 回合「抽牌階段」，請點選右下角【我方牌庫】進行抽牌！");
       render();
     } else {
       // 對手 AI 先攻！
@@ -1437,9 +1502,10 @@ async function confirmMulligan() {
         window.enemyReceptionistTriggeredThisTurn = false;
         playerUntap();
         isMyTurn = true;
-        await performPlayerTurnStartDraw();
-        phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-        setStatus("對手回合結束。目前為我方第 2 回合「召喚階段」，已自動抽 2 張。");
+        window.XLW_playerNeedsToDraw = true;
+        phase = "抽牌階段";
+        window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
+        setStatus("對手回合結束。目前為我方第 2 回合「抽牌階段」，請點選右下角【我方牌庫】抽牌！");
         render();
       }, 1000);
     }
@@ -1457,16 +1523,19 @@ async function checkMulliganCompletion() {
     window.XLW_enemyGoatResearcherTriggeredThisTurn = false;
     window.XLW_meowToyShopPlacementActive = false;
     window.XLW_meowToyShopCardToSummon = null;
-    phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     logBattle("雙方皆已完成起手換牌！第 1 回合對決正式開始。");
     
     const goFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
     if (goFirst) {
       isMyTurn = true;
-      setStatus("對決開始！第 1 回合為我方回合，召喚階段開始。");
-      await performPlayerTurnStartDraw();
+      window.XLW_playerNeedsToDraw = true;
+      phase = "抽牌階段";
+      window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
+      setStatus("對決開始！第 1 回合為我方回合，請點選右下角【我方牌庫】進行抽牌！");
     } else {
       isMyTurn = false;
+      phase = "召喚階段";
+      window.xlwShowPhaseBanner("召喚階段", "#4ade80");
       setStatus("對決開始！第 1 回合為對手回合，等待對手行動...");
     }
     render();
@@ -3206,6 +3275,10 @@ function clearModes(keepTributeWaiting = false) {
 // 小旅人按鈕觸發
 function triggerLittleTraveler(e) {
   if (e) e.stopPropagation();
+  if (window.XLW_playerNeedsToDraw) {
+    setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
+    return;
+  }
   if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
     const handled = window.XLW_Tutorial.handleInteraction("click_forest");
     if (handled) return;
@@ -9970,6 +10043,10 @@ async function runDebbiePlacementFlow() {
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
 async function changeActionPhase(targetPhase) {
+  if (window.XLW_playerNeedsToDraw) {
+    setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
+    return;
+  }
   if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
     window.XLW_Tutorial.handleInteraction("click_phase_btn", { phase: targetPhase });
   }
@@ -17288,13 +17365,15 @@ async function runEnemyTurn() {
 
       // 嚴格二選一：若有宣告進攻，絕不進入戰術佈陣；若無宣告進攻，方可進入戰術佈陣
       if (opponentAttackCount > 0) {
+        // ★ 選擇「進攻宣言」：只有選擇進攻，才不能再繼續進行單位召喚！
         phase = "進攻宣言";
         window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
-        logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（跳過戰術佈陣）。 ——`);
+        logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（選擇進攻，無法再進行單位召喚，跳過戰術佈陣）。 ——`);
         render();
         await new Promise(r => setTimeout(r, 1900));
       } else {
+        // ★ 選擇「戰術佈陣」：移動單位，並且仍然可以召喚一個不需要獻祭 (0-tribute) 的單位！
         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
         phase = "戰術佈陣";
         window.xlwShowPhaseBanner("戰術佈陣", "#a855f7");
@@ -17307,51 +17386,75 @@ async function runEnemyTurn() {
           console.warn("AI 戰術移動異常:", e);
         }
 
-        // 規則嚴格校驗：若召喚階段已進行過通常召喚，戰術佈陣階段絕不得重複召喚！
-        if (window.XLW_enemySummonCountThisTurn >= 1) {
-          logBattle("對手已於召喚階段進行過通常召喚，戰術佈陣不再進行額外召喚。");
-        } else {
-          // 召喚階段未曾召喚，允許在此進行至多 1 次免祭品通常召喚（嚴禁憑空印卡）
-          const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
-          const emptyBackIdx = field.enemy_back.findIndex(u => !u);
-          if (emptyFrontIdx >= 0 || emptyBackIdx >= 0) {
-            let bestTactical = null;
-            try {
-              bestTactical = window.aiFindBestSummonableCard();
-            } catch (e) {
-              console.error("AI 戰術階段召喚檢索出錯:", e);
-            }
+        // 規則明訂：如果選擇戰術佈陣，仍然可以召喚一個不需要獻祭 (0-tribute / 免祭品) 的單位！
+        const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+        const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+        if (emptyFrontIdx >= 0 || emptyBackIdx >= 0) {
+          const tacticalDestZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+          const tacticalDestIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
 
-            const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
-            const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
-
-            if (bestTactical && destZone && destIdx !== -1) {
-              const { handIdx, card } = bestTactical;
-              // 戰術佈陣只能進行免祭品召喚
-              if (getCardTributeCost(card) === 0) {
-                window.XLW_ENEMY.hand.splice(handIdx, 1);
-                const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
-                field[destZone][destIdx] = {
-                  card: card,
-                  tapped: isLyingOrc,
-                  attacking: false,
-                  target: null,
-                  summonedTurn: turn,
-                  summonedZone: destZone
-                };
-                field[destZone][destIdx].card.creator = "enemy";
-                window.XLW_enemySummonCountThisTurn = 1;
-                logBattle(`🤖【對手 AI 戰術佈陣召喚】打出單位【${card.name}】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
-                render();
-                await sleep(1000);
-
-                try {
-                  await triggerAiSummonEffects(card, destZone, destIdx);
-                  await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
-                } catch (errTacticalTrig) {
-                  console.error("AI 戰術召喚觸發效果出錯:", errTacticalTrig);
-                }
+          // 從手牌尋找不需要獻祭 (tribute === 0) 的最佳單位
+          let zeroTributeCandidate = null;
+          let zeroTributeHandIdx = -1;
+          const enemyHand = window.XLW_ENEMY?.hand || [];
+          for (let h = 0; h < enemyHand.length; h++) {
+            const c = enemyHand[h];
+            if (!c || (c.type !== "unit" && c.type !== "單位")) continue;
+            if (getCardTributeCost(c) === 0) {
+              const eff = c.effect_text || "";
+              if (eff.includes("只能通") || eff.includes("只能透過")) continue;
+              const atkV = parseInt(c.attack, 10) || 0;
+              if (!zeroTributeCandidate || atkV > (parseInt(zeroTributeCandidate.attack, 10) || 0)) {
+                zeroTributeCandidate = c;
+                zeroTributeHandIdx = h;
               }
+            }
+          }
+
+          if (zeroTributeCandidate && zeroTributeHandIdx !== -1) {
+            window.XLW_ENEMY.hand.splice(zeroTributeHandIdx, 1);
+            const isLyingOrc = zeroTributeCandidate.id === "R-ORC-0031" || zeroTributeCandidate.name?.includes("躺平獸人");
+            field[tacticalDestZone][tacticalDestIdx] = {
+              card: zeroTributeCandidate,
+              tapped: isLyingOrc,
+              attacking: false,
+              target: null,
+              summonedTurn: turn,
+              summonedZone: tacticalDestZone
+            };
+            field[tacticalDestZone][tacticalDestIdx].card.creator = "enemy";
+            logBattle(`🤖【對手 AI 戰術佈陣】額外打出 0 祭品單位【${zeroTributeCandidate.name}】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
+            render();
+            await sleep(1000);
+
+            try {
+              await triggerAiSummonEffects(zeroTributeCandidate, tacticalDestZone, tacticalDestIdx);
+              await window.checkForPlayerSummonCounters(zeroTributeCandidate, tacticalDestZone, tacticalDestIdx, false);
+            } catch (errTacticalTrig) {
+              console.error("AI 戰術佈陣召喚觸發效果出錯:", errTacticalTrig);
+            }
+          } else {
+            // 手牌無免祭品單位，檢驗森林召喚規則（場上單位少於 2 個）
+            const currentUnits = ["enemy_front", "enemy_back"].reduce((s, z) => s + field[z].filter(Boolean).length, 0);
+            if (currentUnits < 2) {
+              field[tacticalDestZone][tacticalDestIdx] = {
+                card: structuredClone(LITTLE_TRAVELER),
+                tapped: false,
+                attacking: false,
+                target: null,
+                summonedTurn: turn,
+                summonedZone: tacticalDestZone
+              };
+              field[tacticalDestZone][tacticalDestIdx].card.creator = "enemy";
+              logBattle(`🤖【對手 AI 戰術佈陣】從森林召喚了【小旅人】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
+              render();
+              await sleep(1000);
+
+              try {
+                await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, tacticalDestZone, tacticalDestIdx, false);
+              } catch (e) {}
+            } else {
+              logBattle("對手戰術佈陣完成（手牌無 0 祭品單位，且場上單位已達 2 個以上，不進行額外召喚）。");
             }
           }
         }
@@ -17386,6 +17489,10 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  if (window.XLW_playerNeedsToDraw) {
+    setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
+    return;
+  }
   if (!isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running))) {
     console.warn("endPlayerTurnAndRunEnemy blocked: not player turn or AI already running");
     return;
@@ -17775,34 +17882,12 @@ async function endPlayerTurnAndRunEnemy() {
       if (isGameOverFlag) return;
     }
 
-    // 回合開始自動抽 2 張
-    await performPlayerTurnStartDraw();
-
-    if (countdownActive && countdownRemaining === 1) {
-      phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-      await checkCrazyFanSummon();
-      setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！已自動抽2張。`);
-      render();
-    } else {
-      if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
-        phase = "\u9632\u5b88\u968e\u6bb5";
-        setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb\uff0c\u5df2\u81ea\u52d5\u62bd\u0032\u5f35\u3002\u524d\u4e00\u56de\u5408\u5c0d\u624b\u6709\u9032\u653b\u5ba3\u8a00\uff0c\u81ea\u52d5\u9032\u5165\u300c\u9632\u5b88\u968e\u6bb5\u300d\uff01`);
-        render();
-        setTimeout(() => {
-          xlwResolvePlayerDefensePhase();
-        }, 500);
-      } else {
-        const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
-        window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
-        phase = "\u53ec\u559a\u968e\u6bb5";
-        await checkCrazyFanSummon();
-        setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb\uff0c\u5df2\u81ea\u52d5\u62bd\u0032\u5f35\u3002`);
-        if (wasPending) {
-          logBattle("\u6211\u65b9\u9632\u5b88\u968e\u6bb5\u958b\u59cb\u524d\uff0c\u56e0\u5c0d\u624b\u7121\u9032\u653b\u55ae\u4f4d\uff0c\u8df3\u904e\u9632\u5b88\u968e\u6bb5\u3002");
-        }
-        render();
-      }
-    }
+    // 進入新回合「抽牌階段」：等待玩家點選右下角【我方牌庫】抽牌
+    window.XLW_playerNeedsToDraw = true;
+    phase = "抽牌階段";
+    window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
+    setStatus(`第 ${turn} 回合開始！請點擊右下角【我方牌庫】進行抽牌！`);
+    render();
   }
 }
 
@@ -18221,13 +18306,14 @@ function render() {
 
 function getPhaseHelpText(p) {
   switch (p) {
-    case "起手換牌": return "可點選手牌標記（面朝下），確認換牌後重新洗牌，並進入第一回合自動抽牌。";
+    case "起手換牌": return "可點選手牌標記（面朝下），確認換牌後重新洗牌，並進入第一回合手動點選牌組抽牌。";
+    case "抽牌階段": return "輪到我方回合！請點選右下角【我方牌庫】抽取 2 張卡牌。";
     case "防守階段":
       if (window.XLW_defenseCounterActive) {
         return "我方防守反制中：您可以打出魔法卡（如削弱藥水）進行反制。點擊右下角按鈕結束並結算戰鬥。";
       }
       return "前一回合對手宣告了進攻，系統正在為您自動結算戰鬥。";
-    case "召喚階段": return "回合開始已自動抽牌。可點手牌進行召喚/發動魔法，完成後可選擇「戰術佈陣」或「進攻宣言」。";
+    case "召喚階段": return "可點手牌進行召喚/發動魔法，完成後可選擇「戰術佈陣」或「進攻宣言」。";
     case "戰術佈陣": return "本回合已選擇戰術佈陣。可移動單位，或再額外進行一次小旅人/免祭品召喚；此路線無法進攻。";
     case "進攻宣言": return "本回合已選擇進攻宣言。點我方未橫置單位指向同戰線敵方非盾牌進行宣告，戰鬥會在對手回合防守結算。";
     case "結束階段": return "回合結束，可點擊「結束回合」進行棄牌，並讓對手進行 AI 行動回合。";
@@ -18251,6 +18337,11 @@ function createDeckVisual(zoneId, count, label) {
 
   const wrap = document.createElement("div");
   wrap.className = "deck-stack-final-fixed";
+
+  const isPlayerDeck = (zoneId === "playerDeck");
+  if (isPlayerDeck && window.XLW_playerNeedsToDraw) {
+    wrap.classList.add("player-deck-needs-draw");
+  }
 
   const labelDiv = document.createElement("div");
   labelDiv.className = "deck-fixed-label";
@@ -18283,6 +18374,19 @@ function createDeckVisual(zoneId, count, label) {
   counter.className = "deck-fixed-count";
   counter.textContent = count;
   wrap.appendChild(counter);
+
+  if (isPlayerDeck && window.XLW_playerNeedsToDraw) {
+    const drawBadge = document.createElement("div");
+    drawBadge.className = "deck-click-to-draw-badge";
+    drawBadge.innerHTML = "<span>👆 點擊抽牌</span>";
+    wrap.appendChild(drawBadge);
+  }
+
+  wrap.onclick = (e) => {
+    if (isPlayerDeck && typeof window.xlwHandlePlayerDeckClick === "function") {
+      window.xlwHandlePlayerDeckClick(e);
+    }
+  };
 
   zone.appendChild(wrap);
 }
@@ -18346,6 +18450,10 @@ function renderHand() {
         if (handled) {
           return;
         }
+      }
+      if (window.XLW_playerNeedsToDraw) {
+        setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌，再進行卡牌操作！");
+        return;
       }
       if (window.XLW_exileExcessHandActive) {
         const card = hand[idx];
@@ -21910,6 +22018,20 @@ function renderStablePanel() {
     return;
   }
 
+  // 待點選牌組抽牌狀態的面板渲染
+  if (window.XLW_playerNeedsToDraw) {
+    panel.innerHTML = `
+      <div class="stable-action-row" style="opacity: 0.5; pointer-events: none;">
+        <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
+        <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+      </div>
+      <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
+      <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
+      <button id="stableActionEnd" class="stable-action-btn end" style="background: linear-gradient(135deg, #facc15, #f59e0b); color: #0f172a; font-weight: 900; animation: deckPulseGlow 1.4s infinite alternate; cursor: pointer;" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)">👆 請點選牌組抽牌</button>
+    `;
+    return;
+  }
+
   // 正常對戰操作
   panel.innerHTML = `
     <div class="stable-action-row">
@@ -23710,25 +23832,12 @@ function setupWebSocketEvents() {
         for (let i = 0; i < 2; i++) window.XLW_ENEMY.deck.pop();
       }
 
-      await performPlayerTurnStartDraw();
-      if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
-        phase = "\u9632\u5b88\u968e\u6bb5";
-        setStatus(`\u7b2c ${turn} \u56de\u5408開始，已自動抽2張。前一回合對手有進攻宣言，自動進入「防守階段」！`);
-        render();
-        setTimeout(() => {
-          xlwResolvePlayerDefensePhase();
-        }, 500);
-      } else {
-        const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
-        window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
-        phase = "\u53ec\u559a\u968e\u6bb5";
-        await checkCrazyFanSummon();
-        setStatus(`\u7b2c ${turn} \u56de\u5408\u958b\u59cb，已自\u52d5抽2\u5f35。`);
-        if (wasPending) {
-          logBattle("\u6211\u65b9\u9632\u5b88階\u6bb5\u958b\u59cb\u524d，因對手無進攻單位，跳過防守階段。");
-        }
-        render();
-      }
+      // 進入新回合「抽牌階段」：等待玩家點選右下角【我方牌庫】抽牌
+      window.XLW_playerNeedsToDraw = true;
+      phase = "抽牌階段";
+      window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
+      setStatus(`第 ${turn} 回合開始！請點選右下角【我方牌庫】進行抽牌！`);
+      render();
     } else if (data.action === "sync_deck") {
       window.XLW_ENEMY.deckName = data.deck_name;
       enemyExtraDeck = data.extra_deck || xlwInitExtraDeck(data.deck_name);

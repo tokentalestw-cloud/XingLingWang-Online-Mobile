@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-grave-grey-ai-v2">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-draw-tactical-v4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -682,7 +682,7 @@
             <span>🪦 我方墓地 🪦<br><small style="font-size:10px; opacity:0.85;">(空)</small></span>
           </div>
         </div>
-        <div id="playerDeck" class="zone side blue">我方牌庫</div>
+        <div id="playerDeck" class="zone side blue" onclick="xlwHandlePlayerDeckClick(event)">我方牌庫</div>
         <div id="playerRace" class="zone side blue">我方種族</div>
         <div id="playerExile" class="zone side dark">我方除外</div>
         <div id="playerExtraDeck" class="zone side purple" style="display: none;" onclick="showPlayerExtraDeck()">我方額外</div>
@@ -801,7 +801,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-grave-grey-ai-v2" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-draw-tactical-v4" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
