@@ -2727,27 +2727,25 @@ button:disabled {
 
 
 /* ==========================================================================
-   ENCHANTED 3D FOREST & VIBRANT ATMOSPHERIC SPECIAL EFFECTS
-   (3D 奇幻立體森林神木群、小旅人立牌座與發光螢火蟲特效)
+   XINGLINGWANG OFFICIAL CARD-COMPOSITION FOREST ZONE (星靈王卡牌構圖風格森林區)
    ========================================================================== */
 
-#playerForest, #enemyForest {
+#playerForest, #enemyForest, .xlw-forest-card {
   position: absolute !important;
   width: var(--cw) !important;
   height: var(--ch) !important;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: linear-gradient(135deg, #072a1a 0%, #02140c 100%) !important;
-  border: 1.5px solid rgba(52, 211, 153, 0.55) !important;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35), inset 0 0 12px rgba(52, 211, 153, 0.2) !important;
+  background: linear-gradient(145deg, #16241a 0%, #07130b 100%) !important;
+  border: 2px solid #ffd76a !important; /* 星靈王經典金燦外框 */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.85), inset 0 0 10px rgba(0, 255, 127, 0.25) !important;
   perspective: 800px !important;
   transform-style: preserve-3d !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
   z-index: 10 !important;
+  padding: 0 !important;
 }
 
 #playerForest {
@@ -2759,18 +2757,59 @@ button:disabled {
   pointer-events: none !important;
 }
 
-.forest-3d-wrap {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
+/* 1. 卡牌頂部標題列 (Header Banner) */
+.xlw-forest-card-header {
+  height: 22px !important;
+  background: linear-gradient(180deg, rgba(22, 48, 32, 0.96) 0%, rgba(10, 26, 16, 0.98) 100%) !important;
+  border-bottom: 1.5px solid rgba(255, 215, 106, 0.5) !important;
   display: flex !important;
-  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 5px !important;
+  z-index: 5 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.6) !important;
+  flex-shrink: 0 !important;
+}
+
+.forest-card-cost {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  color: #34d399 !important;
+  background: rgba(6, 78, 59, 0.8) !important;
+  border: 1px solid #10b981 !important;
+  border-radius: 10px !important;
+  padding: 1px 4px !important;
+  line-height: 1 !important;
+  text-shadow: 0 0 5px #059669 !important;
+}
+
+.forest-card-title {
+  font-family: 'Cinzel', "Microsoft JhengHei", serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #ffd76a !important;
+  text-shadow: 0 1px 2px #000, 0 0 6px rgba(255, 215, 106, 0.4) !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+}
+
+.forest-card-star {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  color: #fef08a !important;
+  text-shadow: 0 0 4px #d97706 !important;
+  line-height: 1 !important;
+}
+
+/* 2. 中央立體卡牌立繪區 (Illustration Window) */
+.xlw-forest-card-art {
+  flex: 1 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: radial-gradient(circle at 50% 30%, #064e3b 0%, #022c22 65%, #01140e 100%) !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transform-style: preserve-3d !important;
-  pointer-events: none !important;
 }
 
 .forest-3d-trees {
@@ -2815,18 +2854,18 @@ button:disabled {
   100% { transform: rotate(-2.2deg); }
 }
 
-/* 小旅人 3D 立體紙雕立牌 (置於兩棵神木正中間的青苔法陣上) */
+/* 小旅人立牌 (置於中央卡框視窗中) */
 .traveler-3d-standee {
-  width: 44px !important;
-  height: 60px !important;
+  width: 38px !important;
+  height: 54px !important;
   position: absolute !important;
-  bottom: 24px !important;
-  left: calc(50% - 22px) !important;
+  bottom: 3px !important;
+  left: calc(50% - 19px) !important;
   right: auto !important;
   top: auto !important;
   pointer-events: none !important;
   z-index: 4 !important;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(52, 211, 153, 0.6)) !important;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px rgba(52, 211, 153, 0.7)) !important;
   animation: travelerIdleFloat 4s ease-in-out infinite !important;
 }
 
@@ -2834,10 +2873,29 @@ button:disabled {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  border-radius: 6px !important;
-  border: 1.5px solid #ffd76a !important;
-  box-shadow: 0 0 10px rgba(255, 215, 106, 0.6), inset 0 0 6px rgba(0, 255, 127, 0.4) !important;
+  border-radius: 5px !important;
+  border: 1.2px solid #ffd76a !important;
+  box-shadow: 0 0 8px rgba(255, 215, 106, 0.6), inset 0 0 4px rgba(0, 255, 127, 0.4) !important;
   display: block !important;
+}
+
+/* 閃卡鐳射光澤效果 (Card Holographic Sheen) */
+.xlw-card-foil-shine {
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 255, 127, 0.18) 52%, transparent 60%) !important;
+  transform: rotate(-20deg) !important;
+  pointer-events: none !important;
+  z-index: 6 !important;
+  animation: cardFoilSweep 6s infinite ease-in-out !important;
+}
+
+@keyframes cardFoilSweep {
+  0%, 100% { transform: translateY(-30%) rotate(-20deg); opacity: 0.3; }
+  50% { transform: translateY(30%) rotate(-20deg); opacity: 0.8; }
 }
 
 /* 森林發光螢火蟲與靈氣孢子動態特效 */
@@ -2873,46 +2931,67 @@ button:disabled {
   100% { transform: translate(-3px, -12px); opacity: 0.9; }
 }
 
-/* 底部精巧狀態提示條 (緊貼底緣，高僅 24px，絕不遮蔽上方神木景色) */
-.forest-3d-overlay {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
+/* 3. 卡牌底部屬性欄 (Card Footer / Status Plate) */
+.xlw-forest-card-footer {
   height: 24px !important;
-  background: linear-gradient(0deg, rgba(2, 24, 14, 0.95) 0%, rgba(2, 24, 14, 0.7) 70%, transparent 100%) !important;
+  background: linear-gradient(180deg, rgba(12, 28, 18, 0.98) 0%, rgba(5, 15, 9, 0.99) 100%) !important;
+  border-top: 1.5px solid rgba(255, 215, 106, 0.45) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 4px !important;
+  gap: 4px !important;
+  z-index: 5 !important;
+  flex-shrink: 0 !important;
+}
+
+.forest-card-atk {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  color: #ff5252 !important;
+  background: rgba(255, 82, 82, 0.16) !important;
+  border: 1px solid rgba(255, 82, 82, 0.45) !important;
+  border-radius: 3px !important;
+  padding: 1px 4px !important;
+  line-height: 1 !important;
+  text-shadow: 0 0 4px rgba(255, 82, 82, 0.6) !important;
+  white-space: nowrap !important;
+}
+
+.forest-3d-overlay {
+  flex: 1 !important;
+  text-align: center !important;
   color: #e6ffee !important;
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 800 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  text-align: center !important;
-  border-top: 1px solid rgba(52, 211, 153, 0.5) !important;
-  z-index: 10 !important;
-  pointer-events: none !important;
   line-height: 1 !important;
-  text-shadow: 0 1px 3px #000, 0 0 6px rgba(16, 185, 129, 0.9) !important;
+  text-shadow: 0 1px 2px #000, 0 0 6px rgba(16, 185, 129, 0.9) !important;
   letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
 }
 
+/* 可召喚亮光狀態 */
 #playerForest.active-summon-forest {
-  border: 2px solid #00ff7f !important;
-  box-shadow: 0 0 25px rgba(0, 255, 127, 0.85), inset 0 0 18px rgba(0, 255, 127, 0.45) !important;
+  border-color: #00ff7f !important;
+  box-shadow: 0 0 25px rgba(0, 255, 127, 0.85), inset 0 0 15px rgba(0, 255, 127, 0.4) !important;
   animation: forestActivePulse 2s infinite ease-in-out !important;
   cursor: pointer !important;
 }
 
 #playerForest.active-summon-forest:hover {
   transform: translateY(-4px) scale(1.05) !important;
-  box-shadow: 0 0 32px rgba(0, 255, 127, 1), inset 0 0 25px rgba(0, 255, 127, 0.6) !important;
+  box-shadow: 0 0 32px rgba(0, 255, 127, 1), inset 0 0 22px rgba(0, 255, 127, 0.6) !important;
 }
 
 #playerForest.disabled-forest {
-  border: 1.5px solid rgba(52, 211, 153, 0.45) !important;
-  opacity: 1 !important; /* 永遠保持色彩生機盎然，絕不灰階變暗 */
+  border-color: rgba(255, 215, 106, 0.45) !important;
+  opacity: 1 !important;
   filter: none !important;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25) !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6) !important;
   animation: none !important;
   cursor: default !important;
 }
@@ -2924,7 +3003,7 @@ button:disabled {
   }
   50% {
     box-shadow: 0 0 28px rgba(0, 255, 127, 0.95), inset 0 0 22px rgba(0, 255, 127, 0.55);
-    border-color: #6ee7b7;
+    border-color: #ffd76a;
   }
 }
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-forest-v3">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-card-comp-v1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -169,8 +169,13 @@
 
         <!-- 對手功能區域 (右側) -->
         <div id="enemyField" class="zone side green">場地區</div>
-        <div id="enemyForest" class="zone side green">
-          <div class="forest-3d-wrap">
+        <div id="enemyForest" class="zone side green xlw-forest-card">
+          <div class="xlw-forest-card-header">
+            <span class="forest-card-cost">🌲 0</span>
+            <span class="forest-card-title">小旅人之森</span>
+            <span class="forest-card-star">★ 1</span>
+          </div>
+          <div class="xlw-forest-card-art">
             <div class="forest-3d-trees">
               <svg class="forest-trees-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -337,13 +342,15 @@
             <div class="traveler-3d-standee">
               <img src="/static/little_traveler.jpeg" class="traveler-3d-img" alt="小旅人">
             </div>
+            <div class="xlw-card-foil-shine"></div>
           </div>
-          <div class="forest-3d-overlay">
-            <span>🌲 對手森林區 🌲</span>
+          <div class="xlw-forest-card-footer">
+            <span class="forest-card-atk">⚔️ 0</span>
+            <div class="forest-3d-overlay">
+              <span>🌲 對手森林區 🌲</span>
+            </div>
           </div>
-        </div>
-
-        <!-- 中央星星對決戰線 -->
+        </div><!-- 中央星星對決戰線 -->
         <div id="battleLine" class="battle-line-strip">
           <div class="battle-cell" data-index="0">★1</div>
           <div class="battle-cell" data-index="1">★2</div>
@@ -354,8 +361,13 @@
 
         <!-- 我方功能區域 (左側) -->
         <div id="playerField" class="zone side green">我方場地</div>
-        <div id="playerForest" class="zone side green" onclick="triggerLittleTraveler(event)">
-          <div class="forest-3d-wrap">
+        <div id="playerForest" class="zone side green xlw-forest-card" onclick="triggerLittleTraveler(event)">
+          <div class="xlw-forest-card-header">
+            <span class="forest-card-cost">🌲 0</span>
+            <span class="forest-card-title">小旅人之森</span>
+            <span class="forest-card-star">★ 1</span>
+          </div>
+          <div class="xlw-forest-card-art">
             <div class="forest-3d-trees">
               <svg class="forest-trees-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -522,12 +534,15 @@
             <div class="traveler-3d-standee">
               <img src="/static/little_traveler.jpeg" class="traveler-3d-img" alt="小旅人">
             </div>
+            <div class="xlw-card-foil-shine"></div>
           </div>
-          <div class="forest-3d-overlay">
-            <span>🌲 我方森林區 🌲</span>
+          <div class="xlw-forest-card-footer">
+            <span class="forest-card-atk">⚔️ 0</span>
+            <div class="forest-3d-overlay">
+              <span>🌲 我方森林區 🌲</span>
+            </div>
           </div>
         </div>
-
         <!-- 我方戰場行 (前排/後排) -->
         <div class="row player-front"></div>
         <div class="row player-back"></div>
@@ -653,7 +668,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-forest-v3" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-card-comp-v1" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
