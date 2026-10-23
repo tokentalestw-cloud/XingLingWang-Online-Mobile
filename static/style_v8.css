@@ -3682,7 +3682,7 @@ html, body {
 /* ===== 決鬥場地區桌墊架構 (Playmats) ===== */
 .board-playmat {
   position: absolute;
-  left: 50%;
+  left: calc(50% - 1.5 * (var(--cw) + var(--gap)));
   transform: translateX(-50%);
   width: 635px;
   height: 308px;
