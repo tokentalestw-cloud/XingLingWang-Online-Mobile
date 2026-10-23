@@ -29461,84 +29461,84 @@ window.XLW_Tutorial = {
         steps: [
     {
       title: "1. 歡迎來到《星靈王》！",
-      content: "你好！我是精靈導師「雪女」。接下來將帶您快速認識戰場配置、核心資源與對戰流程，點擊『下一步』一起出發吧！",
+      content: "我是精靈導師「雪女」。帶您快速認識戰場配置與對戰流程，點擊『下一步』出發！",
       spotlightSelector: null,
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "2. 場地介紹：前排與後排戰線",
-      content: "中央為交戰區域，分為前排與後排戰線。前排是正面交鋒的主戰線，後排則能保護關鍵單位並提供支援能力。",
+      title: "2. 場地：前排與後排戰線",
+      content: "中央交戰區。前排正面交鋒，後排提供掩護與支援能力。",
       spotlightSelector: ".row.player-front",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "3. 場地介紹：場地魔法區",
-      content: "發動後的「場地魔法卡」會常駐在此區，只要符合條件，加成效果便會持續生效，直到被破壞為止。",
+      title: "3. 場地：場地魔法區",
+      content: "場地魔法常駐在此，持續提供全場或陣營被動增益。",
       spotlightSelector: "#playerField",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "4. 場地介紹：墓地",
-      content: "被擊敗的單位與發動完畢的法術卡都會進入墓地。特定種族還能從墓地發動死者復甦或強化效果！",
+      title: "4. 場地：墓地區",
+      content: "陣亡單位與耗盡法術送入此處，部分種族可死者復甦。",
       spotlightSelector: "#playerGrave",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "5. 場地介紹：除外區",
-      content: "因卡牌效果被除外、升級消耗或手牌超過 10 張丟棄的卡片都會送至此區。除外區的卡牌將無法重回戰局。",
+      title: "5. 場地：除外區",
+      content: "遭除外或棄置的卡片移至此區，無法重回戰局。",
       spotlightSelector: "#playerExile",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "6. 場地介紹：種族宣言卡",
-      content: "雙方在此亮出代表自身陣營的種族宣言卡，讓您一眼掌握彼此牌組的核心特性。",
+      title: "6. 場地：種族宣言卡",
+      content: "展示雙方陣營核心特性與代表種族宣言卡。",
       spotlightSelector: "#playerRace",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "7. 場地介紹：專屬牌組",
-      content: "我方的主要牌庫。每回合開始時將自動從此處抽取 2 張卡牌補充手牌（手牌上限 10 張）。",
+      title: "7. 場地：專屬牌組",
+      content: "我方主要牌庫。每回合自動抽 2 張補充手牌（上限10張）。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "8. 資源：手牌區域",
-      content: "下方展開的是您的手牌。點擊卡牌可查看完整技能數值、發動魔法或進行召喚出擊！",
+      title: "8. 資源：我方手牌",
+      content: "下方展開為手牌。點擊可檢視數值、施放法術或打出召喚。",
       spotlightSelector: "#hand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "9. 對手資源：對手手牌",
-      content: "上方顯示對手持有的手牌張數，隨時留意敵方的資源變化，能幫助您做出最佳判斷。",
+      title: "9. 資源：對手手牌",
+      content: "上方顯示對手手牌張數，隨時掌握敵方資源變化。",
       spotlightSelector: "#xlwEnemyFloatingHand",
       anatomyModal: false,
       interactive: null
     },
     {
-      title: "10. 卡牌資訊與意義解密",
-      content: "卡牌包含五大核心資訊：① ⚔️ 攻擊力/護盾、② 🩸 祭品需求、③ 🏷️ 名稱與陣營、④ 📜 技能效果、⑤ ⭐ ★星數得分。請詳閱特寫解說！",
+      title: "10. 卡牌資訊代表意義",
+      content: "卡牌包含攻防、祭品、陣營、技能效果與★星數得分！",
       spotlightSelector: null,
       anatomyModal: true,
       interactive: null
     },
     {
       title: "11. 勝利條件說明",
-      content: "兩大獲勝方式：①【星星倒數結束】回合倒數歸零時，場上總星數高者奪勝！②【Call Game 提前勝出】總星數達 20★ 以上，或單位比對手多 4 隻以上即可宣告，若對手下回合無法反制便直接獲勝！",
+      content: "①【星星倒數結束】總星數高者勝！②【Call Game】星數領先≥20★或單位多4隻可宣告勝出！",
       spotlightSelector: "#scoreBtn",
       anatomyModal: false,
       interactive: null
     },
     {
       title: "12. 開局準備：起手調度 (1/2)",
-      content: "開局先抽 4 張起始牌，可進行一次「起手調度」換掉初期用不到的高階怪！請點擊手牌最右側需祭品的【胖獸人】選取替換。",
+      content: "開局可調度換牌一次！點擊最右側需祭品的【胖獸人】選取替換。",
       spotlightSelector: "#hand .card:nth-child(4)",
       anatomyModal: false,
       setupBattle: true,
@@ -29546,14 +29546,14 @@ window.XLW_Tutorial = {
     },
     {
       title: "12. 開局準備：確認換牌 (2/2)",
-      content: "選定要替換的卡牌後，點擊右側的【確認換牌】按鈕，完成起手調度並補滿手牌！",
+      content: "點擊右側【確認換牌】，替換卡牌並補滿手牌！",
       spotlightSelector: "#stableActionMulliganConfirm",
       anatomyModal: false,
       interactive: { type: "click_mulligan_confirm", index: 3 }
     },
     {
-      title: "13. 遊戲開始！每回合五階段流程",
-      content: "對戰正式開始！每回合依序經歷五大階段：①抽牌 ➔ ②防守 ➔ ③召喚 ➔ ④戰術（進攻或佈陣 2選1）➔ ⑤結束。點擊『下一步』開始實戰！",
+      title: "13. 每回合五階段流程",
+      content: "每回合五階段：①抽牌 ➔ ②防守 ➔ ③召喚 ➔ ④戰術 ➔ ⑤結束。開始實戰！",
       spotlightSelector: null,
       anatomyModal: false,
       showGameStartBanner: true,
@@ -29968,13 +29968,12 @@ window.XLW_Tutorial = {
 
         const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
         if (isCompactBattle) {
-          sprite.style.width = "62px";
-          sprite.style.height = "84px";
-          sprite.style.left = "-46px";
+          sprite.style.display = "none";
         } else {
-          sprite.style.width = "115px";
-          sprite.style.height = "154px";
-          sprite.style.left = "-76px";
+          sprite.style.display = "block";
+          sprite.style.width = "64px";
+          sprite.style.height = "86px";
+          sprite.style.left = "-44px";
         }
     }
     this.initDrag();
@@ -29991,7 +29990,7 @@ window.XLW_Tutorial = {
     if (!tutorialBox) return;
     const isMin = tutorialBox.classList.toggle("minimized");
     if (minBtn) {
-      minBtn.textContent = isMin ? "➕ 展開" : "➖ 收合";
+      minBtn.textContent = isMin ? "➕" : "➖";
     }
   },
 
@@ -30106,12 +30105,11 @@ window.XLW_Tutorial = {
               tutorialBox.style.transform = '';
 
               if (isCompactBattle) {
-                // 實戰演練階段：固定停靠在畫面左上角外側（完全避開中央 5x4 戰場、下方手牌與右側階段按鈕）
-                // 若目標剛好在左上角，則自動改停靠左下角外側
-                const overlapsTopLeft = (rect.top < 150 && rect.left < 310);
-                tutorialBox.style.left = '50px';
+                // 實戰演練階段：精巧停靠在左上角頂端外緣，完全不擋戰場與按鈕
+                const overlapsTopLeft = (rect.top < 130 && rect.left < 220);
+                tutorialBox.style.left = '10px';
                 if (overlapsTopLeft) {
-                  tutorialBox.style.bottom = '10px';
+                  tutorialBox.style.bottom = '8px';
                 } else {
                   tutorialBox.style.top = '8px';
                 }
@@ -30122,13 +30120,13 @@ window.XLW_Tutorial = {
                 if (isTopHalf) {
                     tutorialBox.style.bottom = '12px';
                 } else {
-                    tutorialBox.style.top = '78px';
+                    tutorialBox.style.top = '72px';
                 }
 
                 if (isLeftHalf) {
-                    tutorialBox.style.right = '14px';
+                    tutorialBox.style.right = '12px';
                 } else {
-                    tutorialBox.style.left = '90px';
+                    tutorialBox.style.left = '50px';
                 }
               }
           }

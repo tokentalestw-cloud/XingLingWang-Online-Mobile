@@ -5447,17 +5447,17 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .xlw-tutorial-box {
   position: absolute !important;
   width: fit-content !important;
-  max-width: min(315px, calc(100vw - 32px)) !important;
-  min-width: 200px !important;
-  background: rgba(12, 9, 26, 0.96) !important;
-  border: 2px solid #00e5ff !important;
-  border-radius: 14px !important;
-  padding: 8px 12px !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(0, 229, 255, 0.35) !important;
+  max-width: min(225px, calc(100vw - 24px)) !important;
+  min-width: 140px !important;
+  background: rgba(12, 9, 26, 0.94) !important;
+  border: 1.5px solid #00e5ff !important;
+  border-radius: 11px !important;
+  padding: 5px 9px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 229, 255, 0.22) !important;
   pointer-events: auto !important;
   z-index: 1000030 !important;
-  transition: top 0.3s ease, left 0.3s ease, transform 0.3s ease !important;
-  backdrop-filter: blur(16px) !important;
+  transition: top 0.25s ease, left 0.25s ease, transform 0.25s ease, opacity 0.2s ease !important;
+  backdrop-filter: blur(12px) !important;
   color: #fff !important;
   font-family: inherit !important;
   bottom: 14px !important;
@@ -5468,23 +5468,23 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 #xlwTutorialMentorSprite {
   position: absolute !important;
   bottom: 0 !important;
-  left: -76px !important;
-  width: 115px !important;
-  height: 154px !important;
+  left: -44px !important;
+  width: 64px !important;
+  height: 86px !important;
   object-fit: contain !important;
   pointer-events: none !important;
   z-index: -1 !important;
-  filter: drop-shadow(0 4px 12px rgba(0, 229, 255, 0.4)) !important;
+  filter: drop-shadow(0 2px 8px rgba(0, 229, 255, 0.35)) !important;
   transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) !important;
   animation: yukiCoherentBreath 3.2s infinite ease-in-out !important;
 }
 
 @keyframes yukiCoherentBreath {
   0%, 100% {
-    transform: translateY(-8px) scale(1);
+    transform: translateY(-4px) scale(1);
   }
   50% {
-    transform: translateY(-13px) scale(1.02);
+    transform: translateY(-8px) scale(1.02);
   }
 }
 
@@ -5493,19 +5493,19 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 @keyframes yukiHopAnim {
-  0% { transform: translateY(-4px) scale(0.96); }
-  50% { transform: translateY(-16px) scale(1.03); }
-  100% { transform: translateY(-8px) scale(1); }
+  0% { transform: translateY(-2px) scale(0.97); }
+  50% { transform: translateY(-10px) scale(1.03); }
+  100% { transform: translateY(-4px) scale(1); }
 }
 
 .tutorial-box-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  gap: 10px !important;
-  margin-bottom: 5px !important;
-  border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
-  padding-bottom: 4px !important;
+  gap: 6px !important;
+  margin-bottom: 3px !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.18) !important;
+  padding-bottom: 3px !important;
   cursor: grab !important;
   user-select: none !important;
 }
@@ -5518,12 +5518,12 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background: rgba(0, 229, 255, 0.14) !important;
   border: 1px solid rgba(0, 229, 255, 0.45) !important;
   color: #79f2ff !important;
-  padding: 1px 7px !important;
-  border-radius: 12px !important;
-  font-size: 11px !important;
+  padding: 1px 5px !important;
+  border-radius: 8px !important;
+  font-size: 10px !important;
   font-weight: bold !important;
   cursor: pointer !important;
-  line-height: 1.4 !important;
+  line-height: 1.2 !important;
 }
 
 .tutorial-min-btn:hover {
@@ -5531,74 +5531,120 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   color: #fff !important;
 }
 
-/* 後半段實戰演練專屬：輕巧側邊指引小卡模式，不遮擋中央戰場 */
+.tutorial-close-header-btn {
+  background: rgba(255, 77, 79, 0.18) !important;
+  border: 1px solid rgba(255, 77, 79, 0.45) !important;
+  color: #ff8585 !important;
+  padding: 1px 6px !important;
+  border-radius: 8px !important;
+  font-size: 10.5px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  line-height: 1.2 !important;
+  transition: all 0.2s ease !important;
+}
+
+.tutorial-close-header-btn:hover {
+  background: rgba(255, 50, 50, 0.4) !important;
+  color: #fff !important;
+}
+
+/* 後半段實戰演練專屬：半透明幽靈微型指引模式，完全不遮擋戰場 */
 .xlw-tutorial-box.battle-compact-mode {
-  width: 240px !important;
-  padding: 7px 11px !important;
-  background: rgba(10, 8, 22, 0.84) !important;
-  border-width: 1.5px !important;
-  border-radius: 11px !important;
-  backdrop-filter: blur(8px) !important;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8), 0 0 14px rgba(0, 229, 255, 0.28) !important;
+  width: fit-content !important;
+  max-width: min(180px, calc(100vw - 20px)) !important;
+  min-width: 120px !important;
+  padding: 3px 7px !important;
+  background: rgba(10, 8, 20, 0.68) !important;
+  border: 1px solid rgba(0, 229, 255, 0.3) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(6px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  opacity: 0.82 !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode:hover,
+.xlw-tutorial-box.battle-compact-mode:active {
+  opacity: 1 !important;
+  background: rgba(10, 8, 20, 0.92) !important;
+}
+
+/* 實戰演練期間完全隱藏側邊突出大立繪，還原完整戰場視野！ */
+.xlw-tutorial-box.battle-compact-mode #xlwTutorialMentorSprite {
+  display: none !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-box-header {
-  margin-bottom: 4px !important;
-  padding-bottom: 3px !important;
+  margin-bottom: 2px !important;
+  padding-bottom: 2px !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12) !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .mentor-name {
-  font-size: 13.5px !important;
+  font-size: 11px !important;
+  color: #80deea !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-step-counter {
-  font-size: 10.5px !important;
-  padding: 1px 7px !important;
+  font-size: 9px !important;
+  padding: 1px 4px !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-title {
-  font-size: 13px !important;
-  margin-bottom: 3px !important;
+  font-size: 11px !important;
+  margin-bottom: 2px !important;
+  color: #ffd76a !important;
+  text-shadow: none !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-content {
-  font-size: 11.5px !important;
-  line-height: 1.35 !important;
-  margin-bottom: 5px !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  margin-bottom: 2px !important;
+  color: #cbd5e1 !important;
+}
+
+.xlw-tutorial-box.battle-compact-mode .tutorial-action-guide {
+  font-size: 10px !important;
+  padding: 2px 4px !important;
+  margin-bottom: 2px !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-box-footer {
   margin-top: 2px !important;
-  gap: 5px !important;
+  gap: 4px !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-btn {
-  padding: 3px 8px !important;
-  font-size: 11px !important;
+  padding: 1.5px 6px !important;
+  font-size: 9.5px !important;
+  border-radius: 8px !important;
 }
 
 /* 一鍵收合模式：僅保留標題列與步驟名稱，完全釋放戰場視野 */
 .xlw-tutorial-box.minimized .tutorial-content,
-.xlw-tutorial-box.minimized .tutorial-action-guide {
+.xlw-tutorial-box.minimized .tutorial-action-guide,
+.xlw-tutorial-box.minimized .tutorial-box-footer {
   display: none !important;
 }
 
 .xlw-tutorial-box.minimized {
-  width: 215px !important;
-  padding: 6px 10px !important;
-  background: rgba(10, 8, 22, 0.78) !important;
+  width: fit-content !important;
+  max-width: 170px !important;
+  padding: 3px 6px !important;
+  background: rgba(10, 8, 22, 0.75) !important;
 }
 
 .tutorial-mentor-info {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 5px !important;
 }
 
 .mentor-avatar {
-  font-size: 20px !important;
+  font-size: 14px !important;
   background: rgba(0, 229, 255, 0.15) !important;
-  padding: 4px 8px !important;
+  padding: 2px 5px !important;
   border-radius: 50% !important;
   border: 1px solid #00e5ff !important;
 }
@@ -5606,7 +5652,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .mentor-name {
   color: #00e5ff !important;
   font-weight: 700 !important;
-  font-size: 15px !important;
+  font-size: 13px !important;
   letter-spacing: 0.5px !important;
 }
 
@@ -5614,59 +5660,53 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background: rgba(255, 215, 106, 0.15) !important;
   border: 1px solid #ffd76a !important;
   color: #ffd76a !important;
-  padding: 2px 10px !important;
-  border-radius: 20px !important;
-  font-size: 12px !important;
+  padding: 1px 6px !important;
+  border-radius: 12px !important;
+  font-size: 10px !important;
   font-weight: bold !important;
 }
 
 .tutorial-title {
-  font-size: 15px !important;
-  font-weight: 800 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
   color: #ffd76a !important;
-  margin-bottom: 4px !important;
-  text-shadow: 0 0 10px rgba(255, 215, 106, 0.3) !important;
+  margin-bottom: 3px !important;
+  text-shadow: none !important;
 }
 
 .tutorial-content {
-  font-size: 13px !important;
-  line-height: 1.45 !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
   color: #e2e8f0 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 4px !important;
 }
 
 .tutorial-action-guide {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(255, 215, 106, 0.15)) !important;
   border: 1px solid #00e5ff !important;
-  border-radius: 10px !important;
-  padding: 6px 10px !important;
-  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
   font-weight: bold !important;
   color: #ffe600 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 4px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  animation: tutorialGuideGlow 1.5s infinite alternate ease-in-out !important;
-}
-
-@keyframes tutorialGuideGlow {
-  from { box-shadow: 0 0 5px rgba(0, 229, 255, 0.3); }
-  to { box-shadow: 0 0 15px rgba(255, 215, 106, 0.6); }
+  gap: 6px !important;
 }
 
 .tutorial-box-footer {
   display: flex !important;
-  justify-content: space-between !important;
+  justify-content: flex-end !important;
   align-items: center !important;
-  gap: 8px !important;
-  margin-top: 4px !important;
+  gap: 5px !important;
+  margin-top: 3px !important;
 }
 
 .tutorial-btn {
-  padding: 5px 12px !important;
-  border-radius: 20px !important;
-  font-size: 12.5px !important;
+  padding: 2.5px 8px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
   font-weight: bold !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
@@ -5684,24 +5724,18 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 .tutorial-btn-skip {
-  background: rgba(255, 77, 79, 0.12) !important;
-  border: 1px solid rgba(255, 77, 79, 0.4) !important;
-  color: #ff6b6b !important;
-}
-.tutorial-btn-skip:hover {
-  background: rgba(255, 77, 79, 0.25) !important;
-  color: #fff !important;
+  display: none !important;
 }
 
 .tutorial-btn-main {
   background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%) !important;
   border: 1px solid #79f2ff !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 10px rgba(0, 180, 219, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(0, 180, 219, 0.35) !important;
 }
 .tutorial-btn-main:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.6) !important;
+  box-shadow: 0 3px 12px rgba(0, 229, 255, 0.5) !important;
 }
 
 /* ?∠?瑽圾撖撖怠?蝒?(Card Anatomy Detail Modal) */
