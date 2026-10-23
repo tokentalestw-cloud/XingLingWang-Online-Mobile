@@ -39,42 +39,42 @@
 
     header {
       background: rgba(7, 5, 5, 0.95);
-      border-bottom: 2px solid var(--gold-accent);
-      padding: 12px 25px;
+      border-bottom: 1.5px solid var(--gold-accent);
+      padding: 6px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 10;
-      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 3px 18px rgba(0, 0, 0, 0.85);
     }
 
     header h1 {
       font-family: 'Cinzel', serif;
-      font-size: 24px;
+      font-size: 16px;
       color: var(--gold-accent);
-      text-shadow: 0 0 12px rgba(255, 215, 106, 0.45);
+      text-shadow: 0 0 10px rgba(255, 215, 106, 0.4);
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 10px;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 10px;
     }
 
     .top-nav-btn {
       background: transparent;
       border: 1px solid var(--gold-accent);
       color: var(--gold-accent);
-      padding: 7px 14px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 5px;
       cursor: pointer;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 11.5px;
       font-weight: bold;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .top-nav-btn:hover {
@@ -89,29 +89,29 @@
       display: flex;
       overflow: hidden;
       position: relative;
-      height: calc(100vh - 140px);
-      max-height: calc(100vh - 140px);
+      height: calc(100vh - 84px);
+      max-height: calc(100vh - 84px);
     }
 
     /* 頂部操作列 */
     .deck-controls-bar {
-      background: rgba(18, 14, 14, 0.9);
+      background: rgba(18, 14, 14, 0.92);
       border-bottom: 1px solid var(--border-color);
-      padding: 12px 25px;
+      padding: 6px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
+      gap: 12px;
     }
 
     .deck-select-wrap {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
 
     .deck-select-wrap label {
-      font-size: 13px;
+      font-size: 11.5px;
       font-weight: bold;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -122,9 +122,10 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--gold-accent);
       color: #ffffff;
-      padding: 8px 15px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 5px;
       font-weight: bold;
+      font-size: 12px;
       outline: none;
       cursor: pointer;
       transition: all 0.3s;
@@ -143,13 +144,13 @@
     .status-counter-box {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 10px;
     }
 
     .counter-badge {
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 15px;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 12px;
       font-weight: bold;
       background: rgba(255, 92, 92, 0.1);
       border: 1px solid var(--red-accent);
@@ -166,13 +167,13 @@
     }
 
     .action-btn {
-      padding: 9px 18px;
-      border-radius: 6px;
+      padding: 4px 12px;
+      border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .clear-btn {
@@ -230,7 +231,7 @@
     }
 
     .panel-header {
-      padding: 15px 20px;
+      padding: 6px 14px;
       background: rgba(255, 215, 106, 0.02);
       border-bottom: 1px solid rgba(255, 215, 106, 0.12);
       display: flex;
@@ -239,7 +240,7 @@
     }
 
     .panel-header h2 {
-      font-size: 15px;
+      font-size: 13px;
       color: var(--gold-accent);
       font-family: 'Cinzel', serif;
       letter-spacing: 0.5px;
@@ -249,12 +250,12 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-color);
       color: #ffffff;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
       outline: none;
       transition: all 0.3s ease;
-      width: 150px;
+      width: 130px;
     }
 
     .search-input:focus {
@@ -265,14 +266,14 @@
 
     .card-filter-wrap {
       display: flex;
-      gap: 10px;
+      gap: 6px;
     }
 
     .filter-btn {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text-muted);
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 4px;
       font-size: 11px;
       cursor: pointer;
@@ -285,14 +286,15 @@
       background: rgba(255, 215, 106, 0.08);
     }
 
+    /* 緊湊優雅卡牌網格 (縮小卡片，消除壓迫感，一目了然掌握全貌) */
     .card-grid {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 10px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
       grid-auto-rows: max-content;
-      gap: 20px;
+      gap: 10px;
       align-content: start;
     }
 
@@ -311,11 +313,11 @@
     .deck-list {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 10px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
       grid-auto-rows: max-content;
-      gap: 12px;
+      gap: 8px;
       align-content: start;
     }
 
@@ -323,66 +325,72 @@
     .card-tile {
       background: rgba(255, 255, 255, 0.03);
       border: 1.5px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      padding: 10px;
+      border-radius: 6px;
+      padding: 5px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
       cursor: pointer;
       position: relative;
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
       user-select: none;
       overflow: hidden;
     }
 
     .card-tile:hover {
-      transform: translateY(-4px);
+      transform: translateY(-3px);
       border-color: var(--gold-accent);
-      box-shadow: 0 6px 15px rgba(255, 215, 106, 0.15);
-      background: rgba(255, 215, 106, 0.03);
+      box-shadow: 0 5px 14px rgba(255, 215, 106, 0.2);
+      background: rgba(255, 215, 106, 0.04);
     }
 
     .card-tile.selected {
       border-color: var(--green-accent);
-      background: rgba(45, 227, 112, 0.05);
-      box-shadow: 0 4px 12px rgba(45, 227, 112, 0.15);
+      background: rgba(45, 227, 112, 0.06);
+      box-shadow: 0 3px 10px rgba(45, 227, 112, 0.2);
     }
 
     .card-tile.selected::after {
       content: '✔';
       position: absolute;
-      top: 5px;
-      right: 8px;
+      top: 4px;
+      right: 6px;
       color: var(--green-accent);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: bold;
     }
 
     .card-tile-img {
       width: 100%;
-      height: 150px;
+      height: 96px;
       object-fit: cover;
       border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       background: #000;
     }
 
+    .deck-panel .card-tile-img {
+      height: 82px;
+    }
+
     .card-tile-name {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: bold;
       color: #ffffff;
       text-align: center;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      line-height: 1.2;
     }
 
     .card-tile-stats {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 11px;
+      font-size: 9px;
       color: var(--text-muted);
+      line-height: 1;
     }
 
     .stat-atk {
@@ -518,25 +526,25 @@
       font-family: 'Cinzel', serif;
     }
   
-    /* ===== 📱 手機版 RWD 微縮卡牌與佈局優化 ===== */
+    /* ===== 📱 手機與小型螢幕 RWD 微縮卡牌與極致空間壓縮優化 ===== */
     @media (max-width: 1200px), (max-height: 750px) {
       header {
-        padding: 8px 12px !important;
+        padding: 4px 10px !important;
       }
       header h1 {
-        font-size: 15px !important;
+        font-size: 13px !important;
       }
       .header-actions {
-        gap: 8px !important;
+        gap: 6px !important;
       }
       .top-nav-btn {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
+        padding: 3px 6px !important;
+        font-size: 10.5px !important;
       }
       
       .deck-controls-bar {
-        padding: 8px 12px !important;
-        gap: 8px !important;
+        padding: 4px 8px !important;
+        gap: 5px !important;
         flex-wrap: wrap !important;
       }
       .deck-select-wrap, .preset-select-wrap {
@@ -544,25 +552,25 @@
         padding-left: 0 !important;
         border-left: none !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
+        gap: 4px !important;
       }
       .deck-select {
-        padding: 4px 8px !important;
-        font-size: 12px !important;
+        padding: 2px 6px !important;
+        font-size: 11px !important;
       }
       .counter-badge {
-        padding: 4px 10px !important;
+        padding: 3px 8px !important;
         font-size: 11px !important;
       }
       .action-btn {
-        padding: 5px 10px !important;
-        font-size: 11px !important;
+        padding: 3px 8px !important;
+        font-size: 10.5px !important;
       }
 
       /* 雙面板佈局 */
       .main-layout {
-        height: calc(100vh - 110px) !important;
-        max-height: calc(100vh - 110px) !important;
+        height: calc(100vh - 68px) !important;
+        max-height: calc(100vh - 68px) !important;
       }
       .panels-container {
         flex-direction: row !important;
@@ -575,47 +583,63 @@
       }
 
       .panel-header {
-        padding: 8px 12px !important;
+        padding: 4px 8px !important;
       }
       .panel-header h2 {
-        font-size: 13px !important;
+        font-size: 11.5px !important;
       }
       .search-input {
-        width: 110px !important;
-        font-size: 11px !important;
-        padding: 3px 6px !important;
+        width: 95px !important;
+        font-size: 10.5px !important;
+        padding: 2px 4px !important;
+      }
+      .card-filter-wrap {
+        gap: 4px !important;
+      }
+      .filter-btn {
+        padding: 2px 5px !important;
+        font-size: 9.5px !important;
       }
 
-      /* 網格與微縮卡片 (一頁可檢視多張卡牌) */
+      /* 網格與微縮卡片 (一頁可檢視多張卡牌，無壓迫感，輕鬆全覽) */
       .card-grid, .deck-list {
-        padding: 8px !important;
-        gap: 8px !important;
-        grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)) !important;
+        padding: 5px !important;
+        gap: 5px !important;
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important;
       }
 
       .card-tile {
-        padding: 4px !important;
-        gap: 4px !important;
-        border-radius: 6px !important;
+        padding: 3px !important;
+        gap: 2px !important;
+        border-radius: 4px !important;
         position: relative !important;
       }
 
-      /* 卡牌圖片縮小 (從 150px 縮小至 70px) */
-      .card-tile-img {
-        height: 70px !important;
+      /* 卡牌圖片高度壓縮 */
+      .card-tile-img,
+      .deck-panel .card-tile-img {
+        height: 56px !important;
       }
 
       .card-tile-name {
-        font-size: 10px !important;
+        font-size: 8.5px !important;
       }
 
       .card-tile-stats {
-        font-size: 8.5px !important;
+        font-size: 7.5px !important;
       }
       
       .extra-tag {
-        font-size: 7px !important;
-        padding: 1px 3px !important;
+        font-size: 6.5px !important;
+        padding: 1px 2px !important;
+      }
+
+      .card-zoom-btn {
+        width: 15px !important;
+        height: 15px !important;
+        font-size: 7.5px !important;
+        bottom: 16px !important;
+        right: 2px !important;
       }
     }
 
@@ -628,9 +652,9 @@
       border: 1px solid var(--gold-accent);
       color: var(--gold-accent);
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 10px;
+      width: 16px;
+      height: 16px;
+      font-size: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -810,9 +834,9 @@
       <select id="presetSelect" class="deck-select" onchange="changePresetDeck(this.value)" style="min-width: 140px;">
         <!-- populated dynamically -->
       </select>
-      <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">新增</button>
-      <button class="action-btn" onclick="renamePresetDeck()" style="background: linear-gradient(135deg, #096dd9, #1890ff); color: white; border: none; padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">重命名</button>
-      <button class="action-btn" onclick="deletePresetDeck()" style="background: linear-gradient(135deg, #ad2102, #cf1322); color: white; border: none; padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">刪除</button>
+      <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">新增</button>
+      <button class="action-btn" onclick="renamePresetDeck()" style="background: linear-gradient(135deg, #096dd9, #1890ff); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">重命名</button>
+      <button class="action-btn" onclick="deletePresetDeck()" style="background: linear-gradient(135deg, #ad2102, #cf1322); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">刪除</button>
     </div>
 
     <div class="status-counter-box">
@@ -858,7 +882,7 @@
           <div class="panel-header" style="background: rgba(216, 80, 255, 0.05); border-bottom-color: rgba(216, 80, 255, 0.25);">
             <h2 id="extraDeckTitle" style="color: #d850ff;">構築中的額外牌組 (0)</h2>
           </div>
-          <div class="deck-list" id="extraDeckGrid" style="flex: 1; overflow-y: auto; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));">
+          <div class="deck-list" id="extraDeckGrid" style="flex: 1; overflow-y: auto; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));">
             <!-- 額外牌組卡牌磚 -->
           </div>
         </div>
