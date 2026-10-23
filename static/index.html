@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-polish-v1">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-forest-fix-v2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -171,62 +171,79 @@
         <div id="enemyField" class="zone side green">場地區</div>
         <div id="enemyForest" class="zone side green">
           <div class="forest-3d-wrap">
-            <div class="forest-3d-bg"></div>
             <div class="forest-3d-trees">
-              <svg class="forest-trees-svg" viewBox="0 0 100 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <svg class="forest-trees-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="treeTrunkGradEnemy" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#3d1f06"/>
-                    <stop offset="45%" stop-color="#78350f"/>
-                    <stop offset="100%" stop-color="#2c1503"/>
+                  <linearGradient id="bgSkyEnemy" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#14532d"/>
+                    <stop offset="45%" stop-color="#064e3b"/>
+                    <stop offset="100%" stop-color="#022c22"/>
                   </linearGradient>
-                  <linearGradient id="foliageDarkGradEnemy" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="trunkGradEnemy" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#451a03"/>
+                    <stop offset="40%" stop-color="#854d0e"/>
+                    <stop offset="100%" stop-color="#3b1502"/>
+                  </linearGradient>
+                  <linearGradient id="pineDarkEnemy" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#059669"/>
                     <stop offset="100%" stop-color="#022c22"/>
                   </linearGradient>
-                  <linearGradient id="foliageMidGradEnemy" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="pineMidEnemy" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#10b981"/>
-                    <stop offset="100%" stop-color="#064e3b"/>
+                    <stop offset="100%" stop-color="#047857"/>
                   </linearGradient>
-                  <linearGradient id="foliageBrightGradEnemy" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="pineBrightEnemy" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#34d399"/>
                     <stop offset="100%" stop-color="#059669"/>
                   </linearGradient>
-                  <radialGradient id="forestGlowEnemy" cx="50%" cy="40%" r="55%">
-                    <stop offset="0%" stop-color="rgba(16, 185, 129, 0.45)"/>
-                    <stop offset="100%" stop-color="rgba(2, 44, 34, 0)"/>
+                  <radialGradient id="leafCrownEnemy" cx="40%" cy="35%" r="60%">
+                    <stop offset="0%" stop-color="#4ade80"/>
+                    <stop offset="45%" stop-color="#10b981"/>
+                    <stop offset="85%" stop-color="#047857"/>
+                    <stop offset="100%" stop-color="#022c22"/>
                   </radialGradient>
-                  <filter id="treeShadowEnemy" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="2.5" stdDeviation="2" flood-color="#000" flood-opacity="0.75"/>
-                  </filter>
                 </defs>
-                <rect x="0" y="0" width="100" height="140" fill="url(#forestGlowEnemy)"/>
-                <g class="tree-back-group" opacity="0.6" filter="url(#treeShadowEnemy)">
-                  <polygon points="50,14 34,48 66,48" fill="#047857"/>
-                  <polygon points="50,32 30,68 70,68" fill="#065f46"/>
-                  <polygon points="50,52 26,88 74,88" fill="#022c22"/>
-                </g>
-                <g class="tree-left-group" filter="url(#treeShadowEnemy)">
-                  <rect x="13" y="52" width="7" height="60" rx="3" fill="url(#treeTrunkGradEnemy)"/>
-                  <ellipse cx="16.5" cy="74" rx="20" ry="16" fill="url(#foliageDarkGradEnemy)"/>
-                  <ellipse cx="16.5" cy="54" rx="17" ry="15" fill="url(#foliageMidGradEnemy)"/>
-                  <ellipse cx="16.5" cy="34" rx="13" ry="12" fill="url(#foliageBrightGradEnemy)"/>
-                </g>
-                <g class="tree-right-group" filter="url(#treeShadowEnemy)">
-                  <rect x="80" y="54" width="6.5" height="58" rx="2.5" fill="url(#treeTrunkGradEnemy)"/>
-                  <polygon points="83,52 62,84 104,84" fill="url(#foliageDarkGradEnemy)"/>
-                  <polygon points="83,34 66,64 100,64" fill="url(#foliageMidGradEnemy)"/>
-                  <polygon points="83,16 70,42 96,42" fill="url(#foliageBrightGradEnemy)"/>
-                </g>
-                <g class="forest-ground-group">
-                  <ellipse cx="20" cy="120" rx="26" ry="8" fill="#064e3b" opacity="0.95"/>
-                  <ellipse cx="80" cy="120" rx="24" ry="8" fill="#064e3b" opacity="0.95"/>
-                  <ellipse cx="50" cy="122" rx="46" ry="10" fill="#022c22"/>
-                  <path d="M 8,118 Q 10,108 13,117" stroke="#10b981" stroke-width="1.6" fill="none"/>
-                  <path d="M 13,118 Q 15,106 17,117" stroke="#34d399" stroke-width="1.6" fill="none"/>
-                  <path d="M 83,118 Q 85,106 87,117" stroke="#34d399" stroke-width="1.6" fill="none"/>
-                  <path d="M 87,118 Q 89,108 92,117" stroke="#10b981" stroke-width="1.6" fill="none"/>
-                </g>
+                <rect width="110" height="135" fill="url(#bgSkyEnemy)"/>
+                <!-- Distant Background Trees -->
+                <polygon points="55,10 38,44 72,44" fill="#044e33"/>
+                <polygon points="55,26 34,64 76,64" fill="#023824"/>
+                <polygon points="28,22 16,52 40,52" fill="#023824" opacity="0.75"/>
+                <polygon points="82,22 70,52 94,52" fill="#023824" opacity="0.75"/>
+                <!-- Left Oak Tree -->
+                <ellipse cx="20" cy="115" rx="14" ry="5" fill="#011b10" opacity="0.6"/>
+                <path d="M 18,52 Q 16,84 14,115 L 24,115 Q 22,84 22,52 Z" fill="url(#trunkGradEnemy)"/>
+                <path d="M 19,70 Q 11,68 6,63 L 7,61 Q 12,65 20,68 Z" fill="#542507"/>
+                <circle cx="18" cy="44" r="18" fill="url(#leafCrownEnemy)"/>
+                <circle cx="9" cy="50" r="12" fill="url(#leafCrownEnemy)"/>
+                <circle cx="27" cy="48" r="13" fill="url(#leafCrownEnemy)"/>
+                <circle cx="17" cy="30" r="14" fill="url(#leafCrownEnemy)"/>
+                <circle cx="15" cy="24" r="9" fill="#4ade80" opacity="0.6"/>
+                <!-- Right Pine Tree -->
+                <ellipse cx="89" cy="115" rx="14" ry="5" fill="#011b10" opacity="0.6"/>
+                <rect x="86" y="52" width="6" height="62" rx="2" fill="url(#trunkGradEnemy)"/>
+                <polygon points="89,64 62,94 116,94" fill="#022c22"/>
+                <polygon points="89,46 66,74 112,74" fill="url(#pineDarkEnemy)"/>
+                <polygon points="89,30 70,56 108,56" fill="url(#pineMidEnemy)"/>
+                <polygon points="89,14 74,38 104,38" fill="url(#pineBrightEnemy)"/>
+                <!-- Top Canopy Arch -->
+                <ellipse cx="55" cy="0" rx="38" ry="16" fill="url(#leafCrownEnemy)" opacity="0.9"/>
+                <ellipse cx="0" cy="6" rx="22" ry="14" fill="#047857"/>
+                <ellipse cx="110" cy="6" rx="22" ry="14" fill="#047857"/>
+                <!-- Mossy Ground -->
+                <ellipse cx="55" cy="126" rx="65" ry="18" fill="#022c22"/>
+                <ellipse cx="20" cy="123" rx="28" ry="10" fill="#064e3b"/>
+                <ellipse cx="90" cy="123" rx="28" ry="10" fill="#064e3b"/>
+                <path d="M 6,119 Q 8,106 11,117" stroke="#34d399" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 11,119 Q 14,103 17,118" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 93,119 Q 96,103 99,118" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 98,119 Q 101,106 104,117" stroke="#34d399" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Spores -->
+                <circle cx="36" cy="42" r="1.6" fill="#a7f3d0" opacity="0.95"/>
+                <circle cx="42" cy="76" r="1.8" fill="#fde047" opacity="0.9"/>
+                <circle cx="72" cy="52" r="1.6" fill="#a7f3d0" opacity="0.95"/>
+                <circle cx="66" cy="88" r="1.8" fill="#fde047" opacity="0.9"/>
+                <circle cx="28" cy="94" r="1.3" fill="#6ee7b7" opacity="0.8"/>
+                <circle cx="82" cy="34" r="1.4" fill="#fde047" opacity="0.85"/>
               </svg>
             </div>
             <div class="traveler-3d-standee">
@@ -234,7 +251,7 @@
             </div>
           </div>
           <div class="forest-3d-overlay">
-            <span>對手森林區<br>小旅人∞</span>
+            <span>🌲 對手森林區 🌲<br>小旅人∞</span>
           </div>
         </div>
 
@@ -251,62 +268,79 @@
         <div id="playerField" class="zone side green">我方場地</div>
         <div id="playerForest" class="zone side green" onclick="triggerLittleTraveler(event)">
           <div class="forest-3d-wrap">
-            <div class="forest-3d-bg"></div>
             <div class="forest-3d-trees">
-              <svg class="forest-trees-svg" viewBox="0 0 100 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <svg class="forest-trees-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="treeTrunkGradPlayer" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#3d1f06"/>
-                    <stop offset="45%" stop-color="#78350f"/>
-                    <stop offset="100%" stop-color="#2c1503"/>
+                  <linearGradient id="bgSkyPlayer" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#14532d"/>
+                    <stop offset="45%" stop-color="#064e3b"/>
+                    <stop offset="100%" stop-color="#022c22"/>
                   </linearGradient>
-                  <linearGradient id="foliageDarkGradPlayer" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="trunkGradPlayer" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#451a03"/>
+                    <stop offset="40%" stop-color="#854d0e"/>
+                    <stop offset="100%" stop-color="#3b1502"/>
+                  </linearGradient>
+                  <linearGradient id="pineDarkPlayer" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#059669"/>
                     <stop offset="100%" stop-color="#022c22"/>
                   </linearGradient>
-                  <linearGradient id="foliageMidGradPlayer" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="pineMidPlayer" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#10b981"/>
-                    <stop offset="100%" stop-color="#064e3b"/>
+                    <stop offset="100%" stop-color="#047857"/>
                   </linearGradient>
-                  <linearGradient id="foliageBrightGradPlayer" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient id="pineBrightPlayer" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#34d399"/>
                     <stop offset="100%" stop-color="#059669"/>
                   </linearGradient>
-                  <radialGradient id="forestGlowPlayer" cx="50%" cy="40%" r="55%">
-                    <stop offset="0%" stop-color="rgba(16, 185, 129, 0.45)"/>
-                    <stop offset="100%" stop-color="rgba(2, 44, 34, 0)"/>
+                  <radialGradient id="leafCrownPlayer" cx="40%" cy="35%" r="60%">
+                    <stop offset="0%" stop-color="#4ade80"/>
+                    <stop offset="45%" stop-color="#10b981"/>
+                    <stop offset="85%" stop-color="#047857"/>
+                    <stop offset="100%" stop-color="#022c22"/>
                   </radialGradient>
-                  <filter id="treeShadowPlayer" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="2.5" stdDeviation="2" flood-color="#000" flood-opacity="0.75"/>
-                  </filter>
                 </defs>
-                <rect x="0" y="0" width="100" height="140" fill="url(#forestGlowPlayer)"/>
-                <g class="tree-back-group" opacity="0.6" filter="url(#treeShadowPlayer)">
-                  <polygon points="50,14 34,48 66,48" fill="#047857"/>
-                  <polygon points="50,32 30,68 70,68" fill="#065f46"/>
-                  <polygon points="50,52 26,88 74,88" fill="#022c22"/>
-                </g>
-                <g class="tree-left-group" filter="url(#treeShadowPlayer)">
-                  <rect x="13" y="52" width="7" height="60" rx="3" fill="url(#treeTrunkGradPlayer)"/>
-                  <ellipse cx="16.5" cy="74" rx="20" ry="16" fill="url(#foliageDarkGradPlayer)"/>
-                  <ellipse cx="16.5" cy="54" rx="17" ry="15" fill="url(#foliageMidGradPlayer)"/>
-                  <ellipse cx="16.5" cy="34" rx="13" ry="12" fill="url(#foliageBrightGradPlayer)"/>
-                </g>
-                <g class="tree-right-group" filter="url(#treeShadowPlayer)">
-                  <rect x="80" y="54" width="6.5" height="58" rx="2.5" fill="url(#treeTrunkGradPlayer)"/>
-                  <polygon points="83,52 62,84 104,84" fill="url(#foliageDarkGradPlayer)"/>
-                  <polygon points="83,34 66,64 100,64" fill="url(#foliageMidGradPlayer)"/>
-                  <polygon points="83,16 70,42 96,42" fill="url(#foliageBrightGradPlayer)"/>
-                </g>
-                <g class="forest-ground-group">
-                  <ellipse cx="20" cy="120" rx="26" ry="8" fill="#064e3b" opacity="0.95"/>
-                  <ellipse cx="80" cy="120" rx="24" ry="8" fill="#064e3b" opacity="0.95"/>
-                  <ellipse cx="50" cy="122" rx="46" ry="10" fill="#022c22"/>
-                  <path d="M 8,118 Q 10,108 13,117" stroke="#10b981" stroke-width="1.6" fill="none"/>
-                  <path d="M 13,118 Q 15,106 17,117" stroke="#34d399" stroke-width="1.6" fill="none"/>
-                  <path d="M 83,118 Q 85,106 87,117" stroke="#34d399" stroke-width="1.6" fill="none"/>
-                  <path d="M 87,118 Q 89,108 92,117" stroke="#10b981" stroke-width="1.6" fill="none"/>
-                </g>
+                <rect width="110" height="135" fill="url(#bgSkyPlayer)"/>
+                <!-- Distant Background Trees -->
+                <polygon points="55,10 38,44 72,44" fill="#044e33"/>
+                <polygon points="55,26 34,64 76,64" fill="#023824"/>
+                <polygon points="28,22 16,52 40,52" fill="#023824" opacity="0.75"/>
+                <polygon points="82,22 70,52 94,52" fill="#023824" opacity="0.75"/>
+                <!-- Left Oak Tree -->
+                <ellipse cx="20" cy="115" rx="14" ry="5" fill="#011b10" opacity="0.6"/>
+                <path d="M 18,52 Q 16,84 14,115 L 24,115 Q 22,84 22,52 Z" fill="url(#trunkGradPlayer)"/>
+                <path d="M 19,70 Q 11,68 6,63 L 7,61 Q 12,65 20,68 Z" fill="#542507"/>
+                <circle cx="18" cy="44" r="18" fill="url(#leafCrownPlayer)"/>
+                <circle cx="9" cy="50" r="12" fill="url(#leafCrownPlayer)"/>
+                <circle cx="27" cy="48" r="13" fill="url(#leafCrownPlayer)"/>
+                <circle cx="17" cy="30" r="14" fill="url(#leafCrownPlayer)"/>
+                <circle cx="15" cy="24" r="9" fill="#4ade80" opacity="0.6"/>
+                <!-- Right Pine Tree -->
+                <ellipse cx="89" cy="115" rx="14" ry="5" fill="#011b10" opacity="0.6"/>
+                <rect x="86" y="52" width="6" height="62" rx="2" fill="url(#trunkGradPlayer)"/>
+                <polygon points="89,64 62,94 116,94" fill="#022c22"/>
+                <polygon points="89,46 66,74 112,74" fill="url(#pineDarkPlayer)"/>
+                <polygon points="89,30 70,56 108,56" fill="url(#pineMidPlayer)"/>
+                <polygon points="89,14 74,38 104,38" fill="url(#pineBrightPlayer)"/>
+                <!-- Top Canopy Arch -->
+                <ellipse cx="55" cy="0" rx="38" ry="16" fill="url(#leafCrownPlayer)" opacity="0.9"/>
+                <ellipse cx="0" cy="6" rx="22" ry="14" fill="#047857"/>
+                <ellipse cx="110" cy="6" rx="22" ry="14" fill="#047857"/>
+                <!-- Mossy Ground -->
+                <ellipse cx="55" cy="126" rx="65" ry="18" fill="#022c22"/>
+                <ellipse cx="20" cy="123" rx="28" ry="10" fill="#064e3b"/>
+                <ellipse cx="90" cy="123" rx="28" ry="10" fill="#064e3b"/>
+                <path d="M 6,119 Q 8,106 11,117" stroke="#34d399" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 11,119 Q 14,103 17,118" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 93,119 Q 96,103 99,118" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 98,119 Q 101,106 104,117" stroke="#34d399" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Spores -->
+                <circle cx="36" cy="42" r="1.6" fill="#a7f3d0" opacity="0.95"/>
+                <circle cx="42" cy="76" r="1.8" fill="#fde047" opacity="0.9"/>
+                <circle cx="72" cy="52" r="1.6" fill="#a7f3d0" opacity="0.95"/>
+                <circle cx="66" cy="88" r="1.8" fill="#fde047" opacity="0.9"/>
+                <circle cx="28" cy="94" r="1.3" fill="#6ee7b7" opacity="0.8"/>
+                <circle cx="82" cy="34" r="1.4" fill="#fde047" opacity="0.85"/>
               </svg>
             </div>
             <div class="traveler-3d-standee">
@@ -314,7 +348,7 @@
             </div>
           </div>
           <div class="forest-3d-overlay">
-            <span>我方森林區<br><small style="font-size: 11px; opacity: 0.85; letter-spacing: 0.5px;">小旅人 ∞</small></span>
+            <span>🌲 我方森林區 🌲<br><small style="font-size: 11px; opacity: 0.9; letter-spacing: 0.5px;">小旅人 ∞</small></span>
           </div>
         </div>
 
@@ -443,7 +477,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-polish-v1" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-forest-fix-v2" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

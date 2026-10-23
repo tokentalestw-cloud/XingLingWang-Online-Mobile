@@ -25045,7 +25045,7 @@ function showXLWConfirm(title, message, confirmText = "要", cancelText = "不�
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999999;
+      z-index: 2000050;
       backdrop-filter: blur(8px);
     `;
 
@@ -25118,7 +25118,7 @@ function showXLWChoiceModal(title, message, options) {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999999;
+      z-index: 2000050;
       backdrop-filter: blur(8px);
     `;
 
@@ -30592,12 +30592,19 @@ window.XLW_Tutorial = {
         await window.xlwShowPhaseBanner("我方防守階段", "#3b82f6");
 
         // 如一般防守階段一樣跳出反制魔法提示
-        await showXLWConfirm(
+        const wantCounter = await showXLWConfirm(
           "🛡️ 防守階段反制魔法",
           "對手【呐喊的人】(攻擊力 4) 宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡【削弱藥水】？",
           "發動防守魔法",
-          "發動防守魔法"
+          "不發動"
         );
+        if (wantCounter) {
+          logBattle("我方宣告發動防守反制魔法！");
+          setStatus("🛡️ 請點擊手牌中的【削弱藥水】發動反制！");
+        } else {
+          logBattle("我方暫未發動魔法。教學提示：面對強敵進攻，請發動手牌【削弱藥水】進行反制！");
+          setStatus("教學提示：若不防守我方單位將被擊潰，請點擊【削弱藥水】進行反制！");
+        }
       }
       else if (actionType === "click_tribute_confirm") {
         await confirmTribute();
