@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-forest-grave-v1">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261024-grave-grey-ai-v2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -164,78 +164,79 @@
               <svg class="grave-bg-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="bgSkyGraveEnemy" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e1035"/>
-                    <stop offset="50%" stop-color="#0e061c"/>
-                    <stop offset="100%" stop-color="#05020a"/>
+                    <stop offset="0%" stop-color="#20242c"/>
+                    <stop offset="50%" stop-color="#12151b"/>
+                    <stop offset="100%" stop-color="#08090d"/>
                   </linearGradient>
                   <linearGradient id="moonGlowEnemy" x1="0" y1="0" x2="0.3" y2="1">
-                    <stop offset="0%" stop-color="#c084fc" stop-opacity="0.35"/>
-                    <stop offset="50%" stop-color="#818cf8" stop-opacity="0.15"/>
-                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+                    <stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.28"/>
+                    <stop offset="50%" stop-color="#94a3b8" stop-opacity="0.12"/>
+                    <stop offset="100%" stop-color="#475569" stop-opacity="0"/>
                   </linearGradient>
                   <linearGradient id="stoneGradEnemy" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#1f152e"/>
-                    <stop offset="40%" stop-color="#3d2b59"/>
-                    <stop offset="70%" stop-color="#4a356d"/>
-                    <stop offset="100%" stop-color="#1a1028"/>
+                    <stop offset="0%" stop-color="#232832"/>
+                    <stop offset="40%" stop-color="#404856"/>
+                    <stop offset="70%" stop-color="#525d6e"/>
+                    <stop offset="100%" stop-color="#1c2028"/>
                   </linearGradient>
-                  <radialGradient id="wispGlowPurpleEnemy" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#f0abfc" stop-opacity="1"/>
-                    <stop offset="45%" stop-color="#c084fc" stop-opacity="0.75"/>
-                    <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+                  <radialGradient id="wispGlowSilverEnemy" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+                    <stop offset="45%" stop-color="#cbd5e1" stop-opacity="0.65"/>
+                    <stop offset="100%" stop-color="#64748b" stop-opacity="0"/>
                   </radialGradient>
-                  <radialGradient id="wispGlowCyanEnemy" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#a5f3fc" stop-opacity="1"/>
-                    <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.75"/>
-                    <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+                  <radialGradient id="wispGlowAshEnemy" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.85"/>
+                    <stop offset="45%" stop-color="#94a3b8" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#475569" stop-opacity="0"/>
                   </radialGradient>
                 </defs>
 
-                <!-- 暗夜幽冥背景 -->
+                <!-- 肅穆冷灰荒野夜空背景 -->
                 <rect width="110" height="135" rx="10" fill="url(#bgSkyGraveEnemy)"/>
 
-                <!-- 月華清輝光柱 -->
+                <!-- 沉寂冷霧月華光柱 -->
                 <polygon points="35,0 75,0 85,125 25,125" fill="url(#moonGlowEnemy)"/>
 
                 <!-- 遠景枯木剪影 (Dead Trees) -->
-                <path d="M 12,50 Q 8,30 4,20 M 10,34 Q 15,24 12,14 M 98,48 Q 102,28 106,18 M 100,32 Q 95,22 97,12" stroke="#231338" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 12,50 Q 8,30 4,20 M 10,34 Q 15,24 12,14 M 98,48 Q 102,28 106,18 M 100,32 Q 95,22 97,12" stroke="#262c37" stroke-width="2" fill="none" stroke-linecap="round"/>
 
                 <!-- 墓地荒丘沃土 (Graveyard Mound) -->
-                <ellipse cx="55" cy="130" rx="65" ry="18" fill="#07020e"/>
-                <ellipse cx="25" cy="126" rx="35" ry="12" fill="#150826"/>
-                <ellipse cx="85" cy="126" rx="35" ry="12" fill="#150826"/>
+                <ellipse cx="55" cy="130" rx="65" ry="18" fill="#0b0d11"/>
+                <ellipse cx="25" cy="126" rx="35" ry="12" fill="#171b22"/>
+                <ellipse cx="85" cy="126" rx="35" ry="12" fill="#171b22"/>
 
                 <!-- 左側傾斜風化墓碑 (Left Headstone) -->
                 <g transform="rotate(-6 22 105)">
                   <rect x="14" y="75" width="16" height="36" rx="4" fill="url(#stoneGradEnemy)"/>
-                  <path d="M 17,82 L 27,82 M 22,78 L 22,88" stroke="#a855f7" stroke-width="1.2" opacity="0.8"/>
+                  <path d="M 17,82 L 27,82 M 22,78 L 22,88" stroke="#94a3b8" stroke-width="1.2" opacity="0.6"/>
                 </g>
 
                 <!-- 右側神秘符文方尖石碑 (Right Rune Obelisk) -->
                 <g transform="rotate(5 88 105)">
                   <polygon points="88,68 80,112 96,112" fill="url(#stoneGradEnemy)"/>
-                  <circle cx="88" cy="85" r="2.5" fill="#c084fc" opacity="0.85"/>
-                  <path d="M 88,90 L 88,102" stroke="#c084fc" stroke-width="1.2" opacity="0.8"/>
+                  <circle cx="88" cy="85" r="2.5" fill="#cbd5e1" opacity="0.75"/>
+                  <path d="M 88,90 L 88,102" stroke="#94a3b8" stroke-width="1.2" opacity="0.6"/>
                 </g>
 
-                <!-- 中央主墓碑：立體哥德式石十字大墓碑 (Center Gothic Cross Tombstone) -->
+                <!-- 中央主墓碑：立體哥德式風化大十字石墓碑 (Center Gothic Cross Tombstone) -->
                 <g class="grave-tomb-center">
                   <rect x="44" y="65" width="22" height="52" rx="4" fill="url(#stoneGradEnemy)"/>
                   <path d="M 38,78 L 72,78" stroke="url(#stoneGradEnemy)" stroke-width="6" stroke-linecap="round"/>
-                  <!-- 墓碑裂痕與神秘星印 -->
-                  <circle cx="55" cy="78" r="4" fill="#a855f7" opacity="0.9"/>
-                  <path d="M 55,84 Q 53,95 56,104" stroke="#c084fc" stroke-width="1" opacity="0.75" fill="none"/>
+                  <!-- 墓碑裂痕與古樸星印雕紋 -->
+                  <circle cx="55" cy="78" r="4" fill="#64748b" opacity="0.85"/>
+                  <circle cx="55" cy="78" r="2.5" fill="#94a3b8" opacity="0.95"/>
+                  <path d="M 55,84 Q 53,95 56,104" stroke="#94a3b8" stroke-width="1" opacity="0.65" fill="none"/>
                 </g>
 
-                <!-- 墓地幽冥鬼火/靈魂幽火 (Floating Soul Wisps) -->
-                <circle class="grave-wisp gw-1" cx="30" cy="55" r="4" fill="url(#wispGlowPurpleEnemy)"/>
-                <circle class="grave-wisp gw-2" cx="80" cy="50" r="3.5" fill="url(#wispGlowCyanEnemy)"/>
-                <circle class="grave-wisp gw-3" cx="55" cy="38" r="3" fill="url(#wispGlowPurpleEnemy)"/>
-                <circle class="grave-wisp gw-4" cx="40" cy="90" r="2.5" fill="url(#wispGlowCyanEnemy)"/>
-                <circle class="grave-wisp gw-5" cx="70" cy="92" r="2.5" fill="url(#wispGlowPurpleEnemy)"/>
+                <!-- 墓地幽冥微光/寒霜幽魂微粒 (Cold Pale Silver Wisps) -->
+                <circle class="grave-wisp gw-1" cx="30" cy="55" r="3.2" fill="url(#wispGlowSilverEnemy)"/>
+                <circle class="grave-wisp gw-2" cx="80" cy="50" r="2.8" fill="url(#wispGlowAshEnemy)"/>
+                <circle class="grave-wisp gw-3" cx="55" cy="38" r="2.5" fill="url(#wispGlowSilverEnemy)"/>
+                <circle class="grave-wisp gw-4" cx="40" cy="90" r="2" fill="url(#wispGlowAshEnemy)"/>
+                <circle class="grave-wisp gw-5" cx="70" cy="92" r="2" fill="url(#wispGlowSilverEnemy)"/>
 
-                <!-- 地底幽冥墓霧 (Ground Mist) -->
-                <ellipse cx="55" cy="122" rx="45" ry="8" fill="#a855f7" opacity="0.18"/>
+                <!-- 地底沉降冷霧 (Cold Ground Mist) -->
+                <ellipse cx="55" cy="122" rx="45" ry="8" fill="#64748b" opacity="0.16"/>
               </svg>
             </div>
           </div>
@@ -601,78 +602,79 @@
               <svg class="grave-bg-svg" viewBox="0 0 110 135" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="bgSkyGravePlayer" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e1035"/>
-                    <stop offset="50%" stop-color="#0e061c"/>
-                    <stop offset="100%" stop-color="#05020a"/>
+                    <stop offset="0%" stop-color="#20242c"/>
+                    <stop offset="50%" stop-color="#12151b"/>
+                    <stop offset="100%" stop-color="#08090d"/>
                   </linearGradient>
                   <linearGradient id="moonGlowPlayer" x1="0" y1="0" x2="0.3" y2="1">
-                    <stop offset="0%" stop-color="#c084fc" stop-opacity="0.35"/>
-                    <stop offset="50%" stop-color="#818cf8" stop-opacity="0.15"/>
-                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+                    <stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.28"/>
+                    <stop offset="50%" stop-color="#94a3b8" stop-opacity="0.12"/>
+                    <stop offset="100%" stop-color="#475569" stop-opacity="0"/>
                   </linearGradient>
                   <linearGradient id="stoneGradPlayer" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#1f152e"/>
-                    <stop offset="40%" stop-color="#3d2b59"/>
-                    <stop offset="70%" stop-color="#4a356d"/>
-                    <stop offset="100%" stop-color="#1a1028"/>
+                    <stop offset="0%" stop-color="#232832"/>
+                    <stop offset="40%" stop-color="#404856"/>
+                    <stop offset="70%" stop-color="#525d6e"/>
+                    <stop offset="100%" stop-color="#1c2028"/>
                   </linearGradient>
-                  <radialGradient id="wispGlowPurplePlayer" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#f0abfc" stop-opacity="1"/>
-                    <stop offset="45%" stop-color="#c084fc" stop-opacity="0.75"/>
-                    <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+                  <radialGradient id="wispGlowSilverPlayer" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+                    <stop offset="45%" stop-color="#cbd5e1" stop-opacity="0.65"/>
+                    <stop offset="100%" stop-color="#64748b" stop-opacity="0"/>
                   </radialGradient>
-                  <radialGradient id="wispGlowCyanPlayer" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#a5f3fc" stop-opacity="1"/>
-                    <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.75"/>
-                    <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+                  <radialGradient id="wispGlowAshPlayer" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.85"/>
+                    <stop offset="45%" stop-color="#94a3b8" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#475569" stop-opacity="0"/>
                   </radialGradient>
                 </defs>
 
-                <!-- 暗夜幽冥背景 -->
+                <!-- 肅穆冷灰荒野夜空背景 -->
                 <rect width="110" height="135" rx="10" fill="url(#bgSkyGravePlayer)"/>
 
-                <!-- 月華清輝光柱 -->
+                <!-- 沉寂冷霧月華光柱 -->
                 <polygon points="35,0 75,0 85,125 25,125" fill="url(#moonGlowPlayer)"/>
 
                 <!-- 遠景枯木剪影 (Dead Trees) -->
-                <path d="M 12,50 Q 8,30 4,20 M 10,34 Q 15,24 12,14 M 98,48 Q 102,28 106,18 M 100,32 Q 95,22 97,12" stroke="#231338" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 12,50 Q 8,30 4,20 M 10,34 Q 15,24 12,14 M 98,48 Q 102,28 106,18 M 100,32 Q 95,22 97,12" stroke="#262c37" stroke-width="2" fill="none" stroke-linecap="round"/>
 
                 <!-- 墓地荒丘沃土 (Graveyard Mound) -->
-                <ellipse cx="55" cy="130" rx="65" ry="18" fill="#07020e"/>
-                <ellipse cx="25" cy="126" rx="35" ry="12" fill="#150826"/>
-                <ellipse cx="85" cy="126" rx="35" ry="12" fill="#150826"/>
+                <ellipse cx="55" cy="130" rx="65" ry="18" fill="#0b0d11"/>
+                <ellipse cx="25" cy="126" rx="35" ry="12" fill="#171b22"/>
+                <ellipse cx="85" cy="126" rx="35" ry="12" fill="#171b22"/>
 
                 <!-- 左側傾斜風化墓碑 (Left Headstone) -->
                 <g transform="rotate(-6 22 105)">
                   <rect x="14" y="75" width="16" height="36" rx="4" fill="url(#stoneGradPlayer)"/>
-                  <path d="M 17,82 L 27,82 M 22,78 L 22,88" stroke="#a855f7" stroke-width="1.2" opacity="0.8"/>
+                  <path d="M 17,82 L 27,82 M 22,78 L 22,88" stroke="#94a3b8" stroke-width="1.2" opacity="0.6"/>
                 </g>
 
                 <!-- 右側神秘符文方尖石碑 (Right Rune Obelisk) -->
                 <g transform="rotate(5 88 105)">
                   <polygon points="88,68 80,112 96,112" fill="url(#stoneGradPlayer)"/>
-                  <circle cx="88" cy="85" r="2.5" fill="#c084fc" opacity="0.85"/>
-                  <path d="M 88,90 L 88,102" stroke="#c084fc" stroke-width="1.2" opacity="0.8"/>
+                  <circle cx="88" cy="85" r="2.5" fill="#cbd5e1" opacity="0.75"/>
+                  <path d="M 88,90 L 88,102" stroke="#94a3b8" stroke-width="1.2" opacity="0.6"/>
                 </g>
 
-                <!-- 中央主墓碑：立體哥德式石十字大墓碑 (Center Gothic Cross Tombstone) -->
+                <!-- 中央主墓碑：立體哥德式風化大十字石墓碑 (Center Gothic Cross Tombstone) -->
                 <g class="grave-tomb-center">
                   <rect x="44" y="65" width="22" height="52" rx="4" fill="url(#stoneGradPlayer)"/>
                   <path d="M 38,78 L 72,78" stroke="url(#stoneGradPlayer)" stroke-width="6" stroke-linecap="round"/>
-                  <!-- 墓碑裂痕與神秘星印 -->
-                  <circle cx="55" cy="78" r="4" fill="#a855f7" opacity="0.9"/>
-                  <path d="M 55,84 Q 53,95 56,104" stroke="#c084fc" stroke-width="1" opacity="0.75" fill="none"/>
+                  <!-- 墓碑裂痕與古樸星印雕紋 -->
+                  <circle cx="55" cy="78" r="4" fill="#64748b" opacity="0.85"/>
+                  <circle cx="55" cy="78" r="2.5" fill="#94a3b8" opacity="0.95"/>
+                  <path d="M 55,84 Q 53,95 56,104" stroke="#94a3b8" stroke-width="1" opacity="0.65" fill="none"/>
                 </g>
 
-                <!-- 墓地幽冥鬼火/靈魂幽火 (Floating Soul Wisps) -->
-                <circle class="grave-wisp gw-1" cx="30" cy="55" r="4" fill="url(#wispGlowPurplePlayer)"/>
-                <circle class="grave-wisp gw-2" cx="80" cy="50" r="3.5" fill="url(#wispGlowCyanPlayer)"/>
-                <circle class="grave-wisp gw-3" cx="55" cy="38" r="3" fill="url(#wispGlowPurplePlayer)"/>
-                <circle class="grave-wisp gw-4" cx="40" cy="90" r="2.5" fill="url(#wispGlowCyanPlayer)"/>
-                <circle class="grave-wisp gw-5" cx="70" cy="92" r="2.5" fill="url(#wispGlowPurplePlayer)"/>
+                <!-- 墓地幽冥微光/寒霜幽魂微粒 (Cold Pale Silver Wisps) -->
+                <circle class="grave-wisp gw-1" cx="30" cy="55" r="3.2" fill="url(#wispGlowSilverPlayer)"/>
+                <circle class="grave-wisp gw-2" cx="80" cy="50" r="2.8" fill="url(#wispGlowAshPlayer)"/>
+                <circle class="grave-wisp gw-3" cx="55" cy="38" r="2.5" fill="url(#wispGlowSilverPlayer)"/>
+                <circle class="grave-wisp gw-4" cx="40" cy="90" r="2" fill="url(#wispGlowAshPlayer)"/>
+                <circle class="grave-wisp gw-5" cx="70" cy="92" r="2" fill="url(#wispGlowSilverPlayer)"/>
 
-                <!-- 地底幽冥墓霧 (Ground Mist) -->
-                <ellipse cx="55" cy="122" rx="45" ry="8" fill="#a855f7" opacity="0.18"/>
+                <!-- 地底沉降冷霧 (Cold Ground Mist) -->
+                <ellipse cx="55" cy="122" rx="45" ry="8" fill="#64748b" opacity="0.16"/>
               </svg>
             </div>
           </div>
@@ -799,7 +801,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-forest-grave-v1" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-grave-grey-ai-v2" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

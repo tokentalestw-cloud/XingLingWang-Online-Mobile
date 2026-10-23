@@ -16248,6 +16248,14 @@ async function aiCastSpell(spellCard, effectCallback) {
   
   await window.xlwOnMagicCardCast(false);
   await effectCallback();
+  // 送入對手墓地（若未被除外且非場地魔法）
+  if (spellCard && !enemyExileZone.includes(spellCard) && spellCard.art_subtype !== "場地" && spellCard.magic_type !== "場地") {
+    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+    if (!window.XLW_ENEMY.grave.includes(spellCard)) {
+      window.XLW_ENEMY.grave.push(spellCard);
+      enemyGraveyard = window.XLW_ENEMY.grave;
+    }
+  }
   return true;
 }
 
@@ -16783,9 +16791,6 @@ async function aiPerformTacticalMovement() {
       }
     }
   }
-  if (roaredCardBackup !== null && window.XLW_ENEMY.hand) {
-    window.XLW_ENEMY.hand.splice(roaredCardIdx, 0, roaredCardBackup);
-  }
 }
 
 
@@ -16919,7 +16924,8 @@ async function runEnemyTurn() {
   } catch (e) { console.warn("AI 狀態清理異常 (AquariusDebuff):", e); }
 
   if (window.XLW_ENEMY.running) {
-    console.warn("AI runEnemyTurn was flagged running. Resetting flag and executing turn.");
+    console.warn("AI runEnemyTurn blocked: AI already running");
+    return;
   }
   window.XLW_ENEMY.running = true;
 
@@ -17070,7 +17076,7 @@ async function runEnemyTurn() {
       console.error("AI 召喚階段發動魔法卡異常:", e);
     }
 
-    // 8. ★ AI 單位召喚核心邏輯 (Core Summoning & 100% Guaranteed Placement) ★
+    // 8. ★ AI 單位召喚核心邏輯（嚴格遵守每回合 1 次通常召喚規則，絕不憑空印卡） ★
     let bestSummon = null;
     try {
       bestSummon = window.aiFindBestSummonableCard();
@@ -17084,6 +17090,16 @@ async function runEnemyTurn() {
     if (bestSummon) {
       const { handIdx, card, tributeUnits } = bestSummon;
       const canSummonToEnemy = xlwIsEnemySummonCard(card);
+
+      // 若需獻祭，先行獻祭以騰出戰場格位
+      if (tributeUnits && tributeUnits.length > 0) {
+        for (const sac of tributeUnits) {
+          try { await window.xlwEnemyTributeUnit(sac.unit, sac.zone, sac.idx); } catch (e) {}
+          field[sac.zone][sac.idx] = null;
+        }
+        logBattle(`✨ 對手 AI 獻祭了 ${tributeUnits.length} 個單位進行獻祭召喚！`);
+        render();
+      }
 
       if (canSummonToEnemy) {
         const pFront = field.player_front.findIndex(u => !u);
@@ -17102,15 +17118,6 @@ async function runEnemyTurn() {
       }
 
       if (destZone && destIdx !== -1) {
-        if (tributeUnits && tributeUnits.length > 0) {
-          for (const sac of tributeUnits) {
-            try { await window.xlwEnemyTributeUnit(sac.unit, sac.zone, sac.idx); } catch (e) {}
-            field[sac.zone][sac.idx] = null;
-          }
-          logBattle(`✨ 對手 AI 獻祭了 ${tributeUnits.length} 個單位進行獻祭召喚！`);
-          render();
-        }
-        
         window.XLW_ENEMY.hand.splice(handIdx, 1);
         const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
         field[destZone][destIdx] = {
@@ -17122,7 +17129,7 @@ async function runEnemyTurn() {
           summonedZone: destZone
         };
         field[destZone][destIdx].card.creator = "enemy";
-        window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
+        window.XLW_enemySummonCountThisTurn = 1;
         logBattle(`🤖【對手 AI 召喚】打出單位【${card.name}】到${destZone.startsWith("player_") ? "我方" : "對手"}${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
         render();
         await sleep(1000);
@@ -17171,19 +17178,15 @@ async function runEnemyTurn() {
         }
       }
     } else {
-      // 保底機制：若手牌無常規免祭品單位，自動特殊召喚【小旅人】建立戰線！
+      // 手牌無可召喚單位時：絕不憑空印卡！符合條件時僅能從森林召喚小旅人（與玩家森林規則完全相同）
       const eFront = field.enemy_front.findIndex(u => !u);
       const eBack = field.enemy_back.findIndex(u => !u);
-      if (eFront >= 0 || eBack >= 0) {
+      const currentEnemyUnitsCount = ["enemy_front", "enemy_back"].reduce((s, z) => s + field[z].filter(Boolean).length, 0);
+      if (currentEnemyUnitsCount < 2 && (eFront >= 0 || eBack >= 0)) {
         destZone = eFront >= 0 ? "enemy_front" : "enemy_back";
         destIdx = eFront >= 0 ? eFront : eBack;
-
-        const aiDeckUnit = (window.XLW_ENEMY.deck || []).find(c => c && c.type === "unit" && getCardTributeCost(c) === 0) ||
-                           allCards.find(c => c && c.type === "unit" && getCardTributeCost(c) === 0 && (c.deck === (window.XLW_ENEMY.deckName || "妖怪村莊") || c.faction === (window.XLW_ENEMY.deckName || "妖怪村莊"))) ||
-                           { id: "C-VLG-0001", name: "小妖怪", type: "unit", tribute: 0, attack: 2, score: 1, image: "/static/card_images/c_vlg_0001.jpeg" };
-        const fallbackCard = structuredClone(aiDeckUnit);
         field[destZone][destIdx] = {
-          card: fallbackCard,
+          card: structuredClone(LITTLE_TRAVELER),
           tapped: false,
           attacking: false,
           target: null,
@@ -17191,36 +17194,22 @@ async function runEnemyTurn() {
           summonedZone: destZone
         };
         field[destZone][destIdx].card.creator = "enemy";
-        window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
-        logBattle(`🤖【對手 AI 召喚】打出單位【${fallbackCard.name}】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
+        window.XLW_enemySummonCountThisTurn = 1;
+        logBattle(`🤖【對手 AI 召喚】從森林召喚了【小旅人】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
         render();
         await sleep(1000);
 
         try {
-          let starryCountered = false;
-          const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-          if (playerHasStarry) {
-            const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了單位，是否從手牌發動【星空】進行反制？`);
-            if (useStarry) {
-              starryCountered = true;
-              const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-              const sCard = hand.splice(sIdx, 1)[0];
-              graveyard.push(sCard);
-              logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手的【小旅人】！`);
-              await destroyUnit(destZone, destIdx, "enemy", false);
-              render();
-            }
-          }
-          if (!starryCountered) {
-            await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
-          }
+          await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
         } catch (e) {}
+      } else {
+        logBattle("對手召喚階段：手牌無符合條件的單位，跳過召喚。");
       }
     }
     render();
-    await sleep(800);
+    await sleep(700);
 
-    // 9. ★ 進攻宣言與戰術佈陣階段 ★
+    // 9. ★ 進攻宣言 與 戰術佈陣 嚴格二選一 ★
     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
     const isAiFirstTurn = aiWentFirst && (turn === 1);
 
@@ -17228,18 +17217,16 @@ async function runEnemyTurn() {
       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(800);
+      await sleep(700);
     } else if (isAiFirstTurn) {
       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(800);
+      await sleep(700);
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
-      phase = "進攻宣言";
-      setStatus(`對手回合：${enemyDeckName} 正在進行進攻檢視與宣告...`);
-      render();
 
+      // 檢查進攻可行性
       let opponentAttackCount = 0;
       try {
         const playerHasYeshu = ["player_front", "player_back"].some(pz => 
@@ -17299,20 +17286,19 @@ async function runEnemyTurn() {
         console.error("AI 進攻宣告階段異常:", errAtk);
       }
 
-            if (opponentAttackCount > 0) {
+      // 嚴格二選一：若有宣告進攻，絕不進入戰術佈陣；若無宣告進攻，方可進入戰術佈陣
+      if (opponentAttackCount > 0) {
+        phase = "進攻宣言";
         window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
+        window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
+        logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（跳過戰術佈陣）。 ——`);
+        render();
         await new Promise(r => setTimeout(r, 1900));
-      }
-      
-      window.XLW_DEFENSE_RULE.playerNeedsDefense = opponentAttackCount > 0;
-      logBattle(`—— 對手回合階段完成，已宣告 ${opponentAttackCount} 條星星戰線進攻。 ——`);
-      render();
-      await sleep(700);
-
-      // 10. ★ 戰術佈陣階段 (Tactical Phase & Fallback Summon) ★
-      if (opponentAttackCount === 0) {
-        phase = "戰術佈陣"; window.xlwShowPhaseBanner("戰術佈陣", "#a855f7");
-        setStatus(`對手回合：${enemyDeckName} 正在進行戰術佈陣與單位佈局...`);
+      } else {
+        window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+        phase = "戰術佈陣";
+        window.xlwShowPhaseBanner("戰術佈陣", "#a855f7");
+        setStatus(`對手回合：${enemyDeckName} 選擇進行戰術佈陣...`);
         render();
 
         try {
@@ -17321,131 +17307,56 @@ async function runEnemyTurn() {
           console.warn("AI 戰術移動異常:", e);
         }
 
-        const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
-        const emptyBackIdx = field.enemy_back.findIndex(u => !u);
-        const hasEmptySlot = emptyFrontIdx >= 0 || emptyBackIdx >= 0;
-
-        if (hasEmptySlot) {
-          let bestTactical = null;
-          try {
-            bestTactical = window.aiFindBestSummonableCard();
-          } catch (e) {
-            console.error("AI 戰術階段召喚檢索出錯:", e);
-          }
-
-          const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
-          const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
-
-          if (bestTactical && destZone && destIdx !== -1) {
-            const { handIdx, card, tributeUnits } = bestTactical;
-            if (tributeUnits && tributeUnits.length > 0) {
-              for (const sac of tributeUnits) {
-                try { await window.xlwEnemyTributeUnit(sac.unit, sac.zone, sac.idx); } catch (e) {}
-                field[sac.zone][sac.idx] = null;
-              }
-              logBattle(`✨ 對手 AI 戰術階段獻祭了 ${tributeUnits.length} 個單位！`);
-              render();
+        // 規則嚴格校驗：若召喚階段已進行過通常召喚，戰術佈陣階段絕不得重複召喚！
+        if (window.XLW_enemySummonCountThisTurn >= 1) {
+          logBattle("對手已於召喚階段進行過通常召喚，戰術佈陣不再進行額外召喚。");
+        } else {
+          // 召喚階段未曾召喚，允許在此進行至多 1 次免祭品通常召喚（嚴禁憑空印卡）
+          const emptyFrontIdx = field.enemy_front.findIndex(u => !u);
+          const emptyBackIdx = field.enemy_back.findIndex(u => !u);
+          if (emptyFrontIdx >= 0 || emptyBackIdx >= 0) {
+            let bestTactical = null;
+            try {
+              bestTactical = window.aiFindBestSummonableCard();
+            } catch (e) {
+              console.error("AI 戰術階段召喚檢索出錯:", e);
             }
 
-            window.XLW_ENEMY.hand.splice(handIdx, 1);
-            const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
-            field[destZone][destIdx] = {
-              card: card,
-              tapped: isLyingOrc,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: destZone
-            };
-            field[destZone][destIdx].card.creator = "enemy";
-            window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
-            logBattle(`🤖【對手 AI 戰術佈陣召喚】打出單位【${card.name}】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
-            render();
-            await sleep(1000);
+            const destZone = emptyFrontIdx >= 0 ? "enemy_front" : "enemy_back";
+            const destIdx = emptyFrontIdx >= 0 ? emptyFrontIdx : emptyBackIdx;
 
-            try {
-              let starryCountered = false;
-              const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-              if (playerHasStarry) {
-                const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制？`);
-                if (useStarry) {
-                  starryCountered = true;
-                  const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-                  const sCard = hand.splice(sIdx, 1)[0];
-                  graveyard.push(sCard);
-                  logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
-                  await destroyUnit(destZone, destIdx, "enemy", false);
-                  render();
+            if (bestTactical && destZone && destIdx !== -1) {
+              const { handIdx, card } = bestTactical;
+              // 戰術佈陣只能進行免祭品召喚
+              if (getCardTributeCost(card) === 0) {
+                window.XLW_ENEMY.hand.splice(handIdx, 1);
+                const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+                field[destZone][destIdx] = {
+                  card: card,
+                  tapped: isLyingOrc,
+                  attacking: false,
+                  target: null,
+                  summonedTurn: turn,
+                  summonedZone: destZone
+                };
+                field[destZone][destIdx].card.creator = "enemy";
+                window.XLW_enemySummonCountThisTurn = 1;
+                logBattle(`🤖【對手 AI 戰術佈陣召喚】打出單位【${card.name}】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
+                render();
+                await sleep(1000);
+
+                try {
+                  await triggerAiSummonEffects(card, destZone, destIdx);
+                  await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
+                } catch (errTacticalTrig) {
+                  console.error("AI 戰術召喚觸發效果出錯:", errTacticalTrig);
                 }
               }
-
-              let interruptCountered = false;
-              if (!starryCountered) {
-                const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
-                const hasImm = hasImmediateEffect(card);
-                if (playerHasInterrupt && hasImm) {
-                  const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否發動【打斷你一下】無效其效果？`);
-                  if (useInterrupt) {
-                    interruptCountered = true;
-                    const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
-                    const sCard = hand.splice(sIdx, 1)[0];
-                    graveyard.push(sCard);
-                    logBattle(`✨ 我方發動【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
-                    render();
-                  }
-                }
-              }
-
-              if (!starryCountered && !interruptCountered) {
-                await triggerAiSummonEffects(card, destZone, destIdx);
-              }
-              if (!starryCountered) {
-                await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
-              }
-            } catch (errTacticalTrig) {
-              console.error("AI 戰術召喚觸發效果出錯:", errTacticalTrig);
-            }
-          } else {
-            // 保底召喚小旅人
-            const aiDeckUnit = (window.XLW_ENEMY.deck || []).find(c => c && c.type === "unit" && getCardTributeCost(c) === 0) ||
-                               allCards.find(c => c && c.type === "unit" && getCardTributeCost(c) === 0 && (c.deck === (window.XLW_ENEMY.deckName || "妖怪村莊") || c.faction === (window.XLW_ENEMY.deckName || "妖怪村莊"))) ||
-                               { id: "C-VLG-0001", name: "小妖怪", type: "unit", tribute: 0, attack: 2, score: 1, image: "/static/card_images/c_vlg_0001.jpeg" };
-            const fallbackCard = structuredClone(aiDeckUnit);
-            field[destZone][destIdx] = {
-              card: fallbackCard,
-              tapped: false,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: destZone
-            };
-            logBattle(`🤖【對手 AI 戰術佈陣】打出單位【${fallbackCard.name}】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}`);
-
-            try {
-              let starryCountered = false;
-              const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-              if (playerHasStarry) {
-                const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了單位，是否從手牌發動【星空】進行反制？`);
-                if (useStarry) {
-                  starryCountered = true;
-                  const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-                  const sCard = hand.splice(sIdx, 1)[0];
-                  graveyard.push(sCard);
-                  logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【小旅人】！`);
-                  await destroyUnit(destZone, destIdx, "enemy", false);
-                  render();
-                }
-              }
-              if (!starryCountered) {
-                await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
-              }
-            } catch (errTravelerTrig) {
-              console.error("小旅人觸發效果出錯:", errTravelerTrig);
             }
           }
-          render();
-          await sleep(1000);
         }
+        render();
+        await sleep(700);
       }
     }
 
@@ -17475,6 +17386,12 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  if (!isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running))) {
+    console.warn("endPlayerTurnAndRunEnemy blocked: not player turn or AI already running");
+    return;
+  }
+  const endBtnEl = $("stableActionEnd");
+  if (endBtnEl) endBtnEl.disabled = true;
   window.XLW_playerCurseSummonActive = false;
   window.XLW_playerFacelessManActive = false;
   window.XLW_enemyFacelessManActive = false;
@@ -22011,9 +21928,10 @@ function renderStablePanel() {
   const cancelBtn = $("stableActionCancel");
   const endBtn = $("stableActionEnd");
 
+  const isAiRunning = !isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running));
   if (tacticalBtn) {
     const canSwitchToTactical = (phase === "召喚階段" || phase === "戰術佈陣" || phase === "進攻宣言");
-    tacticalBtn.disabled = !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
+    tacticalBtn.disabled = isAiRunning || !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
     tacticalBtn.classList.toggle("active", phase === "戰術佈陣");
   }
   if (attackBtn) {
@@ -22023,17 +21941,17 @@ function renderStablePanel() {
     } else if (phase === "戰術佈陣") {
       canSwitchToAttack = false;
     }
-    attackBtn.disabled = !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
+    attackBtn.disabled = isAiRunning || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");
   }
   if (confirmBtn) {
-    confirmBtn.disabled = selectedHandForTribute === null || countSelectedTributesValue(selectedTributes, hand[selectedHandForTribute]) < getCardTributeCost(hand[selectedHandForTribute]);
+    confirmBtn.disabled = isAiRunning || selectedHandForTribute === null || countSelectedTributesValue(selectedTributes, hand[selectedHandForTribute]) < getCardTributeCost(hand[selectedHandForTribute]);
   }
   if (cancelBtn) {
-    cancelBtn.disabled = (selectedHandForSummon === null && selectedHandForTribute === null && selectedAttacker === null && !tributeWaitingPosition);
+    cancelBtn.disabled = isAiRunning || (selectedHandForSummon === null && selectedHandForTribute === null && selectedAttacker === null && !tributeWaitingPosition);
   }
   if (endBtn) {
-    endBtn.disabled = phase === "防守階段";
+    endBtn.disabled = isAiRunning || phase === "防守階段";
   }
 
   // 森林召喚區域同步狀態 (清晰區分可召喚與不可召喚狀態，但永遠保持森林立體神木群生機盎然)
