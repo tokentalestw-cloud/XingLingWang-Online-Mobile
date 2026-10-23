@@ -200,11 +200,11 @@ button:disabled {
   right: 18px;
   top: 18px;
   height: 47%;
-  background-image: url('/static/custom_bg/top_bg.jpeg');
+  background-image: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c');
   background-size: cover;
   background-position: center;
   border-radius: 20px;
-  opacity: 0.15; /* Soft top illustration blending with dark board */
+  opacity: 0.85;
   z-index: 0;
   pointer-events: none;
   box-shadow: inset 0 0 80px rgba(0,0,0,0.5) !important;
@@ -217,11 +217,11 @@ button:disabled {
   right: 18px;
   bottom: 18px;
   height: 47%;
-  background-image: url('/static/custom_bg/bottom_bg.jpeg');
+  background-image: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c');
   background-size: cover;
   background-position: center;
   border-radius: 20px;
-  opacity: 0.15; /* Soft top illustration blending with dark board */
+  opacity: 0.85;
   z-index: 0;
   pointer-events: none;
   box-shadow: inset 0 0 80px rgba(0,0,0,0.5) !important;

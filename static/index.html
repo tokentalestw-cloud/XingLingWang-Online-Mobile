@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=22.16-playmats-applied">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261023-new-mats">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -145,9 +145,9 @@
   <div class="game-shell">
     <div class="board-wrap">
       <section id="boardWrap" class="board">
-        <!-- 決鬥場地區桌墊架構 (對方與我方桌墊圖) -->
-        <div id="enemyPlaymat" class="board-playmat enemy-playmat"></div>
-        <div id="playerPlaymat" class="board-playmat player-playmat"></div>
+        <!-- 決鬥場地區桌墊架構 (對方與我方全新桌墊圖) -->
+        <div id="enemyPlaymat" class="board-playmat enemy-playmat" style="background-image: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c') !important;"></div>
+        <div id="playerPlaymat" class="board-playmat player-playmat" style="background-image: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c') !important;"></div>
 
         <!-- 左側卡牌詳細資訊看板 -->
         <!-- 左側卡牌詳細資訊看板 (Arcade Comic Style) -->
@@ -331,7 +331,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=22.16-playmats-applied" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261023-new-mats" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

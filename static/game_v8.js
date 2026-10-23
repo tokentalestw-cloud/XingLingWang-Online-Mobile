@@ -30701,3 +30701,24 @@ window.addEventListener("orientationchange", function() {
     mask.style.pointerEvents = "none";
   }, 600);
 });
+
+// 強制確保決鬥桌墊套用最新上傳卡墊 (Opponent: new_mat_opponent_2026.jpg, Player: new_mat_player_2026.jpg)
+(function enforceNewDuelPlaymats() {
+  function applyPlaymatImages() {
+    const opp = document.getElementById("enemyPlaymat");
+    const ply = document.getElementById("playerPlaymat");
+    if (opp) {
+      opp.style.setProperty("background-image", "url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c')", "important");
+    }
+    if (ply) {
+      ply.style.setProperty("background-image", "url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c')", "important");
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyPlaymatImages);
+  } else {
+    applyPlaymatImages();
+  }
+  window.addEventListener("load", applyPlaymatImages);
+})();
+

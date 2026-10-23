@@ -13,8 +13,8 @@
   --panel-bg: rgba(14, 10, 24, 0.85);
   --bg-cosmic: 
     radial-gradient(ellipse at 50% 12%, #1e2756 0%, #131a3d 45%, #0c1228 85%, #080c1e 100%);
-  --enemy-playmat-bg: url('/static/custom_bg/top_bg.jpeg?v=22.16-playmat');
-  --player-playmat-bg: url('/static/custom_bg/bottom_bg.jpeg?v=22.16-playmat');
+  --enemy-playmat-bg: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c');
+  --player-playmat-bg: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c');
   --panel-bg: rgba(255, 255, 255, 0.75);
   --text-primary: #ffffff;
   --text-muted: #ffe6a0;
@@ -3699,7 +3699,7 @@ html, body {
 .enemy-playmat {
   top: 14px;
   height: 462px;
-  background-image: var(--enemy-playmat-bg, url('/static/custom_bg/top_bg.jpeg?v=22.16-playmat'));
+  background-image: var(--enemy-playmat-bg, url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261023c')) !important;
   background-color: transparent;
   border: 1.5px solid rgba(255, 90, 95, 0.45);
   border-radius: 20px 20px 8px 8px;
@@ -3709,7 +3709,7 @@ html, body {
 .player-playmat {
   bottom: 14px;
   height: 462px;
-  background-image: var(--player-playmat-bg, url('/static/custom_bg/bottom_bg.jpeg?v=22.16-playmat'));
+  background-image: var(--player-playmat-bg, url('/static/custom_bg/new_mat_player_2026.jpg?v=20261023c')) !important;
   background-color: transparent;
   border: 1.5px solid rgba(78, 148, 255, 0.45);
   border-radius: 8px 8px 20px 20px;
