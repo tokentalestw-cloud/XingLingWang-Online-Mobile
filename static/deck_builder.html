@@ -855,7 +855,6 @@
     <div class="deck-select-wrap" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <label for="factionFilterSelect" style="color: var(--gold-accent); font-weight: bold; font-size: 11.5px;">選擇種族:</label>
       <select id="factionFilterSelect" class="deck-select" onchange="changeFactionFilter(this.value)">
-        <option value="全部種族">🌐 全部種族</option>
         <option value="藝術品">藝術品 (Artwork)</option>
         <option value="喵喵賊">喵喵賊 (Cat Clan)</option>
         <option value="妖怪村莊">妖怪村莊 (Yokai Village)</option>
@@ -881,8 +880,8 @@
         <select id="deckSelect" class="deck-select" onchange="changeSelectedDeck(this.value)" style="min-width: 170px;">
           <!-- populated dynamically -->
         </select>
-        <button class="action-btn order-btn" onclick="moveCurrentDeck(-1)" title="將當前牌組順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
-        <button class="action-btn order-btn" onclick="moveCurrentDeck(1)" title="將當前牌組順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
+        <button id="moveUpDeckBtn" class="action-btn order-btn" onclick="moveCurrentDeck(-1)" title="將當前牌組順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
+        <button id="moveDownDeckBtn" class="action-btn order-btn" onclick="moveCurrentDeck(1)" title="將當前牌組順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
       </div>
 
       <div style="display: flex; align-items: center; gap: 5px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; margin-left: 4px;">
@@ -998,12 +997,33 @@
     // 取得所有自訂牌組鍵名清單
     function getCustomDeckKeys(faction = "") {
       const keys = Object.keys(currentDecks || {}).filter(k => !k.endsWith("_extra") && k !== "中立單位");
-      if (!faction || faction === "全部種族") return keys;
+      if (!faction) return keys;
       return keys.filter(k => 
         k.startsWith(faction + "_") || 
         k === faction || 
         (typeof normDeckName === "function" ? normDeckName(k) === faction : k.includes(faction))
       );
+    }
+
+    // 更新上移 / 下移按鈕的可用狀態
+    function updateOrderButtonsState() {
+      const upBtn = document.getElementById("moveUpDeckBtn");
+      const downBtn = document.getElementById("moveDownDeckBtn");
+      if (!upBtn || !downBtn) return;
+
+      if (!selectedDeckName || !currentDecks[selectedDeckName]) {
+        upBtn.disabled = true;
+        downBtn.disabled = true;
+        return;
+      }
+
+      const allKeys = Object.keys(currentDecks).filter(k => !k.endsWith("_extra") && k !== "中立單位");
+      const fac = normDeckName(selectedDeckName);
+      const factionKeys = allKeys.filter(k => normDeckName(k) === fac);
+      const facIndex = factionKeys.indexOf(selectedDeckName);
+
+      upBtn.disabled = (facIndex <= 0);
+      downBtn.disabled = (facIndex === -1 || facIndex >= factionKeys.length - 1);
     }
 
     // 動態填充自訂牌組下拉選單 (依選擇的種族過濾，並保持 decks.json 的順序)
@@ -1012,7 +1032,7 @@
       const factionFilter = document.getElementById("factionFilterSelect");
       if (!deckSelect) return;
 
-      const currentFaction = factionFilter ? factionFilter.value : "全部種族";
+      const currentFaction = factionFilter ? factionFilter.value : "藝術品";
       deckSelect.innerHTML = "";
 
       const filteredKeys = getCustomDeckKeys(currentFaction);
@@ -1028,15 +1048,16 @@
         renderLibrary();
         renderCurrentDeck();
         updateCounter();
+        updateOrderButtonsState();
         return;
       }
 
-      filteredKeys.forEach(key => {
+      filteredKeys.forEach((key, index) => {
         const opt = document.createElement("option");
         opt.value = key;
         const mainCount = Array.isArray(currentDecks[key]) ? currentDecks[key].length : 0;
         const extraCount = Array.isArray(currentDecks[key + "_extra"]) ? currentDecks[key + "_extra"].length : 0;
-        opt.textContent = `${key} (${mainCount}/20 張, 額外 ${extraCount})`;
+        opt.textContent = `#${index + 1} ${key} (${mainCount}/20 張, 額外 ${extraCount})`;
         deckSelect.appendChild(opt);
       });
 
@@ -1048,6 +1069,7 @@
 
       selectedDeckName = deckSelect.value;
       loadSelectedDeckData();
+      updateOrderButtonsState();
     }
 
     // 啟動加載
@@ -1072,6 +1094,7 @@
       if (!val) return;
       selectedDeckName = val;
       loadSelectedDeckData();
+      updateOrderButtonsState();
     }
 
     // 快速上移/下移當前選擇的自訂牌組
@@ -1116,6 +1139,7 @@
       allKeys[idx2] = deckName;
 
       await saveDeckOrder(allKeys, deckName);
+      showToast(`✔ 成功將「${deckName}」調整至第 #${targetFacIndex + 1} 位！`);
     }
 
     // 儲存牌組自訂順序至後端 API
@@ -1146,7 +1170,6 @@
 
           populateDeckDropdown(activeDeckName || selectedDeckName);
           renderDeckListModal();
-          showToast("✔ 牌組順序已更新並成功保存！");
         } else {
           showToast("順序保存失敗: " + (res.message || res.detail), true);
         }
@@ -1159,7 +1182,7 @@
     async function addPresetDeck() {
       const factionFilter = document.getElementById("factionFilterSelect");
       let currentFaction = factionFilter ? factionFilter.value : "";
-      if (!currentFaction || currentFaction === "全部種族") {
+      if (!currentFaction) {
         currentFaction = normDeckName(selectedDeckName) || "藝術品";
       }
 
@@ -1183,7 +1206,7 @@
 
       await saveDeckToServer();
 
-      if (factionFilter && factionFilter.value !== "全部種族" && factionFilter.value !== currentFaction) {
+      if (factionFilter && factionFilter.value !== currentFaction) {
         factionFilter.value = currentFaction;
       }
       populateDeckDropdown(fullDeckName);
@@ -1304,11 +1327,11 @@
       const filterSelect = document.getElementById("modalFactionFilter");
       if (!tableBody) return;
 
-      const selectedFac = filterSelect ? filterSelect.value : "全部種族";
+      const selectedFac = filterSelect ? filterSelect.value : "藝術品";
       const keys = getCustomDeckKeys(selectedFac);
 
       if (countBadge) {
-        countBadge.textContent = `共 ${keys.length} 組牌組`;
+        countBadge.textContent = `${selectedFac}：共 ${keys.length} 組牌組`;
       }
 
       tableBody.innerHTML = "";
@@ -1360,7 +1383,7 @@
     function selectDeckFromModal(deckKey) {
       const fac = normDeckName(deckKey);
       const mainFactionFilter = document.getElementById("factionFilterSelect");
-      if (mainFactionFilter && mainFactionFilter.value !== "全部種族" && mainFactionFilter.value !== fac) {
+      if (mainFactionFilter && mainFactionFilter.value !== fac) {
         mainFactionFilter.value = fac;
       }
       populateDeckDropdown(deckKey);
@@ -1897,7 +1920,6 @@
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <label style="font-size: 12px; color: var(--text-muted); font-weight: bold;">篩選種族：</label>
           <select id="modalFactionFilter" class="deck-select" onchange="renderDeckListModal()" style="font-size: 12px; padding: 3px 8px;">
-            <option value="全部種族">🌐 全部種族</option>
             <option value="藝術品">藝術品</option>
             <option value="喵喵賊">喵喵賊</option>
             <option value="妖怪村莊">妖怪村莊</option>
