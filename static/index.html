@@ -74,6 +74,7 @@
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
     <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
+    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwStartPuzzleMode()">🧩 殘局模式</button>
     <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
     
     <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">🏠 首頁</button>
@@ -801,7 +802,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-draw-tactical-v4" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-puzzle-v1" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -870,6 +871,12 @@
         <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwStartTutorial()" disabled style="opacity: 0.55; cursor: not-allowed;">
           <span class="btn-icon">🎓</span>
           <span class="btn-text" id="xlwTutorialBtnText">載入中...</span>
+          <span class="btn-shine"></span>
+        </button>
+
+        <button class="menu-btn menu-puzzle" id="xlwWelcomePuzzleBtn" onclick="window.xlwStartPuzzleMode()" disabled style="opacity: 0.55; cursor: not-allowed;">
+          <span class="btn-icon">🧩</span>
+          <span class="btn-text" id="xlwPuzzleBtnText">載入中...</span>
           <span class="btn-shine"></span>
         </button>
 

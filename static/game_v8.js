@@ -707,9 +707,11 @@ async function init() {
       const aiBtn = document.getElementById("xlwWelcomeAiBtn");
       const multiBtn = document.getElementById("xlwWelcomeMultiBtn");
       const tutBtn = document.getElementById("xlwWelcomeTutorialBtn");
+      const puzzleBtn = document.getElementById("xlwWelcomePuzzleBtn");
       const aiText = document.getElementById("xlwAiBtnText");
       const multiText = document.getElementById("xlwMultiBtnText");
       const tutText = document.getElementById("xlwTutorialBtnText");
+      const puzzleText = document.getElementById("xlwPuzzleBtnText");
 
       if (aiBtn) {
         aiBtn.disabled = false;
@@ -726,9 +728,15 @@ async function init() {
         tutBtn.style.opacity = "1";
         tutBtn.style.cursor = "pointer";
       }
+      if (puzzleBtn) {
+        puzzleBtn.disabled = false;
+        puzzleBtn.style.opacity = "1";
+        puzzleBtn.style.cursor = "pointer";
+      }
       if (aiText) aiText.textContent = "單人對抗 AI";
       if (multiText) multiText.textContent = "線上雙人對決";
       if (tutText) tutText.textContent = "🎓 新手教學模式";
+      if (puzzleText) puzzleText.textContent = "🧩 殘局挑戰";
       console.log("Welcome buttons unlocked: card database loaded successfully!");
     } catch (eUnlock) {
       console.warn("Failed to unlock welcome buttons:", eUnlock);
@@ -2849,14 +2857,14 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     if (lane > 0) {
       const leftUnit = field[zone][lane - 1];
       const leftCard = leftUnit && (leftUnit.card || leftUnit);
-      if (leftCard && leftCard.id === "ART-0002") {
+      if (leftCard && (leftCard.id === "ART-0002" || leftCard.name?.includes("大鵰像"))) {
         baseAtk += 2;
       }
     }
     if (lane < 4) {
       const rightUnit = field[zone][lane + 1];
       const rightCard = rightUnit && (rightUnit.card || rightUnit);
-      if (rightCard && rightCard.id === "ART-0002") {
+      if (rightCard && (rightCard.id === "ART-0002" || rightCard.name?.includes("大鵰像"))) {
         baseAtk += 2;
       }
     }
@@ -8185,8 +8193,8 @@ async function performSummonToSlot(zone, idx) {
           logBattle("札克 立即效果：對手正前方及後方皆滿，無法召喚小旅人。");
         }
       }
-      // R-ORC-0014 獸人挑戰者
-      if (card.id === "R-ORC-0014" || card.name?.includes("挑戰者")) {
+      // R-ORC-0014 / ORC-0007 獸人跳戰者 / 獸人挑戰者
+      if (card.id === "R-ORC-0014" || card.id === "ORC-0007" || card.name?.includes("挑戰者") || card.name?.includes("跳戰者")) {
         const isPlayer = zone.startsWith("player_");
         const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
         const candidates = [];
@@ -17107,6 +17115,16 @@ async function runEnemyTurn() {
         logBattle("對手防守階段開始前，因我方無進攻單位，跳過防守階段。");
       }
     } catch (e) { console.warn("AI 防守階段異常:", e); }
+
+    // 🧩 殘局模式專屬結算：防守階段結束後立即評判勝負，不進入對手出牌階段
+    if (window.XLW_isPuzzleMode) {
+      window.XLW_ENEMY.running = false;
+      await sleep(600);
+      if (typeof window.xlwCheckPuzzleEnd === 'function') {
+        window.xlwCheckPuzzleEnd();
+      }
+      return;
+    }
 
     // 7. 召喚階段
     phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
@@ -29601,6 +29619,10 @@ window.xlwConfirmPreBattle = function() {
 };
 
 window.xlwReturnToTitle = function() {
+  window.XLW_isPuzzleMode = false;
+  const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
+  const pModal = document.getElementById("xlwPuzzleModal"); if (pModal) pModal.remove();
+  const resPanel = document.getElementById("xlwResultPanel"); if (resPanel) resPanel.classList.remove("show");
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   const lp = document.getElementById("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
@@ -30853,4 +30875,377 @@ window.addEventListener("orientationchange", function() {
   }
   window.addEventListener("load", applyPlaymatImages);
 })();
+
+// ===== 🧩 殘局挑戰模式引擎 (Puzzle Challenge Mode Engine) =====
+window.XLW_isPuzzleMode = false;
+
+window.xlwStartPuzzleMode = function() {
+  if (typeof window.xlwRequestFullScreen === 'function') {
+    window.xlwRequestFullScreen();
+  }
+  if (typeof window.xlwLockOrientation === 'function') {
+    window.xlwLockOrientation();
+  }
+
+  // 關閉歡迎首頁與出戰面板
+  const welcome = document.getElementById("xlwWelcomeOverlay");
+  if (welcome) {
+    welcome.classList.add("xlw-welcome-fadeout");
+    setTimeout(() => {
+      welcome.style.setProperty("display", "none", "important");
+    }, 300);
+  }
+  const prebattleModal = document.getElementById("xlwPreBattleDeckSelectOverlay");
+  if (prebattleModal) prebattleModal.style.setProperty("display", "none", "important");
+  const resultPanel = document.getElementById("xlwResultPanel");
+  if (resultPanel) resultPanel.classList.remove("show");
+
+  // 關閉現存殘局彈窗
+  const oldModal = document.getElementById("xlwPuzzleModal");
+  if (oldModal) oldModal.remove();
+
+  window.XLW_isPuzzleMode = true;
+  window.XLW_gameInProgress = true;
+  isMultiplayer = false;
+  isMyTurn = true;
+  isGameOverFlag = false;
+  opponent_mulligan_done = true;
+  mulliganActive = false;
+  selectedMulliganIndexes.clear();
+
+  // 設置回合為 2（避開第 1 回合先攻無法進攻的規則限制）
+  turn = 2;
+  phase = "召喚階段";
+  normalSummonUsed = false;
+  tacticalSummonUsed = false;
+  window.XLW_tacticalMoveUsed = false;
+  window.XLW_playerNeedsToDraw = false;
+  window.XLW_playerActionsPerformedThisTurn = false;
+  window.XLW_turnCombatWins = 0;
+  window.XLW_turnTappedUnits = new Set();
+  selectedAttacker = null;
+  clearModes();
+
+  // 1. 卡牌數據定義
+  const assaultOrc = {
+    id: "ORC-0005",
+    name: "突擊獸人",
+    type: "unit",
+    deck: "獸人",
+    faction: "獸人",
+    race: "獸人",
+    attack: "1",
+    score: 2,
+    tribute: 0,
+    effect_text: "進攻時攻擊力+3。若戰鬥勝利獎勵+2",
+    image: "/static/card_images/orc_0005.jpeg",
+    ownerSide: "player"
+  };
+
+  const shieldOrc = {
+    id: "ORC-0011",
+    name: "盾牌獸人",
+    type: "unit",
+    deck: "獸人",
+    faction: "獸人",
+    race: "獸人",
+    attack: "盾",
+    score: 2,
+    tribute: 0,
+    keywords: ["阻擋"],
+    effect_text: "阻擋。此卡左右邊的單位若戰鬥成功獎勵+1",
+    image: "/static/card_images/orc_0011.jpeg",
+    ownerSide: "player"
+  };
+
+  const backstabOrc = {
+    id: "ORC-0002",
+    name: "背刺獸人",
+    type: "unit",
+    deck: "獸人",
+    faction: "獸人",
+    race: "獸人",
+    attack: "2",
+    score: 3,
+    tribute: 0,
+    effect_text: "攻擊橫放單位時攻擊力+3。若戰鬥勝利獎勵+2",
+    image: "/static/card_images/orc_0002.jpeg",
+    ownerSide: "player"
+  };
+
+  const jumperOrc = {
+    id: "R-ORC-0014",
+    name: "獸人跳戰者",
+    type: "unit",
+    deck: "獸人",
+    faction: "獸人",
+    race: "獸人",
+    attack: "4",
+    score: 1,
+    tribute: 0,
+    effect_text: "登場時拉移對方前排一名單位至正前方。若戰鬥勝利獎勵+1",
+    image: "/static/card_images/r_orc_0014.jpeg",
+    ownerSide: "player"
+  };
+
+  const hammerSpell = {
+    id: "R-ORC-0033",
+    name: "阿庫瑪的戰錘",
+    type: "magic",
+    deck: "獸人",
+    faction: "獸人",
+    race: "法術",
+    attack: "0",
+    score: 0,
+    tribute: 0,
+    usable_phases: ["Main Phase"],
+    effect_text: "裝備魔法。攻擊力+1。戰鬥勝利額外+1★",
+    image: "/static/card_images/r_orc_0033.jpeg",
+    ownerSide: "player"
+  };
+
+  const screamingMan = {
+    id: "ART-0004",
+    name: "呐喊的人",
+    type: "unit",
+    deck: "藝術品",
+    faction: "藝術品",
+    race: "藝術品",
+    attack: "4",
+    score: 2,
+    tribute: 0,
+    effect_text: "貫穿",
+    image: "/static/card_images/art_0004.jpeg",
+    ownerSide: "enemy"
+  };
+
+  const eagleStatue = {
+    id: "ART-0002",
+    name: "大鵰像",
+    type: "unit",
+    deck: "藝術品",
+    faction: "藝術品",
+    race: "藝術品",
+    attack: "盾",
+    score: 2,
+    tribute: 0,
+    keywords: ["阻擋"],
+    effect_text: "阻擋。此卡左右邊的單位+2攻擊力",
+    image: "/static/card_images/art_0002.jpeg",
+    ownerSide: "enemy"
+  };
+
+  const armorOrnament = {
+    id: "ART-0005",
+    name: "鎧甲擺件",
+    type: "unit",
+    deck: "藝術品",
+    faction: "藝術品",
+    race: "藝術品",
+    attack: "3",
+    score: 3,
+    tribute: 0,
+    effect_text: "此卡不會被魔法卡選為目標",
+    image: "/static/card_images/art_0005.jpeg",
+    ownerSide: "enemy"
+  };
+
+  const twoStrangers = {
+    id: "ART-0007",
+    name: "兩位陌生人",
+    type: "unit",
+    deck: "藝術品",
+    faction: "藝術品",
+    race: "藝術品",
+    attack: "4",
+    score: 4,
+    tribute: 1,
+    effect_text: "立即:使場上1單位橫放",
+    image: "/static/card_images/art_0007.jpeg",
+    ownerSide: "enemy"
+  };
+
+  // 2. 我方手牌與場地初始化
+  hand = [structuredClone(jumperOrc), structuredClone(hammerSpell)];
+  deck = [];
+  graveyard = [];
+  enemyGraveyard = [];
+  playerExileZone = [];
+  enemyExileZone = [];
+  playerExtraDeck = [];
+  enemyExtraDeck = [];
+
+  // 我方場地：戰線1 突擊獸人(2★, 1 ATK)、戰線2 盾牌獸人(2★, 盾)、戰線4 背刺獸人(3★, 2 ATK)
+  field.player_front = [
+    { card: structuredClone(assaultOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
+    { card: structuredClone(shieldOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
+    null,
+    { card: structuredClone(backstabOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
+    null
+  ];
+  field.player_back = [null, null, null, null, null];
+
+  // 敵方場地：戰線1 呐喊的人(2★, 4 ATK)、戰線2 大鵰像(2★, 盾)、戰線3 鎧甲擺件(3★, 3 ATK)、戰線4 兩位陌生人(4★, 4 ATK, 橫置)
+  field.enemy_front = [
+    { card: structuredClone(screamingMan), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    { card: structuredClone(eagleStatue), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    { card: structuredClone(armorOrnament), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    { card: structuredClone(twoStrangers), tapped: true, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    null
+  ];
+  field.enemy_back = [null, null, null, null, null];
+
+  // 比分精準設置：我方初始 8★ (場上7★ + 額外1★)；敵方初始 20★ (場上11★ + 額外9★)
+  playerBonusScore = 1;
+  enemyBonusScore = 9;
+
+  // 對手 AI 狀態初始化
+  window.XLW_ENEMY = {
+    deck: [],
+    hand: [],
+    grave: [],
+    deckName: "藝術品",
+    running: false
+  };
+
+  // 啟用獨立頂部按鈕列與階段提示板
+  const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
+  if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
+  const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
+  if (topBarBtn) topBarBtn.style.setProperty("display", "flex", "important");
+
+  // 殘局頂部狀態橫條
+  window.xlwUpdatePuzzleStatusBar();
+
+  // 戰鬥日誌
+  logBattle("🧩 —— 殘局模式【破陣之刃】啟動！——");
+  logBattle("📌 局勢：我方【野人獸人】8★ vs 對手【藝術品】20★（落後 12★）！");
+  logBattle("⚠️ 敵方【大鵰像】正為左右兩翼單位提供 +2 攻擊力光環！");
+  logBattle("💡 目標：在此回合內進行關鍵操作，擊潰敵陣，於戰鬥結束時剛好反超比分逆轉獲勝！");
+  setStatus("🧩 殘局挑戰【破陣之刃】：在一回合內反轉戰局完成獲勝！");
+
+  render();
+  window.xlwShowPuzzleIntroModal();
+};
+
+window.xlwResetPuzzle = function() {
+  const pModal = document.getElementById("xlwPuzzleModal");
+  if (pModal) pModal.remove();
+  window.xlwStartPuzzleMode();
+};
+
+window.xlwUpdatePuzzleStatusBar = function() {
+  let bar = document.getElementById("xlwPuzzleStatusBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "xlwPuzzleStatusBar";
+    bar.className = "xlw-puzzle-status-bar";
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = `
+    <span class="puzzle-bar-badge">🧩 殘局挑戰</span>
+    <span class="puzzle-bar-text">目標：在一回合內進行極限破陣，於戰鬥結算時<span class="puzzle-bar-highlight">剛好反超比分</span>獲勝！</span>
+    <button class="puzzle-bar-reset-btn" onclick="window.xlwResetPuzzle()">🔄 重置殘局</button>
+  `;
+};
+
+window.xlwShowPuzzleIntroModal = function() {
+  const old = document.getElementById("xlwPuzzleModal");
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "xlwPuzzleModal";
+  overlay.className = "xlw-puzzle-modal-overlay";
+  overlay.innerHTML = `
+    <div class="xlw-puzzle-modal-box">
+      <div class="puzzle-modal-title" style="color: #c084fc;">🧩 殘局模式：【破陣之刃】</div>
+      <div style="font-size: 13px; color: #a855f7; font-weight: bold; margin-bottom: 12px;">野人獸人 VS 藝術品</div>
+      
+      <div class="puzzle-modal-desc">
+        <div style="color: #ffd76a; font-weight: bold; margin-bottom: 8px;">⚔️ 當前戰況分析：</div>
+        • <b>比分懸殊</b>：敵方目前以 <span style="color:#f87171; font-weight:bold;">20★</span> 遙遙領先我方的 <span style="color:#4ade80; font-weight:bold;">8★</span>（落後整整 12★）！<br>
+        • <b>銅牆鐵壁</b>：敵方戰線 2 的【大鵰像】為左右翼提供了 +2 攻擊力光環，正面強攻將無功而返！<br>
+        • <b>破局生機</b>：敵方戰線 4 的【兩位陌生人】已呈疲勞橫置狀態；我方手牌中握有可強制位移敵陣的【獸人跳戰者】與【阿庫瑪的戰錘】！<br><br>
+        <span style="color: #38bdf8; font-weight: bold;">🎯 勝利條件：</span> 在本回合內進行特定的一系列精確操作，發起進攻，剛好以 <b>15★ 對 14★</b> 反超 1 分逆轉絕殺！
+      </div>
+
+      <div class="puzzle-modal-btn-row">
+        <button class="puzzle-modal-btn primary" onclick="document.getElementById('xlwPuzzleModal').remove();">開始挑戰 ➔</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+};
+
+window.xlwCheckPuzzleEnd = function() {
+  const playerStars = calculateTotalStars(true);
+  const enemyStars = calculateTotalStars(false);
+  isGameOverFlag = true;
+
+  if (playerStars > enemyStars) {
+    window.xlwShowPuzzleSuccessModal(playerStars, enemyStars);
+  } else {
+    window.xlwShowPuzzleFailModal(playerStars, enemyStars);
+  }
+};
+
+window.xlwShowPuzzleSuccessModal = function(playerStars, enemyStars) {
+  const old = document.getElementById("xlwPuzzleModal");
+  if (old) old.remove();
+
+  const diff = playerStars - enemyStars;
+  const overlay = document.createElement("div");
+  overlay.id = "xlwPuzzleModal";
+  overlay.className = "xlw-puzzle-modal-overlay";
+  overlay.innerHTML = `
+    <div class="xlw-puzzle-modal-box" style="border-color: #ffd76a;">
+      <div class="puzzle-modal-title victory">🏆 殘局破解成功！剛好反超 ${diff} 分！</div>
+      <div style="font-size: 14px; color: #facc15; font-weight: bold; margin-bottom: 12px;">✨ 完美絕殺：我方 ${playerStars}★ VS 對手 ${enemyStars}★！</div>
+      
+      <div class="puzzle-modal-desc">
+        <div style="color: #4ade80; font-weight: bold; margin-bottom: 8px;">🎉 破局拆招大揭密：</div>
+        1. <b>空位破陣</b>：召喚【獸人跳戰者】至戰線 5 前排，發動立即效果將敵方【大鵰像】強制拉走，敵方前排左右翼的 +2 攻擊力光環瞬間瓦解！<br>
+        2. <b>戰錘突破</b>：對【突擊獸人】裝備【阿庫瑪的戰錘】，使其進攻攻擊力提升至 5 點，正面擊潰 4 攻擊力的【呐喊的人】，一舉奪得自帶獎勵(+2★)、戰錘(+1★)與相鄰盾牌獸人(+1★)共計 <b>+4★ 巨額獎勵</b>！<br>
+        3. <b>背刺絕殺</b>：【背刺獸人】突襲橫置的【兩位陌生人】(5 ATK > 4 ATK)，將其送入墓地並斬獲 <b>+2★ 獎勵</b>！<br><br>
+        經過精妙算計，我方從 8★ 極限飆升至 15★，敵方被削弱至 14★，以無懈可擊的 <b>15★ 比 14★</b> 剛好反超 1 分，完成驚天逆轉！
+      </div>
+
+      <div class="puzzle-modal-btn-row">
+        <button class="puzzle-modal-btn secondary" onclick="window.xlwResetPuzzle()">🔄 再玩一次</button>
+        <button class="puzzle-modal-btn primary" onclick="window.xlwReturnToTitle()">🏠 返回首頁</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+};
+
+window.xlwShowPuzzleFailModal = function(playerStars, enemyStars) {
+  const old = document.getElementById("xlwPuzzleModal");
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "xlwPuzzleModal";
+  overlay.className = "xlw-puzzle-modal-overlay";
+  overlay.innerHTML = `
+    <div class="xlw-puzzle-modal-box" style="border-color: #f87171;">
+      <div class="puzzle-modal-title defeat">❌ 殘局挑戰未完成！比分未能反超</div>
+      <div style="font-size: 14px; color: #fca5a5; font-weight: bold; margin-bottom: 12px;">當前比分：我方 ${playerStars}★ VS 對手 ${enemyStars}★</div>
+      
+      <div class="puzzle-modal-desc">
+        <div style="color: #f87171; font-weight: bold; margin-bottom: 8px;">💡 戰術提示錦囊：</div>
+        • 敵方【大鵰像】在戰線 2 時，會賦予左右單位 +2 攻擊力，【呐喊的人】將高達 6 攻擊力，正面硬碰我方必敗！<br>
+        • 【獸人跳戰者】登場時可拉移敵方前排任意單位至其正前方——請思考如何利用空格拉走敵方的核心支柱！<br>
+        • 【阿庫瑪的戰錘】不僅能為獸人提供 +1 攻擊力，更能在戰鬥勝利時額外獎勵 +1★！<br>
+        • 橫置疲勞的【兩位陌生人】正是【背刺獸人】攻擊力大增且奪得 +2★ 獎勵的絕佳目標！<br>
+        • 記得完成佈置後宣告「進攻」並「結束回合」進行對決！
+      </div>
+
+      <div class="puzzle-modal-btn-row">
+        <button class="puzzle-modal-btn primary" onclick="window.xlwResetPuzzle()">🔄 重新嘗試</button>
+        <button class="puzzle-modal-btn secondary" onclick="window.xlwReturnToTitle()">🏠 返回首頁</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+};
 
