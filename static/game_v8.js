@@ -992,7 +992,7 @@ function makeSlots() {
       div.className = "slot";
       div.dataset.zone = key.replace('_', '_'); // 統一為 player_front/player_back
       div.dataset.index = i;
-      div.innerHTML = `<span class="lane-badge">${i + 1}</span>${label}${i + 1}`;
+      div.innerHTML = `<span class="lane-badge">${i + 1}</span><span class="slot-row-text">${label}</span>`;
       row.appendChild(div);
     }
   }
@@ -16109,7 +16109,7 @@ async function triggerBossLadySummon() {
     if (isPlayerTurn) {
       shouldTrigger = await showXLWConfirm(
         "【居酒屋老闆娘】效果觸發",
-        "是否發動 居酒屋老闆娘 效果，在雙方場上各召喚一個【迷路的尋寶小旅人】？"
+        "是否發動 居酒屋老闆娘 效果，在雙方場上各召喚一個【小旅人】？"
       );
     }
 
@@ -16126,7 +16126,7 @@ async function triggerBossLadySummon() {
           summonedTurn: turn,
           summonedZone: ownerEmptyZone
         };
-        logBattle(`✨ 居酒屋老闆娘：在 ${isPlayerTurn ? "我方" : "對手"} 場上 ${ownerEmptyZone.includes("front") ? "前排" : "後排"}${ownerEmptyIdx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+        logBattle(`🌲 居酒屋老闆娘 效果：在 ${isPlayerTurn ? "我方" : "對手"} 場上 ${ownerEmptyZone.includes("front") ? "前排" : "後排"}${ownerEmptyIdx + 1} 召喚了一個【小旅人】！`);
         playTravelerSummonAnimation(isPlayerTurn ? "#playerForest" : "#enemyForest", ownerEmptyZone, ownerEmptyIdx);
       }
 
@@ -16139,7 +16139,7 @@ async function triggerBossLadySummon() {
           summonedTurn: turn,
           summonedZone: oppEmptyZone
         };
-        logBattle(`✨ 居酒屋老闆娘：在 ${isPlayerTurn ? "對手" : "我方"} 場上 ${oppEmptyZone.includes("front") ? "前排" : "後排"}${oppEmptyIdx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+        logBattle(`🌲 居酒屋老闆娘 效果：在 ${isPlayerTurn ? "對手" : "我方"} 場上 ${oppEmptyZone.includes("front") ? "前排" : "後排"}${oppEmptyIdx + 1} 召喚了一個【小旅人】！`);
         playTravelerSummonAnimation(isPlayerTurn ? "#enemyForest" : "#playerForest", oppEmptyZone, oppEmptyIdx);
       }
 
@@ -16254,7 +16254,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             summonedZone: res.zone
           };
           field[res.zone][res.idx].card.creator = "player";
-          logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+          logBattle(`🌲 觀光阿姨 效果：從森林區在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個【小旅人】！`);
           playTravelerSummonAnimation("#playerForest", res.zone, res.idx);
           if (isMultiplayer) {
             sendFullGameStateToOpponent();
@@ -16288,7 +16288,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
           summonedZone: res.zone
         };
         field[res.zone][res.idx].card.creator = "enemy";
-        logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
+        logBattle(`🌲 對手 觀光阿姨 效果：從森林區在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個【小旅人】！`);
         playTravelerSummonAnimation("#enemyForest", res.zone, res.idx);
         render();
         await sleep(600);
@@ -18575,7 +18575,7 @@ function render() {
   if (turnEl) turnEl.textContent = turn;
   const handCountEl = $("handCount");
   if (handCountEl) handCountEl.textContent = hand.length;
-  $("playerDeck").innerHTML = `我方牌庫<br>${deck.length} 張`;
+  $("playerDeck").innerHTML = `我方牌組 (${deck.length})`;
   renderGraveyard("playerGrave", graveyard, "我方墓地");
   renderGraveyard("enemyGrave", window.XLW_ENEMY.grave, "對手墓地");
   renderGraveyard("playerExile", playerExileZone, "我方除外");
@@ -18635,7 +18635,7 @@ function createDeckVisual(zoneId, count, label) {
 
   const labelDiv = document.createElement("div");
   labelDiv.className = "deck-fixed-label";
-  labelDiv.textContent = label;
+  labelDiv.textContent = isPlayerDeck ? "我方牌組" : "對手牌組";
   wrap.appendChild(labelDiv);
 
   if (count <= 0) {
@@ -18953,7 +18953,9 @@ function renderField() {
   for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     document.querySelectorAll(`[data-zone="${zone}"]`).forEach(slot => {
       const idx = Number(slot.dataset.index);
-      slot.innerHTML = `<span class="lane-badge">${idx + 1}</span>`;
+      const isFront = zone.includes("front");
+      const rowLabel = isFront ? "前排" : "後排";
+      slot.innerHTML = `<span class="lane-badge">${idx + 1}</span><span class="slot-row-text">${rowLabel}</span>`;
       slot.className = "slot";
       // 重置所有內聯樣式以抵禦 CSS 快取與特異性覆蓋
       slot.style.border = "";
@@ -22359,7 +22361,11 @@ function renderScore() {
 
   const topResetBtn = $("xlwPuzzleResetTopbarBtn");
   if (topResetBtn) {
-    topResetBtn.style.display = window.XLW_isPuzzleMode ? "inline-flex" : "none";
+    topResetBtn.style.setProperty("display", window.XLW_isPuzzleMode ? "inline-flex" : "none", "important");
+  }
+  const topPuzzleBtn = $("xlwPuzzleTopbarBtn");
+  if (topPuzzleBtn) {
+    topPuzzleBtn.style.setProperty("display", window.XLW_isPuzzleMode ? "inline-flex" : "none", "important");
   }
 
 
@@ -25804,7 +25810,7 @@ function renderGraveyard(zoneId, graveList, label) {
     if (graveList.length === 0) {
       zone.classList.remove("has-card");
       if (overlay3d) {
-        overlay3d.innerHTML = `<span>🪦 ${label} 🪦<br><small style="font-size:10px; opacity:0.85;">(空)</small></span>`;
+        overlay3d.innerHTML = `<span>🪦 ${label} (空) 🪦</span>`;
       }
       zone.onclick = null;
       return;
@@ -27664,6 +27670,12 @@ async function rollSinglePlayerCoin(playerGuess) {
 }
 
 function startSinglePlayerGameActual(playerGoesFirst) {
+  window.XLW_isPuzzleMode = false;
+  const topResetBtn = document.getElementById("xlwPuzzleResetTopbarBtn");
+  if (topResetBtn) topResetBtn.style.setProperty("display", "none", "important");
+  const topPuzzleBtn = document.getElementById("xlwPuzzleTopbarBtn");
+  if (topPuzzleBtn) topPuzzleBtn.style.setProperty("display", "none", "important");
+
   preloadDuelAssets();
   renderEnemyFloatingHand();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
@@ -27794,6 +27806,12 @@ function applyCoinTossChoice(winnerRole, choice) {
 }
 
 function startMultiplayerGameActual() {
+  window.XLW_isPuzzleMode = false;
+  const topResetBtn = document.getElementById("xlwPuzzleResetTopbarBtn");
+  if (topResetBtn) topResetBtn.style.setProperty("display", "none", "important");
+  const topPuzzleBtn = document.getElementById("xlwPuzzleTopbarBtn");
+  if (topPuzzleBtn) topPuzzleBtn.style.setProperty("display", "none", "important");
+
   preloadDuelAssets();
   renderEnemyFloatingHand();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");

@@ -236,8 +236,10 @@ button:disabled {
   text-align: center;
   position: relative;
   overflow: hidden;
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 16.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.5px !important;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
   z-index: 2;
@@ -419,6 +421,17 @@ button:disabled {
   font-weight: 900;
   z-index: 2;
   pointer-events: none;
+}
+
+.slot-row-text {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  letter-spacing: 2px !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.8) !important;
+  pointer-events: none !important;
+  user-select: none !important;
 }
 
 /* ===== 8. 擃??∠??祇? (Card) ===== */
@@ -953,15 +966,20 @@ button:disabled {
 }
 
 .deck-fixed-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+  color: #f8fafc !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.8) !important;
 }
 
 .deck-fixed-empty {
   font-size: 18px;
   color: #555;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .deck-fixed-card {
@@ -986,14 +1004,16 @@ button:disabled {
 .deck-fixed-count {
   position: absolute;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid var(--gold-accent);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1.5px solid var(--gold-accent);
+  color: #ffd76a;
   font-weight: 900;
   border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 12px;
+  padding: 2px 8px;
+  font-size: 14.5px !important;
+  white-space: nowrap !important;
   bottom: 8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 /* 牌組手動抽牌待命高亮與提示徽章 */
@@ -2160,8 +2180,9 @@ button:disabled {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
   line-height: 1.3;
 }
 
@@ -2561,7 +2582,9 @@ button:disabled {
     width: var(--cw) !important;
     height: var(--ch) !important;
     border-radius: 10px !important;
-    font-size: 15px !important;
+    font-size: 16.5px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
   }
   .enemy-back { top: 86px !important; }
   .enemy-front { top: 202px !important; }
@@ -3105,17 +3128,18 @@ button:disabled {
   100% { transform: translate(-3px, -12px); opacity: 0.9; }
 }
 
-/* 底部精巧狀態提示條 (緊貼底緣，高僅 24px) */
+/* 底部精巧狀態提示條 (緊貼底緣，高 28px) */
 .forest-3d-overlay {
   position: absolute !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: 24px !important;
+  height: 28px !important;
   background: linear-gradient(0deg, rgba(2, 24, 14, 0.95) 0%, rgba(2, 24, 14, 0.7) 70%, transparent 100%) !important;
   color: #e6ffee !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
+  font-size: 13.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3256,11 +3280,12 @@ button:disabled {
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: 26px !important;
+  height: 28px !important;
   background: linear-gradient(0deg, rgba(13, 15, 18, 0.96) 0%, rgba(13, 15, 18, 0.75) 70%, transparent 100%) !important;
   color: #e2e8f0 !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
+  font-size: 13.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3268,7 +3293,7 @@ button:disabled {
   border-top: 1px solid rgba(148, 163, 184, 0.3) !important;
   z-index: 5 !important;
   pointer-events: none !important;
-  line-height: 1.1 !important;
+  line-height: 1 !important;
   text-shadow: 0 1px 3px #000, 0 0 6px rgba(148, 163, 184, 0.6) !important;
   letter-spacing: 0.5px !important;
 }

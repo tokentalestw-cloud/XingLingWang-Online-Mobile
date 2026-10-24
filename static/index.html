@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261025-auntie-phase-v2">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261025-zone-font-v4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -74,8 +74,8 @@
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
     <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
-    <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none; border-color: #f59e0b; color: #ffd76a;">🔄 重置</button>
-    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()">🧩 關卡</button>
+    <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none !important; border-color: #f59e0b; color: #ffd76a;">🔄 重置</button>
+    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()" style="display: none !important;">🧩 關卡</button>
     <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
     
     <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">🏠 首頁</button>
@@ -159,7 +159,7 @@
 
         
         <!-- 對手功能區域 (左側) -->
-        <div id="enemyDeck" class="zone side dark">對手牌庫</div>
+        <div id="enemyDeck" class="zone side dark">對手牌組</div>
         <div id="enemyGrave" class="zone side dark grave-zone">
           <div class="grave-3d-wrap">
             <div class="grave-3d-bg">
@@ -243,7 +243,7 @@
             </div>
           </div>
           <div class="grave-3d-overlay">
-            <span>🪦 對手墓地 🪦<br><small style="font-size:10px; opacity:0.85;">(空)</small></span>
+            <span>🪦 對手墓地 (空) 🪦</span>
           </div>
         </div>
         <div id="enemyRace" class="zone side red">對手種族</div>
@@ -681,10 +681,10 @@
             </div>
           </div>
           <div class="grave-3d-overlay">
-            <span>🪦 我方墓地 🪦<br><small style="font-size:10px; opacity:0.85;">(空)</small></span>
+            <span>🪦 我方墓地 (空) 🪦</span>
           </div>
         </div>
-        <div id="playerDeck" class="zone side blue" onclick="xlwHandlePlayerDeckClick(event)">我方牌庫</div>
+        <div id="playerDeck" class="zone side blue" onclick="xlwHandlePlayerDeckClick(event)">我方牌組</div>
         <div id="playerRace" class="zone side blue">我方種族</div>
         <div id="playerExile" class="zone side dark">我方除外</div>
         <div id="playerExtraDeck" class="zone side purple" style="display: none;" onclick="showPlayerExtraDeck()">我方額外</div>
@@ -803,7 +803,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261025-auntie-phase-v2" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261025-zone-font-v4" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
