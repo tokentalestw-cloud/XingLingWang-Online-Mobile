@@ -18448,7 +18448,7 @@ function createDeckVisual(zoneId, count, label) {
   zone.appendChild(wrap);
 }
 
-// 手牌魔法卡輕量就地浮動快捷操作條（免彈大視窗）
+// 手牌卡牌輕量就地浮動快捷操作條（免彈大視窗：發動/召喚 vs 檢視）
 window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   const existing = document.getElementById("xlwHandCardQuickMenu");
   if (existing) {
@@ -18457,6 +18457,10 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
     if (isSameCard) return; // 點擊同一張卡牌時直接收起
   }
 
+  const isMagic = (card.type === "magic" || card.type === "魔法");
+  const actionText = isMagic ? "✨ 發動" : "⚔️ 召喚";
+  const actionClass = isMagic ? "cast-btn" : "summon-btn";
+
   const rect = cardEl.getBoundingClientRect();
   const menu = document.createElement("div");
   menu.id = "xlwHandCardQuickMenu";
@@ -18464,7 +18468,7 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   menu.dataset.cardIdx = String(idx);
 
   menu.innerHTML = `
-    <button class="xlw-quick-btn cast-btn">✨ 發動</button>
+    <button class="xlw-quick-btn ${actionClass}">${actionText}</button>
     <button class="xlw-quick-btn inspect-btn">🔍 檢視</button>
   `;
 
@@ -18484,11 +18488,26 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
 
-  const castBtn = menu.querySelector(".cast-btn");
-  castBtn.onclick = (e) => {
+  const actBtn = menu.querySelector(`.${actionClass}`);
+  actBtn.onclick = (e) => {
     e.stopPropagation();
     menu.remove();
-    castSpell(idx);
+    if (isMagic) {
+      // 檢查魔法卡可使用階段
+      const phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
+      let canPlay = false;
+      if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
+      if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
+      if (phases.includes("Defense Phase") && phase === "防守階段" && window.XLW_defenseCounterActive) canPlay = true;
+      if (phases.includes("Enemy Phase") && window.XLW_defenseCounterActive) canPlay = true;
+      if (!canPlay) {
+        setStatus(`【發動限制】目前階段 (${phase}) 無法發動此魔法卡！`);
+        return;
+      }
+      castSpell(idx);
+    } else {
+      window.xlwExecuteHandUnitSummon(card, idx);
+    }
   };
 
   const inspectBtn = menu.querySelector(".inspect-btn");
@@ -18508,6 +18527,84 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   setTimeout(() => {
     document.addEventListener("pointerdown", closeListener, true);
   }, 10);
+};
+
+// 執行手牌單位召喚處理邏輯
+window.xlwExecuteHandUnitSummon = async function(card, idx) {
+  // 檢查階段是否允許召喚
+  let canPlay = (phase === "召喚階段" || phase === "戰術佈陣");
+  if (!canPlay) {
+    setStatus(`目前為「${phase}」，非召喚階段或戰術佈陣階段，無法召喚單位！`);
+    return;
+  }
+
+  // 檢查通常召喚次數限制
+  if (phase === "召喚階段" && normalSummonUsed && !window.XLW_bypassNormalSummonLimit && !window.XLW_bypassTurnCheck) {
+    setStatus("【召喚限制】本回合召喚階段的通常召喚已使用過！");
+    return;
+  }
+  if (phase === "戰術佈陣" && tacticalSummonUsed && !window.XLW_bypassTurnCheck) {
+    setStatus("【召喚限制】本回合戰術佈陣階段的召喚已使用過！");
+    return;
+  }
+
+  // 特殊卡牌：最後的早餐 (R-ART-0030)
+  if (phase === "召喚階段" && (card.id === "R-ART-0030" || card.name?.includes("最後的早餐"))) {
+    const choices = [
+      { text: "【召喚】一般免祭品特殊召喚此單位", value: "summon" },
+      { text: "【展示抽一】展示此卡並抽 1，然後將此卡洗回牌庫", value: "activate" }
+    ];
+    const choice = await showXLWChoiceModal("【最後的早餐】效果選擇", "請選擇要執行的操作：", choices);
+    if (choice === "activate") {
+      logBattle(`✨ 我方展示了手牌中的【最後的早餐】！`);
+      draw(1);
+      const idxInHand = hand.indexOf(card);
+      if (idxInHand >= 0) {
+        hand.splice(idxInHand, 1);
+      }
+      deck.push(card);
+      shuffle(deck);
+      logBattle(`✨ 最後的早餐 效果：已將此卡洗回牌庫，並完成重洗！`);
+      
+      if (isMultiplayer) {
+        ws.send(JSON.stringify({
+          action: "breakfast_reveal_sync",
+          card: card
+        }));
+        sendFullGameStateToOpponent();
+      }
+      render();
+      return;
+    } else if (choice !== "summon") {
+      return;
+    }
+  }
+
+  // 檢查特定卡牌限制 (如麻祖、高塔101號等)
+  if (!canSummonCard(card, true)) {
+    return;
+  }
+
+  const tributeCost = getCardTributeCost(card);
+  if (tributeCost > 0) {
+    if (phase === "戰術佈陣") {
+      setStatus("【戰術限制】戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚！");
+      return;
+    }
+    startTributeSummon(idx);
+  } else {
+    // 免祭品一般召喚
+    if (selectedHandForSummon === idx) {
+      clearModes();
+      setStatus("已取消召喚選擇。");
+      render();
+    } else {
+      clearModes();
+      selectedHandForSummon = idx;
+      setStatus(`已選擇【${card.name}】。請點擊我方戰場一個空格進行召喚。`);
+      render();
+    }
+  }
 };
 
 // 渲染我方手牌
@@ -18603,88 +18700,13 @@ function renderHand() {
         return;
       }
 
-      if (isMultiplayer && !isMyTurn) {
+      if (isMultiplayer && !isMyTurn && !window.XLW_defenseCounterActive) {
         showModal(card);
         setStatus("對手回合中，請稍候！");
         return;
       }
 
-      if (phase === "召喚階段" && (card.id === "R-ART-0030" || card.name?.includes("最後的早餐"))) {
-        const choices = [
-          { text: "【召喚】一般免祭品特殊召喚此單位", value: "summon" },
-          { text: "【展示抽一】展示此卡並抽 1，然後將此卡洗回牌庫", value: "activate" }
-        ];
-        const choice = await showXLWChoiceModal("【最後的早餐】效果選擇", "請選擇要執行的操作：", choices);
-        if (choice === "activate") {
-          logBattle(`✨ 我方展示了手牌中的【最後的早餐】！`);
-          draw(1);
-          const idxInHand = hand.indexOf(card);
-          if (idxInHand >= 0) {
-            hand.splice(idxInHand, 1);
-          }
-          deck.push(card);
-          shuffle(deck);
-          logBattle(`✨ 最後的早餐 效果：已將此卡洗回牌庫，並完成重洗！`);
-          
-          if (isMultiplayer) {
-            ws.send(JSON.stringify({
-              action: "breakfast_reveal_sync",
-              card: card
-            }));
-            sendFullGameStateToOpponent();
-          }
-          render();
-          return;
-        } else if (choice === null || choice === undefined) {
-          return;
-        }
-      }
-
-            let canPlay = false;
-      if (card.type === "magic") {
-        const phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
-        if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
-        if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
-        if (phases.includes("Defense Phase") && phase === "防守階段" && window.XLW_defenseCounterActive) canPlay = true;
-        if (phases.includes("Enemy Phase") && window.XLW_defenseCounterActive) canPlay = true;
-      } else {
-        if (phase === "召喚階段" || phase === "戰術佈陣") canPlay = true;
-      }
-
-      if (!canPlay) {
-        showModal(card);
-        return;
-      }
-
-      if (card.type === "unit" && !canSummonCard(card, true)) {
-        showModal(card);
-        return;
-      }
-
-      if (card.type === "magic") {
-        window.xlwShowHandCardQuickMenu(cardEl, card, idx);
-        return;
-      } else if (getCardTributeCost(card) > 0) {
-        if (phase === "戰術佈陣") {
-          showModal(card);
-          setStatus("【戰術限制】戰術佈陣階段只能進行一般(免祭品)召喚，無法進行獻祭召喚！");
-          return;
-        }
-        startTributeSummon(idx);
-      } else {
-        // 一般免祭品召喚
-        if (selectedHandForSummon === idx) {
-          clearModes();
-          setStatus("已取消召喚選擇。");
-        } else {
-          clearModes();
-          selectedHandForSummon = idx;
-          cardEl.classList.add("selected-hand-summon");
-          showModal(card);
-          setStatus(`已選擇 ${card.name}。請點擊我方一個空格進行召喚。`);
-          render();
-        }
-      }
+      window.xlwShowHandCardQuickMenu(cardEl, card, idx);
     };
 
     container.appendChild(cardEl);

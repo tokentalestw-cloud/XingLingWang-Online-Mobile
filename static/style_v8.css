@@ -7059,6 +7059,17 @@ body #phaseDisplayPanelHard #phaseTextHard,
   filter: brightness(1.2);
 }
 
+.xlw-quick-btn.summon-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.5);
+}
+
+.xlw-quick-btn.summon-btn:hover, .xlw-quick-btn.summon-btn:active {
+  transform: scale(1.06);
+  filter: brightness(1.2);
+}
+
 .xlw-quick-btn.inspect-btn {
   background: rgba(255, 255, 255, 0.15);
   color: #e2e8f0;
