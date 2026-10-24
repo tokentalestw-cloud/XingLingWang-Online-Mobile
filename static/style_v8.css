@@ -6689,33 +6689,44 @@ body #phaseDisplayPanelHard #phaseTextHard,
   box-shadow: 0 6px 25px rgba(216, 180, 254, 0.55) !important;
 }
 
-/* 殘局挑戰專屬置頂局勢橫條 */
+/* 殘局挑戰專屬局勢橫條（改置於手牌區上方，徹底避免遮蔽頂部戰場資訊與階段提示） */
 .xlw-puzzle-status-bar {
   position: fixed;
-  top: 12px;
+  bottom: 138px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 99999;
+  z-index: 10005;
   background: linear-gradient(135deg, rgba(30, 10, 60, 0.95), rgba(15, 23, 42, 0.96));
   border: 1.5px solid #d8b4fe;
-  border-radius: 50px;
-  padding: 6px 20px;
+  border-radius: 40px;
+  padding: 5px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(192, 132, 252, 0.35);
+  gap: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(192, 132, 252, 0.35);
   backdrop-filter: blur(8px);
   pointer-events: auto;
   font-family: inherit;
+  max-width: 94vw;
+  transition: all 0.25s ease;
+}
+
+.xlw-puzzle-status-bar.minimized {
+  padding: 3px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  background: rgba(30, 10, 60, 0.9);
+  border-color: #c084fc;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
 }
 
 .puzzle-bar-badge {
   background: linear-gradient(135deg, #a855f7, #6b21a8);
   color: #fff;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 900;
-  padding: 3px 10px;
-  border-radius: 20px;
+  padding: 2.5px 8px;
+  border-radius: 16px;
   letter-spacing: 0.5px;
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
   white-space: nowrap;
@@ -6723,7 +6734,7 @@ body #phaseDisplayPanelHard #phaseTextHard,
 
 .puzzle-bar-text {
   color: #f1f5f9;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: bold;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -6738,9 +6749,9 @@ body #phaseDisplayPanelHard #phaseTextHard,
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 215, 106, 0.5);
   color: #ffd76a;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 12px;
+  border-radius: 18px;
+  padding: 3px 10px;
+  font-size: 11.5px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
@@ -6753,6 +6764,42 @@ body #phaseDisplayPanelHard #phaseTextHard,
   box-shadow: 0 0 10px rgba(255, 215, 106, 0.6);
   transform: scale(1.05);
 }
+
+.puzzle-bar-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(216, 180, 254, 0.4);
+  color: #e2e8f0;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.puzzle-bar-toggle-btn:hover {
+  background: rgba(168, 85, 247, 0.3);
+  color: #fff;
+}
+
+/* 橫向行動端與緊湊螢幕適配 */
+@media (max-width: 900px), (max-height: 500px) {
+  .xlw-puzzle-status-bar {
+    bottom: 96px !important;
+    padding: 3px 10px !important;
+    gap: 8px !important;
+    transform: translateX(-50%) scale(0.92) !important;
+    transform-origin: bottom center !important;
+  }
+  .puzzle-bar-text {
+    font-size: 11.5px !important;
+  }
+}
+
 
 /* 殘局挑戰勝負與開局說明彈窗 */
 .xlw-puzzle-modal-overlay {

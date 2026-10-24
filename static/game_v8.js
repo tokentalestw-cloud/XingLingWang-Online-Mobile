@@ -808,6 +808,8 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLW_isPuzzleMode = false;
+  const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   xlwOutgoingSeq = 0;
   xlwExpectedIncomingSeq = null;
   const deckSelect = $("deckSelect");
@@ -1060,6 +1062,8 @@ function initGameEmptyState() {
 
 function newGame() {
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
+  window.XLW_isPuzzleMode = false;
+  const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   window.XLW_gameInProgress = true;
   // 確保重設為單人對抗 AI 模式，阻斷 any 線上同步邏輯與狀態鎖！
   isMultiplayer = false;
@@ -31248,6 +31252,13 @@ window.xlwResetPuzzle = function() {
   window.xlwStartPuzzleStage(window.XLW_currentPuzzleStage || 1);
 };
 
+window.XLW_puzzleBarMinimized = false;
+
+window.xlwTogglePuzzleStatusBar = function() {
+  window.XLW_puzzleBarMinimized = !window.XLW_puzzleBarMinimized;
+  window.xlwUpdatePuzzleStatusBar();
+};
+
 window.xlwUpdatePuzzleStatusBar = function() {
   let bar = document.getElementById("xlwPuzzleStatusBar");
   if (!bar) {
@@ -31256,12 +31267,25 @@ window.xlwUpdatePuzzleStatusBar = function() {
     bar.className = "xlw-puzzle-status-bar";
     document.body.appendChild(bar);
   }
-  bar.innerHTML = `
-    <span class="puzzle-bar-badge">🧩 殘局第 ${window.XLW_currentPuzzleStage || 1} 關</span>
-    <span class="puzzle-bar-text">目標：極限破陣，一回合反超比分達到 <span class="puzzle-bar-highlight">21★ : 20★</span> 達成 Call Game 絕殺！</span>
-    <button class="puzzle-bar-reset-btn" onclick="window.xlwResetPuzzle()">🔄 重置關卡</button>
-    <button class="puzzle-bar-reset-btn" style="border-color: #a855f7; color: #d8b4fe;" onclick="window.xlwOpenPuzzleStageSelect()">📋 關卡選擇</button>
-  `;
+  
+  const stage = window.XLW_currentPuzzleStage || 1;
+  if (window.XLW_puzzleBarMinimized) {
+    bar.className = "xlw-puzzle-status-bar minimized";
+    bar.onclick = function() { window.xlwTogglePuzzleStatusBar(); };
+    bar.innerHTML = `
+      <span class="puzzle-bar-badge" style="cursor: pointer;">🧩 第 ${stage} 關目標 ▴</span>
+    `;
+  } else {
+    bar.className = "xlw-puzzle-status-bar";
+    bar.onclick = null;
+    bar.innerHTML = `
+      <span class="puzzle-bar-badge">🧩 殘局第 ${stage} 關</span>
+      <span class="puzzle-bar-text">目標：極限破陣，一回合反超比分達到 <span class="puzzle-bar-highlight">21★ : 20★</span> 達成 Call Game 絕殺！</span>
+      <button class="puzzle-bar-reset-btn" onclick="event.stopPropagation(); window.xlwResetPuzzle()">🔄 重置</button>
+      <button class="puzzle-bar-reset-btn" style="border-color: #a855f7; color: #d8b4fe;" onclick="event.stopPropagation(); window.xlwOpenPuzzleStageSelect()">📋 關卡</button>
+      <button class="puzzle-bar-toggle-btn" onclick="event.stopPropagation(); window.xlwTogglePuzzleStatusBar()" title="收合橫條">➖</button>
+    `;
+  }
 };
 
 window.xlwShowPuzzleIntroModal = function() {
