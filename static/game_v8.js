@@ -22207,7 +22207,7 @@ function renderStablePanel() {
   if (window.XLW_exileExcessHandActive) {
     panel.innerHTML = `
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
-        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
           <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
           <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
@@ -22224,7 +22224,7 @@ function renderStablePanel() {
   if (!isMyTurn) {
     panel.innerHTML = `
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
-        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
           <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
           <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
@@ -22241,7 +22241,7 @@ function renderStablePanel() {
   if (window.XLW_playerNeedsToDraw) {
     panel.innerHTML = `
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
-        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
           <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
           <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
@@ -22257,7 +22257,7 @@ function renderStablePanel() {
   // 正常對戰操作
   panel.innerHTML = `
     <div class="stable-action-choice-group">
-      <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+      <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
       <div class="stable-action-row">
         <button id="stableActionTactical" class="stable-action-btn tactical" onclick="changeActionPhase('戰術佈陣')">戰術佈陣</button>
         <button id="stableActionAttack" class="stable-action-btn attack" onclick="changeActionPhase('進攻宣言')">進攻宣言</button>
