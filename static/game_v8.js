@@ -992,7 +992,7 @@ function makeSlots() {
       div.className = "slot";
       div.dataset.zone = key.replace('_', '_'); // 統一為 player_front/player_back
       div.dataset.index = i;
-      div.innerHTML = `<span class="lane-badge">${i + 1}</span><span class="slot-row-text">${label}</span>`;
+      div.innerHTML = `<span class="lane-badge">${i + 1}</span>`;
       row.appendChild(div);
     }
   }
@@ -1000,7 +1000,14 @@ function makeSlots() {
 
 // ===== 2. 牌組與種族邏輯 =====
 function xlwInitExtraDeck(deckName) {
-  const extraKey = deckName + "_extra";
+  let actualKey = deckName;
+  if (decks && !decks[actualKey + "_extra"]) {
+    const found = Object.keys(decks).find(k => !k.endsWith("_extra") && k !== "中立單位" && (k.startsWith(deckName + "_") || k === deckName));
+    if (found && decks[found + "_extra"]) {
+      actualKey = found;
+    }
+  }
+  const extraKey = actualKey + "_extra";
   if (decks && decks[extraKey] !== undefined && Array.isArray(decks[extraKey])) {
     const extraIds = decks[extraKey];
     return extraIds.map(id => {
@@ -1008,8 +1015,7 @@ function xlwInitExtraDeck(deckName) {
       return c ? structuredClone(c) : null;
     }).filter(c => c !== null);
   } else {
-    // Fallback: If no extra deck is saved/constructed, default to loading all eligible extra deck cards
-    return (allCards || []).filter(c => belongsToDeck(c, deckName) && c.deck_eligible === false).map(c => structuredClone(c));
+    return [];
   }
 }
 
@@ -1086,19 +1092,25 @@ function belongsToDeck(c, deckName) {
 // 取得該牌組的嚴格卡牌
 function strictSourceCards(deckName) {
   let ids = (decks && Array.isArray(decks[deckName])) ? decks[deckName] : [];
+  if (!ids.length && decks) {
+    const found = Object.keys(decks).find(k => !k.endsWith("_extra") && k !== "中立單位" && (k.startsWith(deckName + "_") || k === deckName));
+    if (found && Array.isArray(decks[found]) && decks[found].length > 0) {
+      ids = decks[found];
+    }
+  }
   const baseName = normDeckName(deckName);
   let source = [];
 
   if (ids.length) {
     source = ids.map(id => allCards.find(c => c && c.id === id)).filter(Boolean);
   } else {
-    source = (allCards || []).filter(c => belongsToDeck(c, baseName));
+    // 嚴格僅挑選該種族原生卡牌（不含中立單位），卡牌張數精準保持在正常預組範圍 (20-30張)
+    source = (allCards || []).filter(c => (c.faction === baseName || c.deck === baseName) && c.deck_eligible !== false);
   }
 
   // 去除異圖重複並嚴格過濾
   const seen = new Set();
   return source.filter(c => {
-    if (!belongsToDeck(c, baseName)) return false;
     if (c.deck_eligible === false) return false;
     if (seen.has(c.id)) return false;
     seen.add(c.id);
@@ -16431,7 +16443,12 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
 // ===== 10. 對手 AI 行動與回合接管 =====
 function xlwInitEnemyDeck(deckName = "妖怪村莊") {
   const selectedDeck = deckName || "妖怪村莊";
-  const baseCards = strictSourceCards(selectedDeck);
+  let actualDeckKey = selectedDeck;
+  if (decks && !decks[actualDeckKey]) {
+    const found = Object.keys(decks).find(k => !k.endsWith("_extra") && k !== "中立單位" && (k.startsWith(selectedDeck + "_") || k === selectedDeck));
+    if (found) actualDeckKey = found;
+  }
+  const baseCards = strictSourceCards(actualDeckKey);
   window.XLW_ENEMY.deck = baseCards.map(c => {
     const cloned = structuredClone(c);
     cloned.ownerSide = "enemy";
@@ -16443,7 +16460,7 @@ function xlwInitEnemyDeck(deckName = "妖怪村莊") {
   window.XLW_ENEMY.deckName = selectedDeck;
   window.XLW_ENEMY.running = false;
   enemyGraveyard = window.XLW_ENEMY.grave;
-  enemyExtraDeck = xlwInitExtraDeck(selectedDeck).map(c => {
+  enemyExtraDeck = xlwInitExtraDeck(actualDeckKey).map(c => {
     const cloned = structuredClone(c);
     cloned.ownerSide = "enemy";
     return cloned;
@@ -18852,13 +18869,28 @@ function renderHand() {
     cardEl.setAttribute("draggable", window.matchMedia("(pointer: coarse)").matches ? "false" : "true");
     cardEl.dataset.handIndex = idx;
     
-    // Mulligan 換牌高亮
+    // Mulligan 換牌高亮與即時卡牌放大預覽按鈕
     if (mulliganActive) {
       cardEl.classList.add("mulligan-card");
       if (selectedMulliganIndexes.has(idx)) {
         cardEl.classList.add("mulligan-selected");
       }
+      const inspectBtn = document.createElement("div");
+      inspectBtn.className = "mulligan-card-inspect-btn";
+      inspectBtn.title = "放大檢視卡牌詳情";
+      inspectBtn.innerHTML = "🔍";
+      inspectBtn.onclick = (e) => {
+        e.stopPropagation();
+        showModal(card);
+      };
+      cardEl.appendChild(inspectBtn);
     }
+
+    cardEl.onmouseenter = () => {
+      if (mulliganActive) {
+        showModal(card);
+      }
+    };
 
     // 可否普通召喚亮邊
     const canSum = (phase === "召喚階段" && !normalSummonUsed) || (phase === "戰術佈陣" && !tacticalSummonUsed);
@@ -18924,6 +18956,7 @@ function renderHand() {
 
       if (mulliganActive) {
         toggleMulliganCard(idx);
+        showModal(card);
         return;
       }
 
@@ -18953,9 +18986,7 @@ function renderField() {
   for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     document.querySelectorAll(`[data-zone="${zone}"]`).forEach(slot => {
       const idx = Number(slot.dataset.index);
-      const isFront = zone.includes("front");
-      const rowLabel = isFront ? "前排" : "後排";
-      slot.innerHTML = `<span class="lane-badge">${idx + 1}</span><span class="slot-row-text">${rowLabel}</span>`;
+      slot.innerHTML = `<span class="lane-badge">${idx + 1}</span>`;
       slot.className = "slot";
       // 重置所有內聯樣式以抵禦 CSS 快取與特異性覆蓋
       slot.style.border = "";
@@ -27524,8 +27555,8 @@ function renderExtraDecks() {
       pExtraEl.style.display = "flex";
       const topCard = playerExtraDeck[playerExtraDeck.length - 1];
       pExtraEl.innerHTML = `
-        <img src="${topCard.image || '/static/card_back.jpeg'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
-        <div class="deck-fixed-label" style="background: rgba(147, 51, 234, 0.85); font-size: 11px;">我方額外(${playerExtraDeck.length})</div>
+        <img src="${topCard.image || '/static/card_back.jpeg'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; position: absolute; top: 0; left: 0;">
+        <div class="deck-fixed-label" style="position: absolute !important; bottom: 4px !important; left: 0 !important; right: 0 !important; margin: 0 auto !important; width: 90% !important; background: rgba(147, 51, 234, 0.85) !important; font-size: 11px !important; z-index: 5 !important; text-align: center !important; border-radius: 4px !important; padding: 2px 0 !important; line-height: 1.2 !important;">我方額外(${playerExtraDeck.length})</div>
       `;
       pExtraEl.className = "zone side purple";
       pExtraEl.style.cursor = "pointer";
@@ -27540,8 +27571,8 @@ function renderExtraDecks() {
       eExtraEl.classList.add("mobile-extra-visible");
       eExtraEl.style.display = "flex";
       eExtraEl.innerHTML = `
-        <img src="/static/card_back.jpeg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
-        <div class="deck-fixed-label" style="background: rgba(147, 51, 234, 0.85); font-size: 11px;">對手額外(${enemyExtraDeck.length})</div>
+        <img src="/static/card_back.jpeg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; position: absolute; top: 0; left: 0;">
+        <div class="deck-fixed-label" style="position: absolute !important; bottom: 4px !important; left: 0 !important; right: 0 !important; margin: 0 auto !important; width: 90% !important; background: rgba(147, 51, 234, 0.85) !important; font-size: 11px !important; z-index: 5 !important; text-align: center !important; border-radius: 4px !important; padding: 2px 0 !important; line-height: 1.2 !important;">對手額外(${enemyExtraDeck.length})</div>
       `;
       eExtraEl.className = "zone side purple";
       eExtraEl.style.cursor = "default";
