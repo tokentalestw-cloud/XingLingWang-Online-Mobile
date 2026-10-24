@@ -193,7 +193,8 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   await new Promise(r => setTimeout(r, 400));
 };
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms * 2.5));
+// 節奏校準：使對決流程微幅放緩以利視覺辨識與流暢過渡，消除突兀跳接與卡頓
+const sleep = (ms) => new Promise(r => setTimeout(r, Math.round(ms * 1.3)));
 const $ = (id) => document.getElementById(id);
 
 window.xlwClearAllPendingResolvers = function() {
@@ -228,6 +229,75 @@ const LITTLE_TRAVELER = {
   effect_text: "無任何特殊能力。",
   image: "/static/little_traveler.jpeg"
 };
+
+// ===== 高效卡牌影像預載入與 GPU 解碼快取系統 =====
+const _xlwPreloadedImageUrls = new Set();
+
+function preloadCardImages(cardsList, priority = "high") {
+  if (!Array.isArray(cardsList) || cardsList.length === 0) return;
+  
+  const urls = new Set();
+  urls.add("/static/card_back.jpeg");
+  if (typeof LITTLE_TRAVELER !== "undefined" && LITTLE_TRAVELER.image) {
+    urls.add(LITTLE_TRAVELER.image);
+  }
+
+  cardsList.forEach(c => {
+    if (c && c.image && !_xlwPreloadedImageUrls.has(c.image)) {
+      urls.add(c.image);
+    }
+  });
+
+  urls.forEach(url => {
+    if (_xlwPreloadedImageUrls.has(url)) return;
+    _xlwPreloadedImageUrls.add(url);
+    try {
+      const img = new Image();
+      if (priority === "high" && "fetchPriority" in img) {
+        img.fetchPriority = "high";
+      }
+      img.src = url;
+      if (img.decode) {
+        img.decode().catch(() => {});
+      }
+    } catch (e) {}
+  });
+}
+
+// 對戰即將開始或進行中，立刻對雙方主牌組與額外牌組進行深度快取預解碼
+function preloadDuelAssets() {
+  const allDuelCards = [];
+  if (Array.isArray(deck)) allDuelCards.push(...deck);
+  if (Array.isArray(hand)) allDuelCards.push(...hand);
+  if (Array.isArray(playerExtraDeck)) allDuelCards.push(...playerExtraDeck);
+  if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.deck)) allDuelCards.push(...window.XLW_ENEMY.deck);
+  if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) allDuelCards.push(...window.XLW_ENEMY.hand);
+  if (Array.isArray(enemyExtraDeck)) allDuelCards.push(...enemyExtraDeck);
+  preloadCardImages(allDuelCards, "high");
+}
+
+// 閒置時分批預先載入卡牌庫中的牌面
+function preloadCommonCardsIdle(cardsList) {
+  if (!Array.isArray(cardsList) || cardsList.length === 0) return;
+  let idx = 0;
+  function processBatch() {
+    const batch = cardsList.slice(idx, idx + 10);
+    idx += 10;
+    preloadCardImages(batch, "low");
+    if (idx < cardsList.length) {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(processBatch, { timeout: 2000 });
+      } else {
+        setTimeout(processBatch, 250);
+      }
+    }
+  }
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(processBatch, { timeout: 2000 });
+  } else {
+    setTimeout(processBatch, 400);
+  }
+}
 
 // ===== 線上雙人對戰網路狀態 =====
 let isMultiplayer = false;
@@ -627,6 +697,18 @@ function populateLobbyDecksDropdown() {
   } else if (presetKeys.length > 0) {
     deckSelect.value = presetKeys[0];
   }
+
+  // 自動在背景以最高優先級解碼選取牌組與額外牌組之牌面，進入對決瞬間 0ms 渲染
+  const selectedDeckKey = deckSelect.value;
+  if (selectedDeckKey && decks && Array.isArray(decks[selectedDeckKey])) {
+    const cardIdSet = new Set(decks[selectedDeckKey]);
+    const extraKey = selectedDeckKey + "_extra";
+    if (Array.isArray(decks[extraKey])) {
+      decks[extraKey].forEach(id => cardIdSet.add(id));
+    }
+    const cardsToPreload = (allCards || []).filter(c => c && cardIdSet.has(c.id));
+    preloadCardImages(cardsToPreload, "high");
+  }
 }
 
 function populateDeckSelect() {
@@ -675,6 +757,31 @@ async function init() {
       decks = await fetch("/static/decks.json").then(r => r.json()).catch(() => ({}));
     }
 
+    let factionOrder = [];
+    try {
+      factionOrder = await fetch("/api/factions?v=" + Date.now()).then(r => r.json());
+    } catch (eFac) {
+      factionOrder = await fetch("/static/factions.json").then(r => r.json()).catch(() => []);
+    }
+    if (Array.isArray(factionOrder) && factionOrder.length > 0) {
+      const factionSelect = document.getElementById("factionSelect");
+      if (factionSelect) {
+        const curFac = factionSelect.value;
+        factionSelect.innerHTML = "";
+        factionOrder.forEach(fac => {
+          const opt = document.createElement("option");
+          opt.value = fac;
+          opt.textContent = fac;
+          factionSelect.appendChild(opt);
+        });
+        if (factionOrder.includes(curFac)) {
+          factionSelect.value = curFac;
+        } else {
+          factionSelect.value = factionOrder[0];
+        }
+      }
+    }
+
     if (!Array.isArray(allCards)) allCards = [];
     if (!decks || typeof decks !== "object") decks = {};
 
@@ -687,6 +794,12 @@ async function init() {
         c.image = "/static/card_back.jpeg";
       }
     });
+
+    try {
+      preloadCommonCardsIdle(allCards);
+    } catch (e) {
+      console.warn("preloadCommonCardsIdle error:", e);
+    }
 
     try { makeSlots(); } catch (e) { console.warn("makeSlots error:", e); }
     try { setupGlobalEvents(); } catch (e) { console.warn("setupGlobalEvents error:", e); }
@@ -1132,6 +1245,9 @@ function newGame() {
   }
   xlwInitEnemyDeck(aiDeckChoice);
   logBattle(`🎮 單人對決開始！我方使用【${deckName}】牌組，對手 AI 使用【${aiDeckChoice}】牌組！`);
+
+  // 對決開始瞬間：立即將雙方牌庫與額外牌組所有牌面預先解碼至 GPU 記憶體快取，杜絕白卡與延遲
+  preloadDuelAssets();
 
   // 重置標記
   turn = 0;
@@ -11401,10 +11517,15 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
     
     document.body.appendChild(overlay);
     
-    // 播放 1200 毫秒後自動移除並 resolve
+    // 播放 1200 毫秒後柔和淡出縮放，維持清晰可讀且滑順流暢的對決節奏
     setTimeout(() => {
-      overlay.remove();
-      resolve();
+      overlay.style.transition = "opacity 0.28s ease, transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1)";
+      overlay.style.opacity = "0";
+      overlay.style.transform = "translate(-50%, -50%) scale(0.85)";
+      setTimeout(() => {
+        if (overlay && overlay.parentNode) overlay.remove();
+        resolve();
+      }, 280);
     }, 1200);
   });
 }
@@ -18646,7 +18767,7 @@ function renderHand() {
       : `魔法 | 點 ${card.magic_point || "-"}`;
 
     if (card.image) {
-      cardEl.innerHTML = `<img src="${card.image}" alt="${card.name}"><div class="mini-meta"><div class="mini-meta-name" title="${card.name}">${card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
+      cardEl.innerHTML = `<img src="${card.image}" alt="${card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';"><div class="mini-meta"><div class="mini-meta-name" title="${card.name}">${card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
     } else {
       cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${card.name}">${card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
     }
@@ -18840,7 +18961,7 @@ function renderField() {
         }
 
         if (obj.card.image) {
-          cardEl.innerHTML = `<img src="${obj.card.image}" alt="${obj.card.name}"><div class="mini-meta"><div class="mini-meta-name" title="${obj.card.name}">${obj.card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
+          cardEl.innerHTML = `<img src="${obj.card.image}" alt="${obj.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';"><div class="mini-meta"><div class="mini-meta-name" title="${obj.card.name}">${obj.card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
         } else {
           cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${obj.card.name}">${obj.card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
         }
@@ -27428,6 +27549,7 @@ async function rollSinglePlayerCoin(playerGuess) {
 }
 
 function startSinglePlayerGameActual(playerGoesFirst) {
+  preloadDuelAssets();
   renderEnemyFloatingHand();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");
@@ -27557,6 +27679,7 @@ function applyCoinTossChoice(winnerRole, choice) {
 }
 
 function startMultiplayerGameActual() {
+  preloadDuelAssets();
   renderEnemyFloatingHand();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "flex", "important");

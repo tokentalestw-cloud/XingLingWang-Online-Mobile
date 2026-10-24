@@ -11,25 +11,54 @@ from typing import List, Optional
 BASE = Path(__file__).parent
 app = FastAPI(title="星靈王 Web Final")
 
-@app.middleware("http")
-async def add_no_cache_header(request, call_next):
-    response = await call_next(request)
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 
-class NoCacheStaticFiles(StaticFiles):
-    def file_response(self, *args, **kwargs) -> Response:
-        response = super().file_response(*args, **kwargs)
+# 啟用全域高速 GZip 壓縮（體積 > 1000 bytes 自動壓縮，減少 80% 傳輸量）
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+@app.middleware("http")
+async def add_smart_cache_headers(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+
+    # API 端點：動態資料絕不快取
+    if path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+    elif path.endswith(".html") or path == "/":
+        # HTML 頁面：採用 no-cache 搭配 revalidate，確保即時取得最新代碼版號
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+class OptimizedStaticFiles(StaticFiles):
+    """高效分級靜態資源快取：圖片/音效/字體長效快取，JS/CSS 與 JSON 依版號快取，消除 Render 網路延遲與卡頓"""
+    def file_response(self, *args, **kwargs) -> Response:
+        response = super().file_response(*args, **kwargs)
+        path = str(args[0]) if args else ""
+        ext = os.path.splitext(path)[1].lower()
+
+        # 圖片、音效、字型資源：長效快取 30 天，秒開 0ms 記憶體讀取，徹底解決牌面無法立即顯示問題
+        if ext in [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico", ".mp3", ".wav", ".woff", ".woff2", ".ttf"]:
+            response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+            response.headers["Pragma"] = "public"
+        # JavaScript 與 CSS 資源：搭配 query string (?v=...) 快取 24 小時
+        elif ext in [".js", ".css"]:
+            response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+        # 靜態 JSON 牌庫資料
+        elif ext == ".json":
+            response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+        # HTML 檔案
+        elif ext == ".html":
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=3600"
+
         return response
 
-app.mount("/static", NoCacheStaticFiles(directory=BASE / "static"), name="static")
+app.mount("/static", OptimizedStaticFiles(directory=BASE / "static"), name="static")
 
 # ===== 線上雙人即時房間管理器 =====
 class ConnectionManager:
@@ -265,9 +294,7 @@ class CardSaveSchema(BaseModel):
 @app.get("/")
 def index():
     response = FileResponse(BASE / "static" / "index.html")
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return response
 
 @app.get("/api/cards")
@@ -849,6 +876,54 @@ def reorder_decks(data: DeckReorderSchema):
         raise HTTPException(status_code=500, detail=f"儲存牌組順序失敗: {str(e)}")
         
     return {"status": "success", "message": "牌組順序已成功更新！"}
+
+
+DEFAULT_FACTIONS = [
+    "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
+    "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
+    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+]
+
+
+@app.get("/api/factions")
+def get_factions():
+    factions_file = BASE / "data" / "factions.json"
+    if factions_file.exists():
+        try:
+            return json.loads(factions_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return DEFAULT_FACTIONS
+
+
+class FactionReorderSchema(BaseModel):
+    ordered_factions: list[str]
+
+
+@app.post("/api/factions/reorder")
+def reorder_factions(data: FactionReorderSchema):
+    factions_file = BASE / "data" / "factions.json"
+    static_file = BASE / "static" / "factions.json"
+    
+    cleaned = []
+    seen = set()
+    for fac in data.ordered_factions:
+        if fac in DEFAULT_FACTIONS and fac not in seen:
+            cleaned.append(fac)
+            seen.add(fac)
+    for fac in DEFAULT_FACTIONS:
+        if fac not in seen:
+            cleaned.append(fac)
+            seen.add(fac)
+            
+    try:
+        factions_file.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2), encoding="utf-8")
+        static_file.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"儲存種族順序失敗: {str(e)}")
+        
+    return {"status": "success", "message": "種族順序已成功更新！", "factions": cleaned}
+
 
 
 

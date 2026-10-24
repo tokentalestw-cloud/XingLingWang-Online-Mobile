@@ -853,27 +853,14 @@
   <!-- 牌組控制工具條 -->
   <section class="deck-controls-bar">
     <div class="deck-select-wrap" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-      <label for="factionFilterSelect" style="color: var(--gold-accent); font-weight: bold; font-size: 11.5px;">選擇種族:</label>
-      <select id="factionFilterSelect" class="deck-select" onchange="changeFactionFilter(this.value)">
-        <option value="藝術品">藝術品 (Artwork)</option>
-        <option value="喵喵賊">喵喵賊 (Cat Clan)</option>
-        <option value="妖怪村莊">妖怪村莊 (Yokai Village)</option>
-        <option value="獸人">獸人 (Orc)</option>
-        <option value="虛擬世界">虛擬世界 (Virtual World)</option>
-        <option value="勇者公會">勇者公會 (Hero Guild)</option>
-        <option value="妖精">妖精 (Elf)</option>
-        <option value="山羊族">山羊族 (Goat)</option>
-        <option value="機械軍團">機械軍團 (Mecha Legion)</option>
-        <option value="歡樂島">歡樂島 (Joy Island)</option>
-        <option value="特殊旅人">特殊旅人 (Special Traveler)</option>
-        <option value="甜點王國">甜點王國 (Dessert Kingdom)</option>
-        <option value="發電獸">發電獸 (Electric Beast)</option>
-        <option value="碳碳族">碳碳族 (Carbon Tribe)</option>
-        <option value="蒸汽世界">蒸汽世界 (Steam World)</option>
-        <option value="進化野人">進化野人 (Evolved Wildman)</option>
-        <option value="馬戲團">馬戲團 (Circus)</option>
-        <option value="骷髏人">骷髏人 (Skeleton)</option>
-      </select>
+      <div style="display: flex; align-items: center; gap: 5px;">
+        <label for="factionFilterSelect" style="color: var(--gold-accent); font-weight: bold; font-size: 11.5px;">選擇種族:</label>
+        <select id="factionFilterSelect" class="deck-select" onchange="changeFactionFilter(this.value)">
+          <!-- populated dynamically -->
+        </select>
+        <button id="moveUpFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(-1)" title="將當前種族順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
+        <button id="moveDownFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(1)" title="將當前種族順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
+      </div>
 
       <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; margin-left: 4px;">
         <label for="deckSelect" style="color: #69c0ff; font-weight: bold; font-size: 11.5px;">自訂卡組:</label>
@@ -963,6 +950,8 @@
 
     let allCards = [];
     let currentDecks = {};
+    let currentFactions = [];
+    let currentModalTab = "decks";
     let selectedDeckName = "藝術品";
     let selectedMainIds = [];
     let selectedExtraIds = [];
@@ -1005,7 +994,7 @@
       );
     }
 
-    // 更新上移 / 下移按鈕的可用狀態
+    // 更新牌組上移 / 下移按鈕的可用狀態
     function updateOrderButtonsState() {
       const upBtn = document.getElementById("moveUpDeckBtn");
       const downBtn = document.getElementById("moveDownDeckBtn");
@@ -1024,6 +1013,104 @@
 
       upBtn.disabled = (facIndex <= 0);
       downBtn.disabled = (facIndex === -1 || facIndex >= factionKeys.length - 1);
+    }
+
+    // 動態填充種族下拉選單 (主工具列與彈窗選單)
+    function populateFactionDropdowns(preferredFaction = "") {
+      const mainSelect = document.getElementById("factionFilterSelect");
+      const modalSelect = document.getElementById("modalFactionFilter");
+
+      const targetFaction = preferredFaction || (mainSelect ? mainSelect.value : "") || currentFactions[0] || "藝術品";
+
+      [mainSelect, modalSelect].forEach(selectElem => {
+        if (!selectElem) return;
+        selectElem.innerHTML = "";
+        currentFactions.forEach((fac, idx) => {
+          const opt = document.createElement("option");
+          opt.value = fac;
+          opt.textContent = `#${idx + 1} ${fac}`;
+          selectElem.appendChild(opt);
+        });
+        if (currentFactions.includes(targetFaction)) {
+          selectElem.value = targetFaction;
+        } else if (currentFactions.length > 0) {
+          selectElem.value = currentFactions[0];
+        }
+      });
+
+      updateFactionOrderButtonsState();
+    }
+
+    // 更新種族上移 / 下移按鈕可用狀態
+    function updateFactionOrderButtonsState() {
+      const upBtn = document.getElementById("moveUpFactionBtn");
+      const downBtn = document.getElementById("moveDownFactionBtn");
+      const mainSelect = document.getElementById("factionFilterSelect");
+      if (!upBtn || !downBtn || !mainSelect) return;
+
+      const currentFac = mainSelect.value;
+      const idx = currentFactions.indexOf(currentFac);
+
+      upBtn.disabled = (idx <= 0);
+      downBtn.disabled = (idx === -1 || idx >= currentFactions.length - 1);
+    }
+
+    // 快速上移/下移當前選擇的種族
+    async function moveCurrentFaction(direction) {
+      const mainSelect = document.getElementById("factionFilterSelect");
+      const currentFac = mainSelect ? mainSelect.value : "";
+      if (!currentFac) {
+        showToast("請先選取要調整順序的種族！", true);
+        return;
+      }
+      await moveFaction(currentFac, direction);
+    }
+
+    // 調整種族順序
+    async function moveFaction(fac, direction) {
+      const idx = currentFactions.indexOf(fac);
+      if (idx === -1) return;
+
+      const targetIdx = idx + direction;
+      if (targetIdx < 0) {
+        showToast("已是排在最前面的種族！");
+        return;
+      }
+      if (targetIdx >= currentFactions.length) {
+        showToast("已是排在最後面的種族！");
+        return;
+      }
+
+      // 對調陣列中兩個種族位置
+      const newFactions = [...currentFactions];
+      const targetFac = newFactions[targetIdx];
+      newFactions[idx] = targetFac;
+      newFactions[targetIdx] = fac;
+
+      try {
+        const res = await fetch("/api/factions/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ordered_factions: newFactions })
+        }).then(r => r.json());
+
+        if (res.status === "success") {
+          currentFactions = res.factions || newFactions;
+          populateFactionDropdowns(fac);
+          populateDeckDropdown(selectedDeckName);
+
+          if (currentModalTab === "factions") {
+            renderFactionListTable();
+          } else {
+            renderDeckListModal();
+          }
+          showToast(`✔ 成功將種族「${fac}」調整至第 #${targetIdx + 1} 位！`);
+        } else {
+          showToast("種族順序保存失敗: " + (res.message || res.detail), true);
+        }
+      } catch (err) {
+        showToast("種族順序儲存連線失敗，請檢查伺服器！", true);
+      }
     }
 
     // 動態填充自訂牌組下拉選單 (依選擇的種族過濾，並保持 decks.json 的順序)
@@ -1075,9 +1162,25 @@
     // 啟動加載
     async function loadDeckBuilderData() {
       try {
-        allCards = await fetch("/api/cards?v=" + Date.now()).then(r => r.json());
-        currentDecks = await fetch("/api/decks?v=" + Date.now()).then(r => r.json());
+        const [cardsData, decksData, factionsData] = await Promise.all([
+          fetch("/api/cards?v=" + Date.now()).then(r => r.json()),
+          fetch("/api/decks?v=" + Date.now()).then(r => r.json()),
+          fetch("/api/factions?v=" + Date.now()).then(r => r.json()).catch(() => [])
+        ]);
 
+        allCards = cardsData;
+        currentDecks = decksData;
+        if (Array.isArray(factionsData) && factionsData.length > 0) {
+          currentFactions = factionsData;
+        } else {
+          currentFactions = [
+            "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
+            "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
+            "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+          ];
+        }
+
+        populateFactionDropdowns(currentFactions[0] || "藝術品");
         populateDeckDropdown();
       } catch (err) {
         showToast("資料讀取失敗，請確認伺服器已正常啟動！", true);
@@ -1086,6 +1189,7 @@
 
     // 種族篩選切換
     function changeFactionFilter(val) {
+      updateFactionOrderButtonsState();
       populateDeckDropdown();
     }
 
@@ -1300,6 +1404,48 @@
       }
     }
 
+    // 切換 Modal 分頁 (牌組順序 vs 種族順序)
+    function switchModalTab(tab) {
+      currentModalTab = tab;
+      const decksBtn = document.getElementById("modalTabDecksBtn");
+      const factionsBtn = document.getElementById("modalTabFactionsBtn");
+      const deckSection = document.getElementById("modalDeckSection");
+      const factionSection = document.getElementById("modalFactionSection");
+      const subtitle = document.getElementById("modalSubtitle");
+
+      if (tab === "decks") {
+        if (decksBtn) {
+          decksBtn.style.background = "linear-gradient(135deg, #1890ff, #096dd9)";
+          decksBtn.style.border = "none";
+        }
+        if (factionsBtn) {
+          factionsBtn.style.background = "rgba(255,255,255,0.08)";
+          factionsBtn.style.border = "1px solid rgba(255,255,255,0.25)";
+        }
+        if (deckSection) deckSection.style.display = "block";
+        if (factionSection) factionSection.style.display = "none";
+        if (subtitle) {
+          subtitle.textContent = "條列顯示各陣營自訂牌組，點擊 ⬆️ 上移 / ⬇️ 下移 自由調整對戰選單中顯示的先後順序。";
+        }
+        renderDeckListModal();
+      } else {
+        if (factionsBtn) {
+          factionsBtn.style.background = "linear-gradient(135deg, #1890ff, #096dd9)";
+          factionsBtn.style.border = "none";
+        }
+        if (decksBtn) {
+          decksBtn.style.background = "rgba(255,255,255,0.08)";
+          decksBtn.style.border = "1px solid rgba(255,255,255,0.25)";
+        }
+        if (deckSection) deckSection.style.display = "none";
+        if (factionSection) factionSection.style.display = "block";
+        if (subtitle) {
+          subtitle.textContent = "條列顯示所有種族陣營，點擊 ⬆️ 上移 / ⬇️ 下移 自由調整牌組選單與對戰選單中種族的先後順序。";
+        }
+        renderFactionListTable();
+      }
+    }
+
     // 打開牌組清單與排序管理 Modal
     function openDeckListModal() {
       const modal = document.getElementById("deckListModal");
@@ -1309,7 +1455,7 @@
       if (modalFactionFilter && mainFactionFilter) {
         modalFactionFilter.value = mainFactionFilter.value;
       }
-      renderDeckListModal();
+      switchModalTab(currentModalTab || "decks");
       modal.style.display = "flex";
     }
 
@@ -1379,12 +1525,53 @@
       });
     }
 
+    // 渲染種族順序列表與排序表格
+    function renderFactionListTable() {
+      const tableBody = document.getElementById("factionListTableBody");
+      if (!tableBody) return;
+
+      tableBody.innerHTML = "";
+
+      currentFactions.forEach((fac, idx) => {
+        const row = document.createElement("tr");
+        const customDecksCount = getCustomDeckKeys(fac).length;
+        const isFirst = idx === 0;
+        const isLast = idx === currentFactions.length - 1;
+
+        row.innerHTML = `
+          <td style="text-align: center; color: #ffd76a; font-weight: bold;">#${idx + 1}</td>
+          <td style="text-align: center;"><span class="faction-badge" style="font-size: 13px; padding: 4px 10px;">${fac}</span></td>
+          <td style="text-align: center; color: ${customDecksCount > 0 ? '#69c0ff' : 'var(--text-muted)'}; font-weight: bold;">
+            ${customDecksCount} 組自訂牌組
+          </td>
+          <td style="text-align: center;">
+            <button class="action-btn order-btn" onclick="moveFaction('${fac}', -1)" ${isFirst ? 'disabled' : ''} title="種族上移" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 3px 9px; font-size: 12px; border-radius: 4px; cursor: pointer; margin-right: 4px;">⬆️ 上移</button>
+            <button class="action-btn order-btn" onclick="moveFaction('${fac}', 1)" ${isLast ? 'disabled' : ''} title="種族下移" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 3px 9px; font-size: 12px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
+          </td>
+          <td style="text-align: center;">
+            <button class="action-btn" onclick="filterDecksByFactionFromModal('${fac}')" style="background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; border: none; padding: 3px 10px; font-size: 11.5px; border-radius: 4px; cursor: pointer;">🔍 查看牌組</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // 從種族清單直接跳轉查看該種族的牌組列表
+    function filterDecksByFactionFromModal(fac) {
+      const modalFactionFilter = document.getElementById("modalFactionFilter");
+      if (modalFactionFilter) {
+        modalFactionFilter.value = fac;
+      }
+      switchModalTab("decks");
+    }
+
     // 從 Modal 直接載入特定牌組至編輯器
     function selectDeckFromModal(deckKey) {
       const fac = normDeckName(deckKey);
       const mainFactionFilter = document.getElementById("factionFilterSelect");
       if (mainFactionFilter && mainFactionFilter.value !== fac) {
         mainFactionFilter.value = fac;
+        updateFactionOrderButtonsState();
       }
       populateDeckDropdown(deckKey);
       closeDeckListModal();
@@ -1906,66 +2093,85 @@
     <div class="deck-list-modal-dialog" onclick="event.stopPropagation()">
       <div class="deck-list-modal-header">
         <div class="modal-title-wrap">
-          <h2 style="margin: 0; font-size: 18px; color: var(--gold-accent); display: flex; align-items: center; gap: 8px;">
-            <span>📋</span> 自訂牌組清單與排序管理
-          </h2>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <h2 style="margin: 0; font-size: 18px; color: var(--gold-accent); display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> 牌組與種族順序管理
+            </h2>
+            <div class="modal-tabs" style="display: flex; gap: 6px;">
+              <button id="modalTabDecksBtn" class="action-btn" onclick="switchModalTab('decks')" style="background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; border: none; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;">🎴 牌組順序</button>
+              <button id="modalTabFactionsBtn" class="action-btn" onclick="switchModalTab('factions')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;">🏷️ 種族順序</button>
+            </div>
+          </div>
+          <div id="modalSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
             條列顯示各陣營自訂牌組，點擊 ⬆️ 上移 / ⬇️ 下移 自由調整對戰選單中顯示的先後順序。
           </div>
         </div>
         <button class="modal-close-btn" onclick="closeDeckListModal()">&times;</button>
       </div>
 
-      <div class="deck-list-modal-toolbar">
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <label style="font-size: 12px; color: var(--text-muted); font-weight: bold;">篩選種族：</label>
-          <select id="modalFactionFilter" class="deck-select" onchange="renderDeckListModal()" style="font-size: 12px; padding: 3px 8px;">
-            <option value="藝術品">藝術品</option>
-            <option value="喵喵賊">喵喵賊</option>
-            <option value="妖怪村莊">妖怪村莊</option>
-            <option value="獸人">獸人</option>
-            <option value="虛擬世界">虛擬世界</option>
-            <option value="勇者公會">勇者公會</option>
-            <option value="妖精">妖精</option>
-            <option value="山羊族">山羊族</option>
-            <option value="機械軍團">機械軍團</option>
-            <option value="歡樂島">歡樂島</option>
-            <option value="特殊旅人">特殊旅人</option>
-            <option value="甜點王國">甜點王國</option>
-            <option value="發電獸">發電獸</option>
-            <option value="碳碳族">碳碳族</option>
-            <option value="蒸汽世界">蒸汽世界</option>
-            <option value="進化野人">進化野人</option>
-            <option value="馬戲團">馬戲團</option>
-            <option value="骷髏人">骷髏人</option>
-          </select>
-          <span id="modalDeckCountBadge" style="font-size: 12px; color: #ffd76a; background: rgba(255,215,106,0.12); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(255,215,106,0.3);">
-            共 0 組牌組
-          </span>
+      <!-- 牌組順序管理區域 -->
+      <div id="modalDeckSection">
+        <div class="deck-list-modal-toolbar">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold;">篩選種族：</label>
+            <select id="modalFactionFilter" class="deck-select" onchange="renderDeckListModal()" style="font-size: 12px; padding: 3px 8px;">
+              <!-- populated dynamically -->
+            </select>
+            <span id="modalDeckCountBadge" style="font-size: 12px; color: #ffd76a; background: rgba(255,215,106,0.12); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(255,215,106,0.3);">
+              共 0 組牌組
+            </span>
+          </div>
+          <div>
+            <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 11px; font-size: 12px; border-radius: 4px; cursor: pointer;">
+              ➕ 建立新自訂牌組
+            </button>
+          </div>
         </div>
-        <div>
-          <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 11px; font-size: 12px; border-radius: 4px; cursor: pointer;">
-            ➕ 建立新自訂牌組
-          </button>
+
+        <div class="deck-list-table-container">
+          <table class="deck-list-table">
+            <thead>
+              <tr>
+                <th style="width: 55px; text-align: center;">順序</th>
+                <th style="width: 100px; text-align: center;">種族</th>
+                <th>牌組名稱</th>
+                <th style="width: 150px; text-align: center;">卡牌數量</th>
+                <th style="width: 130px; text-align: center;">順序調整</th>
+                <th style="width: 180px; text-align: center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="deckListTableBody">
+              <!-- populated dynamically -->
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="deck-list-table-container">
-        <table class="deck-list-table">
-          <thead>
-            <tr>
-              <th style="width: 55px; text-align: center;">順序</th>
-              <th style="width: 100px; text-align: center;">種族</th>
-              <th>牌組名稱</th>
-              <th style="width: 150px; text-align: center;">卡牌數量</th>
-              <th style="width: 130px; text-align: center;">順序調整</th>
-              <th style="width: 180px; text-align: center;">操作</th>
-            </tr>
-          </thead>
-          <tbody id="deckListTableBody">
-            <!-- populated dynamically -->
-          </tbody>
-        </table>
+      <!-- 種族順序管理區域 -->
+      <div id="modalFactionSection" style="display: none;">
+        <div class="deck-list-modal-toolbar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; color: var(--gold-accent); font-weight: bold;">🏷️ 所有種族先後順序一覽</span>
+            <span style="font-size: 12px; color: var(--text-muted);">（點擊 ⬆️ 上移 / ⬇️ 下移 即可依照喜好排列各陣營在選單中的先後順序）</span>
+          </div>
+        </div>
+
+        <div class="deck-list-table-container">
+          <table class="deck-list-table">
+            <thead>
+              <tr>
+                <th style="width: 60px; text-align: center;">順序</th>
+                <th style="width: 130px; text-align: center;">種族名稱</th>
+                <th style="text-align: center;">已建立自訂牌組數</th>
+                <th style="width: 140px; text-align: center;">順序調整</th>
+                <th style="width: 140px; text-align: center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="factionListTableBody">
+              <!-- populated dynamically -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="deck-list-modal-footer">
