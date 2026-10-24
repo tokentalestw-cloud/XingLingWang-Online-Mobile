@@ -1069,6 +1069,18 @@ function newGame() {
   isMultiplayer = false;
   isMyTurn = true; 
   opponent_mulligan_done = true; 
+  isGameOverFlag = false;
+  countdownActive = false;
+  countdownRemaining = 4;
+  window.XLW_callGameDeclared = false;
+  window.XLW_callGameDeclaringPlayer = null;
+  window.XLW_callGameCondition = null;
+  window.XLW_callGameNegatedThisTurn = false;
+  window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+  window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+  window.XLW_DEFENSE_RULE.resolving = false;
+  window.XLW_exileExcessHandActive = false;
+  if (window.XLW_ENEMY) window.XLW_ENEMY.running = false;
   
   if (ws) {
     try {
@@ -1479,6 +1491,7 @@ async function confirmMulligan() {
     await checkMulliganCompletion();
   } else {
     // 單人模式
+    isGameOverFlag = false;
     if (isMyTurn) {
       turn = 1;
       window.XLW_playerNeedsToDraw = true;
@@ -11278,11 +11291,16 @@ async function xlwResolveEnemyLaneSafe(lane) {
       }
       if (playerHasTappedArt) break;
     }
-    if (playerHasTappedArt) {
-      await triggerMuseumReceptionistEffect("player");
+    if (!window.XLW_isPuzzleMode) {
+      checkCallGameAtTurnStart(false);
+    } else {
+      // 🧩 殘局模式：防守結算最後一戰線完畢，直接觸發殘局勝負評判！
+      window.XLW_ENEMY.running = false;
+      await sleep(500);
+      if (typeof window.xlwCheckPuzzleEnd === 'function') {
+        window.xlwCheckPuzzleEnd();
+      }
     }
-
-    checkCallGameAtTurnStart(false);
   }
 }
 
@@ -17528,8 +17546,9 @@ async function runEnemyTurn() {
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
   if (window.XLW_playerNeedsToDraw) {
-    setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
-    return;
+    logBattle("⚠️ 檢測到尚未完成抽牌，系統自動為您點選牌庫抽牌！");
+    await window.xlwHandlePlayerDeckClick();
+    await sleep(350);
   }
   if (!isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running))) {
     console.warn("endPlayerTurnAndRunEnemy blocked: not player turn or AI already running");
@@ -17550,18 +17569,18 @@ async function endPlayerTurnAndRunEnemy() {
     return;
   }
 
-  phase = "\u7d50\u675f\u968e\u6bb5"; // 結束階段
+  phase = "結束階段"; // 結束階段
   xlwCleanExpiredTempEquips(turn);
   render();
 
-  // 檢測我方是否滿足提早結束的宣告條件，若滿足則彈出詢問視窗
+  // 檢測我方是否滿足提早結束的宣告條件，若滿足則彈出詢問視窗（殘局模式不觸發Call Game詢問）
   const hasOph = window.hasOphiuchusOnField(true);
   const scoreReq = hasOph ? 15 : 20;
   const diffReq = hasOph ? 3 : 4;
   let canDeclare1 = calculateTotalStars(true) >= scoreReq;
   let canDeclare2 = (calculateUnitCount(true) - calculateUnitCount(false)) >= diffReq;
   
-  if (!window.xlwIsShenaOnField() && !window.XLW_callGameDeclared && !countdownActive && (canDeclare1 || canDeclare2)) {
+  if (!window.XLW_isPuzzleMode && !window.xlwIsShenaOnField() && !window.XLW_callGameDeclared && !countdownActive && (canDeclare1 || canDeclare2)) {
     let choices = [];
     if (canDeclare1) {
       choices.push({ text: `以條件 (1) 宣告提早結束：總分數達到 ${scoreReq} 分以上`, value: "1" });
@@ -17839,7 +17858,7 @@ async function endPlayerTurnAndRunEnemy() {
 
   // 檢查倒數階段
   handleTurnEndCountdownLogic();
-  if (isGameOverFlag) return;
+  if (isGameOverFlag && !window.XLW_isPuzzleMode) return;
 
   if (isMultiplayer) {
     isMyTurn = false;
@@ -17862,7 +17881,7 @@ async function endPlayerTurnAndRunEnemy() {
     
     // Check Call Game resolution for enemy
     checkCallGameAtTurnStart(false);
-    if (isGameOverFlag) return;
+    if (isGameOverFlag && !window.XLW_isPuzzleMode) return;
     
     if (isMultiplayer && isMyTurn) {
       sendFullGameStateToOpponent();
@@ -17881,7 +17900,7 @@ async function endPlayerTurnAndRunEnemy() {
 
     // 檢查倒數階段
     handleTurnEndCountdownLogic();
-    if (isGameOverFlag) return;
+    if (isGameOverFlag && !window.XLW_isPuzzleMode) return;
 
     // 結束階段，清理對手 AI 回合結束時到期的臨時狀態裝備
     xlwCleanExpiredTempEquips(turn);
@@ -18429,6 +18448,68 @@ function createDeckVisual(zoneId, count, label) {
   zone.appendChild(wrap);
 }
 
+// 手牌魔法卡輕量就地浮動快捷操作條（免彈大視窗）
+window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
+  const existing = document.getElementById("xlwHandCardQuickMenu");
+  if (existing) {
+    const isSameCard = existing.dataset.cardIdx === String(idx);
+    existing.remove();
+    if (isSameCard) return; // 點擊同一張卡牌時直接收起
+  }
+
+  const rect = cardEl.getBoundingClientRect();
+  const menu = document.createElement("div");
+  menu.id = "xlwHandCardQuickMenu";
+  menu.className = "xlw-hand-quick-menu";
+  menu.dataset.cardIdx = String(idx);
+
+  menu.innerHTML = `
+    <button class="xlw-quick-btn cast-btn">✨ 發動</button>
+    <button class="xlw-quick-btn inspect-btn">🔍 檢視</button>
+  `;
+
+  document.body.appendChild(menu);
+
+  // 計算選單居中顯示在手牌正上方
+  const menuWidth = 150;
+  const menuHeight = 38;
+  let left = rect.left + (rect.width / 2) - (menuWidth / 2);
+  let top = rect.top - menuHeight - 8;
+
+  // 邊界防溢出處理
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  if (top < 8) top = rect.bottom + 8; // 若上方空間不足，置於卡牌下方
+
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+
+  const castBtn = menu.querySelector(".cast-btn");
+  castBtn.onclick = (e) => {
+    e.stopPropagation();
+    menu.remove();
+    castSpell(idx);
+  };
+
+  const inspectBtn = menu.querySelector(".inspect-btn");
+  inspectBtn.onclick = (e) => {
+    e.stopPropagation();
+    menu.remove();
+    showModal(card);
+  };
+
+  // 點選畫面任意其他位置自動關閉
+  const closeListener = (e) => {
+    if (!menu.contains(e.target) && e.target !== cardEl && !cardEl.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener("pointerdown", closeListener, true);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener("pointerdown", closeListener, true);
+  }, 10);
+};
+
 // 渲染我方手牌
 function renderHand() {
   const container = $("hand");
@@ -18581,21 +18662,7 @@ function renderHand() {
       }
 
       if (card.type === "magic") {
-        const choices = [
-          { text: `✨【發動】${card.name}`, value: "cast" },
-          { text: "🔍【放大檢視】查看卡牌詳情", value: "inspect" },
-          { text: "❌ 取消", value: "cancel" }
-        ];
-        const choice = await showXLWChoiceModal(
-          `【魔法卡】${card.name}`,
-          "請選擇要執行的操作：",
-          choices
-        );
-        if (choice === "cast") {
-          castSpell(idx);
-        } else if (choice === "inspect") {
-          showModal(card);
-        }
+        window.xlwShowHandCardQuickMenu(cardEl, card, idx);
         return;
       } else if (getCardTributeCost(card) > 0) {
         if (phase === "戰術佈陣") {
@@ -22119,8 +22186,8 @@ function renderStablePanel() {
     return;
   }
 
-  // 線上雙人模式：對手回合直接鎖定整個面板，以防違規操作
-  if (isMultiplayer && !isMyTurn) {
+  // 對手回合（線上雙人模式或單人對抗AI）：直接鎖定整個面板，以防違規操作
+  if (!isMyTurn) {
     panel.innerHTML = `
       <div class="stable-action-row" style="opacity: 0.5; pointer-events: none;">
         <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
@@ -31447,18 +31514,142 @@ window.xlwCheckPuzzleEnd = function() {
   }
 };
 
+// 殘局勝利慶祝煙火動畫 (Fireworks Animation)
+window.xlwLaunchFireworks = function() {
+  const oldCanvas = document.getElementById("xlwFireworksCanvas");
+  if (oldCanvas) oldCanvas.remove();
+
+  const canvas = document.createElement("canvas");
+  canvas.id = "xlwFireworksCanvas";
+  canvas.style.cssText = "position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1000000;";
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const colors = ["#facc15", "#f59e0b", "#ec4899", "#a855f7", "#3b82f6", "#10b981", "#ef4444", "#ffffff"];
+
+  function createFirework(x, y) {
+    const count = 48;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.4;
+      const speed = Math.random() * 6.5 + 2.5;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        radius: Math.random() * 2.5 + 1.5,
+        decay: Math.random() * 0.015 + 0.012
+      });
+    }
+  }
+
+  // 播放勝利音效
+  if (typeof window.xlwPlaySFX === 'function') {
+    try { window.xlwPlaySFX('victory'); } catch (e) {}
+  }
+
+  createFirework(canvas.width * 0.3, canvas.height * 0.35);
+  createFirework(canvas.width * 0.7, canvas.height * 0.3);
+  setTimeout(() => createFirework(canvas.width * 0.5, canvas.height * 0.25), 350);
+  setTimeout(() => createFirework(canvas.width * 0.25, canvas.height * 0.4), 700);
+  setTimeout(() => createFirework(canvas.width * 0.75, canvas.height * 0.42), 1100);
+  setTimeout(() => createFirework(canvas.width * 0.5, canvas.height * 0.35), 1500);
+
+  let animationId;
+  const startTime = Date.now();
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.07;
+      p.alpha -= p.decay;
+      if (p.alpha <= 0) {
+        particles.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (Date.now() - startTime < 4000 || particles.length > 0) {
+      animationId = requestAnimationFrame(loop);
+    } else {
+      cancelAnimationFrame(animationId);
+      canvas.remove();
+    }
+  }
+  loop();
+};
+
+// 殘局失敗炸彈爆炸動畫 (Bomb Explosion Animation)
+window.xlwLaunchBombExplosion = function() {
+  const oldBomb = document.getElementById("xlwBombExplosionOverlay");
+  if (oldBomb) oldBomb.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "xlwBombExplosionOverlay";
+  overlay.className = "xlw-bomb-explosion-overlay";
+  overlay.innerHTML = `
+    <div class="xlw-bomb-item">💣</div>
+    <div class="xlw-explosion-burst">💥</div>
+  `;
+  document.body.appendChild(overlay);
+
+  // 畫面劇烈震動
+  const root = document.querySelector(".game-container") || document.body;
+  root.classList.add("xlw-screen-shake");
+
+  if (typeof window.xlwPlaySFX === 'function') {
+    try { window.xlwPlaySFX('destroy'); } catch (e) {}
+  }
+
+  setTimeout(() => {
+    root.classList.remove("xlw-screen-shake");
+    overlay.remove();
+  }, 2200);
+};
+
 window.xlwShowPuzzleSuccessModal = function(playerStars, enemyStars) {
   const old = document.getElementById("xlwPuzzleModal");
   if (old) old.remove();
 
   const diff = playerStars - enemyStars;
+
+  // 放煙火慶祝特效
+  window.xlwLaunchFireworks();
+
   const overlay = document.createElement("div");
   overlay.id = "xlwPuzzleModal";
   overlay.className = "xlw-puzzle-modal-overlay";
   overlay.innerHTML = `
     <div class="xlw-puzzle-modal-box" style="border-color: #ffd76a;">
-      <div class="puzzle-modal-title victory">🏆 殘局破解成功！剛好反超 ${diff} 分！</div>
-      <div style="font-size: 14px; color: #facc15; font-weight: bold; margin-bottom: 12px;">✨ 完美絕殺：我方 ${playerStars}★ VS 對手 ${enemyStars}★！</div>
+      <div class="puzzle-modal-title victory">🏆 殘局破解成功！</div>
+
+      <div class="puzzle-score-board victory">
+        <div class="puzzle-score-col player">
+          <div class="score-team">我方星數</div>
+          <div class="score-num">${playerStars}★</div>
+        </div>
+        <div class="puzzle-score-vs-tag">VS</div>
+        <div class="puzzle-score-col enemy">
+          <div class="score-team">對手星數</div>
+          <div class="score-num">${enemyStars}★</div>
+        </div>
+      </div>
+      <div class="puzzle-score-diff victory">✨ 剛好逆轉反超 +${diff} 分！達成 20★ Call Game 獲勝！</div>
       
       <div class="puzzle-modal-desc">
         <div style="color: #4ade80; font-weight: bold; margin-bottom: 8px;">🎉 破局拆招大揭密：</div>
@@ -31482,13 +31673,30 @@ window.xlwShowPuzzleFailModal = function(playerStars, enemyStars) {
   const old = document.getElementById("xlwPuzzleModal");
   if (old) old.remove();
 
+  // 炸彈爆炸失敗特效
+  window.xlwLaunchBombExplosion();
+
+  const neededDiff = (enemyStars >= playerStars) ? (enemyStars - playerStars + 1) : 0;
+
   const overlay = document.createElement("div");
   overlay.id = "xlwPuzzleModal";
   overlay.className = "xlw-puzzle-modal-overlay";
   overlay.innerHTML = `
     <div class="xlw-puzzle-modal-box" style="border-color: #f87171;">
-      <div class="puzzle-modal-title defeat">❌ 殘局挑戰未完成！比分未能反超</div>
-      <div style="font-size: 14px; color: #fca5a5; font-weight: bold; margin-bottom: 12px;">當前比分：我方 ${playerStars}★ VS 對手 ${enemyStars}★</div>
+      <div class="puzzle-modal-title defeat">❌ 殘局挑戰失敗！</div>
+
+      <div class="puzzle-score-board defeat">
+        <div class="puzzle-score-col player">
+          <div class="score-team">我方星數</div>
+          <div class="score-num">${playerStars}★</div>
+        </div>
+        <div class="puzzle-score-vs-tag">VS</div>
+        <div class="puzzle-score-col enemy">
+          <div class="score-team">對手星數</div>
+          <div class="score-num">${enemyStars}★</div>
+        </div>
+      </div>
+      <div class="puzzle-score-diff defeat">💣 距離反超還差 ${neededDiff} 分，再接再厲！</div>
       
       <div class="puzzle-modal-desc">
         <div style="color: #f87171; font-weight: bold; margin-bottom: 8px;">💡 戰術提示錦囊：</div>
