@@ -26471,6 +26471,8 @@ function toggleChainMinimize() {
     minBtn.style.background = "rgba(0,0,0,0.7)";
     minBtn.style.borderColor = "#ffd76a";
   }
+}
+
 window.xlwShowSpellSuccessToast = function(card, subtitle = "") {
   let toast = document.getElementById("xlwSpellSuccessToast");
   if (!toast) {
