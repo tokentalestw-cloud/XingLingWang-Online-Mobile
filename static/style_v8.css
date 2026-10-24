@@ -6689,60 +6689,18 @@ body #phaseDisplayPanelHard #phaseTextHard,
   box-shadow: 0 6px 25px rgba(216, 180, 254, 0.55) !important;
 }
 
-/* 殘局挑戰專屬局勢橫條（改置於手牌區上方，徹底避免遮蔽頂部戰場資訊與階段提示） */
+/* 殘局挑戰：狀態資訊改為整合於左側總分看板與右上按鈕，不再以懸浮橫條遮蔽戰場任何地方 */
 .xlw-puzzle-status-bar {
-  position: fixed;
-  bottom: 138px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10005;
-  background: linear-gradient(135deg, rgba(30, 10, 60, 0.95), rgba(15, 23, 42, 0.96));
-  border: 1.5px solid #d8b4fe;
-  border-radius: 40px;
-  padding: 5px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(192, 132, 252, 0.35);
-  backdrop-filter: blur(8px);
-  pointer-events: auto;
-  font-family: inherit;
-  max-width: 94vw;
-  transition: all 0.25s ease;
+  display: none !important;
 }
 
-.xlw-puzzle-status-bar.minimized {
-  padding: 3px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  background: rgba(30, 10, 60, 0.9);
-  border-color: #c084fc;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-}
-
-.puzzle-bar-badge {
-  background: linear-gradient(135deg, #a855f7, #6b21a8);
-  color: #fff;
-  font-size: 11.5px;
-  font-weight: 900;
-  padding: 2.5px 8px;
-  border-radius: 16px;
-  letter-spacing: 0.5px;
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
-  white-space: nowrap;
-}
-
-.puzzle-bar-text {
-  color: #f1f5f9;
-  font-size: 12.5px;
-  font-weight: bold;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-}
-
-.puzzle-bar-highlight {
-  color: #facc15;
-  font-weight: 900;
+.score-badge-card.puzzle-goal-badge {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.75) 0%, rgba(30, 10, 60, 0.95) 100%) !important;
+  border: 1.5px solid #c084fc !important;
+  border-radius: 11px !important;
+  padding: 7px 10px !important;
+  margin-top: 4px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
 }
 
 .puzzle-bar-reset-btn {
@@ -6765,40 +6723,38 @@ body #phaseDisplayPanelHard #phaseTextHard,
   transform: scale(1.05);
 }
 
-.puzzle-bar-toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(216, 180, 254, 0.4);
-  color: #e2e8f0;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
+/* 卡牌裝備與武器數值加成標籤 */
+.card-equip-container {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.2s;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 15;
+  pointer-events: none;
 }
 
-.puzzle-bar-toggle-btn:hover {
-  background: rgba(168, 85, 247, 0.3);
-  color: #fff;
+.card-equip-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  border: 1px solid #fde047;
+  color: #0f172a;
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  text-shadow: none;
+  animation: equipPulse 1.8s infinite alternate ease-in-out;
 }
 
-/* 橫向行動端與緊湊螢幕適配 */
-@media (max-width: 900px), (max-height: 500px) {
-  .xlw-puzzle-status-bar {
-    bottom: 96px !important;
-    padding: 3px 10px !important;
-    gap: 8px !important;
-    transform: translateX(-50%) scale(0.92) !important;
-    transform-origin: bottom center !important;
-  }
-  .puzzle-bar-text {
-    font-size: 11.5px !important;
-  }
+@keyframes equipPulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.05); filter: brightness(1.2); }
 }
+
 
 
 /* 殘局挑戰勝負與開局說明彈窗 */

@@ -18701,15 +18701,51 @@ function renderField() {
           cardEl.classList.add("xlw-tribute-card-slam");
         }
         
-        const metaText = obj.card.type === "unit"
-          ? `攻 ${getUnitAtk(obj, zone, idx)} | 星 ${getUnitStars(obj, zone, idx)}`
-          : `魔法`;
+        let metaText = "魔法";
+        if (obj.card.type === "unit") {
+          const currentAtk = getUnitAtk(obj, zone, idx);
+          const baseAtk = Number(obj.card.attack ?? obj.card.atk ?? 0);
+          const atkDiff = currentAtk - baseAtk;
+          let atkDisplay = `攻 ${currentAtk}`;
+          if (atkDiff > 0) {
+            atkDisplay = `攻 ${currentAtk} <span style="color: #4ade80; font-weight: 900;">(+${atkDiff})</span>`;
+          } else if (atkDiff < 0) {
+            atkDisplay = `攻 ${currentAtk} <span style="color: #f87171; font-weight: 900;">(${atkDiff})</span>`;
+          }
+          metaText = `${atkDisplay} | 星 ${getUnitStars(obj, zone, idx)}`;
+        }
 
         if (obj.card.image) {
           cardEl.innerHTML = `<img src="${obj.card.image}" alt="${obj.card.name}"><div class="mini-meta"><div class="mini-meta-name" title="${obj.card.name}">${obj.card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
         } else {
           cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${obj.card.name}">${obj.card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
         }
+
+        // 裝備卡牌標籤與增加數值專屬浮動徽章 (突出顯示裝備武器及屬性加成)
+        if (obj.equipments && obj.equipments.length > 0) {
+          const equipContainer = document.createElement("div");
+          equipContainer.className = "card-equip-container";
+          obj.equipments.forEach(eqName => {
+            const badge = document.createElement("div");
+            badge.className = "card-equip-badge";
+            let icon = "🛡️";
+            let bonusText = "";
+            if (eqName.includes("戰錘") || eqName.includes("阿庫瑪的戰錘")) { icon = "🔨"; bonusText = "+1攻"; }
+            else if (eqName.includes("菜刀")) { icon = "🔪"; bonusText = "貫穿"; }
+            else if (eqName.includes("弓箭")) { icon = "🏹"; bonusText = "+1攻"; }
+            else if (eqName.includes("戰斧牛排")) { icon = "🥩"; bonusText = "+5攻"; }
+            else if (eqName.includes("狼牙棒")) { icon = "🔨"; bonusText = "增攻"; }
+            else if (eqName.includes("削弱藥水")) { icon = "🧪"; bonusText = "-3攻"; }
+            else if (eqName.includes("振奮藥水")) { icon = "🧪"; bonusText = "+3攻"; }
+            else if (eqName.includes("法術保護") || eqName.includes("符咒帽")) { icon = "🛡️"; bonusText = "魔抗"; }
+            
+            badge.innerHTML = `${icon} ${bonusText || eqName}`;
+            badge.title = `裝備: ${eqName}`;
+            equipContainer.appendChild(badge);
+          });
+          cardEl.appendChild(equipContainer);
+        }
+
         
 
         if (typeof selectedTributes !== "undefined" && selectedTributes.find(t => t.key === key)) {
@@ -18869,6 +18905,9 @@ function renderField() {
               }
               else if (spellCard.name?.includes("狼牙棒") || spellCard.id === "R-ORC-0054") {
                 logBattle(`✨ 血戰幫狼牙棒 效果：${obj.card.name} 攻擊力加成將根據場上狼牙棒數量動態增長！`);
+              }
+              else if (spellCard.name?.includes("戰錘") || spellCard.id === "R-ORC-0033") {
+                logBattle(`✨ 阿庫瑪的戰錘 效果：${obj.card.name} 攻擊力 +1 且戰鬥勝利結算額外 +1★！`);
               }
               else if (spellCard.name === "法術保護-護盾") {
                 obj.magicImmune = true;
@@ -21925,6 +21964,22 @@ function renderScore() {
     return div;
   })();
   
+  const puzzleSectionHtml = window.XLW_isPuzzleMode ? `
+    <div class="score-badge-card puzzle-goal-badge">
+      <div style="color: #ffd76a; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <span>🧩 殘局第 ${window.XLW_currentPuzzleStage || 1} 關</span>
+        <span style="font-size: 10.5px; color: #e9d5ff; background: rgba(168,85,247,0.4); padding: 1px 6px; border-radius: 8px;">1 回合反超</span>
+      </div>
+      <div style="color: #f1f5f9; font-size: 12px; margin-top: 5px; line-height: 1.35;">
+        🎯 目標：達到 <span style="color: #facc15; font-weight: 900;">21★ : 20★</span> (Call Game 絕殺)
+      </div>
+      <div style="display: flex; gap: 6px; margin-top: 6px;">
+        <button class="puzzle-bar-reset-btn" onclick="window.xlwResetPuzzle()" style="flex: 1; padding: 4px 6px; font-size: 11.5px; cursor: pointer; text-align: center;">🔄 重置關卡</button>
+        <button class="puzzle-bar-reset-btn" onclick="window.xlwOpenPuzzleStageSelect()" style="flex: 1; padding: 4px 6px; font-size: 11.5px; border-color: #a855f7; color: #d8b4fe; cursor: pointer; text-align: center;">📋 關卡選擇</button>
+      </div>
+    </div>
+  ` : "";
+
   scoreBadge.innerHTML = `
     <div class="score-badge-section">
       <div class="score-badge-card player">
@@ -21945,8 +22000,15 @@ function renderScore() {
           <span>場上單位: <span style="color: #ffe600; font-weight: 900;">${enemyFieldStars} ★</span> | 額外加分: <span style="color: #ff7875; font-weight: 900;">${enemyBonusScore} ★</span></span>
         </div>
       </div>
+      ${puzzleSectionHtml}
     </div>
   `;
+
+  const topResetBtn = $("xlwPuzzleResetTopbarBtn");
+  if (topResetBtn) {
+    topResetBtn.style.display = window.XLW_isPuzzleMode ? "inline-flex" : "none";
+  }
+
 
   // 計分對戰紀錄更新
   const playerVal = $("xlwPlayerScore");
@@ -22246,15 +22308,9 @@ function setupGlobalEvents() {
 
 window.xlwToggleLeftPanelSize = function(e) {
   if (e) e.stopPropagation();
-  const panel = $("xlwLeftCardPanel");
-  const btn = $("xlwLeftPanelToggleBtn");
-  if (!panel) return;
-  const isMin = panel.classList.toggle("minimized");
-  if (btn) {
-    btn.textContent = isMin ? "➕ 放大" : "➖ 縮小";
-    btn.title = isMin ? "放大卡牌特寫" : "縮小卡牌特寫";
-  }
 };
+
+let xlwCurrentModalTarget = null;
 
 window.xlwCloseLeftPanel = function(e) {
   if (e) e.stopPropagation();
@@ -22262,9 +22318,8 @@ window.xlwCloseLeftPanel = function(e) {
   if (panel) {
     panel.style.setProperty("display", "none", "important");
     panel.classList.remove("minimized");
-    const btn = $("xlwLeftPanelToggleBtn");
-    if (btn) btn.textContent = "➖ 縮小";
   }
+  xlwCurrentModalTarget = null;
 };
 
 function showModal(card, equipments, unitObj) {
@@ -22275,17 +22330,24 @@ function showModal(card, equipments, unitObj) {
     if (leftPanel) leftPanel.style.setProperty("display", "none", "important");
     return;
   }
+
+  const thisTarget = unitObj || card;
+  const isPanelOpen = leftPanel && leftPanel.style.display !== "none" && leftPanel.style.visibility !== "hidden";
+  
+  // 「改回只要再點擊一下就直接關閉/打開」：當前已開啟且點擊的是同一張卡牌，立即關閉！
+  if (isPanelOpen && xlwCurrentModalTarget && (xlwCurrentModalTarget === thisTarget || (xlwCurrentModalTarget.id && card.id && xlwCurrentModalTarget.id === card.id))) {
+    window.xlwCloseLeftPanel();
+    return;
+  }
+  xlwCurrentModalTarget = thisTarget;
+
   const leftImg = $("leftPanelImg");
   const placeholder = $("leftPanelPlaceholder");
   const detailView = $("leftCardDetailView");
-  const toggleBtn = $("xlwLeftPanelToggleBtn");
 
   if (leftPanel) {
     leftPanel.style.setProperty("display", "block", "important");
-    if (!leftPanel.classList.contains("minimized") && toggleBtn) {
-      toggleBtn.textContent = "➖ 縮小";
-      toggleBtn.title = "縮小卡牌特寫";
-    }
+    leftPanel.classList.remove("minimized");
   }
 
   // 附加上放大預視窗 SR/SSR 雷射虹光圖層
@@ -22327,12 +22389,21 @@ function showModal(card, equipments, unitObj) {
       eqContainer.className = "xlw-left-panel-equipments-container";
 
       if (hasUnitObj && unitObj.card) {
+        const currentAtk = getUnitAtk(unitObj);
+        const baseAtk = Number(unitObj.card.attack ?? unitObj.card.atk ?? 0);
+        const atkBonus = currentAtk - baseAtk;
         const statBadge = document.createElement("div");
         statBadge.className = "xlw-left-panel-equipment-badge";
         statBadge.style.background = "linear-gradient(135deg, #2a1f3d, #171124)";
         statBadge.style.border = "1.5px solid #ffd76a";
         statBadge.style.color = "#ffd76a";
-        statBadge.textContent = `⚔️ 當前戰鬥力：攻 ${getUnitAtk(unitObj)} | 星 ${getUnitStars(unitObj)}★`;
+        let atkText = `攻 ${currentAtk}`;
+        if (atkBonus > 0) {
+          atkText = `攻 ${currentAtk} <span style="color: #4ade80; font-weight: 900;">(+${atkBonus} 裝備/加成)</span>`;
+        } else if (atkBonus < 0) {
+          atkText = `攻 ${currentAtk} <span style="color: #f87171; font-weight: 900;">(${atkBonus})</span>`;
+        }
+        statBadge.innerHTML = `⚔️ 當前戰鬥力：${atkText} | 星 ${getUnitStars(unitObj)}★`;
         eqContainer.appendChild(statBadge);
 
         if (unitObj.confined) {
@@ -22364,7 +22435,8 @@ function showModal(card, equipments, unitObj) {
       if (hasEquips) {
         equipments.forEach((eqName) => {
           let displayText = eqName;
-          if (eqName.includes("符咒帽")) displayText = "🎩 符咒帽：魔法無效";
+          if (eqName.includes("戰錘") || eqName.includes("阿庫瑪的戰錘")) displayText = "🔨 阿庫瑪的戰錘：攻擊力 +1，戰鬥勝利結算額外 +1★";
+          else if (eqName.includes("符咒帽")) displayText = "🎩 符咒帽：魔法無效";
           else if (eqName.includes("菜刀")) displayText = "🔪 3星菜刀：攻擊力+3，獲得貫穿";
           else if (eqName.includes("弓箭")) displayText = "🏹 弓箭：獲得遠程+1";
           else if (eqName.includes("戰斧牛排")) displayText = "🥩 戰斬牛排：攻擊力+5";
@@ -22378,7 +22450,7 @@ function showModal(card, equipments, unitObj) {
 
           const badge = document.createElement("div");
           badge.className = "xlw-left-panel-equipment-badge";
-          badge.textContent = displayText;
+          badge.innerHTML = displayText;
 
           eqContainer.appendChild(badge);
         });
@@ -22391,6 +22463,7 @@ function showModal(card, equipments, unitObj) {
     leftPanel.style.display = "block";
   }
 }
+
 
 function showCardInfo(card, equipments) {
   if (typeof showModal === "function") {
@@ -31252,41 +31325,12 @@ window.xlwResetPuzzle = function() {
   window.xlwStartPuzzleStage(window.XLW_currentPuzzleStage || 1);
 };
 
-window.XLW_puzzleBarMinimized = false;
-
-window.xlwTogglePuzzleStatusBar = function() {
-  window.XLW_puzzleBarMinimized = !window.XLW_puzzleBarMinimized;
-  window.xlwUpdatePuzzleStatusBar();
-};
-
 window.xlwUpdatePuzzleStatusBar = function() {
-  let bar = document.getElementById("xlwPuzzleStatusBar");
-  if (!bar) {
-    bar = document.createElement("div");
-    bar.id = "xlwPuzzleStatusBar";
-    bar.className = "xlw-puzzle-status-bar";
-    document.body.appendChild(bar);
-  }
-  
-  const stage = window.XLW_currentPuzzleStage || 1;
-  if (window.XLW_puzzleBarMinimized) {
-    bar.className = "xlw-puzzle-status-bar minimized";
-    bar.onclick = function() { window.xlwTogglePuzzleStatusBar(); };
-    bar.innerHTML = `
-      <span class="puzzle-bar-badge" style="cursor: pointer;">🧩 第 ${stage} 關目標 ▴</span>
-    `;
-  } else {
-    bar.className = "xlw-puzzle-status-bar";
-    bar.onclick = null;
-    bar.innerHTML = `
-      <span class="puzzle-bar-badge">🧩 殘局第 ${stage} 關</span>
-      <span class="puzzle-bar-text">目標：極限破陣，一回合反超比分達到 <span class="puzzle-bar-highlight">21★ : 20★</span> 達成 Call Game 絕殺！</span>
-      <button class="puzzle-bar-reset-btn" onclick="event.stopPropagation(); window.xlwResetPuzzle()">🔄 重置</button>
-      <button class="puzzle-bar-reset-btn" style="border-color: #a855f7; color: #d8b4fe;" onclick="event.stopPropagation(); window.xlwOpenPuzzleStageSelect()">📋 關卡</button>
-      <button class="puzzle-bar-toggle-btn" onclick="event.stopPropagation(); window.xlwTogglePuzzleStatusBar()" title="收合橫條">➖</button>
-    `;
-  }
+  const bar = document.getElementById("xlwPuzzleStatusBar");
+  if (bar) bar.remove();
+  renderScore();
 };
+
 
 window.xlwShowPuzzleIntroModal = function() {
   const old = document.getElementById("xlwPuzzleModal");

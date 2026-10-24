@@ -74,7 +74,8 @@
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
     <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
-    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()">🧩 殘局模式</button>
+    <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none; border-color: #f59e0b; color: #ffd76a;">🔄 重置</button>
+    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()">🧩 關卡</button>
     <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
     
     <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">🏠 首頁</button>
@@ -802,7 +803,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261024-puzzle-v3" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261024-puzzle-v4" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -977,7 +978,6 @@
       <div class="left-panel-header" id="xlwLeftPanelHeader">
         <span class="left-panel-title">🔍 卡牌特寫</span>
         <div class="left-panel-ctrls">
-          <button id="xlwLeftPanelToggleBtn" class="left-panel-pill-btn" type="button" title="切換放大/縮小" onclick="window.xlwToggleLeftPanelSize(event)">➖ 縮小</button>
           <button id="xlwLeftPanelCloseBtn" class="left-panel-close-btn" type="button" title="關閉卡牌特寫" onclick="window.xlwCloseLeftPanel(event)">✕</button>
         </div>
       </div>
