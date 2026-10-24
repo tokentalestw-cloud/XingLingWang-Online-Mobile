@@ -4130,6 +4130,7 @@ async function castSpell(handIndex) {
     return;
   }
 
+  logBattle(`✨ 對手未進行反制，魔法卡【${card.name}】正常發動成功！`);
   await window.xlwOnMagicCardCast(true);
 
   const text = card.effect_text || "";
@@ -4877,7 +4878,11 @@ async function castSpell(handIndex) {
       
       window.XLW_equipSpellActive = true;
       window.XLW_equipSpellCard = { ...card, name: "法術保護-護盾" };
-      setStatus("【法術保護】請點選我方場上一個單位以賦予法術保護（對魔抗性）！");
+      const promptText = "請點選我方場上一個單位以賦予法術保護（對魔抗性）！";
+      if (typeof window.xlwShowSpellSuccessToast === "function") {
+        window.xlwShowSpellSuccessToast(card, promptText);
+      }
+      setStatus(`✨【${card.name}】正常發動成功！${promptText}`);
       render();
       await new Promise(r => { window.XLW_equipSpellResolve = r; });
     }
@@ -4951,7 +4956,11 @@ async function castSpell(handIndex) {
 
     window.XLW_equipSpellActive = true;
     window.XLW_equipSpellCard = card;
-    setStatus(`【${card.name}】請點選我方一個獸人單位進行裝備！`);
+    const promptText = "請點選我方一個「獸人」單位進行裝備！";
+    if (typeof window.xlwShowSpellSuccessToast === "function") {
+      window.xlwShowSpellSuccessToast(card, promptText);
+    }
+    setStatus(`✨【${card.name}】正常發動成功！${promptText}`);
     render();
     await new Promise(r => { window.XLW_equipSpellResolve = r; });
   } else {
@@ -4967,23 +4976,30 @@ async function castSpell(handIndex) {
       }
       window.XLW_tempEquipSpellActive = true;
       window.XLW_tempEquipSpellCard = card;
-      setStatus("【賞金】請點選敵方場上一個單位以施加賞金狀態！");
+      const promptBounty = "請點選敵方場上一個單位以施加賞金狀態！";
+      if (typeof window.xlwShowSpellSuccessToast === "function") {
+        window.xlwShowSpellSuccessToast(card, promptBounty);
+      }
+      setStatus(`✨【${card.name}】正常發動成功！${promptBounty}`);
       render();
       await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
     } else if (isTempEquipMagic) {
       window.XLW_tempEquipSpellActive = true;
       window.XLW_tempEquipSpellCard = card;
-      let promptText = `【${card.name}】`;
+      let promptText = "";
       if (card.name.includes("削弱藥水")) {
-        promptText += "請選擇場上一個單位，賦予 -3 攻擊力直到本回合結束。";
+        promptText = "請選擇場上一個單位，賦予 -3 攻擊力直到本回合結束。";
       } else if (card.name.includes("振奮藥水")) {
-        promptText += "請選擇場上一個單位，賦予 +3 攻擊力直到下個回合結束。";
+        promptText = "請選擇場上一個單位，賦予 +3 攻擊力直到下個回合結束。";
       } else if (card.name.includes("塗毒")) {
-        promptText += "請選擇場上一個單位，賦予劇毒。";
+        promptText = "請選擇場上一個單位，賦予劇毒。";
       } else if (card.name.includes("睡眠反擊拳")) {
-        promptText += "請選擇我方場上一個防守單位（橫置單位），賦予 +3 攻擊力直到本回合結束。";
+        promptText = "請選擇我方場上一個防守單位（橫置單位），賦予 +3 攻擊力直到本回合結束。";
       }
-      setStatus(promptText);
+      if (typeof window.xlwShowSpellSuccessToast === "function") {
+        window.xlwShowSpellSuccessToast(card, promptText);
+      }
+      setStatus(`✨【${card.name}】正常發動成功！${promptText}`);
       render();
       await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
     } else if (card.id === "R-ART-0047" || card.name?.includes("最後的麵包與酒")) {
@@ -18565,7 +18581,22 @@ function renderHand() {
       }
 
       if (card.type === "magic") {
-        castSpell(idx);
+        const choices = [
+          { text: `✨【發動】${card.name}`, value: "cast" },
+          { text: "🔍【放大檢視】查看卡牌詳情", value: "inspect" },
+          { text: "❌ 取消", value: "cancel" }
+        ];
+        const choice = await showXLWChoiceModal(
+          `【魔法卡】${card.name}`,
+          "請選擇要執行的操作：",
+          choices
+        );
+        if (choice === "cast") {
+          castSpell(idx);
+        } else if (choice === "inspect") {
+          showModal(card);
+        }
+        return;
       } else if (getCardTributeCost(card) > 0) {
         if (phase === "戰術佈陣") {
           showModal(card);
@@ -25285,6 +25316,12 @@ function showXLWChoiceModal(title, message, options) {
       resolve(val);
     };
 
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        cleanup(null);
+      }
+    };
+
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
       btn.onclick = () => {
         cleanup(btn.dataset.value);
@@ -25960,6 +25997,7 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
   if ((cid === "ORC-0002" || name?.includes("背刺獸人")) && isAttacker) {
     baseReward += 2;
     hasRewardEffect = true;
+    logBattle(`✨【背刺獸人】進攻成功，自帶效果獎勵 +2★！`);
   }
   if ((cid === "ORC-0003" || cid === "SSR-ORC-0003" || name?.includes("菜刀哥")) && isAttacker) {
     baseReward += 1;
@@ -26051,6 +26089,7 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
   if (unit.equipments && unit.equipments.some(eq => eq.includes("戰錘"))) {
     baseReward += 1;
     hasRewardEffect = true;
+    logBattle(`🔨【阿庫瑪的戰錘】裝備效果：戰鬥成功額外獎勵 +1★！`);
   }
   if (isAttacker && ((isPlayer && window.XLW_playerOrcAwardActiveUntil >= turn) || (!isPlayer && window.XLW_enemyOrcAwardActiveUntil >= turn))) {
     baseReward += 1;
@@ -26197,6 +26236,7 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
   if ((cid === "ORC-0005" || name?.includes("突擊獸人")) && isAttacker) {
     baseReward += 2;
     hasRewardEffect = true;
+    logBattle(`✨【突擊獸人】進攻成功，自帶效果獎勵 +2★！`);
   }
   if (cid === "R-ORC-0031" || name?.includes("躺平獸人")) {
     baseReward += 2;
@@ -26431,7 +26471,27 @@ function toggleChainMinimize() {
     minBtn.style.background = "rgba(0,0,0,0.7)";
     minBtn.style.borderColor = "#ffd76a";
   }
-}
+window.xlwShowSpellSuccessToast = function(card, subtitle = "") {
+  let toast = document.getElementById("xlwSpellSuccessToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "xlwSpellSuccessToast";
+    document.body.appendChild(toast);
+  }
+  toast.className = "xlw-spell-success-toast show";
+  toast.innerHTML = `
+    <div class="toast-title">✨【${card?.name || "魔法卡"}】正常發動成功！</div>
+    ${subtitle ? `<div class="toast-sub">${subtitle}</div>` : ""}
+  `;
+  if (window._xlwSpellSuccessTimeout) {
+    clearTimeout(window._xlwSpellSuccessTimeout);
+  }
+  window._xlwSpellSuccessTimeout = setTimeout(() => {
+    if (toast) {
+      toast.classList.remove("show");
+    }
+  }, 2400);
+};
 
 function xlwShowSpellActivationOverlay(card, side) {
   return new Promise((resolve) => {
@@ -31102,6 +31162,13 @@ window.xlwStartPuzzleStage = function(stageNum) {
   window.XLW_playerActionsPerformedThisTurn = false;
   window.XLW_turnCombatWins = 0;
   window.XLW_turnTappedUnits = new Set();
+  window.XLW_debbieActive = false;
+  window.XLW_enemyDebbieActive = false;
+  window.XLW_playerOrcAwardActiveUntil = 0;
+  window.XLW_enemyOrcAwardActiveUntil = 0;
+  window.XLW_orcCheatFairActive = false;
+  window.XLW_enemyOrcCheatFairActive = false;
+  window.XLW_callGameDeclared = false;
   selectedAttacker = null;
   clearModes();
 
