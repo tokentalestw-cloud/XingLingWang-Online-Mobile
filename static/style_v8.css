@@ -6383,7 +6383,9 @@ html.xlw-force-landscape body {
   font-weight: 900 !important;
   letter-spacing: 0.6px !important;
   cursor: pointer !important;
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.15s ease, filter 0.15s ease !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.08s ease, filter 0.08s ease !important;
   user-select: none !important;
 }
 
@@ -6559,10 +6561,41 @@ html.xlw-force-landscape body {
     0 0 24px rgba(250, 204, 21, 0.75) !important;
 }
 
-#stableActionPanel .stable-action-btn:active:not(:disabled) {
-  transform: translateY(2px) !important;
+#stableActionPanel .stable-action-btn:active:not(:disabled),
+.stable-action-btn:active:not(:disabled) {
+  transform: scale(0.93) translateY(2.5px) !important;
   border-bottom-width: 1.5px !important;
-  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+  filter: brightness(1.28) contrast(1.15) !important;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 16px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* 🔄 執行結算中狀態 (.btn-processing) — 立即回饋反饋視覺效果 */
+#stableActionPanel .stable-action-btn.btn-processing,
+.stable-action-btn.btn-processing {
+  background:
+    linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(49, 46, 129, 0.98) 100%) !important;
+  color: #c7d2fe !important;
+  border: 1.5px solid #818cf8 !important;
+  border-bottom: 3.5px solid #312e81 !important;
+  text-shadow: 0 0 8px rgba(129, 140, 248, 0.8) !important;
+  cursor: wait !important;
+  pointer-events: none !important;
+  animation: xlwBtnProcessingPulse 0.9s infinite alternate ease-in-out !important;
+}
+
+@keyframes xlwActiveTacticalPulse {
+  0% { filter: brightness(1); box-shadow: inset 0 2px 3px #ffffff, 0 0 16px rgba(56, 189, 248, 0.7); }
+  100% { filter: brightness(1.2); box-shadow: inset 0 2px 3px #ffffff, 0 0 30px rgba(56, 189, 248, 1), 0 0 14px #fde047; }
+}
+
+@keyframes xlwActiveAttackPulse {
+  0% { filter: brightness(1); box-shadow: inset 0 2px 3px #ffffff, 0 0 16px rgba(239, 68, 68, 0.7); }
+  100% { filter: brightness(1.2); box-shadow: inset 0 2px 3px #ffffff, 0 0 30px rgba(239, 68, 68, 1), 0 0 14px #fde047; }
+}
+
+@keyframes xlwBtnProcessingPulse {
+  0% { filter: brightness(1); box-shadow: 0 0 10px rgba(129, 140, 248, 0.4); }
+  100% { filter: brightness(1.28); box-shadow: 0 0 26px rgba(129, 140, 248, 0.95), inset 0 0 14px rgba(165, 180, 252, 0.6); }
 }
 
 /* 🔒 禁用狀態 (.stable-action-btn:disabled) — 內凹暗黑玄鐵鎖定態，告別死白殘影 */

@@ -3391,6 +3391,7 @@ function clearModes(keepTributeWaiting = false) {
   if (!keepTributeWaiting) {
     tributeWaitingPosition = false;
     selectedTributeCard = null;
+    window.XLW_forcedTravelerPending = null;
   }
   selectedAttacker = null;
   window.XLW_bypassNormalSummonLimit = false;
@@ -10196,8 +10197,68 @@ async function runDebbiePlacementFlow() {
   }
 }
 
+// 強制打出單位/森林小旅人檢測（雙方召喚階段以及戰術佈陣階段不能直接跳過完全不從手牌打出單位）
+async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
+  if (window.XLW_playerNeedsToDraw) return true;
+
+  const emptySlots = [];
+  for (const z of ["player_front", "player_back"]) {
+    for (let i = 0; i < 5; i++) {
+      if (!field[z][i]) emptySlots.push({ zone: z, idx: i });
+    }
+  }
+
+  // 若場上全滿（10格皆有單位），無空格可放，依規則直接放行
+  if (emptySlots.length === 0) {
+    window.XLW_forcedTravelerPending = null;
+    return false;
+  }
+
+  let summonUsed = false;
+  if (currentPhaseName === "召喚階段") {
+    summonUsed = normalSummonUsed;
+  } else if (currentPhaseName === "戰術佈陣") {
+    summonUsed = tacticalSummonUsed;
+  } else {
+    return false;
+  }
+
+  if (summonUsed) {
+    window.XLW_forcedTravelerPending = null;
+    return false;
+  }
+
+  // 尚未滿足「必須打出單位」之規則！
+  // 若已提示過（第二次點擊相同按鈕）或當前已處於 TRAVELER 準備放置狀態：自動配置並放行
+  if (window.XLW_forcedTravelerPending === currentPhaseName || selectedHandForSummon === "TRAVELER") {
+    const slot = emptySlots[0];
+    selectedHandForSummon = "TRAVELER";
+    tributeWaitingPosition = true;
+    logBattle(`🌲【規則限制】${currentPhaseName}未從手牌打出單位，系統依規則強制自森林召喚【小旅人】至我方${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}！`);
+    setStatus(`🌲【規則限制】已自動召喚【小旅人】，正在執行【${nextActionName}】...`);
+    await placeUnit(slot.zone, slot.idx);
+    window.XLW_forcedTravelerPending = null;
+    clearModes();
+    render();
+    return false;
+  } else {
+    // 第一次點擊：提示並開啟小旅人格位選取
+    window.XLW_forcedTravelerPending = currentPhaseName;
+    clearModes();
+    tributeWaitingPosition = true;
+    selectedHandForSummon = "TRAVELER";
+    if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
+    const msg = `⚠️【規則限制】${currentPhaseName}不可直接跳過！請點選場上空格放置【小旅人】（再次點擊【${nextActionName}】可自動配置）。`;
+    setStatus(msg);
+    logBattle(msg);
+    render();
+    return true; // 攔截本次跳轉
+  }
+}
+
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
 async function changeActionPhase(targetPhase) {
+  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (window.XLW_playerNeedsToDraw) {
     setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
     return;
@@ -10211,6 +10272,12 @@ async function changeActionPhase(targetPhase) {
     return;
   }
   if (phase !== "召喚階段" && phase !== "戰術佈陣" && phase !== "進攻宣言") return;
+
+  // 強制打出單位規則：召喚階段不可直接跳過
+  if (phase === "召喚階段" && (targetPhase === "戰術佈陣" || targetPhase === "進攻宣言")) {
+    const blocked = await xlwEnforceForcedSummonRule("召喚階段", targetPhase);
+    if (blocked) return;
+  }
 
   if (targetPhase === "進攻宣言") {
     if (phase === "戰術佈陣") {
@@ -16147,10 +16214,14 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
     }
   }
 
-  // 1. 觀光阿姨 (NEU-0004 / R-NEU-0004)
+  // 1. 觀光阿姨 (NEU-0004 / R-NEU-0004 / SSR-NMS-0017 / R-NMS-0017 / NMS-0017)
   let auntCount = 0;
   field[frontZone].concat(field[backZone]).forEach(u => {
-    if (u && u.card && (u.card.id === "NEU-0004" || u.card.name?.includes("觀光阿姨"))) {
+    if (u && u.card && (
+      u.card.name?.includes("觀光阿姨") ||
+      u.card.id?.includes("NMS-0017") ||
+      u.card.id?.includes("NEU-0004")
+    )) {
       auntCount++;
     }
   });
@@ -16182,17 +16253,19 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             summonedTurn: turn,
             summonedZone: res.zone
           };
+          field[res.zone][res.idx].card.creator = "player";
           logBattle(`✨ 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
           playTravelerSummonAnimation("#playerForest", res.zone, res.idx);
           if (isMultiplayer) {
             sendFullGameStateToOpponent();
           }
+          render();
         }
       } else {
         logBattle("觀光阿姨 效果：我方場地已滿，無法召喚。");
       }
     } else {
-      // AI side triggers aunt: AI only summons Little Traveler on AI's side (enemy side)
+      // AI side triggers aunt: AI summons Little Traveler on AI's side (enemy side, front row priority)
       const targetZones = ["enemy_front", "enemy_back"];
       const allowedSlots = [];
       for (const z of targetZones) {
@@ -16203,7 +16276,9 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
         }
       }
       if (allowedSlots.length > 0) {
-        const res = allowedSlots[Math.floor(Math.random() * allowedSlots.length)];
+        const frontSlots = allowedSlots.filter(s => s.zone === "enemy_front");
+        const pool = frontSlots.length > 0 ? frontSlots : allowedSlots;
+        const res = pool[Math.floor(Math.random() * pool.length)];
         field[res.zone][res.idx] = {
           card: structuredClone(LITTLE_TRAVELER),
           tapped: false,
@@ -16212,8 +16287,13 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
           summonedTurn: turn,
           summonedZone: res.zone
         };
+        field[res.zone][res.idx].card.creator = "enemy";
         logBattle(`✨ 對手 觀光阿姨 效果：在 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1} 召喚了一個 迷路的尋寶小旅人！`);
         playTravelerSummonAnimation("#enemyForest", res.zone, res.idx);
+        render();
+        await sleep(600);
+      } else {
+        logBattle("對手 觀光阿姨 效果：對手場地已滿，無法召喚。");
       }
     }
   }
@@ -17436,11 +17516,10 @@ async function runEnemyTurn() {
         }
       }
     } else {
-      // 手牌無可召喚單位時：絕不憑空印卡！符合條件時僅能從森林召喚小旅人（與玩家森林規則完全相同）
+      // 手牌無可召喚單位時：依規則不能直接跳過，強制從森林召喚小旅人到場上！
       const eFront = field.enemy_front.findIndex(u => !u);
       const eBack = field.enemy_back.findIndex(u => !u);
-      const currentEnemyUnitsCount = ["enemy_front", "enemy_back"].reduce((s, z) => s + field[z].filter(Boolean).length, 0);
-      if (currentEnemyUnitsCount < 2 && (eFront >= 0 || eBack >= 0)) {
+      if (eFront >= 0 || eBack >= 0) {
         destZone = eFront >= 0 ? "enemy_front" : "enemy_back";
         destIdx = eFront >= 0 ? eFront : eBack;
         field[destZone][destIdx] = {
@@ -17453,15 +17532,16 @@ async function runEnemyTurn() {
         };
         field[destZone][destIdx].card.creator = "enemy";
         window.XLW_enemySummonCountThisTurn = 1;
-        logBattle(`🤖【對手 AI 召喚】從森林召喚了【小旅人】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
+        logBattle(`🌲【對手 AI 召喚】依規則未從手牌打出單位，強制從森林召喚【小旅人】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
+        playTravelerSummonAnimation("#enemyForest", destZone, destIdx);
         render();
-        await sleep(1000);
+        await sleep(800);
 
         try {
           await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
         } catch (e) {}
       } else {
-        logBattle("對手召喚階段：手牌無符合條件的單位，跳過召喚。");
+        logBattle("對手召喚階段：場地已滿無空格，無法召喚單位。");
       }
     }
     render();
@@ -17615,9 +17695,8 @@ async function runEnemyTurn() {
               console.error("AI 戰術佈陣召喚觸發效果出錯:", errTacticalTrig);
             }
           } else {
-            // 手牌無免祭品單位，檢驗森林召喚規則（場上單位少於 2 個）
-            const currentUnits = ["enemy_front", "enemy_back"].reduce((s, z) => s + field[z].filter(Boolean).length, 0);
-            if (currentUnits < 2) {
+            // 手牌無免祭品單位，依規則不能直接跳過，強制從森林召喚小旅人到場上！
+            if (tacticalDestZone && tacticalDestIdx >= 0) {
               field[tacticalDestZone][tacticalDestIdx] = {
                 card: structuredClone(LITTLE_TRAVELER),
                 tapped: false,
@@ -17627,15 +17706,16 @@ async function runEnemyTurn() {
                 summonedZone: tacticalDestZone
               };
               field[tacticalDestZone][tacticalDestIdx].card.creator = "enemy";
-              logBattle(`🤖【對手 AI 戰術佈陣】從森林召喚了【小旅人】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
+              logBattle(`🌲【對手 AI 戰術佈陣】依規則未從手牌打出單位，強制從森林召喚【小旅人】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
+              playTravelerSummonAnimation("#enemyForest", tacticalDestZone, tacticalDestIdx);
               render();
-              await sleep(1000);
+              await sleep(800);
 
               try {
                 await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, tacticalDestZone, tacticalDestIdx, false);
               } catch (e) {}
             } else {
-              logBattle("對手戰術佈陣完成（手牌無 0 祭品單位，且場上單位已達 2 個以上，不進行額外召喚）。");
+              logBattle("對手戰術佈陣：場地已滿無空格，無法召喚單位。");
             }
           }
         }
@@ -17661,6 +17741,14 @@ async function runEnemyTurn() {
       }
     } catch (e) { console.warn("AI 手牌超限處理異常:", e); }
 
+    // 12. 對手回合結束階段效果（觀光阿姨召喚小旅人、中立與陣營結束階段效果、衰敗結算）
+    try {
+      await runNeutralEndPhaseEffects(false);
+      await resolveDecayStatus(false);
+    } catch (eEndPhase) {
+      console.warn("AI 結束階段效果異常:", eEndPhase);
+    }
+
   } catch (errTop) {
     console.error("對手 AI 頂層運行出錯:", errTop);
     logBattle(`對手行動出錯: ${errTop.message}`);
@@ -17670,6 +17758,7 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (window.XLW_playerNeedsToDraw) {
     logBattle("⚠️ 檢測到尚未完成抽牌，系統自動為您點選牌庫抽牌！");
     await window.xlwHandlePlayerDeckClick();
@@ -17679,8 +17768,24 @@ async function endPlayerTurnAndRunEnemy() {
     console.warn("endPlayerTurnAndRunEnemy blocked: not player turn or AI already running");
     return;
   }
+
+  // 強制打出單位規則：召喚階段與戰術佈陣階段均不能直接跳過
+  if (phase === "召喚階段") {
+    const blocked = await xlwEnforceForcedSummonRule("召喚階段", "結束回合");
+    if (blocked) return;
+  } else if (phase === "戰術佈陣") {
+    const blocked = await xlwEnforceForcedSummonRule("戰術佈陣", "結束回合");
+    if (blocked) return;
+  }
+
+  window.XLW_isPlayerTurnEnding = true;
   const endBtnEl = $("stableActionEnd");
-  if (endBtnEl) endBtnEl.disabled = true;
+  if (endBtnEl) {
+    endBtnEl.disabled = true;
+    endBtnEl.classList.add("btn-processing");
+    endBtnEl.innerHTML = `<span>⏳ 正在結算回合...</span>`;
+  }
+
   window.XLW_playerCurseSummonActive = false;
   window.XLW_playerFacelessManActive = false;
   window.XLW_enemyFacelessManActive = false;
@@ -17688,6 +17793,7 @@ async function endPlayerTurnAndRunEnemy() {
   window.XLW_enemySummonCountThisTurn = 0;
   await checkPopulationCap(true);
   if (hand.length > 10) {
+    window.XLW_isPlayerTurnEnding = false;
     window.XLW_exileExcessHandActive = true;
     setStatus(`手牌數量 (${hand.length} 張) 超出10張上限，請點選手牌置於除外區，直到剩下 10 張手牌！`);
     render();
@@ -18013,6 +18119,7 @@ async function endPlayerTurnAndRunEnemy() {
     }
     
     turn++; // 保持雙方視覺回合數一致
+    window.XLW_isPlayerTurnEnding = false;
     ws.send(JSON.stringify({
       action: "end_turn",
       next_turn: turn
@@ -18032,6 +18139,7 @@ async function endPlayerTurnAndRunEnemy() {
 
     // 回到我方新回合
     turn++;
+    window.XLW_isPlayerTurnEnding = false;
     window.XLW_turnSneakCount = 0;
     window.XLW_meowToyShopUsedThisTurn = false;
     window.XLW_enemyMeowToyShopUsedThisTurn = false;
@@ -22371,6 +22479,7 @@ function renderStablePanel() {
   }
 
   // 正常對戰操作
+  const isEnding = Boolean(window.XLW_isPlayerTurnEnding || phase === "結束階段");
   panel.innerHTML = `
     <div class="stable-action-choice-group">
       <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
@@ -22381,7 +22490,7 @@ function renderStablePanel() {
     </div>
     <button id="stableActionConfirm" class="stable-action-btn tribute" onclick="event.stopPropagation(); confirmTribute()">確認獻祭</button>
     <button id="stableActionCancel" class="stable-action-btn tribute-cancel" onclick="event.stopPropagation(); clearModes()">取消選擇</button>
-    <button id="stableActionEnd" class="stable-action-btn end" onclick="event.stopPropagation(); endPlayerTurnAndRunEnemy()">結束回合</button>
+    <button id="stableActionEnd" class="stable-action-btn end ${isEnding ? "btn-processing" : ""}" ${isEnding ? "disabled" : ""} onclick="event.stopPropagation(); endPlayerTurnAndRunEnemy()">${isEnding ? "<span>⏳ 正在結算回合...</span>" : "結束回合"}</button>
   `;
 
   // 按鈕狀態控制
@@ -22394,7 +22503,7 @@ function renderStablePanel() {
   const isAiRunning = !isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running));
   if (tacticalBtn) {
     const canSwitchToTactical = (phase === "召喚階段" || phase === "戰術佈陣" || phase === "進攻宣言");
-    tacticalBtn.disabled = isAiRunning || !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
+    tacticalBtn.disabled = isAiRunning || isEnding || !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
     tacticalBtn.classList.toggle("active", phase === "戰術佈陣");
   }
   if (attackBtn) {
@@ -22404,17 +22513,23 @@ function renderStablePanel() {
     } else if (phase === "戰術佈陣") {
       canSwitchToAttack = false;
     }
-    attackBtn.disabled = isAiRunning || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
+    attackBtn.disabled = isAiRunning || isEnding || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");
   }
   if (confirmBtn) {
-    confirmBtn.disabled = isAiRunning || selectedHandForTribute === null || countSelectedTributesValue(selectedTributes, hand[selectedHandForTribute]) < getCardTributeCost(hand[selectedHandForTribute]);
+    confirmBtn.disabled = isAiRunning || isEnding || selectedHandForTribute === null || countSelectedTributesValue(selectedTributes, hand[selectedHandForTribute]) < getCardTributeCost(hand[selectedHandForTribute]);
   }
   if (cancelBtn) {
-    cancelBtn.disabled = isAiRunning || (selectedHandForSummon === null && selectedHandForTribute === null && selectedAttacker === null && !tributeWaitingPosition);
+    cancelBtn.disabled = isAiRunning || isEnding || (selectedHandForSummon === null && selectedHandForTribute === null && selectedAttacker === null && !tributeWaitingPosition);
   }
   if (endBtn) {
-    endBtn.disabled = isAiRunning || phase === "防守階段";
+    if (isEnding) {
+      endBtn.disabled = true;
+      endBtn.classList.add("btn-processing");
+      endBtn.innerHTML = `<span>⏳ 正在結算回合...</span>`;
+    } else {
+      endBtn.disabled = isAiRunning || phase === "防守階段";
+    }
   }
 
   // 森林召喚區域同步狀態 (清晰區分可召喚與不可召喚狀態，但永遠保持森林立體神木群生機盎然)
