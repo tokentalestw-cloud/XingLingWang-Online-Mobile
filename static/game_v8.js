@@ -4872,11 +4872,11 @@ async function castSpell(handIndex) {
       "請選擇要發動的效果：",
       [
         { text: "🛡️ 使我方 1 單位獲得法術保護（不會被敵方魔法卡選為目標）", value: "protect_unit" },
-        { text: "⚡ 使敵方 1 魔法卡無效化（⚠️ 須在對手打出當下反制使用）", value: "negate_magic" }
+        { text: "⚡ 使敵方 1 魔法卡無效化（⚠️ 僅限我方回合遭受敵方反制時反制保護）", value: "negate_magic" }
       ]
     );
     if (opt === "negate_magic") {
-      await showXLWConfirm("法術保護", "【提示】無效化效果必須在對手打出魔法卡的當下，於反制提示框中發動。目前無法直接打出。", "確定");
+      await showXLWConfirm("法術保護", "【提示】法術保護的無效化效果只能在使用者自己的回合使用！當我方發動魔法卡遭遇敵方反制時，可於連鎖提示框中發動以保護我方法術。敵方回合不可發動。", "確定");
       hand.splice(handIndex, 0, card); // 加回手牌
       render();
       return;
@@ -26548,12 +26548,12 @@ function getOrCreateSpellChainOverlay() {
     overlay.id = "xlw-spell-chain-overlay";
     overlay.className = "xlw-chain-overlay";
     overlay.innerHTML = `
-      <button id="xlw-chain-toggle-minimize" class="forest-summon-btn" style="position: absolute; right: 20px; top: 20px; z-index: 100001; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #ffd76a; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; height: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto;"></button>
-      <div id="xlw-chain-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+      <button id="xlw-chain-toggle-minimize" class="forest-summon-btn" style="position: absolute; right: 14px; top: 12px; z-index: 100001; background: rgba(0,0,0,0.75); color: #fff; border: 1px solid #ffd76a; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; height: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto;"></button>
+      <div id="xlw-chain-content">
         <div class="chain-title">🔮 魔法反制連鎖 🔮</div>
         <div id="xlw-chain-cards" class="chain-cards-container"></div>
         <div id="xlw-chain-status" class="chain-status-text"></div>
-        <div id="xlw-chain-actions" style="margin-top:25px; display:flex; gap:15px; justify-content:center; align-items:center;"></div>
+        <div id="xlw-chain-actions"></div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -26756,15 +26756,18 @@ function showSpellChainUI(stack) {
   window.XLW_chainMinimized = false;
   const content = document.getElementById("xlw-chain-content");
   const minBtn = document.getElementById("xlw-chain-toggle-minimize");
-  content.style.display = "flex";
-  overlay.style.background = "rgba(8, 6, 16, 0.5)";
+  if (content) content.style.display = "flex";
+  overlay.style.background = "rgba(8, 6, 16, 0.8)";
   overlay.style.pointerEvents = "auto";
-  minBtn.style.pointerEvents = "auto";
-  minBtn.textContent = "👁️ 隱藏連鎖";
-  minBtn.style.background = "rgba(0,0,0,0.7)";
-  minBtn.style.borderColor = "#ffd76a";
+  if (minBtn) {
+    minBtn.style.pointerEvents = "auto";
+    minBtn.textContent = "👁️ 隱藏連鎖";
+    minBtn.style.background = "rgba(0,0,0,0.7)";
+    minBtn.style.borderColor = "#ffd76a";
+  }
   
   const cardsContainer = document.getElementById("xlw-chain-cards");
+  if (!cardsContainer) return;
   cardsContainer.innerHTML = "";
   
   stack.forEach((item, idx) => {
@@ -26804,6 +26807,12 @@ function showSpellChainUI(stack) {
       cardsContainer.appendChild(divider);
     }
   });
+
+  requestAnimationFrame(() => {
+    if (cardsContainer) {
+      cardsContainer.scrollLeft = cardsContainer.scrollWidth;
+    }
+  });
 }
 
 function hideSpellChainUI() {
@@ -26839,6 +26848,7 @@ function aiRespondToSpellChain() {
     const cid = c.id || "";
     return name.includes("魔法炸彈客") || cid.includes("NMS-0025") || cid === "NEU-0025";
   });
+  const isAITurnForChain = !isMyTurn && (spellChainStack.length > 0 && spellChainStack[0].owner === "opponent");
   const counterCard = aiHand.find(c => {
     if (!c) return false;
     const name = c.name || "";
@@ -26846,8 +26856,12 @@ function aiRespondToSpellChain() {
     if (name.includes("怒吼") || cid === "R-ORC-0036") {
       return lastItem.card && lastItem.card.type === "magic" && Number(lastItem.card.mana || 0) >= 1;
     }
+    // 法術保護只能在使用者自己的回合使用！敵方回合不可使用法術保護反制
+    if (name.includes("法術保護") || cid.includes("NMG-0019")) {
+      if (!isAITurnForChain) return false;
+      return true;
+    }
     return name.includes("魔法反制") || cid.includes("NMG-0020") ||
-           name.includes("法術保護") || cid.includes("NMG-0019") ||
            name.includes("終極無效化") || cid.includes("NMG-0026") ||
            name.includes("法術解析") || cid.includes("NMG-0039");
   });
@@ -26929,6 +26943,7 @@ function promptNextChainAction() {
                            (lastItem.card.id && lastItem.card.id.includes("NMS-0025"));
     const lastItemCard = lastItem ? lastItem.card : null;
     const lastItemMana = lastItemCard ? Number(lastItemCard.mana || 0) : 0;
+    const isPlayerTurnForChain = isMyTurn && (spellChainStack.length > 0 && spellChainStack[0].owner === "me");
     const counterCards = isLastItemUnit ? [] : hand.filter(c => {
       if (!c) return false;
       const name = c.name || "";
@@ -26936,10 +26951,14 @@ function promptNextChainAction() {
       if (name.includes("怒吼") || cid === "R-ORC-0036") {
         return lastItemCard && lastItemCard.type === "magic" && lastItemMana >= 1;
       }
+      // 法術保護只能在使用者自己的回合使用！敵方的回合使用魔法卡，不能利用法術保護反制對方，因為該階段視為敵方回合
+      if (name.includes("法術保護") || cid.includes("NMG-0019")) {
+        if (!isPlayerTurnForChain) return false;
+        return true;
+      }
       return name.includes("魔法反制") || cid.includes("NMG-0020") ||
              name.includes("終極無效化") || cid.includes("NMG-0026") ||
              name.includes("法術解析") || cid.includes("NMG-0039") ||
-             name.includes("法術保護") || cid.includes("NMG-0019") ||
              name.includes("魔法炸彈客") || cid.includes("NMS-0025") || cid === "NEU-0025";
     });
 
@@ -26960,45 +26979,10 @@ function promptNextChainAction() {
     if (counterCards.length > 0 || eligibleMushroomUnits.length > 0) {
       statusText.textContent = `🔥 對手連鎖發動了 ${lastItem.card.name}，是否進行連鎖反制？`;
       
-      // Pass button
-      const passBtn = document.createElement("button");
-      passBtn.className = "forest-summon-btn";
-      passBtn.style.background = "#ff4d4f";
-      passBtn.style.color = "#fff";
-      passBtn.style.borderColor = "#ff4d4f";
-      passBtn.style.padding = "8px 20px";
-      passBtn.style.fontSize = "14px";
-      passBtn.style.height = "auto";
-      passBtn.style.cursor = "pointer";
-      passBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
-      passBtn.textContent = "❌ 放棄反制 / 結算魔法";
-      passBtn.style.fontWeight = "bold";
-      passBtn.style.padding = "12px 24px";
-      passBtn.style.fontSize = "16px";
-      passBtn.style.width = "100%";
-      passBtn.style.marginTop = "10px";
-      passBtn.onclick = () => {
-        actionsDiv.innerHTML = "";
-        statusText.textContent = "⌛ 正在送出連鎖決議...";
-        if (isMultiplayer && ws) {
-          ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
-        }
-        resolveLocalSpellChain();
-      };
-      actionsDiv.appendChild(passBtn);
-
       // Counter buttons
       counterCards.forEach(c => {
         const counterBtn = document.createElement("button");
-        counterBtn.className = "forest-summon-btn";
-        counterBtn.style.background = "#52c41a";
-        counterBtn.style.color = "#fff";
-        counterBtn.style.borderColor = "#52c41a";
-        counterBtn.style.padding = "8px 20px";
-        counterBtn.style.fontSize = "14px";
-        counterBtn.style.height = "auto";
-        counterBtn.style.cursor = "pointer";
-        counterBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+        counterBtn.className = "chain-action-btn counter-btn";
         counterBtn.textContent = `🔥 使用 ${c.name}`;
         counterBtn.onclick = async () => {
           actionsDiv.innerHTML = "";
@@ -27031,15 +27015,7 @@ function promptNextChainAction() {
       // Mushroom buttons
       eligibleMushroomUnits.forEach(item => {
         const mushBtn = document.createElement("button");
-        mushBtn.className = "forest-summon-btn";
-        mushBtn.style.background = "#8c8c8c";
-        mushBtn.style.color = "#fff";
-        mushBtn.style.borderColor = "#ffd76a";
-        mushBtn.style.padding = "8px 20px";
-        mushBtn.style.fontSize = "14px";
-        mushBtn.style.height = "auto";
-        mushBtn.style.cursor = "pointer";
-        mushBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+        mushBtn.className = "chain-action-btn mushroom-btn";
         mushBtn.textContent = `🍄 橫置【酒醉的魔法魔菇】反制`;
         mushBtn.onclick = async () => {
           actionsDiv.innerHTML = "";
@@ -27072,17 +27048,31 @@ function promptNextChainAction() {
         actionsDiv.appendChild(mushBtn);
       });
 
+      // Pass button
+      const passBtn = document.createElement("button");
+      passBtn.className = "chain-action-btn pass-btn";
+      passBtn.textContent = "❌ 放棄反制 / 結算魔法";
+      passBtn.onclick = () => {
+        actionsDiv.innerHTML = "";
+        statusText.textContent = "⌛ 正在送出連鎖決議...";
+        if (isMultiplayer && ws) {
+          ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+        }
+        resolveLocalSpellChain();
+      };
+      actionsDiv.appendChild(passBtn);
+
+      requestAnimationFrame(() => {
+        if (overlay) {
+          overlay.scrollTop = overlay.scrollHeight;
+        }
+      });
+
     } else {
       statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
       
       const autoPassBtn = document.createElement("button");
-      autoPassBtn.className = "forest-summon-btn";
-      autoPassBtn.style.background = "#444";
-      autoPassBtn.style.color = "#888";
-      autoPassBtn.style.borderColor = "#666";
-      autoPassBtn.style.padding = "8px 20px";
-      autoPassBtn.style.fontSize = "14px";
-      autoPassBtn.style.height = "auto";
+      autoPassBtn.className = "chain-action-btn auto-pass-btn";
       autoPassBtn.disabled = true;
       autoPassBtn.textContent = "自動放行中 (1.5秒)...";
       actionsDiv.appendChild(autoPassBtn);
