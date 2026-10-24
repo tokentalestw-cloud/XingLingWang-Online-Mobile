@@ -165,38 +165,30 @@ class ConnectionManager:
 
     def flip_message_coordinates(self, msg: dict) -> dict:
         flipped = json.loads(json.dumps(msg))
+        if flipped.get("action") == "sync_game_state":
+            # sync_game_state 包含全域戰場 field，由前端在接收時專屬對稱翻轉
+            return flipped
+
         zone_map = {
             "player_front": "enemy_front",
             "player_back": "enemy_back",
             "enemy_front": "player_front",
             "enemy_back": "player_back"
         }
-        
-        # 翻轉頂層所有的區域欄位
-        for key in ["zone", "fromZone", "toZone", "attZone", "targetZone"]:
-            if key in flipped:
-                z = flipped[key]
-                if z in zone_map:
-                    flipped[key] = zone_map[z]
-        
-        # 翻轉 target 欄位 (可能是物件也可能是字串)
-        if "target" in flipped:
-            if isinstance(flipped["target"], dict):
-                tz = flipped["target"].get("zone")
-                if tz in zone_map:
-                    flipped["target"]["zone"] = zone_map[tz]
-            elif isinstance(flipped["target"], str):
-                z = flipped["target"]
-                if z in zone_map:
-                    flipped["target"] = zone_map[z]
 
-        # 翻轉 tributes 祭品陣列
-        if "tributes" in flipped and isinstance(flipped["tributes"], list):
-            for t in flipped["tributes"]:
-                tz = t.get("zone")
-                if tz in zone_map:
-                    t["zone"] = zone_map[tz]
-                    
+        def flip_recursive(obj):
+            if isinstance(obj, dict):
+                for k, v in list(obj.items()):
+                    if isinstance(v, str) and v in zone_map:
+                        obj[k] = zone_map[v]
+                    elif isinstance(v, (dict, list)):
+                        flip_recursive(v)
+            elif isinstance(obj, list):
+                for item in obj:
+                    if isinstance(item, (dict, list)):
+                        flip_recursive(item)
+
+        flip_recursive(flipped)
         return flipped
 
 manager = ConnectionManager()

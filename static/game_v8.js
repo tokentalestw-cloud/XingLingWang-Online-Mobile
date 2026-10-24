@@ -1427,6 +1427,9 @@ window.xlwHandlePlayerDeckClick = async function(event) {
       }
       render();
     }
+    if (isMultiplayer) {
+      sendFullGameStateToOpponent();
+    }
     return;
   }
 
@@ -10126,6 +10129,9 @@ async function changeActionPhase(targetPhase) {
       }
     }
     window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
+    if (isMultiplayer) {
+      ws.send(JSON.stringify({ action: "cancel_all_attacks" }));
+    }
     logBattle("我方取消所有進攻宣言，改回執行戰術佈陣。");
   }
 
@@ -10137,6 +10143,9 @@ async function changeActionPhase(targetPhase) {
   } else if (phase === "進攻宣言") {
     setStatus("\u9032\u5165\u300c\u9032\u653b\u5ba3\u8a00\u300d\uff1a\u7cfb\u7d71\u6b63\u5728\u70ba\u6211\u65b9\u55ae\u4f4d\u81ea\u52d5\u5ba3\u544a\u9032\u653b\uff08\u8207\u5c0d\u624b\u9032\u653b\u6a21\u5f0f\u4e00\u81f4\uff09\u002e\u002e\u002e");
     await xlwAutoDeclarePlayerAttacks();
+  }
+  if (isMultiplayer) {
+    sendFullGameStateToOpponent();
   }
   render();
 }
@@ -22197,9 +22206,12 @@ function renderStablePanel() {
   // 手牌超限除外模式的面板渲染
   if (window.XLW_exileExcessHandActive) {
     panel.innerHTML = `
-      <div class="stable-action-row" style="opacity: 0.5; pointer-events: none;">
-        <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
-        <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+      <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
+        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-row">
+          <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
+          <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+        </div>
       </div>
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
@@ -22211,9 +22223,12 @@ function renderStablePanel() {
   // 對手回合（線上雙人模式或單人對抗AI）：直接鎖定整個面板，以防違規操作
   if (!isMyTurn) {
     panel.innerHTML = `
-      <div class="stable-action-row" style="opacity: 0.5; pointer-events: none;">
-        <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
-        <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+      <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
+        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-row">
+          <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
+          <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+        </div>
       </div>
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
@@ -22225,9 +22240,12 @@ function renderStablePanel() {
   // 待點選牌組抽牌狀態的面板渲染
   if (window.XLW_playerNeedsToDraw) {
     panel.innerHTML = `
-      <div class="stable-action-row" style="opacity: 0.5; pointer-events: none;">
-        <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
-        <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+      <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
+        <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+        <div class="stable-action-row">
+          <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
+          <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+        </div>
       </div>
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
@@ -22238,9 +22256,12 @@ function renderStablePanel() {
 
   // 正常對戰操作
   panel.innerHTML = `
-    <div class="stable-action-row">
-      <button id="stableActionTactical" class="stable-action-btn tactical" onclick="changeActionPhase('戰術佈陣')">戰術佈陣</button>
-      <button id="stableActionAttack" class="stable-action-btn attack" onclick="changeActionPhase('進攻宣言')">進攻宣言</button>
+    <div class="stable-action-choice-group">
+      <div class="stable-action-choice-tip">⚡ 戰術／進攻（只能二選一）</div>
+      <div class="stable-action-row">
+        <button id="stableActionTactical" class="stable-action-btn tactical" onclick="changeActionPhase('戰術佈陣')">戰術佈陣</button>
+        <button id="stableActionAttack" class="stable-action-btn attack" onclick="changeActionPhase('進攻宣言')">進攻宣言</button>
+      </div>
     </div>
     <button id="stableActionConfirm" class="stable-action-btn tribute" onclick="event.stopPropagation(); confirmTribute()">確認獻祭</button>
     <button id="stableActionCancel" class="stable-action-btn tribute-cancel" onclick="event.stopPropagation(); clearModes()">取消選擇</button>
@@ -22859,14 +22880,18 @@ function setupWebSocketEvents() {
         playerBonusScore = s.enemyBonusScore;
         enemyBonusScore = s.playerBonusScore;
         
-        graveyard = s.enemyGraveyard || [];
+        if (s.enemyGraveyard && s.enemyGraveyard.length > graveyard.length) {
+          graveyard = s.enemyGraveyard;
+        }
         window.XLW_ENEMY.grave = s.graveyard || [];
         enemyGraveyard = window.XLW_ENEMY.grave;
         
-        playerExileZone = s.enemyExileZone || [];
+        if (s.enemyExileZone && s.enemyExileZone.length > playerExileZone.length) {
+          playerExileZone = s.enemyExileZone;
+        }
         enemyExileZone = s.playerExileZone || [];
         
-        playerExtraDeck = s.enemyExtraDeck || [];
+        // 對手的額外牌庫為發送方 (s) 的 playerExtraDeck
         enemyExtraDeck = s.playerExtraDeck || [];
         
         turn = s.turn;
@@ -22876,10 +22901,12 @@ function setupWebSocketEvents() {
         window.XLW_ENEMY.hand = new Array(s.handCount).fill(null);
         window.XLW_ENEMY.deck = new Array(s.deckCount || 0).fill(null);
         
-        // Synced action & summon flags
-        normalSummonUsed = s.normalSummonUsed;
-        tacticalSummonUsed = s.tacticalSummonUsed;
-        window.XLW_tacticalMoveUsed = s.XLW_tacticalMoveUsed;
+        // 若非我方回合，才同步對手的通常/戰術召喚已使用狀態；若為我方回合，保留我方自身狀態
+        if (!isMyTurn) {
+          normalSummonUsed = s.normalSummonUsed;
+          tacticalSummonUsed = s.tacticalSummonUsed;
+          window.XLW_tacticalMoveUsed = s.XLW_tacticalMoveUsed;
+        }
         window.XLW_playerSummonCountThisTurn = s.enemySummonCountThisTurn || 0;
         window.XLW_enemySummonCountThisTurn = s.playerSummonCountThisTurn || 0;
         window.playerReceptionistTriggeredThisTurn = s.enemyReceptionistTriggeredThisTurn || false;
@@ -23167,6 +23194,16 @@ function setupWebSocketEvents() {
         }
         render();
       }
+    } else if (data.action === "demonic_exorcist_resolved") {
+      const targetUnit = field[data.zone]?.[data.idx];
+      if (targetUnit && targetUnit.equipments) {
+        const eqIdx = targetUnit.equipments.indexOf(data.eqName);
+        if (eqIdx !== -1) {
+          targetUnit.equipments.splice(eqIdx, 1);
+        }
+      }
+      logBattle(`✨ 對手發動 驅魔人 效果：移除了【${data.eqName}】！`);
+      render();
     } else if (data.action === "goat_spell_resolved") {
       const zone = data.zone;
       const idx = data.idx;
@@ -23264,7 +23301,7 @@ function setupWebSocketEvents() {
       logBattle("✨ 對手發動了【畫框】：對手手牌中的所有藝術品單位所需祭品 -1（持續至其本回合召喚階段結束）！");
       render();
     } else if (data.action === "beer_spell_resolved") {
-      const zone = data.zone.startsWith("player_") ? data.zone.replace("player_", "enemy_") : data.zone.replace("enemy_", "player_");
+      const zone = data.zone;
       const idx = data.idx;
       const obj = field[zone]?.[idx];
       if (obj) {
@@ -23362,9 +23399,9 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "leo_buff_sync") {
-      const leoZone = data.leoZone.startsWith("player_") ? data.leoZone.replace("player_", "enemy_") : data.leoZone.replace("enemy_", "player_");
+      const leoZone = data.leoZone;
       const leoIdx = data.leoIdx;
-      const targetZone = data.targetZone.startsWith("player_") ? data.targetZone.replace("player_", "enemy_") : data.targetZone.replace("enemy_", "player_");
+      const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       
       const leoUnit = field[leoZone]?.[leoIdx];
@@ -23379,11 +23416,11 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "aquarius_debuff_sync") {
-      const aquariusZone = data.aquariusZone.startsWith("player_") ? data.aquariusZone.replace("player_", "enemy_") : data.aquariusZone.replace("enemy_", "player_");
+      const aquariusZone = data.aquariusZone;
       const aquariusIdx = data.aquariusIdx;
-      const tapZone = data.tapZone.startsWith("player_") ? data.tapZone.replace("player_", "enemy_") : data.tapZone.replace("enemy_", "player_");
+      const tapZone = data.tapZone;
       const tapIdx = data.tapIdx;
-      const targetZone = data.targetZone.startsWith("player_") ? data.targetZone.replace("player_", "enemy_") : data.targetZone.replace("enemy_", "player_");
+      const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       
       const aqUnit = field[aquariusZone]?.[aquariusIdx];
@@ -23398,7 +23435,7 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "pisces_bounce_sync") {
-      const targetZone = data.targetZone.startsWith("player_") ? data.targetZone.replace("player_", "enemy_") : data.targetZone.replace("enemy_", "player_");
+      const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       const targetUnit = field[targetZone]?.[targetIdx];
       if (targetUnit) {
@@ -23408,7 +23445,7 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "shadow_gemini_sync") {
-      const targetZone = data.zone.startsWith("player_") ? data.zone.replace("player_", "enemy_") : data.zone.replace("enemy_", "player_");
+      const targetZone = data.zone;
       const targetIdx = data.idx;
       
       window.XLW_ENEMY.grave = (window.XLW_ENEMY.grave || []).filter(c => c && c.id !== data.geminiCard.id);
@@ -23531,7 +23568,7 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "dsg_resolved") {
-      const mappedZone = data.targetZone.startsWith("player_") ? data.targetZone.replace("player_", "enemy_") : data.targetZone.replace("enemy_", "player_");
+      const mappedZone = data.targetZone;
       const targetItem = field[mappedZone]?.[data.targetIdx];
       if (targetItem) {
         if (data.subAction === "transform") {
@@ -23709,8 +23746,8 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "frog_move_sync") {
-      const fromZone = data.fromZone.startsWith("player_") ? data.fromZone.replace("player_", "enemy_") : data.fromZone.replace("enemy_", "player_");
-      const toZone = data.toZone.startsWith("player_") ? data.toZone.replace("player_", "enemy_") : data.toZone.replace("enemy_", "player_");
+      const fromZone = data.fromZone;
+      const toZone = data.toZone;
       const fromIdx = data.fromIdx;
       const toIdx = data.toIdx;
       const frogUnit = field[fromZone][fromIdx];
@@ -23722,7 +23759,7 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "gemini_summon_sync") {
-      const zone = data.zone.startsWith("player_") ? data.zone.replace("player_", "enemy_") : data.zone.replace("enemy_", "player_");
+      const zone = data.zone;
       const idx = data.idx;
       const card = data.card;
       const fromSource = data.fromSource;
@@ -23748,7 +23785,7 @@ function setupWebSocketEvents() {
       logBattle(`✨ 對手發動【雙面幻影 雙子座 平子】效果：特殊召喚【${card.name}】至其場上！`);
       render();
     } else if (data.action === "summon_mushroom_sync") {
-      const zone = data.zone.startsWith("player_") ? data.zone.replace("player_", "enemy_") : data.zone.replace("enemy_", "player_");
+      const zone = data.zone;
       const idx = data.idx;
       const card = data.card;
       
@@ -23768,7 +23805,7 @@ function setupWebSocketEvents() {
       logBattle(`✨ 對手發動【酒店不速之客】效果：特殊召喚【${card.name}】至其場上！`);
       render();
     } else if (data.action === "grant_flying_sync") {
-      const targetZone = data.targetZone.startsWith("player_") ? data.targetZone.replace("player_", "enemy_") : data.targetZone.replace("enemy_", "player_");
+      const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       const tUnit = field[targetZone][targetIdx];
       if (tUnit) {
@@ -23853,13 +23890,7 @@ function setupWebSocketEvents() {
       logBattle(`對手發動 始皇帝 效果：橫置了 【${tappedUnit ? tappedUnit.card.name : "單位"}】，特殊召喚【戰士陶俑】到其場上！`);
       render();
     } else if (data.action === "temp_equip_spell_resolved") {
-      const flipZone = (z) => {
-        if (!z) return null;
-        if (z.startsWith("player_")) return z.replace("player_", "enemy_");
-        if (z.startsWith("enemy_")) return z.replace("enemy_", "player_");
-        return z;
-      };
-      const resolvedZone = flipZone(data.zone);
+      const resolvedZone = data.zone;
       const targetUnit = field[resolvedZone]?.[data.idx];
       if (targetUnit) {
         if (!targetUnit.equipments) targetUnit.equipments = [];
@@ -23890,6 +23921,10 @@ function setupWebSocketEvents() {
       if (unit) {
         const oldName = unit.card?.name || "單位";
         unit.card = data.newCard;
+        if (enemyExtraDeck) {
+          const eIdx = enemyExtraDeck.findIndex(c => c && (c.id === data.newCard.id || c.name === data.newCard.name));
+          if (eIdx !== -1) enemyExtraDeck.splice(eIdx, 1);
+        }
         logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】！`);
         render();
       }
@@ -23902,6 +23937,10 @@ function setupWebSocketEvents() {
         if (window.XLW_ENEMY.hand) {
           window.XLW_ENEMY.hand.push(data.newCard);
         }
+        if (enemyExtraDeck) {
+          const eIdx = enemyExtraDeck.findIndex(c => c && (c.id === data.newCard.id || c.name === data.newCard.name));
+          if (eIdx !== -1) enemyExtraDeck.splice(eIdx, 1);
+        }
         logBattle(`✨ 對手進行額外進化：場上的 ${oldName} 成功升級進化為 【${data.newCard.name}】並收回手牌！`);
         render();
       }
@@ -23909,14 +23948,8 @@ function setupWebSocketEvents() {
       const key = `${data.attZone}:${data.attIdx}`;
       window.XLW_opponentDoubleClawNegate[key] = data.negate;
     } else if (data.action === "handy_meow_move_sync") {
-      const flipZone = (z) => {
-        if (!z) return null;
-        if (z.startsWith("player_")) return z.replace("player_", "enemy_");
-        if (z.startsWith("enemy_")) return z.replace("enemy_", "player_");
-        return z;
-      };
-      const flippedFromZone = flipZone(data.fromZone);
-      const flippedToZone = flipZone(data.toZone);
+      const flippedFromZone = data.fromZone;
+      const flippedToZone = data.toZone;
       const oppKey = `${flippedFromZone}:${data.fromIdx}`;
       window.XLW_handyMeowOpponentChoice[oppKey] = data.toZone ? { zone: flippedToZone, idx: data.toIdx } : null;
     } else if (data.action === "manager_meow_activate") {
