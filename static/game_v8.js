@@ -1000,14 +1000,7 @@ function makeSlots() {
 
 // ===== 2. 牌組與種族邏輯 =====
 function xlwInitExtraDeck(deckName) {
-  let actualKey = deckName;
-  if (decks && !decks[actualKey + "_extra"]) {
-    const found = Object.keys(decks).find(k => !k.endsWith("_extra") && k !== "中立單位" && (k.startsWith(deckName + "_") || k === deckName));
-    if (found && decks[found + "_extra"]) {
-      actualKey = found;
-    }
-  }
-  const extraKey = actualKey + "_extra";
+  const extraKey = deckName + "_extra";
   if (decks && decks[extraKey] !== undefined && Array.isArray(decks[extraKey])) {
     const extraIds = decks[extraKey];
     return extraIds.map(id => {
@@ -1015,7 +1008,8 @@ function xlwInitExtraDeck(deckName) {
       return c ? structuredClone(c) : null;
     }).filter(c => c !== null);
   } else {
-    return [];
+    // Fallback: If no extra deck is saved/constructed, default to loading all eligible extra deck cards
+    return (allCards || []).filter(c => belongsToDeck(c, deckName) && c.deck_eligible === false).map(c => structuredClone(c));
   }
 }
 
@@ -27555,8 +27549,8 @@ function renderExtraDecks() {
       pExtraEl.style.display = "flex";
       const topCard = playerExtraDeck[playerExtraDeck.length - 1];
       pExtraEl.innerHTML = `
-        <img src="${topCard.image || '/static/card_back.jpeg'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; position: absolute; top: 0; left: 0;">
-        <div class="deck-fixed-label" style="position: absolute !important; bottom: 4px !important; left: 0 !important; right: 0 !important; margin: 0 auto !important; width: 90% !important; background: rgba(147, 51, 234, 0.85) !important; font-size: 11px !important; z-index: 5 !important; text-align: center !important; border-radius: 4px !important; padding: 2px 0 !important; line-height: 1.2 !important;">我方額外(${playerExtraDeck.length})</div>
+        <img src="${topCard.image || '/static/card_back.jpeg'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+        <div class="deck-fixed-label" style="background: rgba(147, 51, 234, 0.85); font-size: 11px;">我方額外(${playerExtraDeck.length})</div>
       `;
       pExtraEl.className = "zone side purple";
       pExtraEl.style.cursor = "pointer";
@@ -27571,8 +27565,8 @@ function renderExtraDecks() {
       eExtraEl.classList.add("mobile-extra-visible");
       eExtraEl.style.display = "flex";
       eExtraEl.innerHTML = `
-        <img src="/static/card_back.jpeg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; position: absolute; top: 0; left: 0;">
-        <div class="deck-fixed-label" style="position: absolute !important; bottom: 4px !important; left: 0 !important; right: 0 !important; margin: 0 auto !important; width: 90% !important; background: rgba(147, 51, 234, 0.85) !important; font-size: 11px !important; z-index: 5 !important; text-align: center !important; border-radius: 4px !important; padding: 2px 0 !important; line-height: 1.2 !important;">對手額外(${enemyExtraDeck.length})</div>
+        <img src="/static/card_back.jpeg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+        <div class="deck-fixed-label" style="background: rgba(147, 51, 234, 0.85); font-size: 11px;">對手額外(${enemyExtraDeck.length})</div>
       `;
       eExtraEl.className = "zone side purple";
       eExtraEl.style.cursor = "default";
