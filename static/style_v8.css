@@ -5017,36 +5017,36 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: translateY(-18px) rotate(22deg); }
 }
 
-/* 擐?摰孵 */
+/* 登入首頁容器 */
 .welcome-container {
   position: relative;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   text-align: center;
 }
 
-/* 蝬?摮?璅? */
+/* 經典發光標題 */
 .welcome-title-box {
   animation: titlePulse 2s infinite alternate ease-in-out;
 }
 .welcome-title-eng {
   font-family: "Cinzel", "Georgia", serif !important;
-  font-size: 26px !important;
+  font-size: 22px !important;
   font-weight: 900 !important;
   color: #ffffff !important;
-  letter-spacing: 4px !important;
+  letter-spacing: 3px !important;
   margin: 0 !important;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important;
 }
 .welcome-title-chn {
-  font-size: 42px !important;
+  font-size: 36px !important;
   font-weight: 900 !important;
   color: #ffd76a !important;
-  letter-spacing: 12px !important;
-  margin: 6px 0 0 0 !important;
+  letter-spacing: 10px !important;
+  margin: 4px 0 0 0 !important;
   text-shadow: 
     0 0 15px rgba(255, 215, 106, 0.8),
     0 0 30px rgba(255, 215, 106, 0.4) !important;
@@ -5057,16 +5057,16 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: scale(1.02); }
 }
 
-/* 鞎憭扳?剝◢?潘?Bouncing ?孕?拙捆??*/
+/* 萌動吉祥物容器 */
 .mascot-container {
   display: flex;
-  gap: 32px;
-  height: 60px;
+  gap: 24px;
+  height: 48px;
   align-items: flex-end;
-  margin: 10px 0;
+  margin: 4px 0;
 }
 
-/* ???∪?隡?Bouncing ? */
+/* 彈跳動畫 */
 .bouncing-mascot {
   width: 50px;
   height: 50px;
@@ -5074,7 +5074,6 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background-repeat: no-repeat;
   background-position: bottom center;
 }
-/* 鞎??孕??*/
 .mascot-cat {
   background-image: url('/static/icon-192.png');
   border-radius: 50%;
@@ -5093,32 +5092,41 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   100% { transform: translateY(-24px) scaleY(1.05); }
 }
 
-/* 甇∟??詨??閫???*/
+/* 雙欄網格選單按鈕列 (防止按鈕過多超出視窗邊框) */
 .welcome-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 250px;
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px 14px !important;
+  width: 440px !important;
+  max-width: 92vw !important;
+}
+
+.welcome-menu a {
+  grid-column: span 2 !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  text-decoration: none !important;
 }
 
 .menu-btn {
   position: relative;
   width: 100%;
-  padding: 14px 24px !important;
-  font-size: 22px !important; /* 憭批??曉之摮? */
+  padding: 10px 16px !important;
+  font-size: 16px !important;
   font-weight: 900 !important;
-  border-radius: 50px !important;
+  border-radius: 40px !important;
   cursor: pointer !important;
-  border: 3px solid #ffd76a !important; /* ???? */
-  color: #ffe600 !important; /* ?漁?? */
+  border: 2.5px solid #ffd76a !important;
+  color: #ffe600 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 12px !important;
+  gap: 8px !important;
   overflow: hidden !important;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.9) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.8) !important;
 }
 
 .menu-ai {
@@ -6847,5 +6855,118 @@ body #phaseDisplayPanelHard #phaseTextHard,
 .puzzle-modal-btn.secondary:hover {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
+}
+
+/* 殘局挑戰關卡選擇選單彈窗 */
+.xlw-stage-select-box {
+  width: 92vw;
+  max-width: 620px;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  padding: 24px 26px;
+  background: linear-gradient(135deg, #1c1033 0%, #0c0817 100%);
+  border: 2px solid #a855f7;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(168, 85, 247, 0.25);
+  color: #f8fafc;
+  text-align: center;
+}
+
+.stage-select-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 18px 0;
+  text-align: left;
+}
+
+.stage-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(168, 85, 247, 0.3);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: all 0.25s ease;
+}
+
+.stage-card.unlocked:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: #d8b4fe;
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
+  transform: translateY(-2px);
+}
+
+.stage-card.locked {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+  border-style: dashed;
+}
+
+.stage-card-info {
+  flex: 1;
+}
+
+.stage-card-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffd76a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.stage-card-desc {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.stage-card-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.stage-card-badge.active {
+  background: #a855f7;
+  color: #fff;
+}
+
+.stage-card-badge.locked {
+  background: rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+}
+
+.stage-card-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.stage-card-btn.enter {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+}
+
+.stage-card-btn.enter:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.6);
+}
+
+.stage-card-btn.disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  cursor: not-allowed;
 }
 

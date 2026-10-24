@@ -21854,7 +21854,7 @@ function renderBattleLine() {
     cell.textContent = `★${i + 1}`;
     cell.className = "battle-cell";
 
-    if (countdownActive) {
+    if (countdownActive && !window.XLW_isPuzzleMode && !window.XLW_callGameDeclared) {
       if (i >= countdownRemaining) {
         cell.classList.add("greyed-battle-cell");
       } else if (i === countdownRemaining - 1) {
@@ -25568,6 +25568,10 @@ function calculateUnitCount(isPlayer) {
 function triggerCallGameEnd(winner) {
   const isCallGame = true;
   isGameOverFlag = true;
+  countdownActive = false;
+  document.querySelectorAll(".battle-cell").forEach(cell => {
+    cell.classList.remove("greyed-battle-cell", "countdown-threat-cell");
+  });
   
   let playerStars = playerBonusScore;
   let playerFieldStars = 0;
@@ -25700,7 +25704,7 @@ function checkCallGameAtTurnStart(isMyTurnStarting) {
 }
 
 function handleTurnEndCountdownLogic() {
-  if (isGameOverFlag) return;
+  if (isGameOverFlag || window.XLW_callGameDeclared || window.XLW_isPuzzleMode) return;
 
   if (!countdownActive) {
     const isPlayerDeckEmpty = (deck.length === 0);
@@ -30878,8 +30882,101 @@ window.addEventListener("orientationchange", function() {
 
 // ===== 🧩 殘局挑戰模式引擎 (Puzzle Challenge Mode Engine) =====
 window.XLW_isPuzzleMode = false;
+window.XLW_currentPuzzleStage = 1;
 
+// 打開殘局模式關卡選擇視窗
+window.xlwOpenPuzzleStageSelect = function() {
+  const oldModal = document.getElementById("xlwPuzzleModal");
+  if (oldModal) oldModal.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "xlwPuzzleModal";
+  overlay.className = "xlw-puzzle-modal-overlay";
+  overlay.innerHTML = `
+    <div class="xlw-stage-select-box">
+      <div class="puzzle-modal-title" style="color: #c084fc;">🧩 殘局挑戰 — 關卡選擇</div>
+      <div style="font-size: 13px; color: #a855f7; font-weight: bold; margin-bottom: 6px;">一回合逆轉絕殺！考驗你的局勢洞察與極限算計</div>
+
+      <div class="stage-select-grid">
+        <!-- 第 1 關 -->
+        <div class="stage-card unlocked">
+          <div class="stage-card-info">
+            <div class="stage-card-title">
+              <span>第 1 關：【破陣之刃】</span>
+              <span class="stage-card-badge active">當前推薦</span>
+            </div>
+            <div class="stage-card-desc">
+              ⚔️ 陣營：<b>野人獸人 VS 藝術品</b><br>
+              📊 局勢：初始比分 <b>14★ : 26★</b>（落後 12★）<br>
+              🎯 目標：破解敵方【大鵰像】光環，一回合反超比分達到 <b>21★ : 20★</b> 達成 Call Game 絕殺！
+            </div>
+          </div>
+          <button class="stage-card-btn enter" onclick="window.xlwStartPuzzleStage(1)">進入挑戰 ➔</button>
+        </div>
+
+        <!-- 第 2 關 -->
+        <div class="stage-card locked">
+          <div class="stage-card-info">
+            <div class="stage-card-title" style="color: #94a3b8;">
+              <span>第 2 關：【雷霆伏擊】</span>
+              <span class="stage-card-badge locked">🔒 敬請期待</span>
+            </div>
+            <div class="stage-card-desc">
+              ⚡ 陣營：發電獸 VS 碳碳族<br>
+              🎯 考驗利用超導電弧蓄能連鎖，瞬間引爆敵方前排。
+            </div>
+          </div>
+          <button class="stage-card-btn disabled" disabled>敬請期待</button>
+        </div>
+
+        <!-- 第 3 關 -->
+        <div class="stage-card locked">
+          <div class="stage-card-info">
+            <div class="stage-card-title" style="color: #94a3b8;">
+              <span>第 3 關：【百鬼夜行】</span>
+              <span class="stage-card-badge locked">🔒 敬請期待</span>
+            </div>
+            <div class="stage-card-desc">
+              🏮 陣營：妖怪村莊 VS 勇者公會<br>
+              🎯 考驗墓地還魂推擠連鎖與毛線怪牽制絕技。
+            </div>
+          </div>
+          <button class="stage-card-btn disabled" disabled>敬請期待</button>
+        </div>
+
+        <!-- 第 4 關 -->
+        <div class="stage-card locked">
+          <div class="stage-card-info">
+            <div class="stage-card-title" style="color: #94a3b8;">
+              <span>第 4 關：【怪盜秘術】</span>
+              <span class="stage-card-badge locked">🔒 敬請期待</span>
+            </div>
+            <div class="stage-card-desc">
+              🐾 陣營：喵喵賊 VS 虛擬世界<br>
+              🎯 考驗偷襲潛伏與偷天換日星數反轉奇蹟。
+            </div>
+          </div>
+          <button class="stage-card-btn disabled" disabled>敬請期待</button>
+        </div>
+      </div>
+
+      <div class="puzzle-modal-btn-row">
+        <button class="puzzle-modal-btn secondary" onclick="document.getElementById('xlwPuzzleModal').remove()">關閉</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+};
+
+// 兼容舊按鈕入口
 window.xlwStartPuzzleMode = function() {
+  window.xlwOpenPuzzleStageSelect();
+};
+
+// 啟動指定殘局關卡
+window.xlwStartPuzzleStage = function(stageNum) {
+  window.XLW_currentPuzzleStage = stageNum;
+
   if (typeof window.xlwRequestFullScreen === 'function') {
     window.xlwRequestFullScreen();
   }
@@ -30900,7 +30997,6 @@ window.xlwStartPuzzleMode = function() {
   const resultPanel = document.getElementById("xlwResultPanel");
   if (resultPanel) resultPanel.classList.remove("show");
 
-  // 關閉現存殘局彈窗
   const oldModal = document.getElementById("xlwPuzzleModal");
   if (oldModal) oldModal.remove();
 
@@ -30909,11 +31005,17 @@ window.xlwStartPuzzleMode = function() {
   isMultiplayer = false;
   isMyTurn = true;
   isGameOverFlag = false;
+  countdownActive = false;
   opponent_mulligan_done = true;
   mulliganActive = false;
   selectedMulliganIndexes.clear();
 
-  // 設置回合為 2（避開第 1 回合先攻無法進攻的規則限制）
+  // 清除星星戰線可能存在的倒數視覺標籤
+  document.querySelectorAll(".battle-cell").forEach(cell => {
+    cell.classList.remove("greyed-battle-cell", "countdown-threat-cell");
+  });
+
+  // 回合設置為 2（避開第 1 回合先攻無法進攻的規則限制）
   turn = 2;
   phase = "召喚階段";
   normalSummonUsed = false;
@@ -31065,9 +31167,9 @@ window.xlwStartPuzzleMode = function() {
     ownerSide: "enemy"
   };
 
-  // 2. 我方手牌與場地初始化
+  // 2. 我方手牌與牌庫初始化 (牌庫留存卡牌，確保不觸發牌庫抽空倒數邏輯)
   hand = [structuredClone(jumperOrc), structuredClone(hammerSpell)];
-  deck = [];
+  deck = [structuredClone(assaultOrc), structuredClone(backstabOrc), structuredClone(shieldOrc)];
   graveyard = [];
   enemyGraveyard = [];
   playerExileZone = [];
@@ -31075,33 +31177,45 @@ window.xlwStartPuzzleMode = function() {
   playerExtraDeck = [];
   enemyExtraDeck = [];
 
-  // 我方場地：戰線1 突擊獸人(2★, 1 ATK)、戰線2 盾牌獸人(2★, 盾)、戰線4 背刺獸人(3★, 2 ATK)
+  // 我方場地精確佈局：
+  // 戰線1: 空位
+  // 戰線2: 背刺獸人 (3★, 2 ATK) -> 正對敵方戰線2的兩位陌生人
+  // 戰線3: 突擊獸人 (2★, 1 ATK) -> 正對敵方戰線3的呐喊的人
+  // 戰線4: 盾牌獸人 (2★, 盾)   -> 緊鄰突擊獸人(戰線3)，戰鬥成功提供+1★；與戰線2背刺獸人間隔1格，不提供相鄰加成
+  // 戰線5: 空位               -> 供召喚獸人跳戰者
   field.player_front = [
-    { card: structuredClone(assaultOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
-    { card: structuredClone(shieldOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
     null,
     { card: structuredClone(backstabOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
+    { card: structuredClone(assaultOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
+    { card: structuredClone(shieldOrc), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "player_front", equipments: [] },
     null
   ];
   field.player_back = [null, null, null, null, null];
 
-  // 敵方場地：戰線1 呐喊的人(2★, 4 ATK)、戰線2 大鵰像(2★, 盾)、戰線3 鎧甲擺件(3★, 3 ATK)、戰線4 兩位陌生人(4★, 4 ATK, 橫置)
+  // 敵方場地精確佈局：
+  // 戰線1: 鎧甲擺件 (3★, 3 ATK)
+  // 戰線2: 兩位陌生人 (4★, 4 ATK, 橫置) -> 與戰線4大鵰像相隔1格，不受光環影響(4 ATK)
+  // 戰線3: 呐喊的人 (2★, 4 ATK)       -> 緊鄰戰線4大鵰像，當前受光環鼓舞達 6 ATK！
+  // 戰線4: 大鵰像 (2★, 盾)             -> 提供左右+2 ATK
+  // 戰線5: 空位                        -> 供跳戰者將大鵰像拉至此處
   field.enemy_front = [
-    { card: structuredClone(screamingMan), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
-    { card: structuredClone(eagleStatue), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
     { card: structuredClone(armorOrnament), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
     { card: structuredClone(twoStrangers), tapped: true, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    { card: structuredClone(screamingMan), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
+    { card: structuredClone(eagleStatue), tapped: false, attacking: false, target: null, summonedTurn: 1, summonedZone: "enemy_front", equipments: [] },
     null
   ];
   field.enemy_back = [null, null, null, null, null];
 
-  // 比分精準設置：我方初始 8★ (場上7★ + 額外1★)；敵方初始 20★ (場上11★ + 額外9★)
-  playerBonusScore = 1;
-  enemyBonusScore = 9;
+  // 比分精準設置：
+  // 我方初始 14★ (場上7★ + 額外獎勵 7★)
+  // 敵方初始 26★ (場上11★ + 額外獎勵 15★)
+  playerBonusScore = 7;
+  enemyBonusScore = 15;
 
   // 對手 AI 狀態初始化
   window.XLW_ENEMY = {
-    deck: [],
+    deck: [structuredClone(armorOrnament), structuredClone(screamingMan)],
     hand: [],
     grave: [],
     deckName: "藝術品",
@@ -31118,10 +31232,10 @@ window.xlwStartPuzzleMode = function() {
   window.xlwUpdatePuzzleStatusBar();
 
   // 戰鬥日誌
-  logBattle("🧩 —— 殘局模式【破陣之刃】啟動！——");
-  logBattle("📌 局勢：我方【野人獸人】8★ vs 對手【藝術品】20★（落後 12★）！");
-  logBattle("⚠️ 敵方【大鵰像】正為左右兩翼單位提供 +2 攻擊力光環！");
-  logBattle("💡 目標：在此回合內進行關鍵操作，擊潰敵陣，於戰鬥結束時剛好反超比分逆轉獲勝！");
+  logBattle("🧩 —— 殘局模式第 1 關【破陣之刃】啟動！——");
+  logBattle("📌 局勢：我方【野人獸人】14★ vs 對手【藝術品】26★（落後 12★）！");
+  logBattle("⚠️ 敵方戰線4【大鵰像】正使戰線3【呐喊的人】攻擊力飆升至 6 點！");
+  logBattle("💡 目標：在此回合內進行關鍵操作，擊潰敵陣，達成 21★ : 20★ 反超並滿足 Call Game 獲勝！");
   setStatus("🧩 殘局挑戰【破陣之刃】：在一回合內反轉戰局完成獲勝！");
 
   render();
@@ -31131,7 +31245,7 @@ window.xlwStartPuzzleMode = function() {
 window.xlwResetPuzzle = function() {
   const pModal = document.getElementById("xlwPuzzleModal");
   if (pModal) pModal.remove();
-  window.xlwStartPuzzleMode();
+  window.xlwStartPuzzleStage(window.XLW_currentPuzzleStage || 1);
 };
 
 window.xlwUpdatePuzzleStatusBar = function() {
@@ -31143,9 +31257,10 @@ window.xlwUpdatePuzzleStatusBar = function() {
     document.body.appendChild(bar);
   }
   bar.innerHTML = `
-    <span class="puzzle-bar-badge">🧩 殘局挑戰</span>
-    <span class="puzzle-bar-text">目標：在一回合內進行極限破陣，於戰鬥結算時<span class="puzzle-bar-highlight">剛好反超比分</span>獲勝！</span>
-    <button class="puzzle-bar-reset-btn" onclick="window.xlwResetPuzzle()">🔄 重置殘局</button>
+    <span class="puzzle-bar-badge">🧩 殘局第 ${window.XLW_currentPuzzleStage || 1} 關</span>
+    <span class="puzzle-bar-text">目標：極限破陣，一回合反超比分達到 <span class="puzzle-bar-highlight">21★ : 20★</span> 達成 Call Game 絕殺！</span>
+    <button class="puzzle-bar-reset-btn" onclick="window.xlwResetPuzzle()">🔄 重置關卡</button>
+    <button class="puzzle-bar-reset-btn" style="border-color: #a855f7; color: #d8b4fe;" onclick="window.xlwOpenPuzzleStageSelect()">📋 關卡選擇</button>
   `;
 };
 
@@ -31158,15 +31273,15 @@ window.xlwShowPuzzleIntroModal = function() {
   overlay.className = "xlw-puzzle-modal-overlay";
   overlay.innerHTML = `
     <div class="xlw-puzzle-modal-box">
-      <div class="puzzle-modal-title" style="color: #c084fc;">🧩 殘局模式：【破陣之刃】</div>
+      <div class="puzzle-modal-title" style="color: #c084fc;">🧩 殘局第 1 關：【破陣之刃】</div>
       <div style="font-size: 13px; color: #a855f7; font-weight: bold; margin-bottom: 12px;">野人獸人 VS 藝術品</div>
       
       <div class="puzzle-modal-desc">
         <div style="color: #ffd76a; font-weight: bold; margin-bottom: 8px;">⚔️ 當前戰況分析：</div>
-        • <b>比分懸殊</b>：敵方目前以 <span style="color:#f87171; font-weight:bold;">20★</span> 遙遙領先我方的 <span style="color:#4ade80; font-weight:bold;">8★</span>（落後整整 12★）！<br>
-        • <b>銅牆鐵壁</b>：敵方戰線 2 的【大鵰像】為左右翼提供了 +2 攻擊力光環，正面強攻將無功而返！<br>
-        • <b>破局生機</b>：敵方戰線 4 的【兩位陌生人】已呈疲勞橫置狀態；我方手牌中握有可強制位移敵陣的【獸人跳戰者】與【阿庫瑪的戰錘】！<br><br>
-        <span style="color: #38bdf8; font-weight: bold;">🎯 勝利條件：</span> 在本回合內進行特定的一系列精確操作，發起進攻，剛好以 <b>15★ 對 14★</b> 反超 1 分逆轉絕殺！
+        • <b>比分懸殊</b>：敵方目前以 <span style="color:#f87171; font-weight:bold;">26★</span> 遙遙領先我方的 <span style="color:#4ade80; font-weight:bold;">14★</span>（落後整整 12★）！<br>
+        • <b>銅牆鐵壁</b>：敵方戰線 4 的【大鵰像】為戰線 3 的【呐喊的人】提供了 +2 攻擊力光環（高達 6 ATK），正面強攻將無功而返！<br>
+        • <b>破局生機</b>：敵方戰線 2 的【兩位陌生人】已呈疲勞橫置狀態；我方手牌中握有可強制拉移敵陣的【獸人跳戰者】與【阿庫瑪的戰錘】！<br><br>
+        <span style="color: #38bdf8; font-weight: bold;">🎯 勝利條件：</span> 在本回合內進行特定的一系列精確操作，發起進攻，剛好以 <b>21★ 對 20★</b> 反超 1 分並達到 Call Game（≥ 20 分）判定直接獲勝！
       </div>
 
       <div class="puzzle-modal-btn-row">
@@ -31181,6 +31296,12 @@ window.xlwCheckPuzzleEnd = function() {
   const playerStars = calculateTotalStars(true);
   const enemyStars = calculateTotalStars(false);
   isGameOverFlag = true;
+  countdownActive = false;
+
+  // 清除戰線倒數標籤
+  document.querySelectorAll(".battle-cell").forEach(cell => {
+    cell.classList.remove("greyed-battle-cell", "countdown-threat-cell");
+  });
 
   if (playerStars > enemyStars) {
     window.xlwShowPuzzleSuccessModal(playerStars, enemyStars);
@@ -31204,14 +31325,15 @@ window.xlwShowPuzzleSuccessModal = function(playerStars, enemyStars) {
       
       <div class="puzzle-modal-desc">
         <div style="color: #4ade80; font-weight: bold; margin-bottom: 8px;">🎉 破局拆招大揭密：</div>
-        1. <b>空位破陣</b>：召喚【獸人跳戰者】至戰線 5 前排，發動立即效果將敵方【大鵰像】強制拉走，敵方前排左右翼的 +2 攻擊力光環瞬間瓦解！<br>
-        2. <b>戰錘突破</b>：對【突擊獸人】裝備【阿庫瑪的戰錘】，使其進攻攻擊力提升至 5 點，正面擊潰 4 攻擊力的【呐喊的人】，一舉奪得自帶獎勵(+2★)、戰錘(+1★)與相鄰盾牌獸人(+1★)共計 <b>+4★ 巨額獎勵</b>！<br>
-        3. <b>背刺絕殺</b>：【背刺獸人】突襲橫置的【兩位陌生人】(5 ATK > 4 ATK)，將其送入墓地並斬獲 <b>+2★ 獎勵</b>！<br><br>
-        經過精妙算計，我方從 8★ 極限飆升至 15★，敵方被削弱至 14★，以無懈可擊的 <b>15★ 比 14★</b> 剛好反超 1 分，完成驚天逆轉！
+        1. <b>空位破陣</b>：召喚【獸人跳戰者】至戰線 5 前排，發動立即效果將敵方【大鵰像】強制拉至戰線 5！大鵰像遠離戰線 3 的【呐喊的人】，其攻擊力瞬間由 6 點回跌為 <b>4 點</b>，且不會影響戰線 2 的【兩位陌生人】！<br>
+        2. <b>戰錘突破</b>：對戰線 3 的【突擊獸人】裝備【阿庫瑪的戰錘】，使其進攻攻擊力提升至 5 點，正面擊潰 4 攻擊力的【呐喊的人】，斬獲自帶獎勵(+2★)、戰錘(+1★)與相鄰盾牌獸人(+1★)共計 <b>+4★ 巨額獎勵</b>！<br>
+        3. <b>背刺絕殺</b>：戰線 2 的【背刺獸人】突襲橫置的【兩位陌生人】(5 ATK > 4 ATK)，將其送入墓地並斬獲 <b>+2★ 獎勵</b>！<br><br>
+        經過精妙算計，我方從 14★ 極限飆升至 21★（滿足 Call Game ≥ 20★ 條件！），敵方被削弱至 20★，以無懈可擊的 <b>21★ 比 20★</b> 剛好反超 1 分，完成驚天逆轉！
       </div>
 
       <div class="puzzle-modal-btn-row">
         <button class="puzzle-modal-btn secondary" onclick="window.xlwResetPuzzle()">🔄 再玩一次</button>
+        <button class="puzzle-modal-btn secondary" onclick="window.xlwOpenPuzzleStageSelect()">📋 關卡選擇</button>
         <button class="puzzle-modal-btn primary" onclick="window.xlwReturnToTitle()">🏠 返回首頁</button>
       </div>
     </div>
@@ -31233,19 +31355,21 @@ window.xlwShowPuzzleFailModal = function(playerStars, enemyStars) {
       
       <div class="puzzle-modal-desc">
         <div style="color: #f87171; font-weight: bold; margin-bottom: 8px;">💡 戰術提示錦囊：</div>
-        • 敵方【大鵰像】在戰線 2 時，會賦予左右單位 +2 攻擊力，【呐喊的人】將高達 6 攻擊力，正面硬碰我方必敗！<br>
-        • 【獸人跳戰者】登場時可拉移敵方前排任意單位至其正前方——請思考如何利用空格拉走敵方的核心支柱！<br>
-        • 【阿庫瑪的戰錘】不僅能為獸人提供 +1 攻擊力，更能在戰鬥勝利時額外獎勵 +1★！<br>
-        • 橫置疲勞的【兩位陌生人】正是【背刺獸人】攻擊力大增且奪得 +2★ 獎勵的絕佳目標！<br>
+        • 敵方【大鵰像】在戰線 4 時，會賦予戰線 3 的【呐喊的人】+2 攻擊力（達 6 ATK），正面硬碰我方必敗！<br>
+        • 將【獸人跳戰者】召喚至戰線 5 前排，可將【大鵰像】拉至戰線 5，遠離【呐喊的人】與【兩位陌生人】！<br>
+        • 【阿庫瑪的戰錘】能為【突擊獸人】提供 +1 攻擊力，並在戰鬥勝利時額外獎勵 +1★！<br>
+        • 橫置狀態的【兩位陌生人】是【背刺獸人】發揮 5 攻擊力並奪得 +2★ 獎勵的絕佳目標！<br>
         • 記得完成佈置後宣告「進攻」並「結束回合」進行對決！
       </div>
 
       <div class="puzzle-modal-btn-row">
         <button class="puzzle-modal-btn primary" onclick="window.xlwResetPuzzle()">🔄 重新嘗試</button>
+        <button class="puzzle-modal-btn secondary" onclick="window.xlwOpenPuzzleStageSelect()">📋 關卡選擇</button>
         <button class="puzzle-modal-btn secondary" onclick="window.xlwReturnToTitle()">🏠 返回首頁</button>
       </div>
     </div>
   `;
   document.body.appendChild(overlay);
 };
+
 
