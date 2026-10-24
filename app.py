@@ -805,3 +805,50 @@ def rename_deck(data: DeckRenameSchema):
     return {"status": "success", "message": f"成功將牌組名稱修改為 {data.new_name}。"}
 
 
+class DeckReorderSchema(BaseModel):
+    ordered_decks: list[str]
+
+
+@app.post("/api/decks/reorder")
+def reorder_decks(data: DeckReorderSchema):
+    decks_file = BASE / "data" / "decks.json"
+    if not decks_file.exists():
+        raise HTTPException(status_code=404, detail="decks.json not found")
+        
+    decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
+    
+    new_decks_data = {}
+    
+    # 保持中立單位在最前
+    if "中立單位" in decks_data:
+        new_decks_data["中立單位"] = decks_data["中立單位"]
+        
+    # 依 ordered_decks 的順序放入，並將其 _extra 伴隨其後
+    for deck_name in data.ordered_decks:
+        if deck_name in decks_data:
+            new_decks_data[deck_name] = decks_data[deck_name]
+            extra_key = deck_name + "_extra"
+            if extra_key in decks_data:
+                new_decks_data[extra_key] = decks_data[extra_key]
+                
+    # 將任何未包含在 ordered_decks 中的牌組按原順序補在最後
+    for k, v in decks_data.items():
+        if k == "中立單位" or k.endswith("_extra"):
+            continue
+        if k not in new_decks_data:
+            new_decks_data[k] = v
+            extra_k = k + "_extra"
+            if extra_k in decks_data:
+                new_decks_data[extra_k] = decks_data[extra_k]
+                
+    try:
+        decks_file.write_text(json.dumps(new_decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        static_decks = BASE / "static" / "decks.json"
+        static_decks.write_text(json.dumps(new_decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"儲存牌組順序失敗: {str(e)}")
+        
+    return {"status": "success", "message": "牌組順序已成功更新！"}
+
+
+

@@ -6012,6 +6012,28 @@
     "art_subtype": "人型"
   },
   {
+    "id": "R-EVL-0011-泳裝",
+    "name": "風流妖精",
+    "deck": "妖精",
+    "type": "unit",
+    "faction": "妖精",
+    "race": "妖精",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "遠程攻擊，妖精"
+    ],
+    "effect_text": "遠程攻擊。此單位前後左右每個你的妖精單位使此單位+1星",
+    "image": "/static/card_images/r_evl_0011_泳裝.jpeg",
+    "original_file": "妖精/0001_泳裝01_EVL0011_風流妖精.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人形"
+  },
+  {
     "id": "R-EVL-0012",
     "name": "奇異妖精",
     "deck": "妖精",

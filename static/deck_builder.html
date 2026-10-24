@@ -209,6 +209,142 @@
       box-shadow: none;
     }
 
+    /* 牌組排序與管理專用樣式 */
+    .order-btn:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-color: #ffd76a !important;
+      transform: translateY(-1px);
+    }
+    .order-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* 自訂牌組清單 Modal */
+    .deck-list-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .deck-list-modal-dialog {
+      background: #15131a;
+      border: 1.5px solid var(--gold-accent);
+      border-radius: 10px;
+      width: 95%;
+      max-width: 880px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 215, 106, 0.25);
+    }
+
+    .deck-list-modal-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 215, 106, 0.2);
+      background: rgba(255, 215, 106, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 6px;
+      transition: color 0.2s;
+    }
+    .modal-close-btn:hover {
+      color: #ffd76a;
+    }
+
+    .deck-list-modal-toolbar {
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .deck-list-table-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 16px;
+    }
+
+    .deck-list-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      color: #ffffff;
+    }
+
+    .deck-list-table th {
+      padding: 10px 8px;
+      background: rgba(255, 215, 106, 0.08);
+      color: var(--gold-accent);
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255, 215, 106, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .deck-list-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: middle;
+    }
+
+    .deck-list-table tr:hover {
+      background: rgba(255, 215, 106, 0.04);
+    }
+
+    .deck-list-table tr.active-editing {
+      background: rgba(255, 215, 106, 0.12);
+      border-left: 3px solid var(--gold-accent);
+    }
+
+    .faction-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .deck-list-modal-footer {
+      padding: 10px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     /* 左右雙面板區 */
     .panels-container {
       flex: 1;
@@ -716,9 +852,10 @@
 
   <!-- 牌組控制工具條 -->
   <section class="deck-controls-bar">
-    <div class="deck-select-wrap">
-      <label for="deckSelect">當前構築牌組:</label>
-      <select id="deckSelect" class="deck-select" onchange="changeEditingDeck(this.value)">
+    <div class="deck-select-wrap" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <label for="factionFilterSelect" style="color: var(--gold-accent); font-weight: bold; font-size: 11.5px;">選擇種族:</label>
+      <select id="factionFilterSelect" class="deck-select" onchange="changeFactionFilter(this.value)">
+        <option value="全部種族">🌐 全部種族</option>
         <option value="藝術品">藝術品 (Artwork)</option>
         <option value="喵喵賊">喵喵賊 (Cat Clan)</option>
         <option value="妖怪村莊">妖怪村莊 (Yokai Village)</option>
@@ -738,16 +875,22 @@
         <option value="馬戲團">馬戲團 (Circus)</option>
         <option value="骷髏人">骷髏人 (Skeleton)</option>
       </select>
-    </div>
 
-    <div class="preset-select-wrap" style="display: flex; align-items: center; gap: 8px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 15px; margin-left: 15px;">
-      <label for="presetSelect">預設/自訂牌組:</label>
-      <select id="presetSelect" class="deck-select" onchange="changePresetDeck(this.value)" style="min-width: 140px;">
-        <!-- populated dynamically -->
-      </select>
-      <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">新增</button>
-      <button class="action-btn" onclick="renamePresetDeck()" style="background: linear-gradient(135deg, #096dd9, #1890ff); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">重命名</button>
-      <button class="action-btn" onclick="deletePresetDeck()" style="background: linear-gradient(135deg, #ad2102, #cf1322); color: white; border: none; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">刪除</button>
+      <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; margin-left: 4px;">
+        <label for="deckSelect" style="color: #69c0ff; font-weight: bold; font-size: 11.5px;">自訂卡組:</label>
+        <select id="deckSelect" class="deck-select" onchange="changeSelectedDeck(this.value)" style="min-width: 170px;">
+          <!-- populated dynamically -->
+        </select>
+        <button class="action-btn order-btn" onclick="moveCurrentDeck(-1)" title="將當前牌組順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
+        <button class="action-btn order-btn" onclick="moveCurrentDeck(1)" title="將當前牌組順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 5px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; margin-left: 4px;">
+        <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 9px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">➕ 新增</button>
+        <button class="action-btn" onclick="renamePresetDeck()" style="background: linear-gradient(135deg, #096dd9, #1890ff); color: white; border: none; padding: 4px 9px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🏷️ 重命名</button>
+        <button class="action-btn" onclick="deletePresetDeck()" style="background: linear-gradient(135deg, #ad2102, #cf1322); color: white; border: none; padding: 4px 9px; font-size: 11.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🗑️ 刪除</button>
+        <button class="action-btn" onclick="openDeckListModal()" style="background: linear-gradient(135deg, #722ed1, #9254de); color: white; border: none; padding: 4px 10px; font-size: 11.5px; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(114,46,209,0.3); transition: all 0.2s;">📋 牌組清單 / 排序</button>
+      </div>
     </div>
 
     <div class="status-counter-box">
@@ -852,34 +995,59 @@
       updateCounter();
     }
 
-    // 動態填充預設/自訂牌組下拉選單 (依當前選擇的基礎種族鎖定/篩選)
-    function populatePresetsDropdown(selectedPreset = "") {
-      const presetSelect = document.getElementById("presetSelect");
-      if (!presetSelect) return;
-
-      presetSelect.innerHTML = '<option value="">-- 選擇預設/自訂牌組 --</option>';
-
-      const deckSelect = document.getElementById("deckSelect");
-      const currentFaction = deckSelect ? deckSelect.value : "藝術品";
-
-      // 篩選出只包含當前選擇種族名稱的預設牌組
-      const presetKeys = Object.keys(currentDecks).filter(key => 
-        !key.endsWith("_extra") && 
-        key !== "中立單位" && 
-        key !== currentFaction &&
-        key.includes(currentFaction)
+    // 取得所有自訂牌組鍵名清單
+    function getCustomDeckKeys(faction = "") {
+      const keys = Object.keys(currentDecks || {}).filter(k => !k.endsWith("_extra") && k !== "中立單位");
+      if (!faction || faction === "全部種族") return keys;
+      return keys.filter(k => 
+        k.startsWith(faction + "_") || 
+        k === faction || 
+        (typeof normDeckName === "function" ? normDeckName(k) === faction : k.includes(faction))
       );
+    }
 
-      presetKeys.forEach(key => {
+    // 動態填充自訂牌組下拉選單 (依選擇的種族過濾，並保持 decks.json 的順序)
+    function populateDeckDropdown(preferredDeck = "") {
+      const deckSelect = document.getElementById("deckSelect");
+      const factionFilter = document.getElementById("factionFilterSelect");
+      if (!deckSelect) return;
+
+      const currentFaction = factionFilter ? factionFilter.value : "全部種族";
+      deckSelect.innerHTML = "";
+
+      const filteredKeys = getCustomDeckKeys(currentFaction);
+
+      if (filteredKeys.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = `(暫無 ${currentFaction} 自訂牌組)`;
+        deckSelect.appendChild(opt);
+        selectedDeckName = "";
+        selectedMainIds = [];
+        selectedExtraIds = [];
+        renderLibrary();
+        renderCurrentDeck();
+        updateCounter();
+        return;
+      }
+
+      filteredKeys.forEach(key => {
         const opt = document.createElement("option");
         opt.value = key;
-        opt.textContent = key;
-        presetSelect.appendChild(opt);
+        const mainCount = Array.isArray(currentDecks[key]) ? currentDecks[key].length : 0;
+        const extraCount = Array.isArray(currentDecks[key + "_extra"]) ? currentDecks[key + "_extra"].length : 0;
+        opt.textContent = `${key} (${mainCount}/20 張, 額外 ${extraCount})`;
+        deckSelect.appendChild(opt);
       });
 
-      if (selectedPreset && presetKeys.includes(selectedPreset)) {
-        presetSelect.value = selectedPreset;
+      if (preferredDeck && filteredKeys.includes(preferredDeck)) {
+        deckSelect.value = preferredDeck;
+      } else {
+        deckSelect.value = filteredKeys[0];
       }
+
+      selectedDeckName = deckSelect.value;
+      loadSelectedDeckData();
     }
 
     // 啟動加載
@@ -888,112 +1056,159 @@
         allCards = await fetch("/api/cards?v=" + Date.now()).then(r => r.json());
         currentDecks = await fetch("/api/decks?v=" + Date.now()).then(r => r.json());
 
-        // 當前選取的基礎編輯牌組（初始化預設為下拉選單的值）
-        const deckSelectEl = document.getElementById("deckSelect");
-        if (deckSelectEl) {
-          selectedDeckName = deckSelectEl.value;
-        }
-
-        populatePresetsDropdown();
-        loadSelectedDeckData();
+        populateDeckDropdown();
       } catch (err) {
         showToast("資料讀取失敗，請確認伺服器已正常啟動！", true);
       }
     }
 
-    // 換基礎種族牌組編輯
-    function changeEditingDeck(val) {
+    // 種族篩選切換
+    function changeFactionFilter(val) {
+      populateDeckDropdown();
+    }
+
+    // 選擇特定自訂牌組切換編輯
+    function changeSelectedDeck(val) {
+      if (!val) return;
       selectedDeckName = val;
-      
-      // 當選取基礎種族變更時，動態更新右側對應種族的自訂選單
-      populatePresetsDropdown();
       loadSelectedDeckData();
     }
 
-    // 換預設/自訂牌組編輯
-    function changePresetDeck(val) {
-      if (!val) {
-        // 如果切回空值，則恢復成當前構築牌組對應的基礎種族牌組
-        const deckSelect = document.getElementById("deckSelect");
-        if (deckSelect) {
-          selectedDeckName = deckSelect.value;
-        }
-        loadSelectedDeckData();
+    // 快速上移/下移當前選擇的自訂牌組
+    async function moveCurrentDeck(direction) {
+      if (!selectedDeckName) {
+        showToast("請先選取要調整順序的自訂牌組！", true);
+        return;
+      }
+      await moveDeck(selectedDeckName, direction);
+    }
+
+    // 調整特定牌組順序 (方向：-1 為上移，1 為下移)
+    async function moveDeck(deckName, direction) {
+      if (!deckName || !currentDecks[deckName]) return;
+
+      const allKeys = Object.keys(currentDecks).filter(k => !k.endsWith("_extra") && k !== "中立單位");
+      const fac = normDeckName(deckName);
+
+      // 取得屬於同一種族的牌組清單，進行族群內的順序對調
+      const factionKeys = allKeys.filter(k => normDeckName(k) === fac);
+      const facIndex = factionKeys.indexOf(deckName);
+      if (facIndex === -1) return;
+
+      const targetFacIndex = facIndex + direction;
+      if (targetFacIndex < 0) {
+        showToast("已是該種族最上方的牌組！");
+        return;
+      }
+      if (targetFacIndex >= factionKeys.length) {
+        showToast("已是該種族最下方的牌組！");
         return;
       }
 
-      selectedDeckName = val;
+      const targetDeckName = factionKeys[targetFacIndex];
 
-      // 自動同步基礎種族牌組下拉框，以便進行正確的卡庫過濾
-      const normName = normDeckName(val);
-      const deckSelect = document.getElementById("deckSelect");
-      if (deckSelect) {
-        deckSelect.value = normName;
-      }
+      // 在全域 allKeys 中對調兩者位置
+      const idx1 = allKeys.indexOf(deckName);
+      const idx2 = allKeys.indexOf(targetDeckName);
+      if (idx1 === -1 || idx2 === -1) return;
 
-      loadSelectedDeckData();
+      allKeys[idx1] = targetDeckName;
+      allKeys[idx2] = deckName;
+
+      await saveDeckOrder(allKeys, deckName);
     }
 
-    // 新增自訂/預設牌組
-    async function addPresetDeck() {
-      const deckSelect = document.getElementById("deckSelect");
-      const currentFaction = deckSelect ? deckSelect.value : "藝術品";
+    // 儲存牌組自訂順序至後端 API
+    async function saveDeckOrder(orderedKeys, activeDeckName = null) {
+      try {
+        const res = await fetch("/api/decks/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ordered_decks: orderedKeys })
+        }).then(r => r.json());
 
-      const subName = prompt(`請輸入「${currentFaction}」新自訂牌組的後綴名稱（種族前綴「${currentFaction}_」會自動保留）：`);
+        if (res.status === "success") {
+          // 依照新順序在前端重新建構 currentDecks 鍵順序
+          const reordered = {};
+          if (currentDecks["中立單位"]) reordered["中立單位"] = currentDecks["中立單位"];
+          orderedKeys.forEach(k => {
+            if (currentDecks[k]) {
+              reordered[k] = currentDecks[k];
+              if (currentDecks[k + "_extra"]) {
+                reordered[k + "_extra"] = currentDecks[k + "_extra"];
+              }
+            }
+          });
+          Object.keys(currentDecks).forEach(k => {
+            if (!reordered[k]) reordered[k] = currentDecks[k];
+          });
+          currentDecks = reordered;
+
+          populateDeckDropdown(activeDeckName || selectedDeckName);
+          renderDeckListModal();
+          showToast("✔ 牌組順序已更新並成功保存！");
+        } else {
+          showToast("順序保存失敗: " + (res.message || res.detail), true);
+        }
+      } catch (err) {
+        showToast("排序儲存連線失敗，請檢查伺服器！", true);
+      }
+    }
+
+    // 新增自訂牌組
+    async function addPresetDeck() {
+      const factionFilter = document.getElementById("factionFilterSelect");
+      let currentFaction = factionFilter ? factionFilter.value : "";
+      if (!currentFaction || currentFaction === "全部種族") {
+        currentFaction = normDeckName(selectedDeckName) || "藝術品";
+      }
+
+      const subName = prompt(`請輸入「${currentFaction}」新自訂牌組名稱（例如：速攻組、控制流）：`);
       if (!subName) return;
 
       const trimmedSub = subName.trim();
       if (!trimmedSub) return;
 
-      // 自動使用當前鎖定的種族作為前置
-      const fullDeckName = `${currentFaction}_${trimmedSub}`;
+      const fullDeckName = trimmedSub.startsWith(currentFaction + "_") ? trimmedSub : `${currentFaction}_${trimmedSub}`;
 
       if (currentDecks[fullDeckName]) {
         alert("此牌組名稱已存在！");
         return;
       }
 
-      // 新增時複製當前構築中的卡牌配置
       currentDecks[fullDeckName] = [...selectedMainIds];
       currentDecks[fullDeckName + "_extra"] = [...selectedExtraIds];
 
       selectedDeckName = fullDeckName;
 
-      // 儲存至伺服器
       await saveDeckToServer();
 
-      // 重填並選取
-      populatePresetsDropdown(fullDeckName);
-      loadSelectedDeckData();
+      if (factionFilter && factionFilter.value !== "全部種族" && factionFilter.value !== currentFaction) {
+        factionFilter.value = currentFaction;
+      }
+      populateDeckDropdown(fullDeckName);
+      renderDeckListModal();
     }
 
     // 修改自訂牌組名稱
-    async function renamePresetDeck() {
-      const presetSelect = document.getElementById("presetSelect");
-      if (!presetSelect || !presetSelect.value) {
-        alert("請先選擇要重命名的預設/自訂牌組！");
+    async function renamePresetDeck(targetName = null) {
+      const oldName = targetName || selectedDeckName;
+      if (!oldName) {
+        alert("請先選擇要重命名的自訂牌組！");
         return;
       }
 
-      const oldName = presetSelect.value;
-      const baseFactions = [
-        "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
-        "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-        "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
-      ];
-      
-      // 自動獲取舊名字所屬的種族前置
       const normFac = normDeckName(oldName);
       const parts = oldName.split("_");
-      const currentSub = parts.slice(1).join("_") || "";
+      const currentSub = parts.slice(1).join("_") || oldName;
 
-      const newSubName = prompt(`請輸入新的名稱後綴（舊種族前綴「${normFac}_」會自動保留）：`, currentSub);
+      const newSubName = prompt(`請輸入「${normFac}」新牌組名稱：`, currentSub);
       if (!newSubName) return;
 
       const trimmedSub = newSubName.trim();
       if (!trimmedSub || trimmedSub === currentSub) return;
 
-      const newName = `${normFac}_${trimmedSub}`;
+      const newName = trimmedSub.includes(normFac) ? trimmedSub : `${normFac}_${trimmedSub}`;
 
       if (currentDecks[newName]) {
         alert("此牌組名稱已存在！");
@@ -1003,9 +1218,7 @@
       try {
         const res = await fetch("/api/decks/rename", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ old_name: oldName, new_name: newName })
         }).then(r => r.json());
 
@@ -1021,17 +1234,11 @@
           }
 
           selectedDeckName = newName;
-          populatePresetsDropdown(newName);
-
-          const deckSelect = document.getElementById("deckSelect");
-          if (deckSelect) {
-            deckSelect.value = normFac;
-          }
-
-          loadSelectedDeckData();
+          populateDeckDropdown(newName);
+          renderDeckListModal();
           showToast(`✔ 成功將自訂牌組更名為「${newName}」！`);
         } else {
-          alert("重命名失敗: " + res.message);
+          alert("重命名失敗: " + (res.message || res.detail));
         }
       } catch (err) {
         alert("重命名通訊出錯，請重試！");
@@ -1039,22 +1246,19 @@
     }
 
     // 刪除自訂牌組
-    async function deletePresetDeck() {
-      const presetSelect = document.getElementById("presetSelect");
-      if (!presetSelect || !presetSelect.value) {
-        alert("請先選擇要刪除的預設/自訂牌組！");
+    async function deletePresetDeck(targetName = null) {
+      const deckName = targetName || selectedDeckName;
+      if (!deckName) {
+        alert("請先選擇要刪除的自訂牌組！");
         return;
       }
 
-      const deckName = presetSelect.value;
       if (!confirm(`您確定要刪除自訂牌組「${deckName}」嗎？此操作無法還原！`)) return;
 
       try {
         const res = await fetch("/api/decks/delete", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ deck_name: deckName })
         }).then(r => r.json());
 
@@ -1062,24 +1266,106 @@
           delete currentDecks[deckName];
           delete currentDecks[deckName + "_extra"];
 
-          // 切換回預設種族基礎牌組
-          const normName = normDeckName(deckName);
-          selectedDeckName = normName;
-
-          const deckSelect = document.getElementById("deckSelect");
-          if (deckSelect) {
-            deckSelect.value = normName;
-          }
-
-          populatePresetsDropdown();
-          loadSelectedDeckData();
+          populateDeckDropdown();
+          renderDeckListModal();
           showToast(`✔ 成功刪除自訂牌組「${deckName}」！`);
         } else {
-          alert("刪除失敗: " + res.message);
+          alert("刪除失敗: " + (res.message || res.detail));
         }
       } catch (err) {
         alert("刪除通訊出錯，請重試！");
       }
+    }
+
+    // 打開牌組清單與排序管理 Modal
+    function openDeckListModal() {
+      const modal = document.getElementById("deckListModal");
+      if (!modal) return;
+      const modalFactionFilter = document.getElementById("modalFactionFilter");
+      const mainFactionFilter = document.getElementById("factionFilterSelect");
+      if (modalFactionFilter && mainFactionFilter) {
+        modalFactionFilter.value = mainFactionFilter.value;
+      }
+      renderDeckListModal();
+      modal.style.display = "flex";
+    }
+
+    // 關閉牌組清單 Modal
+    function closeDeckListModal(e) {
+      const modal = document.getElementById("deckListModal");
+      if (!modal) return;
+      modal.style.display = "none";
+    }
+
+    // 渲染條列清楚的牌組清單與排序表格
+    function renderDeckListModal() {
+      const tableBody = document.getElementById("deckListTableBody");
+      const countBadge = document.getElementById("modalDeckCountBadge");
+      const filterSelect = document.getElementById("modalFactionFilter");
+      if (!tableBody) return;
+
+      const selectedFac = filterSelect ? filterSelect.value : "全部種族";
+      const keys = getCustomDeckKeys(selectedFac);
+
+      if (countBadge) {
+        countBadge.textContent = `共 ${keys.length} 組牌組`;
+      }
+
+      tableBody.innerHTML = "";
+
+      if (keys.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">暫無符合「${selectedFac}」的自訂牌組。</td></tr>`;
+        return;
+      }
+
+      keys.forEach((deckKey, idx) => {
+        const row = document.createElement("tr");
+        if (deckKey === selectedDeckName) {
+          row.classList.add("active-editing");
+        }
+
+        const fac = normDeckName(deckKey);
+        const mainCards = Array.isArray(currentDecks[deckKey]) ? currentDecks[deckKey] : [];
+        const extraCards = Array.isArray(currentDecks[deckKey + "_extra"]) ? currentDecks[deckKey + "_extra"] : [];
+        const isMainValid = mainCards.length === 20;
+
+        const isFirst = idx === 0;
+        const isLast = idx === keys.length - 1;
+
+        row.innerHTML = `
+          <td style="text-align: center; color: #ffd76a; font-weight: bold;">#${idx + 1}</td>
+          <td style="text-align: center;"><span class="faction-badge">${fac}</span></td>
+          <td style="font-weight: bold; color: ${deckKey === selectedDeckName ? '#ffd76a' : '#fff'};">
+            ${deckKey} ${deckKey === selectedDeckName ? '<span style="font-size: 10px; color: #52c41a; margin-left: 4px;">(當前編輯中)</span>' : ''}
+          </td>
+          <td style="text-align: center;">
+            <span style="color: ${isMainValid ? '#52c41a' : '#ff4d4f'}; font-weight: bold;">${mainCards.length}/20 張</span>
+            <span style="color: var(--text-muted); margin-left: 6px;">(額外 ${extraCards.length})</span>
+          </td>
+          <td style="text-align: center;">
+            <button class="action-btn order-btn" onclick="moveDeck('${deckKey}', -1)" ${isFirst ? 'disabled' : ''} title="上移" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 2px 7px; font-size: 11px; border-radius: 4px; cursor: pointer; margin-right: 3px;">⬆️</button>
+            <button class="action-btn order-btn" onclick="moveDeck('${deckKey}', 1)" ${isLast ? 'disabled' : ''} title="下移" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 2px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️</button>
+          </td>
+          <td style="text-align: center;">
+            <button class="action-btn" onclick="selectDeckFromModal('${deckKey}')" style="background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; margin-right: 3px;">✏️ 編輯</button>
+            <button class="action-btn" onclick="renamePresetDeck('${deckKey}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 2px 6px; font-size: 11px; border-radius: 4px; cursor: pointer; margin-right: 3px;">🏷️</button>
+            <button class="action-btn" onclick="deletePresetDeck('${deckKey}')" style="background: rgba(255,77,79,0.15); border: 1px solid rgba(255,77,79,0.4); color: #ff4d4f; padding: 2px 6px; font-size: 11px; border-radius: 4px; cursor: pointer;">🗑️</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // 從 Modal 直接載入特定牌組至編輯器
+    function selectDeckFromModal(deckKey) {
+      const fac = normDeckName(deckKey);
+      const mainFactionFilter = document.getElementById("factionFilterSelect");
+      if (mainFactionFilter && mainFactionFilter.value !== "全部種族" && mainFactionFilter.value !== fac) {
+        mainFactionFilter.value = fac;
+      }
+      populateDeckDropdown(deckKey);
+      closeDeckListModal();
+      showToast(`已載入「${deckKey}」至構築編輯器！`);
     }
 
     // 計算主牌組法力值總和
@@ -1501,6 +1787,11 @@
         if (res.status === "success") {
           currentDecks[selectedDeckName] = [...selectedMainIds];
           currentDecks[selectedDeckName + "_extra"] = [...selectedExtraIds];
+          populateDeckDropdown(selectedDeckName);
+          const modal = document.getElementById("deckListModal");
+          if (modal && modal.style.display !== "none") {
+            renderDeckListModal();
+          }
           showToast(`✔ 成功重構並儲存「${selectedDeckName}」主/額外牌組！`);
         } else {
           showToast("儲存失敗: " + res.message, true);
@@ -1584,6 +1875,85 @@
       <button class="card-zoom-close-btn" onclick="closeMobileCardZoom()" title="關閉">&times;</button>
       <img id="mobileZoomImg" class="card-zoom-full-img" src="" alt="卡牌高清大圖" onclick="closeMobileCardZoom()">
       <button id="mobileZoomToggleBtn" class="card-zoom-quick-btn" onclick="toggleCardFromModal()">➕ 加入至牌組</button>
+    </div>
+  </div>
+
+  <!-- 條列清楚的自訂牌組清單與排序管理 Modal -->
+  <div id="deckListModal" class="deck-list-modal" style="display: none;" onclick="closeDeckListModal(event)">
+    <div class="deck-list-modal-dialog" onclick="event.stopPropagation()">
+      <div class="deck-list-modal-header">
+        <div class="modal-title-wrap">
+          <h2 style="margin: 0; font-size: 18px; color: var(--gold-accent); display: flex; align-items: center; gap: 8px;">
+            <span>📋</span> 自訂牌組清單與排序管理
+          </h2>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+            條列顯示各陣營自訂牌組，點擊 ⬆️ 上移 / ⬇️ 下移 自由調整對戰選單中顯示的先後順序。
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeDeckListModal()">&times;</button>
+      </div>
+
+      <div class="deck-list-modal-toolbar">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <label style="font-size: 12px; color: var(--text-muted); font-weight: bold;">篩選種族：</label>
+          <select id="modalFactionFilter" class="deck-select" onchange="renderDeckListModal()" style="font-size: 12px; padding: 3px 8px;">
+            <option value="全部種族">🌐 全部種族</option>
+            <option value="藝術品">藝術品</option>
+            <option value="喵喵賊">喵喵賊</option>
+            <option value="妖怪村莊">妖怪村莊</option>
+            <option value="獸人">獸人</option>
+            <option value="虛擬世界">虛擬世界</option>
+            <option value="勇者公會">勇者公會</option>
+            <option value="妖精">妖精</option>
+            <option value="山羊族">山羊族</option>
+            <option value="機械軍團">機械軍團</option>
+            <option value="歡樂島">歡樂島</option>
+            <option value="特殊旅人">特殊旅人</option>
+            <option value="甜點王國">甜點王國</option>
+            <option value="發電獸">發電獸</option>
+            <option value="碳碳族">碳碳族</option>
+            <option value="蒸汽世界">蒸汽世界</option>
+            <option value="進化野人">進化野人</option>
+            <option value="馬戲團">馬戲團</option>
+            <option value="骷髏人">骷髏人</option>
+          </select>
+          <span id="modalDeckCountBadge" style="font-size: 12px; color: #ffd76a; background: rgba(255,215,106,0.12); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(255,215,106,0.3);">
+            共 0 組牌組
+          </span>
+        </div>
+        <div>
+          <button class="action-btn" onclick="addPresetDeck()" style="background: linear-gradient(135deg, #23780a, #389e0d); color: white; border: none; padding: 4px 11px; font-size: 12px; border-radius: 4px; cursor: pointer;">
+            ➕ 建立新自訂牌組
+          </button>
+        </div>
+      </div>
+
+      <div class="deck-list-table-container">
+        <table class="deck-list-table">
+          <thead>
+            <tr>
+              <th style="width: 55px; text-align: center;">順序</th>
+              <th style="width: 100px; text-align: center;">種族</th>
+              <th>牌組名稱</th>
+              <th style="width: 150px; text-align: center;">卡牌數量</th>
+              <th style="width: 130px; text-align: center;">順序調整</th>
+              <th style="width: 180px; text-align: center;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="deckListTableBody">
+            <!-- populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="deck-list-modal-footer">
+        <div style="font-size: 11.5px; color: #52c41a; display: flex; align-items: center; gap: 4px;">
+          <span>💡</span> 順序調整完成後會即時自動儲存至伺服器，對戰大廳將同步依照此順序顯示。
+        </div>
+        <button class="action-btn" onclick="closeDeckListModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 5px 16px; font-size: 12px; border-radius: 5px; cursor: pointer;">
+          完成關閉
+        </button>
+      </div>
     </div>
   </div>
 

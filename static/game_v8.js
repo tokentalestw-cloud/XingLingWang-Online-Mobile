@@ -608,18 +608,11 @@ function populateLobbyDecksDropdown() {
 
   deckSelect.innerHTML = "";
 
-  // The base faction deck is always a valid choice
-  const optBase = document.createElement("option");
-  optBase.value = currentFaction;
-  optBase.textContent = `${currentFaction} (基礎)`;
-  deckSelect.appendChild(optBase);
-
-  // Filter other preset keys belonging to this faction
+  // 篩選屬於該種族的自訂/預設牌組（依 decks.json 中的排序）
   const presetKeys = Object.keys(decks || {}).filter(key => 
     !key.endsWith("_extra") && 
     key !== "中立單位" && 
-    key !== currentFaction &&
-    key.includes(currentFaction)
+    (key.startsWith(currentFaction + "_") || key === currentFaction || (typeof normDeckName === "function" ? normDeckName(key) === currentFaction : key.includes(currentFaction)))
   );
 
   presetKeys.forEach(key => {
@@ -629,8 +622,10 @@ function populateLobbyDecksDropdown() {
     deckSelect.appendChild(opt);
   });
 
-  if (curVal && (curVal === currentFaction || presetKeys.includes(curVal))) {
+  if (curVal && presetKeys.includes(curVal)) {
     deckSelect.value = curVal;
+  } else if (presetKeys.length > 0) {
+    deckSelect.value = presetKeys[0];
   }
 }
 
