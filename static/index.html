@@ -701,36 +701,36 @@
   
   <!-- 戰對統計與歷史紀錄彈窗 -->
   <div id="multiplayerLobby" class="score-panel" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: center; justify-content: center; z-index: 10000; background: rgba(0,0,0,0.8);">
-    <div class="score-box" style="position: relative; width: 440px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 25px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
-      <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
-        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn">🏠 首頁</button>
+    <div class="score-box" style="position: relative; width: 440px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-sizing: border-box; padding: 12px 18px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
+      <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 6px; align-items: center;">
+        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">🏠 首頁</button>
+        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;">×</button>
       </div>
-      <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 24px; cursor: pointer; float: right; margin-top: -10px;">×</button>
-      <h2 style="color: #ffd76a; text-align: center; margin-bottom: 20px; font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "PingFang TC", "Heiti TC", "Outfit", "Roboto", system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
+      <h2 style="color: #ffd76a; text-align: center; margin-top: 4px; margin-bottom: 10px; font-size: 18px; font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Outfit', 'Roboto', system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
       
-      <div class="lobby-section" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+      <div class="lobby-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;">
         <!-- 創建房間 -->
-        <div class="lobby-action-card" style="padding: 15px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center;">
-          <h3 style="color: #ffd76a; margin-bottom: 10px; font-size: 15px;">創立新的對戰房間</h3>
-          <button onclick="createOnlineRoom()" style="background: linear-gradient(135deg, #d4af37, #ffd76a); border: none; color: #070505; font-weight: bold; padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">創立房間</button>
+        <div class="lobby-action-card" style="padding: 10px 14px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center;">
+          <h3 style="color: #ffd76a; margin-top: 0; margin-bottom: 6px; font-size: 14px;">創立新的對戰房間</h3>
+          <button onclick="createOnlineRoom()" style="background: linear-gradient(135deg, #d4af37, #ffd76a); border: none; color: #070505; font-weight: bold; padding: 6px 18px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">創立房間</button>
         </div>
         
-        <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 12px;">— 或 —</div>
+        <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 11px; margin: -2px 0;">— 或 —</div>
         
         <!-- 加入房間 -->
-        <div class="lobby-action-card" style="padding: 15px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-          <h3 style="color: #ffd76a; margin-bottom: 0px; font-size: 15px;">加入好友的房間</h3>
-          <div style="display: flex; gap: 8px; width: 100%; max-width: 260px;">
-            <input type="text" id="lobbyRoomIdInput" placeholder="請輸入 4 位房號" maxlength="6" style="flex: 1; padding: 8px; border: 1px solid #ffd76a; border-radius: 6px; background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-weight: bold; outline: none;">
-            <button onclick="joinOnlineRoom()" style="background: rgba(255, 215, 106, 0.08); border: 1px solid #ffd76a; color: #ffd76a; font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">加入對局</button>
+        <div class="lobby-action-card" style="padding: 10px 14px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <h3 style="color: #ffd76a; margin: 0; font-size: 14px;">加入好友的房間</h3>
+          <div style="display: flex; gap: 6px; width: 100%; max-width: 260px;">
+            <input type="text" id="lobbyRoomIdInput" placeholder="請輸入 4 位房號" maxlength="6" style="flex: 1; padding: 6px 8px; border: 1px solid #ffd76a; border-radius: 6px; background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 13px; font-weight: bold; outline: none;">
+            <button onclick="joinOnlineRoom()" style="background: rgba(255, 215, 106, 0.08); border: 1px solid #ffd76a; color: #ffd76a; font-weight: bold; padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: all 0.3s; white-space: nowrap;">加入對局</button>
           </div>
         </div>
       </div>
       
       <!-- 動態連線狀態提示 -->
-      <div id="lobbyStatusArea" style="display: none; text-align: center; padding: 15px; border-top: 1px solid rgba(255,215,106,0.1); margin-top: 15px;">
-        <div id="lobbyStatusSpinner" class="spinner" style="border: 3px solid rgba(255,215,106,0.1); border-radius: 50%; border-top: 3px solid #ffd76a; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-        <p id="lobbyStatusText" style="color: #ffd76a; font-size: 13px; font-weight: bold;"></p>
+      <div id="lobbyStatusArea" style="display: none; text-align: center; padding: 8px 10px; border-top: 1px solid rgba(255,215,106,0.1); margin-top: 8px;">
+        <div id="lobbyStatusSpinner" class="spinner" style="border: 3px solid rgba(255,215,106,0.1); border-radius: 50%; border-top: 3px solid #ffd76a; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto 6px;"></div>
+        <p id="lobbyStatusText" style="color: #ffd76a; font-size: 12px; font-weight: bold; margin: 0;"></p>
       </div>
     </div>
   </div>
@@ -764,10 +764,10 @@
       if (statusArea) statusArea.style.display = 'block';
       if (statusText) {
         statusText.innerHTML = `
-          <div style="font-size: 16px; color: #ffe600; margin-bottom: 6px;">👑 房間建立成功！房號：<span style="font-weight: 900; font-size: 22px; color: #ffffff; letter-spacing: 2px;">${roomId}</span></div>
-          <div style="font-size: 13px; color: #ffd76a;">正在等待對手輸入房號加入房間...</div>
-          <div style="margin-top: 10px;">
-            <button type="button" onclick="navigator.clipboard.writeText('${roomId}'); alert('房號已複製：${roomId}');" class="topbar-pill-btn" style="padding: 4px 12px !important;">📋 複製房號</button>
+          <div style="font-size: 15px; color: #ffe600; margin-bottom: 4px;">👑 房間建立成功！房號：<span style="font-weight: 900; font-size: 20px; color: #ffffff; letter-spacing: 2px;">${roomId}</span></div>
+          <div style="font-size: 12px; color: #ffd76a;">正在等待對手輸入房號加入房間...</div>
+          <div style="margin-top: 6px;">
+            <button type="button" onclick="navigator.clipboard.writeText('${roomId}'); alert('房號已複製：${roomId}');" class="topbar-pill-btn" style="padding: 3px 10px !important; font-size: 12px;">📋 複製房號</button>
           </div>
         `;
       }
@@ -793,7 +793,7 @@
       const statusText = document.getElementById('lobbyStatusText');
       if (statusArea) statusArea.style.display = 'block';
       if (statusText) {
-        statusText.innerHTML = `<div style="color: #ffd76a; font-size: 14px; font-weight: bold;">正在連接房號為 ${roomId} 的對戰房間，請稍候...</div>`;
+        statusText.innerHTML = `<div style="color: #ffd76a; font-size: 13px; font-weight: bold;">正在連接房號為 ${roomId} 的對戰房間，請稍候...</div>`;
       }
       
       if (typeof window.xlwStartOnlineGuest === 'function') {
@@ -803,7 +803,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261025-mulligan-tribute-v2" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261025-prophet-victory-v3" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

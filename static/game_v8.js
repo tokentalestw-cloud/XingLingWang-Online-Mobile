@@ -2654,9 +2654,9 @@ window.hasImmediateEffect = function(card) {
   const name = card.name || "";
   const text = card.effect_text || "";
   const kw = card.keywords || [];
-  if (kw.includes("立即") || text.includes("立即") || name.includes("立即")) return true;
+  if (kw.some(k => k && k.includes("立即")) || text.includes("立即") || name.includes("立即")) return true;
   
-  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資的野人", "智慧野人", "野人寶寶", "女野人"];
+  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王"];
   return immediateNames.some(n => name.includes(n));
 };
 
@@ -6171,6 +6171,163 @@ window.xlwIsAttackBlockedByClea = function(zone, idx) {
   return false;
 };
 
+// 妖精預言家 (EVL-0015): 立即:查看你牌庫頂3張牌並可任意調換順序
+window.xlwTriggerFairyProphetEffect = function() {
+  return new Promise((resolve) => {
+    if (!deck || deck.length === 0) {
+      logBattle("✨【妖精預言家】立即效果發動：我方牌庫已無卡片，無法查看。");
+      resolve();
+      return;
+    }
+    const count = Math.min(3, deck.length);
+    // Take top cards from the deck (pop returns top card)
+    const inspectedCards = [];
+    for (let i = 0; i < count; i++) {
+      inspectedCards.push(deck.pop());
+    }
+
+    // Modal UI
+    const overlay = document.createElement("div");
+    overlay.id = "xlwFairyProphetModal";
+    overlay.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;";
+
+    const modalBox = document.createElement("div");
+    modalBox.style.cssText = "background: linear-gradient(135deg, #1f1a18 0%, #110e0d 100%); border: 2px solid #ffd76a; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,215,106,0.15); width: 92vw; max-width: 420px; max-height: 85vh; padding: 14px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;";
+
+    const header = document.createElement("div");
+    header.style.cssText = "text-align: center;";
+    header.innerHTML = `
+      <div style="color: #ffd76a; font-size: 18px; font-weight: bold; letter-spacing: 1px;">🔮 妖精預言家 · 預言效果</div>
+      <div style="color: #ccc; font-size: 12px; margin-top: 3px;">查看牌庫頂 ${count} 張牌，點擊 ⬆️ / ⬇️ 調整抽牌順序：</div>
+    `;
+    modalBox.appendChild(header);
+
+    const cardsContainer = document.createElement("div");
+    cardsContainer.style.cssText = "display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; padding-right: 2px;";
+    modalBox.appendChild(cardsContainer);
+
+    function renderCards() {
+      cardsContainer.innerHTML = "";
+      inspectedCards.forEach((c, idx) => {
+        const item = document.createElement("div");
+        item.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,106,0.25); border-radius: 8px; padding: 6px 10px; gap: 8px;";
+
+        const orderBadge = document.createElement("div");
+        orderBadge.style.cssText = `font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; white-space: nowrap; ${idx === 0 ? 'background: #ffd76a; color: #111;' : 'background: rgba(255,255,255,0.1); color: #ddd;'}`;
+        orderBadge.innerText = idx === 0 ? "👑 下張抽牌" : `第 ${idx + 1} 張`;
+
+        const cardInfo = document.createElement("div");
+        cardInfo.style.cssText = "flex: 1; min-width: 0; text-align: left;";
+        const cardImg = c.image ? `<img src="${c.image}" style="width: 26px; height: 36px; object-fit: cover; border-radius: 3px; border: 1px solid #ffd76a; margin-right: 6px; vertical-align: middle;">` : '';
+        const atkScore = c.type === "unit" ? `(攻:${c.attack || 0}/星:${c.score || 0})` : `[${c.type || '魔法'}]`;
+        cardInfo.innerHTML = `
+          <div style="display: flex; align-items: center;">
+            ${cardImg}
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span style="color: #fff; font-size: 13px; font-weight: bold;">${c.name}</span>
+              <span style="color: #ffd76a; font-size: 11px; margin-left: 4px;">${atkScore}</span>
+            </div>
+          </div>
+        `;
+
+        const btnGroup = document.createElement("div");
+        btnGroup.style.cssText = "display: flex; gap: 4px;";
+
+        const upBtn = document.createElement("button");
+        upBtn.innerText = "⬆️";
+        upBtn.title = "往前移 (優先抽到)";
+        upBtn.style.cssText = "background: rgba(255,255,255,0.1); border: 1px solid rgba(255,215,106,0.4); color: #fff; border-radius: 4px; padding: 4px 6px; font-size: 11px; cursor: pointer;";
+        if (idx === 0) {
+          upBtn.style.opacity = "0.3";
+          upBtn.style.cursor = "default";
+        } else {
+          upBtn.onclick = () => {
+            const temp = inspectedCards[idx];
+            inspectedCards[idx] = inspectedCards[idx - 1];
+            inspectedCards[idx - 1] = temp;
+            renderCards();
+          };
+        }
+
+        const downBtn = document.createElement("button");
+        downBtn.innerText = "⬇️";
+        downBtn.title = "往後移";
+        downBtn.style.cssText = "background: rgba(255,255,255,0.1); border: 1px solid rgba(255,215,106,0.4); color: #fff; border-radius: 4px; padding: 4px 6px; font-size: 11px; cursor: pointer;";
+        if (idx === inspectedCards.length - 1) {
+          downBtn.style.opacity = "0.3";
+          downBtn.style.cursor = "default";
+        } else {
+          downBtn.onclick = () => {
+            const temp = inspectedCards[idx];
+            inspectedCards[idx] = inspectedCards[idx + 1];
+            inspectedCards[idx + 1] = temp;
+            renderCards();
+          };
+        }
+
+        btnGroup.appendChild(upBtn);
+        btnGroup.appendChild(downBtn);
+
+        item.appendChild(orderBadge);
+        item.appendChild(cardInfo);
+        item.appendChild(btnGroup);
+        cardsContainer.appendChild(item);
+      });
+    }
+
+    renderCards();
+
+    const footer = document.createElement("div");
+    footer.style.cssText = "margin-top: 4px; text-align: center;";
+    const confirmBtn = document.createElement("button");
+    confirmBtn.innerText = "✨ 確定順序並放回牌庫";
+    confirmBtn.style.cssText = "background: linear-gradient(135deg, #d4af37, #ffd76a); border: none; color: #111; font-weight: bold; font-size: 13px; padding: 8px 20px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.5); width: 100%;";
+    confirmBtn.onclick = () => {
+      // Put back onto deck in reverse order so inspectedCards[0] is top of deck (last element in array)
+      for (let i = inspectedCards.length - 1; i >= 0; i--) {
+        deck.push(inspectedCards[i]);
+      }
+      overlay.remove();
+      const names = inspectedCards.map(c => `【${c.name}】`).join("、");
+      logBattle(`🔮 妖精預言家 效果：查看了牌庫頂 ${count} 張牌（${names}）並調換了抽牌順序！`);
+      if (typeof isMultiplayer !== 'undefined' && isMultiplayer && typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({
+            action: "battle_log",
+            message: `🔮 對手【妖精預言家】效果：查看了牌庫頂 ${count} 張牌並調換了抽牌順序！`
+          }));
+        } catch (e) {}
+      }
+      resolve();
+    };
+    footer.appendChild(confirmBtn);
+    modalBox.appendChild(footer);
+
+    overlay.appendChild(modalBox);
+    document.body.appendChild(overlay);
+  });
+};
+
+window.xlwTriggerEnemyProphetEffect = async function() {
+  const enemyDeck = (window.XLW_ENEMY && window.XLW_ENEMY.deck) ? window.XLW_ENEMY.deck : [];
+  if (enemyDeck.length === 0) return;
+  const count = Math.min(3, enemyDeck.length);
+  const inspected = [];
+  for (let i = 0; i < count; i++) {
+    inspected.push(enemyDeck.pop());
+  }
+  // AI sort strategy: units first, then highest score
+  inspected.sort((a, b) => {
+    const scoreA = (a.type === "unit" ? 10 : 0) + Number(a.score || 0);
+    const scoreB = (b.type === "unit" ? 10 : 0) + Number(b.score || 0);
+    return scoreB - scoreA;
+  });
+  for (let i = inspected.length - 1; i >= 0; i--) {
+    enemyDeck.push(inspected[i]);
+  }
+  logBattle(`🔮 對手 妖精預言家 效果：查看了其牌庫頂 ${count} 張牌並調整了順序！`);
+};
+
 window.xlwTriggerKururuEffect = async function(isPlayerOwner) {
   const oppHand = isPlayerOwner ? window.XLW_ENEMY.hand : hand;
   const oppDeck = isPlayerOwner ? window.XLW_ENEMY.deck : deck;
@@ -7820,6 +7977,16 @@ async function performSummonToSlot(zone, idx) {
               window.XLW_enemyFairyQueenBackRowAllowed = false;
             }
           }
+        }
+      }
+
+      // 妖精預言家 (EVL-0015 / SSR-EVL-0015): 立即:查看你牌庫頂3張牌並可任意調換順序
+      if (card.id === "EVL-0015" || card.id === "R-EVL-0015" || card.id === "SSR-EVL-0015" || card.name?.includes("預言家")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer) {
+          await window.xlwTriggerFairyProphetEffect();
+        } else {
+          await window.xlwTriggerEnemyProphetEffect();
         }
       }
 
@@ -13551,7 +13718,10 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
     return;
   }
-  if (card.id === "R-VRT-0037" || card.id === "SSR-VRT-0037" || card.name?.includes("魔王城參謀長")) {
+  if (card.id === "EVL-0015" || card.id === "R-EVL-0015" || card.id === "SSR-EVL-0015" || card.name?.includes("預言家")) {
+    await window.xlwTriggerEnemyProphetEffect();
+  }
+  else if (card.id === "R-VRT-0037" || card.id === "SSR-VRT-0037" || card.name?.includes("魔王城參謀長")) {
     const minions = [];
     for (const r of ["front", "back"]) {
       const z = "enemy_" + r;
@@ -26455,10 +26625,10 @@ function triggerCallGameEnd(winner) {
   }
   
   let result = "DEFEAT";
-  let msg = "\u5c0d\u624b\u52e5\u5229\uff01"; // 對手勝利！
+  let msg = "對手勝利！";
   if (winner === "player") {
     result = "VICTORY";
-    msg = "\u6211\u65b9\u52e5\u5229\uff01"; // 我方勝利！
+    msg = "我方勝利！";
   }
   
   let panel = document.getElementById("xlwResultPanel");
@@ -26468,40 +26638,51 @@ function triggerCallGameEnd(winner) {
     panel.className = "xlw-result-panel";
     document.body.appendChild(panel);
   }
-    // hide opponent hand immediately
+  panel.style.zIndex = "99999999";
+  const hp = document.querySelector(".hand-panel");
+  if (hp) {
+    hp.style.setProperty("z-index", "1", "important");
+    hp.style.pointerEvents = "none";
+  }
+  const h = document.getElementById("hand");
+  if (h) {
+    h.style.setProperty("z-index", "1", "important");
+    h.style.pointerEvents = "none";
+  }
+  // hide opponent hand immediately
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
 
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(255, 215, 106, 0.15); padding: 20px; text-align: center; width: 90vw; max-width: 360px; max-height: 90vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255, 215, 106, 0.6); margin-bottom: 10px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #eee; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 10px;">
+    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.15); padding: 12px 16px; text-align: center; width: 92vw; max-width: 340px; max-height: 85vh; overflow-y: auto;">
+      <div class="xlw-result-title" style="color: #ffd76a; font-size: 24px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 215, 106, 0.6); margin-bottom: 4px; text-transform: uppercase;">${result}</div>
+      <div class="xlw-result-msg" style="color: #eee; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
         ${msg}
-        <div style="font-size:13px; color:#aaa; margin-top:4px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
+        <div style="font-size:11px; color:#aaa; margin-top:2px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
       </div>
       
-      <div class="xlw-result-score" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="xlw-result-score" style="background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
         <div style="flex: 1; text-align: center;">
-          <div style="font-size: 13px; color: #4ade80; margin-bottom: 4px;">我方</div>
-          <div style="font-size: 26px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.4); line-height: 1;">${playerStars} <span style="font-size: 14px;">★</span></div>
-          <div style="font-size: 10px; color: #ccc; margin-top: 4px; line-height: 1.2;">單位:${playerFieldStars}<br>額外:${playerBonusScore}</div>
+          <div style="font-size: 12px; color: #4ade80; margin-bottom: 2px;">我方</div>
+          <div style="font-size: 22px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 8px rgba(255,215,106,0.4); line-height: 1;">${playerStars} <span style="font-size: 12px;">★</span></div>
+          <div style="font-size: 10px; color: #ccc; margin-top: 2px; line-height: 1.2;">單位:${playerFieldStars} | 額外:${playerBonusScore}</div>
         </div>
-        <div style="width: 1px; height: 50px; background: rgba(255,255,255,0.2);"></div>
+        <div style="width: 1px; height: 36px; background: rgba(255,255,255,0.2);"></div>
         <div style="flex: 1; text-align: center;">
-          <div style="font-size: 13px; color: #ff4d4f; margin-bottom: 4px;">對方</div>
-          <div style="font-size: 26px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.4); line-height: 1;">${enemyStars} <span style="font-size: 14px;">★</span></div>
-          <div style="font-size: 10px; color: #ccc; margin-top: 4px; line-height: 1.2;">單位:${enemyFieldStars}<br>額外:${enemyBonusScore}</div>
+          <div style="font-size: 12px; color: #ff4d4f; margin-bottom: 2px;">對方</div>
+          <div style="font-size: 22px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 8px rgba(255,215,106,0.4); line-height: 1;">${enemyStars} <span style="font-size: 12px;">★</span></div>
+          <div style="font-size: 10px; color: #ccc; margin-top: 2px; line-height: 1.2;">單位:${enemyFieldStars} | 額外:${enemyBonusScore}</div>
         </div>
       </div>
       
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.8);'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s;">返回首頁 / 重新開局</button>
+      <div style="display: flex; flex-direction: row; gap: 8px; justify-content: center;">
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
+        <button onclick="location.reload()" style="flex: 1; background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); white-space: nowrap;">重新開局</button>
       </div>
     </div>
   `;
   panel.classList.add("show");
-  logBattle(`\u904a\u6232\u63d0\u65e9\u7d50\u675f\uff01\u6bd4\u5206\uff1a\u6211\u65b9 ${playerStars} \u2605 vs \u5c0d\u624b ${enemyStars} \u2605\u3002${msg}`);
+  logBattle(`遊戲提早結束！比分：我方 ${playerStars} ★ vs 對手 ${enemyStars} ★。${msg}`);
 }
 
 function checkCallGameAtTurnStart(isMyTurnStarting) {
@@ -26617,18 +26798,18 @@ function executeGameOverCalculations(isCallGame = false) {
   let msg = "平手";
   if (playerStars > enemyStars) {
     result = "VICTORY";
-    msg = "\u6211\u65b9\u52e5\u5229\uff01";
+    msg = "我方勝利！";
   } else if (enemyStars > playerStars) {
     result = "DEFEAT";
-    msg = "\u5c0d\u624b\u52e5\u5229\uff01";
+    msg = "對手勝利！";
   } else {
     const weWentFirst = (window.XLW_coinTossFirstGo !== undefined) ? window.XLW_coinTossFirstGo : (player_role === "player1");
     if (!weWentFirst) {
       result = "VICTORY";
-      msg = "\u5e73\u624b\u0020\u0028\u6211\u65b9\u70ba\u5f8c\u624b\uff0c\u6211\u65b9\u7372\u52dd\uff01\u0029";
+      msg = "平手 (我方為後手，我方獲勝！)";
     } else {
       result = "DEFEAT";
-      msg = "\u5e73\u624b\u0020\u0028\u5c0d\u624b\u70ba\u5f8c\u624b\uff0c\u5c0d\u624b\u7372\u52dd\uff01\u0029";
+      msg = "平手 (對手為後手，對手獲勝！)";
     }
   }
   
@@ -26639,35 +26820,46 @@ function executeGameOverCalculations(isCallGame = false) {
     panel.className = "xlw-result-panel";
     document.body.appendChild(panel);
   }
-    // hide opponent hand immediately
+  panel.style.zIndex = "99999999";
+  const hp = document.querySelector(".hand-panel");
+  if (hp) {
+    hp.style.setProperty("z-index", "1", "important");
+    hp.style.pointerEvents = "none";
+  }
+  const h = document.getElementById("hand");
+  if (h) {
+    h.style.setProperty("z-index", "1", "important");
+    h.style.pointerEvents = "none";
+  }
+  // hide opponent hand immediately
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
 
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(255, 215, 106, 0.15); padding: 20px; text-align: center; width: 90vw; max-width: 360px; max-height: 90vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255, 215, 106, 0.6); margin-bottom: 10px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #eee; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 10px;">
+    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.15); padding: 12px 16px; text-align: center; width: 92vw; max-width: 340px; max-height: 85vh; overflow-y: auto;">
+      <div class="xlw-result-title" style="color: #ffd76a; font-size: 24px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 215, 106, 0.6); margin-bottom: 4px; text-transform: uppercase;">${result}</div>
+      <div class="xlw-result-msg" style="color: #eee; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
         ${msg}
-        <div style="font-size:13px; color:#aaa; margin-top:4px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
+        <div style="font-size:11px; color:#aaa; margin-top:2px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
       </div>
       
-      <div class="xlw-result-score" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="xlw-result-score" style="background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
         <div style="flex: 1; text-align: center;">
-          <div style="font-size: 13px; color: #4ade80; margin-bottom: 4px;">我方</div>
-          <div style="font-size: 26px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.4); line-height: 1;">${playerStars} <span style="font-size: 14px;">★</span></div>
-          <div style="font-size: 10px; color: #ccc; margin-top: 4px; line-height: 1.2;">單位:${playerFieldStars}<br>額外:${playerBonusScore}</div>
+          <div style="font-size: 12px; color: #4ade80; margin-bottom: 2px;">我方</div>
+          <div style="font-size: 22px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 8px rgba(255,215,106,0.4); line-height: 1;">${playerStars} <span style="font-size: 12px;">★</span></div>
+          <div style="font-size: 10px; color: #ccc; margin-top: 2px; line-height: 1.2;">單位:${playerFieldStars} | 額外:${playerBonusScore}</div>
         </div>
-        <div style="width: 1px; height: 50px; background: rgba(255,255,255,0.2);"></div>
+        <div style="width: 1px; height: 36px; background: rgba(255,255,255,0.2);"></div>
         <div style="flex: 1; text-align: center;">
-          <div style="font-size: 13px; color: #ff4d4f; margin-bottom: 4px;">對方</div>
-          <div style="font-size: 26px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.4); line-height: 1;">${enemyStars} <span style="font-size: 14px;">★</span></div>
-          <div style="font-size: 10px; color: #ccc; margin-top: 4px; line-height: 1.2;">單位:${enemyFieldStars}<br>額外:${enemyBonusScore}</div>
+          <div style="font-size: 12px; color: #ff4d4f; margin-bottom: 2px;">對方</div>
+          <div style="font-size: 22px; font-weight: bold; color: #ffd76a; text-shadow: 0 0 8px rgba(255,215,106,0.4); line-height: 1;">${enemyStars} <span style="font-size: 12px;">★</span></div>
+          <div style="font-size: 10px; color: #ccc; margin-top: 2px; line-height: 1.2;">單位:${enemyFieldStars} | 額外:${enemyBonusScore}</div>
         </div>
       </div>
       
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>document.getElementById('xlwResultPanel').classList.add('show'); ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:10px 15px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.8);'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; transition: all 0.2s;">檢視結局狀態</button>
-        <button onclick="location.reload()" style="background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 12px; font-size: 16px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s;">返回首頁 / 重新開局</button>
+      <div style="display: flex; flex-direction: row; gap: 8px; justify-content: center;">
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
+        <button onclick="location.reload()" style="flex: 1; background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); white-space: nowrap;">重新開局</button>
       </div>
     </div>
   `;

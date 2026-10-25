@@ -1163,7 +1163,7 @@ button:disabled {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 10005;
+  z-index: 99999999 !important;
 }
 
 .xlw-result-panel.show {
