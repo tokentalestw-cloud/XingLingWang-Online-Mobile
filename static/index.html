@@ -703,8 +703,8 @@
   <div id="multiplayerLobby" class="score-panel" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: center; justify-content: center; z-index: 10000; background: rgba(0,0,0,0.8);">
     <div class="score-box" style="position: relative; width: 440px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-sizing: border-box; padding: 12px 18px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
       <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 6px; align-items: center;">
-        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">🏠 首頁</button>
-        <button onclick="hideMultiplayerLobby(); if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;">×</button>
+        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">🏠 首頁</button>
+        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;">×</button>
       </div>
       <h2 style="color: #ffd76a; text-align: center; margin-top: 4px; margin-bottom: 10px; font-size: 18px; font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Outfit', 'Roboto', system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
       
@@ -873,6 +873,17 @@
       <div class="mascot-container">
         <div class="bouncing-mascot mascot-cat"></div>
         <div class="bouncing-mascot mascot-beast"></div>
+      </div>
+
+      <!-- 斷線/暫離回歸提示橫幅 (若有保存的連線房間) -->
+      <div id="xlwReconnectNoticeBanner" style="display: none; margin-bottom: 14px; padding: 10px 14px; background: rgba(22, 16, 36, 0.94); border: 1.5px solid #ffd76a; border-radius: 10px; text-align: center; box-shadow: 0 4px 18px rgba(0,0,0,0.7); max-width: 320px; width: 90%; box-sizing: border-box;">
+        <div style="font-size: 13px; color: #ffd76a; font-weight: bold; margin-bottom: 6px; letter-spacing: 0.5px;">
+          ⚡ 偵測到未結束的線上對戰 (房號: <span id="xlwSavedRoomIdText" style="color: #fff; font-size: 15px; font-weight: 900;"></span>)
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+          <button type="button" onclick="if(window.xlwResumeSavedOnlineRoom) window.xlwResumeSavedOnlineRoom()" style="padding: 5px 14px; background: linear-gradient(135deg, #ffd76a, #d4af37); color: #0f0b0b; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">⚡ 重回房間</button>
+          <button type="button" onclick="if(window.xlwClearOnlineSession) window.xlwClearOnlineSession(); const b = document.getElementById('xlwReconnectNoticeBanner'); if(b) b.style.display='none';" style="padding: 5px 12px; background: rgba(255,255,255,0.12); color: #ddd; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 12px; cursor: pointer;">✖ 放棄清除</button>
+        </div>
       </div>
 
       <!-- 三大遊戲模式主入口按鈕 -->

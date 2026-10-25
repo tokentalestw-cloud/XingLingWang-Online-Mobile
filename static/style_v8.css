@@ -425,30 +425,31 @@ button:disabled {
 
 .mulligan-card-inspect-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 28px;
-  height: 28px;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: rgba(18, 12, 28, 0.92);
-  border: 1.5px solid #ffd76a;
+  border: 1px solid rgba(255, 215, 106, 0.85);
   color: #ffd76a;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 11px;
   cursor: pointer;
-  z-index: 25;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.9);
+  z-index: 30;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
   pointer-events: auto;
 }
 
 .mulligan-card-inspect-btn:hover {
-  transform: scale(1.22);
+  transform: scale(1.1);
   background: rgba(55, 20, 85, 0.98);
   border-color: #ffffff;
   color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 215, 106, 0.6);
 }
 
 /* ===== 8. 擃??∠??祇? (Card) ===== */
@@ -1343,30 +1344,322 @@ button:disabled {
   box-shadow: 0 0 16px rgba(82, 196, 26, 0.6) !important;
 }
 
-/* 韏瑟????詨? */
+/* 起手換牌卡牌狀態與特效 */
 .mulligan-card {
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .mulligan-selected {
-  transform: scale(0.9) translateY(10px);
-  filter: brightness(0.4) grayscale(0.8);
+  transform: scale(0.92) translateY(12px) !important;
+  filter: brightness(0.55) grayscale(0.5);
   border-color: #ff4d4f !important;
-  box-shadow: 0 0 12px rgba(255, 77, 79, 0.4) !important;
+  box-shadow: 0 0 16px rgba(255, 77, 79, 0.75) !important;
 }
 
-.mulligan-selected::after {
-  content: "??";
+.mulligan-status-badge {
   position: absolute;
-  left: 50%;
   top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 77, 79, 0.85);
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.95), rgba(190, 18, 60, 0.95));
   color: #fff;
   font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid #ffd76a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), 0 0 8px rgba(225, 29, 72, 0.6);
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+
+/* 起手換牌卡牌檢視與決策彈窗 (Mulligan Inspector Modal) */
+.xlw-mulligan-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000080;
+  animation: xlwFadeIn 0.2s ease;
+}
+
+.xlw-mulligan-modal-box {
+  background: linear-gradient(135deg, #1c1715 0%, #110e0d 100%);
+  border: 2px solid #ffd76a;
+  border-radius: 16px;
+  width: 620px;
+  max-width: 94vw;
+  max-height: 90vh;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(205, 170, 82, 0.35);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  animation: xlwPopupScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  color: #f3ede2;
+}
+
+.xlw-mulligan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 215, 106, 0.25);
+}
+
+.xlw-mulligan-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffd76a;
+  text-shadow: 0 0 10px rgba(255, 215, 106, 0.5);
+}
+
+.xlw-mulligan-idx-badge {
+  font-size: 12px;
+  background: rgba(255, 215, 106, 0.18);
+  border: 1px solid #ffd76a;
+  border-radius: 10px;
+  padding: 2px 8px;
+  color: #fff;
   font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 4px;
+}
+
+.xlw-mulligan-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #c4b9a6;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xlw-mulligan-close-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  border-color: #ef4444;
+  color: #fff;
+}
+
+.xlw-mulligan-body {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+  padding: 4px;
+}
+
+@media (max-width: 600px) {
+  .xlw-mulligan-body {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.xlw-mulligan-img-col {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.xlw-mulligan-img {
+  max-width: 170px;
+  max-height: 245px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 215, 106, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+}
+
+.xlw-mulligan-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.xlw-mulligan-card-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffd76a;
+  text-shadow: 0 0 6px rgba(255, 215, 106, 0.4);
+}
+
+.xlw-mulligan-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.xlw-mulligan-tags .xlw-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+}
+
+.xlw-mulligan-tags .xlw-tag.faction {
+  background: rgba(147, 51, 234, 0.25);
+  border-color: #a855f7;
+  color: #e9d5ff;
+}
+
+.xlw-mulligan-tags .xlw-tag.atk {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+.xlw-mulligan-tags .xlw-tag.score {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #facc15;
+  color: #fef08a;
+}
+
+.xlw-mulligan-tags .xlw-tag.cost {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+
+.xlw-mulligan-tags .xlw-tag.magic {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #34d399;
+  color: #a7f3d0;
+}
+
+.xlw-mulligan-effect-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 215, 106, 0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.xlw-mulligan-effect-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffd76a;
+  margin-bottom: 4px;
+}
+
+.xlw-mulligan-effect-content {
+  color: #e5e7eb;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.xlw-mulligan-decision-wrap {
+  margin-top: 4px;
+}
+
+.xlw-mulligan-toggle-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.xlw-mulligan-toggle-btn.selected-replace {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border: 1.5px solid #f87171;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+}
+
+.xlw-mulligan-toggle-btn.selected-replace:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.xlw-mulligan-toggle-btn.selected-keep {
+  background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+  border: 1.5px solid #4ade80;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.5);
+}
+
+.xlw-mulligan-toggle-btn.selected-keep:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.xlw-mulligan-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.xlw-mulligan-nav-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(205, 170, 82, 0.15);
+  border: 1px solid #ffd76a;
+  color: #ffd76a;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xlw-mulligan-nav-btn:hover:not(:disabled) {
+  background: rgba(205, 170, 82, 0.35);
+  color: #ffffff;
+}
+
+.xlw-mulligan-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #888;
+}
+
+.xlw-mulligan-done-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xlw-mulligan-done-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 /* ?圈洛???? */

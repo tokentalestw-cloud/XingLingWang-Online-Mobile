@@ -300,6 +300,19 @@ class ConnectionManager:
                     r["last_state"].clear()
                     r["client_backups"].clear()
                     r["game_active"] = False
+                elif action == "leave_room":
+                    print(f"Room {room_id}: {sender_role} ({sender_id}) left the room.")
+                    r["game_active"] = False
+                    if sender_role in r.get("players", {}):
+                        r["players"].pop(sender_role, None)
+                    if sender_role in r:
+                        r[sender_role] = (None, None)
+                    if sender_role in r.get("client_backups", {}):
+                        r["client_backups"].pop(sender_role, None)
+                    if sender_role in r.get("last_state", {}):
+                        r["last_state"].pop(sender_role, None)
+                    if sender_role in r.get("decks", {}):
+                        r["decks"].pop(sender_role, None)
             
             if target_ws is not None:
                 try:
