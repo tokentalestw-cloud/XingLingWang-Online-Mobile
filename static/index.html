@@ -748,6 +748,18 @@
       if (lobby) lobby.style.setProperty("display", "flex", "important");
       const statusArea = document.getElementById('lobbyStatusArea');
       if (statusArea) statusArea.style.display = 'none';
+
+      // 若有先前連線房號，自動填入輸入框方便房客重連
+      try {
+        const rawSession = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
+        if (rawSession) {
+          const sess = JSON.parse(rawSession);
+          if (sess && sess.room_id) {
+            const input = document.getElementById('lobbyRoomIdInput');
+            if (input && !input.value) input.value = sess.room_id;
+          }
+        }
+      } catch (e) {}
     }
     
     function hideMultiplayerLobby() {
@@ -757,7 +769,11 @@
     
     function createOnlineRoom() {
       const roomId = Math.floor(1000 + Math.random() * 9000);
-      const playerId = 'host_' + Math.floor(Math.random() * 10000);
+      let playerId = localStorage.getItem("XLW_PLAYER_ID_" + roomId);
+      if (!playerId) {
+        playerId = 'host_' + Math.floor(Math.random() * 10000);
+        localStorage.setItem("XLW_PLAYER_ID_" + roomId, playerId);
+      }
       
       const statusArea = document.getElementById('lobbyStatusArea');
       const statusText = document.getElementById('lobbyStatusText');
@@ -788,7 +804,11 @@
         return;
       }
       
-      const playerId = 'guest_' + Math.floor(Math.random() * 10000);
+      let playerId = localStorage.getItem("XLW_PLAYER_ID_" + roomId);
+      if (!playerId) {
+        playerId = 'guest_' + Math.floor(Math.random() * 10000);
+        localStorage.setItem("XLW_PLAYER_ID_" + roomId, playerId);
+      }
       const statusArea = document.getElementById('lobbyStatusArea');
       const statusText = document.getElementById('lobbyStatusText');
       if (statusArea) statusArea.style.display = 'block';
@@ -803,7 +823,7 @@
   </script>
 
   <!-- 導入核心重構對戰引擎 -->
-  <script src="/static/game_v8.js?v=20261025-prophet-victory-v3" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261026-reconnect-v4" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

@@ -60,28 +60,56 @@ class OptimizedStaticFiles(StaticFiles):
 
 app.mount("/static", OptimizedStaticFiles(directory=BASE / "static"), name="static")
 
+import time
+
 # ===== 線上雙人即時房間管理器 =====
 class ConnectionManager:
     def __init__(self):
         # room_id -> {
-        #   "player1": (player_id, ws),
-        #   "player2": (player_id, ws),
+        #   "player1": (player_id, ws_or_None),
+        #   "player2": (player_id, ws_or_None),
+        #   "players": { "player1": player_id, "player2": player_id },
         #   "decks": { "player1": dict, "player2": dict },
         #   "sync_decks": { "player1": dict, "player2": dict },
-        #   "last_state": { "player1": dict, "player2": dict }
+        #   "last_state": { "player1": dict, "player2": dict },
+        #   "client_backups": { "player1": dict, "player2": dict },
+        #   "game_active": bool,
+        #   "last_active": float
         # }
         self.rooms = {}
 
+    def _cleanup_expired_rooms(self):
+        now = time.time()
+        expired = []
+        for rid, r in list(self.rooms.items()):
+            p1_ws = r.get("player1", (None, None))[1] if "player1" in r else None
+            p2_ws = r.get("player2", (None, None))[1] if "player2" in r else None
+            if p1_ws is None and p2_ws is None:
+                last_active = r.get("last_active", now)
+                if now - last_active > 1800:  # 保留 30 分鐘供斷線重連
+                    expired.append(rid)
+        for rid in expired:
+            self.rooms.pop(rid, None)
+            print(f"Room {rid} expired after 30 mins of inactivity and was removed.")
+
     def _ensure_room_meta(self, room_id: str):
+        self._cleanup_expired_rooms()
         if room_id not in self.rooms:
             self.rooms[room_id] = {}
         r = self.rooms[room_id]
+        if "players" not in r:
+            r["players"] = {}
         if "decks" not in r:
             r["decks"] = {}
         if "sync_decks" not in r:
             r["sync_decks"] = {}
         if "last_state" not in r:
             r["last_state"] = {}
+        if "client_backups" not in r:
+            r["client_backups"] = {}
+        if "game_active" not in r:
+            r["game_active"] = False
+        r["last_active"] = time.time()
         return r
 
     async def connect(self, room_id: str, player_id: str, role: str, websocket: WebSocket):
@@ -93,19 +121,26 @@ class ConnectionManager:
         
         if not role_assigned:
             # 決定玩家角色 (Player1 或 Player2) 並支援斷線重連
-            if "player1" in r and r["player1"][0] == player_id:
+            if r["players"].get("player1") == player_id:
                 role_assigned = "player1"
                 is_reconnect = True
-            elif "player2" in r and r["player2"][0] == player_id:
+            elif r["players"].get("player2") == player_id:
                 role_assigned = "player2"
                 is_reconnect = True
             else:
-                if "player1" not in r:
+                p1_ws = r.get("player1", (None, None))[1]
+                p2_ws = r.get("player2", (None, None))[1]
+                if "player1" not in r["players"]:
                     role_assigned = "player1"
-                elif "player2" not in r:
+                elif "player2" not in r["players"]:
                     role_assigned = "player2"
+                elif p2_ws is None:
+                    role_assigned = "player2"
+                    is_reconnect = True
+                elif p1_ws is None:
+                    role_assigned = "player1"
+                    is_reconnect = True
                 else:
-                    # 檢查舊連線是否已失效，若是同一位或死連線則允許接管
                     print(f"Room {room_id}: connection rejected for {player_id}.")
                     await websocket.send_json({
                         "type": "error",
@@ -114,39 +149,56 @@ class ConnectionManager:
                     await websocket.close()
                     return
         else:
-            # 使用指定角色，若已被其他 player_id 連線，檢查舊連線是否存活
-            if role_assigned in r:
-                existing_player_id, existing_ws = r[role_assigned]
-                if existing_player_id != player_id:
-                    print(f"Room {room_id}: connection rejected for {player_id} (role {role_assigned} already occupied by {existing_player_id}).")
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": "該角色已在連線中！"
-                    })
-                    await websocket.close()
-                    return
-                else:
-                    is_reconnect = True
+            # 若該角色曾在房間中登記過，視為斷線重連並接管該角色連線
+            if role_assigned in r["players"]:
+                is_reconnect = True
+                old_tuple = r.get(role_assigned)
+                if old_tuple and old_tuple[1] is not None and old_tuple[1] is not websocket:
+                    try:
+                        await old_tuple[1].close()
+                    except:
+                        pass
+            elif r.get("game_active"):
+                is_reconnect = True
 
+        r["players"][role_assigned] = player_id
         r[role_assigned] = (player_id, websocket)
-        print(f"Room {room_id}: {role_assigned} ({player_id}) connected. Is reconnect: {is_reconnect}")
+        print(f"Room {room_id}: {role_assigned} ({player_id}) connected. Is reconnect: {is_reconnect}, game_active: {r.get('game_active')}")
         
         await websocket.send_json({
             "type": "welcome",
             "role": role_assigned,
+            "player_id": player_id,
             "is_reconnect": is_reconnect,
+            "game_active": r.get("game_active", False),
             "message": f"成功連接房間 {room_id}！角色為 {role_assigned}。"
         })
         
-        # 通知雙方
-        if "player1" in r and "player2" in r:
-            p1_id, p1_ws = r["player1"]
-            p2_id, p2_ws = r["player2"]
-            other_role = "player2" if role_assigned == "player1" else "player1"
-            other_ws = p2_ws if role_assigned == "player1" else p1_ws
-            this_ws = p1_ws if role_assigned == "player1" else p2_ws
-            
-            if is_reconnect:
+        other_role = "player2" if role_assigned == "player1" else "player1"
+        other_ws = r.get(other_role, (None, None))[1]
+        this_ws = websocket
+
+        if is_reconnect:
+            # 1. 先補發伺服器端備份的該玩家自身完整狀態（手牌、牌庫、戰場、對戰紀錄）
+            if role_assigned in r.get("client_backups", {}):
+                try:
+                    await this_ws.send_json({
+                        "type": "restore_client_backup",
+                        "state": r["client_backups"][role_assigned]
+                    })
+                except Exception as e:
+                    print(f"Error sending restore_client_backup to {role_assigned}: {e}")
+
+            # 2. 若對手有發送過最新 sync_game_state，立即補發給重連方
+            if other_role in r.get("last_state", {}):
+                try:
+                    flipped_state = self.flip_message_coordinates(r["last_state"][other_role])
+                    await this_ws.send_json(flipped_state)
+                except Exception as e:
+                    print(f"Error sending cached last_state to {role_assigned}: {e}")
+
+            # 3. 通知仍在線上的對手同步最新戰況
+            if other_ws is not None:
                 try:
                     await other_ws.send_json({
                         "type": "opponent_rejoined",
@@ -154,35 +206,42 @@ class ConnectionManager:
                     })
                 except:
                     pass
+            try:
+                await this_ws.send_json({
+                    "type": "opponent_rejoined_ack",
+                    "game_active": r.get("game_active", False),
+                    "message": "已成功重新連接到對決！"
+                })
+            except:
+                pass
+
+            # 若仍在選牌階段且對手已選過牌組，補發給重連方
+            if not r.get("game_active") and other_role in r.get("decks", {}):
                 try:
-                    await this_ws.send_json({
-                        "type": "opponent_rejoined_ack",
-                        "message": "已成功重新連接到對決！"
-                    })
+                    await this_ws.send_json(r["decks"][other_role])
                 except:
                     pass
-                # 若對手已選過牌組，補發給重連方
-                if other_role in r.get("decks", {}):
+        else:
+            # 初次雙人進房配對
+            if "player1" in r["players"] and "player2" in r["players"]:
+                p1_ws = r.get("player1", (None, None))[1]
+                p2_ws = r.get("player2", (None, None))[1]
+                if p1_ws is not None:
                     try:
-                        await this_ws.send_json(r["decks"][other_role])
+                        await p1_ws.send_json({
+                            "type": "opponent_joined",
+                            "message": "對手已進入房間，遊戲即將開始！"
+                        })
                     except:
                         pass
-            else:
-                try:
-                    await p1_ws.send_json({
-                        "type": "opponent_joined",
-                        "message": "對手已進入房間，遊戲即將開始！"
-                    })
-                except:
-                    pass
-                try:
-                    await p2_ws.send_json({
-                        "type": "opponent_joined",
-                        "message": "已連接到房主，遊戲即將開始！"
-                    })
-                except:
-                    pass
-                # 若有一方在對手進房前就已經先送出 multi_deck_selected，自動補發給剛進房的對手
+                if p2_ws is not None:
+                    try:
+                        await p2_ws.send_json({
+                            "type": "opponent_joined",
+                            "message": "已連接到房主，遊戲即將開始！"
+                        })
+                    except:
+                        pass
                 if other_role in r.get("decks", {}):
                     try:
                         await this_ws.send_json(r["decks"][other_role])
@@ -192,47 +251,57 @@ class ConnectionManager:
     def disconnect(self, room_id: str, player_id: str, websocket: WebSocket = None):
         if room_id in self.rooms:
             r = self.rooms[room_id]
-            if "player1" in r and r["player1"][0] == player_id:
-                if websocket is None or r["player1"][1] is websocket:
-                    r.pop("player1", None)
-                    print(f"Room {room_id}: Player1 disconnected.")
-            elif "player2" in r and r["player2"][0] == player_id:
-                if websocket is None or r["player2"][1] is websocket:
-                    r.pop("player2", None)
-                    print(f"Room {room_id}: Player2 disconnected.")
-            
-            if not r.get("player1") and not r.get("player2"):
-                self.rooms.pop(room_id, None)
-                print(f"Room {room_id} is now empty and destroyed.")
+            r["last_active"] = time.time()
+            for role_key in ["player1", "player2"]:
+                if role_key in r:
+                    pid, ws_obj = r[role_key]
+                    if pid == player_id and (websocket is None or ws_obj is websocket):
+                        r[role_key] = (pid, None)
+                        print(f"Room {room_id}: {role_key} ({player_id}) disconnected (room & state preserved for reconnect).")
 
     async def broadcast_to_other(self, room_id: str, sender_id: str, message: dict):
         if room_id in self.rooms:
             r = self._ensure_room_meta(room_id)
             sender_role = None
             target_ws = None
-            if "player1" in r and r["player1"][0] == sender_id:
+            if r["players"].get("player1") == sender_id or (r.get("player1") and r["player1"][0] == sender_id):
                 sender_role = "player1"
                 if "player2" in r:
                     target_ws = r["player2"][1]
-            elif "player2" in r and r["player2"][0] == sender_id:
+            elif r["players"].get("player2") == sender_id or (r.get("player2") and r["player2"][0] == sender_id):
                 sender_role = "player2"
                 if "player1" in r:
                     target_ws = r["player1"][1]
 
             action = message.get("action")
             if sender_role:
-                if action == "multi_deck_selected":
+                if action == "backup_client_state":
+                    state_data = message.get("state")
+                    if isinstance(state_data, dict):
+                        r["client_backups"][sender_role] = state_data
+                        if state_data.get("gameInProgress"):
+                            r["game_active"] = True
+                    return
+                elif action == "multi_deck_selected":
                     r["decks"][sender_role] = json.loads(json.dumps(message))
+                    if len(r["decks"]) >= 2:
+                        r["game_active"] = True
                 elif action == "sync_deck":
                     r["sync_decks"][sender_role] = json.loads(json.dumps(message))
+                    r["game_active"] = True
                 elif action == "sync_game_state":
                     r["last_state"][sender_role] = json.loads(json.dumps(message))
+                    r["game_active"] = True
+                elif action in ("coin_toss_roll", "coin_toss_choice", "mulligan_confirm", "summon", "end_turn"):
+                    r["game_active"] = True
                 elif action == "new_game":
                     r["decks"].clear()
                     r["sync_decks"].clear()
                     r["last_state"].clear()
+                    r["client_backups"].clear()
+                    r["game_active"] = False
             
-            if target_ws:
+            if target_ws is not None:
                 try:
                     # 自動翻轉座標，保證兩端視角都是我方在下、對手在上
                     flipped_message = self.flip_message_coordinates(message)
@@ -293,16 +362,18 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str,
         if room_id in manager.rooms:
             r = manager.rooms[room_id]
             remaining_ws = None
-            if "player1" in r:
-                remaining_ws = r["player1"][1]
-            elif "player2" in r:
-                remaining_ws = r["player2"][1]
-            if remaining_ws:
+            p1_ws = r.get("player1", (None, None))[1]
+            p2_ws = r.get("player2", (None, None))[1]
+            if p1_ws is not None:
+                remaining_ws = p1_ws
+            elif p2_ws is not None:
+                remaining_ws = p2_ws
+            if remaining_ws is not None:
                 try:
                     await remaining_ws.send_json({
                         "type": "opponent_disconnected",
                         "temporary": True,
-                        "message": "對手連線已中斷，正在等待其重新連接..."
+                        "message": "對手暫時離開或切換畫面，正在等待其返回對決..."
                     })
                 except:
                     pass

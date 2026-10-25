@@ -899,6 +899,24 @@ async function init() {
       player_role = urlParams.get('role');
       const urlDeck = urlParams.get('deck');
 
+      // 若網址無參數，嘗試從最近儲存的 session 恢復 (支援切換 App 或意外重新載入)
+      if (!room_id || !player_id || !player_role) {
+        try {
+          const rawSession = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
+          if (rawSession) {
+            const sess = JSON.parse(rawSession);
+            if (sess && sess.room_id && sess.player_id && sess.role) {
+              if (!sess.timestamp || (Date.now() - sess.timestamp < 1800000)) {
+                room_id = sess.room_id;
+                player_id = sess.player_id;
+                player_role = sess.role;
+                window.xlwSaveOnlineSession(room_id, player_id, player_role);
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
       if (urlDeck) {
         const factionSelect = document.getElementById("factionSelect");
         const deckSelect = document.getElementById("deckSelect");
@@ -927,6 +945,7 @@ async function init() {
       if (room_id && player_id && player_role) {
         isMultiplayer = true;
         isMyTurn = (player_role === "player1");
+        window.xlwSaveOnlineSession(room_id, player_id, player_role);
         
         const stateRestored = loadLocalGameState();
         const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -935,6 +954,7 @@ async function init() {
         setupWebSocketEvents();
         
         if (stateRestored) {
+          window.xlwEnterActiveOnlineBoardUI();
           render();
         } else {
           initGameEmptyState();
@@ -18515,17 +18535,22 @@ async function endPlayerTurnAndRunEnemy() {
     checkCallGameAtTurnStart(false);
     if (isGameOverFlag && !window.XLW_isPuzzleMode) return;
     
-    // 先將回合結束時所有場上、墓地、手牌、分數與狀態同步給對手
-    sendFullGameStateToOpponent(false);
-    
     isMyTurn = false;
-    setStatus("我方回合結束，正在等待對手行動...");
+    phase = "抽牌階段";
     turn++; // 保持雙方視覺回合數一致
+    window.XLW_enemyNeedsToDraw = true;
+    window.XLW_playerNeedsToDraw = false;
+    
+    // 將回合結束時最新場上、墓地、手牌、分數與回合狀態同步給對手
+    sendFullGameStateToOpponent(true);
+    
+    setStatus("我方回合結束，正在等待對手行動...");
     window.XLW_isPlayerTurnEnding = false;
     ws.send(JSON.stringify({
       action: "end_turn",
       next_turn: turn
     }));
+    saveLocalGameState();
     render();
   } else {
     // 進入對手回合
@@ -23515,7 +23540,13 @@ function setupWebSocketEvents() {
 
   ws.onopen = () => {
     console.log("WebSocket connected to room " + room_id);
-    setStatus("成功建立線上對戰連線！正在等待對手加入...");
+    if (window.XLW_gameInProgress) {
+      window.xlwEnterActiveOnlineBoardUI();
+      setStatus("連線已建立，正在同步最新對戰狀態...");
+      ws.send(JSON.stringify({ action: "request_full_sync" }));
+    } else {
+      setStatus("成功建立線上對戰連線！正在等待對手加入...");
+    }
     if (window.XLW_wsHeartbeatInterval) {
       clearInterval(window.XLW_wsHeartbeatInterval);
     }
@@ -23553,7 +23584,13 @@ function setupWebSocketEvents() {
       }
       console.log("收到線上廣播數據:", data);
     
-    if (data.type === "welcome") {
+    if (data.type === "restore_client_backup") {
+      console.log("Received restore_client_backup from server:", data.state);
+      if (data.state) {
+        window.xlwApplySavedStateObject(data.state);
+        logBattle("已從伺服器備份恢復對戰記錄與戰局！");
+      }
+    } else if (data.type === "welcome") {
       setStatus(data.message);
     } else if (data.type === "opponent_joined") {
       if (!window.XLW_gameInProgress) {
@@ -23566,10 +23603,13 @@ function setupWebSocketEvents() {
         window.xlwChooseMode('multi_deck_select');
       } else {
         logBattle("對手重新進入房間，正在恢復對戰...");
+        window.xlwEnterActiveOnlineBoardUI();
         sendFullGameStateToOpponent(true);
       }
     } else if (data.type === "opponent_rejoined") {
       window.xlwClearAllPendingResolvers();
+      window.XLW_gameInProgress = true;
+      window.xlwEnterActiveOnlineBoardUI();
       logBattle(data.message);
       setStatus("對手已重新連線！正在傳送戰局狀態進行同步...");
       sendFullGameStateToOpponent(true);
@@ -23579,6 +23619,8 @@ function setupWebSocketEvents() {
         window.checkMultiplayerDecksReady();
       }
     } else if (data.type === "opponent_rejoined_ack") {
+      window.XLW_gameInProgress = true;
+      window.xlwEnterActiveOnlineBoardUI();
       logBattle(data.message);
       setStatus("已成功連回遊戲！正在等待對手同步狀態...");
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -23668,11 +23710,14 @@ function setupWebSocketEvents() {
           isMyTurn = !s.isMyTurn;
         }
         
-        // 若對手有修改我方手牌或牌庫（例如獨眼小僧、獨眼大僧、瘟疫喵、訊號干擾喵、水瓶座等），同步真實卡牌物件
-        if (Array.isArray(s.enemyHand) && s.enemyHand.every(c => c !== null && typeof c === "object")) {
+        window.XLW_gameInProgress = true;
+        window.xlwEnterActiveOnlineBoardUI();
+
+        // 若對手有修改我方手牌或牌庫（例如獨眼小僧、獨眼大僧、瘟疫喵、訊號干擾喵、水瓶座等），同步真實卡牌物件（防空陣列誤清空手牌）
+        if (Array.isArray(s.enemyHand) && s.enemyHand.length > 0 && s.enemyHand.every(c => c !== null && typeof c === "object")) {
           hand = s.enemyHand;
         }
-        if (Array.isArray(s.enemyDeck) && s.enemyDeck.every(c => c !== null && typeof c === "object")) {
+        if (Array.isArray(s.enemyDeck) && s.enemyDeck.length > 0 && s.enemyDeck.every(c => c !== null && typeof c === "object")) {
           deck = s.enemyDeck;
         }
         window.XLW_ENEMY.hand = Array.isArray(s.playerHand) ? s.playerHand : new Array(s.handCount || 0).fill(null);
@@ -23708,7 +23753,39 @@ function setupWebSocketEvents() {
         }));
         
         opponent_mulligan_done = s.opponent_mulligan_done;
+
+        // 同步完整戰鬥歷史紀錄
+        if (Array.isArray(s.battleLog) && s.battleLog.length > 0) {
+          if (battleLog.length === 0 || s.battleLog.length >= battleLog.length) {
+            battleLog = s.battleLog;
+            const logContainer = document.getElementById("logContent") || document.getElementById("battleLogContent");
+            if (logContainer) {
+              logContainer.innerHTML = battleLog.map(line => `<div>${line}</div>`).join("");
+              logContainer.scrollTop = logContainer.scrollHeight;
+            }
+          }
+        }
+
+        // 同步抽牌與防守狀態需求
+        if (s.XLW_playerNeedsToDraw !== undefined) {
+          window.XLW_playerNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
+        }
+        if (s.XLW_enemyNeedsToDraw !== undefined) {
+          window.XLW_enemyNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
+        }
+        if (s.XLW_coinTossFirstGo !== undefined) window.XLW_coinTossFirstGo = s.XLW_coinTossFirstGo;
+        if (s.playerNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
+          window.XLW_DEFENSE_RULE.playerNeedsDefense = s.enemyNeedsDefense;
+        }
+        if (s.enemyNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
+          window.XLW_DEFENSE_RULE.enemyNeedsDefense = s.playerNeedsDefense;
+        }
+        if (s.countdownActive !== undefined) countdownActive = s.countdownActive;
+        if (s.countdownRemaining !== undefined) countdownRemaining = s.countdownRemaining;
+        if (s.countdownTriggerTurn !== undefined) countdownTriggerTurn = s.countdownTriggerTurn;
+        if (s.countdownTriggerRole !== undefined) window.countdownTriggerRole = s.countdownTriggerRole;
         
+        saveLocalGameState();
         render();
       }
     } else if (data.type === "opponent_disconnected") {
@@ -28622,20 +28699,94 @@ function showExtraDeckDetailModal(title, extraList, owner) {
   };
 }
 
-// ===== 22. 本地戰局存檔與狀態同步恢復 (sessionStorage) =====
+// ===== 22. 線上對戰 Session 儲存與介面控制 =====
+window.xlwSaveOnlineSession = function(rid, pid, role) {
+  try {
+    const sRoom = rid || room_id;
+    const sPlayer = pid || player_id;
+    const sRole = role || player_role;
+    if (!sRoom || !sPlayer) return;
+    const sessionData = {
+      room_id: sRoom,
+      player_id: sPlayer,
+      role: sRole,
+      timestamp: Date.now()
+    };
+    localStorage.setItem("XLW_ONLINE_SESSION", JSON.stringify(sessionData));
+    sessionStorage.setItem("XLW_ONLINE_SESSION", JSON.stringify(sessionData));
+    localStorage.setItem("XLW_PLAYER_ID_" + sRoom, sPlayer);
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("room", sRoom);
+      url.searchParams.set("player", sPlayer);
+      if (sRole) url.searchParams.set("role", sRole);
+      window.history.replaceState(null, "", url.toString());
+    }
+  } catch (e) {
+    console.warn("xlwSaveOnlineSession error:", e);
+  }
+};
+
+window.xlwClearOnlineSession = function() {
+  try {
+    localStorage.removeItem("XLW_ONLINE_SESSION");
+    sessionStorage.removeItem("XLW_ONLINE_SESSION");
+    if (room_id && player_id) {
+      const key = "XLW_GAME_STATE_" + room_id + "_" + player_id;
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
+    }
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("room");
+      url.searchParams.delete("player");
+      url.searchParams.delete("role");
+      url.searchParams.delete("deck");
+      window.history.replaceState(null, "", url.toString());
+    }
+  } catch (e) {
+    console.warn("xlwClearOnlineSession error:", e);
+  }
+};
+
+window.xlwEnterActiveOnlineBoardUI = function() {
+  const welcomeOverlay = document.getElementById("xlwWelcomeOverlay");
+  if (welcomeOverlay) welcomeOverlay.style.setProperty("display", "none", "important");
+  
+  const lobby = document.getElementById("multiplayerLobby");
+  if (lobby) lobby.style.setProperty("display", "none", "important");
+  
+  const prebattle = document.getElementById("xlwPreBattleDeckSelectOverlay");
+  if (prebattle) prebattle.style.setProperty("display", "none", "important");
+  
+  const modeSelect = document.getElementById("xlwModeSelectOverlay");
+  if (modeSelect) modeSelect.style.setProperty("display", "none", "important");
+  
+  const singleLobby = document.getElementById("xlwSingleLobbyOverlay");
+  if (singleLobby) singleLobby.style.setProperty("display", "none", "important");
+  
+  const board = document.getElementById("board");
+  if (board) board.style.display = "flex";
+};
+
+// ===== 22.1 本地戰局存檔與狀態同步恢復 (localStorage & sessionStorage) =====
 function saveLocalGameState() {
   if (!isMultiplayer || !room_id || !player_id) return;
   const key = "XLW_GAME_STATE_" + room_id + "_" + player_id;
   try {
+    const pfEl = document.getElementById("playerField");
+    const efEl = document.getElementById("enemyField");
     const state = {
       room_id: room_id,
       player_id: player_id,
       role: player_role,
       field: field,
+      playerFieldCard: pfEl?.dataset.card ? JSON.parse(pfEl.dataset.card) : null,
+      enemyFieldCard: efEl?.dataset.card ? JSON.parse(efEl.dataset.card) : null,
       hand: hand,
       deck: deck,
       graveyard: graveyard,
-      enemyGraveyard: enemyGraveyard,
+      enemyGraveyard: enemyGraveyard || (window.XLW_ENEMY && window.XLW_ENEMY.grave) || [],
       playerExileZone: playerExileZone,
       enemyExileZone: enemyExileZone,
       playerExtraDeck: playerExtraDeck,
@@ -28649,54 +28800,171 @@ function saveLocalGameState() {
       opponent_mulligan_done: opponent_mulligan_done,
       enemy_deck_length: window.XLW_ENEMY && window.XLW_ENEMY.deck ? window.XLW_ENEMY.deck.length : 26,
       enemy_hand_length: window.XLW_ENEMY && window.XLW_ENEMY.hand ? window.XLW_ENEMY.hand.length : 4,
+      enemy_hand: (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) ? window.XLW_ENEMY.hand : [],
+      enemy_deck: (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.deck)) ? window.XLW_ENEMY.deck : [],
       enemy_grave: window.XLW_ENEMY && window.XLW_ENEMY.grave ? window.XLW_ENEMY.grave : [],
       enemy_deckName: window.XLW_ENEMY && window.XLW_ENEMY.deckName ? window.XLW_ENEMY.deckName : "",
-      gameInProgress: window.XLW_gameInProgress || false
+      gameInProgress: window.XLW_gameInProgress || false,
+      XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
+      XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
+      XLW_coinTossFirstGo: window.XLW_coinTossFirstGo || null,
+      playerNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.playerNeedsDefense : false,
+      enemyNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.enemyNeedsDefense : false,
+      countdownActive: countdownActive || false,
+      countdownRemaining: countdownRemaining || 0,
+      countdownTriggerTurn: countdownTriggerTurn || null,
+      countdownTriggerRole: window.countdownTriggerRole || null,
+      battleLog: Array.isArray(battleLog) ? battleLog : [],
+      normalSummonUsed: normalSummonUsed,
+      tacticalSummonUsed: tacticalSummonUsed,
+      XLW_tacticalMoveUsed: window.XLW_tacticalMoveUsed,
+      playerSummonCountThisTurn: window.XLW_playerSummonCountThisTurn,
+      enemySummonCountThisTurn: window.XLW_enemySummonCountThisTurn,
+      playerReceptionistTriggeredThisTurn: window.playerReceptionistTriggeredThisTurn,
+      enemyReceptionistTriggeredThisTurn: window.enemyReceptionistTriggeredThisTurn,
+      XLW_playerFrontImprisonedUntilTurn: window.XLW_playerFrontImprisonedUntilTurn,
+      XLW_enemyFrontImprisonedUntilTurn: window.XLW_enemyFrontImprisonedUntilTurn,
+      XLW_playerCannotAttackOnNextTurn: window.XLW_playerCannotAttackOnNextTurn,
+      XLW_enemyCannotAttackOnNextTurn: window.XLW_enemyCannotAttackOnNextTurn,
+      XLW_debbieActive: window.XLW_debbieActive,
+      XLW_enemyDebbieActive: window.XLW_enemyDebbieActive,
+      XLW_playerMeowMotherPending: window.XLW_playerMeowMotherPending,
+      XLW_enemyMeowMotherPending: window.XLW_enemyMeowMotherPending,
+      XLW_rainbowCatAtkBuffActive: window.XLW_rainbowCatAtkBuffActive,
+      XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive
     };
-    sessionStorage.setItem(key, JSON.stringify(state));
+    const jsonStr = JSON.stringify(state);
+    sessionStorage.setItem(key, jsonStr);
+    localStorage.setItem(key, jsonStr);
+    localStorage.setItem("XLW_LAST_GAME_STATE", jsonStr);
+    window.xlwSaveOnlineSession(room_id, player_id, player_role);
+
+    // If websocket is active, push a backup to the server as well
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "backup_client_state",
+        state: state
+      }));
+    }
   } catch (e) {
     console.error("saveLocalGameState failed:", e);
   }
 }
 
+window.xlwApplySavedStateObject = function(s) {
+  if (!s) return false;
+  try {
+    field = s.field || field;
+    hand = Array.isArray(s.hand) ? s.hand : hand;
+    deck = Array.isArray(s.deck) ? s.deck : deck;
+    graveyard = Array.isArray(s.graveyard) ? s.graveyard : graveyard;
+    enemyGraveyard = Array.isArray(s.enemyGraveyard) ? s.enemyGraveyard : (s.enemy_grave || enemyGraveyard);
+    playerExileZone = Array.isArray(s.playerExileZone) ? s.playerExileZone : playerExileZone;
+    enemyExileZone = Array.isArray(s.enemyExileZone) ? s.enemyExileZone : enemyExileZone;
+    playerExtraDeck = Array.isArray(s.playerExtraDeck) ? s.playerExtraDeck : playerExtraDeck;
+    enemyExtraDeck = Array.isArray(s.enemyExtraDeck) ? s.enemyExtraDeck : enemyExtraDeck;
+    
+    playerBonusScore = typeof s.playerBonusScore === 'number' ? s.playerBonusScore : playerBonusScore;
+    enemyBonusScore = typeof s.enemyBonusScore === 'number' ? s.enemyBonusScore : enemyBonusScore;
+    turn = typeof s.turn === 'number' ? s.turn : turn;
+    phase = s.phase || phase;
+    isMyTurn = typeof s.isMyTurn === 'boolean' ? s.isMyTurn : isMyTurn;
+    opponent_joined = typeof s.opponent_joined === 'boolean' ? s.opponent_joined : true;
+    opponent_mulligan_done = typeof s.opponent_mulligan_done === 'boolean' ? s.opponent_mulligan_done : opponent_mulligan_done;
+    
+    window.XLW_gameInProgress = typeof s.gameInProgress === 'boolean' ? s.gameInProgress : true;
+    window.XLW_playerNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
+    window.XLW_enemyNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
+    window.XLW_coinTossFirstGo = s.XLW_coinTossFirstGo || window.XLW_coinTossFirstGo;
+    
+    if (s.playerNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
+      window.XLW_DEFENSE_RULE.playerNeedsDefense = s.playerNeedsDefense;
+    }
+    if (s.enemyNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
+      window.XLW_DEFENSE_RULE.enemyNeedsDefense = s.enemyNeedsDefense;
+    }
+    
+    if (s.countdownActive !== undefined) countdownActive = s.countdownActive;
+    if (s.countdownRemaining !== undefined) countdownRemaining = s.countdownRemaining;
+    if (s.countdownTriggerTurn !== undefined) countdownTriggerTurn = s.countdownTriggerTurn;
+    if (s.countdownTriggerRole !== undefined) window.countdownTriggerRole = s.countdownTriggerRole;
+    
+    if (Array.isArray(s.battleLog) && s.battleLog.length > 0) {
+      battleLog = s.battleLog;
+      const logContainer = document.getElementById("logContent") || document.getElementById("battleLogContent");
+      if (logContainer) {
+        logContainer.innerHTML = battleLog.map(line => `<div>${line}</div>`).join("");
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+    }
+    
+    // Field cards
+    const pfEl = document.getElementById("playerField");
+    const efEl = document.getElementById("enemyField");
+    if (pfEl) {
+      if (s.playerFieldCard) pfEl.dataset.card = JSON.stringify(s.playerFieldCard);
+      else delete pfEl.dataset.card;
+    }
+    if (efEl) {
+      if (s.enemyFieldCard) efEl.dataset.card = JSON.stringify(s.enemyFieldCard);
+      else delete efEl.dataset.card;
+    }
+    
+    // Enemy representation
+    window.XLW_ENEMY = window.XLW_ENEMY || {};
+    window.XLW_ENEMY.deckName = s.enemy_deckName || window.XLW_ENEMY.deckName || "";
+    window.XLW_ENEMY.grave = enemyGraveyard;
+    
+    if (Array.isArray(s.enemy_hand) && s.enemy_hand.length > 0) {
+      window.XLW_ENEMY.hand = s.enemy_hand;
+    } else {
+      const hCount = typeof s.enemy_hand_length === 'number' ? s.enemy_hand_length : 4;
+      window.XLW_ENEMY.hand = new Array(hCount).fill(null);
+    }
+    
+    if (Array.isArray(s.enemy_deck) && s.enemy_deck.length > 0) {
+      window.XLW_ENEMY.deck = s.enemy_deck;
+    } else {
+      const dCount = typeof s.enemy_deck_length === 'number' ? s.enemy_deck_length : 26;
+      window.XLW_ENEMY.deck = new Array(dCount).fill(null);
+    }
+    
+    if (s.normalSummonUsed !== undefined) normalSummonUsed = s.normalSummonUsed;
+    if (s.tacticalSummonUsed !== undefined) tacticalSummonUsed = s.tacticalSummonUsed;
+    if (s.XLW_tacticalMoveUsed !== undefined) window.XLW_tacticalMoveUsed = s.XLW_tacticalMoveUsed;
+    
+    window.xlwEnterActiveOnlineBoardUI();
+    render();
+    console.log("Game state successfully restored and UI rendered!");
+    return true;
+  } catch (e) {
+    console.error("xlwApplySavedStateObject error:", e);
+    return false;
+  }
+};
+
 function loadLocalGameState() {
+  if (!room_id || !player_id) {
+    try {
+      const sess = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
+      if (sess) {
+        const parsed = JSON.parse(sess);
+        if (parsed.room_id && parsed.player_id && parsed.role) {
+          room_id = parsed.room_id;
+          player_id = parsed.player_id;
+          player_role = parsed.role;
+        }
+      }
+    } catch (e) {}
+  }
   if (!room_id || !player_id) return false;
   const key = "XLW_GAME_STATE_" + room_id + "_" + player_id;
-  const saved = sessionStorage.getItem(key);
+  const saved = sessionStorage.getItem(key) || localStorage.getItem(key) || localStorage.getItem("XLW_LAST_GAME_STATE");
   if (!saved) return false;
   try {
     const s = JSON.parse(saved);
-    if (s.room_id !== room_id || s.player_id !== player_id || s.role !== player_role) return false;
-    
-    field = s.field;
-    hand = s.hand;
-    deck = s.deck || [];
-    graveyard = s.graveyard;
-    enemyGraveyard = s.enemyGraveyard || [];
-    playerExileZone = s.playerExileZone || [];
-    enemyExileZone = s.enemyExileZone || [];
-    playerExtraDeck = s.playerExtraDeck || [];
-    enemyExtraDeck = s.enemyExtraDeck || [];
-    playerBonusScore = s.playerBonusScore;
-    enemyBonusScore = s.enemyBonusScore;
-    turn = s.turn;
-    phase = s.phase;
-    isMyTurn = s.isMyTurn;
-    opponent_joined = s.opponent_joined;
-    opponent_mulligan_done = s.opponent_mulligan_done;
-    
-    window.XLW_gameInProgress = s.gameInProgress;
-    
-    window.XLW_ENEMY = {
-      deck: new Array(s.enemy_deck_length).fill(null),
-      hand: new Array(s.enemy_hand_length).fill(null),
-      grave: s.enemy_grave || [],
-      deckName: s.enemy_deckName || ""
-    };
-    enemyGraveyard = window.XLW_ENEMY.grave;
-    
-    console.log("Game state successfully restored from sessionStorage!");
-    return true;
+    if (s.room_id !== room_id || s.player_id !== player_id || (player_role && s.role !== player_role)) return false;
+    return window.xlwApplySavedStateObject(s);
   } catch (e) {
     console.error("loadLocalGameState failed:", e);
     return false;
@@ -28705,19 +28973,36 @@ function loadLocalGameState() {
 
 // ===== 23. 自動重連 WebSocket 機制 =====
 let isReconnecting = false;
-function reconnectWebSocket() {
+let reconnectTimer = null;
+function reconnectWebSocket(immediate = false) {
   window.xlwClearAllPendingResolvers();
-  if (isReconnecting) return;
-  isReconnecting = true;
-  console.log("WebSocket connection lost. Reconnecting in 2 seconds...");
-  setStatus("與伺服器連線已中斷，正在嘗試自動重新連線...");
-  
-  setTimeout(() => {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  if (!room_id || !player_id || !player_role) {
+    try {
+      const saved = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.room_id && s.player_id && s.role) {
+          room_id = s.room_id;
+          player_id = s.player_id;
+          player_role = s.role;
+          isMultiplayer = true;
+        }
+      }
+    } catch (e) {}
+  }
+  if (!room_id || !player_id || !player_role) return;
+
+  const doConnect = () => {
     if (ws) {
       try { ws.onclose = null; ws.onerror = null; ws.close(); } catch(e) {}
     }
     const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const ws_url = `${ws_protocol}//${window.location.host}/ws/battle/${room_id}/${player_id}/${player_role}`;
+    console.log("Connecting WebSocket to:", ws_url);
     ws = new WebSocket(ws_url);
     setupWebSocketEvents();
     const origOnOpen = ws.onopen;
@@ -28725,6 +29010,10 @@ function reconnectWebSocket() {
       isReconnecting = false;
       console.log("WebSocket successfully reconnected!");
       setStatus("連線已成功回復！");
+      if (window.XLW_gameInProgress) {
+        window.xlwEnterActiveOnlineBoardUI();
+        ws.send(JSON.stringify({ action: "request_full_sync" }));
+      }
       if (typeof origOnOpen === "function") origOnOpen(ev);
     };
     const origOnError = ws.onerror;
@@ -28737,7 +29026,62 @@ function reconnectWebSocket() {
       isReconnecting = false;
       if (typeof origOnClose === "function") origOnClose(ev);
     };
-  }, 2000);
+  };
+
+  if (immediate) {
+    doConnect();
+  } else {
+    if (isReconnecting) return;
+    isReconnecting = true;
+    console.log("WebSocket connection lost. Reconnecting in 1.5 seconds...");
+    setStatus("與伺服器連線已中斷，正在嘗試自動重新連線...");
+    reconnectTimer = setTimeout(() => {
+      isReconnecting = false;
+      doConnect();
+    }, 1500);
+  }
+}
+
+// ===== 23.1 頁面喚醒與切換 App 恢復監聽 =====
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      console.log("App switched to background / hidden. Saving local game state...");
+      saveLocalGameState();
+    } else if (document.visibilityState === "visible") {
+      console.log("App returned to foreground / visible. Checking connection & restoring state...");
+      if (isMultiplayer && room_id && player_id) {
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          console.log("WebSocket is closed or closing upon return, reconnecting immediately...");
+          reconnectWebSocket(true);
+        } else if (ws.readyState === WebSocket.OPEN && window.XLW_gameInProgress) {
+          window.xlwEnterActiveOnlineBoardUI();
+          ws.send(JSON.stringify({ action: "request_full_sync" }));
+        }
+      }
+    }
+  });
+
+  window.addEventListener("pageshow", (e) => {
+    console.log("pageshow event triggered, persisted:", e.persisted);
+    if (isMultiplayer && room_id && player_id) {
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        reconnectWebSocket(true);
+      }
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    if (isMultiplayer && room_id && player_id) {
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        reconnectWebSocket(true);
+      }
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    saveLocalGameState();
+  });
 }
 
 function sendFullGameStateToOpponent(includeTurnPhase = false) {
@@ -28785,7 +29129,18 @@ function sendFullGameStateToOpponent(includeTurnPhase = false) {
     XLW_playerMeowMotherPending: window.XLW_playerMeowMotherPending,
     XLW_enemyMeowMotherPending: window.XLW_enemyMeowMotherPending,
     XLW_rainbowCatAtkBuffActive: window.XLW_rainbowCatAtkBuffActive,
-    XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive
+    XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive,
+    gameInProgress: window.XLW_gameInProgress || false,
+    battleLog: Array.isArray(battleLog) ? battleLog : [],
+    XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
+    XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
+    XLW_coinTossFirstGo: window.XLW_coinTossFirstGo || null,
+    playerNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.playerNeedsDefense : false,
+    enemyNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.enemyNeedsDefense : false,
+    countdownActive: countdownActive || false,
+    countdownRemaining: countdownRemaining || 0,
+    countdownTriggerTurn: countdownTriggerTurn || null,
+    countdownTriggerRole: window.countdownTriggerRole || null
   };
   ws.send(JSON.stringify({
     action: "sync_game_state",
@@ -31828,8 +32183,25 @@ window.xlwStartTutorial = function() {
   }
 };
 
-// 確保點開頁面時自動調用首頁顯示 (抗 Safari 競態條件載入引擎)
+// 確保點開頁面時自動調用首頁顯示 (若已有進行中線上戰局則不覆蓋)
 function showWelcomeOverlayOnLoad() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasUrlRoom = urlParams.get('room') && urlParams.get('player');
+    const rawSession = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
+    let hasValidSession = false;
+    if (rawSession) {
+      const sess = JSON.parse(rawSession);
+      if (sess && sess.room_id && sess.player_id && (!sess.timestamp || (Date.now() - sess.timestamp < 1800000))) {
+        hasValidSession = true;
+      }
+    }
+    if (hasUrlRoom || hasValidSession) {
+      console.log("Active online session detected on load, bypassing welcome overlay.");
+      return;
+    }
+  } catch (e) {}
+
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.style.setProperty("display", "flex", "important");
@@ -31850,6 +32222,7 @@ window.xlwStartOnlineHost = function(roomId, playerId) {
   room_id = roomId;
   player_id = playerId;
   player_role = "player1";
+  window.xlwSaveOnlineSession(roomId, playerId, "player1");
   
   const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const ws_url = `${ws_protocol}//${window.location.host}/ws/battle/${roomId}/${playerId}/player1`;
@@ -31867,6 +32240,7 @@ window.xlwStartOnlineGuest = function(roomId, playerId) {
   room_id = roomId;
   player_id = playerId;
   player_role = "player2";
+  window.xlwSaveOnlineSession(roomId, playerId, "player2");
   
   const ws_protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const ws_url = `${ws_protocol}//${window.location.host}/ws/battle/${roomId}/${playerId}/player2`;
