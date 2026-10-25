@@ -193,8 +193,8 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   await new Promise(r => setTimeout(r, 400));
 };
 
-// 節奏校準：使對決流程微幅放緩以利視覺辨識與流暢過渡，消除突兀跳接與卡頓
-const sleep = (ms) => new Promise(r => setTimeout(r, Math.round(ms * 1.3)));
+// 節奏校準：保持流暢輕快的過渡節奏，消除回合切換與結算卡頓
+const sleep = (ms) => new Promise(r => setTimeout(r, Math.round(ms * 0.65)));
 const $ = (id) => document.getElementById(id);
 
 window.xlwClearAllPendingResolvers = function() {
@@ -226,7 +226,11 @@ window.xlwClearAllPendingResolvers = function() {
     ["XLW_resistIronFistResolve", null],
     ["XLW_teasingStickResolve", null],
     ["XLW_lanternResolve", null],
-    ["XLW_demonicExorcistResolve", null]
+    ["XLW_demonicExorcistResolve", null],
+    ["XLW_receptionistResolve", null],
+    ["XLW_peepeeboyResolve", null],
+    ["XLW_emperorSlotResolve", null],
+    ["XLW_thiefResolve", null]
   ];
   for (const [key, fallbackVal] of boardResolvers) {
     if (typeof window[key] === "function") {
@@ -235,6 +239,12 @@ window.xlwClearAllPendingResolvers = function() {
       try { r(fallbackVal); } catch (e) {}
     }
   }
+  window.XLW_receptionistPlacementActive = false;
+  window.XLW_peepeeboyPlacementActive = false;
+  window.XLW_emperorSlotSelecting = false;
+  window.XLW_thiefPlacementActive = false;
+  window.XLW_scarecrowMoveActive = false;
+  window.XLW_lanternPlacementActive = null;
   document.querySelectorAll(".xlw-premium-confirm-overlay, .xlw-premium-choice-overlay").forEach(el => {
     try {
       if (typeof el._xlwCancel === "function") {
@@ -10309,7 +10319,7 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
 
   let summonUsed = false;
   if (currentPhaseName === "召喚階段") {
-    summonUsed = normalSummonUsed;
+    summonUsed = normalSummonUsed || (window.XLW_playerSummonCountThisTurn > 0);
   } else if (currentPhaseName === "戰術佈陣") {
     summonUsed = tacticalSummonUsed;
   } else {
@@ -10324,11 +10334,37 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
   // 尚未滿足「必須打出單位」之規則：自動為玩家自森林召喚【小旅人】至第一個合法空格並直接放行，避免按鈕無反應或阻塞
   const legalSlot = emptySlots.find(s => xlwCanSummonToZone(s.zone, LITTLE_TRAVELER)) || emptySlots[0];
   clearModes();
-  selectedHandForSummon = "TRAVELER";
-  tributeWaitingPosition = false;
+  field[legalSlot.zone][legalSlot.idx] = {
+    card: structuredClone(LITTLE_TRAVELER),
+    tapped: false,
+    attacking: false,
+    target: null,
+    summonedTurn: turn,
+    summonedZone: legalSlot.zone
+  };
+  field[legalSlot.zone][legalSlot.idx].card.creator = "player";
+  if (currentPhaseName === "召喚階段") normalSummonUsed = true;
+  if (currentPhaseName === "戰術佈陣") tacticalSummonUsed = true;
+  window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
+  window.XLW_playerActionsPerformedThisTurn = true;
   logBattle(`🌲【規則限制】${currentPhaseName}未從手牌打出單位，系統依規則自動自森林召喚【小旅人】至我方${legalSlot.zone.includes("front") ? "前排" : "後排"}${legalSlot.idx + 1}！`);
   setStatus(`🌲【規則限制】已自動召喚【小旅人】，正在執行【${nextActionName}】...`);
-  await performSummonToSlot(legalSlot.zone, legalSlot.idx);
+  try {
+    playTravelerSummonAnimation("#playerForest", legalSlot.zone, legalSlot.idx);
+  } catch (e) {}
+  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(JSON.stringify({
+        action: "summon",
+        card: field[legalSlot.zone][legalSlot.idx].card,
+        zone: legalSlot.zone,
+        idx: legalSlot.idx,
+        fromHand: false,
+        tributes: []
+      }));
+      sendFullGameStateToOpponent(false);
+    } catch (e) {}
+  }
   window.XLW_forcedTravelerPending = null;
   clearModes();
   render();
@@ -11194,8 +11230,7 @@ async function xlwResolvePlayerDefensePhase() {
       }
 
       if (attackersInLane.length === 0) {
-        setStatus(`防守判定：星星戰線 ${lane + 1} 對手無進攻。`);
-        await sleep(650);
+        if (isMultiplayer) await sleep(120);
         continue;
       }
 
@@ -11217,7 +11252,7 @@ async function xlwResolvePlayerDefensePhase() {
           logBattle(`星星戰線 ${lane + 1} 的對手進攻單位已被反制，跳過對決！`);
           setStatus(`防守對決：星星戰線 ${lane + 1} 進攻已被反制。`);
           render();
-          await sleep(650);
+          await sleep(250);
           continue;
         }
 
@@ -11295,7 +11330,7 @@ async function xlwResolvePlayerDefensePhase() {
           logBattle(`防守判定：星星戰線 ${lane + 1} 前方無我方單位，對手進攻單位進行空戰線結算（陣營維持橫置）。`);
           setStatus(`防守判定：星星戰線 ${lane + 1} 前方無我方單位，對手進攻單位已橫置。`);
           render();
-          await sleep(650);
+          await sleep(250);
           continue;
         }
 
@@ -11315,20 +11350,20 @@ async function xlwResolvePlayerDefensePhase() {
             attacker.target = null;
             setStatus(`防守判定：星星戰線 ${lane + 1} 被盾牌阻擋。`);
             render();
-            await sleep(650);
+            await sleep(250);
             continue;
           }
         }
 
         setStatus(`對決！星星戰線 ${lane + 1}：${unitName(attacker)} ⚔ ${unitName(defender)}`);
         flashBattle(attZone, lane, defZone, defIdx);
-        await sleep(650);
+        await sleep(300);
 
         const resultMsg = await resolveUnitCombat(attZone, lane, defZone, defIdx, "player");
         logBattle(`防守對決：${resultMsg}`);
         setStatus(`戰線 ${lane + 1} 結果：${resultMsg}`);
         render();
-        await sleep(750);
+        await sleep(350);
       }
     }
   } catch (err) {
@@ -11383,12 +11418,14 @@ async function xlwResolveEnemyLaneSafe(lane) {
   }
 
   if (attackersInLane.length === 0) {
-    setStatus(`防守判定：星星戰線 ${lane + 1} 我方無進攻。`);
-    await sleep(650);
     if (lane === 4) {
       window.XLW_DEFENSE_RULE.enemyNeedsDefense = false;
       window.XLW_DEFENSE_RULE.resolving = false;
       logBattle("—— 對手防守階段結束 ——");
+
+      // Check Manager Meow Upgrade
+      await xlwCheckManagerMeowUpgrade();
+      xlwCleanDoubleClawBonus();
 
       // 戰鬥階段結束時，若我方有博物館接待員且有任何橫置藝術品，觸發效果特殊召喚小旅人
       let playerHasTappedArt = false;
@@ -11408,7 +11445,15 @@ async function xlwResolveEnemyLaneSafe(lane) {
         await triggerMuseumReceptionistEffect("player");
       }
 
-      checkCallGameAtTurnStart(false);
+      if (!window.XLW_isPuzzleMode) {
+        checkCallGameAtTurnStart(false);
+      } else {
+        window.XLW_ENEMY.running = false;
+        await sleep(300);
+        if (typeof window.xlwCheckPuzzleEnd === 'function') {
+          window.xlwCheckPuzzleEnd();
+        }
+      }
     }
     return;
   }
@@ -11484,7 +11529,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
       logBattle(`防守判定：星星戰線 ${lane + 1} 前方無對手單位，我方進攻單位進行空戰線結算（我方維持橫置）。`);
       setStatus(`防守判定：星星戰線 ${lane + 1} 前方無對手單位，我方進攻單位已橫置。`);
       render();
-      await sleep(650);
+      await sleep(250);
       continue;
     }
 
@@ -11504,7 +11549,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
         attacker.target = null;
         setStatus("防守判定：星星戰線 " + (lane + 1) + " 被對手盾牌阻擋。");
         render();
-        await sleep(650);
+        await sleep(250);
         continue;
       }
     }
@@ -11521,12 +11566,12 @@ async function xlwResolveEnemyLaneSafe(lane) {
 
     setStatus("對決！星星戰線 " + (lane + 1) + "：我方 " + unitName(attacker) + " ⚔ 對手 " + unitName(defender));
     flashBattle(attZone, lane, defZone, defIdx);
-    await sleep(650);
+    await sleep(300);
 
     const resultMsg = await resolveUnitCombat(attZone, lane, defZone, defIdx, "enemy");
     logBattle("我方進攻：" + resultMsg);
     render();
-    await sleep(650);
+    await sleep(300);
   }
 
   if (lane === 4) {
@@ -11554,12 +11599,15 @@ async function xlwResolveEnemyLaneSafe(lane) {
       }
       if (playerHasTappedArt) break;
     }
+    if (playerHasTappedArt) {
+      await triggerMuseumReceptionistEffect("player");
+    }
     if (!window.XLW_isPuzzleMode) {
       checkCallGameAtTurnStart(false);
     } else {
       // 🧩 殘局模式：防守結算最後一戰線完畢，直接觸發殘局勝負評判！
       window.XLW_ENEMY.running = false;
-      await sleep(500);
+      await sleep(300);
       if (typeof window.xlwCheckPuzzleEnd === 'function') {
         window.xlwCheckPuzzleEnd();
       }
@@ -11660,16 +11708,16 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
     
     document.body.appendChild(overlay);
     
-    // 播放 1200 毫秒後柔和淡出縮放，維持清晰可讀且滑順流暢的對決節奏
+    // 播放 700 毫秒後柔和淡出縮放，維持清晰可讀且滑順流暢的對決節奏
     setTimeout(() => {
-      overlay.style.transition = "opacity 0.28s ease, transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1)";
+      overlay.style.transition = "opacity 0.2s ease, transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)";
       overlay.style.opacity = "0";
       overlay.style.transform = "translate(-50%, -50%) scale(0.85)";
       setTimeout(() => {
         if (overlay && overlay.parentNode) overlay.remove();
         resolve();
-      }, 280);
-    }, 1200);
+      }, 200);
+    }, 700);
   });
 }
 
@@ -11741,35 +11789,7 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     defenderShouldDie = false;
   } else {
     // 平手 (atkPower === defPower)
-    // AI 大三元 (SR-FMS-0016)
-  const tripleIdx = hand.findIndex(c => c && (c.id === "SR-FMS-0016" || c.name?.includes("大三元")));
-  if (tripleIdx >= 0 && window.xlwCheckMahjongCombo(false, "大三元")) {
-    const spellCard = hand.splice(tripleIdx, 1)[0];
-    await xlwShowSpellActivationOverlay(spellCard, "enemy");
-    await aiCastSpell(spellCard, async () => {
-      enemyBonusScore += 8;
-      enemyExileZone.push(spellCard);
-      logBattle("✨ 對手 AI 大三元 效果發動：對手成功胡牌，額外分數 +8★！此卡被除外。");
-      renderScore();
-      render();
-    });
-  }
-
-  // AI 小四喜 (R-FMS-0017)
-  const fourIdx = hand.findIndex(c => c && (c.id === "R-FMS-0017" || c.name?.includes("小四喜")));
-  if (fourIdx >= 0 && window.xlwCheckMahjongCombo(false, "小四喜")) {
-    const spellCard = hand.splice(fourIdx, 1)[0];
-    await xlwShowSpellActivationOverlay(spellCard, "enemy");
-    await aiCastSpell(spellCard, async () => {
-      enemyBonusScore += 8;
-      enemyExileZone.push(spellCard);
-      logBattle("✨ 對手 AI 小四喜 效果發動：對手成功胡牌，額外分數 +8★！此卡被除外。");
-      renderScore();
-      render();
-    });
-  }
-
-  // 天下第一獸人作弊大會 (ORC-0019) 效果發動：平手視為我方獲勝！
+    // 天下第一獸人作弊大會 (ORC-0019) 效果發動：平手視為我方獲勝！
     let playerCheated = false;
     let enemyCheated = false;
     
@@ -13145,11 +13165,22 @@ async function triggerMuseumReceptionistEffect(side) {
   if (!hasEmptySlot) return;
 
   if (side === "player") {
-    // 玩家自選位置
-    window.XLW_receptionistPlacementActive = true;
-    setStatus("【博物館接待員】請選擇我方一個空格特殊召喚小旅人！");
-    render();
-    const placement = await new Promise(r => { window.XLW_receptionistResolve = r; });
+    let placement = null;
+    if (!isMyTurn || window.XLW_isPlayerTurnEnding || phase === "防守階段" || phase === "結束階段") {
+      for (const z of zones) {
+        const idx = field[z].findIndex(x => !x);
+        if (idx >= 0) {
+          placement = { zone: z, idx };
+          break;
+        }
+      }
+    } else {
+      // 玩家自選位置
+      window.XLW_receptionistPlacementActive = true;
+      setStatus("【博物館接待員】請選擇我方一個空格特殊召喚小旅人！");
+      render();
+      placement = await new Promise(r => { window.XLW_receptionistResolve = r; });
+    }
     if (placement) {
       field[placement.zone][placement.idx] = {
         card: structuredClone(LITTLE_TRAVELER),
@@ -15003,8 +15034,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖�
     }
   }
 
-  // 2. 等待動畫完整播放結束 (0.8 秒)
-  await sleep(800);
+  // 2. 等待動畫完整播放結束
+  await sleep(450);
 
   // 3. 清理火花層
   if (slot) {
@@ -16459,21 +16490,31 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
 
       if (emptySlots.length > 0) {
         if (targetOwner === "player") {
-          window.XLW_scarecrowMoveActive = true;
-          window.XLW_scarecrowMoveFromZone = targetZone;
-          window.XLW_scarecrowMoveFromIdx = targetIdx;
-          window.XLW_scarecrowMoveExpectedSide = "player";
-          setStatus(`【恐怖稻草人 效果】請點選我方場上空格，以移動被驅趕的【${targetUnit.card.name}】！`);
-          render();
-          const res = await new Promise(r => { window.XLW_scarecrowMoveResolve = r; });
-          if (isMultiplayer && ws) {
-            ws.send(JSON.stringify({
-              action: "scarecrow_move_sync",
-              fromZone: targetZone,
-              fromIdx: targetIdx,
-              toZone: res.zone,
-              toIdx: res.idx
-            }));
+          const choices = emptySlots.map((s, i) => ({
+            text: `我方${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
+            value: i
+          }));
+          const chosenSlotIdx = await showXLWChoiceModal(
+            "恐怖稻草人 效果發動",
+            `請選擇要將被驅趕的【${targetUnit.card.name}】移動到的我方空格：`,
+            choices
+          );
+          const res = emptySlots[chosenSlotIdx !== null && chosenSlotIdx !== undefined ? chosenSlotIdx : 0];
+          if (res) {
+            field[res.zone][res.idx] = field[targetZone][targetIdx];
+            field[targetZone][targetIdx] = null;
+            if (field[res.zone][res.idx]) field[res.zone][res.idx].summonedZone = res.zone;
+            logBattle(`✨ 恐怖稻草人 效果：將我方場上的【${targetUnit.card.name}】移動到 ${res.zone.includes("front") ? "前排" : "後排"}${res.idx + 1}！`);
+            render();
+            if (isMultiplayer && ws) {
+              ws.send(JSON.stringify({
+                action: "scarecrow_move_sync",
+                fromZone: targetZone,
+                fromIdx: targetIdx,
+                toZone: res.zone,
+                toIdx: res.idx
+              }));
+            }
           }
         } else {
           if (isMultiplayer) {
@@ -17359,7 +17400,7 @@ async function runEnemyTurn() {
     const enemyDeckName = window.XLW_ENEMY?.deckName || "對手";
     logBattle(`—— 對手回合開始 (${enemyDeckName}) ——`);
     setStatus(`對手回合：${enemyDeckName} 正在進行整備抽牌...`);
-    await sleep(700);
+    await sleep(300);
 
     // 3. 整備階段：對手單位轉正
     try {
@@ -17431,7 +17472,7 @@ async function runEnemyTurn() {
       }
     } catch (e) { console.warn("AI 小旅人手牌判定異常:", e); }
 
-    await sleep(700);
+    await sleep(300);
 
     // 6. 防守階段結算
     try {
@@ -17450,7 +17491,7 @@ async function runEnemyTurn() {
     // 🧩 殘局模式專屬結算：防守階段結束後立即評判勝負，不進入對手出牌階段
     if (window.XLW_isPuzzleMode) {
       window.XLW_ENEMY.running = false;
-      await sleep(600);
+      await sleep(400);
       if (typeof window.xlwCheckPuzzleEnd === 'function') {
         window.xlwCheckPuzzleEnd();
       }
@@ -17558,7 +17599,7 @@ async function runEnemyTurn() {
         window.XLW_enemySummonCountThisTurn = 1;
         logBattle(`🤖【對手 AI 召喚】打出單位【${card.name}】到${destZone.startsWith("player_") ? "我方" : "對手"}${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
         render();
-        await sleep(1000);
+        await sleep(450);
 
         try {
           let starryCountered = false;
@@ -17623,7 +17664,7 @@ async function runEnemyTurn() {
         logBattle(`🌲【對手 AI 召喚】依規則未從手牌打出單位，強制從森林召喚【小旅人】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
         playTravelerSummonAnimation("#enemyForest", destZone, destIdx);
         render();
-        await sleep(800);
+        await sleep(450);
 
         try {
           await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
@@ -17633,7 +17674,7 @@ async function runEnemyTurn() {
       }
     }
     render();
-    await sleep(700);
+    await sleep(300);
 
     // 9. ★ 進攻宣言 與 戰術佈陣 嚴格二選一 ★
     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
@@ -17643,12 +17684,12 @@ async function runEnemyTurn() {
       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(700);
+      await sleep(300);
     } else if (isAiFirstTurn) {
       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(700);
+      await sleep(300);
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
 
@@ -17720,7 +17761,7 @@ async function runEnemyTurn() {
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
         logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（選擇進攻，無法再進行單位召喚，跳過戰術佈陣）。 ——`);
         render();
-        await new Promise(r => setTimeout(r, 1900));
+        await sleep(550);
       } else {
         // ★ 選擇「戰術佈陣」：移動單位，並且仍然可以召喚一個不需要獻祭 (0-tribute) 的單位！
         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
@@ -17774,7 +17815,7 @@ async function runEnemyTurn() {
             field[tacticalDestZone][tacticalDestIdx].card.creator = "enemy";
             logBattle(`🤖【對手 AI 戰術佈陣】額外打出 0 祭品單位【${zeroTributeCandidate.name}】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
             render();
-            await sleep(1000);
+            await sleep(450);
 
             try {
               await triggerAiSummonEffects(zeroTributeCandidate, tacticalDestZone, tacticalDestIdx);
@@ -17797,7 +17838,7 @@ async function runEnemyTurn() {
               logBattle(`🌲【對手 AI 戰術佈陣】依規則未從手牌打出單位，強制從森林召喚【小旅人】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
               playTravelerSummonAnimation("#enemyForest", tacticalDestZone, tacticalDestIdx);
               render();
-              await sleep(800);
+              await sleep(450);
 
               try {
                 await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, tacticalDestZone, tacticalDestIdx, false);
@@ -17808,7 +17849,7 @@ async function runEnemyTurn() {
           }
         }
         render();
-        await sleep(700);
+        await sleep(300);
       }
     }
 
@@ -17825,7 +17866,7 @@ async function runEnemyTurn() {
           logBattle(`對手將手牌中的【${card ? card.name : "未知卡牌"}】置於除外區。`);
         }
         render();
-        await sleep(500);
+        await sleep(300);
       }
     } catch (e) { console.warn("AI 手牌超限處理異常:", e); }
 
@@ -17850,7 +17891,7 @@ async function endPlayerTurnAndRunEnemy() {
   if (window.XLW_playerNeedsToDraw) {
     logBattle("⚠️ 檢測到尚未完成抽牌，系統自動為您點選牌庫抽牌！");
     await window.xlwHandlePlayerDeckClick();
-    await sleep(350);
+    await sleep(250);
   }
   if (phase === "防守階段" || (window.XLW_DEFENSE_RULE && window.XLW_DEFENSE_RULE.resolving)) {
     setStatus("⚠️ 請先完成當前的【防守階段】結算！");
@@ -17937,7 +17978,7 @@ async function endPlayerTurnAndRunEnemy() {
         window.XLW_callGameNegatedThisTurn = true;
         logBattle("✨ 對手 AI 從手牌中發動了【駁回!!】，無效化了我方的提早結束宣告！我方本回合不得再次宣告提早結束。");
         render();
-        await sleep(500);
+        await sleep(300);
       } else {
         window.XLW_callGameDeclared = true;
         window.XLW_callGameDeclaringPlayer = "player";
@@ -17958,7 +17999,7 @@ async function endPlayerTurnAndRunEnemy() {
         }));
       }
       render();
-      await sleep(500);
+      await sleep(300);
       }
     }
   }
@@ -18078,17 +18119,35 @@ async function endPlayerTurnAndRunEnemy() {
             const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
             if (chosen !== null && chosen !== undefined) {
               const cardToSummon = eligible[chosen];
-              const graveIdx = graveyard.indexOf(cardToSummon);
-              if (graveIdx >= 0) graveyard.splice(graveIdx, 1);
-              
-              window.XLW_bypassNormalSummonLimit = true;
-              window.XLW_bypassTurnCheck = true;
-              selectedHandForSummon = "GRAVEYARD_WELL";
-              window.XLW_tempGraveCard = cardToSummon;
-              setStatus("【恐怖的井 召喚】請點選我方一個空格進行特殊召喚！");
-              render();
-              await new Promise(r => { window.XLW_summonPlacementResolve = r; });
-              window.XLW_bypassTurnCheck = false;
+              let destZone = null;
+              let destIdx = -1;
+              for (const z of ["player_front", "player_back"]) {
+                for (let i = 0; i < 5; i++) {
+                  if (!field[z][i] && xlwCanSummonToZone(z, cardToSummon)) {
+                    destZone = z;
+                    destIdx = i;
+                    break;
+                  }
+                }
+                if (destZone) break;
+              }
+              if (destZone && destIdx >= 0) {
+                const graveIdx = graveyard.indexOf(cardToSummon);
+                if (graveIdx >= 0) graveyard.splice(graveIdx, 1);
+                field[destZone][destIdx] = {
+                  card: structuredClone(cardToSummon),
+                  tapped: false,
+                  attacking: false,
+                  target: null,
+                  summonedTurn: turn,
+                  summonedZone: destZone
+                };
+                logBattle(`✨ 恐怖的井 效果：從墓地特殊召喚【${cardToSummon.name}】至我方${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
+                if (isMultiplayer) {
+                  sendFullGameStateToOpponent();
+                }
+                render();
+              }
             }
           }
         }
@@ -27039,8 +27098,8 @@ function xlwShowSpellActivationOverlay(card, side) {
       setTimeout(() => {
         if (overlay && overlay.parentNode) overlay.remove();
         resolve();
-      }, 250);
-    }, 1500);
+      }, 200);
+    }, 950);
   });
 }
 
@@ -27111,8 +27170,8 @@ function xlwShowTributeSummonOverlay(card, side) {
       setTimeout(() => {
         if (overlay && overlay.parentNode) overlay.remove();
         resolve();
-      }, 250);
-    }, 1500);
+      }, 200);
+    }, 950);
   });
 }
 
@@ -27436,20 +27495,24 @@ function promptNextChainAction() {
       });
 
     } else {
-      statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
-      
-      const autoPassBtn = document.createElement("button");
-      autoPassBtn.className = "chain-action-btn auto-pass-btn";
-      autoPassBtn.disabled = true;
-      autoPassBtn.textContent = "自動放行中 (1.5秒)...";
-      actionsDiv.appendChild(autoPassBtn);
-
-      window.XLW_chainAutoPassTimeout = setTimeout(() => {
-        if (isMultiplayer && ws) {
-          ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
-        }
+      if (!isMultiplayer) {
         resolveLocalSpellChain();
-      }, 1500);
+      } else {
+        statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
+        
+        const autoPassBtn = document.createElement("button");
+        autoPassBtn.className = "chain-action-btn auto-pass-btn";
+        autoPassBtn.disabled = true;
+        autoPassBtn.textContent = "自動放行中 (1.5秒)...";
+        actionsDiv.appendChild(autoPassBtn);
+
+        window.XLW_chainAutoPassTimeout = setTimeout(() => {
+          if (isMultiplayer && ws) {
+            ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
+          }
+          resolveLocalSpellChain();
+        }, 1500);
+      }
     }
   }
 }
