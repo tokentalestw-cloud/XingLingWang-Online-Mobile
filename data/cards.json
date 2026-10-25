@@ -2630,7 +2630,10 @@
     "original_file": "中立單位/IMG_5813.JPG",
     "deck_eligible": true,
     "mana": 2,
-    "usable_phases": [],
+    "usable_phases": [
+      "Main Phase",
+      "Defense Phase"
+    ],
     "trigger_condition": "",
     "art_subtype": "(山羊)永久"
   },
@@ -7975,7 +7978,10 @@
     "original_file": "中立單位/IMG_6417.JPG",
     "deck_eligible": true,
     "mana": 2,
-    "usable_phases": [],
+    "usable_phases": [
+      "Main Phase",
+      "Defense Phase"
+    ],
     "trigger_condition": "",
     "art_subtype": "(山羊)永久"
   },

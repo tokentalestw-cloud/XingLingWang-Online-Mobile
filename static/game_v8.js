@@ -193,8 +193,8 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   await new Promise(r => setTimeout(r, 400));
 };
 
-// 節奏校準：保持流暢輕快的過渡節奏，消除回合切換與結算卡頓
-const sleep = (ms) => new Promise(r => setTimeout(r, Math.round(ms * 0.65)));
+// 節奏校準：保持流暢且易於閱讀的過渡節奏
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const $ = (id) => document.getElementById(id);
 
 window.xlwClearAllPendingResolvers = function() {
@@ -3538,7 +3538,7 @@ async function castSpell(handIndex) {
       setStatus("受到【怒吼】效果限制，本回合我方不得再次使用該魔法卡！");
       return;
     }
-  if (isMultiplayer && !isMyTurn) {
+  if (isMultiplayer && !isMyTurn && !window.XLW_defenseCounterActive && phase !== "防守階段") {
     setStatus("對手回合中，請稍候！");
     return;
   }
@@ -11193,7 +11193,7 @@ async function xlwResolvePlayerDefensePhase() {
       // 剛進入防守階段一口氣進行防守反制魔法判定，可依序打出多張魔法卡
       const wantCounter = await showXLWConfirm(
         "🛡️ 防守階段反制魔法",
-        "對手宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡（可依序打出多張，如盾牌人偶、削弱藥水、塗毒等）？",
+        "對手宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡（可依序打出多張，如山羊術、盾牌人偶、削弱藥水、塗毒等）？",
         "發動防守魔法",
         "不發動，直接開始戰鬥"
       );
@@ -17400,7 +17400,7 @@ async function runEnemyTurn() {
     const enemyDeckName = window.XLW_ENEMY?.deckName || "對手";
     logBattle(`—— 對手回合開始 (${enemyDeckName}) ——`);
     setStatus(`對手回合：${enemyDeckName} 正在進行整備抽牌...`);
-    await sleep(300);
+    await sleep(750);
 
     // 3. 整備階段：對手單位轉正
     try {
@@ -17472,7 +17472,7 @@ async function runEnemyTurn() {
       }
     } catch (e) { console.warn("AI 小旅人手牌判定異常:", e); }
 
-    await sleep(300);
+    await sleep(650);
 
     // 6. 防守階段結算
     try {
@@ -17491,7 +17491,7 @@ async function runEnemyTurn() {
     // 🧩 殘局模式專屬結算：防守階段結束後立即評判勝負，不進入對手出牌階段
     if (window.XLW_isPuzzleMode) {
       window.XLW_ENEMY.running = false;
-      await sleep(400);
+      await sleep(600);
       if (typeof window.xlwCheckPuzzleEnd === 'function') {
         window.xlwCheckPuzzleEnd();
       }
@@ -17502,6 +17502,7 @@ async function runEnemyTurn() {
     phase = "召喚階段"; window.xlwShowPhaseBanner("召喚階段", "#4ade80");
     setStatus(`對手回合：${enemyDeckName} 正在進行召喚階段...`);
     render();
+    await sleep(650);
     
     // 特殊前置效果觸發 (Leo, Aquarius, Nurse, ViceDirector, TourGuide, Beibei, Nezhul, etc.)
     try {
@@ -17599,7 +17600,7 @@ async function runEnemyTurn() {
         window.XLW_enemySummonCountThisTurn = 1;
         logBattle(`🤖【對手 AI 召喚】打出單位【${card.name}】到${destZone.startsWith("player_") ? "我方" : "對手"}${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
         render();
-        await sleep(450);
+        await sleep(950);
 
         try {
           let starryCountered = false;
@@ -17664,7 +17665,7 @@ async function runEnemyTurn() {
         logBattle(`🌲【對手 AI 召喚】依規則未從手牌打出單位，強制從森林召喚【小旅人】到對手${destZone === "enemy_front" ? "前排" : "後排"}${destIdx + 1}！`);
         playTravelerSummonAnimation("#enemyForest", destZone, destIdx);
         render();
-        await sleep(450);
+        await sleep(850);
 
         try {
           await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, destZone, destIdx, false);
@@ -17674,7 +17675,7 @@ async function runEnemyTurn() {
       }
     }
     render();
-    await sleep(300);
+    await sleep(650);
 
     // 9. ★ 進攻宣言 與 戰術佈陣 嚴格二選一 ★
     const aiWentFirst = (window.XLW_coinTossFirstGo === false);
@@ -17684,12 +17685,12 @@ async function runEnemyTurn() {
       logBattle("對手最後一回合：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(300);
+      await sleep(650);
     } else if (isAiFirstTurn) {
       logBattle("對手第一回合（先手）：只能進行召喚階段，跳過戰術佈陣與進攻宣言。");
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       render();
-      await sleep(300);
+      await sleep(650);
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
 
@@ -17761,7 +17762,7 @@ async function runEnemyTurn() {
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
         logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（選擇進攻，無法再進行單位召喚，跳過戰術佈陣）。 ——`);
         render();
-        await sleep(550);
+        await sleep(1500);
       } else {
         // ★ 選擇「戰術佈陣」：移動單位，並且仍然可以召喚一個不需要獻祭 (0-tribute) 的單位！
         window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
@@ -17769,6 +17770,7 @@ async function runEnemyTurn() {
         window.xlwShowPhaseBanner("戰術佈陣", "#a855f7");
         setStatus(`對手回合：${enemyDeckName} 選擇進行戰術佈陣...`);
         render();
+        await sleep(750);
 
         try {
           await aiPerformTacticalMovement();
@@ -17815,7 +17817,7 @@ async function runEnemyTurn() {
             field[tacticalDestZone][tacticalDestIdx].card.creator = "enemy";
             logBattle(`🤖【對手 AI 戰術佈陣】額外打出 0 祭品單位【${zeroTributeCandidate.name}】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
             render();
-            await sleep(450);
+            await sleep(900);
 
             try {
               await triggerAiSummonEffects(zeroTributeCandidate, tacticalDestZone, tacticalDestIdx);
@@ -17838,7 +17840,7 @@ async function runEnemyTurn() {
               logBattle(`🌲【對手 AI 戰術佈陣】依規則未從手牌打出單位，強制從森林召喚【小旅人】至對手${tacticalDestZone === "enemy_front" ? "前排" : "後排"}${tacticalDestIdx + 1}！`);
               playTravelerSummonAnimation("#enemyForest", tacticalDestZone, tacticalDestIdx);
               render();
-              await sleep(450);
+              await sleep(850);
 
               try {
                 await window.checkForPlayerSummonCounters(LITTLE_TRAVELER, tacticalDestZone, tacticalDestIdx, false);
@@ -17849,7 +17851,7 @@ async function runEnemyTurn() {
           }
         }
         render();
-        await sleep(300);
+        await sleep(600);
       }
     }
 
@@ -18871,12 +18873,19 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
     menu.remove();
     if (isMagic) {
       // 檢查魔法卡可使用階段
-      const phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
+      const isGoat = (card.name && card.name.includes("山羊術"));
+      let phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
+      if (isGoat) {
+        phases = ["Main Phase", "Defense Phase"];
+      }
       let canPlay = false;
       if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
       if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
-      if (phases.includes("Defense Phase") && phase === "防守階段" && window.XLW_defenseCounterActive) canPlay = true;
-      if (phases.includes("Enemy Phase") && window.XLW_defenseCounterActive) canPlay = true;
+      if (phases.includes("Defense Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlay = true;
+      if (phases.includes("Enemy Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlay = true;
+      if (isGoat && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "防守階段" || window.XLW_defenseCounterActive)) {
+        canPlay = true;
+      }
       if (!canPlay) {
         setStatus(`【發動限制】目前階段 (${phase}) 無法發動此魔法卡！`);
         return;
@@ -27099,7 +27108,7 @@ function xlwShowSpellActivationOverlay(card, side) {
         if (overlay && overlay.parentNode) overlay.remove();
         resolve();
       }, 200);
-    }, 950);
+    }, 1400);
   });
 }
 
@@ -27171,7 +27180,7 @@ function xlwShowTributeSummonOverlay(card, side) {
         if (overlay && overlay.parentNode) overlay.remove();
         resolve();
       }, 200);
-    }, 950);
+    }, 1400);
   });
 }
 
@@ -27496,7 +27505,9 @@ function promptNextChainAction() {
 
     } else {
       if (!isMultiplayer) {
-        resolveLocalSpellChain();
+        window.XLW_chainAutoPassTimeout = setTimeout(() => {
+          resolveLocalSpellChain();
+        }, 800);
       } else {
         statusText.textContent = "❌ 我方手牌中無可用反制魔法卡，將自動放行...";
         
