@@ -63,32 +63,49 @@ app.mount("/static", OptimizedStaticFiles(directory=BASE / "static"), name="stat
 # ===== 線上雙人即時房間管理器 =====
 class ConnectionManager:
     def __init__(self):
-        # room_id -> { "player1": (player_id, ws), "player2": (player_id, ws) }
+        # room_id -> {
+        #   "player1": (player_id, ws),
+        #   "player2": (player_id, ws),
+        #   "decks": { "player1": dict, "player2": dict },
+        #   "sync_decks": { "player1": dict, "player2": dict },
+        #   "last_state": { "player1": dict, "player2": dict }
+        # }
         self.rooms = {}
+
+    def _ensure_room_meta(self, room_id: str):
+        if room_id not in self.rooms:
+            self.rooms[room_id] = {}
+        r = self.rooms[room_id]
+        if "decks" not in r:
+            r["decks"] = {}
+        if "sync_decks" not in r:
+            r["sync_decks"] = {}
+        if "last_state" not in r:
+            r["last_state"] = {}
+        return r
 
     async def connect(self, room_id: str, player_id: str, role: str, websocket: WebSocket):
         await websocket.accept()
-        if room_id not in self.rooms:
-            self.rooms[room_id] = {}
+        r = self._ensure_room_meta(room_id)
         
         is_reconnect = False
         role_assigned = role
         
         if not role_assigned:
             # 決定玩家角色 (Player1 或 Player2) 並支援斷線重連
-            if "player1" in self.rooms[room_id] and self.rooms[room_id]["player1"][0] == player_id:
+            if "player1" in r and r["player1"][0] == player_id:
                 role_assigned = "player1"
                 is_reconnect = True
-            elif "player2" in self.rooms[room_id] and self.rooms[room_id]["player2"][0] == player_id:
+            elif "player2" in r and r["player2"][0] == player_id:
                 role_assigned = "player2"
                 is_reconnect = True
             else:
-                if "player1" not in self.rooms[room_id]:
+                if "player1" not in r:
                     role_assigned = "player1"
-                elif "player2" not in self.rooms[room_id]:
+                elif "player2" not in r:
                     role_assigned = "player2"
                 else:
-                    # 房間已滿
+                    # 檢查舊連線是否已失效，若是同一位或死連線則允許接管
                     print(f"Room {room_id}: connection rejected for {player_id}.")
                     await websocket.send_json({
                         "type": "error",
@@ -97,9 +114,9 @@ class ConnectionManager:
                     await websocket.close()
                     return
         else:
-            # 使用指定角色，若已被其他 player_id 連線，則拒絕
-            if role_assigned in self.rooms[room_id]:
-                existing_player_id, existing_ws = self.rooms[room_id][role_assigned]
+            # 使用指定角色，若已被其他 player_id 連線，檢查舊連線是否存活
+            if role_assigned in r:
+                existing_player_id, existing_ws = r[role_assigned]
                 if existing_player_id != player_id:
                     print(f"Room {room_id}: connection rejected for {player_id} (role {role_assigned} already occupied by {existing_player_id}).")
                     await websocket.send_json({
@@ -111,7 +128,7 @@ class ConnectionManager:
                 else:
                     is_reconnect = True
 
-        self.rooms[room_id][role_assigned] = (player_id, websocket)
+        r[role_assigned] = (player_id, websocket)
         print(f"Room {room_id}: {role_assigned} ({player_id}) connected. Is reconnect: {is_reconnect}")
         
         await websocket.send_json({
@@ -122,13 +139,14 @@ class ConnectionManager:
         })
         
         # 通知雙方
-        if "player1" in self.rooms[room_id] and "player2" in self.rooms[room_id]:
-            p1_id, p1_ws = self.rooms[room_id]["player1"]
-            p2_id, p2_ws = self.rooms[room_id]["player2"]
+        if "player1" in r and "player2" in r:
+            p1_id, p1_ws = r["player1"]
+            p2_id, p2_ws = r["player2"]
+            other_role = "player2" if role_assigned == "player1" else "player1"
+            other_ws = p2_ws if role_assigned == "player1" else p1_ws
+            this_ws = p1_ws if role_assigned == "player1" else p2_ws
             
             if is_reconnect:
-                other_ws = p2_ws if role_assigned == "player1" else p1_ws
-                this_ws = p1_ws if role_assigned == "player1" else p2_ws
                 try:
                     await other_ws.send_json({
                         "type": "opponent_rejoined",
@@ -143,6 +161,12 @@ class ConnectionManager:
                     })
                 except:
                     pass
+                # 若對手已選過牌組，補發給重連方
+                if other_role in r.get("decks", {}):
+                    try:
+                        await this_ws.send_json(r["decks"][other_role])
+                    except:
+                        pass
             else:
                 try:
                     await p1_ws.send_json({
@@ -158,16 +182,24 @@ class ConnectionManager:
                     })
                 except:
                     pass
+                # 若有一方在對手進房前就已經先送出 multi_deck_selected，自動補發給剛進房的對手
+                if other_role in r.get("decks", {}):
+                    try:
+                        await this_ws.send_json(r["decks"][other_role])
+                    except:
+                        pass
 
-    def disconnect(self, room_id: str, player_id: str):
+    def disconnect(self, room_id: str, player_id: str, websocket: WebSocket = None):
         if room_id in self.rooms:
             r = self.rooms[room_id]
             if "player1" in r and r["player1"][0] == player_id:
-                r.pop("player1", None)
-                print(f"Room {room_id}: Player1 disconnected.")
+                if websocket is None or r["player1"][1] is websocket:
+                    r.pop("player1", None)
+                    print(f"Room {room_id}: Player1 disconnected.")
             elif "player2" in r and r["player2"][0] == player_id:
-                r.pop("player2", None)
-                print(f"Room {room_id}: Player2 disconnected.")
+                if websocket is None or r["player2"][1] is websocket:
+                    r.pop("player2", None)
+                    print(f"Room {room_id}: Player2 disconnected.")
             
             if not r.get("player1") and not r.get("player2"):
                 self.rooms.pop(room_id, None)
@@ -175,14 +207,30 @@ class ConnectionManager:
 
     async def broadcast_to_other(self, room_id: str, sender_id: str, message: dict):
         if room_id in self.rooms:
-            r = self.rooms[room_id]
+            r = self._ensure_room_meta(room_id)
+            sender_role = None
             target_ws = None
             if "player1" in r and r["player1"][0] == sender_id:
+                sender_role = "player1"
                 if "player2" in r:
                     target_ws = r["player2"][1]
             elif "player2" in r and r["player2"][0] == sender_id:
+                sender_role = "player2"
                 if "player1" in r:
                     target_ws = r["player1"][1]
+
+            action = message.get("action")
+            if sender_role:
+                if action == "multi_deck_selected":
+                    r["decks"][sender_role] = json.loads(json.dumps(message))
+                elif action == "sync_deck":
+                    r["sync_decks"][sender_role] = json.loads(json.dumps(message))
+                elif action == "sync_game_state":
+                    r["last_state"][sender_role] = json.loads(json.dumps(message))
+                elif action == "new_game":
+                    r["decks"].clear()
+                    r["sync_decks"].clear()
+                    r["last_state"].clear()
             
             if target_ws:
                 try:
@@ -241,7 +289,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str,
             except Exception as e:
                 print(f"Error in websocket loop for room {room_id}, player {player_id}: {e}")
     except WebSocketDisconnect:
-        manager.disconnect(room_id, player_id)
+        manager.disconnect(room_id, player_id, websocket)
         if room_id in manager.rooms:
             r = manager.rooms[room_id]
             remaining_ws = None
