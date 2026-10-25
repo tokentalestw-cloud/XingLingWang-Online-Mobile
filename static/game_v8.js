@@ -1855,6 +1855,8 @@ function xlwCanSummonToZone(zone, card) {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
       if (isArtworkUnit && hasMuseumGuardOnField("player")) {
         // Allowed to bypass frontline check by Museum Guard
+      } else if (window.XLW_fairyQueenBackRowAllowed) {
+        // Allowed to bypass frontline check by Fairy Queen effect
       } else if (window.XLW_playerYouCantSeeMeActiveTurn === turn) {
         // Allowed to bypass frontline check by "You Can't See Me" spell
       } else if (xlwFrontlineHasEmpty()) {
@@ -1868,6 +1870,8 @@ function xlwCanSummonToZone(zone, card) {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
       if (isArtworkUnit && hasMuseumGuardOnField("enemy")) {
         // Allowed to bypass frontline check by Museum Guard
+      } else if (window.XLW_enemyFairyQueenBackRowAllowed) {
+        // Allowed to bypass frontline check by Fairy Queen effect
       } else if (window.XLW_enemyYouCantSeeMeActiveTurn === turn) {
         // Allowed to bypass frontline check by "You Can't See Me" spell
       } else {
@@ -3017,6 +3021,43 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
         }
       }
       baseAtk = count * 2;
+    }
+  }
+
+  // 壯壯妖精 (R-EVL-0021) 效果：X = 你前排妖精單位數量
+  if (c.id === "R-EVL-0021" || c.name?.includes("壯壯妖精")) {
+    let resolvedZone = zone;
+    let resolvedLane = lane;
+    if (!resolvedZone || resolvedLane === undefined || resolvedLane === -1) {
+      for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+        if (typeof field !== "undefined" && field && field[testZone]) {
+          const testIdx = field[testZone].indexOf(unit);
+          if (testIdx >= 0) {
+            resolvedZone = testZone;
+            resolvedLane = testIdx;
+            break;
+          }
+        }
+      }
+    }
+    if (resolvedZone && resolvedLane !== undefined && resolvedLane !== -1 && window.isUnitSilenced && window.isUnitSilenced(unit, resolvedZone, resolvedLane)) {
+      baseAtk = 0;
+    } else {
+      let sidePrefix = (resolvedZone && resolvedZone.startsWith("player_")) ? "player_" : "enemy_";
+      let count = 0;
+      const frontZone = sidePrefix + "front";
+      if (typeof field !== "undefined" && field && field[frontZone]) {
+        for (let idx = 0; idx < 5; idx++) {
+          const u = field[frontZone][idx];
+          if (u && u.card) {
+            const isFairy = u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.race === "妖精" || (u.card.id && u.card.id.includes("EVL")) || (u.card.keywords && u.card.keywords.some(k => k && k.includes("妖精"))) || (u.card.name && (u.card.name.includes("妖精") || u.card.name.includes("小旅人")));
+            if (isFairy) {
+              count++;
+            }
+          }
+        }
+      }
+      baseAtk = count;
     }
   }
 
@@ -7367,7 +7408,9 @@ async function performSummonToSlot(zone, idx) {
     return;
   }
 
+  const isTributePlacement = tributeWaitingPosition || (selectedTributeCard !== null);
   const canSum = isSpecialSummon ||
+                 isTributePlacement ||
                  (window.XLW_Tutorial && window.XLW_Tutorial.active) ||
                  window.XLW_bypassNormalSummonLimit ||
                  (phase === "召喚階段" && !normalSummonUsed) || 
@@ -7735,6 +7778,48 @@ async function performSummonToSlot(zone, idx) {
               }
             }
           }, 500);
+        }
+      }
+
+      // 妖精女王 梅瑟琳 (EVL-0002 / SSR-EVL-0002) 立即:從手牌額外打出1張無須祭品的單位，且該單位可打在後排戰線
+      if (card.id === "EVL-0002" || card.id === "SSR-EVL-0002" || card.name?.includes("妖精女王")) {
+        const isPlayer = zone.startsWith("player_");
+        if (isPlayer) {
+          const eligibleUnits = hand.filter(c => c && c.type === "unit" && Number(c.tribute || 0) <= 0);
+          const hasEmptySlot = ["player_front", "player_back"].some(z => field[z].some(u => u === null));
+          if (eligibleUnits.length > 0 && hasEmptySlot) {
+            setTimeout(async () => {
+              const confirm = await showXLWConfirm("妖精女王 梅瑟琳 效果發動", "是否發動【妖精女王 梅瑟琳】效果：從手牌額外打出 1 張無須祭品的單位？（可直接打在後排戰線）");
+              if (confirm) {
+                const choices = eligibleUnits.map(u => ({ text: `${u.name} (攻:${u.attack || 0}/星:${u.score || 0})`, value: hand.indexOf(u) }));
+                const chosenHandIdx = await showXLWChoiceModal("妖精女王 召喚選擇", "請選擇要額外打出的單位：", choices);
+                if (chosenHandIdx !== null && chosenHandIdx !== undefined && hand[chosenHandIdx]) {
+                  window.XLW_bypassNormalSummonLimit = true;
+                  window.XLW_fairyQueenBackRowAllowed = true;
+                  selectedHandForSummon = chosenHandIdx;
+                  setStatus(`【妖精女王 效果】請點選我方任一空格（可直接放置於後排）召喚【${hand[chosenHandIdx].name}】！`);
+                  render();
+                }
+              }
+            }, 400);
+          }
+        } else if (window.XLW_ENEMY && window.XLW_ENEMY.hand) {
+          const enemyHand = window.XLW_ENEMY.hand;
+          const eligibleIdx = enemyHand.findIndex(c => c && c.type === "unit" && Number(c.tribute || 0) <= 0);
+          if (eligibleIdx >= 0) {
+            const emptyEnemySlots = [];
+            for (const z of ["enemy_front", "enemy_back"]) {
+              field[z].forEach((u, i) => { if (!u) emptyEnemySlots.push({ zone: z, idx: i }); });
+            }
+            if (emptyEnemySlots.length > 0) {
+              const targetSlot = emptyEnemySlots[0];
+              const cardToSummon = enemyHand.splice(eligibleIdx, 1)[0];
+              logBattle(`✨ 對手 妖精女王 梅瑟琳 效果：從手牌額外打出【${cardToSummon.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
+              window.XLW_enemyFairyQueenBackRowAllowed = true;
+              await performSummonToSlot(cardToSummon, targetSlot.zone, targetSlot.idx);
+              window.XLW_enemyFairyQueenBackRowAllowed = false;
+            }
+          }
         }
       }
 
@@ -10148,8 +10233,15 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
     }
     throw err;
   } finally {
-    const isSummoningTributeCard = (selectedTributeCard !== null && card !== null && card.id === selectedTributeCard.id);
+    if (window.XLW_fairyQueenBackRowAllowed) {
+      window.XLW_fairyQueenBackRowAllowed = false;
+    }
+    const isSummoningTributeCard = isTributePlacement || (selectedTributeCard !== null && card !== null && card.id === selectedTributeCard.id);
     const keepTribute = tributeWaitingPosition && !isSummoningTributeCard;
+    if (isTributePlacement) {
+      tributeWaitingPosition = false;
+      selectedTributeCard = null;
+    }
     clearModes(keepTribute);
     render();
   }
@@ -18836,9 +18928,127 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
     if (isSameCard) return; // 點擊同一張卡牌時直接收起
   }
 
+// 判定手牌中的卡牌當前是否符合發動或召喚條件
+window.xlwCanPlayHandCard = function(card, idx) {
+  if (!card) return false;
+  if (window.XLW_playerNeedsToDraw) return false;
+
+  const isMagic = (card.type === "magic" || card.type === "魔法");
+
+  if (isMagic) {
+    if (isMultiplayer && !isMyTurn && !window.XLW_defenseCounterActive && phase !== "防守階段") {
+      return false;
+    }
+    // 反制卡不能主動發動 (需敵方動作觸發)
+    const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+    if (isPureCounter) return false;
+
+    if (window.XLW_playerCannotUseCardIdThisTurn === card.id) return false;
+
+    // 太陽餅限制場地魔法
+    const isFieldSpell = card.art_subtype === "場地" || card.magic_type === "場地" || card.name?.includes("場地") || card.name?.includes("世界") || card.name?.includes("電影院") || card.name?.includes("井") || card.name?.includes("鬼屋");
+    if (isFieldSpell && typeof field !== "undefined" && field) {
+      for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+        if (field[z] && field[z].some(u => u && u.card && (u.card.id === "R-FMS-0003" || u.card.name?.includes("太陽餅")) && !window.isUnitSilenced(u))) {
+          return false;
+        }
+      }
+    }
+
+    // 檢查魔法卡可使用階段
+    const isGoat = (card.name && card.name.includes("山羊術"));
+    let phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
+    if (isGoat) {
+      phases = ["Main Phase", "Defense Phase"];
+    }
+    let canPlayPhase = false;
+    if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣") && (isMyTurn || !isMultiplayer)) canPlayPhase = true;
+    if (phases.includes("Summon Phase") && phase === "召喚階段" && (isMyTurn || !isMultiplayer)) canPlayPhase = true;
+    if (phases.includes("Defense Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlayPhase = true;
+    if (phases.includes("Enemy Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlayPhase = true;
+    if (isGoat && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "防守階段" || window.XLW_defenseCounterActive)) {
+      canPlayPhase = true;
+    }
+    if (!canPlayPhase) return false;
+
+    // 逗喵棒需有我方喵喵賊單位
+    if ((card.name?.includes("逗喵棒") || card.id === "R-CAT-0040") && typeof field !== "undefined" && field) {
+      const hasMeowUnit = ["player_front", "player_back"].some(z => field[z] && field[z].some(u => u && (u.card?.faction === "喵喵賊" || u.card?.race === "喵喵賊" || u.card?.id?.includes("CAT") || u.card?.id?.includes("cat"))));
+      if (!hasMeowUnit) return false;
+    }
+
+    return true;
+  } else {
+    // 單位卡
+    if (isMultiplayer && !isMyTurn) return false;
+
+    // 階段限制：只有召喚階段與戰術佈陣階段可召喚手牌
+    if (phase !== "召喚階段" && phase !== "戰術佈陣") return false;
+
+    // 召喚次數限制
+    if (phase === "召喚階段" && normalSummonUsed && !window.XLW_bypassNormalSummonLimit && !window.XLW_bypassTurnCheck) {
+      return false;
+    }
+    if (phase === "戰術佈陣" && tacticalSummonUsed && !window.XLW_bypassTurnCheck && !window.XLW_bypassNormalSummonLimit) {
+      return false;
+    }
+
+    // 戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚（除非詛咒通靈效果啟用）
+    const tributeCost = getCardTributeCost(card);
+    if (phase === "戰術佈陣" && tributeCost > 0 && !window.XLW_playerCurseSummonActive) {
+      return false;
+    }
+
+    // 麻祖、高塔101等特殊限制
+    if (typeof canSummonCard === "function" && !canSummonCard(card, true)) {
+      return false;
+    }
+
+    if (typeof field === "undefined" || !field) return false;
+
+    // 祭品檢查
+    if (tributeCost > 0) {
+      const myUnits = (field["player_front"] || []).concat(field["player_back"] || []).filter(u => u !== null);
+      if (myUnits.length < tributeCost) return false;
+    } else {
+      // 0 祭品單位需檢查場上是否有合法空格
+      const canToEnemy = xlwIsEnemySummonCard(card);
+      let hasEmptySlot = false;
+      if (canToEnemy) {
+        for (const z of ["enemy_front", "enemy_back", "player_front", "player_back"]) {
+          if (field[z] && field[z].some((u, i) => !u && xlwCanSummonToZone(z, card))) {
+            hasEmptySlot = true;
+            break;
+          }
+        }
+      } else {
+        for (const z of ["player_front", "player_back"]) {
+          if (field[z] && field[z].some((u, i) => !u && xlwCanSummonToZone(z, card))) {
+            hasEmptySlot = true;
+            break;
+          }
+        }
+      }
+      if (!hasEmptySlot) return false;
+    }
+
+    return true;
+  }
+};
+
+// 手牌卡牌輕量就地浮動快捷操作條（免彈大視窗：發動/召喚 vs 檢視）
+window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
+  const existing = document.getElementById("xlwHandCardQuickMenu");
+  if (existing) {
+    const isSameCard = existing.dataset.cardIdx === String(idx);
+    existing.remove();
+    if (isSameCard) return; // 點擊同一張卡牌時直接收起
+  }
+
   const isMagic = (card.type === "magic" || card.type === "魔法");
   const actionText = isMagic ? "✨ 發動" : "⚔️ 召喚";
   const actionClass = isMagic ? "cast-btn" : "summon-btn";
+  const canPlay = window.xlwCanPlayHandCard(card, idx);
 
   const rect = cardEl.getBoundingClientRect();
   const menu = document.createElement("div");
@@ -18846,15 +19056,21 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   menu.className = "xlw-hand-quick-menu";
   menu.dataset.cardIdx = String(idx);
 
-  menu.innerHTML = `
-    <button class="xlw-quick-btn ${actionClass}">${actionText}</button>
-    <button class="xlw-quick-btn inspect-btn">🔍 檢視</button>
-  `;
+  if (canPlay) {
+    menu.innerHTML = `
+      <button class="xlw-quick-btn ${actionClass}">${actionText}</button>
+      <button class="xlw-quick-btn inspect-btn">🔍 檢視</button>
+    `;
+  } else {
+    menu.innerHTML = `
+      <button class="xlw-quick-btn inspect-btn" style="width: 100%;">🔍 檢視</button>
+    `;
+  }
 
   document.body.appendChild(menu);
 
   // 計算選單居中顯示在手牌正上方
-  const menuWidth = 150;
+  const menuWidth = canPlay ? 150 : 88;
   const menuHeight = 38;
   let left = rect.left + (rect.width / 2) - (menuWidth / 2);
   let top = rect.top - menuHeight - 8;
@@ -18866,42 +19082,31 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
 
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
+  menu.style.width = `${menuWidth}px`;
 
-  const actBtn = menu.querySelector(`.${actionClass}`);
-  actBtn.onclick = (e) => {
-    e.stopPropagation();
-    menu.remove();
-    if (isMagic) {
-      // 檢查魔法卡可使用階段
-      const isGoat = (card.name && card.name.includes("山羊術"));
-      let phases = (card.usable_phases && card.usable_phases.length > 0) ? card.usable_phases : ["Main Phase"];
-      if (isGoat) {
-        phases = ["Main Phase", "Defense Phase"];
-      }
-      let canPlay = false;
-      if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣")) canPlay = true;
-      if (phases.includes("Summon Phase") && phase === "召喚階段") canPlay = true;
-      if (phases.includes("Defense Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlay = true;
-      if (phases.includes("Enemy Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlay = true;
-      if (isGoat && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "防守階段" || window.XLW_defenseCounterActive)) {
-        canPlay = true;
-      }
-      if (!canPlay) {
-        setStatus(`【發動限制】目前階段 (${phase}) 無法發動此魔法卡！`);
-        return;
-      }
-      castSpell(idx);
-    } else {
-      window.xlwExecuteHandUnitSummon(card, idx);
+  if (canPlay) {
+    const actBtn = menu.querySelector(`.${actionClass}`);
+    if (actBtn) {
+      actBtn.onclick = (e) => {
+        e.stopPropagation();
+        menu.remove();
+        if (isMagic) {
+          castSpell(idx);
+        } else {
+          window.xlwExecuteHandUnitSummon(card, idx);
+        }
+      };
     }
-  };
+  }
 
   const inspectBtn = menu.querySelector(".inspect-btn");
-  inspectBtn.onclick = (e) => {
-    e.stopPropagation();
-    menu.remove();
-    showModal(card);
-  };
+  if (inspectBtn) {
+    inspectBtn.onclick = (e) => {
+      e.stopPropagation();
+      menu.remove();
+      showModal(card);
+    };
+  }
 
   // 點選畫面任意其他位置自動關閉
   const closeListener = (e) => {
@@ -19005,35 +19210,6 @@ function renderHand() {
     cardEl.setAttribute("draggable", window.matchMedia("(pointer: coarse)").matches ? "false" : "true");
     cardEl.dataset.handIndex = idx;
     
-    // Mulligan 換牌高亮與即時卡牌放大預覽按鈕
-    if (mulliganActive) {
-      cardEl.classList.add("mulligan-card");
-      if (selectedMulliganIndexes.has(idx)) {
-        cardEl.classList.add("mulligan-selected");
-      }
-      const inspectBtn = document.createElement("div");
-      inspectBtn.className = "mulligan-card-inspect-btn";
-      inspectBtn.title = "放大檢視卡牌詳情";
-      inspectBtn.innerHTML = "🔍";
-      inspectBtn.onclick = (e) => {
-        e.stopPropagation();
-        showModal(card);
-      };
-      cardEl.appendChild(inspectBtn);
-    }
-
-    cardEl.onmouseenter = () => {
-      if (mulliganActive) {
-        showModal(card);
-      }
-    };
-
-    // 可否普通召喚亮邊
-    const canSum = (phase === "召喚階段" && !normalSummonUsed) || (phase === "戰術佈陣" && !tacticalSummonUsed);
-    if (canSum && card.type === "unit" && getCardTributeCost(card) <= 0) {
-      cardEl.classList.add("can-summon-now");
-    }
-
     if (selectedHandForSummon === idx) {
       cardEl.classList.add("selected-hand-summon");
     }
@@ -19046,6 +19222,30 @@ function renderHand() {
       cardEl.innerHTML = `<img src="${card.image}" alt="${card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';"><div class="mini-meta"><div class="mini-meta-name" title="${card.name}">${card.name}</div><div class="mini-meta-stats">${metaText}</div></div>`;
     } else {
       cardEl.innerHTML = `<div class="fallback"><div class="fallback-name" title="${card.name}">${card.name}</div><div class="fallback-stats">${metaText}</div></div>`;
+    }
+
+    // Mulligan 換牌高亮與即時卡牌放大預覽按鈕 (確保於 innerHTML 之後加入，避免被覆蓋)
+    if (mulliganActive) {
+      cardEl.classList.add("mulligan-card");
+      if (selectedMulliganIndexes.has(idx)) {
+        cardEl.classList.add("mulligan-selected");
+        const statusBadge = document.createElement("div");
+        statusBadge.className = "mulligan-status-badge";
+        statusBadge.innerHTML = "🔄 預定替換";
+        cardEl.appendChild(statusBadge);
+      }
+      const inspectBtn = document.createElement("div");
+      inspectBtn.className = "mulligan-card-inspect-btn";
+      inspectBtn.title = "放大檢視卡牌詳情";
+      inspectBtn.innerHTML = "🔍";
+      inspectBtn.onclick = (e) => {
+        e.stopPropagation();
+        showModal(card);
+      };
+      cardEl.appendChild(inspectBtn);
+    } else if (window.xlwCanPlayHandCard(card, idx)) {
+      // 只有在非起手換牌階段且真正符合召喚/發動條件時，手牌才呈現可用綠光
+      cardEl.classList.add("can-summon-now");
     }
 
     // 動態撲克牌扇形展開效果 (Poker Fan-out)
@@ -19092,7 +19292,6 @@ function renderHand() {
 
       if (mulliganActive) {
         toggleMulliganCard(idx);
-        showModal(card);
         return;
       }
 

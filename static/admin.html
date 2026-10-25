@@ -512,9 +512,9 @@
       <!-- 戰鬥數值 -->
       <div class="form-row" id="combatRow">
         <div class="form-group">
-          <label for="cAttack">攻擊力 (頂端刀劍，或勾選盾牌)</label>
+          <label for="cAttack">攻擊力 (頂端刀劍、X 或勾選盾牌)</label>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="number" id="cAttack" placeholder="數字" style="flex: 1;" min="0">
+            <input type="text" id="cAttack" placeholder="數字或 X" style="flex: 1;">
             <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap;">
               <input type="checkbox" id="cIsShield" onchange="toggleShield(this.checked)"> 是盾牌 (🛡)
             </label>
