@@ -18919,15 +18919,6 @@ function createDeckVisual(zoneId, count, label) {
   zone.appendChild(wrap);
 }
 
-// 手牌卡牌輕量就地浮動快捷操作條（免彈大視窗：發動/召喚 vs 檢視）
-window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
-  const existing = document.getElementById("xlwHandCardQuickMenu");
-  if (existing) {
-    const isSameCard = existing.dataset.cardIdx === String(idx);
-    existing.remove();
-    if (isSameCard) return; // 點擊同一張卡牌時直接收起
-  }
-
 // 判定手牌中的卡牌當前是否符合發動或召喚條件
 window.xlwCanPlayHandCard = function(card, idx) {
   if (!card) return false;
