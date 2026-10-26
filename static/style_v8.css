@@ -425,31 +425,36 @@ button:disabled {
 
 .mulligan-card-inspect-btn {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 20px;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
   height: 20px;
-  border-radius: 50%;
-  background: rgba(18, 12, 28, 0.92);
-  border: 1px solid rgba(255, 215, 106, 0.85);
+  padding: 0 7px;
+  border-radius: 10px;
+  background: rgba(18, 12, 28, 0.94);
+  border: 1px solid rgba(255, 215, 106, 0.9);
   color: #ffd76a;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  z-index: 30;
+  z-index: 50;
   transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
   pointer-events: auto;
+  white-space: nowrap;
 }
 
-.mulligan-card-inspect-btn:hover {
-  transform: scale(1.1);
+.mulligan-card-inspect-btn:hover,
+.mulligan-card-inspect-btn:active {
+  transform: translateX(-50%) scale(1.08);
   background: rgba(55, 20, 85, 0.98);
   border-color: #ffffff;
   color: #ffffff;
-  box-shadow: 0 0 8px rgba(255, 215, 106, 0.6);
+  box-shadow: 0 0 10px rgba(255, 215, 106, 0.8);
 }
 
 /* ===== 8. 擃??∠??祇? (Card) ===== */
@@ -1346,6 +1351,7 @@ button:disabled {
 
 /* 起手換牌卡牌狀態與特效 */
 .mulligan-card {
+  overflow: visible !important;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1354,6 +1360,11 @@ button:disabled {
   filter: brightness(0.55) grayscale(0.5);
   border-color: #ff4d4f !important;
   box-shadow: 0 0 16px rgba(255, 77, 79, 0.75) !important;
+}
+
+.mulligan-selected .mulligan-card-inspect-btn {
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 .mulligan-status-badge {
@@ -6912,18 +6923,44 @@ html.xlw-force-landscape body {
   box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 16px rgba(255, 215, 0, 0.5) !important;
 }
 
+/* ⚡ 立即點擊反饋動畫：金光爆閃 + 深刻按壓 */
+@keyframes xlwBtnClickFlash {
+  0% {
+    transform: scale(0.92) translateY(3px);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.95), inset 0 0 15px rgba(255, 255, 255, 0.9);
+    filter: brightness(1.35);
+  }
+  50% {
+    transform: scale(0.95) translateY(2px);
+    box-shadow: 0 0 35px rgba(255, 215, 0, 1), inset 0 0 20px rgba(255, 255, 255, 0.95);
+    filter: brightness(1.45);
+  }
+  100% {
+    transform: scale(0.96) translateY(1.5px);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.75);
+  }
+}
+
+#stableActionPanel .stable-action-btn.btn-pressed-instant,
+.stable-action-btn.btn-pressed-instant {
+  animation: xlwBtnClickFlash 0.35s ease-out forwards !important;
+  border-color: #ffffff !important;
+  color: #fff !important;
+}
+
 /* 🔄 執行結算中狀態 (.btn-processing) — 立即回饋反饋視覺效果 */
 #stableActionPanel .stable-action-btn.btn-processing,
 .stable-action-btn.btn-processing {
   background:
-    linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(49, 46, 129, 0.98) 100%) !important;
-  color: #c7d2fe !important;
-  border: 1.5px solid #818cf8 !important;
-  border-bottom: 3.5px solid #312e81 !important;
-  text-shadow: 0 0 8px rgba(129, 140, 248, 0.8) !important;
+    linear-gradient(135deg, rgba(30, 27, 75, 0.98) 0%, rgba(49, 46, 129, 0.99) 100%) !important;
+  color: #fef08a !important;
+  border: 1.5px solid #ffd76a !important;
+  border-bottom: 3.5px solid #b45309 !important;
+  text-shadow: 0 0 8px rgba(255, 215, 106, 0.8) !important;
+  box-shadow: 0 0 22px rgba(255, 215, 106, 0.65) !important;
   cursor: wait !important;
   pointer-events: none !important;
-  animation: xlwBtnProcessingPulse 0.9s infinite alternate ease-in-out !important;
+  animation: xlwBtnProcessingPulse 0.8s infinite alternate ease-in-out !important;
 }
 
 @keyframes xlwActiveTacticalPulse {

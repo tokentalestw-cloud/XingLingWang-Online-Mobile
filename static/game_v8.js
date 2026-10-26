@@ -19044,7 +19044,33 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  if (window.XLW_isPlayerTurnEnding) return;
+  window.XLW_isPlayerTurnEnding = true;
+
+  // 立即觸發震動反饋、音效與按鈕視覺回饋，讓玩家 100% 明確感知按鍵已成功觸發
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
+  try {
+    if (navigator.vibrate) navigator.vibrate(40);
+  } catch (e) {}
+
+  const endBtnEl = $("stableActionEnd");
+  if (endBtnEl) {
+    endBtnEl.disabled = true;
+    endBtnEl.classList.add("btn-processing", "btn-pressed-instant");
+    endBtnEl.innerHTML = `<span>⏳ 已確認，結算中...</span>`;
+    endBtnEl.style.pointerEvents = "none";
+  }
+
+  const revertButtonState = () => {
+    window.XLW_isPlayerTurnEnding = false;
+    if (endBtnEl) {
+      endBtnEl.disabled = false;
+      endBtnEl.classList.remove("btn-processing", "btn-pressed-instant");
+      endBtnEl.innerHTML = "結束回合";
+      endBtnEl.style.pointerEvents = "auto";
+    }
+  };
+
   if (window.XLW_playerNeedsToDraw) {
     logBattle("⚠️ 檢測到尚未完成抽牌，系統自動為您點選牌庫抽牌！");
     await window.xlwHandlePlayerDeckClick();
@@ -19052,30 +19078,31 @@ async function endPlayerTurnAndRunEnemy() {
   }
   if (phase === "防守階段" || (window.XLW_DEFENSE_RULE && window.XLW_DEFENSE_RULE.resolving)) {
     setStatus("⚠️ 請先完成當前的【防守階段】結算！");
+    revertButtonState();
     return;
   }
   if (!isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running))) {
     console.warn("endPlayerTurnAndRunEnemy blocked: not player turn or AI already running");
+    revertButtonState();
     return;
   }
 
   // 強制打出單位規則：召喚階段與戰術佈陣階段均不能直接跳過
   if (phase === "召喚階段") {
     const blocked = await xlwEnforceForcedSummonRule("召喚階段", "結束回合");
-    if (blocked) return;
+    if (blocked) {
+      revertButtonState();
+      return;
+    }
   } else if (phase === "戰術佈陣") {
     const blocked = await xlwEnforceForcedSummonRule("戰術佈陣", "結束回合");
-    if (blocked) return;
+    if (blocked) {
+      revertButtonState();
+      return;
+    }
   }
 
   clearModes();
-  window.XLW_isPlayerTurnEnding = true;
-  const endBtnEl = $("stableActionEnd");
-  if (endBtnEl) {
-    endBtnEl.disabled = true;
-    endBtnEl.classList.add("btn-processing");
-    endBtnEl.innerHTML = `<span>⏳ 正在結算回合...</span>`;
-  }
 
   try {
     window.XLW_playerCurseSummonActive = false;
@@ -20295,16 +20322,22 @@ function renderHand() {
       }
       const inspectBtn = document.createElement("div");
       inspectBtn.className = "mulligan-card-inspect-btn";
-      inspectBtn.title = "放大檢視卡牌效果與換牌設定";
-      inspectBtn.innerHTML = "🔍";
-      inspectBtn.onclick = (e) => {
-        e.stopPropagation();
+      inspectBtn.title = "點選卡牌上方查看詳細資訊";
+      inspectBtn.innerHTML = "🔍 詳情";
+      const openInspect = (e) => {
+        if (e) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
         if (typeof window.xlwOpenMulliganInspector === "function") {
           window.xlwOpenMulliganInspector(idx);
         } else {
           showModal(card);
         }
       };
+      inspectBtn.onclick = openInspect;
+      inspectBtn.onpointerdown = (e) => { e.stopPropagation(); };
+      inspectBtn.ontouchstart = (e) => { e.stopPropagation(); };
       cardEl.appendChild(inspectBtn);
     } else if (window.xlwCanPlayHandCard(card, idx)) {
       // 只有在非起手換牌階段且真正符合召喚/發動條件時，手牌才呈現可用綠光
@@ -23983,6 +24016,13 @@ function renderStablePanel() {
       endBtn.innerHTML = `<span>⏳ 正在結算回合...</span>`;
     } else {
       endBtn.disabled = isAiRunning || phase === "防守階段";
+      if (!endBtn.disabled) {
+        endBtn.onpointerdown = (e) => {
+          try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
+          if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
+          endBtn.classList.add("btn-pressed-instant");
+        };
+      }
     }
   }
 
@@ -29792,6 +29832,9 @@ window.xlwLeaveOnlineRoom = function(promptConfirm = false) {
 };
 
 window.xlwResumeSavedOnlineRoom = function() {
+  if (typeof window.xlwAutoLandscapeFullscreen === 'function') {
+    window.xlwAutoLandscapeFullscreen();
+  }
   try {
     const rawSession = sessionStorage.getItem("XLW_ONLINE_SESSION") || localStorage.getItem("XLW_ONLINE_SESSION");
     if (!rawSession) {
@@ -32018,31 +32061,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// ===== 🐱 貓咪大戰爭風格：點擊即自動全畫面轉橫向引擎 (Instant Fullscreen & Landscape Engine) =====
-window.xlwAutoLandscapeFullscreen = function() {
+// ===== 🐱 點擊即自動全畫面轉橫向引擎 (Instant Fullscreen & Landscape Engine) =====
+window.xlwAutoLandscapeFullscreen = async function() {
   const docEl = document.documentElement;
 
-  // 1. 嘗試調用全螢幕 API
+  // 1. 嘗試調用全螢幕 API (支援各廠牌前綴，並隱藏導航列)
   try {
-    const rfs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+    const rfs = docEl.requestFullscreen || 
+                docEl.webkitRequestFullscreen || 
+                docEl.webkitRequestFullScreen || 
+                docEl.mozRequestFullScreen || 
+                docEl.msRequestFullscreen;
     if (rfs && !document.fullscreenElement && !document.webkitFullscreenElement) {
-      const p = rfs.call(docEl);
-      if (p && p.catch) p.catch(() => {});
+      const p = rfs.call(docEl, { navigationUI: "hide" });
+      if (p && p.catch) {
+        await p.catch(() => {});
+      }
     }
   } catch (e) {}
 
   // 2. 嘗試調用螢幕方向鎖定 API (Android Chrome / Edge / PWA)
+  // 注意：Android Chrome 必須在全螢幕生效後鎖定，此處在 requestFullscreen 後鎖定，並在 fullscreenchange 重複鎖定
   try {
     if (screen.orientation && typeof screen.orientation.lock === 'function') {
-      screen.orientation.lock("landscape").catch(() => {});
+      await screen.orientation.lock("landscape").catch(() => {});
     } else if (screen.lockOrientation) {
       screen.lockOrientation("landscape");
     } else if (screen.webkitLockOrientation) {
       screen.webkitLockOrientation("landscape");
+    } else if (screen.mozLockOrientation) {
+      screen.mozLockOrientation("landscape");
     }
   } catch (e) {}
 
-  // 3. 即時檢查並套用虛擬橫向轉換
+  // 3. 即時檢查並套用橫向狀態與自適應縮放
   window.xlwCheckLandscapeOrientation();
 };
 
@@ -32051,7 +32103,15 @@ window.xlwLockOrientation = window.xlwAutoLandscapeFullscreen;
 
 window.xlwCheckLandscapeOrientation = function() {
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isPortrait = window.innerHeight > window.innerWidth;
+  
+  let isPortrait = false;
+  if (screen.orientation && screen.orientation.type) {
+    isPortrait = screen.orientation.type.startsWith('portrait');
+  } else if (typeof window.orientation !== 'undefined') {
+    isPortrait = (window.orientation === 0 || window.orientation === 180);
+  } else {
+    isPortrait = window.innerHeight > window.innerWidth;
+  }
 
   if (isTouchDevice && isPortrait) {
     document.documentElement.classList.add("xlw-force-landscape");
@@ -32066,12 +32126,27 @@ window.xlwCheckLandscapeOrientation = function() {
   }
 };
 
+// 監聽全螢幕狀態切換事件，一旦進入全螢幕即刻強制鎖定橫向 (Landscape)
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("landscape").catch(() => {});
+  }
+  if (typeof adjustBoardScale === 'function') adjustBoardScale();
+});
+document.addEventListener("webkitfullscreenchange", () => {
+  if (document.webkitFullscreenElement && screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("landscape").catch(() => {});
+  }
+  if (typeof adjustBoardScale === 'function') adjustBoardScale();
+});
+
 // 全局點擊/觸控即刻啟動全畫面橫向（不需任何提示、不需經過跳轉）
 window.addEventListener("click", window.xlwAutoLandscapeFullscreen, { passive: true });
-window.addEventListener("touchstart", window.xlwAutoLandscapeFullscreen, { passive: true });
+window.addEventListener("pointerdown", window.xlwAutoLandscapeFullscreen, { passive: true });
 window.addEventListener("resize", window.xlwCheckLandscapeOrientation);
 window.addEventListener("orientationchange", () => {
-  setTimeout(window.xlwCheckLandscapeOrientation, 150);
+  setTimeout(window.xlwCheckLandscapeOrientation, 80);
+  setTimeout(window.xlwCheckLandscapeOrientation, 250);
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -32079,8 +32154,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// ===== 🏠 貓咪大戰爭風格登入首頁選單與模式控制引擎 =====
+// ===== 🏠 登入首頁選單與模式控制引擎 =====
 window.xlwChooseMode = function(mode) {
+  if (typeof window.xlwAutoLandscapeFullscreen === 'function') {
+    window.xlwAutoLandscapeFullscreen();
+  }
   window.XLW_ACTIVE_MODE = mode;
   
   if (mode === 'single') {
@@ -33329,6 +33407,9 @@ window.XLW_Tutorial = {
 };
 
 window.xlwStartTutorial = function() {
+  if (typeof window.xlwAutoLandscapeFullscreen === 'function') {
+    window.xlwAutoLandscapeFullscreen();
+  }
   if (typeof window.xlwClearOnlineSession === 'function') {
     window.xlwClearOnlineSession();
   }
@@ -33530,6 +33611,9 @@ window.XLW_currentPuzzleStage = 1;
 
 // 打開殘局模式關卡選擇視窗
 window.xlwOpenPuzzleStageSelect = function() {
+  if (typeof window.xlwAutoLandscapeFullscreen === 'function') {
+    window.xlwAutoLandscapeFullscreen();
+  }
   if (typeof window.xlwClearOnlineSession === 'function') {
     window.xlwClearOnlineSession();
   }
