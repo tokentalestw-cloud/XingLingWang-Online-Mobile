@@ -3954,7 +3954,8 @@ function triggerLittleTraveler(e) {
     return;
   }
   clearModes();
-  tributeWaitingPosition = true; // 借用位置等待狀態
+  tributeWaitingPosition = false; // 召喚小旅人絕非獻祭等待
+  selectedTributeCard = null;
   selectedHandForSummon = "TRAVELER";
   setStatus("【小旅人】請點選我方一個空格進行召喚（前排優先）。");
   render();
@@ -8023,7 +8024,7 @@ async function performSummonToSlot(zone, idx) {
   let immediateEffectNegated = false;
   logDebug(`【點選放置】目標格子: ${zone}:${idx + 1}`);
   // 獻祭召喚與位置放置之強大對象參考匹配與 Fallback 恢復機制
-  if (!isSpecialSummon && (tributeWaitingPosition || selectedTributeCard !== null)) {
+  if (!isSpecialSummon && selectedHandForSummon !== "TRAVELER" && (tributeWaitingPosition || selectedTributeCard !== null)) {
     const isGraveyardSummon = (selectedHandForSummon === "GRAVEYARD_UMBRELLA" || 
                                selectedHandForSummon === "GRAVEYARD_WELL" || 
                                selectedHandForSummon === "GRAVEYARD_GHOST_MEOW");
@@ -8070,7 +8071,7 @@ async function performSummonToSlot(zone, idx) {
     return;
   }
 
-  const isTributePlacement = tributeWaitingPosition || (selectedTributeCard !== null);
+  const isTributePlacement = (selectedHandForSummon !== "TRAVELER") && (tributeWaitingPosition || (selectedTributeCard !== null));
   const canSum = isSpecialSummon ||
                  isTributePlacement ||
                  (window.XLW_Tutorial && window.XLW_Tutorial.active) ||
