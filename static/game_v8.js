@@ -7859,9 +7859,15 @@ function confirmTribute() {
     // 檢查獻祭前墓地中是否已有雨傘妖怪 (防止雨傘妖怪自身被獻祭時觸發效果)
     const hadUmbrellaInGraveBefore = graveyard.some(c => c && c.name.includes("雨傘妖怪"));
 
+    // 預先記錄被獻祭的單位卡片，避免迴圈中 field 置為 null 造成 map 丟失資料
+    window.XLW_lastSacrificedCards = selectedTributes.map(t2 => {
+      if (t2.zone === "dummy") return null;
+      return field[t2.zone]?.[t2.idx] ? field[t2.zone][t2.idx].card : null;
+    }).filter(Boolean);
+
     for (const t of selectedTributes) {
-      if (t.zone === "dummy") return;
-      const unit = field[t.zone][t.idx];
+      if (t.zone === "dummy") continue;
+      const unit = field[t.zone]?.[t.idx];
       if (unit) {
         // 先處理裝備卡送入墓地
         if (unit.equipments && unit.equipments.length > 0) {
@@ -7890,11 +7896,6 @@ function confirmTribute() {
         if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
           logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
         } else {
-          window.XLW_lastSacrificedCards = selectedTributes.map(t2 => {
-            if (t2.zone === "dummy") return null;
-            return field[t2.zone][t2.idx] ? field[t2.zone][t2.idx].card : null;
-          }).filter(Boolean);
-          
           await window.xlwPlayerTributeUnit(unit, t.zone, t.idx);
         }
         field[t.zone][t.idx] = null;
@@ -8098,6 +8099,25 @@ async function performSummonToSlot(zone, idx) {
     } else {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
     }
+
+    // 樹葉旅人 (SR-SPT-0029) 效果觸發：一回合限一次，你召喚小旅人時，召喚1個小旅人
+    const leafPrefix = zone.startsWith("player_") ? "player_" : "enemy_";
+    const isPlayerTraveler = zone.startsWith("player_");
+    const lastLeafTurn = isPlayerTraveler ? window.XLW_leafTravelerTriggeredTurn_player : window.XLW_leafTravelerTriggeredTurn_enemy;
+    if (lastLeafTurn !== turn) {
+      const hasLeafOnField = [leafPrefix + "front", leafPrefix + "back"].some(z => {
+        return field[z].some((u, i) => u && u.card && (u.card.id === "SR-SPT-0029" || u.card.name?.includes("樹葉旅人")) && !window.isUnitSilenced(u, z, i));
+      });
+      if (hasLeafOnField) {
+        if (isPlayerTraveler) {
+          window.XLW_leafTravelerTriggeredTurn_player = turn;
+        } else {
+          window.XLW_leafTravelerTriggeredTurn_enemy = turn;
+        }
+        logBattle(`✨ ${isPlayerTraveler ? "我方" : "對手"} 樹葉旅人 效果觸發：一回合限一次，召喚小旅人時額外召喚 1 個小旅人！`);
+        await (window.promptAndSummonTraveler || promptAndSummonTraveler)(isPlayerTraveler ? "player" : "enemy", 1, "樹葉旅人");
+      }
+    }
   } else {
     // 召喚手牌
     const isTributeSummon = (tributeWaitingPosition || selectedTributeCard !== null);
@@ -8141,7 +8161,8 @@ async function performSummonToSlot(zone, idx) {
       attacking: false,
       target: null,
       summonedTurn: turn,
-      summonedZone: zone
+      summonedZone: zone,
+      equipments: []
     };
     field[zone][idx].card.creator = "player";
     if (zone.startsWith("player_")) {
@@ -8235,13 +8256,14 @@ async function performSummonToSlot(zone, idx) {
                             selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
                             selectedHandForSummon !== "GRAVEYARD_WELL" &&
                             selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
+        const safeTributes = (window.XLW_lastTributes || []).filter(t => !(t.zone === zone && t.idx === idx));
         ws.send(JSON.stringify({
           action: "summon",
           card: field[zone][idx].card,
           zone: zone,
           idx: idx,
           fromHand: isFromHand,
-          tributes: window.XLW_lastTributes || []
+          tributes: safeTributes
         }));
         window.XLW_lastTributes = null;
 
@@ -8274,7 +8296,7 @@ async function performSummonToSlot(zone, idx) {
       const hasInterrupt = oppHand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
       const hasImm = hasImmediateEffect(card);
 
-      if (hasStarry && Math.random() < 0.4) {
+      if (hasStarry && hasImm && Math.random() < 0.4) {
         const sIdx = oppHand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
         const sCard = oppHand.splice(sIdx, 1)[0];
         window.XLW_ENEMY.grave.push(sCard);
@@ -10991,13 +11013,14 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
                           selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
                           selectedHandForSummon !== "GRAVEYARD_WELL" &&
                           selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
+      const safeTributes = (window.XLW_lastTributes || []).filter(t => !(t.zone === zone && t.idx === idx));
       ws.send(JSON.stringify({
         action: "summon",
         card: field[zone][idx] ? field[zone][idx].card : card,
         zone: zone,
         idx: idx,
         fromHand: isFromHand,
-        tributes: window.XLW_lastTributes || []
+        tributes: safeTributes
       }));
       window.XLW_lastTributes = null;
     }
@@ -24635,7 +24658,8 @@ function setupWebSocketEvents() {
       if (data.tributes && data.tributes.length > 0) {
         data.tributes.forEach(t => {
           if (t.zone === "dummy") return;
-          const unit = field[t.zone][t.idx];
+          if (t.zone === zone && t.idx === idx) return; // 絕不清除當前正被召喚進場的目標格子
+          const unit = field[t.zone]?.[t.idx];
           if (unit) {
             // 先處理裝備卡送入對手墓地
             if (unit.equipments && unit.equipments.length > 0) {
@@ -26851,128 +26875,140 @@ async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
   const key = `${zone}:${idx}`;
   window.XLW_animatingTributeSlots.add(key);
   
-  // 隱藏教學模式 spotlight 與選取邊框，避免藍色方框遮擋出場動畫
-  const spotlight = document.getElementById("xlwTutorialSpotlight");
-  if (spotlight) spotlight.style.display = "none";
-  document.querySelectorAll(".selected-slot, .slot-highlight").forEach(el => el.classList.remove("selected-slot", "slot-highlight"));
+  let portal = null;
+  let pillar = null;
+  let targetSlot = null;
 
-  // 1. 先重繪，讓格子卡牌暫時隱藏，播放魔法陣與光束特效
-  render();
-  
-  // 2. 獲取格子元素與視埠坐標以精確定位
-  const targetSlot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
-  if (!targetSlot) {
-    window.XLW_animatingTributeSlots.delete(key);
+  try {
+    // 隱藏教學模式 spotlight 與選取邊框，避免藍色方框遮擋出場動畫
+    const spotlight = document.getElementById("xlwTutorialSpotlight");
+    if (spotlight) spotlight.style.display = "none";
+    document.querySelectorAll(".selected-slot, .slot-highlight").forEach(el => el.classList.remove("selected-slot", "slot-highlight"));
+
+    // 1. 先重繪，讓格子卡牌暫時隱藏，播放魔法陣與光束特效
     render();
-    return;
-  }
-  
-  const rect = targetSlot.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2 + window.scrollX;
-  const centerY = rect.top + rect.height / 2 + window.scrollY;
-  
-  // 3. 創建金黃色巨型旋轉魔法陣（用絕對定位置於 body 中，突破 slot 邊界剪裁）
-  const portal = document.createElement("div");
-  portal.className = "xlw-tribute-portal-circle-large";
-  portal.style.left = `${centerX}px`;
-  portal.style.top = `${centerY}px`;
-  document.body.appendChild(portal);
-  
-  // 4. 創建巨型沖天能量光柱
-  const pillar = document.createElement("div");
-  pillar.className = "xlw-tribute-energy-pillar-large";
-  pillar.style.left = `${centerX}px`;
-  pillar.style.top = `${centerY + 40}px`; // 置於落點底座位置
-  document.body.appendChild(pillar);
-  
-  // Wait for portal/pillar intro
-  await sleep(750);
-  
-  // If it's a real tribute summon, show the fullscreen overlay
-  const card = field[zone][idx]?.card;
-  if (isRealTribute && card) {
-    const isPlayer = zone.startsWith("player_");
-    await xlwShowTributeSummonOverlay(card, isPlayer ? "player" : "enemy");
-  }
-  
-  portal.remove();
-  pillar.remove();
-  
-  // 釋放隱藏狀態，切換為 Slam 入場狀態
-  window.XLW_animatingTributeSlots.delete(key);
-  window.XLW_slamTributeCards.add(key);
-  
-  // 重繪顯示卡牌
-  render();
-  
-  // 6. 全屏耀眼黃金閃光（Color Dodge 模式，帶來極強的史詩神格感）
-  const flash = document.createElement("div");
-  flash.className = "xlw-screen-flash-gold";
-  document.body.appendChild(flash);
-  setTimeout(() => flash.remove(), 400);
-  
-  // 7. 膨脹爆裂衝擊波能量環
-  const wave = document.createElement("div");
-  wave.className = "xlw-shockwave-ring";
-  wave.style.left = `${centerX}px`;
-  wave.style.top = `${centerY}px`;
-  document.body.appendChild(wave);
-  setTimeout(() => wave.remove(), 600);
-  
-  // 8. 重擊震地：在格子加上 slam-shake 類別
-  targetSlot.classList.add("xlw-tribute-slam-shake");
-  
-  // 9. 噴射大量金黃色與紫色閃耀星星/粒子（結合 ✨、⭐ 矢量與高光發光顆粒）
-  for (let i = 0; i < 30; i++) {
-    const p = document.createElement("div");
-    p.className = "xlw-tribute-particle-super";
-    p.style.left = `${centerX}px`;
-    p.style.top = `${centerY}px`;
     
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * 160 + 60;
-    const destX = centerX + Math.cos(angle) * distance;
-    const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
-    
-    const randType = Math.random();
-    if (randType < 0.35) {
-      p.innerHTML = "✨";
-      p.style.fontSize = `${Math.random() * 18 + 14}px`;
-      p.style.textShadow = "0 0 15px #ffd700, 0 0 30px #ffe066, 0 0 45px #fff";
-    } else if (randType < 0.65) {
-      p.innerHTML = "⭐";
-      p.style.fontSize = `${Math.random() * 14 + 10}px`;
-      p.style.textShadow = "0 0 15px #ff8c00, 0 0 25px #ffd700";
-    } else {
-      // 高亮度發光黃金菱形亮片
-      const size = Math.random() * 12 + 8;
-      p.style.width = `${size}px`;
-      p.style.height = `${size}px`;
-      p.style.background = "linear-gradient(135deg, #fff 0%, #ffd700 50%, #ff8c00 100%)";
-      p.style.boxShadow = "0 0 15px #ffd700, 0 0 30px #ff8c00, 0 0 45px #fff";
-      p.style.borderRadius = "2px";
-      p.style.transform = "translate(-50%, -50%) rotate(45deg)";
+    // 2. 獲取格子元素與視埠坐標以精確定位
+    targetSlot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
+    if (!targetSlot) {
+      return;
     }
     
-    document.body.appendChild(p);
+    const rect = targetSlot.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2 + window.scrollX;
+    const centerY = rect.top + rect.height / 2 + window.scrollY;
     
-    p.style.transition = "all 1.1s cubic-bezier(0.1, 0.8, 0.2, 1)";
-    p.offsetHeight; // 強制重繪
+    // 3. 創建金黃色巨型旋轉魔法陣（用絕對定位置於 body 中，突破 slot 邊界剪裁）
+    portal = document.createElement("div");
+    portal.className = "xlw-tribute-portal-circle-large";
+    portal.style.left = `${centerX}px`;
+    portal.style.top = `${centerY}px`;
+    document.body.appendChild(portal);
     
-    p.style.left = `${destX}px`;
-    p.style.top = `${destY}px`;
-    p.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 720 - 360}deg) scale(0)`;
-    p.style.opacity = "0";
+    // 4. 創建巨型沖天能量光柱
+    pillar = document.createElement("div");
+    pillar.className = "xlw-tribute-energy-pillar-large";
+    pillar.style.left = `${centerX}px`;
+    pillar.style.top = `${centerY + 40}px`; // 置於落點底座位置
+    document.body.appendChild(pillar);
     
-    setTimeout(() => p.remove(), 1100);
+    // Wait for portal/pillar intro
+    await sleep(750);
+    
+    // If it's a real tribute summon, show the fullscreen overlay
+    const card = field[zone]?.[idx]?.card;
+    if (isRealTribute && card) {
+      const isPlayer = zone.startsWith("player_");
+      try {
+        await xlwShowTributeSummonOverlay(card, isPlayer ? "player" : "enemy");
+      } catch (e) {
+        console.error("Overlay error in tribute animation:", e);
+      }
+    }
+  } catch (err) {
+    console.error("Error in playTributeSummonAnimation:", err);
+  } finally {
+    if (portal) { try { portal.remove(); } catch (e) {} }
+    if (pillar) { try { pillar.remove(); } catch (e) {} }
+    
+    // 釋放隱藏狀態，切換為 Slam 入場狀態，確保卡牌必定顯示於場上
+    window.XLW_animatingTributeSlots.delete(key);
+    window.XLW_slamTributeCards.add(key);
+    render();
   }
-  
-  // 10. 移除震地類別
-  setTimeout(() => {
-    targetSlot.classList.remove("xlw-tribute-slam-shake");
-  }, 450);
-  
-  // 11. 移除卡牌 Slam 標記以防後續重繪重複觸發
+
+  // 播放粒子與震地特效 (不阻塞遊戲核心卡牌放置)
+  try {
+    if (targetSlot) {
+      const rect = targetSlot.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2 + window.scrollX;
+      const centerY = rect.top + rect.height / 2 + window.scrollY;
+
+      // 6. 全屏耀眼黃金閃光
+      const flash = document.createElement("div");
+      flash.className = "xlw-screen-flash-gold";
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 400);
+      
+      // 7. 膨脹爆裂衝擊波能量環
+      const wave = document.createElement("div");
+      wave.className = "xlw-shockwave-ring";
+      wave.style.left = `${centerX}px`;
+      wave.style.top = `${centerY}px`;
+      document.body.appendChild(wave);
+      setTimeout(() => wave.remove(), 600);
+      
+      // 8. 重擊震地：在格子加上 slam-shake 類別
+      targetSlot.classList.add("xlw-tribute-slam-shake");
+      setTimeout(() => {
+        targetSlot.classList.remove("xlw-tribute-slam-shake");
+      }, 450);
+      
+      // 9. 噴射大量金黃色與紫色閃耀星星/粒子
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement("div");
+        p.className = "xlw-tribute-particle-super";
+        p.style.left = `${centerX}px`;
+        p.style.top = `${centerY}px`;
+        
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 160 + 60;
+        const destX = centerX + Math.cos(angle) * distance;
+        const destY = centerY + Math.sin(angle) * distance - (Math.random() * 50 + 20);
+        
+        const randType = Math.random();
+        if (randType < 0.35) {
+          p.innerHTML = "✨";
+          p.style.fontSize = `${Math.random() * 18 + 14}px`;
+          p.style.textShadow = "0 0 15px #ffd700, 0 0 30px #ffe066, 0 0 45px #fff";
+        } else if (randType < 0.65) {
+          p.innerHTML = "⭐";
+          p.style.fontSize = `${Math.random() * 14 + 10}px`;
+          p.style.textShadow = "0 0 15px #ff8c00, 0 0 25px #ffd700";
+        } else {
+          const size = Math.random() * 12 + 8;
+          p.style.width = `${size}px`;
+          p.style.height = `${size}px`;
+          p.style.background = "linear-gradient(135deg, #fff 0%, #ffd700 50%, #ff8c00 100%)";
+          p.style.boxShadow = "0 0 15px #ffd700, 0 0 30px #ff8c00, 0 0 45px #fff";
+          p.style.borderRadius = "2px";
+          p.style.transform = "translate(-50%, -50%) rotate(45deg)";
+        }
+        
+        document.body.appendChild(p);
+        p.style.transition = "all 1.1s cubic-bezier(0.1, 0.8, 0.2, 1)";
+        p.offsetHeight;
+        
+        p.style.left = `${destX}px`;
+        p.style.top = `${destY}px`;
+        p.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 720 - 360}deg) scale(0)`;
+        p.style.opacity = "0";
+        
+        setTimeout(() => p.remove(), 1100);
+      }
+    }
+  } catch (e) {}
+
   setTimeout(() => {
     window.XLW_slamTributeCards.delete(key);
     render();
