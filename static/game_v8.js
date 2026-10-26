@@ -2561,36 +2561,41 @@ async function promptAndSummonTraveler(side, count, sourceName = "效果") {
   const totalToSummon = count + leafBonus;
 
   for (let c = 0; c < totalToSummon; c++) {
-    const emptySlots = [];
-    [frontZone, backZone].forEach(z => {
-      field[z].forEach((u, i) => { if (!u) emptySlots.push({ zone: z, idx: i }); });
-    });
+    const frontEmptySlots = [];
+    field[frontZone].forEach((u, i) => { if (!u) frontEmptySlots.push({ zone: frontZone, idx: i }); });
+    
+    const backEmptySlots = [];
+    field[backZone].forEach((u, i) => { if (!u) backEmptySlots.push({ zone: backZone, idx: i }); });
 
-    if (emptySlots.length === 0) {
+    // 前排有空格則必須優先召喚到前排，不能召喚到後排；只有前排位置全滿才能召喚到後排
+    const eligibleSlots = frontEmptySlots.length > 0 ? frontEmptySlots : backEmptySlots;
+
+    if (eligibleSlots.length === 0) {
       logBattle(`${isPlayerSide ? "我方" : "對手"} 場上已無空位，無法召喚更多小旅人。`);
       break;
     }
 
-    let chosenSlot = emptySlots[0];
+    let chosenSlot = eligibleSlots[0];
     if (isPlayerSide) {
-      const choices = emptySlots.map(s => ({
+      const choices = eligibleSlots.map((s, i) => ({
         text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
         value: `${s.zone}:${s.idx}`
       }));
       try {
-        const res = await showXLWChoiceModal(`${sourceName} 效果`, `請選擇第 ${c + 1}/${totalToSummon} 個小旅人召喚的位置：`, choices);
-        if (res !== null && res !== undefined && choices[res]) {
-          const parts = choices[res].value.split(":");
+        const res = await showXLWChoiceModal(`${sourceName} 效果`, `請選擇第 ${c + 1}/${totalToSummon} 個小旅人召喚的位置${frontEmptySlots.length > 0 ? "（前排有空位必須優先召喚至前排）" : ""}：`, choices);
+        if (res && typeof res === "string" && res.includes(":")) {
+          const parts = res.split(":");
           chosenSlot = { zone: parts[0], idx: Number(parts[1]) };
+        } else if (res !== null && res !== undefined && !isNaN(parseInt(res, 10)) && eligibleSlots[parseInt(res, 10)]) {
+          chosenSlot = eligibleSlots[parseInt(res, 10)];
         } else {
-          chosenSlot = emptySlots[0];
+          chosenSlot = eligibleSlots[0];
         }
       } catch (e) {
-        chosenSlot = emptySlots[0];
+        chosenSlot = eligibleSlots[0];
       }
     } else {
-      const frontEmpty = emptySlots.filter(s => s.zone === frontZone);
-      chosenSlot = frontEmpty.length > 0 ? frontEmpty[0] : emptySlots[0];
+      chosenSlot = eligibleSlots[0];
     }
 
     const travelerTemplate = typeof LITTLE_TRAVELER !== "undefined" ? LITTLE_TRAVELER : (
@@ -6372,6 +6377,22 @@ async function startTributeSummon(handIndex) {
     return;
   }
 
+  // 黃金旅人 (SPT-0013)：此卡的祭品必須為小旅人
+  if (card.id === "SPT-0013" || card.name?.includes("黃金旅人")) {
+    let travelerCount = 0;
+    for (const z of ["player_front", "player_back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u.card && (u.card.id === "TOKEN_TRAVELER" || u.card.id === "SPT-LITTLE" || u.card.id === "C-NMS-0071" || u.card.name?.includes("小旅人")) && !isUnitConfined(z, i)) {
+          travelerCount++;
+        }
+      });
+    }
+    if (travelerCount < targetCost) {
+      setStatus(`【獻祭召喚失敗】黃金旅人 只能選取場上的小旅人作為祭品！目前場上僅有 ${travelerCount} 個小旅人（需求 ${targetCost} 個）。`);
+      return;
+    }
+  }
+
   // 十八呎大人 特殊手牌折抵祭品效果
   if (card.name.includes("十八呎") || card.id === "VLG_011") {
     const yokaiInHand = hand.filter((c, idx) => idx !== handIndex && c && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
@@ -6535,6 +6556,15 @@ function toggleTributeSelection(zone, idx) {
   if (isGraffiti && !isPigmentCard(c)) {
     setStatus("【獻祭失敗】牆壁上的塗鴉 只能使用顏料單位作為祭品！");
     return;
+  }
+
+  const isGoldenTraveler = card && (card.id === "SPT-0013" || card.name?.includes("黃金旅人"));
+  if (isGoldenTraveler) {
+    const isLittle = c && (c.id === "TOKEN_TRAVELER" || c.id === "SPT-LITTLE" || c.id === "C-NMS-0071" || c.name?.includes("小旅人"));
+    if (!isLittle) {
+      setStatus("【獻祭失敗】黃金旅人 只能選取場上的小旅人作為祭品！");
+      return;
+    }
   }
 
   if (existIdx >= 0) {
@@ -7177,9 +7207,9 @@ function confirmTribute() {
     const allLittleTravelers = selectedTributes.every(t => {
       if (t.zone === "dummy") return false;
       const u = field[t.zone]?.[t.idx];
-      return u && u.card && (u.card.id === "SPT-LITTLE" || u.card.name?.includes("小旅人"));
+      return u && u.card && (u.card.id === "TOKEN_TRAVELER" || u.card.id === "SPT-LITTLE" || u.card.id === "C-NMS-0071" || u.card.name?.includes("小旅人"));
     });
-    if (!allLittleTravelers) {
+    if (!allLittleTravelers || selectedTributes.length < targetCost) {
       setStatus("【黃金旅人】效果限制：此卡的祭品必須全為小旅人！");
       return;
     }
@@ -18400,9 +18430,18 @@ window.aiFindBestSummonableCard = function() {
       const numAtk = parseInt(c.attack, 10) || 0;
       if (cost <= 0) {
         candidates.push({ handIdx, card: c, tributeUnits: [], priority: 100 + numAtk });
-      } else if (aiAvailableUnits.length >= cost) {
+      } else {
         if (typeof phase !== "undefined" && phase === "戰術佈陣") return;
-        candidates.push({ handIdx, card: c, tributeUnits: aiAvailableUnits.slice(0, cost), priority: 50 + numAtk });
+        if (c.id === "SPT-0013" || c.name?.includes("黃金旅人")) {
+          const travelerUnits = aiAvailableUnits.filter(u => u.unit && u.unit.card && (u.unit.card.id === "TOKEN_TRAVELER" || u.unit.card.id === "SPT-LITTLE" || u.unit.card.id === "C-NMS-0071" || u.unit.card.name?.includes("小旅人")));
+          if (travelerUnits.length >= cost) {
+            candidates.push({ handIdx, card: c, tributeUnits: travelerUnits.slice(0, cost), priority: 50 + numAtk });
+          }
+          return;
+        }
+        if (aiAvailableUnits.length >= cost) {
+          candidates.push({ handIdx, card: c, tributeUnits: aiAvailableUnits.slice(0, cost), priority: 50 + numAtk });
+        }
       }
     });
 
