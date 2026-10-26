@@ -2491,11 +2491,12 @@ window.isCombineUnit = function(unit) {
   if (!unit || !unit.card) return false;
   const c = unit.card;
   const text = c.effect_text || c.desc || "";
-  return window.xlwCardHasKeyword(c, "合體") || 
-         c.id === "NMS-0020" || c.id === "R-CAT-0038" || 
+  return unit.isCombined || (unit.equipments && unit.equipments.some(e => typeof e === "string" && e.includes("合體"))) ||
+         window.xlwCardHasKeyword(c, "合體") || 
+         c.id === "SPT-0012" || c.id === "NMS-0020" || c.id === "R-CAT-0038" || 
          c.id === "R-ORC-0039" || c.id === "R-ORC-0042" || 
          c.id === "R-VLG-0032" || c.id === "R-VLG-0035" ||
-         c.name?.includes("合體") || c.name?.includes("機甲") || c.name?.includes("背背");
+         c.name?.includes("合體") || c.name?.includes("機甲") || c.name?.includes("背背") || c.name?.includes("多頭機械");
 };
 
 window.isDemonUnit = function(c) {
@@ -9456,39 +9457,78 @@ async function performSummonToSlot(zone, idx) {
   if (card.id === "SPT-0012" || card.name?.includes("多頭機械旅人")) {
       const isPlayer = zone.startsWith("player_");
       const myZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+      
+      const isMechUnit = (unit) => {
+          if (!unit || !unit.card) return false;
+          const c = unit.card;
+          const sub = c.art_subtype || c.subtype || c.subType || "";
+          if (typeof sub === "string" && sub.includes("機械")) return true;
+          if (Array.isArray(sub) && sub.some(s => typeof s === "string" && s.includes("機械"))) return true;
+          return false;
+      };
+
       let targets = [];
       myZones.forEach(z => {
           field[z].forEach((u, i) => {
-              if (u && (z !== zone || i !== idx) && (u.card.id === "TOKEN_TRAVELER" || u.card.name?.includes("小旅人") || u.card.name?.includes("旅人"))) {
+              if (u && (z !== zone || i !== idx) && isMechUnit(u)) {
                   targets.push({ zone: z, idx: i, name: u.card.name, u });
               }
           });
       });
+
       if (targets.length > 0) {
           if (isPlayer) {
-              const choices = targets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front")?"前排":"後排"}${t.idx+1})`, value: i }));
-              choices.push({ text: "不發動合體", value: -1 });
-              const chosen = await showXLWChoiceModal("多頭機械旅人 合體效果", "請選擇我方一個旅人單位進行合體：", choices);
-              if (chosen !== null && chosen !== -1) {
-                  const target = targets[chosen];
-                  logBattle(`✨ 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
-                  target.u.equipments = target.u.equipments || [];
-                  target.u.equipments.push("多頭機械旅人 (合體)");
-                  target.u.bonusScore = (target.u.bonusScore || 0) + 1; // 假設合體給予+1獎勵
-                  field[zone][idx] = null; // 自己離場
-                  await (window.promptAndSummonTraveler || promptAndSummonTraveler)("player", 2, "多頭機械旅人");
-                  render();
+              const choices = targets.map((t, i) => ({ 
+                  text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, 
+                  value: String(i) 
+              }));
+              choices.push({ text: "不發動合體", value: "-1" });
+              const chosen = await showXLWChoiceModal("多頭機械旅人 合體效果", "請選擇我方一個特定類型為「機械」的單位進行合體：", choices);
+              if (chosen !== null && chosen !== undefined && chosen !== "" && chosen !== "-1" && chosen !== -1) {
+                  const chosenIdx = parseInt(chosen, 10);
+                  const target = targets[chosenIdx];
+                  if (target && target.u && target.u.card) {
+                      logBattle(`✨ 多頭機械旅人 效果：與 【${target.name}】 進行機械合體，並額外召喚 2 個小旅人！`);
+                      target.u.equipments = target.u.equipments || [];
+                      target.u.equipments.push("多頭機械旅人 (合體)");
+                      target.u.isCombined = true;
+                      target.u.bonusScore = (target.u.bonusScore || 0) + 1;
+                      field[zone][idx] = null; // 自己離場
+                      render();
+                      const summonFn = window.promptAndSummonTraveler || (typeof promptAndSummonTraveler !== 'undefined' ? promptAndSummonTraveler : null);
+                      if (summonFn) {
+                          await summonFn("player", 2, "多頭機械旅人");
+                      }
+                      render();
+                      if (isMultiplayer) {
+                          sendFullGameState();
+                      }
+                  }
+              } else {
+                  logBattle("✨ 我方 多頭機械旅人：選擇不發動機械合體。");
               }
           } else {
               const target = targets[0];
-              logBattle(`✨ 對手 多頭機械旅人 效果：與 【${target.name}】 進行合體，並額外召喚 2 個小旅人！`);
-              target.u.equipments = target.u.equipments || [];
-              target.u.equipments.push("多頭機械旅人 (合體)");
-              target.u.bonusScore = (target.u.bonusScore || 0) + 1;
-              field[zone][idx] = null;
-              await (window.promptAndSummonTraveler || promptAndSummonTraveler)("enemy", 2, "多頭機械旅人");
-              render();
+              if (target && target.u && target.u.card) {
+                  logBattle(`✨ 對手 多頭機械旅人 效果：與 【${target.name}】 進行機械合體，並額外召喚 2 個小旅人！`);
+                  target.u.equipments = target.u.equipments || [];
+                  target.u.equipments.push("多頭機械旅人 (合體)");
+                  target.u.isCombined = true;
+                  target.u.bonusScore = (target.u.bonusScore || 0) + 1;
+                  field[zone][idx] = null;
+                  render();
+                  const summonFn = window.promptAndSummonTraveler || (typeof promptAndSummonTraveler !== 'undefined' ? promptAndSummonTraveler : null);
+                  if (summonFn) {
+                      await summonFn("enemy", 2, "多頭機械旅人");
+                  }
+                  render();
+                  if (isMultiplayer) {
+                      sendFullGameState();
+                  }
+              }
           }
+      } else {
+          logBattle(`✨ ${isPlayer ? "我方" : "對手"} 多頭機械旅人：場上無其他「機械」類型單位，無法發動機械合體。`);
       }
   }
 
