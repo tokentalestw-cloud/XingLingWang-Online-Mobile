@@ -83,6 +83,12 @@ let battleLog = [];
 // 新增生死倒數計數器與遊戲結束狀態
 let countdownActive = false;
 let countdownRemaining = 5;
+let countdownTriggerTurn = null;
+let countdownTriggerRole = null;
+window.countdownActive = false;
+window.countdownRemaining = 5;
+window.countdownTriggerTurn = null;
+window.countdownTriggerRole = null;
 let isGameOverFlag = false;
 
 // 對手行為狀態
@@ -24697,10 +24703,10 @@ function setupWebSocketEvents() {
         if (s.enemyNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
           window.XLW_DEFENSE_RULE.enemyNeedsDefense = s.playerNeedsDefense;
         }
-        if (s.countdownActive !== undefined) countdownActive = s.countdownActive;
-        if (s.countdownRemaining !== undefined) countdownRemaining = s.countdownRemaining;
-        if (s.countdownTriggerTurn !== undefined) countdownTriggerTurn = s.countdownTriggerTurn;
-        if (s.countdownTriggerRole !== undefined) window.countdownTriggerRole = s.countdownTriggerRole;
+        if (s.countdownActive !== undefined) { countdownActive = s.countdownActive; window.countdownActive = s.countdownActive; }
+        if (s.countdownRemaining !== undefined) { countdownRemaining = s.countdownRemaining; window.countdownRemaining = s.countdownRemaining; }
+        if (s.countdownTriggerTurn !== undefined) { countdownTriggerTurn = s.countdownTriggerTurn; window.countdownTriggerTurn = s.countdownTriggerTurn; }
+        if (s.countdownTriggerRole !== undefined) { countdownTriggerRole = s.countdownTriggerRole; window.countdownTriggerRole = s.countdownTriggerRole; }
         
         saveLocalGameState();
         render();
@@ -29902,10 +29908,10 @@ function saveLocalGameState() {
       XLW_coinTossFirstGo: window.XLW_coinTossFirstGo || null,
       playerNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.playerNeedsDefense : false,
       enemyNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.enemyNeedsDefense : false,
-      countdownActive: countdownActive || false,
-      countdownRemaining: countdownRemaining || 0,
-      countdownTriggerTurn: countdownTriggerTurn || null,
-      countdownTriggerRole: window.countdownTriggerRole || null,
+      countdownActive: (typeof countdownActive !== 'undefined' ? countdownActive : window.countdownActive) || false,
+      countdownRemaining: (typeof countdownRemaining !== 'undefined' ? countdownRemaining : window.countdownRemaining) || 0,
+      countdownTriggerTurn: (typeof countdownTriggerTurn !== 'undefined' ? countdownTriggerTurn : window.countdownTriggerTurn) || null,
+      countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null,
       battleLog: Array.isArray(battleLog) ? battleLog : [],
       normalSummonUsed: normalSummonUsed,
       tacticalSummonUsed: tacticalSummonUsed,
@@ -29976,10 +29982,10 @@ window.xlwApplySavedStateObject = function(s) {
       window.XLW_DEFENSE_RULE.enemyNeedsDefense = s.enemyNeedsDefense;
     }
     
-    if (s.countdownActive !== undefined) countdownActive = s.countdownActive;
-    if (s.countdownRemaining !== undefined) countdownRemaining = s.countdownRemaining;
-    if (s.countdownTriggerTurn !== undefined) countdownTriggerTurn = s.countdownTriggerTurn;
-    if (s.countdownTriggerRole !== undefined) window.countdownTriggerRole = s.countdownTriggerRole;
+    if (s.countdownActive !== undefined) { countdownActive = s.countdownActive; window.countdownActive = s.countdownActive; }
+    if (s.countdownRemaining !== undefined) { countdownRemaining = s.countdownRemaining; window.countdownRemaining = s.countdownRemaining; }
+    if (s.countdownTriggerTurn !== undefined) { countdownTriggerTurn = s.countdownTriggerTurn; window.countdownTriggerTurn = s.countdownTriggerTurn; }
+    if (s.countdownTriggerRole !== undefined) { countdownTriggerRole = s.countdownTriggerRole; window.countdownTriggerRole = s.countdownTriggerRole; }
     
     if (Array.isArray(s.battleLog) && s.battleLog.length > 0) {
       battleLog = s.battleLog;
@@ -30229,10 +30235,10 @@ function sendFullGameStateToOpponent(includeTurnPhase = false) {
     XLW_coinTossFirstGo: window.XLW_coinTossFirstGo || null,
     playerNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.playerNeedsDefense : false,
     enemyNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.enemyNeedsDefense : false,
-    countdownActive: countdownActive || false,
-    countdownRemaining: countdownRemaining || 0,
-    countdownTriggerTurn: countdownTriggerTurn || null,
-    countdownTriggerRole: window.countdownTriggerRole || null
+    countdownActive: (typeof countdownActive !== 'undefined' ? countdownActive : window.countdownActive) || false,
+    countdownRemaining: (typeof countdownRemaining !== 'undefined' ? countdownRemaining : window.countdownRemaining) || 0,
+    countdownTriggerTurn: (typeof countdownTriggerTurn !== 'undefined' ? countdownTriggerTurn : window.countdownTriggerTurn) || null,
+    countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null
   };
   ws.send(JSON.stringify({
     action: "sync_game_state",
