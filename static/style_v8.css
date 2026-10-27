@@ -6105,13 +6105,13 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .xlw-tutorial-box {
   position: absolute !important;
   width: fit-content !important;
-  max-width: min(290px, calc(calc(100 * var(--xvw, 1vw)) - 24px)) !important;
-  min-width: 170px !important;
+  max-width: min(250px, calc(calc(100 * var(--xvw, 1vw)) - 24px)) !important;
+  min-width: 140px !important;
   min-height: 86px !important;
   background: rgba(12, 9, 26, 0.97) !important;
   border: 1.5px solid #00e5ff !important;
   border-radius: 12px !important;
-  padding: 6px 12px 6px 66px !important;
+  padding: 6px 10px !important;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 229, 255, 0.22) !important;
   pointer-events: auto !important;
   z-index: 1000030 !important;
@@ -6126,14 +6126,14 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 
 #xlwTutorialMentorSprite {
   position: absolute !important;
-  bottom: 6px !important;
-  left: 8px !important;
-  width: 52px !important;
-  height: 72px !important;
+  bottom: 0 !important;
+  left: -46px !important;
+  width: 66px !important;
+  height: 90px !important;
   object-fit: contain !important;
   object-position: bottom center !important;
   pointer-events: none !important;
-  z-index: 2 !important;
+  z-index: -1 !important;
   filter: drop-shadow(0 2px 4px rgba(0, 229, 255, 0.35)) !important;
   transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) !important;
   animation: yukiCoherentBreath 3.2s infinite ease-in-out !important;
@@ -6216,10 +6216,10 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* 後半段實戰演練專屬：半透明微型指引模式，雪女依舊常駐陪伴 */
 .xlw-tutorial-box.battle-compact-mode {
   width: fit-content !important;
-  max-width: min(260px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
-  min-width: 160px !important;
+  max-width: min(220px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
+  min-width: 130px !important;
   min-height: 74px !important;
-  padding: 5px 8px 5px 56px !important;
+  padding: 5px 8px !important;
   background: rgba(10, 8, 20, 0.90) !important;
   border: 1.5px solid rgba(0, 229, 255, 0.45) !important;
   border-radius: 10px !important;
@@ -6234,15 +6234,16 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background: rgba(10, 8, 20, 0.96) !important;
 }
 
-/* 實戰演練期間雪女確實在框架內，底端對齊，左側不突出 */
+/* 實戰演練期間雪女常駐在解說框外左側生動陪伴 */
 .xlw-tutorial-box.battle-compact-mode #xlwTutorialMentorSprite {
   display: block !important;
   position: absolute !important;
-  width: 46px !important;
-  height: 62px !important;
-  left: 6px !important;
-  bottom: 6px !important;
+  width: 56px !important;
+  height: 76px !important;
+  left: -40px !important;
+  bottom: 0 !important;
   object-fit: contain !important;
+  z-index: -1 !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-box-header {

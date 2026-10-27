@@ -33024,16 +33024,16 @@ window.XLW_Tutorial = {
         const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
         if (isCompactBattle) {
           sprite.style.display = "block";
-          sprite.style.width = "46px";
-          sprite.style.height = "62px";
-          sprite.style.left = "6px";
-          sprite.style.bottom = "6px";
+          sprite.style.width = "56px";
+          sprite.style.height = "76px";
+          sprite.style.left = "-40px";
+          sprite.style.bottom = "0px";
         } else {
           sprite.style.display = "block";
-          sprite.style.width = "52px";
-          sprite.style.height = "72px";
-          sprite.style.left = "8px";
-          sprite.style.bottom = "6px";
+          sprite.style.width = "64px";
+          sprite.style.height = "86px";
+          sprite.style.left = "-44px";
+          sprite.style.bottom = "0px";
         }
     }
     this.initDrag();
@@ -33079,7 +33079,7 @@ window.XLW_Tutorial = {
       if (!isDragging) return;
       const dx = clientX - startX;
       const dy = clientY - startY;
-      const newLeft = Math.max(8, Math.min(window.innerWidth - box.offsetWidth - 8, initialLeft + dx));
+      const newLeft = Math.max(50, Math.min(window.innerWidth - box.offsetWidth - 8, initialLeft + dx));
       const newTop = Math.max(6, Math.min(window.innerHeight - box.offsetHeight - 6, initialTop + dy));
       box.style.bottom = "";
       box.style.right = "";
@@ -33165,9 +33165,9 @@ window.XLW_Tutorial = {
               tutorialBox.style.transform = '';
 
               if (isCompactBattle) {
-                // 實戰演練階段：精巧停靠在左上角頂端外緣，完全不擋戰場與按鈕
+                // 實戰演練階段：精巧停靠在左上角頂端外緣，雪女立繪在框外左側(-40px)，因此 left 設 52px 確保雪女完整顯示在手機視窗內(52-40=12px)
                 const overlapsTopLeft = (rect.top < 130 && rect.left < 220);
-                tutorialBox.style.left = '12px';
+                tutorialBox.style.left = '52px';
                 if (overlapsTopLeft) {
                   tutorialBox.style.bottom = '10px';
                 } else {
