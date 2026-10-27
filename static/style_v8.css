@@ -425,36 +425,32 @@ button:disabled {
 
 .mulligan-card-inspect-btn {
   position: absolute;
-  top: -24px;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 20px;
-  padding: 0 7px;
-  border-radius: 10px;
-  background: rgba(18, 12, 28, 0.94);
+  top: 3px;
+  right: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(18, 12, 28, 0.92);
   border: 1px solid rgba(255, 215, 106, 0.9);
   color: #ffd76a;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9.5px;
   cursor: pointer;
   z-index: 50;
   transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
   pointer-events: auto;
-  white-space: nowrap;
+  padding: 0;
 }
 
 .mulligan-card-inspect-btn:hover,
 .mulligan-card-inspect-btn:active {
-  transform: translateX(-50%) scale(1.08);
+  transform: scale(1.15);
   background: rgba(55, 20, 85, 0.98);
-  border-color: #ffffff;
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 215, 106, 0.8);
+  box-shadow: 0 3px 10px rgba(255, 215, 106, 0.7);
 }
 
 /* ===== 8. 擃??∠??祇? (Card) ===== */
@@ -1134,7 +1130,7 @@ button:disabled {
   border: 2px solid var(--gold-accent);
   border-radius: 16px;
   width: 500px;
-  max-width: 90vw;
+  max-width: calc(90 * var(--xvw, 1vw));
   padding: 24px;
   position: relative;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
@@ -1404,8 +1400,8 @@ button:disabled {
   border: 2px solid #ffd76a;
   border-radius: 16px;
   width: 620px;
-  max-width: 94vw;
-  max-height: 90vh;
+  max-width: calc(94 * var(--xvw, 1vw));
+  max-height: calc(90 * var(--xvh, 1vh));
   padding: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(205, 170, 82, 0.35);
   display: flex;
@@ -1471,7 +1467,7 @@ button:disabled {
   gap: 16px;
   align-items: flex-start;
   overflow-y: auto;
-  max-height: calc(90vh - 140px);
+  max-height: calc(calc(90 * var(--xvh, 1vh)) - 140px);
   padding: 4px;
 }
 
@@ -2276,9 +2272,9 @@ button:disabled {
 .xlw-chain-overlay {
   position: fixed !important;
   inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
+  width: calc(100 * var(--xvw, 1vw)) !important;
+  height: calc(100 * var(--xvh, 1vh)) !important;
+  height: calc(100 * var(--xvh, 1vh)) !important;
   background: rgba(8, 6, 16, 0.8) !important;
   z-index: 100000 !important;
   display: none;
@@ -2310,11 +2306,11 @@ button:disabled {
 }
 
 .chain-title {
-  font-size: clamp(16px, 3.6vh, 24px) !important;
+  font-size: clamp(16px, calc(3.6 * var(--xvh, 1vh)), 24px) !important;
   font-weight: 900 !important;
   color: #ffe6a0 !important;
   text-shadow: 0 0 15px rgba(255, 230, 160, 0.7);
-  margin-bottom: clamp(6px, 1.6vh, 14px) !important;
+  margin-bottom: clamp(6px, calc(1.6 * var(--xvh, 1vh)), 14px) !important;
   letter-spacing: 1.2px;
   text-align: center !important;
 }
@@ -2323,12 +2319,12 @@ button:disabled {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: clamp(8px, 1.8vw, 16px) !important;
+  gap: clamp(8px, calc(1.8 * var(--xvw, 1vw)), 16px) !important;
   flex-wrap: nowrap !important;
-  max-width: 96vw !important;
+  max-width: calc(96 * var(--xvw, 1vw)) !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  margin-bottom: clamp(6px, 1.8vh, 16px) !important;
+  margin-bottom: clamp(6px, calc(1.8 * var(--xvh, 1vh)), 16px) !important;
   padding: 6px 10px !important;
   box-sizing: border-box !important;
   -webkit-overflow-scrolling: touch !important;
@@ -2356,7 +2352,7 @@ button:disabled {
 }
 
 .chain-card-img {
-  height: clamp(82px, 22vh, 160px) !important;
+  height: clamp(82px, calc(22 * var(--xvh, 1vh)), 160px) !important;
   width: auto !important;
   aspect-ratio: 145 / 203 !important;
   object-fit: fill;
@@ -2399,7 +2395,7 @@ button:disabled {
 }
 
 .chain-divider {
-  font-size: clamp(16px, 3vh, 22px) !important;
+  font-size: clamp(16px, calc(3 * var(--xvh, 1vh)), 22px) !important;
   color: #ffd700;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.85);
   animation: combatVSPulse 0.6s infinite alternate ease-in-out;
@@ -2408,18 +2404,18 @@ button:disabled {
 }
 
 .chain-status-text {
-  font-size: clamp(13px, 2.6vh, 17px) !important;
+  font-size: clamp(13px, calc(2.6 * var(--xvh, 1vh)), 17px) !important;
   font-weight: bold;
   color: #ffe6a0;
   text-shadow: 0 0 10px rgba(255, 230, 160, 0.45);
-  margin: clamp(4px, 1.2vh, 10px) 0 !important;
+  margin: clamp(4px, calc(1.2 * var(--xvh, 1vh)), 10px) 0 !important;
   text-align: center !important;
-  max-width: 92vw !important;
+  max-width: calc(92 * var(--xvw, 1vw)) !important;
   line-height: 1.35 !important;
 }
 
 #xlw-chain-actions {
-  margin-top: clamp(6px, 1.5vh, 15px) !important;
+  margin-top: clamp(6px, calc(1.5 * var(--xvh, 1vh)), 15px) !important;
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
@@ -2427,7 +2423,7 @@ button:disabled {
   justify-content: center !important;
   align-items: center !important;
   width: 100% !important;
-  max-width: 94vw !important;
+  max-width: calc(94 * var(--xvw, 1vw)) !important;
   box-sizing: border-box !important;
   padding: 4px 8px !important;
 }
@@ -2441,7 +2437,7 @@ button:disabled {
   transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   padding: 7px 16px !important;
-  font-size: clamp(12px, 2.2vh, 14px) !important;
+  font-size: clamp(12px, calc(2.2 * var(--xvh, 1vh)), 14px) !important;
   line-height: 1.2 !important;
   height: auto !important;
   min-height: 36px !important;
@@ -2650,7 +2646,7 @@ button:disabled {
 @media (max-width: 0px) {
   html, body {
     height: auto !important;
-    min-height: 100dvh !important;
+    min-height: calc(100 * var(--xvh, 1vh)) !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
     -webkit-text-size-adjust: 100%;
@@ -2706,7 +2702,7 @@ button:disabled {
     position: fixed !important;
     top: 104px !important;
     display: flex !important;
-    width: calc(50vw - 10px) !important;
+    width: calc(calc(50 * var(--xvw, 1vw)) - 10px) !important;
     min-height: 54px !important;
     margin: 0 !important;
     padding: 6px 8px !important;
@@ -2794,7 +2790,7 @@ button:disabled {
     top: 104px !important;
     bottom: auto !important;
     width: calc(100% - 16px) !important;
-    height: min(62vh, 520px) !important;
+    height: min(calc(62 * var(--xvh, 1vh)), 520px) !important;
     z-index: 9800 !important;
   }
   .xlw-left-card-panel img, #leftPanelImg { max-height: 100% !important; object-fit: contain !important; }
@@ -2828,7 +2824,7 @@ button:disabled {
   }
   html, body {
     height: auto !important;
-    min-height: 100dvh !important;
+    min-height: calc(100 * var(--xvh, 1vh)) !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
   }
@@ -2875,7 +2871,7 @@ button:disabled {
     top: auto !important;
     left: auto !important;
     right: auto !important;
-    width: calc(50vw - 8px) !important;
+    width: calc(calc(50 * var(--xvw, 1vw)) - 8px) !important;
     min-height: 50px !important;
     margin: 4px !important;
     padding: 6px 8px !important;
@@ -3086,8 +3082,8 @@ button:disabled {
 
 /* 2. 撌血?∠??曉之?Ｘ (撠箏站?拐葉嚗??牧?蝡??潔??對?蝯???) */
 .xlw-left-card-panel {
-  width: 280px !important;
-  max-height: 520px !important;
+  width: 330px !important;
+  max-height: min(650px, calc(88 * var(--xvh, 1vh))) !important;
   height: auto !important;
   left: 14px !important;
   bottom: 16px !important;
@@ -3211,7 +3207,7 @@ button:disabled {
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 5 / 7 !important;
-  max-height: min(460px, 70vh) !important;
+  max-height: min(540px, calc(80 * var(--xvh, 1vh))) !important;
   border-radius: 12px !important;
   border: 2px solid rgba(255, 255, 255, 0.6) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9) !important;
@@ -3277,9 +3273,9 @@ button:disabled {
 
 .xlw-spell-activation-card-box,
 .xlw-tribute-activation-card-box {
-  width: 80vw !important;
+  width: calc(80 * var(--xvw, 1vw)) !important;
   max-width: 280px !important;
-  max-height: 65vh !important;
+  max-height: calc(65 * var(--xvh, 1vh)) !important;
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
@@ -4073,8 +4069,8 @@ button, select, .forest-summon-btn, .modal-content button, .xlw-modal button, .t
   border-radius: 22px !important;
   width: auto !important;
   min-width: 380px !important;
-  max-width: 90vw !important;
-  max-height: 95vh !important;
+  max-width: calc(90 * var(--xvw, 1vw)) !important;
+  max-height: calc(95 * var(--xvh, 1vh)) !important;
   overflow-y: auto !important;
   padding: 15px 20px !important;
   text-align: center !important;
@@ -5394,7 +5390,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 650px !important; /* ?箏?撖砍漲嚗蝭?iOS Safari 撖砍漲撏拙? */
-    max-width: 90vw !important;
+    max-width: calc(90 * var(--xvw, 1vw)) !important;
     height: 90px !important;
     min-height: 90px !important;
     max-height: 90px !important;
@@ -5466,7 +5462,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     bottom: 0px !important;
     top: auto !important;
     z-index: 10050 !important;
-    transform: scale(0.80) !important;
+    transform: scale(0.95) !important;
     transform-origin: bottom left !important;
   }
 }
@@ -5496,8 +5492,8 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 120vw;
-  height: 120vh;
+  width: calc(120 * var(--xvw, 1vw));
+  height: calc(120 * var(--xvh, 1vh));
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(0,0,0,0) 70%);
   animation: welcomeGlowPulse 6s infinite alternate ease-in-out;
@@ -5646,7 +5642,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   grid-template-columns: repeat(2, 1fr) !important;
   gap: 10px 14px !important;
   width: 440px !important;
-  max-width: 92vw !important;
+  max-width: calc(92 * var(--xvw, 1vw)) !important;
 }
 
 .welcome-menu a {
@@ -6057,39 +6053,39 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 
 .xlw-tutorial-spotlight {
   position: absolute !important;
-  transition: all 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+  transition: top 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), left 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), width 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), height 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), border-color 0.25s ease !important;
   border: 3px solid #00e5ff !important;
   border-radius: 12px !important;
-  box-shadow: 0 0 22px #00e5ff, 0 0 0 9999px rgba(4, 2, 14, 0.82) !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.8), 0 0 0 9999px rgba(4, 2, 14, 0.82) !important;
   pointer-events: none !important;
   z-index: 1000020 !important;
   animation: tutorialSpotlightPulse 2.2s infinite ease-in-out !important;
 }
 
 .xlw-tutorial-spotlight.battle-clear-mode {
-  box-shadow: 0 0 22px #00e5ff, inset 0 0 14px rgba(0, 229, 255, 0.45) !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.8), inset 0 0 12px rgba(0, 229, 255, 0.45) !important;
   animation: tutorialSpotlightClearPulse 1.8s infinite ease-in-out !important;
 }
 
 @keyframes tutorialSpotlightPulse {
   0%, 100% {
     border-color: #00e5ff;
-    box-shadow: 0 0 20px #00e5ff, 0 0 0 9999px rgba(4, 2, 14, 0.82);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.8), 0 0 0 9999px rgba(4, 2, 14, 0.82);
   }
   50% {
     border-color: #ffd76a;
-    box-shadow: 0 0 35px #ffd76a, 0 0 0 9999px rgba(4, 2, 14, 0.86);
+    box-shadow: 0 0 20px rgba(255, 215, 106, 0.9), 0 0 0 9999px rgba(4, 2, 14, 0.82);
   }
 }
 
 @keyframes tutorialSpotlightClearPulse {
   0%, 100% {
     border-color: #00e5ff;
-    box-shadow: 0 0 20px #00e5ff, inset 0 0 12px rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.4);
   }
   50% {
     border-color: #ffd76a;
-    box-shadow: 0 0 32px #ffd76a, inset 0 0 16px rgba(255, 215, 106, 0.55);
+    box-shadow: 0 0 20px rgba(255, 215, 106, 0.9), inset 0 0 12px rgba(255, 215, 106, 0.5);
   }
 }
 
@@ -6109,9 +6105,9 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .xlw-tutorial-box {
   position: absolute !important;
   width: fit-content !important;
-  max-width: min(195px, calc(100vw - 20px)) !important;
+  max-width: min(195px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
   min-width: 110px !important;
-  background: rgba(12, 9, 26, 0.94) !important;
+  background: rgba(12, 9, 26, 0.97) !important;
   border: 1.5px solid #00e5ff !important;
   border-radius: 11px !important;
   padding: 4px 7px !important;
@@ -6119,7 +6115,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   pointer-events: auto !important;
   z-index: 1000030 !important;
   transition: top 0.25s ease, left 0.25s ease, transform 0.25s ease, opacity 0.2s ease !important;
-  backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(4px) !important;
   color: #fff !important;
   font-family: inherit !important;
   bottom: 14px !important;
@@ -6136,17 +6132,21 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   object-fit: contain !important;
   pointer-events: none !important;
   z-index: -1 !important;
-  filter: drop-shadow(0 2px 8px rgba(0, 229, 255, 0.35)) !important;
+  filter: drop-shadow(0 2px 5px rgba(0, 229, 255, 0.35)) !important;
   transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) !important;
   animation: yukiCoherentBreath 3.2s infinite ease-in-out !important;
+  will-change: transform !important;
+  transform: translate3d(0, -4px, 0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
 }
 
 @keyframes yukiCoherentBreath {
   0%, 100% {
-    transform: translateY(-4px) scale(1);
+    transform: translate3d(0, -4px, 0);
   }
   50% {
-    transform: translateY(-8px) scale(1.02);
+    transform: translate3d(0, -8px, 0);
   }
 }
 
@@ -6155,9 +6155,9 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 @keyframes yukiHopAnim {
-  0% { transform: translateY(-2px) scale(0.97); }
-  50% { transform: translateY(-10px) scale(1.03); }
-  100% { transform: translateY(-4px) scale(1); }
+  0% { transform: translate3d(0, -2px, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+  100% { transform: translate3d(0, -4px, 0); }
 }
 
 .tutorial-box-header {
@@ -6214,7 +6214,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* 後半段實戰演練專屬：半透明幽靈微型指引模式，完全不遮擋戰場 */
 .xlw-tutorial-box.battle-compact-mode {
   width: fit-content !important;
-  max-width: min(180px, calc(100vw - 20px)) !important;
+  max-width: min(180px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
   min-width: 120px !important;
   padding: 3px 7px !important;
   background: rgba(10, 8, 20, 0.68) !important;
@@ -6414,8 +6414,8 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   border: 2px solid #ffd76a !important;
   border-radius: 18px !important;
   width: 720px !important;
-  max-width: 95vw !important;
-  max-height: 88vh !important;
+  max-width: calc(95 * var(--xvw, 1vw)) !important;
+  max-height: calc(88 * var(--xvh, 1vh)) !important;
   padding: 20px 24px !important;
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 215, 106, 0.3) !important;
   display: flex !important;
@@ -6673,6 +6673,15 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 /* Base deep space gradient & legacy star overrides removed in favor of xlw-starlight-atmosphere */
 body { background: transparent !important; }
 .game-shell::before, .game-shell::after, .board-wrap::before { display: none !important; }
+
+
+/* ===== 旋轉橫向模式用的視口單位變數（直向畫面以 CSS 旋轉顯示橫向時，vh/vw 軸向互換） ===== */
+:root { --xvh: 1vh; --xvw: 1vw; }
+html.xlw-force-landscape { --xvh: 1vw; --xvw: 1vh; }
+@supports (height: 1dvh) {
+  :root { --xvh: 1dvh; --xvw: 1dvw; }
+  html.xlw-force-landscape { --xvh: 1dvw; --xvw: 1dvh; }
+}
 
 /* ===== 🐱 貓咪大戰爭風格：手機自動全畫面橫向轉向引擎 (Auto Landscape Fullscreen Engine) ===== */
 html.xlw-force-landscape,
@@ -7310,6 +7319,60 @@ body #phaseDisplayPanelHard #phaseTextHard,
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
 }
 
+/* ⚠️ Call Game 雙方即時戰況提醒牌（放置於比分下方） */
+.score-badge-card.call-game-warning-badge {
+  border-radius: 11px !important;
+  padding: 7px 10px !important;
+  margin-top: 4px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+  animation: callGamePulseBorder 1.5s infinite alternate ease-in-out !important;
+}
+
+.score-badge-card.call-game-warning-badge.enemy-declared {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.88) 0%, rgba(69, 10, 10, 0.98) 100%) !important;
+  border: 1.5px solid #ef4444 !important;
+}
+
+.score-badge-card.call-game-warning-badge.player-declared {
+  background: linear-gradient(135deg, rgba(113, 63, 18, 0.88) 0%, rgba(66, 32, 6, 0.98) 100%) !important;
+  border: 1.5px solid #eab308 !important;
+}
+
+@keyframes callGamePulseBorder {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 4px rgba(239, 68, 68, 0.3);
+  }
+  100% {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), 0 0 14px rgba(239, 68, 68, 0.7);
+  }
+}
+
+.call-game-pulse-tag {
+  font-size: 10px !important;
+  padding: 1px 6px !important;
+  border-radius: 8px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.call-game-pulse-tag.red {
+  background: rgba(239, 68, 68, 0.4) !important;
+  color: #fecaca !important;
+  border: 1px solid #ef4444 !important;
+  animation: callGameTagBlink 1s infinite alternate ease-in-out !important;
+}
+
+.call-game-pulse-tag.gold {
+  background: rgba(234, 179, 8, 0.4) !important;
+  color: #fef08a !important;
+  border: 1px solid #eab308 !important;
+}
+
+@keyframes callGameTagBlink {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; filter: brightness(1.3); }
+}
+
 .puzzle-bar-reset-btn {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 215, 106, 0.5);
@@ -7384,9 +7447,9 @@ body #phaseDisplayPanelHard #phaseTextHard,
 }
 
 .xlw-puzzle-modal-box {
-  width: 90vw;
+  width: calc(90 * var(--xvw, 1vw));
   max-width: 480px;
-  max-height: 88vh;
+  max-height: calc(88 * var(--xvh, 1vh));
   overflow-y: auto;
   border-radius: 20px;
   padding: 24px 28px;
@@ -7469,9 +7532,9 @@ body #phaseDisplayPanelHard #phaseTextHard,
 
 /* 殘局挑戰關卡選擇選單彈窗 */
 .xlw-stage-select-box {
-  width: 92vw;
+  width: calc(92 * var(--xvw, 1vw));
   max-width: 620px;
-  max-height: 88vh;
+  max-height: calc(88 * var(--xvh, 1vh));
   overflow-y: auto;
   border-radius: 20px;
   padding: 24px 26px;

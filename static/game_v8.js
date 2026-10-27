@@ -424,8 +424,8 @@ window.xlwShowRevealOverlay = function(card, side) {
     overlay.style.left = "0";
     overlay.style.right = "0";
     overlay.style.bottom = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
+    overlay.style.width = "calc(100 * var(--xvw, 1vw))";
+    overlay.style.height = "calc(100 * var(--xvh, 1vh))";
     overlay.style.background = "rgba(0, 0, 0, 0.75)";
     overlay.style.display = "flex";
     overlay.style.flexDirection = "column";
@@ -443,7 +443,7 @@ window.xlwShowRevealOverlay = function(card, side) {
 
     overlay.innerHTML = `
       <div class="xlw-spell-activation-title" style="color: ${titleColor}; font-size: 22px; font-weight: 900; margin-bottom: 12px; text-shadow: 0 0 10px ${titleColor}, 2px 2px 0 #000;">${titleText}</div>
-      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 260px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
+      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: calc(80 * var(--xvw, 1vw)); max-width: 260px; max-height: calc(65 * var(--xvh, 1vh)); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
         <img class="xlw-spell-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px !important; height: 240px !important; max-width: 170px !important; max-height: 240px !important; object-fit: cover !important; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px; display: block;">
         <div class="xlw-spell-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
         <div class="xlw-spell-activation-card-effect" style="font-size: 12px; color: #e0e0e0; line-height: 1.4; word-break: break-word;">${card.effect_text || ""}</div>
@@ -1251,6 +1251,7 @@ function newGame() {
   isMyTurn = true; 
   opponent_mulligan_done = true; 
   isGameOverFlag = false;
+  if (window.xlwClearGameOverUI) window.xlwClearGameOverUI();
   countdownActive = false;
   countdownRemaining = 4;
   window.XLW_callGameDeclared = false;
@@ -6687,7 +6688,7 @@ window.xlwTriggerFairyProphetEffect = function() {
     overlay.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;";
 
     const modalBox = document.createElement("div");
-    modalBox.style.cssText = "background: linear-gradient(135deg, #1f1a18 0%, #110e0d 100%); border: 2px solid #ffd76a; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,215,106,0.15); width: 92vw; max-width: 420px; max-height: 85vh; padding: 14px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;";
+    modalBox.style.cssText = "background: linear-gradient(135deg, #1f1a18 0%, #110e0d 100%); border: 2px solid #ffd76a; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,215,106,0.15); width: calc(92 * var(--xvw, 1vw)); max-width: 420px; max-height: calc(85 * var(--xvh, 1vh)); padding: 14px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;";
 
     const header = document.createElement("div");
     header.style.cssText = "text-align: center;";
@@ -6698,7 +6699,7 @@ window.xlwTriggerFairyProphetEffect = function() {
     modalBox.appendChild(header);
 
     const cardsContainer = document.createElement("div");
-    cardsContainer.style.cssText = "display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; padding-right: 2px;";
+    cardsContainer.style.cssText = "display: flex; flex-direction: column; gap: 8px; max-height: calc(55 * var(--xvh, 1vh)); overflow-y: auto; padding-right: 2px;";
     modalBox.appendChild(cardsContainer);
 
     function renderCards() {
@@ -19796,7 +19797,26 @@ function xlwSanitizeGoatCardTypes() {
   }
 }
 
+// 清除上一局遺留的結局 UI（右下角「顯示結局面版」按鈕、結算面板、手牌層級鎖定）
+window.xlwClearGameOverUI = function() {
+  document.querySelectorAll("#reopenResultBtn").forEach(b => b.remove());
+  const resPanel = document.getElementById("xlwResultPanel");
+  if (resPanel) { resPanel.classList.remove("show"); resPanel.innerHTML = ""; }
+  const hp = document.querySelector(".hand-panel");
+  if (hp) { hp.style.removeProperty("z-index"); hp.style.pointerEvents = ""; }
+  const h = document.getElementById("hand");
+  if (h) { h.style.removeProperty("z-index"); h.style.pointerEvents = ""; }
+  const efh = document.getElementById("xlwEnemyFloatingHand");
+  if (efh && efh.style.getPropertyValue("display") === "none" && efh.style.getPropertyPriority("display") === "important") {
+    efh.style.removeProperty("display");
+  }
+};
+
 function render() {
+  // 新局（非結束狀態）時自動清除上一局殘留的結局按鈕/面板
+  if (!isGameOverFlag && (document.getElementById("reopenResultBtn") || document.querySelector("#xlwResultPanel.show"))) {
+    window.xlwClearGameOverUI();
+  }
   renderEnemyFloatingHand();
   // 易怒喵 (C-CAT-0055) 進入/移動偵測
   if (phase === "防守階段" && window.XLW_previousFrontRow) {
@@ -20322,18 +20342,14 @@ function renderHand() {
       }
       const inspectBtn = document.createElement("div");
       inspectBtn.className = "mulligan-card-inspect-btn";
-      inspectBtn.title = "點選卡牌上方查看詳細資訊";
-      inspectBtn.innerHTML = "🔍 詳情";
+      inspectBtn.title = "點擊查看卡牌詳情";
+      inspectBtn.innerHTML = "🔍";
       const openInspect = (e) => {
         if (e) {
           e.stopPropagation();
           e.preventDefault();
         }
-        if (typeof window.xlwOpenMulliganInspector === "function") {
-          window.xlwOpenMulliganInspector(idx);
-        } else {
-          showModal(card);
-        }
+        showModal(card);
       };
       inspectBtn.onclick = openInspect;
       inspectBtn.onpointerdown = (e) => { e.stopPropagation(); };
@@ -23816,6 +23832,44 @@ function renderScore() {
     </div>
   ` : "";
 
+  let callGameSectionHtml = "";
+  if (window.XLW_callGameDeclared) {
+    const isEnemyDeclaring = (window.XLW_callGameDeclaringPlayer === "enemy");
+    const cond = window.XLW_callGameCondition;
+    const condDesc = (cond === 1) ? "總比分達到 20★ (蛇夫座存在時 15★)" : "場上單位數比敵方多 4 個 (蛇夫座存在時 3 個)";
+    if (isEnemyDeclaring) {
+      callGameSectionHtml = `
+        <div class="score-badge-card call-game-warning-badge enemy-declared">
+          <div style="color: #ff4d4f; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 10px rgba(255, 77, 79, 0.8);">
+            <span>⚠️ 警戒：對手已宣告 Call Game！</span>
+            <span class="call-game-pulse-tag red">被宣告中</span>
+          </div>
+          <div style="color: #ffccc7; font-size: 11.5px; margin-top: 5px; line-height: 1.35;">
+            🎯 對手目標：<span style="color: #ffd76a; font-weight: bold;">${condDesc}</span>
+          </div>
+          <div style="color: #ffa39e; font-size: 11px; margin-top: 4px; font-weight: bold;">
+            ⏱️ 請在對手下回合主要階段前消滅對手單位或追分，瓦解其宣告！
+          </div>
+        </div>
+      `;
+    } else {
+      callGameSectionHtml = `
+        <div class="score-badge-card call-game-warning-badge player-declared">
+          <div style="color: #ffd76a; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 10px rgba(255, 215, 106, 0.8);">
+            <span>👑 我方 Call Game 宣告中</span>
+            <span class="call-game-pulse-tag gold">生效中</span>
+          </div>
+          <div style="color: #fef08a; font-size: 11.5px; margin-top: 5px; line-height: 1.35;">
+            🎯 達成條件：<span style="color: #fff; font-weight: bold;">${condDesc}</span>
+          </div>
+          <div style="color: #86efac; font-size: 11px; margin-top: 4px; font-weight: bold;">
+            ✨ 若下回合開始仍滿足條件，我方將直接獲得勝利！
+          </div>
+        </div>
+      `;
+    }
+  }
+
   scoreBadge.innerHTML = `
     <div class="score-badge-section">
       <div class="score-badge-card player">
@@ -23837,6 +23891,7 @@ function renderScore() {
         </div>
       </div>
       ${puzzleSectionHtml}
+      ${callGameSectionHtml}
     </div>
   `;
 
@@ -24447,8 +24502,8 @@ function adjustBoardScale() {
 
   if (isMobile && isLandscapeMobile) {
     if (shell) {
-      shell.style.height = "100vh";
-      shell.style.minHeight = "100vh";
+      shell.style.height = "calc(100 * var(--xvh, 1vh))";
+      shell.style.minHeight = "calc(100 * var(--xvh, 1vh))";
     }
     if (wrap) {
       wrap.style.height = "100%";
@@ -24611,17 +24666,22 @@ function setupWebSocketEvents() {
         for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
           if (field[zone]) {
             field[zone].forEach(u => {
-              if (u && u.summonedZone && zoneMap[u.summonedZone]) {
-                u.summonedZone = zoneMap[u.summonedZone];
-              }
-              if (u && u.target && u.target.zone && zoneMap[u.target.zone]) {
-                u.target.zone = zoneMap[u.target.zone];
-              }
-              if (u && u.kidnappedCards) {
-                u.kidnappedCards.forEach(c => {
-                  if (c.originalOwner === "player") c.originalOwner = "enemy";
-                  else if (c.originalOwner === "enemy") c.originalOwner = "player";
-                });
+              if (u) {
+                if (u.card) {
+                  u.card.creator = zone.startsWith("player_") ? "player" : "enemy";
+                }
+                if (u.summonedZone && zoneMap[u.summonedZone]) {
+                  u.summonedZone = zoneMap[u.summonedZone];
+                }
+                if (u.target && u.target.zone && zoneMap[u.target.zone]) {
+                  u.target.zone = zoneMap[u.target.zone];
+                }
+                if (u.kidnappedCards) {
+                  u.kidnappedCards.forEach(c => {
+                    if (c.originalOwner === "player") c.originalOwner = "enemy";
+                    else if (c.originalOwner === "enemy") c.originalOwner = "player";
+                  });
+                }
               }
             });
           }
@@ -24747,10 +24807,34 @@ function setupWebSocketEvents() {
         if (s.countdownRemaining !== undefined) { countdownRemaining = s.countdownRemaining; window.countdownRemaining = s.countdownRemaining; }
         if (s.countdownTriggerTurn !== undefined) { countdownTriggerTurn = s.countdownTriggerTurn; window.countdownTriggerTurn = s.countdownTriggerTurn; }
         if (s.countdownTriggerRole !== undefined) { countdownTriggerRole = s.countdownTriggerRole; window.countdownTriggerRole = s.countdownTriggerRole; }
+        if (s.callGameDeclared !== undefined) {
+          window.XLW_callGameDeclared = Boolean(s.callGameDeclared);
+          window.XLW_callGameCondition = s.callGameCondition || null;
+          window.XLW_callGameTurn = s.callGameTurn || null;
+          if (s.callGameDeclaringPlayer === "player") {
+            window.XLW_callGameDeclaringPlayer = "enemy";
+          } else if (s.callGameDeclaringPlayer === "enemy") {
+            window.XLW_callGameDeclaringPlayer = "player";
+          } else {
+            window.XLW_callGameDeclaringPlayer = null;
+          }
+        }
+        if (s.playerDeckName) {
+          if (!window.XLW_ENEMY) window.XLW_ENEMY = {};
+          window.XLW_ENEMY.deckName = s.playerDeckName;
+          if (typeof renderFactionCards === 'function') renderFactionCards();
+        }
+        if (s.isGameOverFlag && !isGameOverFlag) {
+          executeGameOverCalculations();
+        }
         
         saveLocalGameState();
         render();
       }
+    } else if (data.action === "game_over") {
+      window.XLW_syncGameOverFromOpponent = true;
+      executeGameOverCalculations(data.isCallGame || false);
+      window.XLW_syncGameOverFromOpponent = false;
     } else if (data.type === "opponent_disconnected") {
       window.xlwClearAllPendingResolvers();
       logBattle(data.message);
@@ -25829,9 +25913,13 @@ function setupWebSocketEvents() {
       window.XLW_callGameTurn = data.turn;
       
       const conditionStr = data.condition === 1 
-        ? "\u5206\u6578\u52a0\u7e3d\u81f3\u5c11\u4e8c\u5341\u5206" 
-        : "\u5834\u4e0a\u55ae\u4f4d\u6578\u91cf\u81f3\u5c11\u6bd4\u6575\u65b9\u591a\u56db\u500b";
-      logBattle(`\u3010\u5c0d\u624b\u5ba3\u544a\u3011\u5c0d\u624b\u5ba3\u544a\u63d0\u65e9\u7d50\u675f (Call Game)\uff01\u689d\u4ef6\uff1a${conditionStr}\u3002`);
+        ? "分數加總至少二十分 (蛇夫座存在時 15★)" 
+        : "場上單位數量至少比敵方多四個 (蛇夫座存在時 3 個)";
+      logBattle(`【對手宣告】對手宣告提早結束 (Call Game)！條件：${conditionStr}。`);
+      if (typeof window.xlwShowPhaseBanner === 'function') {
+        window.xlwShowPhaseBanner("⚠️ 對手宣告 Call Game！", "#ff4d4f");
+      }
+      try { if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('phase'); } catch(e){}
       render();
       
       const playerHasReject = hand.some(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
@@ -27166,7 +27254,7 @@ function showXLWConfirm(title, message, confirmText = "要", cancelText = "不�
       border: 2px solid var(--gold-accent);
       border-radius: 16px;
       width: 420px;
-      max-width: 90vw;
+      max-width: calc(90 * var(--xvw, 1vw));
       padding: 24px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(205, 170, 82, 0.4);
       text-align: center;
@@ -27249,7 +27337,7 @@ function showXLWChoiceModal(title, message, options) {
       border: 2px solid var(--gold-accent);
       border-radius: 16px;
       width: 480px;
-      max-width: 90vw;
+      max-width: calc(90 * var(--xvw, 1vw));
       padding: 24px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(205, 170, 82, 0.4);
       text-align: center;
@@ -27523,9 +27611,9 @@ function showGraveyardDetailModal(title, graveList) {
     border: 2px solid var(--gold-accent);
     border-radius: 16px;
     width: 600px;
-    max-width: 90vw;
+    max-width: calc(90 * var(--xvw, 1vw));
     height: 500px;
-    max-height: 80vh;
+    max-height: calc(80 * var(--xvh, 1vh));
     padding: 24px;
     box-shadow: 0 12px 50px rgba(0, 0, 0, 0.95), 0 0 25px rgba(205, 170, 82, 0.45);
     display: flex;
@@ -27686,10 +27774,24 @@ function triggerCallGameEnd(winner) {
   }
   
   let result = "DEFEAT";
-  let msg = "對手勝利！";
+  let msg = "對手提早結束宣告達成，對手勝利！";
   if (winner === "player") {
     result = "VICTORY";
-    msg = "我方勝利！";
+    msg = "我方提早結束宣告達成，我方勝利！";
+  }
+
+  if (result === "VICTORY") {
+    try { if (window.xlwPlaySFX) window.xlwPlaySFX('victory'); } catch (e) {}
+    if (typeof window.xlwShowPhaseBanner === 'function') {
+      window.xlwShowPhaseBanner("🏆 戰鬥結束 — 獲得勝利！", "#ffd76a");
+    }
+    setStatus("🎉 恭喜獲勝！提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
+  } else {
+    try { if (window.xlwPlaySFX) window.xlwPlaySFX('defeat'); } catch (e) {}
+    if (typeof window.xlwShowPhaseBanner === 'function') {
+      window.xlwShowPhaseBanner("💀 戰鬥結束 — 遺憾戰敗", "#ff4d4f");
+    }
+    setStatus("💀 本局遺憾落敗。對手提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
   }
   
   let panel = document.getElementById("xlwResultPanel");
@@ -27714,10 +27816,17 @@ function triggerCallGameEnd(winner) {
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
 
+  const isVic = (result === "VICTORY");
+  const boxBorder = isVic ? "2px solid #ffd76a" : "2px solid #ef4444";
+  const boxBg = isVic ? "linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%)" : "linear-gradient(135deg, #260d0d 0%, #0d0404 100%)";
+  const boxGlow = isVic ? "0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.25)" : "0 8px 32px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.25)";
+  const titleColor = isVic ? "#ffd76a" : "#ff4d4f";
+  const titleGlow = isVic ? "0 0 12px rgba(255, 215, 106, 0.8)" : "0 0 15px rgba(255, 77, 79, 0.85)";
+
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.15); padding: 12px 16px; text-align: center; width: 92vw; max-width: 340px; max-height: 85vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 24px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 215, 106, 0.6); margin-bottom: 4px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #eee; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+    <div class="xlw-result-box ${isVic ? "victory" : "defeat"}" style="border: ${boxBorder}; background: ${boxBg}; border-radius: 14px; box-shadow: ${boxGlow}; padding: 12px 16px; text-align: center; width: calc(92 * var(--xvw, 1vw)); max-width: 340px; max-height: calc(85 * var(--xvh, 1vh)); overflow-y: auto;">
+      <div class="xlw-result-title ${isVic ? "victory" : "defeat"}" style="color: ${titleColor}; font-size: 26px; font-weight: 900; letter-spacing: 2px; text-shadow: ${titleGlow}; margin-bottom: 4px; text-transform: uppercase;">${result}</div>
+      <div class="xlw-result-msg" style="color: ${isVic ? "#fef08a" : "#ffccc7"}; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
         ${msg}
         <div style="font-size:11px; color:#aaa; margin-top:2px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
       </div>
@@ -27737,7 +27846,7 @@ function triggerCallGameEnd(winner) {
       </div>
       
       <div style="display: flex; flex-direction: row; gap: 8px; justify-content: center;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} document.querySelectorAll('#reopenResultBtn').forEach(b=>b.remove()); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{ob.remove(); document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
         <button onclick="if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle(); else location.reload();" style="flex: 1; background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); white-space: nowrap;">🏠 返回首頁</button>
       </div>
     </div>
@@ -27873,6 +27982,33 @@ function executeGameOverCalculations(isCallGame = false) {
       msg = "平手 (對手為後手，對手獲勝！)";
     }
   }
+  if (result === "VICTORY") {
+    try { if (window.xlwPlaySFX) window.xlwPlaySFX('victory'); } catch (e) {}
+    if (typeof window.xlwShowPhaseBanner === 'function') {
+      window.xlwShowPhaseBanner("🏆 戰鬥結束 — 獲得勝利！", "#ffd76a");
+    }
+    setStatus("🎉 恭喜獲勝！對決已結束。點擊下方可檢視戰局或返回首頁。");
+  } else if (result === "DEFEAT") {
+    try { if (window.xlwPlaySFX) window.xlwPlaySFX('defeat'); } catch (e) {}
+    if (typeof window.xlwShowPhaseBanner === 'function') {
+      window.xlwShowPhaseBanner("💀 戰鬥結束 — 遺憾戰敗", "#ff4d4f");
+    }
+    setStatus("💀 本局遺憾落敗。對決已結束。點擊下方可檢視戰局或返回首頁。");
+  } else {
+    try { if (window.xlwPlaySFX) window.xlwPlaySFX('phase'); } catch (e) {}
+    if (typeof window.xlwShowPhaseBanner === 'function') {
+      window.xlwShowPhaseBanner("⚖️ 戰鬥結束 — 平局", "#93c5fd");
+    }
+    setStatus("⚖️ 雙方戰成平局。對決已結束。點擊下方可檢視戰局或返回首頁。");
+  }
+
+  // 線上多人對戰：若為本地主動結算，向對手廣播遊戲結束通知
+  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN && !window.XLW_syncGameOverFromOpponent) {
+    ws.send(JSON.stringify({
+      action: "game_over",
+      isCallGame: isCallGame
+    }));
+  }
   
   let panel = document.getElementById("xlwResultPanel");
   if (!panel) {
@@ -27896,10 +28032,22 @@ function executeGameOverCalculations(isCallGame = false) {
   const efh = document.getElementById("xlwEnemyFloatingHand");
   if (efh) efh.style.setProperty("display", "none", "important");
 
+  const isVic = (result === "VICTORY");
+  const isDef = (result === "DEFEAT");
+  const boxBorder = isVic ? "2px solid #ffd76a" : (isDef ? "2px solid #ef4444" : "2px solid #60a5fa");
+  const boxBg = isVic 
+    ? "linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%)" 
+    : (isDef ? "linear-gradient(135deg, #260d0d 0%, #0d0404 100%)" : "linear-gradient(135deg, #0d1b2a 0%, #050a14 100%)");
+  const boxGlow = isVic 
+    ? "0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.25)" 
+    : (isDef ? "0 8px 32px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.25)" : "0 8px 32px rgba(96, 165, 250, 0.4), inset 0 0 15px rgba(96, 165, 250, 0.2)");
+  const titleColor = isVic ? "#ffd76a" : (isDef ? "#ff4d4f" : "#93c5fd");
+  const titleGlow = isVic ? "0 0 12px rgba(255, 215, 106, 0.8)" : (isDef ? "0 0 15px rgba(255, 77, 79, 0.85)" : "0 0 12px rgba(147, 197, 253, 0.8)");
+
   panel.innerHTML = `
-    <div class="xlw-result-box" style="border: 2px solid #ffd76a; background: linear-gradient(135deg, #1f1a18 0%, #0d0a09 100%); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 215, 106, 0.15); padding: 12px 16px; text-align: center; width: 92vw; max-width: 340px; max-height: 85vh; overflow-y: auto;">
-      <div class="xlw-result-title" style="color: #ffd76a; font-size: 24px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 215, 106, 0.6); margin-bottom: 4px; text-transform: uppercase;">${result}</div>
-      <div class="xlw-result-msg" style="color: #eee; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+    <div class="xlw-result-box ${isVic ? "victory" : (isDef ? "defeat" : "draw")}" style="border: ${boxBorder}; background: ${boxBg}; border-radius: 14px; box-shadow: ${boxGlow}; padding: 12px 16px; text-align: center; width: calc(92 * var(--xvw, 1vw)); max-width: 340px; max-height: calc(85 * var(--xvh, 1vh)); overflow-y: auto;">
+      <div class="xlw-result-title ${isVic ? "victory" : (isDef ? "defeat" : "draw")}" style="color: ${titleColor}; font-size: 26px; font-weight: 900; letter-spacing: 2px; text-shadow: ${titleGlow}; margin-bottom: 4px; text-transform: uppercase;">${result}</div>
+      <div class="xlw-result-msg" style="color: ${isVic ? "#fef08a" : (isDef ? "#ffccc7" : "#bfdbfe")}; font-size: 15px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
         ${msg}
         <div style="font-size:11px; color:#aaa; margin-top:2px; font-weight:normal;">(${isCallGame ? '提早結束' : '正常結束'})</div>
       </div>
@@ -27919,7 +28067,7 @@ function executeGameOverCalculations(isCallGame = false) {
       </div>
       
       <div style="display: flex; flex-direction: row; gap: 8px; justify-content: center;">
-        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
+        <button onclick="document.getElementById('xlwResultPanel').classList.remove('show'); const hp = document.querySelector('.hand-panel'); if(hp){hp.style.removeProperty('z-index'); hp.style.pointerEvents='';} const h = document.getElementById('hand'); if(h){h.style.removeProperty('z-index'); h.style.pointerEvents='';} document.querySelectorAll('#reopenResultBtn').forEach(b=>b.remove()); const ob = document.createElement('button'); ob.innerHTML='顯示結局面版'; ob.onclick=()=>{ob.remove(); document.getElementById('xlwResultPanel').classList.add('show'); if(hp){hp.style.setProperty('z-index','1','important'); hp.style.pointerEvents='none';} if(h){h.style.setProperty('z-index','1','important'); h.style.pointerEvents='none';}}; ob.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;padding:8px 12px;background:#1a1a1a;color:#ffd76a;border:1px solid #ffd76a;border-radius:6px;box-shadow:0 0 10px rgba(0,0,0,0.8);font-size:13px;cursor:pointer;'; ob.id='reopenResultBtn'; document.body.appendChild(ob); this.parentElement.parentElement.parentElement.querySelector('#reopenResultBtn')?.remove();" style="flex: 1; background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; white-space: nowrap;">檢視結局狀態</button>
         <button onclick="if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle(); else location.reload();" style="flex: 1; background: linear-gradient(to bottom, #d4af37, #aa8222); color:#fff; border:none; border-radius:8px; padding: 8px 10px; font-size: 13px; cursor:pointer; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 8px rgba(0,0,0,0.4); white-space: nowrap;">🏠 返回首頁</button>
       </div>
     </div>
@@ -27953,7 +28101,7 @@ function showCORSProtocolWarning() {
     border: 2px solid #ff4d4f;
     border-radius: 16px;
     width: 540px;
-    max-width: 92vw;
+    max-width: calc(92 * var(--xvw, 1vw));
     padding: 35px;
     box-shadow: 0 15px 50px rgba(255, 77, 79, 0.35);
     text-align: center;
@@ -28511,8 +28659,8 @@ function xlwShowSpellActivationOverlay(card, side) {
     overlay.style.left = "0";
     overlay.style.right = "0";
     overlay.style.bottom = "0";
-    /* overlay.style.width = "100vw"; */
-    /* overlay.style.height = "100vh"; */
+    /* overlay.style.width = "calc(100 * var(--xvw, 1vw))"; */
+    /* overlay.style.height = "calc(100 * var(--xvh, 1vh))"; */
     overlay.style.background = "rgba(0, 0, 0, 0.75)";
     overlay.style.display = "flex";
     overlay.style.flexDirection = "column";
@@ -28530,7 +28678,7 @@ function xlwShowSpellActivationOverlay(card, side) {
 
     overlay.innerHTML = `
       <div class="xlw-spell-activation-title" style="color: ${titleColor}; font-size: 24px; font-weight: 900; margin-bottom: 12px; text-shadow: 0 0 10px ${titleColor}, 2px 2px 0 #000;">${titleText}</div>
-      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
+      <div class="xlw-spell-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: calc(80 * var(--xvw, 1vw)); max-width: 280px; max-height: calc(65 * var(--xvh, 1vh)); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
         <img class="xlw-spell-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px; height: 240px; object-fit: fill; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px;">
         <div class="xlw-spell-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
         <div class="xlw-spell-activation-card-effect" style="font-size: 12px; color: #e0e0e0; line-height: 1.4;">${card.effect_text || ""}</div>
@@ -28570,8 +28718,8 @@ function xlwShowTributeSummonOverlay(card, side) {
     overlay.style.left = "0";
     overlay.style.right = "0";
     overlay.style.bottom = "0";
-    /* overlay.style.width = "100vw"; */
-    /* overlay.style.height = "100vh"; */
+    /* overlay.style.width = "calc(100 * var(--xvw, 1vw))"; */
+    /* overlay.style.height = "calc(100 * var(--xvh, 1vh))"; */
     overlay.style.background = "rgba(0, 0, 0, 0.75)";
     overlay.style.display = "flex";
     overlay.style.flexDirection = "column";
@@ -28597,7 +28745,7 @@ function xlwShowTributeSummonOverlay(card, side) {
         <div class="xlw-tribute-activation-title" style="font-size: 24px; font-weight: 900; color: #ffe600; text-shadow: 0 0 10px #ffe600, 2px 2px 0 #000;">${titleText}</div>
         <div class="xlw-tribute-activation-subtitle" style="color: ${subtitleColor}; font-size: 14px; font-weight: bold;">${subtitleText}</div>
       </div>
-      <div class="xlw-tribute-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: 80vw; max-width: 280px; max-height: 65vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
+      <div class="xlw-tribute-activation-card-box" style="background: rgba(18, 12, 16, 0.95); border: 2.5px solid #ffe600; border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.95), 0 0 20px rgba(255, 230, 0, 0.4); display: flex; flex-direction: column; align-items: center; width: calc(80 * var(--xvw, 1vw)); max-width: 280px; max-height: calc(65 * var(--xvh, 1vh)); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; text-align: center;">
         <img class="xlw-tribute-activation-card-img" src="${card.image || "/static/card_back.jpeg"}" alt="${card.name}" style="width: 170px; height: 240px; object-fit: fill; border-radius: 8px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 10px;">
         <div class="xlw-tribute-activation-card-name" style="font-size: 18px; font-weight: 900; color: #ffe600; text-shadow: 1px 1px 0 #000; margin-bottom: 4px;">${card.name}</div>
         <div class="xlw-tribute-activation-card-stats" style="display: flex; gap: 6px; margin-bottom: 8px;">
@@ -29504,9 +29652,9 @@ function showExtraDeckDetailModal(title, extraList, owner) {
     border: 2px solid var(--gold-accent);
     border-radius: 16px;
     width: 600px;
-    max-width: 90vw;
+    max-width: calc(90 * var(--xvw, 1vw));
     height: 500px;
-    max-height: 80vh;
+    max-height: calc(80 * var(--xvh, 1vh));
     padding: 24px;
     box-shadow: 0 12px 50px rgba(0, 0, 0, 0.95), 0 0 25px rgba(205, 170, 82, 0.45);
     display: flex;
@@ -29806,6 +29954,7 @@ window.xlwLeaveOnlineRoom = function(promptConfirm = false) {
   if (fh) fh.style.display = "none";
   const resPanel = document.getElementById("xlwResultPanel");
   if (resPanel) resPanel.classList.remove("show");
+  if (window.xlwClearGameOverUI) window.xlwClearGameOverUI();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
   if (hardPhasePanel) hardPhasePanel.style.setProperty("display", "none", "important");
   const topBarBtn = document.getElementById("xlwFixedTopRightActionBar");
@@ -29850,7 +29999,6 @@ window.xlwResumeSavedOnlineRoom = function() {
     player_id = sess.player_id;
     player_role = sess.role;
     isMultiplayer = true;
-    isMyTurn = (player_role === "player1");
     window.xlwSaveOnlineSession(room_id, player_id, player_role);
     
     const banner = document.getElementById("xlwReconnectNoticeBanner");
@@ -30281,7 +30429,13 @@ function sendFullGameStateToOpponent(includeTurnPhase = false) {
     countdownActive: (typeof countdownActive !== 'undefined' ? countdownActive : window.countdownActive) || false,
     countdownRemaining: (typeof countdownRemaining !== 'undefined' ? countdownRemaining : window.countdownRemaining) || 0,
     countdownTriggerTurn: (typeof countdownTriggerTurn !== 'undefined' ? countdownTriggerTurn : window.countdownTriggerTurn) || null,
-    countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null
+    countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null,
+    callGameDeclared: Boolean(window.XLW_callGameDeclared),
+    callGameCondition: window.XLW_callGameCondition || null,
+    callGameDeclaringPlayer: window.XLW_callGameDeclaringPlayer || null,
+    callGameTurn: window.XLW_callGameTurn || null,
+    playerDeckName: (typeof deckName !== 'undefined' ? deckName : (window.XLW_selectedDeckName || "")),
+    isGameOverFlag: Boolean(isGameOverFlag)
   };
   ws.send(JSON.stringify({
     action: "sync_game_state",
@@ -30602,7 +30756,7 @@ window.xlwShowSoulReturnModal = function(targetValue, candidates) {
       border: 2px solid #cdaa52;
       border-radius: 16px;
       width: 700px;
-      max-width: 95vw;
+      max-width: calc(95 * var(--xvw, 1vw));
       padding: 30px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px rgba(205,170,82,0.3);
       display: flex;
@@ -32101,32 +32255,28 @@ window.xlwAutoLandscapeFullscreen = async function() {
 window.xlwRequestFullScreen = window.xlwAutoLandscapeFullscreen;
 window.xlwLockOrientation = window.xlwAutoLandscapeFullscreen;
 
+window.XLW_IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
 window.xlwCheckLandscapeOrientation = function() {
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  
-  let isPortrait = false;
-  if (screen.orientation && screen.orientation.type) {
-    isPortrait = screen.orientation.type.startsWith('portrait');
-  } else if (typeof window.orientation !== 'undefined') {
-    isPortrait = (window.orientation === 0 || window.orientation === 180);
-  } else {
-    isPortrait = window.innerHeight > window.innerWidth;
-  }
 
-  if (isTouchDevice && isPortrait) {
-    document.documentElement.classList.add("xlw-force-landscape");
-    document.body.classList.add("xlw-force-landscape");
-  } else {
-    document.documentElement.classList.remove("xlw-force-landscape");
-    document.body.classList.remove("xlw-force-landscape");
-  }
+  // 以「實際可視區域」判斷：只要視口是直的，就用 CSS 旋轉成橫向畫面。
+  // （iOS 開啟「直向鎖定」時，視口永遠是直的 → 畫面永遠以橫向顯示、不會再變動）
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const shouldRotate = isTouchDevice && isPortrait;
+  const root = document.documentElement;
+  const changed = root.classList.contains("xlw-force-landscape") !== shouldRotate;
 
-  if (typeof adjustBoardScale === 'function') {
-    adjustBoardScale();
+  root.classList.toggle("xlw-force-landscape", shouldRotate);
+  if (document.body) document.body.classList.toggle("xlw-force-landscape", shouldRotate);
+
+  if (changed || !window.XLW_lastScaleApplied) {
+    window.XLW_lastScaleApplied = true;
+    if (typeof adjustBoardScale === 'function') adjustBoardScale();
   }
 };
 
-// 監聽全螢幕狀態切換事件，一旦進入全螢幕即刻強制鎖定橫向 (Landscape)
+// 監聽全螢幕狀態切換事件，一旦進入全螢幕即刻強制鎖定橫向 (Landscape) — Android 有效，iOS 不支援
 document.addEventListener("fullscreenchange", () => {
   if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
     screen.orientation.lock("landscape").catch(() => {});
@@ -32140,18 +32290,30 @@ document.addEventListener("webkitfullscreenchange", () => {
   if (typeof adjustBoardScale === 'function') adjustBoardScale();
 });
 
-// 全局點擊/觸控即刻啟動全畫面橫向（不需任何提示、不需經過跳轉）
-window.addEventListener("click", window.xlwAutoLandscapeFullscreen, { passive: true });
-window.addEventListener("pointerdown", window.xlwAutoLandscapeFullscreen, { passive: true });
-window.addEventListener("resize", window.xlwCheckLandscapeOrientation);
-window.addEventListener("orientationchange", () => {
-  setTimeout(window.xlwCheckLandscapeOrientation, 80);
-  setTimeout(window.xlwCheckLandscapeOrientation, 250);
-});
+// Android：第一次觸控即嘗試全螢幕＋鎖橫向（之後不再重複觸發，避免每次點擊都重排版面）
+// iOS：系統不提供任何網頁鎖定方向 / 全螢幕 API，完全依賴 CSS 旋轉，不做無效呼叫
+if (!window.XLW_IS_IOS) {
+  const xlwFirstGestureLock = () => {
+    window.removeEventListener("pointerdown", xlwFirstGestureLock);
+    window.xlwAutoLandscapeFullscreen();
+  };
+  window.addEventListener("pointerdown", xlwFirstGestureLock, { passive: true });
+}
+
+let xlwOrientTimer = null;
+const xlwScheduleOrientCheck = () => {
+  window.xlwCheckLandscapeOrientation();
+  clearTimeout(xlwOrientTimer);
+  xlwOrientTimer = setTimeout(window.xlwCheckLandscapeOrientation, 300);
+};
+window.addEventListener("resize", xlwScheduleOrientCheck);
+window.addEventListener("orientationchange", xlwScheduleOrientCheck);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", xlwScheduleOrientCheck);
 
 document.addEventListener("DOMContentLoaded", () => {
   window.xlwCheckLandscapeOrientation();
 });
+window.xlwCheckLandscapeOrientation();
 
 
 // ===== 🏠 登入首頁選單與模式控制引擎 =====
@@ -32301,6 +32463,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   const pModal = document.getElementById("xlwPuzzleModal"); if (pModal) pModal.remove();
   const resPanel = document.getElementById("xlwResultPanel"); if (resPanel) resPanel.classList.remove("show");
+  if (window.xlwClearGameOverUI) window.xlwClearGameOverUI();
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   const lp = document.getElementById("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
@@ -32829,19 +32992,36 @@ window.XLW_Tutorial = {
         const isLastStep = (this.currentStep === this.steps.length - 1);
         const isInteractive = Boolean(step.interactive);
 
-        let targetSrc = "/static/card_images/yuki_tutorial_1.png?v=22.09";
-        if (isLastStep) {
-          targetSrc = "/static/card_images/yuki_tutorial_3.png?v=22.09";
-        } else if (isInteractive || (this.currentStep % 2 === 1)) {
-          targetSrc = "/static/card_images/yuki_tutorial_7.png?v=22.09";
+        // 輕量版立繪（192x256，原圖 768x1024 約 1.2MB 太大，切換時會卡頓）
+        const YUKI_V = "?v=23.01s";
+        const YUKI_POSES = {
+          idle: "/static/card_images/yuki_tutorial_1_s.png" + YUKI_V,
+          win: "/static/card_images/yuki_tutorial_3_s.png" + YUKI_V,
+          guide: "/static/card_images/yuki_tutorial_7_s.png" + YUKI_V
+        };
+        if (!window.XLW_yukiPreloaded) {
+          window.XLW_yukiPreloaded = Object.values(YUKI_POSES).map(src => {
+            const im = new Image();
+            im.decoding = "async";
+            im.src = src;
+            return im;
+          });
         }
 
-        if (!sprite.src.includes(targetSrc)) {
+        let targetSrc = YUKI_POSES.idle;
+        if (isLastStep) {
+          targetSrc = YUKI_POSES.win;
+        } else if (isInteractive || (this.currentStep % 2 === 1)) {
+          targetSrc = YUKI_POSES.guide;
+        }
+
+        if (sprite.getAttribute("src") !== targetSrc) {
+          sprite.decoding = "async";
           sprite.src = targetSrc;
-          // 動作連貫跳動回饋 (Smooth Hop)
           sprite.classList.remove("yuki-hop");
-          void sprite.offsetWidth; // 強制重繪觸發流暢跳動效果
-          sprite.classList.add("yuki-hop");
+          requestAnimationFrame(() => {
+            sprite.classList.add("yuki-hop");
+          });
         }
 
         const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
@@ -33730,6 +33910,7 @@ window.xlwStartPuzzleStage = function(stageNum) {
   if (prebattleModal) prebattleModal.style.setProperty("display", "none", "important");
   const resultPanel = document.getElementById("xlwResultPanel");
   if (resultPanel) resultPanel.classList.remove("show");
+  if (window.xlwClearGameOverUI) window.xlwClearGameOverUI();
 
   const oldModal = document.getElementById("xlwPuzzleModal");
   if (oldModal) oldModal.remove();
@@ -34049,7 +34230,7 @@ window.xlwLaunchFireworks = function() {
 
   const canvas = document.createElement("canvas");
   canvas.id = "xlwFireworksCanvas";
-  canvas.style.cssText = "position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1000000;";
+  canvas.style.cssText = "position: fixed; inset: 0; width: calc(100 * var(--xvw, 1vw)); height: calc(100 * var(--xvh, 1vh)); pointer-events: none; z-index: 1000000;";
   document.body.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
