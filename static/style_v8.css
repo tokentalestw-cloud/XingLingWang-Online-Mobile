@@ -6105,12 +6105,12 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .xlw-tutorial-box {
   position: absolute !important;
   width: fit-content !important;
-  max-width: min(195px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
-  min-width: 110px !important;
+  max-width: min(240px, calc(calc(100 * var(--xvw, 1vw)) - 24px)) !important;
+  min-width: 140px !important;
   background: rgba(12, 9, 26, 0.97) !important;
   border: 1.5px solid #00e5ff !important;
-  border-radius: 11px !important;
-  padding: 4px 7px !important;
+  border-radius: 12px !important;
+  padding: 6px 10px !important;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 229, 255, 0.22) !important;
   pointer-events: auto !important;
   z-index: 1000030 !important;
@@ -6126,9 +6126,9 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 #xlwTutorialMentorSprite {
   position: absolute !important;
   bottom: 0 !important;
-  left: -44px !important;
-  width: 64px !important;
-  height: 86px !important;
+  left: -46px !important;
+  width: 66px !important;
+  height: 90px !important;
   object-fit: contain !important;
   pointer-events: none !important;
   z-index: -1 !important;
@@ -6211,29 +6211,32 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   color: #fff !important;
 }
 
-/* 後半段實戰演練專屬：半透明幽靈微型指引模式，完全不遮擋戰場 */
+/* 後半段實戰演練專屬：半透明微型指引模式，雪女依舊常駐陪伴 */
 .xlw-tutorial-box.battle-compact-mode {
   width: fit-content !important;
-  max-width: min(180px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
-  min-width: 120px !important;
-  padding: 3px 7px !important;
-  background: rgba(10, 8, 20, 0.68) !important;
-  border: 1px solid rgba(0, 229, 255, 0.3) !important;
-  border-radius: 8px !important;
-  backdrop-filter: blur(6px) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
-  opacity: 0.82 !important;
+  max-width: min(215px, calc(calc(100 * var(--xvw, 1vw)) - 20px)) !important;
+  min-width: 130px !important;
+  padding: 5px 8px !important;
+  background: rgba(10, 8, 20, 0.88) !important;
+  border: 1px solid rgba(0, 229, 255, 0.35) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(4px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  opacity: 0.94 !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode:hover,
 .xlw-tutorial-box.battle-compact-mode:active {
   opacity: 1 !important;
-  background: rgba(10, 8, 20, 0.92) !important;
+  background: rgba(10, 8, 20, 0.95) !important;
 }
 
-/* 實戰演練期間完全隱藏側邊突出大立繪，還原完整戰場視野！ */
+/* 實戰演練期間雪女保持靈巧尺寸展示 */
 .xlw-tutorial-box.battle-compact-mode #xlwTutorialMentorSprite {
-  display: none !important;
+  display: block !important;
+  width: 56px !important;
+  height: 76px !important;
+  left: -40px !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-box-header {
@@ -6243,31 +6246,32 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 .xlw-tutorial-box.battle-compact-mode .mentor-name {
-  font-size: 11px !important;
+  font-size: 13px !important;
   color: #80deea !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-step-counter {
-  font-size: 9px !important;
-  padding: 1px 4px !important;
+  font-size: 10px !important;
+  padding: 1px 5px !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-title {
-  font-size: 11px !important;
+  font-size: 13px !important;
   margin-bottom: 2px !important;
   color: #ffd76a !important;
   text-shadow: none !important;
+  line-height: 1.3 !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-content {
-  font-size: 10px !important;
-  line-height: 1.25 !important;
-  margin-bottom: 2px !important;
-  color: #cbd5e1 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  margin-bottom: 3px !important;
+  color: #e2e8f0 !important;
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-action-guide {
-  font-size: 10px !important;
+  font-size: 10.5px !important;
   padding: 2px 4px !important;
   margin-bottom: 2px !important;
 }
@@ -6278,8 +6282,8 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 }
 
 .xlw-tutorial-box.battle-compact-mode .tutorial-btn {
-  padding: 1.5px 6px !important;
-  font-size: 9.5px !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
   border-radius: 8px !important;
 }
 
@@ -6314,7 +6318,7 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
 .mentor-name {
   color: #00e5ff !important;
   font-weight: 700 !important;
-  font-size: 13px !important;
+  font-size: 14.5px !important;
   letter-spacing: 0.5px !important;
 }
 
@@ -6322,25 +6326,26 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   background: rgba(255, 215, 106, 0.15) !important;
   border: 1px solid #ffd76a !important;
   color: #ffd76a !important;
-  padding: 1px 6px !important;
+  padding: 1.5px 7px !important;
   border-radius: 12px !important;
-  font-size: 10px !important;
+  font-size: 11px !important;
   font-weight: bold !important;
 }
 
 .tutorial-title {
-  font-size: 12px !important;
+  font-size: 14.5px !important;
   font-weight: 700 !important;
   color: #ffd76a !important;
-  margin-bottom: 2px !important;
+  margin-bottom: 3px !important;
+  line-height: 1.35 !important;
   text-shadow: none !important;
 }
 
 .tutorial-content {
-  font-size: 11px !important;
-  line-height: 1.3 !important;
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
   color: #e2e8f0 !important;
-  margin-bottom: 3px !important;
+  margin-bottom: 4px !important;
 }
 
 .tutorial-action-guide {
@@ -6351,14 +6356,14 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
   display: flex !important;
   justify-content: flex-end !important;
   align-items: center !important;
-  gap: 4px !important;
-  margin-top: 2px !important;
+  gap: 5px !important;
+  margin-top: 3px !important;
 }
 
 .tutorial-btn {
-  padding: 2px 7px !important;
+  padding: 3px 9px !important;
   border-radius: 10px !important;
-  font-size: 10.5px !important;
+  font-size: 12px !important;
   font-weight: bold !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;

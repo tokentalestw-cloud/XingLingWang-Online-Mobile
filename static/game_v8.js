@@ -32991,29 +32991,26 @@ window.XLW_Tutorial = {
         // 最後一步勝利：Pose 3 (yuki_tutorial_3.png)：開心比YA歡呼慶祝
         const isLastStep = (this.currentStep === this.steps.length - 1);
         const isInteractive = Boolean(step.interactive);
+        const YUKI_V = "?v=23.02s";
 
-        // 輕量版立繪（192x256，原圖 768x1024 約 1.2MB 太大，切換時會卡頓）
-        const YUKI_V = "?v=23.01s";
-        const YUKI_POSES = {
-          idle: "/static/card_images/yuki_tutorial_1_s.png" + YUKI_V,
-          win: "/static/card_images/yuki_tutorial_3_s.png" + YUKI_V,
-          guide: "/static/card_images/yuki_tutorial_7_s.png" + YUKI_V
-        };
+        // 預載入全部 20 張輕量版雪女立繪（確保輪番切換時 100% 順暢零延遲）
         if (!window.XLW_yukiPreloaded) {
-          window.XLW_yukiPreloaded = Object.values(YUKI_POSES).map(src => {
+          window.XLW_yukiPreloaded = [];
+          for (let i = 1; i <= 20; i++) {
             const im = new Image();
             im.decoding = "async";
-            im.src = src;
-            return im;
-          });
+            im.src = `/static/card_images/yuki_tutorial_${i}_s.png${YUKI_V}`;
+            window.XLW_yukiPreloaded.push(im);
+          }
         }
 
-        let targetSrc = YUKI_POSES.idle;
+        // 20 張雪女圖片輪番出現在教學模式上
+        // 最後一步固定使用最具慶祝感的 pose（3 號 YA / 歡呼），其餘步驟依序循環輪播 1~20
+        let targetNum = (this.currentStep % 20) + 1;
         if (isLastStep) {
-          targetSrc = YUKI_POSES.win;
-        } else if (isInteractive || (this.currentStep % 2 === 1)) {
-          targetSrc = YUKI_POSES.guide;
+          targetNum = 3;
         }
+        const targetSrc = `/static/card_images/yuki_tutorial_${targetNum}_s.png${YUKI_V}`;
 
         if (sprite.getAttribute("src") !== targetSrc) {
           sprite.decoding = "async";
@@ -33026,12 +33023,15 @@ window.XLW_Tutorial = {
 
         const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
         if (isCompactBattle) {
-          sprite.style.display = "none";
+          sprite.style.display = "block";
+          sprite.style.width = "56px";
+          sprite.style.height = "76px";
+          sprite.style.left = "-40px";
         } else {
           sprite.style.display = "block";
-          sprite.style.width = "64px";
-          sprite.style.height = "86px";
-          sprite.style.left = "-44px";
+          sprite.style.width = "66px";
+          sprite.style.height = "90px";
+          sprite.style.left = "-46px";
         }
     }
     this.initDrag();
