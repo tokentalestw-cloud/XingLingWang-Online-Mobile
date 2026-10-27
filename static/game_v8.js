@@ -33024,14 +33024,16 @@ window.XLW_Tutorial = {
         const isCompactBattle = (this.currentStep >= 11 && !isLastStep);
         if (isCompactBattle) {
           sprite.style.display = "block";
-          sprite.style.width = "56px";
-          sprite.style.height = "76px";
-          sprite.style.left = "-40px";
+          sprite.style.width = "46px";
+          sprite.style.height = "62px";
+          sprite.style.left = "6px";
+          sprite.style.bottom = "6px";
         } else {
           sprite.style.display = "block";
-          sprite.style.width = "66px";
-          sprite.style.height = "90px";
-          sprite.style.left = "-46px";
+          sprite.style.width = "52px";
+          sprite.style.height = "72px";
+          sprite.style.left = "8px";
+          sprite.style.bottom = "6px";
         }
     }
     this.initDrag();
@@ -33165,11 +33167,11 @@ window.XLW_Tutorial = {
               if (isCompactBattle) {
                 // 實戰演練階段：精巧停靠在左上角頂端外緣，完全不擋戰場與按鈕
                 const overlapsTopLeft = (rect.top < 130 && rect.left < 220);
-                tutorialBox.style.left = '10px';
+                tutorialBox.style.left = '12px';
                 if (overlapsTopLeft) {
-                  tutorialBox.style.bottom = '8px';
+                  tutorialBox.style.bottom = '10px';
                 } else {
-                  tutorialBox.style.top = '8px';
+                  tutorialBox.style.top = '10px';
                 }
               } else {
                 const isTopHalf = (rect.top + rect.height / 2) < (vh / 2);
