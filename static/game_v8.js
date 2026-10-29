@@ -2539,6 +2539,60 @@ window.xlwUnitHasPoison = function(unit, zone, idx) {
   return false;
 };
 
+async function xlwCheckAndTriggerLeafTraveler(isPlayerSide) {
+  const prefix = isPlayerSide ? "player_" : "enemy_";
+  const lastLeafTurn = isPlayerSide ? window.XLW_leafTravelerTriggeredTurn_player : window.XLW_leafTravelerTriggeredTurn_enemy;
+  if (lastLeafTurn !== turn) {
+    const hasLeaf = [prefix + "front", prefix + "back"].some(z => {
+      return field[z] && field[z].some((u, i) => u && u.card && (u.card.id === "SR-SPT-0029" || u.card.name?.includes("樹葉旅人")) && !window.isUnitSilenced(u, z, i));
+    });
+    if (hasLeaf) {
+      if (isPlayerSide) {
+        window.XLW_leafTravelerTriggeredTurn_player = turn;
+      } else {
+        window.XLW_leafTravelerTriggeredTurn_enemy = turn;
+      }
+      logBattle(`✨ ${isPlayerSide ? "我方" : "對手"} 樹葉旅人 效果觸發：一回合限一次，召喚小旅人時額外召喚 1 個小旅人！`);
+      await (window.promptAndSummonTraveler || promptAndSummonTraveler)(isPlayerSide ? "player" : "enemy", 1, "樹葉旅人");
+      render();
+    }
+  }
+}
+window.xlwCheckAndTriggerLeafTraveler = xlwCheckAndTriggerLeafTraveler;
+
+window.xlwGetAvailableOrcEquipments = function() {
+  const equips = [];
+  if (typeof graveyard !== "undefined" && Array.isArray(graveyard)) {
+    graveyard.forEach((c, idx) => {
+      if (c && (c.type === "magic" || c.type === "魔法" || c.type === "法術")) {
+        const isOrcFaction = (c.faction === "獸人" || c.deck === "獸人" || c.id?.includes("ORC") || c.id?.includes("0RC"));
+        const hasWeaponKw = /帽|菜刀|狼牙棒|弓|牛排|斧|戰錘|盾牌|裝備|武器/.test(c.name || "");
+        if (isOrcFaction || hasWeaponKw) {
+          equips.push({ source: "graveyard", index: idx, card: c, name: c.name });
+        }
+      }
+    });
+  }
+  if (typeof field !== "undefined" && field) {
+    for (const z of ["player_front", "player_back"]) {
+      if (!field[z]) continue;
+      for (let i = 0; i < 5; i++) {
+        const u = field[z][i];
+        if (u && u.equipments && u.equipments.length > 0) {
+          u.equipments.forEach((eqName, eqIdx) => {
+            const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳", "法術保護"].some(x => eqName.includes(x));
+            const isOrcEquip = /帽|菜刀|狼牙棒|弓|牛排|斧|戰錘|盾牌|裝備|武器/.test(eqName);
+            if (!isTempMagic && isOrcEquip) {
+              equips.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
+            }
+          });
+        }
+      }
+    }
+  }
+  return equips;
+};
+
 async function promptAndSummonTraveler(side, count, sourceName = "效果") {
   const isPlayerSide = (side === "player" || side === true);
   const frontZone = isPlayerSide ? "player_front" : "enemy_front";
@@ -4667,6 +4721,13 @@ async function castSpell(handIndex) {
       setStatus("場上無獸人單位可裝備！");
       return;
     }
+    if (card.name?.includes("戰斧牛排") || card.id === "SR-ORC-0043") {
+      const orcEquips = (typeof window.xlwGetAvailableOrcEquipments === "function") ? window.xlwGetAvailableOrcEquipments() : [];
+      if (orcEquips.length < 2) {
+        setStatus("【戰斧牛排】發動失敗：場上與墓地沒有 2 張或以上的獸人裝備，無法發動！");
+        return;
+      }
+    }
   } else if (card.id === "R-NMG-0035" || card.name?.includes("CPU過載")) {
     const myCount = ["player_front", "player_back"].reduce((sum, z) => sum + field[z].filter(u => u !== null).length, 0);
     const enemyCount = ["enemy_front", "enemy_back"].reduce((sum, z) => sum + field[z].filter(u => u !== null).length, 0);
@@ -5597,33 +5658,19 @@ async function castSpell(handIndex) {
     }
 
     if (card.name?.includes("戰斧牛排") || card.id === "SR-ORC-0043") {
-      let equipCards = [];
-      graveyard.forEach((c, idx) => {
-        if (c && c.type === "magic" && (c.name.includes("帽") || c.name.includes("菜刀") || c.name.includes("狼牙棒") || c.name.includes("弓") || c.name.includes("牛排") || c.name.includes("斧"))) {
-          equipCards.push({ source: "graveyard", index: idx, card: c });
-        }
-      });
-      for (const z of ["player_front", "player_back"]) {
-        for (let i = 0; i < 5; i++) {
-          const u = field[z][i];
-          if (u && u.equipments && u.equipments.length > 0) {
-            u.equipments.forEach((eqName, eqIdx) => {
-              const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-              if (!isTempMagic) {
-                equipCards.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
-              }
-            });
-          }
-        }
-      }
+      const equipCards = (typeof window.xlwGetAvailableOrcEquipments === "function") ? window.xlwGetAvailableOrcEquipments() : [];
 
       if (equipCards.length < 2) {
-        setStatus("我方場上與墓地裝備卡不足 2 張，無法除外以發動戰斧牛排！");
+        hand.splice(handIndex, 0, card);
+        setStatus("【戰斧牛排】發動失敗：我方場上與墓地沒有 2 張或以上的獸人裝備，無法發動！");
+        render();
         return;
       }
 
-      const proceed = await showXLWConfirm("戰斧牛排 額外代價", `發動戰斧牛排需要除外我方場上/墓地共 2 張裝備卡，系統將自動為您除外以下裝備卡：\n${equipCards.slice(0, 2).map(e => e.card ? e.card.name : e.name).join("、")}。是否確認？`);
+      const proceed = await showXLWConfirm("戰斧牛排 額外代價", `發動戰斧牛排需要除外我方場上/墓地共 2 張獸人裝備卡，系統將自動為您除外以下裝備卡：\n${equipCards.slice(0, 2).map(e => e.card ? e.card.name : e.name).join("、")}。是否確認？`);
       if (!proceed) {
+        hand.splice(handIndex, 0, card);
+        render();
         return;
       }
 
@@ -5635,17 +5682,17 @@ async function castSpell(handIndex) {
             graveyard.splice(idx, 1);
           }
           exileCard(item.card, "player");
-          logBattle(`[戰斧牛排 代價] 除外了墓地裝備卡：${item.card.name}`);
+          logBattle(`[戰斧牛排 代價] 除外了墓地獸人裝備卡：${item.card.name}`);
         } else {
-          const u = field[item.zone][item.slotIdx];
+          const u = field[item.zone]?.[item.slotIdx];
           if (u && u.equipments) {
             const idx = u.equipments.indexOf(item.name);
             if (idx !== -1) {
               u.equipments.splice(idx, 1);
             }
-            const cardObj = allCards.find(c => c && c.name === item.name) || { name: item.name, type: "magic" };
+            const cardObj = (typeof allCards !== "undefined" && allCards.find(c => c && c.name === item.name)) || { name: item.name, type: "magic" };
             exileCard(cardObj, "player");
-            logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的裝備：${item.name}`);
+            logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的獸人裝備：${item.name}`);
           }
         }
       });
@@ -8140,23 +8187,8 @@ async function performSummonToSlot(zone, idx) {
     }
 
     // 樹葉旅人 (SR-SPT-0029) 效果觸發：一回合限一次，你召喚小旅人時，召喚1個小旅人
-    const leafPrefix = zone.startsWith("player_") ? "player_" : "enemy_";
     const isPlayerTraveler = zone.startsWith("player_");
-    const lastLeafTurn = isPlayerTraveler ? window.XLW_leafTravelerTriggeredTurn_player : window.XLW_leafTravelerTriggeredTurn_enemy;
-    if (lastLeafTurn !== turn) {
-      const hasLeafOnField = [leafPrefix + "front", leafPrefix + "back"].some(z => {
-        return field[z].some((u, i) => u && u.card && (u.card.id === "SR-SPT-0029" || u.card.name?.includes("樹葉旅人")) && !window.isUnitSilenced(u, z, i));
-      });
-      if (hasLeafOnField) {
-        if (isPlayerTraveler) {
-          window.XLW_leafTravelerTriggeredTurn_player = turn;
-        } else {
-          window.XLW_leafTravelerTriggeredTurn_enemy = turn;
-        }
-        logBattle(`✨ ${isPlayerTraveler ? "我方" : "對手"} 樹葉旅人 效果觸發：一回合限一次，召喚小旅人時額外召喚 1 個小旅人！`);
-        await (window.promptAndSummonTraveler || promptAndSummonTraveler)(isPlayerTraveler ? "player" : "enemy", 1, "樹葉旅人");
-      }
-    }
+    await xlwCheckAndTriggerLeafTraveler(isPlayerTraveler);
   } else {
     // 召喚手牌
     const isTributeSummon = (tributeWaitingPosition || selectedTributeCard !== null);
@@ -17515,6 +17547,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             sendFullGameStateToOpponent();
           }
           render();
+          await xlwCheckAndTriggerLeafTraveler(true);
         }
       } else {
         logBattle("觀光阿姨 效果：我方場地已滿，無法召喚。");
@@ -17547,6 +17580,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
         playTravelerSummonAnimation("#enemyForest", res.zone, res.idx);
         render();
         await sleep(600);
+        await xlwCheckAndTriggerLeafTraveler(false);
       } else {
         logBattle("對手 觀光阿姨 效果：對手場地已滿，無法召喚。");
       }
@@ -20081,6 +20115,14 @@ window.xlwCanPlayHandCard = function(card, idx) {
     if ((card.name?.includes("逗喵棒") || card.id === "R-CAT-0040") && typeof field !== "undefined" && field) {
       const hasMeowUnit = ["player_front", "player_back"].some(z => field[z] && field[z].some(u => u && (u.card?.faction === "喵喵賊" || u.card?.race === "喵喵賊" || u.card?.id?.includes("CAT") || u.card?.id?.includes("cat"))));
       if (!hasMeowUnit) return false;
+    }
+
+    // 戰斧牛排需場上與墓地合計有 2 張或以上獸人裝備，且場上有獸人單位可裝備
+    if (card.name?.includes("戰斧牛排") || card.id === "SR-ORC-0043") {
+      const orcEquips = (typeof window.xlwGetAvailableOrcEquipments === "function") ? window.xlwGetAvailableOrcEquipments() : [];
+      if (orcEquips.length < 2) return false;
+      const hasOrc = (typeof field !== "undefined" && field) && ["player_front", "player_back"].some(z => field[z] && field[z].some(u => u && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC"))));
+      if (!hasOrc) return false;
     }
 
     return true;
