@@ -224,18 +224,18 @@ button:disabled {
 .player-front { top: 627.5px !important; }
 .player-back { top: 781.5px !important; }
 
-/* ?澆??箇????餌??寞? */
+/* 戰場置卡槽位與功能區 3D 凹槽嵌合質感 */
 .slot, .zone {
   width: var(--cw);
   height: var(--ch);
   border-radius: 10px;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.32);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   font-size: 16.5px !important;
   font-weight: 900 !important;
   white-space: nowrap !important;
@@ -247,29 +247,31 @@ button:disabled {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 5px rgba(0, 0, 0, 0.8) !important;
   
   box-shadow:
-    inset 0 2px 5px rgba(255, 255, 255, 0.1),
-    inset 0 -8px 16px rgba(0, 0, 0, 0.5),
-    0 4px 10px rgba(0, 0, 0, 0.4);
+    inset 0 3px 8px rgba(0, 0, 0, 0.75),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.15),
+    0 3px 8px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .slot:hover, .zone:hover {
   filter: brightness(1.2);
   border-color: var(--gold-accent);
   box-shadow:
-    inset 0 2px 7px rgba(255, 255, 255, 0.2),
-    inset 0 -10px 20px rgba(0, 0, 0, 0.6),
-    0 0 15px var(--gold-glow);
+    inset 0 3px 9px rgba(0, 0, 0, 0.6),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.25),
+    0 0 18px var(--gold-glow),
+    0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
-/* ???撠惇? */
+/* 敵我雙方戰場格專屬 3D 漸層底色與立體外框 */
 .enemy-back .slot, .enemy-front .slot {
-  background: linear-gradient(180deg, rgba(135, 60, 60, 0.28) 0%, rgba(85, 30, 30, 0.38) 100%); /* Softer pastel red tint */
-  border-color: rgba(232, 120, 120, 0.28);
+  background: linear-gradient(180deg, rgba(145, 50, 50, 0.38) 0%, rgba(65, 20, 20, 0.48) 100%);
+  border-color: rgba(255, 120, 120, 0.42);
 }
 
 .player-front .slot, .player-back .slot {
-  background: linear-gradient(180deg, rgba(50, 85, 145, 0.28) 0%, rgba(25, 45, 90, 0.38) 100%); /* Softer pastel blue tint */
-  border-color: rgba(120, 180, 255, 0.28);
+  background: linear-gradient(180deg, rgba(40, 80, 155, 0.38) 0%, rgba(18, 38, 85, 0.48) 100%);
+  border-color: rgba(120, 180, 255, 0.42);
 }
 
 .green {
@@ -453,34 +455,76 @@ button:disabled {
   box-shadow: 0 3px 10px rgba(255, 215, 106, 0.7);
 }
 
-/* ===== 8. 擃??∠??祇? (Card) ===== */
+/* ===== 8. 高清立體實體卡牌質感 (Card 3D Core) ===== */
 .card {
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  background: #eadfc0;
   background: radial-gradient(circle at 50% 35%, #2a1f18 0%, #110e0c 100%);
   color: #12100d;
-  border: 2px solid #5a351e;
+  border: 1.5px solid rgba(255, 215, 106, 0.72);
   overflow: hidden;
   cursor: pointer;
   user-select: none;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease-out, box-shadow 0.4s ease-out;
-  will-change: transform, opacity;
+  /* 實體卡牌邊緣微倒角高光與多層立體層次投影 */
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.65),
+    0 8px 18px rgba(0, 0, 0, 0.75),
+    0 16px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.7),
+    inset 0 -1.5px 1px rgba(0, 0, 0, 0.85),
+    inset 1px 0 1px rgba(255, 255, 255, 0.25),
+    inset -1px 0 1px rgba(0, 0, 0, 0.6);
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.35s ease-out, box-shadow 0.35s ease-out, filter 0.3s ease;
+  will-change: transform, opacity, box-shadow;
   backface-visibility: hidden;
   transform: translateZ(0);
   opacity: 1 !important;
 }
 
+/* 實體卡牌覆膜/雷射微光立體反射層 */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.08) 28%,
+    transparent 46%,
+    rgba(0, 0, 0, 0.12) 80%,
+    rgba(0, 0, 0, 0.32) 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease, background 0.3s ease;
+}
+
 .card:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-8px) scale(1.04);
   box-shadow:
-    0 10px 20px rgba(0,0,0,0.6),
-    0 0 12px rgba(205, 170, 82, 0.35);
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 16px 32px rgba(0, 0, 0, 0.85),
+    0 30px 48px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(255, 215, 106, 0.55),
+    inset 0 2px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -2px 1.5px rgba(0, 0, 0, 0.95);
+  z-index: 50;
+}
+
+.card:hover::after {
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.16) 32%,
+    transparent 52%,
+    rgba(0, 0, 0, 0.08) 80%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
 }
 
 .card img {
@@ -492,6 +536,29 @@ button:disabled {
   transform: translateZ(0);
   image-rendering: -webkit-optimize-contrast;
   pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* 戰場槽位內卡牌專屬深度立體感 */
+.slot .card {
+  border-radius: 8px;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.7),
+    0 10px 22px rgba(0, 0, 0, 0.78),
+    0 20px 34px rgba(0, 0, 0, 0.52),
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.7),
+    inset 0 -1.5px 1px rgba(0, 0, 0, 0.85) !important;
+}
+
+.slot .card:hover {
+  transform: translateY(-8px) scale(1.05) !important;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.6),
+    0 18px 36px rgba(0, 0, 0, 0.88),
+    0 32px 52px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 215, 106, 0.6),
+    inset 0 2px 1px rgba(255, 255, 255, 0.9) !important;
+  z-index: 50 !important;
 }
 
 .card .fallback {
@@ -508,10 +575,11 @@ button:disabled {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(20, 14, 32, 0.92) 0%, rgba(8, 6, 14, 0.98) 100%) !important;
+  background: linear-gradient(180deg, rgba(20, 14, 32, 0.94) 0%, rgba(8, 6, 14, 0.98) 100%) !important;
   color: #ffffff !important;
   padding: 3px 2px !important;
-  border-top: 1.5px solid rgba(255, 215, 106, 0.45) !important;
+  border-top: 1.5px solid rgba(255, 215, 106, 0.75) !important;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.75) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -519,6 +587,7 @@ button:disabled {
   justify-content: center !important;
   overflow: hidden !important;
   pointer-events: none !important;
+  z-index: 4;
 }
 
 .mini-meta-name {
@@ -631,6 +700,24 @@ button:disabled {
   height: 110px;
   min-width: 85px;
   flex: 0 0 85px;
+  border: 1.5px solid rgba(255, 215, 106, 0.75) !important;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.65),
+    0 12px 24px rgba(0, 0, 0, 0.78),
+    0 22px 36px rgba(0, 0, 0, 0.48),
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.7),
+    inset 0 -1.5px 1px rgba(0, 0, 0, 0.85) !important;
+}
+
+.hand .card:hover {
+  transform: translateY(-16px) scale(1.08) !important;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.65),
+    0 24px 44px rgba(0, 0, 0, 0.88),
+    0 38px 60px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(255, 215, 106, 0.65),
+    inset 0 2px 1px rgba(255, 255, 255, 0.9) !important;
+  z-index: 100 !important;
 }
 
 /* ===== 10. ?冽銝擃??喃?銝餅?雿??(stableActionPanel) ===== */
@@ -4259,7 +4346,7 @@ html, body {
   100% { opacity: 0.4; transform: scale(0.99); }
 }
 
-/* ===== 決鬥場地區桌墊架構 (Playmats) ===== */
+/* ===== 決鬥場地區 3D 擬真實體桌墊系統 (3D Real-Texture Playmats) ===== */
 .board-playmat {
   position: absolute;
   left: calc(50% - 1.5 * (var(--cw) + var(--gap)));
@@ -4273,28 +4360,73 @@ html, body {
   background-position: center;
   background-repeat: no-repeat;
   transition: all 0.3s ease;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  opacity: 0.38;
-  border-radius: 14px;
+  border-radius: 18px;
+  opacity: 0.88 !important;
+  /* 實體電競橡膠桌墊厚度與多層環境陰影 */
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.75),
+    0 18px 40px rgba(0, 0, 0, 0.85),
+    0 32px 64px rgba(0, 0, 0, 0.65),
+    inset 0 2.5px 5px rgba(255, 255, 255, 0.32),
+    inset 0 -3.5px 10px rgba(0, 0, 0, 0.85),
+    inset 0 0 60px rgba(0, 0, 0, 0.55);
 }
 
-/* 對手桌墊區 (頂部場地區 - 縮小1/3並同步往下移動一個格子) */
+/* 桌墊表面 3D 斜向環境光澤 */
+.board-playmat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.03) 38%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.22) 80%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 對手桌墊區 (頂部場地區 - 烈焰赤紅 3D 雙層細緻車縫包邊與立體紅寶石氛圍) */
 .enemy-playmat {
   top: 156px;
   height: 308px;
   background-image: var(--enemy-playmat-bg, url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261024-transparency')) !important;
-  background-color: transparent;
-  border: 1px solid rgba(255, 90, 95, 0.28);
+  background-color: #120a14;
+  border: 2px solid rgba(255, 80, 105, 0.75) !important;
+  outline: 1.5px dashed rgba(255, 160, 175, 0.5) !important;
+  outline-offset: -5px !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.75),
+    0 18px 40px rgba(0, 0, 0, 0.85),
+    0 32px 64px rgba(0, 0, 0, 0.65),
+    0 0 35px rgba(255, 50, 75, 0.32),
+    inset 0 2.5px 5px rgba(255, 220, 225, 0.35),
+    inset 0 -3.5px 10px rgba(0, 0, 0, 0.85),
+    inset 0 0 60px rgba(0, 0, 0, 0.55) !important;
 }
 
-/* 我方桌墊區 (底部場地區 - 縮小1/3並同步往下移動一個格子) */
+/* 我方桌墊區 (底部場地區 - 湛藍星穹 3D 雙層細緻車縫包邊與立體藍寶石氛圍) */
 .player-playmat {
   top: 610px;
   height: 308px;
   background-image: var(--player-playmat-bg, url('/static/custom_bg/new_mat_player_2026.jpg?v=20261024-transparency')) !important;
-  background-color: transparent;
-  border: 1px solid rgba(78, 148, 255, 0.28);
+  background-color: #081020;
+  border: 2px solid rgba(65, 165, 255, 0.75) !important;
+  outline: 1.5px dashed rgba(160, 215, 255, 0.5) !important;
+  outline-offset: -5px !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.75),
+    0 18px 40px rgba(0, 0, 0, 0.85),
+    0 32px 64px rgba(0, 0, 0, 0.65),
+    0 0 35px rgba(40, 150, 255, 0.32),
+    inset 0 2.5px 5px rgba(220, 240, 255, 0.35),
+    inset 0 -3.5px 10px rgba(0, 0, 0, 0.85),
+    inset 0 0 60px rgba(0, 0, 0, 0.55) !important;
 }
 
 
@@ -5422,16 +5554,31 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     overflow: visible !important;
   }
 
-  /* 3D 閬?蝡??漲?? (54px x 74px) */
+  /* 3D 視角立體斜角手牌 (54px x 76px) */
   .hand .card {
-    width: 54px !important; height: 76px !important; min-width: 44px !important; flex: 0 0 54px !important; margin-left: -12px !important; border-radius: 5px !important; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7) !important; transform: perspective(300px) rotateX(-15deg) !important; transition: transform 0.45s ease-out, z-index 0.2s ease !important;
+    width: 54px !important;
+    height: 76px !important;
+    min-width: 44px !important;
+    flex: 0 0 54px !important;
+    margin-left: -12px !important;
+    border-radius: 6px !important;
+    border: 1.5px solid rgba(255, 215, 106, 0.75) !important;
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.7),
+      0 10px 20px rgba(0, 0, 0, 0.8),
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.7),
+      inset 0 -1.5px 1px rgba(0, 0, 0, 0.85) !important;
+    transform: perspective(350px) rotateX(-14deg) !important;
+    transition: transform 0.45s ease-out, box-shadow 0.3s ease, z-index 0.2s ease !important;
     transform-origin: bottom center !important;
   }
   .hand .card .mini-meta {
     font-size: 9px !important;
     line-height: 1.15 !important;
     padding: 2px !important;
-    background: rgba(8, 6, 12, 0.9) !important;
+    background: rgba(8, 6, 12, 0.94) !important;
+    border-top: 1.5px solid rgba(255, 215, 106, 0.75) !important;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.75) !important;
   }
   .hand .card .mini-meta-name {
     font-size: 8.5px !important;
@@ -5442,17 +5589,20 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
     line-height: 1.1 !important;
   }
 
-
   .hand .card:first-child {
     margin-left: 0 !important;
   }
 
-  /* ?? Hover/Touch 瘚桃征?絲 24px 銝行憭?1.4 ??*/
+  /* 手牌 Hover/Touch 浮起躍出 3D 特效 */
   .hand .card:hover,
   .hand .card:active {
     z-index: 200 !important;
-    transform: perspective(300px) rotateX(0deg) translateY(-35px) scale(1.4) !important;
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 215, 106, 0.3) !important;
+    transform: perspective(350px) rotateX(0deg) translateY(-35px) scale(1.4) !important;
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.9),
+      0 20px 45px rgba(0, 0, 0, 0.75),
+      0 0 18px rgba(255, 215, 106, 0.65),
+      inset 0 2px 1px rgba(255, 255, 255, 0.9) !important;
   }
 
   /* 撌血?∠??曉之?汗?Ｘ?函?敶?拚? */
