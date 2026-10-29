@@ -2789,6 +2789,7 @@ button:disabled {
     position: fixed !important;
     top: 104px !important;
     display: flex !important;
+    flex-direction: column !important;
     width: calc(calc(50 * var(--xvw, 1vw)) - 10px) !important;
     min-height: 54px !important;
     margin: 0 !important;
@@ -2805,7 +2806,14 @@ button:disabled {
   .score-badge-label { width: auto !important; min-width: 48px !important; font-size: 11px !important; }
   .score-badge-num { width: auto !important; font-size: 13px !important; margin-left: auto !important; }
   .score-badge-stars { display: none !important; }
-  .score-badge-subrow { display: none !important; }
+  .score-board-header { margin-bottom: 4px !important; padding-bottom: 2px !important; }
+  .score-board-title { font-size: 11px !important; }
+  .score-round-badge { font-size: 9px !important; padding: 0 4px !important; }
+  .score-gem-socket { height: 32px !important; border-radius: 8px !important; }
+  .score-gem-val { font-size: 17px !important; }
+  .score-combatant-name { font-size: 10px !important; }
+  .score-lead-badge { font-size: 8.5px !important; padding: 0 4px !important; }
+  .score-pill { font-size: 8.5px !important; padding: 1px 3px !important; }
   .enemy-info-title { font-size: 12px !important; margin-bottom: 2px !important; }
 
   .game-shell {
@@ -2958,6 +2966,8 @@ button:disabled {
     top: auto !important;
     left: auto !important;
     right: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
     width: calc(calc(50 * var(--xvw, 1vw)) - 8px) !important;
     min-height: 50px !important;
     margin: 4px !important;
@@ -6905,10 +6915,14 @@ html.xlw-force-landscape body {
   backdrop-filter: blur(16px) !important;
 }
 
-/* 2. 操作面板按鈕通用立體工藝 (.stable-action-btn) */
+/* 2. 操作面板按鈕通用立體工藝 (.stable-action-btn) — 爐石 / 大師決鬥實體微凹浮雕 */
 #stableActionPanel .stable-action-btn,
 .stable-action-btn {
   position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 12px !important;
   font-weight: 900 !important;
   letter-spacing: 0.6px !important;
@@ -6917,117 +6931,140 @@ html.xlw-force-landscape body {
   -webkit-tap-highlight-color: transparent !important;
   transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.08s ease, filter 0.08s ease !important;
   user-select: none !important;
+  overflow: hidden !important;
+  gap: 2px !important;
+  padding: 8px 12px !important;
+  min-height: 48px !important;
 }
 
-/* 🛡️ 戰術佈陣按鈕 — 皇家藍寶石立體結晶 */
+#stableActionPanel .stable-action-btn .btn-main-text,
+.stable-action-btn .btn-main-text {
+  font-size: 14.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+
+#stableActionPanel .stable-action-btn .btn-sub-turn,
+.stable-action-btn .btn-sub-turn {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  opacity: 0.85 !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+}
+
+/* 🛡️ 戰術佈陣按鈕 — 蒼藍秘法符文銘碑 (Arcanist Sapphire Tablet) */
 #stableActionPanel #stableActionTactical,
 #stableActionPanel .stable-action-btn.tactical,
 .stable-action-btn.tactical {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.22) 100%),
-    linear-gradient(180deg, #2563eb 0%, #1d4ed8 52%, #172554 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(147, 197, 253, 0.45) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(0, 0, 0, 0.25) 100%),
+    linear-gradient(180deg, #2563eb 0%, #1d4ed8 48%, #172554 100%) !important;
   color: #f0f9ff !important;
-  border: 1.5px solid #60a5fa !important;
-  border-bottom: 3.5px solid #0f172a !important;
-  text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(56, 189, 248, 0.45) !important;
+  border: 1.5px solid #93c5fd !important;
+  border-bottom: 4.5px solid #0f172a !important;
+  text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.5) !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.45),
-    0 5px 14px rgba(0, 0, 0, 0.65),
-    0 0 12px rgba(37, 99, 235, 0.35) !important;
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(37, 99, 235, 0.4) !important;
 }
 
 #stableActionPanel #stableActionTactical:hover:not(:disabled),
 #stableActionPanel .stable-action-btn.tactical:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  filter: brightness(1.12) !important;
+  filter: brightness(1.15) !important;
   border-color: #bae6fd !important;
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.75),
-    0 8px 20px rgba(0, 0, 0, 0.75),
-    0 0 20px rgba(56, 189, 248, 0.65) !important;
+    inset 0 2px 2px rgba(255, 255, 255, 0.8),
+    0 8px 22px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(56, 189, 248, 0.8) !important;
 }
 
 #stableActionPanel #stableActionTactical.active,
 #stableActionPanel .stable-action-btn.tactical.active {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 48%),
-    linear-gradient(180deg, #0ea5e9 0%, #2563eb 52%, #1e3a8a 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(186, 230, 253, 0.6) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #0284c7 0%, #2563eb 50%, #1e3a8a 100%) !important;
   border-color: #fde047 !important;
-  box-shadow:
-    inset 0 2px 3px #ffffff,
-    0 0 22px rgba(56, 189, 248, 0.85),
-    0 0 10px rgba(253, 224, 71, 0.65) !important;
+  animation: xlwActiveTacticalPulse 1.2s infinite alternate ease-in-out !important;
 }
 
-/* ⚔️ 進攻宣言按鈕 — 緋紅血玉立體結晶 */
+/* ⚔️ 進攻宣言按鈕 — 緋紅龍玉戰刃晶石 (Berserker Ruby Plate) */
 #stableActionPanel #stableActionAttack,
 #stableActionPanel .stable-action-btn.attack,
 .stable-action-btn.attack {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.22) 100%),
-    linear-gradient(180deg, #dc2626 0%, #b91c1c 52%, #450a0a 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(252, 165, 165, 0.45) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(0, 0, 0, 0.25) 100%),
+    linear-gradient(180deg, #dc2626 0%, #b91c1c 48%, #450a0a 100%) !important;
   color: #fff1f2 !important;
   border: 1.5px solid #f87171 !important;
-  border-bottom: 3.5px solid #2a0404 !important;
-  text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(248, 113, 113, 0.45) !important;
+  border-bottom: 4.5px solid #2a0404 !important;
+  text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(248, 113, 113, 0.5) !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.45),
-    0 5px 14px rgba(0, 0, 0, 0.65),
-    0 0 12px rgba(220, 38, 38, 0.35) !important;
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(220, 38, 38, 0.4) !important;
 }
 
 #stableActionPanel #stableActionAttack:hover:not(:disabled),
 #stableActionPanel .stable-action-btn.attack:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  filter: brightness(1.12) !important;
+  filter: brightness(1.15) !important;
   border-color: #fecdd3 !important;
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.75),
-    0 8px 20px rgba(0, 0, 0, 0.75),
-    0 0 20px rgba(248, 113, 113, 0.7) !important;
+    inset 0 2px 2px rgba(255, 255, 255, 0.8),
+    0 8px 22px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(248, 113, 113, 0.8) !important;
 }
 
 #stableActionPanel #stableActionAttack.active,
 #stableActionPanel .stable-action-btn.attack.active {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 48%),
-    linear-gradient(180deg, #ef4444 0%, #dc2626 52%, #7f1d1d 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(254, 205, 211, 0.6) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #ef4444 0%, #dc2626 50%, #7f1d1d 100%) !important;
   border-color: #fde047 !important;
-  box-shadow:
-    inset 0 2px 3px #ffffff,
-    0 0 22px rgba(239, 68, 68, 0.85),
-    0 0 10px rgba(253, 224, 71, 0.65) !important;
+  animation: xlwActiveAttackPulse 1.2s infinite alternate ease-in-out !important;
 }
 
-/* 🩸 確認獻祭按鈕 — 琥珀聖金浮雕 */
+/* 🩸 確認獻祭按鈕 — 琥珀聖火浮雕祭台 */
 #stableActionPanel #stableActionConfirm,
 #stableActionPanel .stable-action-btn.tribute,
 .stable-action-btn.tribute {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.2) 100%),
-    linear-gradient(180deg, #d97706 0%, #b45309 52%, #451a03 100%) !important;
+    radial-gradient(ellipse at 50% 0%, rgba(253, 230, 138, 0.45) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(0, 0, 0, 0.25) 100%),
+    linear-gradient(180deg, #d97706 0%, #b45309 48%, #451a03 100%) !important;
   color: #fffbeb !important;
   border: 1.5px solid #fbbf24 !important;
-  border-bottom: 3.5px solid #290f02 !important;
+  border-bottom: 4.5px solid #290f02 !important;
   text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9) !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.45),
-    0 5px 14px rgba(0, 0, 0, 0.65),
-    0 0 12px rgba(217, 119, 6, 0.35) !important;
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(217, 119, 6, 0.4) !important;
 }
 
 #stableActionPanel #stableActionConfirm:hover:not(:disabled),
 #stableActionPanel .stable-action-btn.tribute:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  filter: brightness(1.12) !important;
+  filter: brightness(1.15) !important;
   border-color: #fef08a !important;
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.75),
-    0 8px 18px rgba(0, 0, 0, 0.75),
-    0 0 18px rgba(251, 191, 36, 0.6) !important;
+    inset 0 2px 2px rgba(255, 255, 255, 0.8),
+    0 8px 20px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(251, 191, 36, 0.75) !important;
 }
 
 /* ✖️ 取消選擇 / 重置新局 — 鈦銀黑曜石金屬鍵 */
@@ -7041,7 +7078,7 @@ html.xlw-force-landscape body {
     linear-gradient(180deg, #475569 0%, #334155 52%, #0f172a 100%) !important;
   color: #f1f5f9 !important;
   border: 1.5px solid rgba(148, 163, 184, 0.65) !important;
-  border-bottom: 3.5px solid #090d16 !important;
+  border-bottom: 4.5px solid #090d16 !important;
   text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9) !important;
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.38),
@@ -7057,25 +7094,44 @@ html.xlw-force-landscape body {
   border-color: #e2e8f0 !important;
 }
 
-/* ⏳ 結束回合 / 確認換牌 — 王者鎏金立體聖徽主按鈕 */
+/* ⏳ 結束回合 / 確認換牌 — 爐石經典「王者金幣」高立體度雙層倒角實體勳章 (Hearthstone End Turn Medallion) */
 #stableActionPanel #stableActionEnd,
 #stableActionPanel #stableActionMulliganConfirm,
 #stableActionPanel .stable-action-btn.end,
 #stableActionPanel .stable-action-btn.primary,
 .stable-action-btn.end,
 .stable-action-btn.primary {
+  min-height: 54px !important;
+  padding: 10px 16px !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.16) 100%),
-    linear-gradient(180deg, #fef08a 0%, #eab308 48%, #b45309 92%, #78350f 100%) !important;
-  color: #1c1002 !important;
-  border: 1.5px solid #fef9c3 !important;
-  border-bottom: 4px solid #5c3404 !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+    radial-gradient(ellipse at 50% -20%, rgba(255, 255, 255, 0.75) 0%, rgba(254, 240, 138, 0.35) 45%, transparent 75%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(180deg, #fef08a 0%, #f59e0b 46%, #b45309 88%, #78350f 100%) !important;
+  color: #291500 !important;
+  border: 1.5px solid #fef08a !important;
+  border-bottom: 5.5px solid #451a03 !important;
+  border-radius: 14px !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.8),
-    inset 0 -2px 5px rgba(120, 53, 15, 0.55),
-    0 6px 18px rgba(0, 0, 0, 0.78),
-    0 0 16px rgba(234, 179, 8, 0.42) !important;
+    inset 0 2px 2px rgba(255, 255, 255, 0.85),
+    inset 0 -2.5px 6px rgba(120, 53, 15, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 20px rgba(245, 158, 11, 0.5) !important;
+}
+
+#stableActionPanel #stableActionEnd .btn-main-text,
+#stableActionPanel #stableActionMulliganConfirm .btn-main-text {
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.8px !important;
+}
+
+#stableActionPanel #stableActionEnd .btn-sub-turn,
+#stableActionPanel #stableActionMulliganConfirm .btn-sub-turn {
+  font-size: 9.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.5px !important;
+  color: #713f12 !important;
 }
 
 #stableActionPanel #stableActionEnd:hover:not(:disabled),
@@ -7083,37 +7139,68 @@ html.xlw-force-landscape body {
 #stableActionPanel .stable-action-btn.end:hover:not(:disabled),
 #stableActionPanel .stable-action-btn.primary:hover:not(:disabled) {
   transform: translateY(-2.5px) !important;
-  filter: brightness(1.08) !important;
+  filter: brightness(1.1) !important;
   border-color: #ffffff !important;
   box-shadow:
     inset 0 2.5px 3px #ffffff,
-    0 10px 24px rgba(0, 0, 0, 0.85),
-    0 0 24px rgba(250, 204, 21, 0.75) !important;
+    0 12px 28px rgba(0, 0, 0, 0.9),
+    0 0 28px rgba(250, 204, 21, 0.85) !important;
 }
 
+/* ⌛ 對手回合休眠玄鐵石碑態 (.enemy-turn) */
+#stableActionPanel #stableActionEnd.enemy-turn,
+.stable-action-btn.end.enemy-turn {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(148, 163, 184, 0.25) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.35) 100%),
+    linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 100%) !important;
+  color: #94a3b8 !important;
+  border: 1.5px solid #475569 !important;
+  border-bottom: 4.5px solid #020617 !important;
+  text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.9) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.6),
+    0 6px 16px rgba(0, 0, 0, 0.8) !important;
+  cursor: not-allowed !important;
+  animation: xlwEnemyTurnBreath 2.2s infinite ease-in-out !important;
+}
+
+#stableActionPanel #stableActionEnd.enemy-turn .btn-sub-turn,
+.stable-action-btn.end.enemy-turn .btn-sub-turn {
+  color: #64748b !important;
+}
+
+@keyframes xlwEnemyTurnBreath {
+  0% { filter: brightness(0.95); opacity: 0.88; }
+  50% { filter: brightness(1.12); opacity: 1; }
+  100% { filter: brightness(0.95); opacity: 0.88; }
+}
+
+/* 實體深刻按壓回饋 (:active) */
 #stableActionPanel .stable-action-btn:active:not(:disabled),
 .stable-action-btn:active:not(:disabled) {
-  transform: scale(0.93) translateY(2.5px) !important;
+  transform: translateY(3.5px) scale(0.97) !important;
   border-bottom-width: 1.5px !important;
-  filter: brightness(1.28) contrast(1.15) !important;
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 16px rgba(255, 215, 0, 0.5) !important;
+  filter: brightness(1.22) contrast(1.12) !important;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 18px rgba(255, 215, 0, 0.6) !important;
 }
 
 /* ⚡ 立即點擊反饋動畫：金光爆閃 + 深刻按壓 */
 @keyframes xlwBtnClickFlash {
   0% {
-    transform: scale(0.92) translateY(3px);
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.95), inset 0 0 15px rgba(255, 255, 255, 0.9);
+    transform: scale(0.94) translateY(3.5px);
+    box-shadow: 0 0 28px rgba(255, 215, 0, 0.95), inset 0 0 15px rgba(255, 255, 255, 0.9);
     filter: brightness(1.35);
   }
   50% {
-    transform: scale(0.95) translateY(2px);
-    box-shadow: 0 0 35px rgba(255, 215, 0, 1), inset 0 0 20px rgba(255, 255, 255, 0.95);
+    transform: scale(0.96) translateY(2px);
+    box-shadow: 0 0 38px rgba(255, 215, 0, 1), inset 0 0 20px rgba(255, 255, 255, 0.95);
     filter: brightness(1.45);
   }
   100% {
-    transform: scale(0.96) translateY(1.5px);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.75);
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.75);
   }
 }
 
@@ -7124,7 +7211,7 @@ html.xlw-force-landscape body {
   color: #fff !important;
 }
 
-/* 🔄 執行結算中狀態 (.btn-processing) — 立即回饋反饋視覺效果 */
+/* 🔄 執行結算中狀態 (.btn-processing) */
 #stableActionPanel .stable-action-btn.btn-processing,
 .stable-action-btn.btn-processing {
   background:
@@ -7141,12 +7228,12 @@ html.xlw-force-landscape body {
 
 @keyframes xlwActiveTacticalPulse {
   0% { filter: brightness(1); box-shadow: inset 0 2px 3px #ffffff, 0 0 16px rgba(56, 189, 248, 0.7); }
-  100% { filter: brightness(1.2); box-shadow: inset 0 2px 3px #ffffff, 0 0 30px rgba(56, 189, 248, 1), 0 0 14px #fde047; }
+  100% { filter: brightness(1.22); box-shadow: inset 0 2px 3px #ffffff, 0 0 32px rgba(56, 189, 248, 1), 0 0 14px #fde047; }
 }
 
 @keyframes xlwActiveAttackPulse {
   0% { filter: brightness(1); box-shadow: inset 0 2px 3px #ffffff, 0 0 16px rgba(239, 68, 68, 0.7); }
-  100% { filter: brightness(1.2); box-shadow: inset 0 2px 3px #ffffff, 0 0 30px rgba(239, 68, 68, 1), 0 0 14px #fde047; }
+  100% { filter: brightness(1.22); box-shadow: inset 0 2px 3px #ffffff, 0 0 32px rgba(239, 68, 68, 1), 0 0 14px #fde047; }
 }
 
 @keyframes xlwBtnProcessingPulse {
@@ -7154,7 +7241,7 @@ html.xlw-force-landscape body {
   100% { filter: brightness(1.28); box-shadow: 0 0 26px rgba(129, 140, 248, 0.95), inset 0 0 14px rgba(165, 180, 252, 0.6); }
 }
 
-/* 🔒 禁用狀態 (.stable-action-btn:disabled) — 內凹暗黑玄鐵鎖定態，告別死白殘影 */
+/* 🔒 禁用狀態 (.stable-action-btn:disabled) */
 #stableActionPanel .stable-action-btn:disabled,
 .stable-action-btn:disabled {
   background: linear-gradient(180deg, rgba(20, 16, 30, 0.88) 0%, rgba(12, 9, 18, 0.94) 100%) !important;
@@ -7169,88 +7256,334 @@ html.xlw-force-landscape body {
   transform: none !important;
 }
 
-/* 3. 左上角雙方總分狀態欄 (#scoreBadgeFixed) — 星耀雙層立體寶石鑲嵌看板 */
+/* ==========================================================================
+   3. 左上角雙方總分狀態欄 (#scoreBadgeFixed) — 大師決鬥黑曜石嵌金神壇計分座
+   ========================================================================== */
 #scoreBadgeFixed,
 .score-badge-fixed {
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 215, 106, 0.16) 0%, transparent 72%),
-    linear-gradient(165deg, rgba(26, 20, 44, 0.95) 0%, rgba(11, 8, 20, 0.98) 100%) !important;
-  border: 1.5px solid rgba(255, 215, 106, 0.65) !important;
-  border-bottom: 4px solid #5a4310 !important;
-  border-radius: 16px !important;
+    radial-gradient(ellipse at 50% -20%, rgba(255, 215, 106, 0.22) 0%, transparent 65%),
+    radial-gradient(circle at 10% 50%, rgba(30, 58, 138, 0.25) 0%, transparent 60%),
+    radial-gradient(circle at 90% 50%, rgba(153, 27, 27, 0.25) 0%, transparent 60%),
+    linear-gradient(175deg, rgba(28, 22, 44, 0.96) 0%, rgba(14, 10, 24, 0.98) 60%, rgba(8, 6, 14, 0.99) 100%) !important;
+  border: 1.5px solid rgba(255, 215, 106, 0.75) !important;
+  border-bottom: 4.5px solid #5a4310 !important;
+  border-radius: 18px !important;
   padding: 10px 12px !important;
+  min-width: 290px !important;
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.28),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.65),
-    0 12px 30px rgba(0, 0, 0, 0.88),
-    0 0 18px rgba(212, 175, 55, 0.18) !important;
-  backdrop-filter: blur(14px) !important;
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.35),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.8),
+    0 14px 36px rgba(0, 0, 0, 0.88),
+    0 0 24px rgba(212, 175, 55, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
 }
 
-#scoreBadgeFixed .score-badge-section {
+/* 標頭：星靈戰局 + 回合數徽章 */
+.score-board-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding-bottom: 6px !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid rgba(255, 215, 106, 0.25) !important;
+}
+
+.score-board-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.score-header-icon {
+  font-size: 14px !important;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 106, 0.6)) !important;
+}
+
+.score-header-title {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.8px !important;
+  color: #ffd76a !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 215, 106, 0.5) !important;
+}
+
+.score-board-turn-badge {
+  font-size: 10.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  color: #f1f5f9 !important;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.5) !important;
+  border-radius: 20px !important;
+  padding: 1px 8px !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 兩大陣營卡片容器 */
+.score-badge-section {
   display: flex !important;
   flex-direction: column !important;
   gap: 8px !important;
 }
 
-#scoreBadgeFixed .score-badge-card.player {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.52) 0%, rgba(15, 23, 42, 0.82) 100%) !important;
+.score-badge-card {
+  border-radius: 12px !important;
+  padding: 6px 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.score-badge-card.player {
+  background:
+    linear-gradient(135deg, rgba(30, 58, 138, 0.55) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
   border: 1px solid rgba(96, 165, 250, 0.45) !important;
-  border-left: 3.5px solid #ffd76a !important;
+  border-left: 3.5px solid #60a5fa !important;
   border-bottom: 2.5px solid rgba(10, 18, 40, 0.95) !important;
-  border-radius: 11px !important;
-  padding: 6px 10px !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 10px rgba(0, 0, 0, 0.5) !important;
 }
 
-#scoreBadgeFixed .score-badge-card.enemy {
-  background: linear-gradient(135deg, rgba(127, 29, 29, 0.52) 0%, rgba(35, 10, 18, 0.82) 100%) !important;
+.score-badge-card.player.leading {
+  border-left-color: #ffd76a !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 14px rgba(250, 204, 21, 0.35) !important;
+}
+
+.score-badge-card.enemy {
+  background:
+    linear-gradient(135deg, rgba(127, 29, 29, 0.55) 0%, rgba(35, 10, 18, 0.85) 100%) !important;
   border: 1px solid rgba(248, 113, 113, 0.45) !important;
-  border-left: 3.5px solid #ff7875 !important;
+  border-left: 3.5px solid #f87171 !important;
   border-bottom: 2.5px solid rgba(40, 8, 12, 0.95) !important;
-  border-radius: 11px !important;
-  padding: 6px 10px !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 10px rgba(0, 0, 0, 0.5) !important;
 }
 
-#scoreBadgeFixed .score-badge-num {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #422c06 0%, #1f1402 100%) !important;
-  border: 1.5px solid #facc15 !important;
-  border-bottom: 2.5px solid #713f12 !important;
-  border-radius: 8px !important;
-  padding: 1px 9px !important;
-  color: #fde047 !important;
+.score-badge-card.enemy.leading {
+  border-left-color: #ff4d4f !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 14px rgba(239, 68, 68, 0.35) !important;
+}
+
+/* 陣營頂部列：身份名稱 + 領先徽章 */
+.score-badge-top-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 5px !important;
+}
+
+.score-player-identity {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.score-crest {
+  font-size: 11px !important;
+}
+
+.score-name {
+  font-size: 12px !important;
   font-weight: 900 !important;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.65), 0 1px 2px #000 !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 6px rgba(0, 0, 0, 0.6) !important;
-}
-
-#scoreBadgeFixed .score-badge-num.enemy-num {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #4c0519 0%, #25020b 100%) !important;
-  border-color: #fb7185 !important;
-  border-bottom-color: #881337 !important;
-  color: #fda4af !important;
-  text-shadow: 0 0 8px rgba(251, 113, 133, 0.65), 0 1px 2px #000 !important;
-}
-
-#scoreBadgeFixed .score-badge-subrow {
-  background: rgba(6, 4, 14, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 6px !important;
-  padding: 3px 7px !important;
-  margin-top: 3px !important;
+  letter-spacing: 0.5px !important;
   color: #e2e8f0 !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+
+/* 領先狀態徽章 (.score-lead-badge) */
+.score-lead-badge {
+  font-size: 9.5px !important;
+  font-weight: 900 !important;
+  padding: 1px 6px !important;
+  border-radius: 10px !important;
+  line-height: 1.2 !important;
+}
+
+.score-lead-badge.player-lead {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  color: #082f49 !important;
+  border: 1px solid #7dd3fc !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7) !important;
+}
+
+.score-lead-badge.enemy-lead {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #450a0a !important;
+  border: 1px solid #fca5a5 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7) !important;
+}
+
+.score-lead-badge.tie {
+  background: rgba(100, 116, 139, 0.5) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+}
+
+.score-lead-badge.player-chase,
+.score-lead-badge.enemy-chase {
+  background: rgba(71, 85, 105, 0.5) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+/* 主得分列：立體寶石座 + 次要細項膠囊 */
+.score-badge-main-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* 立體寶石座 (.score-gem-socket) — 藍寶石 / 紅寶石雙層透光高折射琢面 */
+.score-gem-socket {
+  position: relative !important;
+  min-width: 82px !important;
+  height: 42px !important;
+  border-radius: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 0 8px !important;
+}
+
+.score-gem-socket.player-gem {
+  background:
+    radial-gradient(ellipse at 35% 25%, #93c5fd 0%, #3b82f6 38%, #1d4ed8 72%, #0f172a 100%) !important;
+  border: 1.5px solid #93c5fd !important;
+  border-bottom: 3.5px solid #082f49 !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.75),
+    0 0 16px rgba(37, 99, 235, 0.5) !important;
+}
+
+.score-gem-socket.enemy-gem {
+  background:
+    radial-gradient(ellipse at 35% 25%, #fca5a5 0%, #ef4444 38%, #b91c1c 72%, #450a0a 100%) !important;
+  border: 1.5px solid #fca5a5 !important;
+  border-bottom: 3.5px solid #450a0a !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.75),
+    0 0 16px rgba(220, 38, 38, 0.5) !important;
+}
+
+/* 玻璃高光反光片 */
+.score-gem-socket::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 1px !important;
+  left: 3px !important;
+  right: 3px !important;
+  height: 42% !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border-radius: 9px 9px 18px 18px !important;
+  pointer-events: none !important;
+}
+
+.score-gem-val {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
+  color: #ffffff !important;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 12px rgba(255, 255, 255, 0.8) !important;
+  font-family: 'Cinzel', 'Outfit', 'Microsoft JhengHei', sans-serif !important;
+  line-height: 1 !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.score-gem-star {
+  font-size: 15px !important;
+  color: #ffd76a !important;
+  margin-left: 2px !important;
+  text-shadow: 0 0 8px rgba(255, 215, 106, 0.8) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* 細項膠囊雙行排版 (.score-breakdown-col) */
+.score-breakdown-col {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  gap: 4px !important;
+}
+
+.score-pill {
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 3px 6px !important;
+  border-radius: 6px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.score-pill.field-pill {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  color: #cbd5e1 !important;
+}
+
+.score-pill.bonus-pill {
+  background: rgba(42, 28, 6, 0.8) !important;
+  border: 1px solid rgba(250, 204, 21, 0.45) !important;
+  color: #fde047 !important;
+  text-shadow: 0 0 6px rgba(250, 204, 21, 0.5) !important;
+}
+
+.score-pill .pill-lbl {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.score-pill .pill-val {
+  font-weight: 900 !important;
+  color: #ffffff !important;
+}
+
+.score-pill.bonus-pill .pill-val {
+  color: #fde047 !important;
+}
+
+/* 按鈕內部圖標與文字微調 */
+#stableActionPanel .stable-action-btn .btn-icon {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  margin-right: 2px !important;
+}
+
+#stableActionPanel .stable-action-btn .btn-text {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* 抽牌指示呼吸燈 (.deck-draw-pulse) */
+#stableActionPanel .stable-action-btn.deck-draw-pulse {
+  background:
+    radial-gradient(ellipse at 50% -20%, rgba(255, 255, 255, 0.85) 0%, rgba(254, 240, 138, 0.45) 45%, transparent 75%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(180deg, #fde047 0%, #eab308 46%, #b45309 88%, #78350f 100%) !important;
+  border-color: #ffffff !important;
+  animation: xlwDeckDrawPulse 1.4s infinite alternate ease-in-out !important;
+}
+
+@keyframes xlwDeckDrawPulse {
+  0% { transform: scale(1); box-shadow: inset 0 2px 2px #fff, 0 6px 18px rgba(0,0,0,0.8), 0 0 14px rgba(250, 204, 21, 0.5); }
+  100% { transform: scale(1.02); box-shadow: inset 0 2.5px 3px #fff, 0 8px 24px rgba(0,0,0,0.9), 0 0 26px rgba(250, 204, 21, 0.95); }
 }
 
 /* 4. 階段狀態提示欄 (#phaseDisplayPanelHard) — 皇家星冕動態銘牌 */
 body #phaseDisplayPanelHard,
 #phaseDisplayPanelHard {
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 215, 106, 0.2) 0%, transparent 75%),
+    radial-gradient(circle at 50% 0%, rgba(255, 215, 106, 0.22) 0%, transparent 75%),
     linear-gradient(180deg, rgba(32, 24, 52, 0.96) 0%, rgba(13, 9, 24, 0.99) 100%) !important;
   border: 1.5px solid rgba(255, 215, 106, 0.72) !important;
   border-bottom: 3.5px solid #5c440e !important;

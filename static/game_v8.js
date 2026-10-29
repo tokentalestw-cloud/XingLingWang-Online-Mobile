@@ -19092,7 +19092,7 @@ async function endPlayerTurnAndRunEnemy() {
   if (endBtnEl) {
     endBtnEl.disabled = true;
     endBtnEl.classList.add("btn-processing", "btn-pressed-instant");
-    endBtnEl.innerHTML = `<span>⏳ 已確認，結算中...</span>`;
+    endBtnEl.innerHTML = `<span class="btn-main-text">⏳ 正在結算...</span><span class="btn-sub-turn">RESOLVING</span>`;
     endBtnEl.style.pointerEvents = "none";
   }
 
@@ -19101,7 +19101,7 @@ async function endPlayerTurnAndRunEnemy() {
     if (endBtnEl) {
       endBtnEl.disabled = false;
       endBtnEl.classList.remove("btn-processing", "btn-pressed-instant");
-      endBtnEl.innerHTML = "結束回合";
+      endBtnEl.innerHTML = `<span class="btn-main-text">結束回合</span><span class="btn-sub-turn">END TURN</span>`;
       endBtnEl.style.pointerEvents = "auto";
     }
   };
@@ -23912,24 +23912,82 @@ function renderScore() {
     }
   }
 
+  const playerLead = playerStars > enemyStars;
+  const enemyLead = enemyStars > playerStars;
+  const isTie = playerStars === enemyStars;
+
+  const playerLeadBadge = playerLead 
+    ? `<span class="score-lead-badge player-lead">👑 領先</span>` 
+    : (isTie ? `<span class="score-lead-badge tie">⚡ 平局</span>` : `<span class="score-lead-badge player-chase">追趕</span>`);
+  
+  const enemyLeadBadge = enemyLead 
+    ? `<span class="score-lead-badge enemy-lead">🔥 領先</span>` 
+    : (isTie ? `<span class="score-lead-badge tie">⚡ 平局</span>` : `<span class="score-lead-badge enemy-chase">防守</span>`);
+
   scoreBadge.innerHTML = `
+    <div class="score-board-header">
+      <div class="score-board-header-left">
+        <span class="score-header-icon">⚔️</span>
+        <span class="score-header-title">星靈戰局</span>
+      </div>
+      <div class="score-board-turn-badge">TURN ${turn}</div>
+    </div>
     <div class="score-badge-section">
-      <div class="score-badge-card player">
-        <div class="score-badge-row">
-          <span class="score-badge-label">👑 我方總分</span>
-          <span class="score-badge-num player-num">${playerStars} ★</span>
+      <div class="score-badge-card player ${playerLead ? "leading" : ""}">
+        <div class="score-badge-top-row">
+          <div class="score-player-identity">
+            <span class="score-crest player-crest">🔷</span>
+            <span class="score-name">我方星靈</span>
+          </div>
+          ${playerLeadBadge}
         </div>
-        <div class="score-badge-subrow">
-          <span>場上單位: <span style="color: #ffe600; font-weight: 900;">${playerFieldStars} ★</span> | 額外加分: <span style="color: #ff7875; font-weight: 900;">${playerBonusScore} ★</span></span>
+        <div class="score-badge-main-row">
+          <div class="score-gem-socket player-gem">
+            <span class="score-gem-glow"></span>
+            <span class="score-gem-val">${playerStars}</span>
+            <span class="score-gem-star">★</span>
+          </div>
+          <div class="score-breakdown-col">
+            <div class="score-pill field-pill" title="場上單位星星總數">
+              <span class="pill-icon">🛡️</span>
+              <span class="pill-lbl">戰線</span>
+              <span class="pill-val">${playerFieldStars}★</span>
+            </div>
+            <div class="score-pill bonus-pill" title="額外獎勵分數">
+              <span class="pill-icon">✨</span>
+              <span class="pill-lbl">獎勵</span>
+              <span class="pill-val">+${playerBonusScore}★</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="score-badge-card enemy">
-        <div class="score-badge-row">
-          <span class="score-badge-label enemy-label">👾 對手總分</span>
-          <span class="score-badge-num enemy-num">${enemyStars} ★</span>
+
+      <div class="score-badge-card enemy ${enemyLead ? "leading" : ""}">
+        <div class="score-badge-top-row">
+          <div class="score-player-identity">
+            <span class="score-crest enemy-crest">🔻</span>
+            <span class="score-name">對手陣營</span>
+          </div>
+          ${enemyLeadBadge}
         </div>
-        <div class="score-badge-subrow">
-          <span>場上單位: <span style="color: #ffe600; font-weight: 900;">${enemyFieldStars} ★</span> | 額外加分: <span style="color: #ff7875; font-weight: 900;">${enemyBonusScore} ★</span></span>
+        <div class="score-badge-main-row">
+          <div class="score-gem-socket enemy-gem">
+            <span class="score-gem-glow"></span>
+            <span class="score-gem-val">${enemyStars}</span>
+            <span class="score-gem-star">★</span>
+          </div>
+          <div class="score-breakdown-col">
+            <div class="score-pill field-pill" title="敵方場上單位星星總數">
+              <span class="pill-icon">🛡️</span>
+              <span class="pill-lbl">戰線</span>
+              <span class="pill-val">${enemyFieldStars}★</span>
+            </div>
+            <div class="score-pill bonus-pill" title="敵方額外獎勵分數">
+              <span class="pill-icon">✨</span>
+              <span class="pill-lbl">獎勵</span>
+              <span class="pill-val">+${enemyBonusScore}★</span>
+            </div>
+          </div>
         </div>
       </div>
       ${puzzleSectionHtml}
@@ -24034,13 +24092,13 @@ function renderStablePanel() {
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
         <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
-          <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
-          <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+          <button id="stableActionTactical" class="stable-action-btn tactical" disabled><span class="btn-icon">🛡️</span><span class="btn-text">戰術佈陣</span></button>
+          <button id="stableActionAttack" class="stable-action-btn attack" disabled><span class="btn-icon">⚔️</span><span class="btn-text">進攻宣言</span></button>
         </div>
       </div>
-      <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
-      <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
-      <button id="stableActionEnd" class="stable-action-btn end" style="background: #333; color: #666; cursor: not-allowed;" disabled>對手回合中</button>
+      <button id="stableActionConfirm" class="stable-action-btn tribute" disabled><span class="btn-icon">🩸</span><span class="btn-text">確認獻祭</span></button>
+      <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled><span class="btn-icon">✕</span><span class="btn-text">取消選擇</span></button>
+      <button id="stableActionEnd" class="stable-action-btn end enemy-turn" style="cursor: not-allowed;" disabled><span class="btn-main-text">對手行動中</span><span class="btn-sub-turn">ENEMY TURN</span></button>
     `;
     return;
   }
@@ -24051,13 +24109,13 @@ function renderStablePanel() {
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
         <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
-          <button id="stableActionTactical" class="stable-action-btn tactical" disabled>戰術佈陣</button>
-          <button id="stableActionAttack" class="stable-action-btn attack" disabled>進攻宣言</button>
+          <button id="stableActionTactical" class="stable-action-btn tactical" disabled><span class="btn-icon">🛡️</span><span class="btn-text">戰術佈陣</span></button>
+          <button id="stableActionAttack" class="stable-action-btn attack" disabled><span class="btn-icon">⚔️</span><span class="btn-text">進攻宣言</span></button>
         </div>
       </div>
-      <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
-      <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
-      <button id="stableActionEnd" class="stable-action-btn end" style="background: linear-gradient(135deg, #facc15, #f59e0b); color: #0f172a; font-weight: 900; animation: deckPulseGlow 1.4s infinite alternate; cursor: pointer;" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)">👆 請點選牌組抽牌</button>
+      <button id="stableActionConfirm" class="stable-action-btn tribute" disabled><span class="btn-icon">🩸</span><span class="btn-text">確認獻祭</span></button>
+      <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled><span class="btn-icon">✕</span><span class="btn-text">取消選擇</span></button>
+      <button id="stableActionEnd" class="stable-action-btn end deck-draw-pulse" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)"><span class="btn-main-text">👆 點選牌組抽牌</span><span class="btn-sub-turn">DRAW CARD</span></button>
     `;
     return;
   }
@@ -24066,15 +24124,31 @@ function renderStablePanel() {
   const isEnding = Boolean(window.XLW_isPlayerTurnEnding || phase === "結束階段");
   panel.innerHTML = `
     <div class="stable-action-choice-group">
-      <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
+      <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 二選一</span></div>
       <div class="stable-action-row">
-        <button id="stableActionTactical" class="stable-action-btn tactical" onclick="changeActionPhase('戰術佈陣')">戰術佈陣</button>
-        <button id="stableActionAttack" class="stable-action-btn attack" onclick="changeActionPhase('進攻宣言')">進攻宣言</button>
+        <button id="stableActionTactical" class="stable-action-btn tactical" onclick="changeActionPhase('戰術佈陣')">
+          <span class="btn-icon">🛡️</span>
+          <span class="btn-text">戰術佈陣</span>
+        </button>
+        <button id="stableActionAttack" class="stable-action-btn attack" onclick="changeActionPhase('進攻宣言')">
+          <span class="btn-icon">⚔️</span>
+          <span class="btn-text">進攻宣言</span>
+        </button>
       </div>
     </div>
-    <button id="stableActionConfirm" class="stable-action-btn tribute" onclick="event.stopPropagation(); confirmTribute()">確認獻祭</button>
-    <button id="stableActionCancel" class="stable-action-btn tribute-cancel" onclick="event.stopPropagation(); clearModes()">取消選擇</button>
-    <button id="stableActionEnd" class="stable-action-btn end ${isEnding ? "btn-processing" : ""}" ${isEnding ? "disabled" : ""} onclick="event.stopPropagation(); endPlayerTurnAndRunEnemy()">${isEnding ? "<span>⏳ 正在結算回合...</span>" : "結束回合"}</button>
+    <button id="stableActionConfirm" class="stable-action-btn tribute" onclick="event.stopPropagation(); confirmTribute()">
+      <span class="btn-icon">🩸</span>
+      <span class="btn-text">確認獻祭</span>
+    </button>
+    <button id="stableActionCancel" class="stable-action-btn tribute-cancel" onclick="event.stopPropagation(); clearModes()">
+      <span class="btn-icon">✕</span>
+      <span class="btn-text">取消選擇</span>
+    </button>
+    <button id="stableActionEnd" class="stable-action-btn end ${isEnding ? "btn-processing" : ""}" ${isEnding ? "disabled" : ""} onclick="event.stopPropagation(); endPlayerTurnAndRunEnemy()">
+      ${isEnding 
+        ? `<span class="btn-main-text">⏳ 結算中...</span><span class="btn-sub-turn">RESOLVING</span>` 
+        : `<span class="btn-main-text">結束回合</span><span class="btn-sub-turn">END TURN</span>`}
+    </button>
   `;
 
   // 按鈕狀態控制
