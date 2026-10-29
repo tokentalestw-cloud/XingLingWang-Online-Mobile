@@ -27318,6 +27318,202 @@ function showXLWConfirm(title, message, confirmText = "要", cancelText = "不�
 
 function showXLWChoiceModal(title, message, options) {
   return new Promise((resolve) => {
+    // 1. Check if the options map to battlefield elements (lanes, slots, or units)
+    const parseTarget = (opt) => {
+      const text = (opt.text || "").trim();
+      const val = opt.value !== undefined && opt.value !== null ? String(opt.value) : "";
+      
+      // Cancel / Skip options
+      if (/取消|不發動|跳過|放棄|結束|不要召喚/.test(text) || val === "cancel") {
+        return { type: "cancel", opt };
+      }
+
+      // Check for lane / column selection (星星戰線 1~5)
+      const laneMatch = text.match(/(?:星星戰線|戰線|直列)\s*([1-5])/);
+      if (!laneMatch && /(?:星星戰線|戰線|直列)/.test(title + message)) {
+        if (/^[0-4]$/.test(val) && /^([1-5])(?:\s*\(.*?\))?$/.test(text)) {
+          const laneIdx = parseInt(val, 10);
+          return { type: "lane", lane: laneIdx, label: `⭐ 戰線 ${laneIdx + 1}`, opt };
+        }
+        if (/^[1-5]$/.test(text)) {
+          const laneIdx = parseInt(text, 10) - 1;
+          return { type: "lane", lane: laneIdx, label: `⭐ 戰線 ${laneIdx + 1}`, opt };
+        }
+      }
+
+      if (laneMatch) {
+        const laneNum = parseInt(laneMatch[1], 10);
+        const laneIdx = laneNum - 1;
+        const rowMatch = text.match(/(?:[\(（]|我方|敵方|對手)?(前排|前衛|後排|後衛)/);
+        const hasUnit = /【|的|:|：|單位/.test(text);
+        if (rowMatch && hasUnit) {
+          const isFront = rowMatch[1].includes("前");
+          let isEnemy = /敵方|對手/.test(text) || /敵方|對手/.test(title + message);
+          if (/我方/.test(text) || /我方/.test(title + message)) isEnemy = false;
+          const zone = (isEnemy ? "enemy_" : "player_") + (isFront ? "front" : "back");
+          return { type: "unit", zone, idx: laneIdx, label: `🎯 ${laneNum}號戰線`, opt };
+        }
+        if (!hasUnit && (/直列/.test(text) || /(?:星星戰線|戰線)/.test(title + message))) {
+          return { type: "lane", lane: laneIdx, label: `⭐ 戰線 ${laneNum}`, opt };
+        }
+      }
+
+      // Check for summon slot or unit slot
+      const isSummon = /(?:召喚|空格|特召|打出|位置)/.test(title + message);
+      const slotMatch = text.match(/(前排|前衛|後排|後衛)\s*(?:第)?\s*([1-5])(?:\s*格)?/);
+      if (slotMatch) {
+        const rowStr = slotMatch[1];
+        const idx = parseInt(slotMatch[2], 10) - 1;
+        const isFront = rowStr.includes("前");
+        let isEnemy = /敵方|對手/.test(text) || /敵方|對手/.test(title + message);
+        if (isSummon && !(/敵方|對手/.test(text))) {
+          isEnemy = false;
+        } else if (/我方/.test(text) || /我方/.test(title + message)) {
+          isEnemy = false;
+        }
+        const zone = (isEnemy ? "enemy_" : "player_") + (isFront ? "front" : "back");
+        const hasUnit = /(?: 的 | 的|【|:|：| \(原| \(攻| \(現| \(原始)/.test(text) || !isSummon;
+        if (isSummon && !hasUnit) {
+          return { type: "summon", zone, idx, label: `✨ ${rowStr}${idx + 1}`, opt };
+        } else {
+          return { type: "unit", zone, idx, label: `🎯 ${rowStr}${idx + 1}`, opt };
+        }
+      }
+
+      // JSON-based target in value (e.g. {"zone":"enemy_front","idx":0})
+      if (val.startsWith("{") && val.includes("zone") && val.includes("idx")) {
+        try {
+          const parsed = JSON.parse(val);
+          if (parsed && parsed.zone && parsed.idx !== undefined) {
+            return { type: "unit", zone: parsed.zone, idx: parseInt(parsed.idx, 10), label: `🎯 目標`, opt };
+          }
+        } catch (e) {}
+      }
+
+      // Formatted value (e.g. "player_front:0" or "player_front_0")
+      const valSlotMatch = val.match(/(player_front|player_back|enemy_front|enemy_back)[:_]([0-4])/);
+      if (valSlotMatch) {
+        const z = valSlotMatch[1];
+        const i = parseInt(valSlotMatch[2], 10);
+        return { type: isSummon ? "summon" : "unit", zone: z, idx: i, label: isSummon ? `✨ 召喚` : `🎯 目標`, opt };
+      }
+
+      return null;
+    };
+
+    const targetMaps = options.map((opt, i) => ({ opt, optIdx: i, target: parseTarget(opt) }));
+    const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
+
+    // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
+    if (boardTargets.length > 0 && boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length) {
+      let settled = false;
+      const attachedSlotCleanups = [];
+
+      // Create floating prompt banner
+      const promptBar = document.createElement("div");
+      promptBar.id = "xlwDirectTargetPromptBar";
+      promptBar.className = "xlw-direct-prompt-bar";
+
+      const isSummonMode = boardTargets.some(b => b.target.type === "summon");
+      const icon = isSummonMode ? "✨" : "🎯";
+      const promptTitleHtml = `<div class="xlw-direct-prompt-title">${icon} ${title}</div>`;
+      const promptMsgHtml = `<div class="xlw-direct-prompt-message">${message}</div>`;
+
+      let pillsHtml = `<div class="xlw-direct-prompt-pills">`;
+      targetMaps.forEach(({ opt, optIdx, target }) => {
+        const isCancel = target && target.type === "cancel";
+        if (isCancel) {
+          pillsHtml += `<button class="xlw-direct-prompt-cancel-btn" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text || "取消"}</button>`;
+        } else {
+          pillsHtml += `<button class="xlw-direct-prompt-pill" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text}</button>`;
+        }
+      });
+      pillsHtml += `</div>`;
+
+      promptBar.innerHTML = promptTitleHtml + promptMsgHtml + pillsHtml;
+      document.body.appendChild(promptBar);
+
+      const cleanup = (val) => {
+        if (settled) return;
+        settled = true;
+        try { promptBar.remove(); } catch (e) {}
+        attachedSlotCleanups.forEach(fn => fn());
+        resolve(val);
+      };
+      promptBar._xlwCancel = () => cleanup(null);
+
+      // Hook up pills & cancel inside prompt bar
+      promptBar.querySelectorAll(".xlw-direct-prompt-pill").forEach(pill => {
+        pill.onclick = (e) => {
+          e.stopPropagation();
+          const idx = parseInt(pill.dataset.optIdx, 10);
+          cleanup(options[idx] ? options[idx].value : pill.dataset.val);
+        };
+      });
+      promptBar.querySelectorAll(".xlw-direct-prompt-cancel-btn").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const idx = btn.dataset.optIdx ? parseInt(btn.dataset.optIdx, 10) : -1;
+          const val = idx >= 0 && options[idx] ? options[idx].value : null;
+          cleanup(val !== undefined ? val : null);
+        };
+      });
+
+      // Hook up board slots
+      boardTargets.forEach(({ opt, target }) => {
+        let slotElements = [];
+        if (target.type === "lane") {
+          const laneIdx = target.lane;
+          let zones = ["player_front", "player_back", "enemy_front", "enemy_back"];
+          if (/敵方|對手/.test(title + message)) {
+            zones = ["enemy_front", "enemy_back"];
+          } else if (/我方/.test(title + message)) {
+            zones = ["player_front", "player_back"];
+          }
+          zones.forEach(z => {
+            const el = document.querySelector(`.slot[data-zone="${z}"][data-index="${laneIdx}"]`);
+            if (el) slotElements.push(el);
+          });
+        } else {
+          const el = document.querySelector(`.slot[data-zone="${target.zone}"][data-index="${target.idx}"]`);
+          if (el) slotElements.push(el);
+        }
+
+        slotElements.forEach(slotEl => {
+          const targetClass = target.type === "summon" 
+            ? "slot-type-summon" 
+            : (target.type === "lane" ? "slot-type-lane" : "slot-type-unit");
+          slotEl.classList.add("xlw-direct-board-target", targetClass);
+
+          const badge = document.createElement("div");
+          badge.className = `xlw-direct-target-badge ${target.type === "summon" ? "badge-summon" : (target.type === "lane" ? "badge-lane" : "")}`;
+          badge.textContent = target.label || (target.type === "summon" ? "✨ 召喚" : "🎯 點選");
+          slotEl.appendChild(badge);
+
+          const onSlotClick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            cleanup(opt.value);
+          };
+
+          slotEl.addEventListener("click", onSlotClick, true);
+          slotEl.addEventListener("touchend", onSlotClick, true);
+
+          attachedSlotCleanups.push(() => {
+            try {
+              slotEl.classList.remove("xlw-direct-board-target", "slot-type-summon", "slot-type-unit", "slot-type-lane");
+              badge.remove();
+              slotEl.removeEventListener("click", onSlotClick, true);
+              slotEl.removeEventListener("touchend", onSlotClick, true);
+            } catch (err) {}
+          });
+        });
+      });
+
+      return;
+    }
+
+    // 2. FALLBACK: Standard Modal Overlay
     const overlay = document.createElement("div");
     overlay.className = "xlw-premium-choice-overlay";
     overlay.style.cssText = `
@@ -27346,13 +27542,13 @@ function showXLWChoiceModal(title, message, options) {
     `;
 
     let buttonsHTML = "";
-    options.forEach((opt) => {
+    options.forEach((opt, idx) => {
       const isEnd = opt.value === "end_effects";
       const btnStyle = isEnd
         ? "background: rgba(255, 255, 255, 0.05); color: #c4b9a6; border: 1px solid rgba(255, 255, 255, 0.15);"
         : "background: rgba(205, 170, 82, 0.15); color: #ffd76a; border: 1.5px solid var(--gold-accent);";
       buttonsHTML += `
-        <button class="xlw-choice-btn" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
+        <button class="xlw-choice-btn" data-opt-idx="${idx}" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
           ${opt.text}
         </button>
       `;
@@ -27386,7 +27582,8 @@ function showXLWChoiceModal(title, message, options) {
 
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
       btn.onclick = () => {
-        cleanup(btn.dataset.value);
+        const idx = parseInt(btn.dataset.optIdx, 10);
+        cleanup(options[idx] ? options[idx].value : btn.dataset.value);
       };
       btn.onmouseenter = () => {
         btn.style.filter = "brightness(1.2)";
