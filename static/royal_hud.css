@@ -559,3 +559,191 @@ body.xlw-royal-ui #xlw-phase-banner {
     animation: none !important; transition: none !important;
   }
 }
+
+/* Astral Forge v2: keep the central play area free of persistent HUD overlays. */
+:root { --xlw-command-edge: max(12px, env(safe-area-inset-right)); }
+html body.xlw-royal-ui #stableActionPanel,
+html body.xlw-royal-ui #xlwFixedTopRightActionBar { right: var(--xlw-command-edge) !important; }
+html body.xlw-royal-ui #phaseDisplayPanelHard {
+  left: auto !important; right: var(--xlw-command-edge) !important; top: 72px !important;
+  width: var(--xlw-rail) !important; max-width: none !important;
+  min-height: 92px !important; height: auto !important;
+  transform: none !important; padding: 15px 22px !important; gap: 7px !important;
+  border-radius: 7px !important;
+  border-top-color: var(--phase-light) !important;
+  background: radial-gradient(ellipse at 50% -40%, #62768d3b, transparent 80%),
+    linear-gradient(160deg, #1b293b, #0b1423) !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard[data-side='player'] { --phase-light: #9ce6ee; }
+body.xlw-royal-ui #phaseDisplayPanelHard[data-side='enemy'] { --phase-light: #f0a4b0; }
+body.xlw-royal-ui #phaseDisplayPanelHard[data-side='waiting'] { --phase-light: #d8c292; }
+html body.xlw-royal-ui #phaseDisplayPanelHard .phase-turn-owner {
+  display: inline-flex; align-items: center; align-self: center; gap: 6px;
+  width: max-content; flex: 0 0 auto;
+  color: var(--phase-light); border: 1px solid currentColor;
+  border-radius: 3px; padding: 3px 8px;
+  font-size: 10px; font-weight: 600; line-height: 1.2; letter-spacing: 2px;
+  background: #07101c80;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard .phase-turn-owner::before {
+  content: ''; width: 4px; height: 4px; border-radius: 50%;
+  background: currentColor; box-shadow: 0 0 7px currentColor;
+}
+html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-title { gap: 8px !important; }
+html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-help {
+  font-size: 10.5px !important; line-height: 1.65 !important; color: #b9c6d6 !important;
+}
+
+/* The hand has its own top-centre space, independent of the phase plaque. */
+html body.xlw-royal-ui #xlwEnemyFloatingHand {
+  position: fixed !important; top: 13px !important; left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-width: min(420px, calc(var(--xlw-ui-width, 100vw) - 2 * var(--xlw-rail) - 48px)) !important;
+  z-index: 7200 !important;
+}
+body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-count-badge {
+  display: block !important; color: #a7b6c9 !important;
+  font-size: 9px !important; font-weight: 400 !important;
+  letter-spacing: 1px !important; margin-bottom: 5px !important;
+  background: none !important; border: 0 !important; padding: 0 !important;
+  text-shadow: 0 2px 2px #000 !important;
+}
+body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back {
+  width: 37px !important; height: 52px !important;
+  border: 1px solid #a58f6080 !important; border-radius: 3px !important;
+  margin-left: -12px !important;
+  box-shadow: 0 3px 7px #0007 !important;
+}
+body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back:first-child { margin-left: 0 !important; }
+
+/* Turn ownership is encoded by both colour and explicit text, never colour alone. */
+body.xlw-royal-ui #xlw-phase-banner[data-side] {
+  --banner-light: #a6ecf2;
+  --banner-edge: #66cbd1;
+  --banner-wash: #103d50f5;
+  color: var(--banner-light) !important;
+  border-color: var(--banner-edge) !important;
+  background: linear-gradient(90deg, transparent, var(--banner-wash) 28% 72%, transparent) !important;
+  text-shadow: 0 3px 2px #020813, 0 0 18px #65dce440 !important;
+  box-shadow: 0 10px 30px #0006, inset 0 1px 0 #ffffff12 !important;
+  padding: 20px 0 23px !important;
+}
+body.xlw-royal-ui #xlw-phase-banner[data-side='enemy'] {
+  --banner-light: #ffd2dc; --banner-edge: #e28a9c; --banner-wash: #4e172cf5;
+  text-shadow: 0 3px 2px #17050c, 0 0 18px #eb829340 !important;
+}
+body.xlw-royal-ui #xlw-phase-banner[data-side]::before {
+  content: '我方回合  /  YOUR TURN'; display: block;
+  font: 500 10px/1.5 'Outfit', 'Microsoft JhengHei', sans-serif;
+  letter-spacing: 4px; margin-bottom: 7px; color: var(--banner-light);
+  text-shadow: none;
+}
+body.xlw-royal-ui #xlw-phase-banner[data-side='enemy']::before { content: '對手回合  /  ENEMY TURN'; }
+
+/* Stable, uncropped card inspection: size the frame to the actual image, not 5:7. */
+html body.xlw-royal-ui #xlwLeftCardPanel {
+  left: 12px !important; top: 12px !important; bottom: auto !important;
+  width: 338px !important; max-width: calc(var(--xlw-ui-width, 100vw) - 24px) !important;
+  height: auto !important;
+  max-height: calc(var(--xlw-ui-height, 100dvh) - 24px) !important;
+  padding: 12px !important; border: 1px solid #9a8558 !important;
+  transform: none !important; transform-origin: top left !important;
+  border-radius: 9px !important;
+  background: linear-gradient(165deg, #1c293a, #0b1422) !important;
+  box-shadow: inset 0 1px 0 #fff0cc22, 0 15px 40px #0009 !important;
+  backdrop-filter: none !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .left-panel-header {
+  margin-bottom: 10px !important; padding-bottom: 9px !important;
+  border-bottom: 1px solid #b39e6747 !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .left-panel-title {
+  font-size: 13px !important; font-weight: 500 !important;
+  color: #e6d7b5 !important; letter-spacing: 2px !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .left-panel-close-btn {
+  width: 30px !important; height: 30px !important; border-radius: 4px !important;
+  background: linear-gradient(#314157, #172536) !important;
+  border: 1px solid #75869a70 !important; box-shadow: 0 2px 0 #030a13 !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel #leftCardDetailView {
+  height: auto !important; min-height: 0 !important; padding: 0 !important;
+  overflow-y: auto !important; scrollbar-width: thin; scrollbar-color: #65788c #0c1522;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .detail-img-wrap {
+  width: 100% !important; max-width: none !important; height: auto !important;
+  min-height: 0 !important; max-height: none !important; aspect-ratio: auto !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important;
+  border-radius: 5px !important; box-shadow: none !important;
+  background: transparent !important; overflow: hidden !important;
+  transform: none !important; flex: 0 0 auto !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel #leftPanelImg {
+  display: block !important; width: 100% !important; height: auto !important;
+  max-width: 100% !important; max-height: none !important;
+  object-fit: contain !important; aspect-ratio: auto !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important;
+  border-radius: 0 !important; box-shadow: none !important;
+  transform: none !important; transition: none !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel > .xlw-holo-foil { display: none !important; }
+
+@media (max-width: 1100px), (pointer: coarse) {
+  html body.xlw-royal-ui #stableActionPanel,
+  html body.xlw-royal-ui #xlwFixedTopRightActionBar { right: max(8px, env(safe-area-inset-right)) !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard {
+    top: 49px !important; right: max(8px, env(safe-area-inset-right)) !important;
+    left: auto !important; width: var(--xlw-rail) !important;
+    min-height: 45px !important; padding: 8px 18px !important;
+    flex-direction: row !important; flex-wrap: wrap !important; gap: 6px !important;
+  }
+  html body.xlw-royal-ui #phaseDisplayPanelHard .phase-turn-owner {
+    font-size: 8px !important; letter-spacing: 0 !important; padding: 2px 4px !important; gap: 3px !important;
+  }
+  html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-title { font-size: 0 !important; gap: 0 !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard #phaseTextHard { font-size: 11px !important; letter-spacing: 0 !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-help { display: none !important; }
+  html body.xlw-royal-ui #xlwEnemyFloatingHand { top: 5px !important; }
+  html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-count-badge { font-size: 7px !important; margin-bottom: 2px !important; }
+  html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back { width: 22px !important; height: 31px !important; margin-left: -8px !important; }
+  html body.xlw-royal-ui #boardWrap {
+    position: absolute !important; left: 50% !important; top: 50px !important;
+    width: 1400px !important; height: 760px !important; margin: 0 !important;
+    transform-origin: 0 0 !important;
+    transform: translate(calc(-490px * var(--xlw-ui-mobile-board-scale, .32)), calc(-140px * var(--xlw-ui-mobile-board-scale, .32)))
+      scale(var(--xlw-ui-mobile-board-scale, .32)) !important;
+  }
+  html body.xlw-royal-ui #xlwLeftCardPanel {
+    left: 6px !important; top: 6px !important; bottom: auto !important;
+    width: 242px !important; padding: 8px !important;
+    height: auto !important;
+    max-height: calc(var(--xlw-ui-height, 100dvh) - 12px) !important;
+  }
+  html body.xlw-royal-ui #xlwLeftCardPanel .detail-img-wrap {
+    max-width: min(100%, calc((var(--xlw-ui-height, 100dvh) - 110px) * var(--xlw-detail-aspect, .68))) !important;
+  }
+  body.xlw-royal-ui #xlw-phase-banner[data-side] { font-size: 24px !important; padding: 13px 0 16px !important; letter-spacing: 3px !important; }
+  body.xlw-royal-ui #xlw-phase-banner[data-side]::before { font-size: 8px; letter-spacing: 2px; margin-bottom: 3px; }
+}
+
+/* Inspection content determines the drawer height; no empty black column. */
+body.xlw-royal-ui #xlwLeftCardPanel .panel-inner {
+  height: auto !important; max-height: calc(var(--xlw-ui-height, 100dvh) - 50px) !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel #leftCardDetailView {
+  max-height: calc(var(--xlw-ui-height, 100dvh) - 100px) !important;
+  flex: 0 1 auto !important; background: transparent !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel #xlwLeftPanelHeader { background: transparent !important; }
+body.xlw-royal-ui #xlwLeftCardPanel .inspector-stat-cell {
+  background: linear-gradient(#23364b, #112031) !important;
+  border: 1px solid #788da35c !important; border-bottom: 3px solid #07111e !important;
+  border-radius: 5px !important; box-shadow: inset 0 1px 0 #ffffff12, 0 3px 8px #0005 !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .inspector-stat-cell .stat-label { color: #bdcddc !important; }
+body.xlw-royal-ui #xlwLeftCardPanel .inspector-section-block {
+  background: #0b1727 !important; border-color: #6680984f !important; border-radius: 5px !important;
+}
+body.xlw-royal-ui #xlwLeftCardPanel .inspector-section-title { color: #c6d7e2 !important; }
+body.xlw-royal-ui #xlwLeftCardPanel .inspector-note-item { background: #8fcfd60a !important; border-left-color: #82c1cd !important; }

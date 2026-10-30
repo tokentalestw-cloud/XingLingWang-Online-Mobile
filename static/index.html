@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261030-3d-hud-v5">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261031-astral-forge-v1">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261031-astral-forge-v2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -142,7 +142,8 @@
 
   <!-- 中上方獨立階段狀態提示板 -->
   <div id="phaseDisplayPanelHard" class="phase-display-panel-hard" style="display: none !important;">
-    <div class="phase-hard-title">目前階段：<span id="phaseTextHard">召喚階段</span></div>
+    <div id="phaseTurnOwner" class="phase-turn-owner">準備對戰</div>
+    <div class="phase-hard-title">階段<span id="phaseTextHard">召喚階段</span></div>
     <div class="phase-hard-help" id="phaseHelpHard">可進行單位召喚、祭品召喚或發動手牌魔法。</div>
   </div>
 
@@ -834,7 +835,7 @@
 
   <!-- 導入核心重構對戰引擎 -->
   <script src="/static/online_sync.js?v=20261031-sync-v2" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261031-astral-forge-v1" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261031-astral-forge-v2" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -1018,7 +1019,7 @@
   <aside id="xlwLeftCardPanel" class="xlw-left-card-panel" style="display: none !important;">
     <div class="panel-inner">
       <div class="left-panel-header" id="xlwLeftPanelHeader">
-        <span class="left-panel-title">🔍 卡牌特寫</span>
+        <span class="left-panel-title">卡牌特寫</span>
         <div class="left-panel-ctrls">
           <button id="xlwLeftPanelCloseBtn" class="left-panel-close-btn" type="button" title="關閉卡牌特寫" onclick="window.xlwCloseLeftPanel(event)">✕</button>
         </div>

@@ -178,6 +178,11 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   banner.style.borderTop = "2px solid " + color;
   banner.style.borderBottom = "2px solid " + color;
   banner.style.boxShadow = "0 0 30px " + color + "40, inset 0 0 30px " + color + "40";
+  const bannerSide = /^(對手|對方)/.test(displayText) ? "enemy" :
+    (/^我方/.test(displayText) ? "player" : (isMyTurn ? "player" : "enemy"));
+  banner.dataset.side = bannerSide;
+  banner.setAttribute("role", "status");
+  banner.setAttribute("aria-live", "polite");
   banner.textContent = displayText;
   
   // Reset animation state
@@ -19962,13 +19967,12 @@ function render() {
     phaseDisplayPanel.dataset.phase = phase;
   }
   
-  if (phaseDisplayText) {
-    if (isMultiplayer) {
-      phaseDisplayText.textContent = isMyTurn ? `我方回合 - ${phase}` : `對手回合 - ${phase}`;
-    } else {
-      phaseDisplayText.textContent = phase;
-    }
-  }
+  const turnSide = window.XLW_gameInProgress ? (isMyTurn ? "player" : "enemy") : "waiting";
+  if (phaseDisplayPanel) phaseDisplayPanel.dataset.side = turnSide;
+  const turnOwnerLabel = $("phaseTurnOwner");
+  if (turnOwnerLabel) turnOwnerLabel.textContent = turnSide === "waiting" ? "準備對戰" :
+    (turnSide === "player" ? "我方回合" : "對手回合");
+  if (phaseDisplayText) phaseDisplayText.textContent = phase;
   if (phaseHelpText) {
     phaseHelpText.textContent = isMultiplayer && !isMyTurn ? "等待對手操作中..." : getPhaseHelpText(phase);
   }
@@ -24413,6 +24417,13 @@ function showModal(card, equipments, unitObj) {
         this.onerror = null;
         this.src = "/static/card_back.jpeg";
       };
+      // Use the source image's own proportions; no letterboxing or destructive cropping.
+      leftImg.onload = () => {
+        if (leftImg.naturalWidth && leftImg.naturalHeight) {
+          leftImg.parentElement.style.setProperty("--xlw-detail-aspect", String(leftImg.naturalWidth / leftImg.naturalHeight));
+        }
+      };
+      leftImg.alt = card.name || "卡牌特寫";
       leftImg.src = (card && card.image) ? card.image : "/static/card_back.jpeg";
       placeholder.style.display = "none";
       detailView.style.setProperty("display", "flex", "important");
@@ -24657,6 +24668,13 @@ function adjustBoardScale() {
   if (!board) return;
 
   // Keep the existing laptop board geometry legible between the two HUD rails.
+  const rotatedUI = document.documentElement.classList.contains("xlw-force-landscape") && window.innerHeight > window.innerWidth;
+  const uiWidth = rotatedUI ? window.innerHeight : window.innerWidth;
+  const uiHeight = rotatedUI ? window.innerWidth : window.innerHeight;
+  document.documentElement.style.setProperty("--xlw-ui-width", uiWidth + "px");
+  document.documentElement.style.setProperty("--xlw-ui-height", uiHeight + "px");
+  const mobileBoardScale = Math.max(0.22, Math.min((uiHeight - 132) / 794, (uiWidth - 356) / 1170, 0.4));
+  document.documentElement.style.setProperty("--xlw-ui-mobile-board-scale", String(mobileBoardScale));
   const hudBoardScale = Math.max(0.35, Math.min(
     (window.innerHeight - 242) / 794,
     (window.innerWidth - 508) / 1170,
@@ -32422,7 +32440,7 @@ window.xlwIsHoloCard = function(card) {
 };
 
 window.xlwAttach3DTiltAndHolo = function(root = document) {
-  const selector = '.card, .unit-card, .xlw-left-panel-img, #leftPanelImg';
+  const selector = '.card, .unit-card';
   const cards = root.matches?.(selector) ? [root] : root.querySelectorAll(selector);
   cards.forEach(cardEl => {
     if (cardEl.dataset.xlwTiltAttached) return;
@@ -32458,7 +32476,7 @@ window.xlwAttach3DTiltAndHolo = function(root = document) {
 // Attach effects only when a card is first hovered, including newly rendered cards.
 document.addEventListener("pointerover", (event) => {
   if (event.pointerType === "touch") return;
-  const card = event.target.closest?.('.card, .unit-card, .xlw-left-panel-img, #leftPanelImg');
+  const card = event.target.closest?.('.card, .unit-card');
   if (card && !card.dataset.xlwTiltAttached) window.xlwAttach3DTiltAndHolo(card);
 }, { passive: true });
 
