@@ -300,6 +300,8 @@ function preloadCardImages(cardsList, priority = "high") {
     _xlwPreloadedImageUrls.add(url);
     try {
       const img = new Image();
+      // Failed requests must remain eligible for a later preload attempt.
+      img.onerror = () => _xlwPreloadedImageUrls.delete(url);
       if (priority === "high" && "fetchPriority" in img) {
         img.fetchPriority = "high";
       }
@@ -307,7 +309,7 @@ function preloadCardImages(cardsList, priority = "high") {
       if (img.decode) {
         img.decode().catch(() => {});
       }
-    } catch (e) {}
+    } catch (e) { _xlwPreloadedImageUrls.delete(url); }
   });
 }
 
@@ -19978,7 +19980,7 @@ function render() {
   renderEnemyPanel();
   renderRaceCards();
   if (typeof window.xlwRender3DStacks === 'function') window.xlwRender3DStacks();
-  saveLocalGameState();
+  scheduleLocalGameStateSave();
 }
 
 function getPhaseHelpText(p) {
@@ -30452,7 +30454,23 @@ window.xlwEnterActiveOnlineBoardUI = function() {
 };
 
 // ===== 22.1 本地戰局存檔與狀態同步恢復 (localStorage & sessionStorage) =====
+// Coalesce render bursts while retaining immediate saves at explicit checkpoints.
+let xlwLocalSaveTimer = null;
+function scheduleLocalGameStateSave() {
+  if (!isMultiplayer || !room_id || !player_id || xlwLocalSaveTimer !== null) return;
+  xlwLocalSaveTimer = setTimeout(saveLocalGameState, 200);
+}
+window.addEventListener("pagehide", () => {
+  if (xlwLocalSaveTimer !== null) saveLocalGameState();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && xlwLocalSaveTimer !== null) saveLocalGameState();
+});
 function saveLocalGameState() {
+  if (xlwLocalSaveTimer !== null) {
+    clearTimeout(xlwLocalSaveTimer);
+    xlwLocalSaveTimer = null;
+  }
   if (!isMultiplayer || !room_id || !player_id) return;
   const key = "XLW_GAME_STATE_" + room_id + "_" + player_id;
   try {
@@ -32247,8 +32265,9 @@ window.xlwIsHoloCard = function(card) {
   return r.includes("SR") || r.includes("SSR") || r.includes("SSSR") || r.includes("UR") || id.includes("SR") || id.includes("SSR") || stars >= 3;
 };
 
-window.xlwAttach3DTiltAndHolo = function() {
-  const cards = document.querySelectorAll('.card, .unit-card, .xlw-left-panel-img, #leftPanelImg');
+window.xlwAttach3DTiltAndHolo = function(root = document) {
+  const selector = '.card, .unit-card, .xlw-left-panel-img, #leftPanelImg';
+  const cards = root.matches?.(selector) ? [root] : root.querySelectorAll(selector);
   cards.forEach(cardEl => {
     if (cardEl.dataset.xlwTiltAttached) return;
     cardEl.dataset.xlwTiltAttached = "1";
@@ -32280,12 +32299,12 @@ window.xlwAttach3DTiltAndHolo = function() {
   });
 };
 
-// Global observer & interval for dynamic cards
-setInterval(() => {
-  if (typeof window.xlwAttach3DTiltAndHolo === "function") {
-    window.xlwAttach3DTiltAndHolo();
-  }
-}, 300);
+// Attach effects only when a card is first hovered, including newly rendered cards.
+document.addEventListener("pointerover", (event) => {
+  if (event.pointerType === "touch") return;
+  const card = event.target.closest?.('.card, .unit-card, .xlw-left-panel-img, #leftPanelImg');
+  if (card && !card.dataset.xlwTiltAttached) window.xlwAttach3DTiltAndHolo(card);
+}, { passive: true });
 
 
 // ===== 🎴 牌庫與墓地 3D 堆疊卡牌厚度系統 =====
