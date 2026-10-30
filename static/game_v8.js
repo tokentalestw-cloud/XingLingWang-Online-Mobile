@@ -23935,18 +23935,18 @@ function renderScore() {
   const isTie = playerStars === enemyStars;
 
   const playerLeadBadge = playerLead 
-    ? `<span class="score-lead-badge player-lead">👑 領先</span>` 
-    : (isTie ? `<span class="score-lead-badge tie">⚡ 平局</span>` : `<span class="score-lead-badge player-chase">追趕</span>`);
+    ? `<span class="score-lead-badge player-lead">領先</span>`
+    : (isTie ? `<span class="score-lead-badge tie">平局</span>` : `<span class="score-lead-badge player-chase">追趕</span>`);
   
   const enemyLeadBadge = enemyLead 
-    ? `<span class="score-lead-badge enemy-lead">🔥 領先</span>` 
-    : (isTie ? `<span class="score-lead-badge tie">⚡ 平局</span>` : `<span class="score-lead-badge enemy-chase">防守</span>`);
+    ? `<span class="score-lead-badge enemy-lead">領先</span>`
+    : (isTie ? `<span class="score-lead-badge tie">平局</span>` : `<span class="score-lead-badge enemy-chase">追趕</span>`);
 
   scoreBadge.innerHTML = `
     <div class="score-board-header">
       <div class="score-board-header-left">
         <span class="score-header-icon">⚔️</span>
-        <span class="score-header-title">雙方比分</span>
+        <span class="score-header-title">星靈戰局</span>
       </div>
       <div class="score-board-turn-badge">TURN ${turn}</div>
     </div>
@@ -23966,7 +23966,7 @@ function renderScore() {
             <span class="score-gem-star">★</span>
           </div>
           <div class="score-bonus-badge" title="我方額外加分">
-            <span class="bonus-lbl">✨ 額外加分</span>
+            <span class="bonus-lbl">額外加分</span>
             <span class="bonus-val">+${playerBonusScore}★</span>
           </div>
         </div>
@@ -23987,7 +23987,7 @@ function renderScore() {
             <span class="score-gem-star">★</span>
           </div>
           <div class="score-bonus-badge" title="對手額外加分">
-            <span class="bonus-lbl">✨ 額外加分</span>
+            <span class="bonus-lbl">額外加分</span>
             <span class="bonus-val">+${enemyBonusScore}★</span>
           </div>
         </div>
@@ -24117,7 +24117,7 @@ function renderStablePanel() {
       </div>
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled><span class="btn-icon">🩸</span><span class="btn-text">確認獻祭</span></button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled><span class="btn-icon">✕</span><span class="btn-text">取消選擇</span></button>
-      <button id="stableActionEnd" class="stable-action-btn end deck-draw-pulse" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)"><span class="btn-main-text">👆 點選牌組抽牌</span><span class="btn-sub-turn">DRAW CARD</span></button>
+      <button id="stableActionEnd" class="stable-action-btn end deck-draw-pulse" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)"><span class="btn-main-text">抽取回合手牌</span><span class="btn-sub-turn">DRAW CARD</span></button>
     `;
     return;
   }
@@ -24655,6 +24655,14 @@ function logBattle(text) {
 function adjustBoardScale() {
   const board = $("boardWrap");
   if (!board) return;
+
+  // Keep the existing laptop board geometry legible between the two HUD rails.
+  const hudBoardScale = Math.max(0.35, Math.min(
+    (window.innerHeight - 242) / 794,
+    (window.innerWidth - 508) / 1170,
+    0.88
+  ));
+  document.documentElement.style.setProperty("--xlw-ui-board-scale", String(hudBoardScale));
 
   const isMobile = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
   const isPortraitMobile = false; // Forced to false to prevent portrait scaling recalculations and layout jumping on physical rotation
@@ -30478,7 +30486,7 @@ window.xlwLeaveOnlineRoom = function(promptConfirm = false) {
   // 6. 恢復首頁歡迎畫面與按鈕文字
   const returnBtn = document.getElementById("xlwReturnTitleBtn");
   if (returnBtn) {
-    returnBtn.innerHTML = "🏠 首頁";
+    returnBtn.innerHTML = "首頁";
     returnBtn.title = "返回首頁";
   }
   const overlay = document.getElementById("xlwWelcomeOverlay");
@@ -30560,7 +30568,7 @@ window.xlwEnterActiveOnlineBoardUI = function() {
     topBarBtn.style.setProperty("display", "flex", "important");
     const returnBtn = document.getElementById("xlwReturnTitleBtn");
     if (returnBtn) {
-      returnBtn.innerHTML = "🚪 離開房間";
+      returnBtn.innerHTML = "離開房間";
       returnBtn.title = "離開連線房間並返回首頁";
     }
   }
@@ -32513,7 +32521,7 @@ window.xlwRender3DStacks = function() {
     localStorage.setItem('xlw_sfx_enabled', sfxEnabled ? 'true' : 'false');
     const btn = document.getElementById('xlwSfxToggleBtn');
     if (btn) {
-      btn.innerHTML = sfxEnabled ? '🔊 音效: 開' : '🔇 音效: 關';
+      btn.innerHTML = sfxEnabled ? '音效：開' : '音效：關';
     }
     if (sfxEnabled) window.xlwPlaySFX('phase');
   };
@@ -33040,7 +33048,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
   }
   const returnBtn = document.getElementById("xlwReturnTitleBtn");
   if (returnBtn) {
-    returnBtn.innerHTML = "🏠 首頁";
+    returnBtn.innerHTML = "首頁";
     returnBtn.title = "返回首頁";
   }
   console.log("Returned to Main Welcome Splash Screen successfully!");

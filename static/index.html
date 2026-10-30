@@ -5,6 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261030-3d-hud-v5">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261031-astral-forge-v1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -78,16 +79,16 @@
     })();
   </script>
 </head>
-<body>
+<body class="xlw-royal-ui">
 
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
-    <button id="scoreBtn" class="topbar-setting-btn">📜 紀錄</button>
-    <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none !important; border-color: #f59e0b; color: #ffd76a;">🔄 重置</button>
-    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()" style="display: none !important;">🧩 關卡</button>
-    <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">🔊 音效: 開</button>
+    <button id="scoreBtn" class="topbar-setting-btn">紀錄</button>
+    <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none !important; border-color: #f59e0b; color: #ffd76a;">重置</button>
+    <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()" style="display: none !important;">關卡</button>
+    <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwToggleSFX()">音效：開</button>
     
-    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">🏠 首頁</button>
+    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">首頁</button>
   </div>
 
   <!-- 上方導航工具列 -->
@@ -712,7 +713,7 @@
   <div id="multiplayerLobby" class="score-panel" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: center; justify-content: center; z-index: 10000; background: rgba(0,0,0,0.8);">
     <div class="score-box" style="position: relative; width: 440px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-sizing: border-box; padding: 12px 18px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
       <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 6px; align-items: center;">
-        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">🏠 首頁</button>
+        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">首頁</button>
         <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;">×</button>
       </div>
       <h2 style="color: #ffd76a; text-align: center; margin-top: 4px; margin-bottom: 10px; font-size: 18px; font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Outfit', 'Roboto', system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
@@ -833,7 +834,7 @@
 
   <!-- 導入核心重構對戰引擎 -->
   <script src="/static/online_sync.js?v=20261031-sync-v2" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261031-sync-v2" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261031-astral-forge-v1" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

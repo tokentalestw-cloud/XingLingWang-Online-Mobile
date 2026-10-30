@@ -1,0 +1,561 @@
+/* Xinglingwang — Astral Forge. Final presentation layer; no game-state rules. */
+:root {
+  --xlw-ink: #080e19;
+  --xlw-metal: #172237;
+  --xlw-gold: #c3a469;
+  --xlw-gold-light: #f0deb1;
+  --xlw-ivory: #f5f0df;
+  --xlw-muted: #a7b4c7;
+  --xlw-star-blue: #9bdce7;
+  --xlw-enemy: #d89aa5;
+  --xlw-rail: 272px;
+  --xlw-safe-edge: 24px;
+  --xlw-star-sigil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='white' d='m20 0 4.8 13.2L36 4l-9.2 11.2L40 20l-13.2 4.8L36 36l-11.2-9.2L20 40l-4.8-13.2L4 36l9.2-11.2L0 20l13.2-4.8L4 4l11.2 9.2z'/%3E%3C/svg%3E");
+  --xlw-shield-sigil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='white' stroke-width='1.6' d='m12 2 8 3v6c0 5-5 9-8 11-3-2-8-6-8-11V5zM12 5v13M7 8h10'/%3E%3C/svg%3E");
+  --xlw-sword-sigil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' d='m7 17 13-13 1-3-3 1L5 15m-2-2 8 8M3 21l3-3M2 22l1-1M5 3l4 4M3 5l4 4M16 16l5 5M15 19l4-4'/%3E%3C/svg%3E");
+}
+
+body.xlw-royal-ui {
+  background: radial-gradient(ellipse at 43% 20%, #182c42 0%, #101c32 42%, #080f1e 100%) !important;
+  color: var(--xlw-ivory);
+  font-family: 'Outfit', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+}
+body.xlw-royal-ui .starlight-glow-ambient {
+  background: radial-gradient(ellipse at 50% 30%, #20444c38, transparent 62%) !important;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere {
+  background: radial-gradient(ellipse at 45% 22%, #29445680, transparent 65%),
+    radial-gradient(ellipse at 90% 70%, #30274640, transparent 60%),
+    linear-gradient(145deg, #101e30, #0b1424 65%, #0b1020) !important;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles { opacity: .55; }
+
+/* Carved metal chassis: a restrained bevel, a dark sidewall, then a soft shadow. */
+body.xlw-royal-ui :is(#scoreBadgeFixed, #stableActionPanel) {
+  width: var(--xlw-rail) !important;
+  padding: 17px !important;
+  border: 1px solid #9c8459 !important;
+  border-top-color: #e3cd9a !important;
+  border-bottom: 4px solid #423824 !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(115deg, #ffffff07, transparent 34%),
+    radial-gradient(ellipse at 50% 0, #8a79531b, transparent 65%),
+    linear-gradient(165deg, #1b2638, #0c1321 56%, #080e18) !important;
+  box-shadow: inset 0 1px 0 #fff5d82e, inset 0 0 0 4px #080e19,
+    inset 0 0 0 5px #c6ab6430, 0 3px 0 #060b12, 0 15px 35px #0008 !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  isolation: isolate;
+}
+body.xlw-royal-ui :is(#scoreBadgeFixed, #stableActionPanel)::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 8px !important;
+  border: solid #c4a66560 !important;
+  border-width: 1px 0 0 !important;
+  border-radius: 4px !important;
+  background: none !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Scoreboard. Total score is the first read; bonuses form a quieter second read. */
+body.xlw-royal-ui #scoreBadgeFixed {
+  top: 72px !important;
+  left: var(--xlw-safe-edge) !important;
+  right: auto !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -9px !important;
+  left: calc(50% - 9px) !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: linear-gradient(135deg, #fff3cd, #c4a264 55%, #77603c) !important;
+  mask: var(--xlw-star-sigil) center / contain no-repeat;
+  pointer-events: none !important;
+  animation: none !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-board-header {
+  padding: 0 0 13px !important;
+  margin: 0 0 12px !important;
+  border-bottom: 1px solid #bba7783b !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-header-title {
+  color: var(--xlw-gold-light) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 3px !important;
+  text-shadow: 0 2px 2px #000 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-header-icon { display: none !important; }
+body.xlw-royal-ui #scoreBadgeFixed .score-board-turn-badge {
+  padding: 4px 7px !important;
+  border: 1px solid #6d78904d !important;
+  border-radius: 3px !important;
+  background: #070e1b !important;
+  color: #b9c7d9 !important;
+  font: 500 10px/1.2 'Outfit', sans-serif !important;
+  letter-spacing: 1px !important;
+  box-shadow: inset 0 2px 3px #0008 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-section { gap: 12px !important; }
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-card {
+  --score-light: var(--xlw-star-blue);
+  position: relative;
+  padding: 11px 12px !important;
+  background: linear-gradient(125deg, #1c3a4e90, #0b1726 75%) !important;
+  border: 1px solid #64899570 !important;
+  border-left: 2px solid #8ac8d5 !important;
+  border-bottom: 3px solid #040a12 !important;
+  border-radius: 5px !important;
+  box-shadow: inset 0 1px 0 #d3f7ff18, 0 2px 4px #0006 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-card.enemy {
+  --score-light: var(--xlw-enemy);
+  background: linear-gradient(125deg, #46263390, #1a1420 75%) !important;
+  border-color: #a16d7b60 !important;
+  border-left: 2px solid #c18294 !important;
+  border-bottom-color: #0d060d !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-card.leading {
+  border-top-color: #dfc68a !important;
+  box-shadow: inset 0 1px 0 #ffe4a426, 0 0 16px #d6b86813 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-top-row { margin-bottom: 9px !important; gap: 4px; }
+body.xlw-royal-ui #scoreBadgeFixed .score-player-identity { gap: 7px !important; }
+body.xlw-royal-ui #scoreBadgeFixed .score-crest {
+  width: 11px; height: 11px; font-size: 0 !important;
+  background: var(--score-light); mask: var(--xlw-star-sigil) center / contain no-repeat;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-name {
+  font-size: 12px !important; font-weight: 500 !important;
+  color: #c4cfde !important; letter-spacing: 1px !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-lead-badge {
+  padding: 3px 6px !important; color: #bdc8d7 !important;
+  border: 1px solid #7b8aa340 !important; border-radius: 3px !important;
+  background: #070c153d !important; box-shadow: none !important;
+  font-size: 9px !important; font-weight: 500 !important; letter-spacing: 1px;
+}
+body.xlw-royal-ui #scoreBadgeFixed :is(.player-lead, .enemy-lead) {
+  color: #e9d39d !important; border-color: #c4a56570 !important; background: #90753418 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-main-row { gap: 12px !important; }
+body.xlw-royal-ui #scoreBadgeFixed .score-gem-socket {
+  height: 49px !important; padding: 0 !important;
+  justify-content: flex-start !important; gap: 5px !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; overflow: visible !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-gem-socket::before,
+body.xlw-royal-ui #scoreBadgeFixed .score-gem-glow { display: none !important; }
+body.xlw-royal-ui #scoreBadgeFixed .score-gem-val {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 41px !important; font-weight: 600 !important; line-height: 1 !important;
+  color: #f5f3e9 !important; letter-spacing: -1.5px !important;
+  text-shadow: 0 2px 0 #000, 0 0 16px #7fccde30 !important;
+  -webkit-text-stroke: 0 !important; font-variant-numeric: tabular-nums;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-gem-star {
+  color: var(--score-light) !important; font-size: 12px !important;
+  margin: 8px 0 0 !important; text-shadow: 0 0 8px #b9f4ff30 !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .score-bonus-badge {
+  flex: 0 0 78px !important; min-width: 0 !important; width: 78px !important;
+  height: 44px !important; padding: 5px 7px !important;
+  gap: 3px !important; border: 1px solid #b79d5b52 !important;
+  border-radius: 4px !important; background: linear-gradient(160deg, #2c2930, #111721) !important;
+  box-shadow: inset 0 1px 0 #f8e6b220, inset 0 -2px 3px #0007, 0 2px 0 #0008 !important;
+  box-sizing: border-box !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .bonus-lbl {
+  font: 500 9px/1.2 'Outfit', 'Microsoft JhengHei', sans-serif !important;
+  color: #bba77d !important; letter-spacing: 1px !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #scoreBadgeFixed .bonus-val {
+  font: 500 18px/1 'Outfit', sans-serif !important;
+  color: #efdcac !important; text-shadow: 0 2px 1px #000 !important;
+}
+
+/* Command deck: quiet secondary actions, distinct tactical choices, one primary. */
+body.xlw-royal-ui #stableActionPanel {
+  right: var(--xlw-safe-edge) !important; bottom: 28px !important;
+  left: auto !important; top: auto !important;
+  gap: 11px !important; padding-top: 37px !important;
+}
+body.xlw-royal-ui #stableActionPanel::before {
+  content: '星 靈 指 令' !important;
+  position: absolute !important; top: 14px !important; left: 18px !important;
+  width: auto !important; height: auto !important;
+  color: #c7b17d !important; background: none !important;
+  font-size: 10px !important; font-weight: 500 !important; letter-spacing: 2px !important;
+  opacity: 1 !important; transform: none !important; animation: none !important;
+  pointer-events: none !important;
+}
+body.xlw-royal-ui #stableActionPanel .stable-action-choice-group {
+  border: 0 !important; background: none !important; padding: 0 !important; gap: 9px !important;
+}
+body.xlw-royal-ui #stableActionPanel .stable-action-choice-tip {
+  text-align: left !important; color: #a0acbe !important;
+  font-size: 10px !important; font-weight: 500 !important; letter-spacing: 1px !important;
+}
+body.xlw-royal-ui #stableActionPanel .stable-action-choice-tip {
+  background: none !important; border: 0 !important; padding: 0 !important;
+  box-shadow: none !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #stableActionPanel .stable-action-row { gap: 9px !important; }
+body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+  #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) {
+  --button-edge: #746549;
+  --button-depth: #141b28;
+  --button-top: #2b394b;
+  --button-bottom: #142032;
+  min-height: 43px !important; height: auto !important; padding: 10px !important;
+  position: relative !important; isolation: isolate;
+  border: 1px solid var(--button-edge) !important;
+  border-top-color: #c3c9ca82 !important; border-bottom-width: 1px !important;
+  border-radius: 5px !important;
+  background: linear-gradient(110deg, #ffffff0a, transparent 45%),
+    linear-gradient(180deg, var(--button-top), var(--button-bottom)) !important;
+  color: #eee9da !important; font-size: 13px !important; font-weight: 600 !important;
+  text-shadow: 0 2px 2px #000b !important;
+  box-shadow: inset 0 1px 0 #fff5dd29, inset 0 -2px 3px #0005,
+    0 3px 0 var(--button-depth), 0 4px 0 #030711, 0 8px 12px #0006 !important;
+  transform: none !important; filter: none !important; animation: none !important;
+  opacity: 1 !important; gap: 3px !important; overflow: hidden !important;
+  transition: transform 120ms ease, filter 140ms ease, box-shadow 120ms ease, border-color 140ms ease !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+  #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel)::after {
+  content: '' !important; position: absolute !important; inset: 3px !important;
+  border: 1px solid #bba67224 !important; border-radius: 2px !important;
+  background: none !important; pointer-events: none !important;
+  transform: none !important; animation: none !important; opacity: 1 !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAttack) {
+  min-height: 72px !important; padding: 10px 4px !important; gap: 7px !important;
+}
+body.xlw-royal-ui #stableActionPanel #stableActionTactical {
+  --button-top: #234b59; --button-bottom: #112c3c;
+  --button-depth: #081a24; --button-edge: #65949a;
+  color: #def0ee !important;
+}
+body.xlw-royal-ui #stableActionPanel #stableActionAttack {
+  --button-top: #623d48; --button-bottom: #301d2b;
+  --button-depth: #1d0f19; --button-edge: #b17f87;
+  color: #f0dfe0 !important;
+}
+body.xlw-royal-ui #stableActionPanel #stableActionConfirm {
+  --button-top: #4d425d; --button-bottom: #261f39;
+  --button-depth: #161222; --button-edge: #9685a6;
+  flex-direction: row !important; gap: 8px !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionCancel, .secondary) {
+  --button-top: #273343; --button-bottom: #131f2c; --button-edge: #536171;
+  flex-direction: row !important; gap: 8px !important; color: #b5c1cf !important;
+}
+body.xlw-royal-ui #stableActionPanel .btn-text { font-size: 13px !important; font-weight: 600 !important; }
+body.xlw-royal-ui #stableActionPanel .btn-icon {
+  margin: 0 !important; width: 22px; height: 22px; font-size: 0 !important;
+  background: currentColor; mask: var(--xlw-star-sigil) center / contain no-repeat;
+  opacity: .9;
+}
+body.xlw-royal-ui #stableActionPanel #stableActionTactical .btn-icon { mask-image: var(--xlw-shield-sigil); }
+body.xlw-royal-ui #stableActionPanel #stableActionAttack .btn-icon { mask-image: var(--xlw-sword-sigil); }
+body.xlw-royal-ui #stableActionPanel #stableActionCancel .btn-icon {
+  width: 12px; height: 12px; mask: none;
+  background: linear-gradient(45deg, transparent 45%, currentColor 46% 54%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, currentColor 46% 54%, transparent 55%);
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary) {
+  --button-top: #405b6a; --button-bottom: #152938;
+  --button-edge: #d2ba7b; --button-depth: #51452b;
+  min-height: 76px !important; padding: 13px 10px 13px 48px !important;
+  color: #fff0c9 !important; border-radius: 6px !important;
+  text-shadow: 0 2px 2px #000 !important;
+  box-shadow: inset 0 1px 0 #fff3cc65, inset 0 -3px 6px #0006,
+    0 4px 0 #5c4c2c, 0 5px 0 #1b1712, 0 10px 18px #0009, 0 0 22px #6acbda12 !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary)::before {
+  content: '' !important; position: absolute !important;
+  width: 27px !important; height: 34px !important; top: calc(50% - 17px) !important; left: 16px !important;
+  background: linear-gradient(140deg, #fff7ce 0%, #edcf87 29%, #a6e8ec 30%, #6abfc8 52%, #315f78 53%, #142c41 100%) !important;
+  clip-path: polygon(50% 0, 91% 24%, 83% 78%, 50% 100%, 17% 78%, 9% 24%);
+  border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; filter: none !important; opacity: 1 !important;
+  transform: none !important; animation: none !important; pointer-events: none !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm) .btn-main-text {
+  font-size: 17px !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: 1px !important;
+}
+body.xlw-royal-ui #stableActionPanel #stableActionEnd .btn-sub-turn {
+  font: 500 9px/1.4 'Outfit', sans-serif !important;
+  letter-spacing: 3px !important; color: #bfd3d9 !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+  #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel):hover:not(:disabled) {
+  transform: translateY(-2px) !important; filter: brightness(1.16) !important;
+  border-color: #f3ddac !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+  #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel):active:not(:disabled),
+body.xlw-royal-ui #stableActionPanel #stableActionEnd.btn-pressed-instant:not(:disabled) {
+  transform: translateY(3px) !important; filter: brightness(1.04) !important;
+  box-shadow: inset 0 2px 6px #0007, 0 1px 0 #030711, 0 3px 5px #0008 !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+  #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel):disabled {
+  --button-top: #1f2938; --button-bottom: #151d2b; --button-edge: #445162;
+  color: #8997a9 !important; border-color: #445162 !important; cursor: not-allowed !important;
+  background: linear-gradient(#222d3b, #161e2b) !important;
+  box-shadow: inset 0 1px 0 #b8c7dc14, 0 2px 0 #080d17 !important;
+  text-shadow: 0 1px 1px #000 !important; transform: none !important; filter: none !important;
+}
+body.xlw-royal-ui #stableActionPanel .stable-action-choice-group[style] { opacity: 1 !important; }
+body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd.enemy-turn, #stableActionEnd.btn-processing)::before {
+  background: linear-gradient(140deg, #d3d7df, #7f92a6 48%, #3b4a5e 49%, #1e2d43) !important;
+}
+body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAttack).active:not(:disabled) {
+  border-color: #e5cd91 !important; box-shadow: inset 0 0 0 2px #d1b66c45, 0 3px 0 #101725, 0 0 14px #ddbe7029 !important;
+}
+body.xlw-royal-ui :is(button, select):focus-visible {
+  outline: 2px solid #f5dfaa !important; outline-offset: 4px !important;
+}
+
+/* Phase plaque — a floating astrolabe with a clear current phase. */
+body.xlw-royal-ui #phaseDisplayPanelHard {
+  --phase-light: #abdce2;
+  position: fixed !important; left: 50% !important; top: 64px !important;
+  width: 610px !important; max-width: calc(100vw - 640px) !important;
+  min-height: 68px !important; height: auto !important;
+  transform: translateX(-50%) !important; flex-direction: column !important;
+  gap: 5px !important; padding: 12px 30px !important; box-sizing: border-box !important;
+  border: 1px solid #b19a615e !important; border-top-color: #d5bd83 !important;
+  border-bottom: 3px solid #383422 !important; border-radius: 5px 5px 13px 13px !important;
+  background: radial-gradient(ellipse at 50% -80%, #5f798c77, transparent 75%),
+    linear-gradient(180deg, #1b293b, #0b1321) !important;
+  box-shadow: inset 0 1px 0 #fff0c429, inset 0 0 0 3px #0a1321, 0 9px 22px #0007 !important;
+  backdrop-filter: none !important; overflow: visible !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard::before,
+body.xlw-royal-ui #phaseDisplayPanelHard::after {
+  content: '' !important; position: absolute !important; width: 14px !important; height: 14px !important;
+  top: calc(50% - 7px) !important; background: var(--phase-light) !important;
+  mask: var(--xlw-star-sigil) center / contain no-repeat;
+  pointer-events: none !important; animation: none !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard::before { left: 13px !important; }
+body.xlw-royal-ui #phaseDisplayPanelHard::after { right: 13px !important; }
+body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-title {
+  display: flex !important; flex-direction: row !important; align-items: center !important;
+  gap: 11px !important; font-size: 10px !important; letter-spacing: 1px !important;
+  font-weight: 500 !important; color: #a5b1c2 !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard #phaseTextHard {
+  background: none !important; border: 0 !important; padding: 0 !important; height: auto !important;
+  box-shadow: none !important; color: var(--phase-light) !important;
+  font-size: 18px !important; font-weight: 600 !important; letter-spacing: 2px !important;
+  text-shadow: 0 2px 2px #000 !important; line-height: 1.3 !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-help {
+  font-size: 11px !important; font-weight: 400 !important; color: #bac6d5 !important;
+  line-height: 1.5 !important; max-width: 100% !important; text-shadow: none !important;
+}
+body.xlw-royal-ui #phaseDisplayPanelHard[data-phase='進攻宣言'] { --phase-light: #e5a5ac; }
+body.xlw-royal-ui #phaseDisplayPanelHard[data-phase='戰術佈陣'] { --phase-light: #a6cbe8; }
+body.xlw-royal-ui #phaseDisplayPanelHard[data-phase='起手換牌'] { --phase-light: #e1cba1; }
+
+/* Utility controls share the chassis material, at a usable size. */
+body.xlw-royal-ui #xlwFixedTopRightActionBar {
+  top: 18px !important; right: var(--xlw-safe-edge) !important; gap: 6px !important;
+  transform: none !important; padding: 5px !important; border-radius: 5px !important;
+  background: linear-gradient(#1d293b, #0d1522) !important;
+  border: 1px solid #8d7b514d !important;
+  box-shadow: inset 0 1px 0 #fff0ca15, 0 5px 12px #0006 !important;
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar :is(button, #scoreBtn, #xlwSfxToggleBtn,
+  #xlwReturnTitleBtn, #xlwPuzzleResetTopbarBtn, #xlwPuzzleTopbarBtn) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px !important; min-height: 32px !important; padding: 5px 11px !important;
+  border: 1px solid #7481964d !important; border-bottom: 2px solid #080d17 !important;
+  border-radius: 3px !important; background: linear-gradient(#2c394a, #172333) !important;
+  color: #cdd6e1 !important; font-size: 11px !important; font-weight: 500 !important;
+  box-shadow: inset 0 1px 0 #ffffff12, 0 1px 2px #0006 !important; text-shadow: 0 1px 1px #000 !important;
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar button::before {
+  content: ''; width: 12px; height: 12px; flex: 0 0 12px;
+  background: currentColor; mask: var(--xlw-star-sigil) center / contain no-repeat; opacity: .8;
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar #scoreBtn::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='white' stroke-width='1.5' d='M4 2h12v16H4zM7 6h6M7 10h6M7 14h4'/%3E%3C/svg%3E");
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar #xlwSfxToggleBtn::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='white' stroke-width='1.5' d='M2 7h4l5-4v14l-5-4H2zM14 6c2 2 2 6 0 8M16 3c4 4 4 10 0 14'/%3E%3C/svg%3E");
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar #xlwReturnTitleBtn::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='white' stroke-width='1.5' d='m2 9 8-7 8 7M4 8v10h12V8M8 18v-6h4v6'/%3E%3C/svg%3E");
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar #xlwReturnTitleBtn {
+  background: linear-gradient(#3f3940, #25232c) !important;
+  color: #e8d5ae !important; border-color: #a88f5d73 !important;
+}
+body.xlw-royal-ui #xlwFixedTopRightActionBar button:hover { filter: brightness(1.15) !important; transform: translateY(-1px) !important; }
+
+/* In-game confirmations and card choices use the same forged material. */
+body.xlw-royal-ui :is(.xlw-premium-confirm-overlay, .xlw-premium-choice-overlay) {
+  background: #040a13cc !important; backdrop-filter: blur(5px) !important;
+}
+body.xlw-royal-ui :is(.xlw-premium-confirm-overlay, .xlw-premium-choice-overlay) > div,
+body.xlw-royal-ui :is(.xlw-coin-toss-box, .prebattle-container) {
+  background: radial-gradient(ellipse at 50% 0, #40627c3b, transparent 70%),
+    linear-gradient(155deg, #1b283a, #0b1423 80%) !important;
+  border: 1px solid #bda16b !important; border-bottom: 4px solid #4e412c !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 0 #ffe4a833, inset 0 0 0 4px #0b1322,
+    inset 0 0 0 5px #d0ad6129, 0 25px 60px #000a !important;
+  padding: 30px !important;
+}
+body.xlw-royal-ui :is(.xlw-premium-confirm-overlay, .xlw-premium-choice-overlay) > div > div:first-child,
+body.xlw-royal-ui :is(.xlw-coin-toss-title, .prebattle-title) {
+  color: #eddaac !important; font-size: 20px !important; font-weight: 600 !important;
+  text-shadow: 0 2px 2px #000 !important; letter-spacing: 1px !important;
+}
+body.xlw-royal-ui :is(.xlw-premium-confirm-overlay, .xlw-premium-choice-overlay) > div > div:nth-child(2) {
+  color: #c2cddd !important; font-size: 14px !important; line-height: 1.8 !important;
+}
+body.xlw-royal-ui :is(#xlwConfirmYes, #prebattleConfirmBtn),
+body.xlw-royal-ui #xlw-coin-toss-actions button,
+body.xlw-royal-ui .xlw-choice-btn {
+  min-height: 44px !important; padding: 11px 20px !important;
+  background: linear-gradient(145deg, #456879, #1c3548) !important;
+  border: 1px solid #d3bb81 !important; border-radius: 4px !important;
+  color: #f5e5bf !important; font-weight: 600 !important;
+  box-shadow: inset 0 1px 0 #fff0cb45, 0 3px 0 #51432b, 0 7px 13px #0007 !important;
+  text-shadow: 0 2px 1px #000 !important;
+  transition: transform 120ms ease, filter 120ms ease !important;
+}
+body.xlw-royal-ui #xlwConfirmNo {
+  min-height: 44px !important; border: 1px solid #66788d !important;
+  border-radius: 4px !important; background: linear-gradient(#2b394b, #152131) !important;
+  box-shadow: inset 0 1px 0 #fff1, 0 3px 0 #080d17, 0 7px 13px #0007 !important;
+  color: #cad5df !important;
+}
+body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn):hover,
+body.xlw-royal-ui #xlw-coin-toss-actions button:hover { filter: brightness(1.15) !important; transform: translateY(-1px) !important; }
+body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn):active,
+body.xlw-royal-ui #xlw-coin-toss-actions button:active { transform: translateY(2px) !important; }
+body.xlw-royal-ui #xlw-coin-toss-status {
+  background: #07101b99 !important; border: 1px solid #8492a32e !important;
+  border-radius: 4px !important; box-shadow: inset 0 2px 5px #0005 !important;
+  color: #ccd7e4 !important; text-shadow: none !important;
+}
+body.xlw-royal-ui .prebattle-select {
+  background: #0c1626 !important; color: #e6dfce !important;
+  border: 1px solid #627181 !important; border-radius: 4px !important;
+  box-shadow: inset 0 2px 5px #0007 !important;
+}
+body.xlw-royal-ui #xlw-phase-banner {
+  font-size: clamp(22px, 3vw, 39px) !important; font-weight: 500 !important;
+  color: #ead6a3 !important; letter-spacing: 8px !important;
+  background: linear-gradient(90deg, transparent, #0a1427f2 27% 73%, transparent) !important;
+  border-top: 1px solid #c2ab6b73 !important; border-bottom: 1px solid #c2ab6b73 !important;
+  box-shadow: 0 10px 35px #0005 !important; text-shadow: 0 3px 2px #000, 0 0 18px #e9cf7f35 !important;
+  padding: 23px 0 !important;
+}
+
+/* Conserve board space on laptops; never shrink labels to decorative microtext. */
+@media (max-width: 1500px) and (min-width: 1101px) {
+  :root { --xlw-rail: 224px; --xlw-safe-edge: 16px; }
+  body.xlw-royal-ui :is(#scoreBadgeFixed, #stableActionPanel) { padding: 13px !important; }
+  body.xlw-royal-ui #stableActionPanel { padding-top: 35px !important; gap: 9px !important; }
+  body.xlw-royal-ui #scoreBadgeFixed .score-badge-card { padding: 9px !important; }
+  body.xlw-royal-ui #scoreBadgeFixed .score-gem-val { font-size: 35px !important; }
+  body.xlw-royal-ui #scoreBadgeFixed .score-bonus-badge { flex-basis: 68px !important; width: 68px !important; }
+  body.xlw-royal-ui #scoreBadgeFixed .score-header-title { font-size: 13px !important; letter-spacing: 2px !important; }
+  body.xlw-royal-ui #phaseDisplayPanelHard { width: 470px !important; max-width: calc(100vw - 520px) !important; }
+  body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAttack) { min-height: 60px !important; }
+}
+
+/* Compact landscape: each side keeps a narrow, readable control rail. */
+@media (min-width: 1101px) and (max-width: 1400px) {
+  body.xlw-royal-ui #boardWrap {
+    position: absolute !important; left: 50% !important; top: 140px !important;
+    width: 1400px !important; height: 760px !important; margin: 0 !important;
+    transform-origin: 0 0 !important;
+    transform: translate(calc(-490px * var(--xlw-ui-board-scale, .6)), calc(-140px * var(--xlw-ui-board-scale, .6)))
+      scale(var(--xlw-ui-board-scale, .6)) !important;
+  }
+}
+
+@media (max-width: 1100px), (pointer: coarse) {
+  :root { --xlw-rail: 158px; --xlw-safe-edge: max(8px, env(safe-area-inset-right)); }
+  html body.xlw-royal-ui #scoreBadgeFixed {
+    width: var(--xlw-rail) !important; top: 42px !important; left: max(8px, env(safe-area-inset-left)) !important;
+    padding: 10px !important; transform: none !important;
+  }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-board-header { padding-bottom: 8px !important; margin-bottom: 8px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-header-title { font-size: 11px !important; letter-spacing: 1px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-board-turn-badge { font-size: 8px !important; padding: 3px 4px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-badge-section { gap: 8px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-badge-card { padding: 7px 6px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-name { font-size: 10px !important; letter-spacing: 0 !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-crest { width: 8px !important; height: 8px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-player-identity { gap: 4px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-lead-badge { font-size: 8px !important; padding: 2px 3px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-badge-top-row { margin-bottom: 4px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-badge-main-row { gap: 4px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-gem-socket { height: 34px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-gem-val { font-size: 29px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-gem-star { font-size: 9px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .score-bonus-badge { flex: 0 0 54px !important; width: 54px !important; height: 33px !important; padding: 3px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .bonus-lbl { font-size: 8px !important; letter-spacing: 0 !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .bonus-val { font-size: 14px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .puzzle-goal-badge > div:last-child { flex-wrap: wrap !important; gap: 5px !important; }
+  html body.xlw-royal-ui #scoreBadgeFixed .puzzle-goal-badge button { flex: 1 1 0 !important; min-width: 0 !important; padding: 4px 2px !important; font-size: 8px !important; white-space: nowrap !important; }
+  html body.xlw-royal-ui #stableActionPanel {
+    width: var(--xlw-rail) !important; padding: 27px 10px 10px !important;
+    right: var(--xlw-safe-edge) !important; bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    transform: none !important; gap: 8px !important;
+  }
+  html body.xlw-royal-ui #stableActionPanel::before { font-size: 8px !important; top: 10px !important; left: 13px !important; }
+  html body.xlw-royal-ui #stableActionPanel .stable-action-choice-tip { font-size: 8px !important; letter-spacing: 0 !important; }
+  html body.xlw-royal-ui #stableActionPanel .stable-action-choice-group { gap: 7px !important; }
+  html body.xlw-royal-ui #stableActionPanel .stable-action-row { gap: 6px !important; }
+  html body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
+    #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) { min-height: 34px !important; padding: 7px 4px !important; font-size: 11px !important; }
+  html body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAttack) { min-height: 49px !important; gap: 4px !important; }
+  html body.xlw-royal-ui #stableActionPanel .btn-icon { width: 17px !important; height: 17px !important; }
+  html body.xlw-royal-ui #stableActionPanel .btn-text { font-size: 10px !important; }
+  html body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary) { min-height: 55px !important; padding-left: 29px !important; }
+  html body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary)::before { width: 18px !important; height: 25px !important; left: 9px !important; top: calc(50% - 12.5px) !important; }
+  html body.xlw-royal-ui #stableActionPanel #stableActionEnd .btn-main-text { font-size: 12px !important; letter-spacing: .5px !important; }
+  html body.xlw-royal-ui #stableActionPanel #stableActionEnd .btn-sub-turn { font-size: 7px !important; letter-spacing: 1.5px !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard {
+    top: 7px !important; left: calc(var(--xlw-rail) + 24px) !important;
+    width: min(320px, calc(100vw - var(--xlw-rail) - 320px)) !important;
+    max-width: none !important; min-height: 32px !important; padding: 5px 20px !important;
+    transform: none !important;
+  }
+  html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-title { font-size: 8px !important; gap: 7px !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard #phaseTextHard { font-size: 13px !important; letter-spacing: 1px !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard .phase-hard-help { font-size: 9px !important; line-height: 1.3 !important; }
+  html body.xlw-royal-ui #phaseDisplayPanelHard::before,
+  html body.xlw-royal-ui #phaseDisplayPanelHard::after { width: 9px !important; height: 9px !important; top: calc(50% - 4.5px) !important; }
+  html body.xlw-royal-ui #xlwFixedTopRightActionBar { top: 7px !important; right: 8px !important; gap: 3px !important; padding: 3px !important; }
+  html body.xlw-royal-ui #xlwFixedTopRightActionBar :is(button, #scoreBtn, #xlwSfxToggleBtn,
+    #xlwReturnTitleBtn, #xlwPuzzleResetTopbarBtn, #xlwPuzzleTopbarBtn) { padding: 4px 7px !important; height: 27px !important; min-height: 27px !important; font-size: 9px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.xlw-royal-ui :is(#stableActionPanel, #scoreBadgeFixed, #phaseDisplayPanelHard, #xlwFixedTopRightActionBar) *,
+  body.xlw-royal-ui :is(#stableActionPanel, #scoreBadgeFixed, #phaseDisplayPanelHard)::before {
+    animation: none !important; transition: none !important;
+  }
+}
