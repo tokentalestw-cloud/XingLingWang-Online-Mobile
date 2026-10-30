@@ -24576,7 +24576,6 @@ function showModal(card, equipments, unitObj) {
       `;
 
       detailView.appendChild(eqContainer);
-    }
 
     // Mulligan 換牌期間：於左側預覽面板同步提供換牌/保留切換按鈕
     const oldMulliganCtrl = $("leftPanelMulliganCtrl");
