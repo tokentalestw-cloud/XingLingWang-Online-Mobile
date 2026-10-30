@@ -23928,7 +23928,7 @@ function renderScore() {
     <div class="score-board-header">
       <div class="score-board-header-left">
         <span class="score-header-icon">⚔️</span>
-        <span class="score-header-title">星靈戰局</span>
+        <span class="score-header-title">雙方比分</span>
       </div>
       <div class="score-board-turn-badge">TURN ${turn}</div>
     </div>
@@ -23937,7 +23937,7 @@ function renderScore() {
         <div class="score-badge-top-row">
           <div class="score-player-identity">
             <span class="score-crest player-crest">🔷</span>
-            <span class="score-name">我方星靈</span>
+            <span class="score-name">我方總分</span>
           </div>
           ${playerLeadBadge}
         </div>
@@ -23947,17 +23947,9 @@ function renderScore() {
             <span class="score-gem-val">${playerStars}</span>
             <span class="score-gem-star">★</span>
           </div>
-          <div class="score-breakdown-col">
-            <div class="score-pill field-pill" title="場上單位星星總數">
-              <span class="pill-icon">🛡️</span>
-              <span class="pill-lbl">戰線</span>
-              <span class="pill-val">${playerFieldStars}★</span>
-            </div>
-            <div class="score-pill bonus-pill" title="額外獎勵分數">
-              <span class="pill-icon">✨</span>
-              <span class="pill-lbl">獎勵</span>
-              <span class="pill-val">+${playerBonusScore}★</span>
-            </div>
+          <div class="score-bonus-badge" title="我方額外加分">
+            <span class="bonus-lbl">✨ 額外加分</span>
+            <span class="bonus-val">+${playerBonusScore}★</span>
           </div>
         </div>
       </div>
@@ -23966,7 +23958,7 @@ function renderScore() {
         <div class="score-badge-top-row">
           <div class="score-player-identity">
             <span class="score-crest enemy-crest">🔻</span>
-            <span class="score-name">對手陣營</span>
+            <span class="score-name">對手總分</span>
           </div>
           ${enemyLeadBadge}
         </div>
@@ -23976,17 +23968,9 @@ function renderScore() {
             <span class="score-gem-val">${enemyStars}</span>
             <span class="score-gem-star">★</span>
           </div>
-          <div class="score-breakdown-col">
-            <div class="score-pill field-pill" title="敵方場上單位星星總數">
-              <span class="pill-icon">🛡️</span>
-              <span class="pill-lbl">戰線</span>
-              <span class="pill-val">${enemyFieldStars}★</span>
-            </div>
-            <div class="score-pill bonus-pill" title="敵方額外獎勵分數">
-              <span class="pill-icon">✨</span>
-              <span class="pill-lbl">獎勵</span>
-              <span class="pill-val">+${enemyBonusScore}★</span>
-            </div>
+          <div class="score-bonus-badge" title="對手額外加分">
+            <span class="bonus-lbl">✨ 額外加分</span>
+            <span class="bonus-val">+${enemyBonusScore}★</span>
           </div>
         </div>
       </div>
@@ -24402,97 +24386,194 @@ function showModal(card, equipments, unitObj) {
     }
   }
 
-  // 清除舊裝備標籤
-  const oldContainer = $("leftPanelEquipmentsContainer");
-  if (oldContainer) oldContainer.remove();
+    // 清除舊特寫詳情標籤
+    const oldContainer = $("leftPanelEquipmentsContainer");
+    if (oldContainer) oldContainer.remove();
 
-  if (leftImg && placeholder && detailView) {
-    leftImg.onerror = function() {
-      this.onerror = null;
-      this.src = "/static/card_back.jpeg";
-    };
-    leftImg.src = (card && card.image) ? card.image : "/static/card_back.jpeg";
-    placeholder.style.display = "none";
-    detailView.style.setProperty("display", "flex", "important");
-    detailView.style.flexDirection = "column";
-    detailView.style.alignItems = "center";
+    if (leftImg && placeholder && detailView) {
+      leftImg.onerror = function() {
+        this.onerror = null;
+        this.src = "/static/card_back.jpeg";
+      };
+      leftImg.src = (card && card.image) ? card.image : "/static/card_back.jpeg";
+      placeholder.style.display = "none";
+      detailView.style.setProperty("display", "flex", "important");
+      detailView.style.flexDirection = "column";
+      detailView.style.alignItems = "center";
 
-    // 若該單位有加裝裝備卡或傳入實例狀態，將效果說明顯示於圖片下方
-    const hasEquips = equipments && equipments.length > 0;
-    const hasUnitObj = unitObj && typeof unitObj === "object";
-    if (hasEquips || hasUnitObj) {
+      // 構建完整的特寫詳細資訊面板 (裝備、魔法加成、單位效果、攻防/星數增減、卡牌能力說明)
       const eqContainer = document.createElement("div");
       eqContainer.id = "leftPanelEquipmentsContainer";
-      eqContainer.className = "xlw-left-panel-equipments-container";
+      eqContainer.className = "xlw-left-panel-inspector-details";
 
-      if (hasUnitObj && unitObj.card) {
-        const currentAtk = getUnitAtk(unitObj);
-        const baseAtk = Number(unitObj.card.attack ?? unitObj.card.atk ?? 0);
-        const atkBonus = currentAtk - baseAtk;
-        const statBadge = document.createElement("div");
-        statBadge.className = "xlw-left-panel-equipment-badge";
-        statBadge.style.background = "linear-gradient(135deg, #2a1f3d, #171124)";
-        statBadge.style.border = "1.5px solid #ffd76a";
-        statBadge.style.color = "#ffd76a";
-        let atkText = `攻 ${currentAtk}`;
+      const hasUnitObj = unitObj && typeof unitObj === "object";
+      const currentAtk = hasUnitObj ? getUnitAtk(unitObj) : Number(card.attack ?? card.atk ?? 0);
+      const baseAtk = Number(card.attack ?? card.atk ?? 0);
+      const atkBonus = currentAtk - baseAtk;
+
+      const currentStars = hasUnitObj ? getUnitStars(unitObj) : Number(card.stars ?? card.star ?? 0);
+      const baseStars = Number(card.stars ?? card.star ?? 0);
+      const starBonus = currentStars - baseStars;
+
+      const isUnitCard = (card.type === "unit" || card.type === "單位" || typeof card.attack !== "undefined" || typeof card.atk !== "undefined");
+
+      let statsHtml = "";
+      if (isUnitCard) {
+        // 攻擊力盤
+        let atkBadgeVal = `${currentAtk}`;
+        let atkSubTag = "";
         if (atkBonus > 0) {
-          const bonusLabel = hasEquips ? "裝備/加成" : "加成";
-          atkText = `攻 ${currentAtk} <span style="color: #4ade80; font-weight: 900;">(+${atkBonus} ${bonusLabel})</span>`;
+          atkSubTag = `<span class="stat-diff-tag buff">(原 ${baseAtk} +${atkBonus})</span>`;
         } else if (atkBonus < 0) {
-          atkText = `攻 ${currentAtk} <span style="color: #f87171; font-weight: 900;">(${atkBonus})</span>`;
+          atkSubTag = `<span class="stat-diff-tag debuff">(原 ${baseAtk} ${atkBonus})</span>`;
+        } else {
+          atkSubTag = `<span class="stat-diff-tag normal">(基準數值)</span>`;
         }
-        statBadge.innerHTML = `⚔️ 當前戰鬥力：${atkText} | 星 ${getUnitStars(unitObj)}★`;
-        eqContainer.appendChild(statBadge);
 
-        if (unitObj.confined) {
-          const b = document.createElement("div");
-          b.className = "xlw-left-panel-equipment-badge";
-          b.style.background = "linear-gradient(135deg, #7f1d1d, #450a0a)";
-          b.style.color = "#fecaca";
-          b.textContent = "⛓️ 處於禁錮狀態";
-          eqContainer.appendChild(b);
+        // 星數盤
+        let starBadgeVal = `${currentStars}★`;
+        let starSubTag = "";
+        if (starBonus > 0) {
+          starSubTag = `<span class="stat-diff-tag buff">(原 ${baseStars}★ +${starBonus}★)</span>`;
+        } else if (starBonus < 0) {
+          starSubTag = `<span class="stat-diff-tag debuff">(原 ${baseStars}★ ${starBonus}★)</span>`;
+        } else {
+          starSubTag = `<span class="stat-diff-tag normal">(初始星級)</span>`;
         }
-        if (unitObj.decay) {
-          const b = document.createElement("div");
-          b.className = "xlw-left-panel-equipment-badge";
-          b.style.background = "linear-gradient(135deg, #581c87, #3b0764)";
-          b.style.color = "#e9d5ff";
-          b.textContent = "💀 處於衰退狀態";
-          eqContainer.appendChild(b);
+
+        statsHtml = `
+          <div class="inspector-stat-grid">
+            <div class="inspector-stat-cell atk-cell">
+              <div class="stat-label">⚔️ 戰鬥攻擊力</div>
+              <div class="stat-number ${atkBonus > 0 ? "is-buffed" : (atkBonus < 0 ? "is-debuffed" : "")}">${atkBadgeVal}</div>
+              ${atkSubTag}
+            </div>
+            <div class="inspector-stat-cell star-cell">
+              <div class="stat-label">⭐ 當前星數</div>
+              <div class="stat-number ${starBonus > 0 ? "is-buffed" : (starBonus < 0 ? "is-debuffed" : "")}">${starBadgeVal}</div>
+              ${starSubTag}
+            </div>
+          </div>
+        `;
+      }
+
+      // 單位自帶效果與數值異動加註
+      let modifierNoteHtml = "";
+      if (hasUnitObj && (atkBonus !== 0 || starBonus !== 0)) {
+        const notes = [];
+        if (atkBonus > 0 && (!equipments || equipments.length === 0)) {
+          notes.push(`✨ 攻擊力增益 +${atkBonus}（源自單位技能、陣營光環或魔法效果）`);
+        } else if (atkBonus < 0) {
+          notes.push(`⚠️ 攻擊力減益 ${atkBonus}（源自削弱技能或魔法負面效果）`);
         }
-        if (unitObj.tapped) {
-          const b = document.createElement("div");
-          b.className = "xlw-left-panel-equipment-badge";
-          b.style.background = "linear-gradient(135deg, #374151, #1f2937)";
-          b.style.color = "#d1d5db";
-          b.textContent = "💤 處於橫置（疲勞）狀態";
-          eqContainer.appendChild(b);
+        if (starBonus !== 0) {
+          notes.push(`⭐ 星數異動 ${starBonus > 0 ? '+' : ''}${starBonus}★（源自卡牌效果增減）`);
+        }
+        if (notes.length > 0) {
+          modifierNoteHtml = `
+            <div class="inspector-section-block">
+              <div class="inspector-section-title">📊 效果數值增減加註</div>
+              <div class="inspector-modifier-notes">
+                ${notes.map(n => `<div class="inspector-note-item">${n}</div>`).join("")}
+              </div>
+            </div>
+          `;
         }
       }
 
-      if (hasEquips) {
-        equipments.forEach((eqName) => {
-          let displayText = eqName;
-          if (eqName.includes("戰錘") || eqName.includes("阿庫瑪的戰錘")) displayText = "🔨 阿庫瑪的戰錘：攻擊力 +1，戰鬥勝利結算額外 +1★";
-          else if (eqName.includes("符咒帽")) displayText = "🎩 符咒帽：魔法無效";
-          else if (eqName.includes("菜刀")) displayText = "🔪 3星菜刀：攻擊力+3，獲得貫穿";
-          else if (eqName.includes("弓箭")) displayText = "🏹 弓箭：獲得遠程+1";
-          else if (eqName.includes("戰斧牛排")) displayText = "🥩 戰斬牛排：攻擊力+5";
-          else if (eqName.includes("削弱藥水")) displayText = "🧪 削弱藥水：攻擊力-3";
-          else if (eqName.includes("振奮藥水")) displayText = "🧪 振奮藥水：攻擊力+3";
-          else if (eqName.includes("塗毒")) displayText = "🤢 塗毒：獲得劇毒效果";
-          else if (eqName.includes("睡眠反擊拳")) displayText = "🥊 睡眠反擊拳：攻擊力+3";
-          else if (eqName.includes("狼牙棒")) displayText = "🔨 狼牙棒：動態攻擊力加成";
-          else if (eqName.includes("法術保護")) displayText = "🛡️ 法術保護：魔法無效";
-          else if (eqName.includes("冰霜法師(-3)")) displayText = "❄️ 冰霜法師：星數-3⭐";
+      // 狀態效果 (禁錮、衰退、橫置、魔法無效、遠程、貫穿、劇毒等)
+      let statusListHtml = "";
+      if (hasUnitObj) {
+        const statuses = [];
+        if (unitObj.confined) statuses.push({ icon: "⛓️", title: "禁錮狀態", desc: "本回合無法宣告進攻或發動主動行動", cls: "confined" });
+        if (unitObj.decay) statuses.push({ icon: "💀", title: "衰退狀態", desc: "受暗黑侵蝕，持續減損戰力", cls: "decay" });
+        if (unitObj.tapped) statuses.push({ icon: "💤", title: "橫置疲勞", desc: "已完成本回合行動，進入防守態", cls: "tapped" });
+        if (unitObj.magicImmunity || unitObj.spellShield) statuses.push({ icon: "🛡️", title: "魔法免疫", desc: "不受敵方魔法或法術效果影響", cls: "shield" });
+        if (unitObj.ranged) statuses.push({ icon: "🏹", title: "遠程進攻", desc: "可跨越前排直接攻擊敵方後排目標", cls: "ranged" });
+        if (unitObj.pierce) statuses.push({ icon: "🔪", title: "貫穿傷害", desc: "擊破敵方單位時多餘傷害穿透至比分", cls: "pierce" });
+        if (unitObj.poison) statuses.push({ icon: "🤢", title: "劇毒致命", desc: "造成戰鬥傷害時必定消滅目標", cls: "poison" });
 
-          const badge = document.createElement("div");
-          badge.className = "xlw-left-panel-equipment-badge";
-          badge.innerHTML = displayText;
-
-          eqContainer.appendChild(badge);
-        });
+        if (statuses.length > 0) {
+          statusListHtml = `
+            <div class="inspector-section-block">
+              <div class="inspector-section-title">⚡ 單位狀態與異能</div>
+              <div class="inspector-status-tags">
+                ${statuses.map(st => `
+                  <div class="inspector-status-badge ${st.cls}">
+                    <span class="st-icon">${st.icon}</span>
+                    <div class="st-meta">
+                      <span class="st-title">${st.title}</span>
+                      <span class="st-desc">${st.desc}</span>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }
       }
+
+      // 裝備卡詳細清單
+      let equipsHtml = "";
+      const activeEquips = equipments || (hasUnitObj && unitObj.equipments ? unitObj.equipments : []);
+      if (activeEquips && activeEquips.length > 0) {
+        equipsHtml = `
+          <div class="inspector-section-block">
+            <div class="inspector-section-title">🗡️ 已加裝裝備卡 (${activeEquips.length})</div>
+            <div class="inspector-equip-list">
+              ${activeEquips.map(eq => {
+                const eqName = typeof eq === "string" ? eq : (eq.name || "裝備");
+                let effectDesc = "提供數值或異能加成";
+                let statMod = "";
+                if (eqName.includes("戰錘") || eqName.includes("阿庫瑪的戰錘")) { effectDesc = "戰鬥勝利結算額外 +1★"; statMod = "攻 +1"; }
+                else if (eqName.includes("符咒帽")) { effectDesc = "魔法無效化保護"; }
+                else if (eqName.includes("菜刀")) { effectDesc = "獲得【貫穿】效果"; statMod = "攻 +3"; }
+                else if (eqName.includes("弓箭")) { effectDesc = "獲得【遠程】效果"; statMod = "遠程 +1"; }
+                else if (eqName.includes("戰斧牛排")) { effectDesc = "頂級獸人戰食，爆發性戰力"; statMod = "攻 +5"; }
+                else if (eqName.includes("削弱藥水")) { effectDesc = "受到弱化效果"; statMod = "攻 -3"; }
+                else if (eqName.includes("振奮藥水")) { effectDesc = "受到力量激勵"; statMod = "攻 +3"; }
+                else if (eqName.includes("塗毒")) { effectDesc = "獲得【劇毒】致命效果"; }
+                else if (eqName.includes("睡眠反擊拳")) { effectDesc = "沉睡後的強大反擊力"; statMod = "攻 +3"; }
+                else if (eqName.includes("狼牙棒")) { effectDesc = "狂暴獸人兵器"; statMod = "動態加成"; }
+                else if (eqName.includes("法術保護")) { effectDesc = "完全免受魔法卡破壞"; }
+                else if (eqName.includes("冰霜法師")) { effectDesc = "受到極寒凍結減損"; statMod = "星數 -3★"; }
+
+                return `
+                  <div class="inspector-equip-item">
+                    <div class="equip-header">
+                      <span class="equip-name">${eqName}</span>
+                      ${statMod ? `<span class="equip-mod-badge">${statMod}</span>` : ""}
+                    </div>
+                    <div class="equip-desc">${effectDesc}</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // 卡牌原始效果說明
+      let cardRuleHtml = "";
+      const effectText = card.effect || card.description || card.rule || "";
+      if (effectText) {
+        cardRuleHtml = `
+          <div class="inspector-section-block">
+            <div class="inspector-section-title">📜 卡牌效果說明</div>
+            <div class="inspector-card-rule-box">
+              ${effectText}
+            </div>
+          </div>
+        `;
+      }
+
+      eqContainer.innerHTML = `
+        ${statsHtml}
+        ${modifierNoteHtml}
+        ${statusListHtml}
+        ${equipsHtml}
+        ${cardRuleHtml}
+      `;
 
       detailView.appendChild(eqContainer);
     }
