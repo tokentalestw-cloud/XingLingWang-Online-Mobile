@@ -61,6 +61,8 @@ class OptimizedStaticFiles(StaticFiles):
 app.mount("/static", OptimizedStaticFiles(directory=BASE / "static"), name="static")
 
 import time
+import asyncio
+from sync_protocol import RoomDelivery
 
 # ===== 線上雙人即時房間管理器 =====
 class ConnectionManager:
@@ -97,6 +99,10 @@ class ConnectionManager:
         if room_id not in self.rooms:
             self.rooms[room_id] = {}
         r = self.rooms[room_id]
+        if "delivery" not in r:
+            r["delivery"] = RoomDelivery()
+            r["delivery_lock"] = asyncio.Lock()
+            r["ready"] = {}
         if "players" not in r:
             r["players"] = {}
         if "decks" not in r:
@@ -118,6 +124,17 @@ class ConnectionManager:
         
         is_reconnect = False
         role_assigned = role
+        if role not in (None, "player1", "player2") or (role is not None and any(
+            registered == player_id and registered_role != role
+            for registered_role, registered in r["players"].items()
+        )):
+            await websocket.send_json({"type": "error", "message": "房間角色無效。"})
+            await websocket.close(code=1008)
+            return False
+        if role and role in r["players"] and r["players"][role] != player_id:
+            await websocket.send_json({"type": "error", "message": "此位置已由另一位玩家保留。"})
+            await websocket.close(code=1008)
+            return False
         
         if not role_assigned:
             # 決定玩家角色 (Player1 或 Player2) 並支援斷線重連
@@ -134,12 +151,6 @@ class ConnectionManager:
                     role_assigned = "player1"
                 elif "player2" not in r["players"]:
                     role_assigned = "player2"
-                elif p2_ws is None:
-                    role_assigned = "player2"
-                    is_reconnect = True
-                elif p1_ws is None:
-                    role_assigned = "player1"
-                    is_reconnect = True
                 else:
                     print(f"Room {room_id}: connection rejected for {player_id}.")
                     await websocket.send_json({
@@ -152,21 +163,25 @@ class ConnectionManager:
             # 若該角色曾在房間中登記過，視為斷線重連並接管該角色連線
             if role_assigned in r["players"]:
                 is_reconnect = True
-                old_tuple = r.get(role_assigned)
-                if old_tuple and old_tuple[1] is not None and old_tuple[1] is not websocket:
-                    try:
-                        await old_tuple[1].close()
-                    except:
-                        pass
             elif r.get("game_active"):
                 is_reconnect = True
 
+        # Replace the active socket before closing the old one; its finalizer is fenced.
+        old_socket = r.get(role_assigned, (None, None))[1]
         r["players"][role_assigned] = player_id
         r[role_assigned] = (player_id, websocket)
+        r["ready"][role_assigned] = websocket.query_params.get("protocol") != "2"
+        if old_socket is not None and old_socket is not websocket:
+            try:
+                await old_socket.close()
+            except Exception:
+                pass
         print(f"Room {room_id}: {role_assigned} ({player_id}) connected. Is reconnect: {is_reconnect}, game_active: {r.get('game_active')}")
         
         await websocket.send_json({
             "type": "welcome",
+            "sync_protocol": 2,
+            "epoch": r["delivery"].epoch,
             "role": role_assigned,
             "player_id": player_id,
             "is_reconnect": is_reconnect,
@@ -177,6 +192,18 @@ class ConnectionManager:
         other_role = "player2" if role_assigned == "player1" else "player1"
         other_ws = r.get(other_role, (None, None))[1]
         this_ws = websocket
+
+        if websocket.query_params.get("protocol") == "2" and is_reconnect:
+            # V2 resumes a checkpoint plus the ordered journal, never two stale snapshots.
+            if other_ws is not None:
+                try:
+                    await other_ws.send_json({"type": "opponent_rejoined", "reliable": True,
+                                              "message": "對手已重新連線，正在補齊操作紀錄。"})
+                except Exception:
+                    pass
+            if not r.get("game_active") and len(r["players"]) == 2:
+                await this_ws.send_json({"type": "opponent_joined", "message": "已重新連回房間，請選擇牌組。"})
+            return True
 
         if is_reconnect:
             # 1. 先補發伺服器端備份的該玩家自身完整狀態（手牌、牌庫、戰場、對戰紀錄）
@@ -248,6 +275,8 @@ class ConnectionManager:
                     except:
                         pass
 
+        return True
+
     def disconnect(self, room_id: str, player_id: str, websocket: WebSocket = None):
         if room_id in self.rooms:
             r = self.rooms[room_id]
@@ -257,9 +286,18 @@ class ConnectionManager:
                     pid, ws_obj = r[role_key]
                     if pid == player_id and (websocket is None or ws_obj is websocket):
                         r[role_key] = (pid, None)
+                        r["ready"][role_key] = False
                         print(f"Room {room_id}: {role_key} ({player_id}) disconnected (room & state preserved for reconnect).")
+                        return True
+        return False
 
-    async def broadcast_to_other(self, room_id: str, sender_id: str, message: dict):
+    async def broadcast_to_other(self, room_id: str, sender_id: str, message: dict, websocket=None):
+        if room_id not in self.rooms:
+            return
+        async with self.rooms[room_id]["delivery_lock"]:
+            await self._broadcast_to_other(room_id, sender_id, message, websocket)
+
+    async def _broadcast_to_other(self, room_id: str, sender_id: str, message: dict, websocket=None):
         if room_id in self.rooms:
             r = self._ensure_room_meta(room_id)
             sender_role = None
@@ -273,7 +311,42 @@ class ConnectionManager:
                 if "player1" in r:
                     target_ws = r["player1"][1]
 
+            if not sender_role:
+                return
+            active_ws = r.get(sender_role, (None, None))[1]
+            if websocket is not None and active_ws is not websocket:
+                return
+            other_role = "player2" if sender_role == "player1" else "player1"
+            delivery = r["delivery"]
             action = message.get("action")
+            if action == "resume_delivery":
+                epoch, cursor = message.get("epoch"), message.get("cursor", 0)
+                backup = r["client_backups"].get(sender_role)
+                if epoch is None and backup and (backup.get("sync_metadata") or {}).get("epoch") == delivery.epoch:
+                    await active_ws.send_json({"type": "restore_client_backup", "state": backup})
+                    epoch = backup["sync_metadata"]["epoch"]
+                    cursor = backup["sync_metadata"]["cursor"]
+                try:
+                    for event in delivery.replay(sender_role, epoch, cursor):
+                        await active_ws.send_json(event)
+                    await active_ws.send_json({"type": "resume_complete", "epoch": delivery.epoch})
+                    r["ready"][sender_role] = True
+                except ValueError as error:
+                    await active_ws.send_json({"type": "sync_error", "message": str(error)})
+                return
+            if action == "delivery_applied":
+                return
+            message_id = message.get("message_id")
+            if active_ws is not None and active_ws.query_params.get("protocol") == "2":
+                if not r["ready"].get(sender_role) and action != "leave_room":
+                    return
+                if action not in ("backup_client_state",):
+                    if not isinstance(message_id, str) or len(message_id) > 100:
+                        await active_ws.send_json({"type": "sync_error", "message": "操作缺少確認編號，請重新整理。"})
+                        return
+                    if delivery.duplicate(sender_role, message_id):
+                        await active_ws.send_json({"type": "delivery_ack", "message_id": message_id})
+                        return
             if sender_role:
                 if action == "backup_client_state":
                     state_data = message.get("state")
@@ -314,13 +387,21 @@ class ConnectionManager:
                     if sender_role in r.get("decks", {}):
                         r["decks"].pop(sender_role, None)
             
-            if target_ws is not None:
+            # Commit to the replay journal before acknowledging the sender.
+            flipped_message = delivery.append(other_role, self.flip_message_coordinates(message))
+            if message_id:
+                delivery.remember(sender_role, message_id)
                 try:
-                    # 自動翻轉座標，保證兩端視角都是我方在下、對手在上
-                    flipped_message = self.flip_message_coordinates(message)
+                    await active_ws.send_json({"type": "delivery_ack", "message_id": message_id})
+                except Exception:
+                    pass  # The recipient must still receive an accepted operation if its sender disconnects.
+            if target_ws is not None and r["ready"].get(other_role, True):
+                try:
                     await target_ws.send_json(flipped_message)
                 except Exception as e:
-                    print(f"Error broadcasting message to target player: {e}")
+                    print(f"Error broadcasting message to target player (retained for replay): {e}")
+            if action == "leave_room":
+                self.rooms.pop(room_id, None)
 
     def flip_message_coordinates(self, msg: dict) -> dict:
         flipped = json.loads(json.dumps(msg))
@@ -355,24 +436,27 @@ manager = ConnectionManager()
 @app.websocket("/ws/battle/{room_id}/{player_id}")
 @app.websocket("/ws/battle/{room_id}/{player_id}/{role}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str, role: str = None):
-    await manager.connect(room_id, player_id, role, websocket)
+    if not await manager.connect(room_id, player_id, role, websocket):
+        return
     try:
         while True:
             try:
                 data = await websocket.receive_text()
                 message = json.loads(data)
+                if not isinstance(message, dict):
+                    continue
                 if message.get("action") == "ping":
                     # 傳回 pong 以維持雙向活躍連線，防止 Render 50 秒閒置逾時斷線
                     await websocket.send_json({"action": "pong"})
                     continue
-                await manager.broadcast_to_other(room_id, player_id, message)
+                await manager.broadcast_to_other(room_id, player_id, message, websocket)
             except WebSocketDisconnect:
                 raise
             except Exception as e:
                 print(f"Error in websocket loop for room {room_id}, player {player_id}: {e}")
     except WebSocketDisconnect:
-        manager.disconnect(room_id, player_id, websocket)
-        if room_id in manager.rooms:
+        disconnected = manager.disconnect(room_id, player_id, websocket)
+        if disconnected and room_id in manager.rooms:
             r = manager.rooms[room_id]
             remaining_ws = None
             p1_ws = r.get("player1", (None, None))[1]
