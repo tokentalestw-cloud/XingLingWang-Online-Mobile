@@ -991,3 +991,16 @@ body.xlw-royal-ui #boardWrap .slot.xlw-goal-contributor:not(.xlw-route-target) {
   body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source-line {font-size:8px;}
   html body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source .bonus-lbl {font-size:7px !important;line-height:1 !important;}
 }
+
+/* Tutorial dialogue follows its content; reserve space for the mentor as well. */
+.xlw-tutorial-box,
+.xlw-tutorial-box.battle-compact-mode {
+  min-height: 0 !important;
+  height: auto !important;
+  max-width: min(250px, calc(100 * var(--xvw, 1vw) - 140px)) !important;
+  transition: opacity .2s ease !important;
+}
+.xlw-tutorial-box.battle-compact-mode { max-width: min(220px, calc(100 * var(--xvw, 1vw) - 140px)) !important; }
+.xlw-tutorial-active #xlwActionFeedback,
+.xlw-tutorial-active #status,
+.xlw-tutorial-active .puzzle-goal-badge { display: none !important; }

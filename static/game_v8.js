@@ -24020,7 +24020,7 @@ function renderScore() {
     return div;
   })();
   
-  const puzzleSectionHtml = window.XLW_isPuzzleMode ? `
+  const puzzleSectionHtml = window.XLW_isPuzzleMode && !window.XLW_Tutorial?.active ? `
     <div class="score-badge-card puzzle-goal-badge">
       <div style="color: #ffd76a; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
         <span>🧩 殘局第 ${window.XLW_currentPuzzleStage || 1} 關</span>
@@ -33443,6 +33443,10 @@ window.XLW_Tutorial = {
     }
     
     this.active = true;
+    window.XLW_isPuzzleMode = false;
+    document.body.classList.add("xlw-tutorial-active");
+    document.getElementById("xlwPuzzleStatusBar")?.remove();
+    window.XLWBFeedback?.resetScores();
     this.currentStep = 0;
 
     const welcome = document.getElementById("xlwWelcomeOverlay");
@@ -33739,6 +33743,9 @@ window.XLW_Tutorial = {
     const box = document.getElementById("xlwTutorialBox");
     if (!handle || !box) return;
     this._dragInitialized = true;
+    window.addEventListener("resize", () => {
+      if (this.active) requestAnimationFrame(() => this.updateSpotlight());
+    });
 
     let isDragging = false;
     let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
@@ -33758,12 +33765,13 @@ window.XLW_Tutorial = {
       if (!isDragging) return;
       const dx = clientX - startX;
       const dy = clientY - startY;
-      const newLeft = Math.max(50, Math.min(window.innerWidth - box.offsetWidth - 8, initialLeft + dx));
+      const newLeft = initialLeft + dx;
       const newTop = Math.max(6, Math.min(window.innerHeight - box.offsetHeight - 6, initialTop + dy));
       box.style.bottom = "";
       box.style.right = "";
       box.style.left = `${newLeft}px`;
       box.style.top = `${newTop}px`;
+      this.keepMentorInBounds();
     };
 
     const onEnd = () => {
@@ -33788,6 +33796,25 @@ window.XLW_Tutorial = {
       }
     }, { passive: true });
     window.addEventListener("touchend", onEnd);
+  },
+
+  keepMentorInBounds: function() {
+    const box = document.getElementById("xlwTutorialBox");
+    const overlay = document.getElementById("xlwTutorialOverlay");
+    const sprite = document.getElementById("xlwTutorialMentorSprite");
+    if (!box || !overlay || !sprite || !this.active) return;
+    const width = overlay.clientWidth, height = overlay.clientHeight;
+    if (!width || !height) return;
+    const margin = Math.max(24, Math.min(40, width * .04));
+    const overhang = Math.max(0, -parseFloat(getComputedStyle(sprite).left) || 0);
+    const minLeft = margin + overhang;
+    const maxLeft = Math.max(minLeft, width - margin - box.offsetWidth);
+    const left = Math.max(minLeft, Math.min(maxLeft, box.offsetLeft));
+    const top = Math.max(12, Math.min(Math.max(12, height - box.offsetHeight - 12), box.offsetTop));
+    box.style.right = "auto";
+    box.style.bottom = "auto";
+    box.style.left = `${left}px`;
+    box.style.top = `${top}px`;
   },
 
   updateSpotlight: function() {
@@ -33885,6 +33912,7 @@ window.XLW_Tutorial = {
         }
       }
     }
+    this.keepMentorInBounds();
   },
 
   nextStep: function() {
@@ -33905,6 +33933,7 @@ window.XLW_Tutorial = {
 
   endTutorial: function() {
     this.active = false;
+    document.body.classList.remove("xlw-tutorial-active");
     const overlay = document.getElementById("xlwTutorialOverlay");
     if (overlay) overlay.style.setProperty("display", "none", "important");
 

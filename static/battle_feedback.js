@@ -62,7 +62,7 @@
   let recovering = false;
   const state = () => global.xlwGetBattleFeedbackState?.() || {};
   function notice(message, tone='info') {
-    if (!global.document || !message || !state().active) return;
+    if (!global.document || !message || !state().active || global.XLW_Tutorial?.active) return;
     let box = document.getElementById('xlwActionFeedback');
     if (!box) {
       box = document.createElement('div'); box.id='xlwActionFeedback';
