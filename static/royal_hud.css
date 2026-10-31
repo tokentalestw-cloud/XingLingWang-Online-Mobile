@@ -833,3 +833,38 @@ body.xlw-royal-ui #boardWrap .board-playmat::before {
       5px 9px 0 #080e18, 9px 17px 17px #020610a8, 0 0 16px #c5e8ec59 !important;
   }
 }
+
+
+/* Astral Forge v4: reference-size field, shallow hand overlap, no empty glass header. */
+html body.xlw-royal-ui header.topbar.topbar-grouped-v9 {
+  display: none !important;
+  background: transparent !important; box-shadow: none !important; border: 0 !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand {
+  top: max(4px, env(safe-area-inset-top)) !important;
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-count-badge {
+  position: absolute !important; left: calc(100% + 7px) !important;
+  top: 50% !important; transform: translateY(-50%) !important;
+  margin: 0 !important; font-size: 8px !important; line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back {
+  width: 26px !important; height: 36px !important; margin-left: -9px !important;
+}
+html body.xlw-royal-ui .hand-panel {
+  background: transparent !important; background-color: transparent !important;
+  border: 0 !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+@media (max-width: 1100px), (pointer: coarse) {
+  html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back {
+    width: 14px !important; height: 20px !important; margin-left: -5px !important;
+  }
+  html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-count-badge {
+    font-size: 7px !important; left: calc(100% + 5px) !important;
+  }
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back:first-child { margin-left: 0 !important; }

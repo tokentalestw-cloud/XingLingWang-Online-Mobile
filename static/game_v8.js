@@ -24798,6 +24798,24 @@ function xlwFitBoardRect(bounds, space) {
   };
 }
 
+// The toolbar occupies the upper-right corner, not the whole top of the field.
+// Prefer the largest valid fit, either below it or beside it.
+function xlwFitBoardAroundToolbar(bounds, space, toolbar, gap) {
+  const fit = xlwFitBoardRect(bounds, space);
+  const intersects = f => toolbar &&
+    f.x + bounds.left * f.scale < toolbar.right + gap &&
+    f.x + bounds.right * f.scale > toolbar.left - gap &&
+    f.y + bounds.top * f.scale < toolbar.bottom + gap &&
+    f.y + bounds.bottom * f.scale > toolbar.top - gap;
+  if (!intersects(fit)) return fit;
+  const candidates = [
+    {...space, top: Math.max(space.top, toolbar.bottom + gap)},
+    {...space, right: Math.min(space.right, toolbar.left - gap)}
+  ].filter(s => s.right > s.left && s.bottom > s.top)
+    .map(s => xlwFitBoardRect(bounds, s));
+  return candidates.sort((a, b) => b.scale - a.scale)[0] || fit;
+}
+
 let xlwBoardFitFrame = 0;
 let xlwBoardHudObserver = null;
 function adjustBoardScale() {
@@ -24850,11 +24868,12 @@ function adjustBoardScale() {
     const space = {
       left: Math.max(gap, score ? score.right + gap : gap),
       right: Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
-      top: Math.max(gap, enemyHand ? enemyHand.bottom + gap : gap, toolbar ? toolbar.bottom + gap : gap),
-      bottom: Math.min(height - gap, hand ? hand.top - gap : height)
+      top: Math.max(gap, enemyHand ? enemyHand.bottom : gap),
+      // A shallow overlap matches the reference fan without moving any field zones.
+      bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
     };
     if (space.right <= space.left || space.bottom <= space.top) return;
-    const fit = xlwFitBoardRect(bounds, space);
+    const fit = xlwFitBoardAroundToolbar(bounds, space, toolbar, gap);
     root.style.setProperty("--xlw-field-scale", String(fit.scale));
     root.style.setProperty("--xlw-field-x", fit.x + "px");
     root.style.setProperty("--xlw-field-y", fit.y + "px");
