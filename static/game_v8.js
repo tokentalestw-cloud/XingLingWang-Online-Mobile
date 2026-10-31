@@ -679,6 +679,39 @@ window.XLW_enemyMeowMotherPending = false;
 window.XLW_opponentHandyMeowChoice = {};
 
 
+// 全域不可移動判定函數 (沈思的男人、關鍵字不可移動、禁錮等)
+function xlwIsUnitUnmovable(unit, zone, idx) {
+  if (!unit) return false;
+  const c = unit.card || unit;
+  if (!c) return false;
+
+  // 沈思的男人 / 沉思的男人：完全不能被移動！
+  if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" ||
+      c.name?.includes("沉思") || c.name?.includes("沈思")) {
+    return true;
+  }
+
+  // 關鍵字判定
+  if (c.keywords && (c.keywords.includes("不可移動") || c.keywords.includes("不得移動") || c.keywords.includes("禁錮"))) {
+    return true;
+  }
+
+  // 效果文字判定
+  const text = c.effect_text || c.effect || c.description || "";
+  if (text.includes("不得被移動") || text.includes("不可移動") || text.includes("無法移動") || text.includes("不能被移動")) {
+    return true;
+  }
+
+  // 禁錮判定
+  if (unit.confined) return true;
+  if (typeof zone !== "undefined" && typeof idx !== "undefined" && isUnitConfined(zone, idx)) {
+    return true;
+  }
+
+  return false;
+}
+window.xlwIsUnitUnmovable = xlwIsUnitUnmovable;
+
 // 新增：全域禁錮與狀態判定函數
 function isUnitConfined(zone, idx) {
   const slot = field[zone]?.[idx];
@@ -689,10 +722,15 @@ function isUnitConfined(zone, idx) {
   const c = slot.card;
   if (!c) return false;
 
+  // 沈思的男人 / 沉思的男人：完全不能被移動！
+  if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思") || c.name?.includes("沈思")) {
+    return true;
+  }
+
   const isConfinementSource = c.name && (c.name.includes("長脖子的女人") || c.name.includes("土蜘蛛") || c.name.includes("雪女") || c.name.includes("虎姑媽"));
   if (!isConfinementSource) {
     if ((c.keywords && (c.keywords.includes("禁錮") || c.keywords.includes("不可移動"))) ||
-        (c.effect_text && (c.effect_text.includes("不得被移動") || c.effect_text.includes("禁錮")))) {
+        (c.effect_text && (c.effect_text.includes("不得被移動") || c.effect_text.includes("不可移動") || c.effect_text.includes("無法移動") || c.effect_text.includes("禁錮")))) {
       return true;
     }
   }
@@ -2263,8 +2301,14 @@ window.isGodRaceUnit = isGodRaceUnit;
 function hasArmorBreak(unit, zone, lane) {
   if (!unit) return false;
   const c = unit.card || unit;
-  if (window.xlwCardHasKeyword(c, "破甲")) return true;
+  if (!c) return false;
   if (unit.armorBreak) return true;
+  if (c.name && (c.name.includes("破甲") || c.name.includes("破甲獸人") || c.name.includes("破甲小兵") || c.name.includes("破甲喵") || c.name.includes("破甲菜兵"))) return true;
+  if (c.id === "ORC-0004" || c.id === "CRB-0003" || c.id === "R-CAT-0028" || c.id?.includes("FMS-0008") || c.id?.includes("FMS-0030") || c.id?.includes("NMS-0024") || c.id?.includes("CAT-0047")) return true;
+  if (window.xlwCardHasKeyword(c, "破甲")) return true;
+  const eff = c.effect_text || c.effect || c.description || "";
+  if (eff.includes("破甲")) return true;
+  if (unit.equipments && unit.equipments.some(eq => typeof eq === "string" ? eq.includes("破甲") : (eq.name && eq.name.includes("破甲")))) return true;
   
   if (zone && (lane !== undefined && lane !== null)) {
     const idxs = [lane - 1, lane + 1];
@@ -3958,7 +4002,7 @@ function validPlayerAttackLine(zone, lane) {
   if (unit.tapped) return false; // 橫置狀態不可宣告攻擊
   if (window.XLW_isShieldUnit(unit)) return false; // 盾牌不可宣告攻擊
   if (!enemyLaneHasAny(lane)) return false; // 空戰線不可進攻
-  if (enemyFrontIsShield(lane)) return false; // 前排為盾牌不可進攻
+  if (enemyFrontIsShield(lane) && !hasArmorBreak(unit, zone, lane)) return false; // 前排為盾牌不可進攻（具破甲者可進攻）
 
   // 牆壁上的香蕉 (SR-ART-0025 / SSR-ART-0025) 左右保護
   const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
@@ -6665,9 +6709,17 @@ function toggleTributeSelection(zone, idx) {
 async function moveOrPushUnitToSlot(fromZone, fromIdx, toZone, toIdx) {
   const movingUnit = field[fromZone][fromIdx];
   if (!movingUnit) return;
+  if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(movingUnit, fromZone, fromIdx)) {
+    logBattle(`🛡️ 【${movingUnit.card.name}】完全不能被移動！`);
+    return;
+  }
   
   const existingUnit = field[toZone][toIdx];
   if (existingUnit) {
+    if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingUnit, toZone, toIdx)) {
+      logBattle(`🛡️ 【${existingUnit.card.name}】完全不能被移動，無法被推擠！`);
+      return;
+    }
     if (toZone.includes("front")) {
       const backZone = toZone.replace("front", "back");
       const existingBack = field[backZone][toIdx];
@@ -8865,26 +8917,44 @@ async function performSummonToSlot(zone, idx) {
         
         let targetUnit = field[oppFront][idx];
         if (targetUnit) {
-          // Push front unit backward
-          const existingBack = field[oppBack][idx];
-          if (existingBack) {
-            // Back unit is pushed off-field -> returns to hand!
-            logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
-            oppHand.push(existingBack.card);
+          if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppFront, idx)) {
+            logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
+          } else {
+            // Push front unit backward
+            const existingBack = field[oppBack][idx];
+            if (existingBack) {
+              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingBack, oppBack, idx)) {
+                logBattle(`🛡️ 【${existingBack.card.name}】完全不能被移動，阻擋了推擠！`);
+              } else {
+                // Back unit is pushed off-field -> returns to hand!
+                logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
+                oppHand.push(existingBack.card);
+                field[oppBack][idx] = targetUnit;
+                targetUnit.summonedZone = oppBack;
+                field[oppFront][idx] = null;
+                logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
+                render();
+              }
+            } else {
+              field[oppBack][idx] = targetUnit;
+              targetUnit.summonedZone = oppBack;
+              field[oppFront][idx] = null;
+              logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
+              render();
+            }
           }
-          field[oppBack][idx] = targetUnit;
-          targetUnit.summonedZone = oppBack;
-          field[oppFront][idx] = null;
-          logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-          render();
         } else {
           // Front is empty, check if back has unit -> push off-field -> returns to hand!
           targetUnit = field[oppBack][idx];
           if (targetUnit) {
-            logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
-            oppHand.push(targetUnit.card);
-            field[oppBack][idx] = null;
-            render();
+            if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppBack, idx)) {
+              logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
+            } else {
+              logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
+              oppHand.push(targetUnit.card);
+              field[oppBack][idx] = null;
+              render();
+            }
           }
         }
       }
@@ -9246,25 +9316,30 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
         const oppBackZone = isPlayer ? "enemy_back" : "player_back";
-        const targetUnit = field[oppFrontZone][idx] || field[oppBackZone][idx];
+        const originalZone = field[oppFrontZone][idx] ? oppFrontZone : oppBackZone;
+        const targetUnit = field[originalZone][idx];
         if (targetUnit) {
-          const emptySlots = [];
-          for (const z of [oppFrontZone, oppBackZone]) {
-            field[z].forEach((u, col) => {
-              if (col !== idx && u === null) {
-                emptySlots.push({ zone: z, idx: col });
-              }
-            });
-          }
-          if (emptySlots.length > 0) {
-            const chosen = emptySlots[Math.floor(Math.random() * emptySlots.length)];
-            const originalZone = field[oppFrontZone][idx] ? oppFrontZone : oppBackZone;
-            field[originalZone][idx] = null;
-            field[chosen.zone][chosen.idx] = targetUnit;
-            logBattle(`✨ 駭獸人 立即效果：將正前方的敵方單位【${targetUnit.card.name}】移至 ${chosen.zone === oppFrontZone ? "前排" : "後排"}${chosen.idx + 1}！`);
-            render();
+          if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, originalZone, idx)) {
+            logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，駭獸人效果無法移動它！`);
           } else {
-            logBattle("駭獸人 立即效果：對手場上其他星星戰線無空位，無法移動！");
+            const emptySlots = [];
+            for (const z of [oppFrontZone, oppBackZone]) {
+              field[z].forEach((u, col) => {
+                if (col !== idx && u === null) {
+                  emptySlots.push({ zone: z, idx: col });
+                }
+              });
+            }
+            if (emptySlots.length > 0) {
+              const chosen = emptySlots[Math.floor(Math.random() * emptySlots.length)];
+              field[originalZone][idx] = null;
+              field[chosen.zone][chosen.idx] = targetUnit;
+              targetUnit.summonedZone = chosen.zone;
+              logBattle(`✨ 駭獸人 立即效果：將正前方的敵方單位【${targetUnit.card.name}】移至 ${chosen.zone === oppFrontZone ? "前排" : "後排"}${chosen.idx + 1}！`);
+              render();
+            } else {
+              logBattle("駭獸人 立即效果：對手場上其他星星戰線無空位，無法移動！");
+            }
           }
         }
       }
@@ -9272,28 +9347,31 @@ async function performSummonToSlot(zone, idx) {
       if (card.id === "SR-ORC-0053" || card.name?.includes("憤怒的駭獸人")) {
         const isPlayer = zone.startsWith("player_");
         const oppZones = isPlayer ? ["enemy_front", "enemy_back"] : ["player_front", "player_back"];
-        const units = [];
+        const movableUnits = [];
+        const availableSlots = [];
         oppZones.forEach(z => {
           field[z].forEach((u, col) => {
             if (u) {
-              units.push(u);
-              field[z][col] = null;
+              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, col)) {
+                // Keep unmovable unit in place
+              } else {
+                movableUnits.push(u);
+                availableSlots.push({ zone: z, idx: col });
+                field[z][col] = null;
+              }
+            } else {
+              availableSlots.push({ zone: z, idx: col });
             }
           });
         });
-        if (units.length > 0) {
-          const allSlots = [];
-          oppZones.forEach(z => {
-            for (let col = 0; col < 5; col++) {
-              allSlots.push({ zone: z, idx: col });
-            }
-          });
-          shuffle(allSlots);
-          units.forEach((u, uIdx) => {
-            const slot = allSlots[uIdx];
+        if (movableUnits.length > 0) {
+          shuffle(availableSlots);
+          movableUnits.forEach((u, uIdx) => {
+            const slot = availableSlots[uIdx];
             field[slot.zone][slot.idx] = u;
+            u.summonedZone = slot.zone;
           });
-          logBattle(`✨ 憤怒的駭獸人 立即效果：打亂對手場上所有單位的位置！`);
+          logBattle(`✨ 憤怒的駭獸人 立即效果：打亂對手場上單位的位置！`);
           render();
         }
       }
@@ -10071,23 +10149,29 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         if (frontZone) {
           const frontUnit = field[frontZone][idx];
           if (frontUnit && !isUnitEffectImmune(frontUnit)) {
-            const oppEmptySlots = [];
-            for (const z of ["enemy_front", "enemy_back"]) {
-              for (let i = 0; i < 5; i++) {
-                if (!field[z][i]) oppEmptySlots.push({ zone: z, idx: i });
-              }
-            }
-            if (oppEmptySlots.length > 0) {
-              window.XLW_tigerAuntMoveActive = true;
-              window.XLW_tigerAuntFromZone = frontZone;
-              window.XLW_tigerAuntFromIdx = idx;
-              setStatus("【虎姑媽 效果】請點選對手場上的一個空格以將前方的單位移動至該位置！");
-              render();
-              await new Promise(r => { window.XLW_tigerAuntResolve = r; });
-            } else {
+            if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(frontUnit, frontZone, idx)) {
               frontUnit.confined = true;
               frontUnit.confinedByTigerAuntOwner = "player";
-              logBattle(`✨ 虎姑媽 效果：對手場上沒有空位，正前方單位【${frontUnit.card.name}】留在原位，並被禁錮直到我方的下個主要階段開始！`);
+              logBattle(`✨ 虎姑媽 效果：正前方單位【${frontUnit.card.name}】完全不能被移動，留在原位並被禁錮直到我方的下個主要階段開始！`);
+            } else {
+              const oppEmptySlots = [];
+              for (const z of ["enemy_front", "enemy_back"]) {
+                for (let i = 0; i < 5; i++) {
+                  if (!field[z][i]) oppEmptySlots.push({ zone: z, idx: i });
+                }
+              }
+              if (oppEmptySlots.length > 0) {
+                window.XLW_tigerAuntMoveActive = true;
+                window.XLW_tigerAuntFromZone = frontZone;
+                window.XLW_tigerAuntFromIdx = idx;
+                setStatus("【虎姑媽 效果】請點選對手場上的一個空格以將前方的單位移動至該位置！");
+                render();
+                await new Promise(r => { window.XLW_tigerAuntResolve = r; });
+              } else {
+                frontUnit.confined = true;
+                frontUnit.confinedByTigerAuntOwner = "player";
+                logBattle(`✨ 虎姑媽 效果：對手場上沒有空位，正前方單位【${frontUnit.card.name}】留在原位，並被禁錮直到我方的下個主要階段開始！`);
+              }
             }
           }
         }
@@ -10530,7 +10614,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         let movedCount = 0;
         const frontLastUnits = [];
         field.player_front.forEach((u, idx) => {
-          if (u && u.card && isLastCard(u.card)) {
+          if (u && u.card && isLastCard(u.card) && !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, "player_front", idx))) {
             frontLastUnits.push({ unit: u, fromIdx: idx });
           }
         });
@@ -11484,16 +11568,8 @@ function moveFieldUnit(fromZone, fromIdx, toZone, toIdx) {
   if (!unit) return;
 
   const c = unit.card || unit;
-  if (isUnitConfined(fromZone, fromIdx)) {
-    setStatus(`【移動失敗】${c.name} 處於禁錮狀態！`);
-    return;
-  }
-
-  // 不可移動判定 (支持關鍵字「不可移動」與「禁錮」)
-  const isUnmovable = (c.keywords && (c.keywords.includes("不可移動") || c.keywords.includes("禁錮"))) ||
-                      (c.effect_text && (c.effect_text.includes("不得被移動") || c.effect_text.includes("不可移動") || c.effect_text.includes("無法移動") || c.effect_text.includes("禁錮")));
-  if (isUnmovable) {
-    setStatus(`【移動失敗】${c.name} 處於禁錮或無法移動狀態！`);
+  if (xlwIsUnitUnmovable(unit, fromZone, fromIdx)) {
+    setStatus(`【移動失敗】${c.name} 完全不能被移動！`);
     return;
   }
 
@@ -11546,7 +11622,7 @@ function selectPlayerAttacker(zone, idx) {
   if (!validPlayerAttackLine(zone, idx)) {
     if (window.XLW_isShieldUnit(unit)) setStatus("盾牌單位不能宣告進攻。");
     else if (!enemyLaneHasAny(idx)) setStatus("同戰線敵方前後排皆空，不能進攻該戰線。");
-    else if (enemyFrontIsShield(idx)) setStatus("敵方同戰線前排為盾牌單位，受其阻擋無法進攻。");
+    else if (enemyFrontIsShield(idx) && !hasArmorBreak(unit, zone, idx)) setStatus("敵方同戰線前排為盾牌單位，受其阻擋無法進攻。（具有破甲效果的單位可進攻）");
     return;
   }
 
@@ -11610,14 +11686,14 @@ async function selectPlayerTarget(zone, idx) {
     }
   }
 
-  // 盾牌不能被進攻
+  // 盾牌不能被進攻（具有破甲效果的單位除外）
   if (window.XLW_isShieldUnit(defender)) {
-    if (window.hasFlying(attacker) && !window.hasFlying(defender)) {
-      // Allow flying to attack if bypassing, but normally they bypass the shield to attack the non-shield unit.
-      // If they target the shield unit directly, we can allow it or block it. Usually shield units can be attacked directly if they are the only unit, or if the attacker wishes.
-      // Let's allow flying units to attack shield units directly if they want.
+    if (hasArmorBreak(attacker, selectedAttacker.zone, selectedAttacker.idx)) {
+      logBattle(`✨ 破甲效果生效：進攻單位 ${attacker.card.name} 具有破甲，可對盾牌單位 ${defender.card.name} 發起進攻！`);
+    } else if (window.hasFlying(attacker) && !window.hasFlying(defender)) {
+      // Allow flying to attack
     } else {
-      setStatus("盾牌單位在場時無法被直接選為進攻目標。");
+      setStatus("盾牌單位在場時無法被直接選為進攻目標。（具有破甲效果的單位可進攻）");
       return;
     }
   }
@@ -11707,7 +11783,11 @@ async function xlwAutoDeclarePlayerAttacks() {
     if (!targetZone) continue;
 
     const targetDefender = field[targetZone][i];
-    if (window.XLW_isShieldUnit(targetDefender)) continue;
+    if (window.XLW_isShieldUnit(targetDefender)) {
+      if (!hasArmorBreak(playerAttacker, actualZone, i)) {
+        continue;
+      }
+    }
 
     let finalZone = targetZone;
     let finalIdx = i;
@@ -11864,11 +11944,13 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
 
     const targetDefender = field[targetZone][idx];
     if (targetDefender && window.XLW_isShieldUnit(targetDefender)) {
-      if (window.hasFlying(unit) && !window.hasFlying(targetDefender)) {
+      if (hasArmorBreak(unit, zone, idx)) {
+        // 具有破甲效果的單位可以對盾牌單位進攻！
+      } else if (window.hasFlying(unit) && !window.hasFlying(targetDefender)) {
         // Flying bypasses shield unit
       } else {
-      setStatus("\u963b\u64cb\u55ae\u4f4d\u7121\u6cd5\u9032\u884c\u653b\u64ca\u5ba3\u8a00\u3002");
-      return;
+        setStatus("敵方目標為阻擋/盾牌單位，受其阻擋無法進行攻擊宣告。（具有破甲效果的單位可進攻）");
+        return;
       }
     }
     if (targetDefender && isUnitAttackProtected(targetZone, idx)) {
@@ -12770,13 +12852,15 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   let atkPower = getUnitAtk(attacker, attZone, attIdx);
   let defPower = getUnitAtk(defender, defZone, defIdx, true);
 
-  // 黃金鬥士 金牛座 (SSSR-NMS-0040) 效果：與阻擋單位戰鬥時，阻擋單位的攻擊力視為其星數
+  // 具有破甲效果的單位（如破甲獸人）或黃金鬥士金牛座：與阻擋/盾牌單位戰鬥時，盾牌單位的攻擊力視為其星星分數
+  const attackerHasBreak = hasArmorBreak(attacker, attZone, attIdx);
   const attackerIsTaurus40 = attacker && attacker.card && (attacker.card.id === "SSSR-NMS-0040" || attacker.card.name === "黃金鬥士 金牛座" || attacker.card.name?.includes("黃金鬥士")) && !window.isUnitSilenced(attacker, attZone, attIdx);
   const defenderIsTaurus40 = defender && defender.card && (defender.card.id === "SSSR-NMS-0040" || defender.card.name === "黃金鬥士 金牛座" || defender.card.name?.includes("黃金鬥士")) && !window.isUnitSilenced(defender, defZone, defIdx);
 
-  if (attackerIsTaurus40 && window.XLW_isShieldUnit(defender)) {
+  if ((attackerHasBreak || attackerIsTaurus40) && window.XLW_isShieldUnit(defender)) {
     defPower = getUnitStars(defender, defZone, defIdx);
-    logBattle(`✨ 黃金鬥士 金牛座 效果發動：與阻擋單位戰鬥時，防守方【${defender.card.name}】的攻擊力視為其星數 (${defPower})！`);
+    const reasonText = attackerHasBreak ? "破甲效果" : "黃金鬥士 金牛座 效果";
+    logBattle(`✨ ${reasonText}發動：與盾牌單位戰鬥時，防守方【${defender.card.name}】的攻擊力視為其星星分數 (${defPower})！`);
   }
   if (defenderIsTaurus40 && window.XLW_isShieldUnit(attacker)) {
     atkPower = getUnitStars(attacker, attZone, attIdx);
@@ -14923,31 +15007,37 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     if (frontZone) {
       const frontUnit = field[frontZone][destIdx];
       if (frontUnit && !isUnitEffectImmune(frontUnit)) {
-        const playerEmptySlots = [];
-        for (const z of ["player_front", "player_back"]) {
-          for (let i = 0; i < 5; i++) {
-            if (!field[z][i]) playerEmptySlots.push({ zone: z, idx: i });
-          }
-        }
-        if (playerEmptySlots.length > 0) {
-          const chosenSlot = playerEmptySlots[Math.floor(Math.random() * playerEmptySlots.length)];
-          const toZone = chosenSlot.zone;
-          const toIdx = chosenSlot.idx;
-          
-          field[toZone][toIdx] = frontUnit;
-          field[frontZone][destIdx] = null;
-          
+        if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(frontUnit, frontZone, destIdx)) {
           frontUnit.confined = true;
           frontUnit.confinedByTigerAuntOwner = "enemy";
-          frontUnit.summonedZone = toZone;
-          
-          logBattle(`✨ 對手 虎姑媽 效果：使我方單位【${frontUnit.card.name}】移動至 ${toZone === "player_front" ? "前排" : "後排"}${toIdx + 1}，並將其禁錮直到對手下個主要階段開始！`);
-          render();
-          await sleep(500);
+          logBattle(`✨ 對手 虎姑媽 效果：我方單位【${frontUnit.card.name}】完全不能被移動，留在原位並被禁錮直到對手下個主要階段開始！`);
         } else {
-          frontUnit.confined = true;
-          frontUnit.confinedByTigerAuntOwner = "enemy";
-          logBattle(`✨ 對手 虎姑媽 效果：我方場上沒有空位，正前方單位【${frontUnit.card.name}】留在原位，並被禁錮直到對手下個主要階段開始！`);
+          const playerEmptySlots = [];
+          for (const z of ["player_front", "player_back"]) {
+            for (let i = 0; i < 5; i++) {
+              if (!field[z][i]) playerEmptySlots.push({ zone: z, idx: i });
+            }
+          }
+          if (playerEmptySlots.length > 0) {
+            const chosenSlot = playerEmptySlots[Math.floor(Math.random() * playerEmptySlots.length)];
+            const toZone = chosenSlot.zone;
+            const toIdx = chosenSlot.idx;
+            
+            field[toZone][toIdx] = frontUnit;
+            field[frontZone][destIdx] = null;
+            
+            frontUnit.confined = true;
+            frontUnit.confinedByTigerAuntOwner = "enemy";
+            frontUnit.summonedZone = toZone;
+            
+            logBattle(`✨ 對手 虎姑媽 效果：使我方單位【${frontUnit.card.name}】移動至 ${toZone === "player_front" ? "前排" : "後排"}${toIdx + 1}，並將其禁錮直到對手下個主要階段開始！`);
+            render();
+            await sleep(500);
+          } else {
+            frontUnit.confined = true;
+            frontUnit.confinedByTigerAuntOwner = "enemy";
+            logBattle(`✨ 對手 虎姑媽 效果：我方場上沒有空位，正前方單位【${frontUnit.card.name}】留在原位，並被禁錮直到對手下個主要階段開始！`);
+          }
         }
       }
     }
@@ -15130,7 +15220,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     let movedCount = 0;
     const frontLastUnits = [];
     field.enemy_front.forEach((u, idx) => {
-      if (u && u.card && isLastCard(u.card)) {
+      if (u && u.card && isLastCard(u.card) && !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, "enemy_front", idx))) {
         frontLastUnits.push({ unit: u, fromIdx: idx });
       }
     });
@@ -15605,23 +15695,41 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     
     let targetUnit = field[oppFront][destIdx];
     if (targetUnit) {
-      const existingBack = field[oppBack][destIdx];
-      if (existingBack) {
-        logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
-        oppHand.push(existingBack.card);
+      if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppFront, destIdx)) {
+        logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
+      } else {
+        const existingBack = field[oppBack][destIdx];
+        if (existingBack) {
+          if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingBack, oppBack, destIdx)) {
+            logBattle(`🛡️ 【${existingBack.card.name}】完全不能被移動，阻擋了推擠！`);
+          } else {
+            logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
+            oppHand.push(existingBack.card);
+            field[oppBack][destIdx] = targetUnit;
+            targetUnit.summonedZone = oppBack;
+            field[oppFront][destIdx] = null;
+            logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
+            render();
+          }
+        } else {
+          field[oppBack][destIdx] = targetUnit;
+          targetUnit.summonedZone = oppBack;
+          field[oppFront][destIdx] = null;
+          logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
+          render();
+        }
       }
-      field[oppBack][destIdx] = targetUnit;
-      targetUnit.summonedZone = oppBack;
-      field[oppFront][destIdx] = null;
-      logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-      render();
     } else {
       targetUnit = field[oppBack][destIdx];
       if (targetUnit) {
-        logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
-        oppHand.push(targetUnit.card);
-        field[oppBack][destIdx] = null;
-        render();
+        if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppBack, destIdx)) {
+          logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
+        } else {
+          logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
+          oppHand.push(targetUnit.card);
+          field[oppBack][destIdx] = null;
+          render();
+        }
       }
     }
   }
@@ -17672,6 +17780,10 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
       const targetUnit = frontInfo.unit;
       const targetZone = frontInfo.zone;
       const targetIdx = frontInfo.idx;
+      if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, targetZone, targetIdx)) {
+        logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，恐怖稻草人驅趕無效！`);
+        continue;
+      }
       const targetOwner = targetZone.startsWith("player_") ? "player" : "enemy";
 
       const emptySlots = [];
@@ -17789,9 +17901,10 @@ function checkAiAttackFavorability(attacker, attZone, attIdx, defender, defZone,
   let atkPower = getUnitAtk(attacker, attZone, attIdx);
   let defPower = getUnitAtk(defender, defZone, defIdx, true);
   
-  // 黃金鬥士 金牛座效果覆寫
+  // 具有破甲效果的單位（如破甲獸人）或黃金鬥士金牛座效果覆寫：防守方為盾牌單位時，其攻擊力視為其星數
+  const attackerHasBreak = hasArmorBreak(attacker, attZone, attIdx);
   const attackerIsTaurus40 = attacker.card && (attacker.card.id === "SSSR-NMS-0040" || attacker.card.name?.includes("黃金鬥士")) && !window.isUnitSilenced(attacker, attZone, attIdx);
-  if (attackerIsTaurus40 && window.XLW_isShieldUnit(defender)) {
+  if ((attackerHasBreak || attackerIsTaurus40) && window.XLW_isShieldUnit(defender)) {
     defPower = getUnitStars(defender, defZone, defIdx);
   }
   
@@ -18421,14 +18534,10 @@ async function aiPerformTacticalMovement() {
     const backUnit = field.enemy_back[i];
     
     if (frontUnit && !backUnit) {
-      const isConfined = isUnitConfined("enemy_front", i);
-      const isUnmovable = frontUnit.card && (
-        (frontUnit.card.keywords && (frontUnit.card.keywords.includes("不可移動") || frontUnit.card.keywords.includes("禁錮"))) ||
-        (frontUnit.card.effect_text && (frontUnit.card.effect_text.includes("不得被移動") || frontUnit.card.effect_text.includes("不可移動") || frontUnit.card.effect_text.includes("無法移動")))
-      );
+      const isUnmovable = xlwIsUnitUnmovable(frontUnit, "enemy_front", i);
       const isSummonedThisTurn = (frontUnit.summonedTurn === turn);
       
-      if (!isConfined && !isUnmovable && !isSummonedThisTurn) {
+      if (!isUnmovable && !isSummonedThisTurn) {
         const atk = getUnitAtk(frontUnit, "enemy_front", i);
         const stars = getUnitStars(frontUnit, "enemy_front", i);
         
@@ -18946,7 +19055,11 @@ async function runEnemyTurn() {
             if (!targetZone) continue;
             
             const targetDefender = field[targetZone][i];
-            if (window.XLW_isShieldUnit(targetDefender)) continue;
+            if (window.XLW_isShieldUnit(targetDefender)) {
+              if (!hasArmorBreak(enemyAttacker, enemyAttackerZone, i)) {
+                continue;
+              }
+            }
             if (targetDefender && isUnitAttackProtected(targetZone, i)) continue;
             
             if (targetDefender && !isMultiplayer) {
@@ -20754,8 +20867,8 @@ function renderField() {
               setStatus("對手回合中，請稍候！");
               return;
             }
-            if (isUnitConfined(zone, idx)) {
-              setStatus("禁錮狀態的單位無法進行戰術移動！");
+            if (xlwIsUnitUnmovable(obj, zone, idx)) {
+              setStatus(`【無法移動】${obj.card?.name || "此單位"} 完全不能被移動！`);
               return;
             }
             if (window.XLW_tacticalSelected && window.XLW_tacticalSelected.zone === zone && window.XLW_tacticalSelected.idx === idx) {
@@ -21347,6 +21460,10 @@ function renderField() {
 
           if (window.XLW_bottleMovingActive) {
             if (zone.startsWith("enemy_")) {
+              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(obj, zone, idx)) {
+                setStatus(`${obj.card.name} 完全不能被移動！`);
+                return;
+              }
               if (isUnitEffectImmune(obj, zone, idx)) {
                 setStatus(`${obj.card.name} 具有效果免疫保護，無法被選為效果或魔法目標！`);
                 return;
@@ -21922,6 +22039,10 @@ function renderField() {
 
             const isSculpture48 = obj.card?.id === "R-ART-0048" || obj.card?.name?.includes("守護的斷臂雕像");
             if (isSculpture48) {
+              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(obj, zone, idx)) {
+                setStatus("守護的斷臂雕像 完全不能被移動，無法發動位置互換效果！");
+                return;
+              }
               if (obj.sculptureEffectUsedTurn === turn) {
                 setStatus("守護的斷臂雕像 的效果本回合已使用過。");
                 
@@ -21932,7 +22053,7 @@ function renderField() {
               const choices = [];
               for (const z of ["player_front", "player_back"]) {
                 field[z].forEach((u, i) => {
-                  if (u && u.tapped && !(z === zone && i === idx)) {
+                  if (u && u.tapped && !(z === zone && i === idx) && !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, i))) {
                     choices.push({
                       text: `${u.card.name} (${z === "player_front" ? "前排" : "後排"}${i + 1})`,
                       value: choices.length,
@@ -24299,9 +24420,9 @@ function setupGlobalEvents() {
     const slotEl = e.target.closest(".slot");
     if (slotEl && phase === "戰術佈陣") {
       const zone = slotEl.dataset.zone;
-      const idx = Number(slotEl.dataset.index);
-      if (isUnitConfined(zone, idx)) {
-        setStatus("禁錮狀態的單位無法進行戰術移動！");
+      const unit = field[zone]?.[idx];
+      if (unit && xlwIsUnitUnmovable(unit, zone, idx)) {
+        setStatus(`【無法移動】${unit.card?.name || "此單位"} 完全不能被移動！`);
         e.preventDefault();
         return;
       }
