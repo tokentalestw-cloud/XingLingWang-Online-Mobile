@@ -117,6 +117,7 @@ module.exports = (async () => {
     countdownActive: false, countdownRemaining: 0, countdownTriggerTurn: null, countdownTriggerRole: null,
   };
   const game = vm.createContext(globals);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../static/battle_flow.js'), 'utf8'), game);
   vm.runInContext(handler, game);
   const remoteField = structuredClone(fields);
   remoteField.enemy_front[0] = { card: { id: 'goat', creator: 'player' },
@@ -141,6 +142,17 @@ module.exports = (async () => {
   game.hand = [{ id: 'keep' }]; snapshot.enemyHand = [null];
   await game.ws.onmessage({ data: JSON.stringify({ action: 'sync_game_state', state: snapshot }) });
   assert.equal(game.hand[0].id, 'keep'); tests++;
+
+  game.window.XLW_playerNeedsToDraw = false;
+  snapshot.includeTurnPhase = false;
+  snapshot.XLW_enemyNeedsToDraw = true;
+  snapshot.XLW_playerNeedsToDraw = false;
+  await game.ws.onmessage({ data: JSON.stringify({ action: 'sync_game_state', state: snapshot }) });
+  assert.equal(game.window.XLW_playerNeedsToDraw, false);
+  assert.equal(game.window.XLW_enemyNeedsToDraw, false); tests++;
+  snapshot.includeTurnPhase = true;
+  await game.ws.onmessage({ data: JSON.stringify({ action: 'sync_game_state', state: snapshot }) });
+  assert.equal(game.window.XLW_playerNeedsToDraw, true); tests++;
 
   // Coordinates for temporary equipment have already been flipped by the server.
   game.field.enemy_back[1] = { card: { name: 'target' } };

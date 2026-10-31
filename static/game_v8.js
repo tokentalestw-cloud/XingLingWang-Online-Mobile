@@ -1071,6 +1071,7 @@ async function init() {
 function newGameMultiplayer() {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
@@ -1333,6 +1334,7 @@ function initGameEmptyState() {
 function newGame() {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   window.XLW_isPuzzleMode = false;
@@ -1851,6 +1853,8 @@ window.xlwMulliganToggleFromModal = function(cardIdx) {
 
 async function confirmMulligan() {
   if (!mulliganActive) return;
+  const confirmButton = $("stableActionMulliganConfirm");
+  if (confirmButton) { confirmButton.disabled = true; confirmButton.textContent = "確認中…"; }
   if (typeof window.xlwCloseMulliganInspector === "function") {
     window.xlwCloseMulliganInspector();
   }
@@ -1884,6 +1888,7 @@ async function confirmMulligan() {
       deck: deck
     }));
     setStatus("我方起手換牌已確認，正在等待對手換牌中...");
+    render();
     await checkMulliganCompletion();
   } else {
     // 單人模式
@@ -1934,6 +1939,7 @@ async function confirmMulligan() {
 }
 
 async function checkMulliganCompletion() {
+  if (phase !== "起手換牌") return;
   if (opponent_mulligan_done && !mulliganActive) {
     // 雙方都 Mulligan 完畢，遊戲正式開始！
     turn = 1;
@@ -11824,6 +11830,7 @@ async function selectPlayerTarget(zone, idx) {
 
 // ===== 自動宣告與切換進攻宣言 =====
 async function xlwAutoDeclarePlayerAttacks() {
+  window.XLWBattleFlow?.forgetSide("player");
   if (window.XLW_playerCannotAttackThisTurn) {
     logBattle("座敷童子/和平巨人 效果生效：本回合我方無法進行進攻！");
     setStatus("座敷童子/和平巨人 效果生效：本回合我方無法進行進攻！");
@@ -12928,7 +12935,15 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   const attacker = field[attZone]?.[attIdx];
   const defender = field[defZone]?.[defIdx];
 
-  if (!attacker || !defender) return "戰鬥目標不存在";
+  if (!attacker) return "戰鬥目標不存在";
+  if (!defender) {
+    window.XLWBattleFlow?.settle(attacker,attZone,attIdx,turn);
+    render();
+    return "戰鬥目標已離場，本次進攻結束";
+  }
+  const closeCombatReplies = window.XLWBattleFlow?.openCombat(attZone,attIdx,defZone,defIdx) || (()=>{});
+  let attackSpent = false;
+  try {
 
   let atkPower = getUnitAtk(attacker, attZone, attIdx);
   let defPower = getUnitAtk(defender, defZone, defIdx, true);
@@ -13427,13 +13442,13 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
         if (chosenIdx !== null && chosenIdx !== undefined) {
           chosenSlot = emptySlots[chosenIdx];
         }
-        if (isMultiplayer && ws && chosenSlot) {
+        if (isMultiplayer && ws) {
           ws.send(JSON.stringify({
             action: "handy_meow_move_sync",
             fromZone: defeatedZone,
             fromIdx: defeatedIdx,
-            toZone: chosenSlot.zone,
-            toIdx: chosenSlot.idx
+            toZone: chosenSlot?.zone || null,
+            toIdx: chosenSlot?.idx ?? null
           }));
         }
       } else {
@@ -13478,6 +13493,11 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       }
     }
   }
+
+  // Commit the spent attack before destruction/reward animations or player choices.
+  attackSpent = true;
+  window.XLWBattleFlow?.settle(attacker,attZone,attIdx,turn);
+  render();
 
   if (attackerShouldDie) {
     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat, true));
@@ -13824,6 +13844,11 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   }
 
   return combatMsg;
+  } finally {
+    if (attackSpent) window.XLWBattleFlow?.finish(attacker,field[attZone]?.[attIdx],attZone,attIdx,turn);
+    closeCombatReplies();
+    render();
+  }
 }
 
 // 帶有碎裂和火花粒子特效的卡牌銷毀函數
@@ -19377,6 +19402,11 @@ async function runEnemyTurn() {
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
   if (window.XLW_isPlayerTurnEnding) return;
+  if (isMultiplayer && (!isMyTurn || mulliganActive || phase === "起手換牌" || !window.XLW_sync?.ready)) {
+    setStatus(mulliganActive || phase === "起手換牌" ? "請先完成雙方起手換牌。" : !window.XLW_sync?.ready ? "連線正在同步，請稍候。" : "目前為對手回合，請等待對手行動。");
+    renderStablePanel();
+    return;
+  }
   window.XLW_isPlayerTurnEnding = true;
 
   // 立即觸發震動反饋、音效與按鈕視覺回饋，讓玩家 100% 明確感知按鍵已成功觸發
@@ -19847,6 +19877,7 @@ async function endPlayerTurnAndRunEnemy() {
 }
 
 function playerUntap() {
+  window.XLWBattleFlow?.forgetSide("player");
   window.XLW_playerSummonCountThisTurn = 0;
   window.XLW_callGameNegatedThisTurn = false;
   window.XLW_playerActionsPerformedThisTurn = false;
@@ -25266,6 +25297,8 @@ function setupWebSocketEvents() {
         field.enemy_front = s.field.player_front;
         field.enemy_back = s.field.player_back;
         
+        window.XLWBattleFlow?.reconcile(field, turn);
+
         // 修正每個單位的 summonedZone 與 target.zone 屬性，防止座標對決判定失準
         const zoneMap = {
           "player_front": "enemy_front",
@@ -25408,12 +25441,9 @@ function setupWebSocketEvents() {
         }
 
         // 同步抽牌與防守狀態需求
-        if (s.XLW_playerNeedsToDraw !== undefined) {
-          window.XLW_playerNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
-        }
-        if (s.XLW_enemyNeedsToDraw !== undefined) {
-          window.XLW_enemyNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
-        }
+        const drawFlags = window.XLWBattleFlow.drawFlags(window.XLW_playerNeedsToDraw, window.XLW_enemyNeedsToDraw, s);
+        window.XLW_playerNeedsToDraw = drawFlags.player;
+        window.XLW_enemyNeedsToDraw = drawFlags.enemy;
         if (typeof s.XLW_coinTossFirstGo === "boolean") window.XLW_coinTossFirstGo = !s.XLW_coinTossFirstGo;
         if (s.playerNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
           window.XLW_DEFENSE_RULE.playerNeedsDefense = s.enemyNeedsDefense;
@@ -25478,6 +25508,7 @@ function setupWebSocketEvents() {
       }
       logBattle("對手已確認起手換牌，等待我方確認。");
       await checkMulliganCompletion();
+      render();
     } else if (data.action === "summon") {
       // 後端已將 zone 座標自動翻轉，所以收到時對本地來說就是 enemy_front / enemy_back
       const zone = data.zone; 
@@ -26040,6 +26071,7 @@ function setupWebSocketEvents() {
       const targetIdx = data.targetIdx;
       const attacker = field[attZone][attIdx];
       if (attacker) {
+        window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
         attacker.target = { zone: targetZone, idx: targetIdx };
         attacker.tapped = true;
@@ -26891,7 +26923,8 @@ function setupWebSocketEvents() {
     window.XLWBFeedback?.resetConnection();
     window.XLW_sync = new window.XLWOnlineSync({
       key: syncKey, storage: sessionStorage,
-      canBypass: action => Boolean(
+      canBypass: (action, data) => Boolean(
+        window.XLWBattleFlow?.canBypass(action, data) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
         (action === "aquarius_hand_reveal" && window.XLW_aquariusHandResolve) ||
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
@@ -33295,12 +33328,14 @@ window.XLW_Tutorial = {
     
     this.active = true;
     window.XLWAudio?.resetBattle();
+    window.XLWBattleFlow?.reset();
     window.XLWSpecialSummon?.cancel();
     window.XLW_isPuzzleMode = false;
     document.body.classList.add("xlw-tutorial-active");
     document.getElementById("xlwPuzzleStatusBar")?.remove();
     window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWBattleFlow?.reset();
     this.currentStep = 0;
 
     const welcome = document.getElementById("xlwWelcomeOverlay");
@@ -34437,6 +34472,7 @@ window.xlwStartPuzzleMode = function() {
 window.xlwStartPuzzleStage = function(stageNum) {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   window.XLW_currentPuzzleStage = stageNum;
 

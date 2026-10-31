@@ -137,7 +137,7 @@
           }
         };
         // These replies release promises awaited by the current game handler.
-        if (this.processing > 0 && this.canBypass(data.action)) run().catch(error => this.stop(error));
+        if (this.processing > 0 && this.canBypass(data.action, data)) run().catch(error => this.stop(error));
         else this.tail = this.tail.then(run).catch(error => this.stop(error));
       };
     }
