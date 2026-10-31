@@ -1,0 +1,83 @@
+/* Card-specific presentation only. Never changes a card, rule, turn or network message. */
+(function(global){
+  'use strict';
+  const ASSET='/static/summon_fx/';
+  const YUKI={key:'yuki',video:ASSET+'yuki_summon_packed_v1.mp4',poster:ASSET+'yuki_summon_poster_v1.webp',duration:3900};
+  function match(card){
+    if(!card)return null;
+    return /^(?:ASSR|R|SR|SSR|SSSR)-VLG-0012$/.test(card.id||'')||
+      (card.name==='雪女'&&[card.deck,card.faction,card.race].includes('妖怪村莊'))?YUKI:null;
+  }
+  function snowParticles(width,height,count=64,random=Math.random){
+    return Array.from({length:count},()=>{const depth=.12+random()*.88;return {x:random()*width,y:random()*height,depth,size:1.5+depth*12,speed:22+depth*85,phase:random()*6.283,spin:(random()-.5)*.6};});
+  }
+  function createVideo(){const video=document.createElement('video');video.muted=true;video.defaultMuted=true;video.playsInline=true;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.preload='auto';video.disablePictureInPicture=true;video.src=YUKI.video;return video;}
+  let warmedVideo=null,active=null;
+  function preload(cards){if(!global.document||warmedVideo||!cards?.some(match))return;try{warmedVideo=createVideo();warmedVideo.load();const image=new Image();image.src=YUKI.poster;}catch(_){}}
+  function compositor(canvas){
+    const gl=canvas.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:false});
+    if(!gl)return null;
+    const resources=[];
+    const shader=(type,source)=>{const item=gl.createShader(type);gl.shaderSource(item,source);gl.compileShader(item);if(!gl.getShaderParameter(item,gl.COMPILE_STATUS)){gl.deleteShader(item);throw Error('Shader compilation failed');}resources.push(['shader',item]);return item;};
+    try{
+      const program=gl.createProgram();resources.push(['program',program]);
+      gl.attachShader(program,shader(gl.VERTEX_SHADER,'attribute vec2 p; varying vec2 uv; void main(){uv=(p+1.0)*0.5;gl_Position=vec4(p,0.0,1.0);}'));
+      gl.attachShader(program,shader(gl.FRAGMENT_SHADER,'precision mediump float; varying vec2 uv; uniform sampler2D frame; void main(){vec3 rgb=texture2D(frame,vec2(uv.x*0.5,uv.y)).rgb;float a=texture2D(frame,vec2(0.5+uv.x*0.5,uv.y)).r; a=smoothstep(0.025,0.975,a);gl_FragColor=vec4(rgb*a,a);}'));
+      gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('Shader linking failed');gl.useProgram(program);
+      const buffer=gl.createBuffer();resources.push(['buffer',buffer]);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const position=gl.getAttribLocation(program,'p');gl.enableVertexAttribArray(position);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+      const texture=gl.createTexture();resources.push(['texture',texture]);gl.bindTexture(gl.TEXTURE_2D,texture);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.uniform1i(gl.getUniformLocation(program,'frame'),0);gl.clearColor(0,0,0,0);gl.viewport(0,0,canvas.width,canvas.height);
+      return {draw(video){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);},dispose(){for(const [kind,item]of resources)gl['delete'+kind[0].toUpperCase()+kind.slice(1)](item);gl.getExtension('WEBGL_lose_context')?.loseContext();}};
+    }catch(_){for(const [kind,item]of resources)gl['delete'+kind[0].toUpperCase()+kind.slice(1)](item);return null;}
+  }
+  function flakeSprite(near){
+    const image=document.createElement('canvas');image.width=image.height=48;const ctx=image.getContext('2d');ctx.translate(24,24);ctx.strokeStyle='#e6faff';ctx.lineWidth=near?1.6:1.2;ctx.shadowColor='#8edfff';ctx.shadowBlur=near?4:1;
+    for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-16);ctx.moveTo(0,-9);ctx.lineTo(-4,-12);ctx.moveTo(0,-9);ctx.lineTo(4,-12);ctx.stroke();}return image;
+  }
+  function play(card,{zone='',idx=0}={}){
+    const effect=match(card);if(!effect||!global.document)return Promise.resolve(false);
+    if(active?.key===zone+':'+idx)return active.promise;
+    active?.cancel();
+    let resolve;const promise=new Promise(done=>resolve=done),overlay=document.createElement('div');overlay.className='xlw-yuki-summon';overlay.dataset.cardId=card.id||'';overlay.dataset.renderMode='poster';
+    overlay.innerHTML='<canvas class="xlw-yuki-snow far" aria-hidden="true"></canvas><div class="xlw-yuki-halo" aria-hidden="true"></div><div class="xlw-yuki-performer"><img class="xlw-yuki-poster" alt="雪女登場"><canvas class="xlw-yuki-video" aria-hidden="true"></canvas></div><canvas class="xlw-yuki-snow near" aria-hidden="true"></canvas><div class="xlw-yuki-caption"><span class="xlw-yuki-owner"></span><strong>雪女</strong><span>霜華降臨</span></div><button type="button" class="xlw-yuki-skip">略過動畫</button>';
+    const owner=zone.startsWith('enemy_')?'對手星靈':'我方星靈';overlay.querySelector('.xlw-yuki-owner').textContent=owner;overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',owner+'雪女登場動畫');
+    document.body.appendChild(overlay);
+    const performer=overlay.querySelector('.xlw-yuki-performer'),poster=overlay.querySelector('.xlw-yuki-poster'),canvas=overlay.querySelector('.xlw-yuki-video');poster.src=effect.poster;canvas.width=canvas.height=640;
+    let allowMovie=true,renderer=null,video=null,raf=0,loadTimer=0,hardTimer=0,fadeTimer=0,finished=false,disposed=false,lastFrame=-1,lastSnow=0,elapsed=0;
+    const oldFocus=document.activeElement;const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let snow=[];const snowCanvases=[...overlay.querySelectorAll('.xlw-yuki-snow')],sprites=[flakeSprite(false),flakeSprite(true)];
+    function size(){const width=overlay.clientWidth,height=overlay.clientHeight,dpr=Math.min(global.devicePixelRatio||1,1.5);for(const c of snowCanvases){c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}snow=snowParticles(width,height,reduced?20:(width<1000?64:90));}
+    function finish(){if(finished)return;finished=true;overlay.classList.add('is-leaving');if(video)video.pause();fadeTimer=setTimeout(dispose,reduced?80:240);}
+    function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(raf);clearTimeout(loadTimer);clearTimeout(hardTimer);clearTimeout(fadeTimer);document.removeEventListener('visibilitychange',hidden);global.removeEventListener('pagehide',finish);global.removeEventListener('resize',size);if(video){video.onended=video.onerror=null;video.pause();video.removeAttribute('src');video.load();}renderer?.dispose();overlay.remove();if(active?.promise===promise)active=null;if(oldFocus?.isConnected)oldFocus.focus?.({preventScroll:true});resolve(true);}
+    function hidden(){if(document.hidden){finished=true;dispose();}}
+    overlay.addEventListener('click',event=>event.stopPropagation());
+    const skip=overlay.querySelector('button');skip.onclick=finish;skip.focus({preventScroll:true});overlay.onkeydown=event=>{event.stopPropagation();if(event.key==='Escape'){event.preventDefault();finish();}if(event.key==='Tab'){event.preventDefault();skip.focus();}};
+    size();global.addEventListener('resize',size);global.addEventListener('pagehide',finish);document.addEventListener('visibilitychange',hidden);
+    active={key:zone+':'+idx,promise,cancel(){finished=true;dispose();}};
+    global.xlwPlaySFX?.('yuki');
+    if(!reduced){try{renderer=compositor(canvas);}catch(_){renderer=null;}}
+    if(renderer){
+      video=warmedVideo||createVideo();warmedVideo=null;video.className='xlw-yuki-source';overlay.appendChild(video);video.currentTime=0;video.onended=finish;
+      const fallback=()=>{allowMovie=false;overlay.dataset.renderMode='poster';video?.pause();video.onended=null;};video.onerror=fallback;
+      // A failed or slow movie never blocks the duel. Keep the transparent poster and snow.
+      loadTimer=setTimeout(()=>{if(lastFrame<0)fallback();},950);
+      try{Promise.resolve(video.play()).catch(fallback);}catch(_){fallback();}
+    }
+    function frame(time){
+      if(disposed)return;
+      if(!lastSnow)lastSnow=time;
+      const dt=Math.min((time-lastSnow)/1000,.05);
+      if(time-lastSnow>=30){elapsed+=dt;lastSnow=time;
+        const w=overlay.clientWidth,h=overlay.clientHeight;for(const c of snowCanvases)c.getContext('2d').clearRect(0,0,w,h);
+        for(const flake of snow){flake.y+=flake.speed*dt;flake.x+=Math.sin(elapsed*.7+flake.phase)*10*flake.depth*dt;if(flake.y>h+20){flake.y=-20;flake.x=Math.random()*w;}const ctx=snowCanvases[flake.depth>.66?1:0].getContext('2d');ctx.save();ctx.globalAlpha=.18+flake.depth*.65;ctx.translate(flake.x,flake.y);ctx.rotate(flake.phase+elapsed*flake.spin);const s=flake.size;ctx.drawImage(sprites[flake.depth>.66?1:0],-s,-s,s*2,s*2);ctx.restore();}
+        if(allowMovie&&video&&renderer&&!finished&&video.readyState>=2&&video.currentTime!==lastFrame){try{renderer.draw(video);lastFrame=video.currentTime;overlay.dataset.renderMode='video';}catch(_){video.pause();video.onended=null;overlay.dataset.renderMode='poster';}}
+      }
+      raf=requestAnimationFrame(frame);
+    }
+    raf=requestAnimationFrame(frame);hardTimer=setTimeout(finish,reduced?1700:4500);
+    return promise;
+  }
+  global.XLWSpecialSummon={match,snowParticles,preload,play,cancel(){active?.cancel();}};
+})(typeof window==='undefined'?globalThis:window);

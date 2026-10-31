@@ -329,6 +329,7 @@ function preloadDuelAssets() {
   if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) allDuelCards.push(...window.XLW_ENEMY.hand);
   if (Array.isArray(enemyExtraDeck)) allDuelCards.push(...enemyExtraDeck);
   preloadCardImages(allDuelCards, "high");
+  window.XLWSpecialSummon?.preload(allDuelCards);
 }
 
 // 閒置時分批預先載入卡牌庫中的牌面
@@ -1070,6 +1071,7 @@ async function init() {
 function newGameMultiplayer() {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWSpecialSummon?.cancel();
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   xlwOutgoingSeq = 0;
@@ -1331,6 +1333,7 @@ function initGameEmptyState() {
 function newGame() {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWSpecialSummon?.cancel();
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
@@ -8285,6 +8288,7 @@ async function performSummonToSlot(zone, idx) {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
     }
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+    if (window.XLWSpecialSummon?.match(card)) await playTributeSummonAnimation(zone, idx, true);
   } else if (selectedHandForSummon === "TRAVELER") {
     // 召喚小旅人
     field[zone][idx] = {
@@ -11283,7 +11287,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
     }
     } // end of if (!immediateEffectNegated)
     
-    if (isTributeSummon) {
+    if (isTributeSummon || window.XLWSpecialSummon?.match(card)) {
       await playTributeSummonAnimation(zone, idx, true);
     }
   }
@@ -14704,6 +14708,9 @@ function countSelectedTributesValue(tributesList, targetCard) {
 
 async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (!card) return;
+  if (!isMultiplayer && field[destZone]?.[destIdx]?.card && window.XLWSpecialSummon?.match(card)) {
+    await playTributeSummonAnimation(destZone, destIdx, true);
+  }
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
     return;
   }
@@ -25665,7 +25672,7 @@ function setupWebSocketEvents() {
         }));
         if (card && card.id === "TOKEN_TRAVELER") {
           playTravelerSummonAnimation("#enemyForest", zone, idx);
-        } else if (card && Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0)) {
+        } else if (card && (window.XLWSpecialSummon?.match(card) || (Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0)))) {
           await playTributeSummonAnimation(zone, idx, true);
         } else {
           render();
@@ -27773,6 +27780,20 @@ window.XLW_animatingTributeSlots = window.XLW_animatingTributeSlots || new Set()
 window.XLW_slamTributeCards = window.XLW_slamTributeCards || new Set();
 
 async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
+  const specialCard = field[zone]?.[idx]?.card;
+  if (isRealTribute && window.XLWSpecialSummon?.match(specialCard)) {
+    const specialKey = `${zone}:${idx}`;
+    window.XLW_animatingTributeSlots.add(specialKey);
+    render();
+    try { await window.XLWSpecialSummon.play(specialCard, {zone,idx}); }
+    catch (error) { console.warn("Special summon presentation unavailable", error); }
+    finally {
+      window.XLW_animatingTributeSlots.delete(specialKey);
+      render();
+    }
+    return;
+  }
+
   window.xlwPlaySFX?.(isRealTribute ? 'tribute' : 'summon');
   const key = `${zone}:${idx}`;
   window.XLW_animatingTributeSlots.add(key);
@@ -33274,6 +33295,7 @@ window.XLW_Tutorial = {
     
     this.active = true;
     window.XLWAudio?.resetBattle();
+    window.XLWSpecialSummon?.cancel();
     window.XLW_isPuzzleMode = false;
     document.body.classList.add("xlw-tutorial-active");
     document.getElementById("xlwPuzzleStatusBar")?.remove();
@@ -34415,6 +34437,7 @@ window.xlwStartPuzzleMode = function() {
 window.xlwStartPuzzleStage = function(stageNum) {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.XLWSpecialSummon?.cancel();
   window.XLW_currentPuzzleStage = stageNum;
 
   if (typeof window.xlwRequestFullScreen === 'function') {
