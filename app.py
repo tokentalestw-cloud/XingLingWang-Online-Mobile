@@ -471,7 +471,7 @@ class ConnectionManager:
 
     def flip_message_coordinates(self, msg: dict) -> dict:
         flipped = json.loads(json.dumps(msg))
-        if flipped.get("action") == "sync_game_state":
+        if flipped.get("action") in ("sync_game_state", "end_turn"):
             # sync_game_state 包含全域戰場 field，由前端在接收時專屬對稱翻轉
             return flipped
 

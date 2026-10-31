@@ -1650,8 +1650,8 @@ async function performPlayerTurnStartDraw() {
   }
 
   // Banana Marquis turn start movement check
-  const enemyHasAttackers = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.attacking);
-  const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+  const enemyHasAttackers = field["enemy_front"].concat(field["enemy_back"]).some(u => u && (u.attacking || u.target));
+  const playerNeedsDefense = enemyHasAttackers || Boolean(window.XLW_DEFENSE_RULE?.playerNeedsDefense);
   if (!playerNeedsDefense) {
     await xlwCheckBananaMarquisMovement(true);
     await window.xlwResolveTurnStartEffects(true);
@@ -1679,9 +1679,14 @@ window.xlwHandlePlayerDeckClick = async function(event) {
     let enemyHasAttackers = false;
     ["enemy_front", "enemy_back"].forEach(zone => {
       field[zone].forEach(u => {
-        if (u && u.attacking) enemyHasAttackers = true;
+        if (u && (u.attacking || u.target)) {
+          u.attacking = true;
+          enemyHasAttackers = true;
+        }
       });
     });
+
+    const needsDefense = enemyHasAttackers || Boolean(window.XLW_DEFENSE_RULE?.playerNeedsDefense);
 
     if (countdownActive && countdownRemaining === 1) {
       phase = "召喚階段";
@@ -1689,7 +1694,8 @@ window.xlwHandlePlayerDeckClick = async function(event) {
       await checkCrazyFanSummon();
       setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！`);
       render();
-    } else if (window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers) {
+    } else if (needsDefense) {
+      window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
       phase = "防守階段";
       window.xlwShowPhaseBanner("防守階段", "#3b82f6");
       setStatus(`抽牌完成！前一回合對手有進攻宣言，自動進入「防守階段」！`);
@@ -1697,15 +1703,11 @@ window.xlwHandlePlayerDeckClick = async function(event) {
       await sleep(500);
       await xlwResolvePlayerDefensePhase();
     } else {
-      const wasPending = window.XLW_DEFENSE_RULE.playerNeedsDefense;
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
       phase = "召喚階段";
       window.xlwShowPhaseBanner("召喚階段", "#4ade80");
       await checkCrazyFanSummon();
       setStatus(`抽牌完成！第 ${turn} 回合「召喚階段」開始！`);
-      if (wasPending) {
-        logBattle("我方防守階段開始前，因對手無進攻單位，跳過防守階段。");
-      }
       render();
     }
     if (isMultiplayer) {
@@ -1853,8 +1855,15 @@ window.xlwMulliganToggleFromModal = function(cardIdx) {
 
 async function confirmMulligan() {
   if (!mulliganActive) return;
-  const confirmButton = $("stableActionMulliganConfirm");
-  if (confirmButton) { confirmButton.disabled = true; confirmButton.textContent = "確認中…"; }
+  const confirmButton = $("stableActionMulliganConfirm") || document.getElementById("stableActionMulliganConfirm");
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    confirmButton.classList.add("btn-processing", "btn-pressed-instant");
+    confirmButton.innerHTML = `<span class="btn-main-text">⏳ 確認中…</span><span class="btn-sub-turn">PROCESSING</span>`;
+    confirmButton.style.pointerEvents = "none";
+  }
+  try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
+  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (typeof window.xlwCloseMulliganInspector === "function") {
     window.xlwCloseMulliganInspector();
   }
@@ -12391,7 +12400,7 @@ async function xlwResolvePlayerDefensePhase() {
     // 檢查對手場上是否有宣告進攻的單位
     let hasAnyAttacker = false;
     for (const z of ["enemy_front", "enemy_back"]) {
-      if (field[z].some(u => u && u.attacking)) {
+      if (field[z].some(u => u && (u.attacking || u.target))) {
         hasAnyAttacker = true;
         break;
       }
@@ -12430,10 +12439,12 @@ async function xlwResolvePlayerDefensePhase() {
       }
 
       const attackersInLane = [];
-      if (field.enemy_front[lane] && field.enemy_front[lane].attacking) {
+      if (field.enemy_front[lane] && (field.enemy_front[lane].attacking || field.enemy_front[lane].target)) {
+        field.enemy_front[lane].attacking = true;
         attackersInLane.push({ zone: "enemy_front", unit: field.enemy_front[lane] });
       }
-      if (field.enemy_back[lane] && field.enemy_back[lane].attacking) {
+      if (field.enemy_back[lane] && (field.enemy_back[lane].attacking || field.enemy_back[lane].target)) {
+        field.enemy_back[lane].attacking = true;
         attackersInLane.push({ zone: "enemy_back", unit: field.enemy_back[lane] });
       }
 
@@ -12618,10 +12629,12 @@ async function xlwResolvePlayerDefensePhase() {
 
 async function xlwResolveEnemyLaneSafe(lane) {
   const attackersInLane = [];
-  if (field.player_front[lane] && field.player_front[lane].attacking) {
+  if (field.player_front[lane] && (field.player_front[lane].attacking || field.player_front[lane].target)) {
+    field.player_front[lane].attacking = true;
     attackersInLane.push({ zone: "player_front", unit: field.player_front[lane] });
   }
-  if (field.player_back[lane] && field.player_back[lane].attacking) {
+  if (field.player_back[lane] && (field.player_back[lane].attacking || field.player_back[lane].target)) {
+    field.player_back[lane].attacking = true;
     attackersInLane.push({ zone: "player_back", unit: field.player_back[lane] });
   }
 
@@ -19804,14 +19817,11 @@ async function endPlayerTurnAndRunEnemy() {
     window.XLW_playerNeedsToDraw = false;
     
     // 將回合結束時最新場上、墓地、手牌、分數與回合狀態同步給對手
-    sendFullGameStateToOpponent(true);
+    sendFullGameStateToOpponent(true, "end_turn");
     
     setStatus("我方回合結束，正在等待對手行動...");
     window.XLW_isPlayerTurnEnding = false;
-    ws.send(JSON.stringify({
-      action: "end_turn",
-      next_turn: turn
-    }));
+
     saveLocalGameState();
     render();
   } else {
@@ -19855,7 +19865,7 @@ async function endPlayerTurnAndRunEnemy() {
         if (u && u.attacking) enemyHasAttackers = true;
       });
     });
-    const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+    const playerNeedsDefense = enemyHasAttackers;
     if (!playerNeedsDefense) {
       checkCallGameAtTurnStart(true);
       if (isGameOverFlag) return;
@@ -24396,13 +24406,29 @@ function renderStablePanel() {
   if (mulliganActive) {
     if (isMultiplayer) {
       panel.innerHTML = `
-        <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">確認換牌</button>
+        <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
+          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
+        </button>
       `;
     } else {
       panel.innerHTML = `
-        <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">確認換牌</button>
-        <button class="stable-action-btn secondary" onclick="event.stopPropagation(); newGame()">重置新局</button>
+        <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
+          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
+        </button>
+        <button class="stable-action-btn secondary" onclick="event.stopPropagation(); newGame()">
+          <span class="btn-main-text">重置新局</span><span class="btn-sub-turn">RESET</span>
+        </button>
       `;
+    }
+    const mConfirm = $("stableActionMulliganConfirm");
+    if (mConfirm) {
+      const handleDown = (e) => {
+        try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
+        if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
+        mConfirm.classList.add("btn-pressed-instant");
+      };
+      mConfirm.onpointerdown = handleDown;
+      mConfirm.ontouchstart = handleDown;
     }
     return;
   }
@@ -24534,11 +24560,13 @@ function renderStablePanel() {
     } else {
       endBtn.disabled = isAiRunning || phase === "防守階段";
       if (!endBtn.disabled) {
-        endBtn.onpointerdown = (e) => {
+        const handleEndDown = (e) => {
           try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
           if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
           endBtn.classList.add("btn-pressed-instant");
         };
+        endBtn.onpointerdown = handleEndDown;
+        endBtn.ontouchstart = handleEndDown;
       }
     }
   }
@@ -25288,6 +25316,7 @@ function setupWebSocketEvents() {
       }
     } else if (data.action === "sync_game_state") {
       const s = data.state;
+      if (s && Number.isFinite(s.turn) && s.turn < turn) return;
       if (s) {
         // Ordered delivery prevents a snapshot from overtaking an unfinished effect.
         // Do not resolve outstanding counter/placement promises as a side effect of syncing.
@@ -25297,7 +25326,7 @@ function setupWebSocketEvents() {
         field.enemy_front = s.field.player_front;
         field.enemy_back = s.field.player_back;
         
-        window.XLWBattleFlow?.reconcile(field, turn);
+        window.XLWBattleFlow?.reconcile(field, s.turn !== undefined ? s.turn : turn);
 
         // 修正每個單位的 summonedZone 與 target.zone 屬性，防止座標對決判定失準
         const zoneMap = {
@@ -25332,6 +25361,21 @@ function setupWebSocketEvents() {
                 }
               }
             });
+          }
+        }
+
+        // 當對手傳送包含進攻需求時，強制還原並鎖定敵方進攻單位的 attacking 狀態
+        if (s.enemyNeedsDefense) {
+          if (window.XLW_DEFENSE_RULE) window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
+          for (const zone of ["enemy_front", "enemy_back"]) {
+            if (field[zone]) {
+              field[zone].forEach(u => {
+                if (u && (u.target || u.attacking)) {
+                  u.attacking = true;
+                  u.tapped = true;
+                }
+              });
+            }
           }
         }
 
@@ -25476,8 +25520,10 @@ function setupWebSocketEvents() {
           executeGameOverCalculations();
         }
         
-        saveLocalGameState();
-        render();
+        if (!data.turnHandoff) {
+          saveLocalGameState();
+          render();
+        }
       }
     } else if (data.action === "battle_log") {
       logBattle(String(data.message || ""));
@@ -26617,6 +26663,13 @@ function setupWebSocketEvents() {
       logBattle("\u3010\u5c0d\u624b\u5ba3\u544a\u5931\u6557\u3011\u5c0d\u624b\u5148\u524d\u5ba3\u544a\u7684\u63d0\u65e9\u7d50\u675f\u689d\u4ef6\u5df2\u4e0d\u6eff\u8db3\uff0c\u5c0d\u623d\u7e7c\u7e8c\uff01");
       render();
     } else if (data.action === "end_turn") {
+      if (Number.isFinite(data.next_turn) && data.next_turn <= turn && isMyTurn) return;
+      window.XLWBattleFlow?.reset();
+      if (data.state) {
+        // Apply the board and turn transition as one queued operation. The nested
+        // snapshot does not render an actionable draw button before initialization.
+        await gameMessageHandler({ data: JSON.stringify({ action: "sync_game_state", state: data.state, turnHandoff: true }) });
+      }
       // 結束階段，清理對手回合結束時到期的臨時狀態裝備
       xlwCleanExpiredTempEquips(turn);
 
@@ -26641,10 +26694,14 @@ function setupWebSocketEvents() {
       let enemyHasAttackers = false;
       ["enemy_front", "enemy_back"].forEach(zone => {
         field[zone].forEach(u => {
-          if (u && u.attacking) enemyHasAttackers = true;
+          if (u && (u.attacking || u.target)) {
+            u.attacking = true;
+            enemyHasAttackers = true;
+          }
         });
       });
-      const playerNeedsDefense = window.XLW_DEFENSE_RULE.playerNeedsDefense && enemyHasAttackers;
+      const playerNeedsDefense = enemyHasAttackers || Boolean(window.XLW_DEFENSE_RULE?.playerNeedsDefense);
+      window.XLW_DEFENSE_RULE.playerNeedsDefense = playerNeedsDefense;
       if (!playerNeedsDefense) {
         checkCallGameAtTurnStart(true);
         if (isGameOverFlag) return;
@@ -30975,7 +31032,7 @@ function saveLocalGameState() {
       countdownRemaining: (typeof countdownRemaining !== 'undefined' ? countdownRemaining : window.countdownRemaining) || 0,
       countdownTriggerTurn: (typeof countdownTriggerTurn !== 'undefined' ? countdownTriggerTurn : window.countdownTriggerTurn) || null,
       countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null,
-      battleLog: Array.isArray(battleLog) ? battleLog : [],
+      battleLog: Array.isArray(battleLog) ? battleLog.slice(-50) : [],
       normalSummonUsed: normalSummonUsed,
       tacticalSummonUsed: tacticalSummonUsed,
       XLW_tacticalMoveUsed: window.XLW_tacticalMoveUsed,
@@ -31265,7 +31322,7 @@ if (typeof document !== "undefined") {
   });
 }
 
-function sendFullGameStateToOpponent(includeTurnPhase = false) {
+function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_game_state") {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   const stateToSend = {
     includeTurnPhase: Boolean(includeTurnPhase || isMyTurn),
@@ -31315,7 +31372,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false) {
     XLW_rainbowCatAtkBuffActive: window.XLW_rainbowCatAtkBuffActive,
     XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive,
     gameInProgress: window.XLW_gameInProgress || false,
-    battleLog: Array.isArray(battleLog) ? battleLog : [],
+    battleLog: Array.isArray(battleLog) ? battleLog.slice(-50) : [],
     XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
     XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
     XLW_coinTossFirstGo: typeof window.XLW_coinTossFirstGo === "boolean" ? window.XLW_coinTossFirstGo : null,
@@ -31333,7 +31390,8 @@ function sendFullGameStateToOpponent(includeTurnPhase = false) {
     isGameOverFlag: Boolean(isGameOverFlag)
   };
   ws.send(JSON.stringify({
-    action: "sync_game_state",
+    action: action,
+    next_turn: action === "end_turn" ? turn : undefined,
     state: stateToSend
   }));
 }

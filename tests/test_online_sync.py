@@ -39,6 +39,16 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
     async def send(self, pid, socket, message):
         await self.manager.broadcast_to_other('test', pid, message, socket)
 
+    async def test_atomic_handoff_preserves_sender_coordinates_for_both_roles(self):
+        for pid, sock, peer in [('a', self.a, self.b), ('b', self.b, self.a)]:
+            message = {'action': 'end_turn', 'next_turn': 2, 'message_id': 'handoff-' + pid,
+                       'state': {'field': {'player_front': [{'target': {'zone': 'enemy_front', 'idx': 1}}]},
+                                 'isMyTurn': False, 'enemyNeedsDefense': True}}
+            await self.send(pid, sock, message)
+            received = [m for m in peer.messages if m.get('action') == 'end_turn'][-1]
+            self.assertEqual(received['state'], message['state'])
+            self.assertEqual(received['next_turn'], 2)
+
     async def test_duplicate_operation_applied_once(self):
         message = {'action': 'summon', 'zone': 'player_front', 'idx': 0, 'message_id': 'one'}
         await self.send('a', self.a, message)

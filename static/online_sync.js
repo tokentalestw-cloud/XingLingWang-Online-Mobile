@@ -18,6 +18,8 @@
       this.processing = 0;
       this.ready = false;
       this.pending = new Map();
+      this.backupTimer = null;
+      this.latestBackup = null;
       try {
         const items = JSON.parse(storage.getItem(key + ':outbox') || '[]');
         for (const item of items) this.pending.set(item.message_id, item);
@@ -36,13 +38,33 @@
     raw(message) {
       if (this.socket?.readyState === 1) this.originalSend.call(this.socket, JSON.stringify(message));
     }
+    queueBackup(message) {
+      this.latestBackup = message;
+      if (this.backupTimer !== null) return;
+      this.backupTimer = setTimeout(() => {
+        this.backupTimer = null;
+        if (!this.ready || this.failed) return;
+        // Bulk recovery data must never build an upload queue ahead of player input.
+        if (this.pending.size || this.processing || this.socket?.bufferedAmount > 0) {
+          this.queueBackup(this.latestBackup);
+          return;
+        }
+        const latest = this.latestBackup;
+        this.latestBackup = null;
+        if (latest) this.raw(latest);
+      }, 1000);
+    }
     send(message) {
       if (message.action === 'leave_room') {
         message.message_id ||= global.crypto.randomUUID();
         this.raw(message);
         return;
       }
-      if (['ping', 'pong', 'backup_client_state'].includes(message.action)) {
+      if (message.action === 'backup_client_state') {
+        if (this.ready) this.queueBackup(message);
+        return;
+      }
+      if (['ping', 'pong'].includes(message.action)) {
         if (this.ready || message.action === 'ping') this.raw(message);
         return;
       }
@@ -143,6 +165,9 @@
     }
     stop(error) {
       if (this.failed) return;
+      if (this.backupTimer !== null) clearTimeout(this.backupTimer);
+      this.backupTimer = null;
+      this.latestBackup = null;
       this.failed = true;
       this.ready = false;
       this.fail(error.message || String(error));

@@ -20,7 +20,7 @@
     if(!current.tapped&&!current.attacking){spent.delete(key(zone,idx));return;}
     exhaust(current);
   }
-  function reconcile(field,turn){for(const [k,record]of spent){const [zone,index]=k.split(':'),unit=field[zone]?.[Number(index)];if(record.turn!==turn||!unit||signature(unit)!==record.signature){spent.delete(k);continue;}if(unit.attacking)exhaust(unit);else if(!unit.tapped)spent.delete(k);}}
+  function reconcile(field,turn){for(const [k,record]of spent){const [zone,index]=k.split(':'),unit=field[zone]?.[Number(index)];if(record.turn!==turn||!unit||signature(unit)!==record.signature){spent.delete(k);continue;}if(zone.startsWith('enemy_')&&global.XLW_DEFENSE_RULE?.playerNeedsDefense)continue;if(unit.attacking)exhaust(unit);else if(!unit.tapped)spent.delete(k);}}
   function drawFlags(player,enemy,snapshot){
     // Only a turn-authoritative snapshot may change this client's draw requirement.
     if(snapshot.includeTurnPhase && snapshot.XLW_enemyNeedsToDraw!==undefined)player=Boolean(snapshot.XLW_enemyNeedsToDraw);
