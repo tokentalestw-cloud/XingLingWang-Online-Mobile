@@ -1067,3 +1067,8 @@ body.xlw-royal-ui #boardWrap .slot.xlw-goal-contributor:not(.xlw-route-target) {
 @media(prefers-reduced-motion:reduce) { .xlw-yuki-summon,.xlw-yuki-performer { animation:none; } }
 
 .xlw-yuki-source { position:absolute; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+/* The cinematic displays only the character name; skipping stays icon-only. */
+.xlw-yuki-caption { min-width:0; padding:5px 28px; }
+.xlw-yuki-skip { width:36px; height:36px; display:grid; place-items:center; padding:8px; }
+.xlw-yuki-skip svg { display:block; pointer-events:none; }

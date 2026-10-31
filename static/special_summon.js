@@ -2,7 +2,7 @@
 (function(global){
   'use strict';
   const ASSET='/static/summon_fx/';
-  const YUKI={key:'yuki',video:ASSET+'yuki_summon_packed_v1.mp4',poster:ASSET+'yuki_summon_poster_v1.webp',duration:3900};
+  const YUKI={key:'yuki',video:ASSET+'yuki_summon_packed_v2.mp4',poster:ASSET+'yuki_summon_poster_v2.webp',duration:4000};
   function match(card){
     if(!card)return null;
     return /^(?:ASSR|R|SR|SSR|SSSR)-VLG-0012$/.test(card.id||'')||
@@ -41,11 +41,11 @@
     if(active?.key===zone+':'+idx)return active.promise;
     active?.cancel();
     let resolve;const promise=new Promise(done=>resolve=done),overlay=document.createElement('div');overlay.className='xlw-yuki-summon';overlay.dataset.cardId=card.id||'';overlay.dataset.renderMode='poster';
-    overlay.innerHTML='<canvas class="xlw-yuki-snow far" aria-hidden="true"></canvas><div class="xlw-yuki-halo" aria-hidden="true"></div><div class="xlw-yuki-performer"><img class="xlw-yuki-poster" alt="雪女登場"><canvas class="xlw-yuki-video" aria-hidden="true"></canvas></div><canvas class="xlw-yuki-snow near" aria-hidden="true"></canvas><div class="xlw-yuki-caption"><span class="xlw-yuki-owner"></span><strong>雪女</strong><span>霜華降臨</span></div><button type="button" class="xlw-yuki-skip">略過動畫</button>';
-    const owner=zone.startsWith('enemy_')?'對手星靈':'我方星靈';overlay.querySelector('.xlw-yuki-owner').textContent=owner;overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',owner+'雪女登場動畫');
+    overlay.innerHTML='<canvas class="xlw-yuki-snow far" aria-hidden="true"></canvas><div class="xlw-yuki-halo" aria-hidden="true"></div><div class="xlw-yuki-performer"><img class="xlw-yuki-poster" alt="雪女登場"><canvas class="xlw-yuki-video" aria-hidden="true"></canvas></div><canvas class="xlw-yuki-snow near" aria-hidden="true"></canvas><div class="xlw-yuki-caption"><strong>雪女</strong></div><button type="button" class="xlw-yuki-skip" aria-label="略過動畫"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+    const owner=zone.startsWith('enemy_')?'對手星靈':'我方星靈';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',owner+'雪女登場動畫');
     document.body.appendChild(overlay);
-    const performer=overlay.querySelector('.xlw-yuki-performer'),poster=overlay.querySelector('.xlw-yuki-poster'),canvas=overlay.querySelector('.xlw-yuki-video');poster.src=effect.poster;canvas.width=canvas.height=640;
-    let allowMovie=true,renderer=null,video=null,raf=0,loadTimer=0,hardTimer=0,fadeTimer=0,finished=false,disposed=false,lastFrame=-1,lastSnow=0,elapsed=0;
+    const performer=overlay.querySelector('.xlw-yuki-performer'),poster=overlay.querySelector('.xlw-yuki-poster'),canvas=overlay.querySelector('.xlw-yuki-video');poster.src=effect.poster;canvas.width=canvas.height=960;
+    let allowMovie=true,renderer=null,video=null,raf=0,loadTimer=0,hardTimer=0,fadeTimer=0,finished=false,disposed=false,lastFrameIndex=-1,lastSnow=0,elapsed=0;
     const oldFocus=document.activeElement;const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let snow=[];const snowCanvases=[...overlay.querySelectorAll('.xlw-yuki-snow')],sprites=[flakeSprite(false),flakeSprite(true)];
     function size(){const width=overlay.clientWidth,height=overlay.clientHeight,dpr=Math.min(global.devicePixelRatio||1,1.5);for(const c of snowCanvases){c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}snow=snowParticles(width,height,reduced?20:(width<1000?64:90));}
@@ -62,18 +62,19 @@
       video=warmedVideo||createVideo();warmedVideo=null;video.className='xlw-yuki-source';overlay.appendChild(video);video.currentTime=0;video.onended=finish;
       const fallback=()=>{allowMovie=false;overlay.dataset.renderMode='poster';video?.pause();video.onended=null;};video.onerror=fallback;
       // A failed or slow movie never blocks the duel. Keep the transparent poster and snow.
-      loadTimer=setTimeout(()=>{if(lastFrame<0)fallback();},950);
+      loadTimer=setTimeout(()=>{if(lastFrameIndex<0)fallback();},950);
       try{Promise.resolve(video.play()).catch(fallback);}catch(_){fallback();}
     }
     function frame(time){
       if(disposed)return;
       if(!lastSnow)lastSnow=time;
       const dt=Math.min((time-lastSnow)/1000,.05);
-      if(time-lastSnow>=30){elapsed+=dt;lastSnow=time;
+      if(time-lastSnow>=15){elapsed+=dt;lastSnow=time;
         const w=overlay.clientWidth,h=overlay.clientHeight;for(const c of snowCanvases)c.getContext('2d').clearRect(0,0,w,h);
         for(const flake of snow){flake.y+=flake.speed*dt;flake.x+=Math.sin(elapsed*.7+flake.phase)*10*flake.depth*dt;if(flake.y>h+20){flake.y=-20;flake.x=Math.random()*w;}const ctx=snowCanvases[flake.depth>.66?1:0].getContext('2d');ctx.save();ctx.globalAlpha=.18+flake.depth*.65;ctx.translate(flake.x,flake.y);ctx.rotate(flake.phase+elapsed*flake.spin);const s=flake.size;ctx.drawImage(sprites[flake.depth>.66?1:0],-s,-s,s*2,s*2);ctx.restore();}
-        if(allowMovie&&video&&renderer&&!finished&&video.readyState>=2&&video.currentTime!==lastFrame){try{renderer.draw(video);lastFrame=video.currentTime;overlay.dataset.renderMode='video';}catch(_){video.pause();video.onended=null;overlay.dataset.renderMode='poster';}}
+
       }
+      if(allowMovie&&video&&renderer&&!finished&&video.readyState>=2&&Math.floor(video.currentTime*60)!==lastFrameIndex){try{renderer.draw(video);lastFrameIndex=Math.floor(video.currentTime*60);overlay.dataset.renderMode='video';}catch(_){video.pause();video.onended=null;overlay.dataset.renderMode='poster';}}
       raf=requestAnimationFrame(frame);
     }
     raf=requestAnimationFrame(frame);hardTimer=setTimeout(finish,reduced?1700:4500);
