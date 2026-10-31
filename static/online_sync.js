@@ -36,6 +36,7 @@
       catch (_) { this.stop(new Error('瀏覽器無法儲存連線紀錄，請檢查儲存空間。')); throw new Error('Cannot persist outgoing game operation'); }
     }
     raw(message) {
+      if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("wire:send",{action:message.action,ready:this.ready,buffered:this.socket?.bufferedAmount});
       if (this.socket?.readyState === 1) this.originalSend.call(this.socket, JSON.stringify(message));
     }
     queueBackup(message) {
@@ -70,6 +71,7 @@
       }
       if (this.failed) throw new Error('Online synchronization is paused');
       message.message_id ||= global.crypto.randomUUID();
+      if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("send:entry",{action:message.action});
       this.pending.set(message.message_id, message);
       this.persistOutbox();
       // Persist locally-mutated game state before the peer can acknowledge this action.
@@ -107,6 +109,8 @@
           return;
         }
         if (data.type === 'delivery_ack') {
+          const sent = this.pending.get(data.message_id);
+          if (sent && ["end_turn","mulligan_confirm"].includes(sent.action)) global.XLWInputDiagnostics?.mark("wire:ack",{action:sent.action});
           this.pending.delete(data.message_id);
           this.persistOutbox();
           return;

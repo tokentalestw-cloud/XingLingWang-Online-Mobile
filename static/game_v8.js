@@ -1857,6 +1857,7 @@ window.xlwMulliganToggleFromModal = function(cardIdx) {
 };
 
 async function confirmMulligan() {
+  window.XLWInputDiagnostics?.mark("confirmMulligan:entry");
   if (!mulliganActive) return;
   try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
@@ -19458,6 +19459,7 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  window.XLWInputDiagnostics?.mark("endTurn:entry",{ending:!!window.XLW_isPlayerTurnEnding,myTurn:isMyTurn,phase});
   if (window.XLW_isPlayerTurnEnding) return;
   if (isMultiplayer && (!isMyTurn || mulliganActive || phase === "起手換牌")) {
     setStatus(mulliganActive || phase === "起手換牌" ? "請先完成雙方起手換牌。" : "目前為對手回合，請等待對手行動。");
@@ -31098,11 +31100,13 @@ function saveLocalGameState() {
       XLW_rainbowCatAtkBuffActive: window.XLW_rainbowCatAtkBuffActive,
       XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive
     };
+    const endStorageMeasure = window.XLWInputDiagnostics?.begin("save-storage");
     const jsonStr = JSON.stringify(state);
     sessionStorage.setItem(key, jsonStr);
     localStorage.setItem(key, jsonStr);
     localStorage.setItem("XLW_LAST_GAME_STATE", jsonStr);
     window.xlwSaveOnlineSession(room_id, player_id, player_role);
+    endStorageMeasure?.();
 
     // If websocket is active, push a backup to the server as well
     if (ws && ws.readyState === WebSocket.OPEN) {

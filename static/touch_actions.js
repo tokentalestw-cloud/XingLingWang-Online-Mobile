@@ -8,13 +8,16 @@
     if(!panel||bound.has(panel))return;bound.add(panel);
     let press=null,compatibilityUntil=0;
     const begin=(event,x,y,id)=>{
+      compatibilityUntil=0;
       const button=action(event.target);if(!button||button.disabled)return;
+      global.XLWInputDiagnostics?.mark('touch:begin',{button:button.id});
       press={button,x,y,id,moved:false};button.classList.add('btn-pressed-instant');
     };
-    const cancel=()=>{press?.button.classList.remove('btn-pressed-instant');press=null;};
+    const cancel=()=>{compatibilityUntil=0;global.XLWInputDiagnostics?.mark('touch:cancel');press?.button.classList.remove('btn-pressed-instant');press=null;};
     const move=(x,y)=>{if(press&&Math.hypot(x-press.x,y-press.y)>12){press.moved=true;press.button.classList.remove('btn-pressed-instant');}};
     const finish=event=>{
       const p=press;press=null;if(!p)return;
+      global.XLWInputDiagnostics?.mark('touch:release',{moved:p.moved,button:p.button.id});
       const button=p.button;
       if(p.moved||!button.isConnected||button.disabled||action(event.target)!==button){button.classList.remove('btn-pressed-instant');return;}
       // Safari's subsequent compatibility click must not run the same action twice.
@@ -22,6 +25,7 @@
       button.setAttribute('aria-busy','true');
       let dispatched=false;
       const run=()=>{if(dispatched)return;dispatched=true;
+        global.XLWInputDiagnostics?.mark('touch:dispatch',{button:button.id,disabled:button.disabled,connected:button.isConnected});
         try{if(button.isConnected&&!button.disabled)button.click();}
         finally{button.removeAttribute('aria-busy');button.classList.remove('btn-pressed-instant');}
       };
@@ -31,7 +35,7 @@
     };
     panel.addEventListener('click',event=>{
       const button=action(event.target);
-      if(button&&event.isTrusted&&event.detail!==0&&now()<compatibilityUntil){event.preventDefault();event.stopImmediatePropagation();}
+      if(button&&event.isTrusted&&event.detail!==0&&now()<compatibilityUntil){global.XLWInputDiagnostics?.mark('touch:suppress-compat-click',{button:button.id});event.preventDefault();event.stopImmediatePropagation();compatibilityUntil=0;}
     },true);
     panel.addEventListener('keydown',()=>{compatibilityUntil=0;},true);
     if(global.PointerEvent){

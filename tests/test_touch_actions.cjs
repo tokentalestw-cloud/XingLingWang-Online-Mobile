@@ -28,4 +28,6 @@ for(const id of ['stableActionMulliganConfirm','stableActionEnd']){
 {const f=fixture();f.down();f.down({isPrimary:false,pointerId:2});f.up();f.flush();assert.equal(f.calls(),0);tests++;}
 {const f=fixture(false),t={identifier:3,clientX:10,clientY:10};f.dispatch('touchstart',f.event('touchstart',{touches:[t]}));f.dispatch('touchend',f.event('touchend',{changedTouches:[t]}));f.flush();assert.equal(f.calls(),1);tests++;}
 {const f=fixture(false),t={identifier:3,clientX:10,clientY:10};f.dispatch('touchstart',f.event('touchstart',{touches:[t]}));f.dispatch('touchcancel');f.dispatch('touchend',f.event('touchend',{changedTouches:[t]}));f.flush();assert.equal(f.calls(),0);tests++;}
+{const f=fixture();f.down();f.up();f.flush();f.down();f.dispatch('pointercancel');assert.equal(f.dispatch('click').stopped,undefined);tests++;}
+{const f=fixture();f.down();f.up();f.flush();assert.equal(f.dispatch('click').stopped,true);assert.equal(f.dispatch('click').stopped,undefined);tests++;}
 console.log(`${tests} touch release, delayed-click deduplication, cancellation, disabled and desktop scenarios: PASS`);
