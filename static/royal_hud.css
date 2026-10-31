@@ -1078,3 +1078,13 @@ html body.xlw-royal-ui .hand-panel,
 html body.xlw-royal-ui #hand { pointer-events: none !important; }
 html body.xlw-royal-ui #hand .card { pointer-events: auto !important; }
 html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
+
+/* Qin's terracotta legions emerge behind the transparent emperor performer. */
+.xlw-emperor-summon .xlw-yuki-halo {background:radial-gradient(ellipse,#e7b35b36,transparent 66%);box-shadow:0 0 80px #b3833430;}
+.xlw-emperor-summon .xlw-yuki-performer {filter:drop-shadow(0 0 14px #f4c47355);top:47%;}
+.xlw-emperor-summon .xlw-yuki-caption {color:#fff0c5;text-shadow:0 2px 4px #271607,0 0 18px #f6c365;background:linear-gradient(90deg,transparent,#33230ed9,transparent);}
+.xlw-emperor-summon .xlw-yuki-caption strong {letter-spacing:12px;}
+.xlw-emperor-army {position:absolute;z-index:1;left:50%;top:53%;width:min(calc(108 * var(--xvw,1vw)),1450px);transform:translate(-50%,-50%);pointer-events:none;animation:xlwEmperorLegions 4.5s cubic-bezier(.2,.65,.25,1) both;}
+.xlw-emperor-army img {display:block;width:100%;height:auto;opacity:.92;filter:drop-shadow(0 0 12px #d7a44d55);mask-image:linear-gradient(transparent,#000 8%,#000 80%,transparent);-webkit-mask-image:linear-gradient(transparent,#000 8%,#000 80%,transparent);}
+@keyframes xlwEmperorLegions {0%{opacity:0;transform:translate(-50%,-36%) scale(.75);filter:brightness(.4);}20%{opacity:.35;}48%{opacity:.9;filter:brightness(1);}100%{opacity:.9;transform:translate(-50%,-50%) scale(1.05);filter:brightness(1.08);}}
+@media(prefers-reduced-motion:reduce){.xlw-emperor-army{animation:none;opacity:.65;}.xlw-emperor-summon .xlw-yuki-performer{animation:none;}}
