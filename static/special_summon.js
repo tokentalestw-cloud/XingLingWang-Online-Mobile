@@ -3,7 +3,7 @@
   'use strict';
   const ASSET='/static/summon_fx/';
   const YUKI={name:'雪女',sound:'yuki',size:960,key:'yuki',video:ASSET+'yuki_summon_packed_v2.mp4',poster:ASSET+'yuki_summon_poster_v2.webp',duration:4000};
-  const EMPEROR={name:'始皇帝',sound:'emperor',size:1152,key:'emperor',video:ASSET+'emperor_summon_packed_v1.mp4',poster:ASSET+'emperor_summon_poster_v1.webp',army:ASSET+'terracotta_army_v1.webp',duration:4100};
+  const EMPEROR={name:'始皇帝',sound:'emperor',size:1152,key:'emperor',video:ASSET+'emperor_summon_packed_v1.mp4',poster:ASSET+'emperor_summon_poster_v1.webp',army:ASSET+'terracotta_army_v2.webp',duration:4100};
   function match(card){
     if(!card)return null;
     if(/^(?:ASSR|R|SR|SSR|SSSR)-ART-0059$/.test(card.id||'')||(card.name==='始皇帝'&&[card.deck,card.faction,card.race].includes('藝術品')))return EMPEROR;
