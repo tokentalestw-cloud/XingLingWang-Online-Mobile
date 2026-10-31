@@ -939,3 +939,14 @@ body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles.layer-3 {
 @media (prefers-reduced-motion: reduce) {
   body.xlw-royal-ui #xlwStarlightAtmosphere :is(.starlight-glow-ambient, .starlight-particles) { animation: none !important; }
 }
+
+
+/* One-frame viewport updates: no black mask and no geometry tween on rotation. */
+#xlw-orientation-mask { display: none !important; pointer-events: none !important; }
+html.xlw-mobile-viewport,
+html.xlw-mobile-viewport body {
+  transition: none !important; scroll-behavior: auto !important; overscroll-behavior: none;
+}
+body.xlw-royal-ui #boardWrap :is(.row, .zone, .slot, .board-playmat, .battle-line-strip) {
+  transition-property: box-shadow, filter, border-color !important;
+}

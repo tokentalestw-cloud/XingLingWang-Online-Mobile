@@ -898,8 +898,7 @@ async function init() {
     try { setupDebugToggle(); } catch (e) { console.warn("setupDebugToggle error:", e); }
     try {
       adjustBoardScale();
-      window.addEventListener("resize", adjustBoardScale);
-      window.addEventListener("orientationchange", () => setTimeout(adjustBoardScale, 250));
+      // mobile_viewport.js owns resize/orientation events; avoid delayed duplicate fits.
     } catch (e) {}
 
     // 解除首頁按鈕的載入鎖定
@@ -24824,6 +24823,7 @@ function adjustBoardScale() {
     xlwBoardFitFrame = 0;
     const board = $("boardWrap");
     if (!board || !board.getClientRects().length) return;
+    if (typeof window.xlwApplyViewportOrientation === "function") window.xlwApplyViewportOrientation();
     const root = document.documentElement;
     const rotated = root.classList.contains("xlw-force-landscape") && innerHeight > innerWidth;
     const width = rotated ? innerHeight : innerWidth;
@@ -32946,106 +32946,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// ===== 🐱 點擊即自動全畫面轉橫向引擎 (Instant Fullscreen & Landscape Engine) =====
-window.xlwAutoLandscapeFullscreen = async function() {
-  const docEl = document.documentElement;
-
-  // 1. 嘗試調用全螢幕 API (支援各廠牌前綴，並隱藏導航列)
-  try {
-    const rfs = docEl.requestFullscreen || 
-                docEl.webkitRequestFullscreen || 
-                docEl.webkitRequestFullScreen || 
-                docEl.mozRequestFullScreen || 
-                docEl.msRequestFullscreen;
-    if (rfs && !document.fullscreenElement && !document.webkitFullscreenElement) {
-      const p = rfs.call(docEl, { navigationUI: "hide" });
-      if (p && p.catch) {
-        await p.catch(() => {});
-      }
-    }
-  } catch (e) {}
-
-  // 2. 嘗試調用螢幕方向鎖定 API (Android Chrome / Edge / PWA)
-  // 注意：Android Chrome 必須在全螢幕生效後鎖定，此處在 requestFullscreen 後鎖定，並在 fullscreenchange 重複鎖定
-  try {
-    if (screen.orientation && typeof screen.orientation.lock === 'function') {
-      await screen.orientation.lock("landscape").catch(() => {});
-    } else if (screen.lockOrientation) {
-      screen.lockOrientation("landscape");
-    } else if (screen.webkitLockOrientation) {
-      screen.webkitLockOrientation("landscape");
-    } else if (screen.mozLockOrientation) {
-      screen.mozLockOrientation("landscape");
-    }
-  } catch (e) {}
-
-  // 3. 即時檢查並套用橫向狀態與自適應縮放
-  window.xlwCheckLandscapeOrientation();
-};
-
-window.xlwRequestFullScreen = window.xlwAutoLandscapeFullscreen;
-window.xlwLockOrientation = window.xlwAutoLandscapeFullscreen;
-
-window.XLW_IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-window.xlwCheckLandscapeOrientation = function() {
-  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  // 以「實際可視區域」判斷：只要視口是直的，就用 CSS 旋轉成橫向畫面。
-  // （iOS 開啟「直向鎖定」時，視口永遠是直的 → 畫面永遠以橫向顯示、不會再變動）
-  const isPortrait = window.innerHeight > window.innerWidth;
-  const shouldRotate = isPortrait && (isTouchDevice || window.innerWidth <= 600);
-  const root = document.documentElement;
-  const changed = root.classList.contains("xlw-force-landscape") !== shouldRotate;
-
-  root.classList.toggle("xlw-force-landscape", shouldRotate);
-  if (document.body) document.body.classList.toggle("xlw-force-landscape", shouldRotate);
-
-  if (changed || !window.XLW_lastScaleApplied) {
-    window.XLW_lastScaleApplied = true;
-    if (typeof adjustBoardScale === 'function') adjustBoardScale();
-  }
-};
-
-// 監聽全螢幕狀態切換事件，一旦進入全螢幕即刻強制鎖定橫向 (Landscape) — Android 有效，iOS 不支援
-document.addEventListener("fullscreenchange", () => {
-  if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock("landscape").catch(() => {});
-  }
-  if (typeof adjustBoardScale === 'function') adjustBoardScale();
-});
-document.addEventListener("webkitfullscreenchange", () => {
-  if (document.webkitFullscreenElement && screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock("landscape").catch(() => {});
-  }
-  if (typeof adjustBoardScale === 'function') adjustBoardScale();
-});
-
-// Android：第一次觸控即嘗試全螢幕＋鎖橫向（之後不再重複觸發，避免每次點擊都重排版面）
-// iOS：系統不提供任何網頁鎖定方向 / 全螢幕 API，完全依賴 CSS 旋轉，不做無效呼叫
-if (!window.XLW_IS_IOS) {
-  const xlwFirstGestureLock = () => {
-    window.removeEventListener("pointerdown", xlwFirstGestureLock);
-    window.xlwAutoLandscapeFullscreen();
-  };
-  window.addEventListener("pointerdown", xlwFirstGestureLock, { passive: true });
-}
-
-let xlwOrientTimer = null;
-const xlwScheduleOrientCheck = () => {
-  window.xlwCheckLandscapeOrientation();
-  clearTimeout(xlwOrientTimer);
-  xlwOrientTimer = setTimeout(window.xlwCheckLandscapeOrientation, 300);
-};
-window.addEventListener("resize", xlwScheduleOrientCheck);
-window.addEventListener("orientationchange", xlwScheduleOrientCheck);
-if (window.visualViewport) window.visualViewport.addEventListener("resize", xlwScheduleOrientCheck);
-
-document.addEventListener("DOMContentLoaded", () => {
-  window.xlwCheckLandscapeOrientation();
-});
-window.xlwCheckLandscapeOrientation();
-
+// Mobile viewport and fullscreen coordination is loaded before paint in mobile_viewport.js.
 
 // ===== 🏠 登入首頁選單與模式控制引擎 =====
 window.xlwChooseMode = function(mode) {
@@ -34479,24 +34380,6 @@ window.checkMultiplayerDecksReady = function() {
   }
 };
 
-
-// Handle orientation change gracefully to prevent "jumping" UI
-window.addEventListener("orientationchange", function() {
-  let mask = document.getElementById("xlw-orientation-mask");
-  if (!mask) {
-    mask = document.createElement("div");
-    mask.id = "xlw-orientation-mask";
-    mask.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 999999999; opacity: 1; transition: opacity 0.3s ease;";
-    document.body.appendChild(mask);
-  }
-  mask.style.opacity = "1";
-  mask.style.pointerEvents = "all";
-  
-  setTimeout(() => {
-    mask.style.opacity = "0";
-    mask.style.pointerEvents = "none";
-  }, 600);
-});
 
 // 強制確保決鬥桌墊套用最新上傳卡墊 (Opponent: new_mat_opponent_2026.jpg, Player: new_mat_player_2026.jpg)
 (function enforceNewDuelPlaymats() {
