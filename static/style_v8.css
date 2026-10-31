@@ -8265,10 +8265,12 @@ body #phaseDisplayPanelHard #phaseTextHard,
 
 /* ⚠️ Call Game 雙方即時戰況提醒牌（放置於比分下方） */
 .score-badge-card.call-game-warning-badge {
-  border-radius: 11px !important;
-  padding: 7px 10px !important;
-  margin-top: 4px !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  margin-top: 3px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
   animation: callGamePulseBorder 1.5s infinite alternate ease-in-out !important;
 }
 

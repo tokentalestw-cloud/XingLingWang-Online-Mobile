@@ -10809,11 +10809,17 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
                   window.XLW_ENEMY.hand.splice(result.oppIdx, 1);
                   exileCard(result.oppCard, "enemy");
                   logBattle(`✨ 對手手牌中的 ${result.oppCard.name} 被成功除外！`);
-                  render();
+                  setStatus(`【水瓶座】成功將對手手牌【${result.cardName}】除外！`);
                 }
+              } else {
+                setStatus("【水瓶座】效果結束，請繼續進行您的回合。");
               }
+              render();
+              renderStablePanel();
             } catch (err) {
               console.error("[Aquarius] Singleplayer modal error:", err);
+              setStatus("水瓶座效果處理異常，已自動恢復對戰流程。");
+              renderStablePanel();
             }
           }, 300);
         } else {
@@ -10859,7 +10865,10 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
                     const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
                     exileCard(exiledCard, "enemy");
                   }
+                  logBattle(`✨ 對手手牌中的 ${result.cardName} 被成功除外！`);
+                  setStatus(`【水瓶座】成功將對手手牌【${result.cardName}】除外！`);
                   render();
+                  renderStablePanel();
                   sendFullGameStateToOpponent(false);
                 }
               } else {
@@ -10868,10 +10877,14 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
                     action: "aquarius_complete"
                   }));
                 }
+                setStatus("【水瓶座】效果結束，請繼續進行您的回合。");
+                render();
+                renderStablePanel();
               }
             } catch (err) {
               console.error("[Aquarius] Multiplayer modal error:", err);
               setStatus("水瓶座效果處理異常，已自動恢復對戰流程。");
+              renderStablePanel();
             }
           }, 300);
         }
@@ -11619,6 +11632,10 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
 async function changeActionPhase(targetPhase) {
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
+  if (selectedHandForTribute !== null || tributeWaitingPosition) {
+    setStatus("⚠️ 正在進行獻祭召喚中，請先完成放置或點選「取消」！");
+    return;
+  }
   if (window.XLW_playerNeedsToDraw) {
     setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
     return;
@@ -19723,19 +19740,26 @@ async function endPlayerTurnAndRunEnemy() {
             const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
             if (chosen !== null && chosen !== undefined) {
               const cardToSummon = eligible[chosen];
-              let destZone = null;
-              let destIdx = -1;
+              const validSlots = [];
               for (const z of ["player_front", "player_back"]) {
                 for (let i = 0; i < 5; i++) {
                   if (!field[z][i] && xlwCanSummonToZone(z, cardToSummon)) {
-                    destZone = z;
-                    destIdx = i;
-                    break;
+                    validSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排戰線" : "後排戰線"} ${i + 1}` });
                   }
                 }
-                if (destZone) break;
               }
-              if (destZone && destIdx >= 0) {
+              if (validSlots.length > 0) {
+                let chosenSlot = validSlots[0];
+                if (validSlots.length > 1) {
+                  const slotChoices = validSlots.map((s, idx) => ({ text: s.label, value: idx }));
+                  const chosenSlotIdx = await showXLWChoiceModal("恐怖的井 選擇召喚位置", `請選擇【${cardToSummon.name}】要放置的戰線位置：`, slotChoices);
+                  if (chosenSlotIdx === null || chosenSlotIdx === undefined || chosenSlotIdx === -1) {
+                    return;
+                  }
+                  chosenSlot = validSlots[chosenSlotIdx];
+                }
+                const destZone = chosenSlot.zone;
+                const destIdx = chosenSlot.idx;
                 const graveIdx = graveyard.indexOf(cardToSummon);
                 if (graveIdx >= 0) graveyard.splice(graveIdx, 1);
                 field[destZone][destIdx] = {
@@ -19748,7 +19772,17 @@ async function endPlayerTurnAndRunEnemy() {
                 };
                 logBattle(`✨ 恐怖的井 效果：從墓地特殊召喚【${cardToSummon.name}】至我方${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
                 if (isMultiplayer) {
-                  sendFullGameStateToOpponent();
+                  if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                      action: "summon",
+                      card: field[destZone][destIdx].card,
+                      zone: destZone,
+                      idx: destIdx,
+                      fromHand: false,
+                      tributes: []
+                    }));
+                  }
+                  sendFullGameStateToOpponent(false);
                 }
                 render();
               }
@@ -24286,34 +24320,28 @@ function renderScore() {
   if (window.XLW_callGameDeclared) {
     const isEnemyDeclaring = (window.XLW_callGameDeclaringPlayer === "enemy");
     const cond = window.XLW_callGameCondition;
-    const condDesc = (cond === 1) ? "總比分達到 20★ (蛇夫座存在時 15★)" : "場上單位數比敵方多 4 個 (蛇夫座存在時 3 個)";
+    const condShort = (cond === 1) ? "達 20★ (蛇夫 15★)" : "單位多 4 體 (蛇夫 3 體)";
     if (isEnemyDeclaring) {
       callGameSectionHtml = `
         <div class="score-badge-card call-game-warning-badge enemy-declared">
-          <div style="color: #ff4d4f; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 10px rgba(255, 77, 79, 0.8);">
-            <span>⚠️ 警戒：對手已宣告 Call Game！</span>
-            <span class="call-game-pulse-tag red">被宣告中</span>
+          <div style="color: #ff4d4f; font-weight: 900; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚠️ 敵方 Call Game!</span>
+            <span class="call-game-pulse-tag red">警戒</span>
           </div>
-          <div style="color: #ffccc7; font-size: 11.5px; margin-top: 5px; line-height: 1.35;">
-            🎯 對手目標：<span style="color: #ffd76a; font-weight: bold;">${condDesc}</span>
-          </div>
-          <div style="color: #ffa39e; font-size: 11px; margin-top: 4px; font-weight: bold;">
-            ⏱️ 請在對手下回合主要階段前消滅對手單位或追分，瓦解其宣告！
+          <div style="color: #ffccc7; font-size: 10.5px; margin-top: 2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            目標：<span style="color: #ffd76a; font-weight: bold;">${condShort}</span>（下回前須瓦解）
           </div>
         </div>
       `;
     } else {
       callGameSectionHtml = `
         <div class="score-badge-card call-game-warning-badge player-declared">
-          <div style="color: #ffd76a; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 10px rgba(255, 215, 106, 0.8);">
-            <span>👑 我方 Call Game 宣告中</span>
-            <span class="call-game-pulse-tag gold">生效中</span>
+          <div style="color: #ffd76a; font-weight: 900; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between;">
+            <span>👑 我方 Call Game!</span>
+            <span class="call-game-pulse-tag gold">生效</span>
           </div>
-          <div style="color: #fef08a; font-size: 11.5px; margin-top: 5px; line-height: 1.35;">
-            🎯 達成條件：<span style="color: #fff; font-weight: bold;">${condDesc}</span>
-          </div>
-          <div style="color: #86efac; font-size: 11px; margin-top: 4px; font-weight: bold;">
-            ✨ 若下回合開始仍滿足條件，我方將直接獲得勝利！
+          <div style="color: #fef08a; font-size: 10.5px; margin-top: 2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            條件：<span style="color: #fff; font-weight: bold;">${condShort}</span>（下回維持即勝）
           </div>
         </div>
       `;
@@ -24570,9 +24598,10 @@ function renderStablePanel() {
   const endBtn = $("stableActionEnd");
 
   const isAiRunning = !isMultiplayer && (!isMyTurn || (window.XLW_ENEMY && window.XLW_ENEMY.running));
+  const isTributeOngoing = selectedHandForTribute !== null || tributeWaitingPosition;
   if (tacticalBtn) {
     const canSwitchToTactical = (phase === "召喚階段" || phase === "戰術佈陣" || phase === "進攻宣言");
-    tacticalBtn.disabled = isAiRunning || isEnding || !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
+    tacticalBtn.disabled = isAiRunning || isEnding || isTributeOngoing || !canSwitchToTactical || turn === 1 || (countdownActive && countdownRemaining === 1);
     tacticalBtn.classList.toggle("active", phase === "戰術佈陣");
   }
   if (attackBtn) {
@@ -24582,7 +24611,7 @@ function renderStablePanel() {
     } else if (phase === "戰術佈陣") {
       canSwitchToAttack = false;
     }
-    attackBtn.disabled = isAiRunning || isEnding || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
+    attackBtn.disabled = isAiRunning || isEnding || isTributeOngoing || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");
   }
   if (confirmBtn) {
@@ -28443,32 +28472,42 @@ async function showAquariusModal(oppHand, myHand) {
 
     const overlay = document.createElement("div");
     overlay.className = "xlw-aquarius-overlay";
-    overlay.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', sans-serif;";
+    overlay.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;color:#fff;padding:8px;box-sizing:border-box;font-family:'Microsoft JhengHei','微軟正黑體',sans-serif;backdrop-filter:blur(4px);";
     overlay._xlwCancel = () => finish({ success: false });
 
     const content = document.createElement("div");
     content.className = "xlw-aquarius-content";
-    content.style.cssText = "background:linear-gradient(135deg, #1f1a16, #2d241e);border:2px solid #d4af37;border-radius:12px;padding:25px;max-width:800px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.6);";
+    content.style.cssText = "background:linear-gradient(135deg,#1c1815,#2a221a);border:2px solid #d4af37;border-radius:12px;padding:12px 14px;max-width:min(94vw,620px);max-height:min(92vh,620px);max-height:min(92dvh,620px);display:flex;flex-direction:column;box-sizing:border-box;box-shadow:0 10px 40px rgba(0,0,0,0.9);overflow:hidden;";
 
     const title = document.createElement("h2");
     title.textContent = "🔮 好奇女巫 水瓶座 立即效果";
-    title.style.cssText = "text-align:center;color:#ffd76a;margin-bottom:20px;";
+    title.style.cssText = "text-align:center;color:#ffd76a;margin:0 0 4px 0;font-size:16px;font-weight:900;";
     content.appendChild(title);
 
     const desc = document.createElement("p");
-    desc.textContent = "對手已展示所有手牌。若我方手牌有與對手同名的卡牌，可選擇進行對應展示並將對手的該手牌除外。";
-    desc.style.cssText = "font-size:14px;color:#ccc;text-align:center;margin-bottom:20px;";
+    desc.textContent = "對手已展示所有手牌。點選帶有 MATCH 標記的對手卡牌即可展示同名手牌將其除外。";
+    desc.style.cssText = "font-size:11.5px;color:#cbd5e1;text-align:center;margin:0 0 8px 0;line-height:1.35;";
     content.appendChild(desc);
+
+    const hasAnyMatch = safeOppHand.some(c => c && safeMyHand.some(m => m && m.name === c.name));
+    const hint = document.createElement("div");
+    hint.style.cssText = `padding:5px 8px;border-radius:6px;font-size:11px;text-align:center;margin-bottom:8px;line-height:1.3;${hasAnyMatch ? "background:rgba(0,255,127,0.15);border:1px solid #00ff7f;color:#a7f3d0;" : "background:rgba(234,179,8,0.15);border:1px solid #eab308;color:#fef08a;"}`;
+    hint.innerHTML = hasAnyMatch 
+      ? "✨ 發現可除外的對手手牌！請<b>直接點選該卡牌</b>進行除外。"
+      : "ℹ️ 我方手牌中沒有與對手同名的卡牌，請點選下方按鈕結束水瓶座效果。";
+    content.appendChild(hint);
 
     // Opponent Hand Section
     const oppSection = document.createElement("div");
-    oppSection.innerHTML = "<h3 style='color:#ffd76a;border-bottom:1px solid #443c35;padding-bottom:5px;margin-bottom:10px;'>對手的手牌</h3>";
+    oppSection.style.cssText = "display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0;";
+    oppSection.innerHTML = "<div style='color:#ffd76a;font-weight:bold;font-size:12px;border-bottom:1px solid #443c35;padding-bottom:4px;margin-bottom:6px;'>對手展示的手牌 (" + safeOppHand.length + "張)</div>";
+
     const oppCardsContainer = document.createElement("div");
-    oppCardsContainer.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 25px 0;";
+    oppCardsContainer.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;overflow-y:auto;overflow-x:hidden;max-height:calc(92vh - 200px);max-height:calc(92dvh - 200px);padding:4px 2px;-webkit-overflow-scrolling:touch;";
 
     if (safeOppHand.length === 0) {
       const emptyMsg = document.createElement("div");
-      emptyMsg.style.cssText = "color:#aaa;padding:15px;text-align:center;font-size:14px;width:100%;";
+      emptyMsg.style.cssText = "color:#aaa;padding:20px 10px;text-align:center;font-size:13px;width:100%;";
       emptyMsg.textContent = "對手目前手中沒有任何卡牌。";
       oppCardsContainer.appendChild(emptyMsg);
     } else {
@@ -28476,34 +28515,42 @@ async function showAquariusModal(oppHand, myHand) {
         if (!c) return;
         const cardEl = document.createElement("div");
         cardEl.className = "xlw-aq-card";
-        cardEl.style.cssText = "background:#2a211a;border:1.5px solid #5a4b3e;border-radius:6px;padding:10px;width:120px;text-align:center;cursor:pointer;position:relative;transition:all 0.2s ease;";
-
-        // Check if we have a match in myHand
         const hasMatch = safeMyHand.some(m => m && m.name === c.name);
+        cardEl.style.cssText = `background:#221b16;border:${hasMatch ? "2px solid #00ff7f" : "1.5px solid #473a2e"};border-radius:6px;padding:5px;width:72px;max-width:85px;text-align:center;position:relative;transition:all 0.2s ease;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;${hasMatch ? "cursor:pointer;box-shadow:0 0 10px rgba(0,255,127,0.5);" : "opacity:0.6;cursor:not-allowed;"}`;
+
+        const imgWrapper = document.createElement("div");
+        imgWrapper.style.cssText = "position:relative;width:100%;aspect-ratio:5/7;border-radius:4px;overflow:hidden;background:#000;margin-bottom:4px;";
+        
+        const cardImgSrc = c.image || (allCards.find(ac => ac && (ac.id === c.id || ac.name === c.name))?.image) || '/static/card_back.jpeg';
+        const img = document.createElement("img");
+        img.src = cardImgSrc;
+        img.alt = c.name;
+        img.loading = "eager";
+        img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+        img.onerror = () => { img.onerror = null; img.src = '/static/card_back.jpeg'; };
+        imgWrapper.appendChild(img);
+
         if (hasMatch) {
-          cardEl.style.border = "2.5px solid #00ff7f";
-          cardEl.style.boxShadow = "0 0 10px rgba(0,255,127,0.4)";
           const matchBadge = document.createElement("div");
           matchBadge.textContent = "MATCH";
-          matchBadge.style.cssText = "position:absolute;top:-8px;right:-8px;background:#00ff7f;color:#000;font-size:8px;font-weight:bold;padding:2px 4px;border-radius:4px;";
-          cardEl.appendChild(matchBadge);
+          matchBadge.style.cssText = "position:absolute;top:2px;right:2px;background:#00ff7f;color:#000;font-size:8.5px;font-weight:900;padding:1px 3px;border-radius:3px;box-shadow:0 0 5px rgba(0,255,127,0.8);";
+          imgWrapper.appendChild(matchBadge);
 
           cardEl.onclick = () => {
             finish({ success: true, cardName: c.name, oppCard: c, oppIdx: idx });
           };
-        } else {
-          cardEl.style.opacity = "0.6";
-          cardEl.style.cursor = "not-allowed";
         }
+        cardEl.appendChild(imgWrapper);
 
         const nameEl = document.createElement("div");
         nameEl.textContent = c.name;
-        nameEl.style.cssText = "font-weight:bold;font-size:12px;color:#ffd76a;word-break:break-all;";
+        nameEl.title = c.name;
+        nameEl.style.cssText = "font-weight:bold;font-size:10px;color:#ffd76a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;line-height:1.2;";
         cardEl.appendChild(nameEl);
 
         const typeEl = document.createElement("div");
-        typeEl.textContent = c.type === "unit" ? "單位" : "魔法";
-        typeEl.style.cssText = "font-size:10px;color:#888;margin-top:5px;";
+        typeEl.textContent = c.type === "unit" ? (c.attack !== undefined ? `${c.attack}⚔️ / ${c.score || 0}★` : "單位") : "魔法";
+        typeEl.style.cssText = "font-size:8.5px;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;";
         cardEl.appendChild(typeEl);
 
         oppCardsContainer.appendChild(cardEl);
@@ -28514,11 +28561,11 @@ async function showAquariusModal(oppHand, myHand) {
 
     // Buttons
     const btnContainer = document.createElement("div");
-    btnContainer.style.cssText = "display:flex;justify-content:center;gap:15px;";
+    btnContainer.style.cssText = "display:flex;justify-content:center;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);flex-shrink:0;";
 
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "關閉 / 不進行除外";
-    closeBtn.style.cssText = "background:linear-gradient(135deg, #ae2a2a, #821c1c);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:bold;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.3);";
+    closeBtn.textContent = hasAnyMatch ? "關閉 / 不進行除外" : "確定 / 結束效果";
+    closeBtn.style.cssText = "background:linear-gradient(135deg, #ae2a2a, #821c1c);color:#fff;border:1px solid #ef4444;padding:8px 24px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,0.4);";
     closeBtn.onclick = () => {
       finish({ success: false });
     };
