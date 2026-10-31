@@ -24439,6 +24439,7 @@ function renderStablePanel() {
   })();
 
   panel.style.touchAction = "manipulation";
+  window.XLWTouchActions?.bind(panel);
   const setContent = markup => window.XLWBattleFlow.renderPanel(panel, markup);
 
   if (window.XLW_defenseCounterActive) {
