@@ -1027,6 +1027,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLWBFeedback?.resetScores();
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   xlwOutgoingSeq = 0;
@@ -1286,6 +1287,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLWBFeedback?.resetScores();
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
@@ -20331,6 +20333,14 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   const actionText = isMagic ? "✨ 發動" : "⚔️ 召喚";
   const actionClass = isMagic ? "cast-btn" : "summon-btn";
   const canPlay = window.xlwCanPlayHandCard(card, idx);
+  if (!canPlay && window.XLWBFeedback) {
+    setStatus(window.XLWBFeedback.unavailableReason({needsDraw:!!window.XLW_playerNeedsToDraw,
+      myTurn:isMyTurn,defense:!!window.XLW_defenseCounterActive || phase === "防守階段",
+      magic:isMagic,phase,normalUsed:normalSummonUsed,tacticalUsed:tacticalSummonUsed,
+      bypass:!!window.XLW_bypassNormalSummonLimit || !!window.XLW_bypassTurnCheck,
+      tribute:isMagic?0:getCardTributeCost(card),units:[...field.player_front,...field.player_back].filter(Boolean).length,
+      counterOnly:isMagic && (!!card.name?.match(/魔法反制|終極無效化|法術解析|星空/) || card.id === "ART-0020")}));
+  }
 
   const rect = cardEl.getBoundingClientRect();
   const menu = document.createElement("div");
@@ -23966,6 +23976,14 @@ function getStarIcons(count) {
 }
 
 function renderScore() {
+  const feedbackUnits = {player:{},enemy:{}};
+  const feedbackLanes = {player:[0,0,0,0,0],enemy:[0,0,0,0,0]};
+  const recordUnit = (side, unit, stars, lane) => {
+    const key = String(unit.card?.id || unit.card?.name || "unit");
+    const entry = feedbackUnits[side][key] ||= {name:unit.card?.name || "場上單位",stars:0,count:0};
+    entry.stars += stars; entry.count++;
+    feedbackLanes[side][lane] += stars;
+  };
   let playerStars = playerBonusScore;
   let enemyStars = enemyBonusScore;
 
@@ -23976,6 +23994,7 @@ function renderScore() {
         const uStars = getUnitStars(u, zone, i);
         playerStars += uStars;
         playerFieldStars += uStars;
+        recordUnit("player", u, uStars, i);
       }
     });
   }
@@ -23987,6 +24006,7 @@ function renderScore() {
         const uStars = getUnitStars(u, zone, i);
         enemyStars += uStars;
         enemyFieldStars += uStars;
+        recordUnit("enemy", u, uStars, i);
       }
     });
   }
@@ -24066,6 +24086,10 @@ function renderScore() {
     ? `<span class="score-lead-badge enemy-lead">領先</span>`
     : (isTie ? `<span class="score-lead-badge tie">平局</span>` : `<span class="score-lead-badge enemy-chase">追趕</span>`);
 
+  window.XLWBFeedback?.updateScore({
+    player:{total:playerStars,field:playerFieldStars,bonus:playerBonusScore,units:feedbackUnits.player,lanes:feedbackLanes.player},
+    enemy:{total:enemyStars,field:enemyFieldStars,bonus:enemyBonusScore,units:feedbackUnits.enemy,lanes:feedbackLanes.enemy}
+  }, !window.XLW_gameInProgress || (isMultiplayer && !window.XLW_sync?.ready));
   scoreBadge.innerHTML = `
     <div class="score-board-header">
       <div class="score-board-header-left">
@@ -24149,6 +24173,7 @@ function renderScore() {
   }
 
   
+  window.XLWBFeedback?.render();
 }
 
 function renderEnemyPanel() {
@@ -24765,9 +24790,25 @@ function showCardInfo(card, equipments) {
 }
 window.showCardInfo = showCardInfo;
 
+// Read-only presentation adapter. All legality checks and game mutations remain in the game.
+window.xlwGetBattleFeedbackState = function() {
+  const routes = [];
+  for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+    (field[zone] || []).forEach((unit, idx) => {
+      if (unit?.attacking && unit.target) routes.push({from:{zone,idx},to:{zone:unit.target.zone,idx:unit.target.idx}});
+    });
+  }
+  return {active:!!window.XLW_gameInProgress,over:!!isGameOverFlag,multi:!!isMultiplayer,
+    myTurn:!!isMyTurn,phase,ready:!!window.XLW_sync?.ready,failed:!!window.XLW_sync?.failed,
+    socket:ws?.readyState ?? 3,peerJoined:!!opponent_joined,routes,
+    selectedAttacker:phase === "進攻宣言" ? selectedAttacker : null};
+};
+window.xlwRefreshScorePresentation = function() { renderScore(); };
+
 function setStatus(t) {
   const s = $("status");
   if (s) s.textContent = t;
+  window.XLWBFeedback?.status(String(t));
 }
 
 function logBattle(text) {
@@ -24900,6 +24941,7 @@ function adjustBoardScale() {
       const measured = context.measureText(label.textContent.trim()).width;
       label.style.setProperty("--xlw-fit-font", Math.min(max, max * available / Math.max(1, measured)).toFixed(2) + "px");
     });
+    window.XLWBFeedback?.paintTargetsAndRoutes();
     if (!xlwBoardHudObserver && typeof ResizeObserver !== "undefined") {
       xlwBoardHudObserver = new ResizeObserver(adjustBoardScale);
       [$("scoreBadgeFixed"), $("stableActionPanel"), $("phaseDisplayPanelHard"), $("xlwEnemyFloatingHand"), document.querySelector(".hand-panel")]
@@ -24960,11 +25002,13 @@ function setupWebSocketEvents() {
   };
   
   ws.onerror = (err) => {
+    window.XLWBFeedback?.updatePresence();
     console.error("WebSocket 錯誤:", err);
     reconnectWebSocket();
   };
   
   ws.onclose = () => {
+    window.XLWBFeedback?.updatePresence();
     console.log("WebSocket 連線已關閉");
     reconnectWebSocket();
   };
@@ -24972,6 +25016,8 @@ function setupWebSocketEvents() {
   ws.onmessage = async (event) => {
     try {
       const data = JSON.parse(event.data);
+      if (data.type === "opponent_disconnected") window.XLWBFeedback?.peer("offline");
+      if (["opponent_joined", "opponent_rejoined"].includes(data.type)) window.XLWBFeedback?.peer("online");
       
       // Sequence tracking for multi-player games (never drop valid live messages when seq resets on new game)
       if (data && data.action) {
@@ -26674,6 +26720,7 @@ function setupWebSocketEvents() {
   const gameMessageHandler = ws.onmessage;
   const syncKey = "XLW_SYNC_" + room_id + "_" + player_id;
   if (!window.XLW_sync || window.XLW_sync.key !== syncKey) {
+    window.XLWBFeedback?.resetConnection();
     window.XLW_sync = new window.XLWOnlineSync({
       key: syncKey, storage: sessionStorage,
       canBypass: action => Boolean(
@@ -31025,7 +31072,7 @@ function reconnectWebSocket(immediate = false) {
     ws.onopen = (ev) => {
       isReconnecting = false;
       console.log("WebSocket successfully reconnected!");
-      setStatus("連線已成功回復！");
+      setStatus("連線重新建立，正在補齊對局操作...");
       if (window.XLW_gameInProgress) {
         window.xlwEnterActiveOnlineBoardUI();
         ws.send(JSON.stringify({ action: "ping" }));
@@ -34505,6 +34552,7 @@ window.xlwStartPuzzleMode = function() {
 
 // 啟動指定殘局關卡
 window.xlwStartPuzzleStage = function(stageNum) {
+  window.XLWBFeedback?.resetScores();
   window.XLW_currentPuzzleStage = stageNum;
 
   if (typeof window.xlwRequestFullScreen === 'function') {

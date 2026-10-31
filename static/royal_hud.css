@@ -950,3 +950,44 @@ html.xlw-mobile-viewport body {
 body.xlw-royal-ui #boardWrap :is(.row, .zone, .slot, .board-playmat, .battle-line-strip) {
   transition-property: box-shadow, filter, border-color !important;
 }
+
+
+/* v7 / 2: keep the original playmat illustration and its geometry; quiet the surface. */
+body.xlw-royal-ui #boardWrap .board-playmat::before {
+  background: linear-gradient(180deg, #07122066 0%, #07122088 62%, #071220c9 100%) !important;
+  box-shadow: inset 0 0 0 7px #07101c33, inset 0 0 0 8px #fff0cf24 !important;
+}
+/* v7 / 4: feedback uses existing legality classes and validated attack declarations. */
+body.xlw-royal-ui #xlwAttackRoutes {position:absolute;left:0;top:0;overflow:visible;z-index:24;pointer-events:none;}
+body.xlw-royal-ui .xlw-action-label {position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);z-index:30;pointer-events:none;
+  padding:2px 6px;border:1px solid #8cdbd8;border-radius:4px;background:#09212ded;color:#b9f1eb;font:700 18px/1.2 'Microsoft JhengHei',sans-serif;white-space:nowrap;text-shadow:none;}
+body.xlw-royal-ui .xlw-hand-front-illegal .xlw-action-label {border-color:#bd758b;color:#e7b5c1;background:#2a1522ed;}
+body.xlw-royal-ui .slot.xlw-route-target {outline:2px dashed #efd397;outline-offset:3px;}
+body.xlw-royal-ui .xlw-route-target .xlw-action-label {color:#f4dfad;border-color:#bca16a;background:#282218f0;}
+body.xlw-royal-ui #xlwActionFeedback {position:fixed;left:var(--xlw-player-hand-center,50%);bottom:150px;transform:translateX(-50%);z-index:9700;
+  width:max-content;max-width:min(520px,calc(var(--xlw-ui-width,100vw) - 2 * var(--xlw-rail) - 42px));box-sizing:border-box;
+  padding:9px 14px;border:1px solid #729ead;border-left:3px solid #a2dfe5;border-radius:6px;background:#0b1a2af2;color:#e6f2f4;
+  font:500 12px/1.6 'Microsoft JhengHei',sans-serif;text-align:center;pointer-events:none;box-shadow:0 5px 18px #02061080;}
+body.xlw-royal-ui #xlwActionFeedback[hidden] {display:none !important;}
+body.xlw-royal-ui #xlwActionFeedback[data-tone='warning'] {border-color:#c09863;border-left-color:#edc487;color:#f7dfb4;}
+body.xlw-royal-ui #xlwActionFeedback[data-tone='success'] {border-color:#75b7ad;color:#b3ebdc;}
+/* v7 / 5: use the existing badge footprint, so score feedback cannot shrink the field. */
+body.xlw-royal-ui #scoreBadgeFixed .score-lead-badge.xlw-score-delta {font-size:12px !important;font-weight:700 !important;color:#b7f1dc !important;border-color:#75bca9 !important;}
+body.xlw-royal-ui #scoreBadgeFixed .score-lead-badge.xlw-score-delta[data-direction='down'] {color:#efb8c7 !important;border-color:#b7788d !important;}
+body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source-line {font-size:10px;line-height:1.1;color:#e9d9b5;white-space:nowrap;}
+body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source {gap:1px !important;padding:2px !important;}
+body.xlw-royal-ui #scoreBadgeFixed .score-bonus-badge[role='button'] {cursor:pointer;}
+body.xlw-royal-ui #scoreBadgeFixed .score-bonus-badge[role='button']:focus-visible {outline:2px solid #b1dfe9;outline-offset:2px;}
+/* v7 / 7: persistent state occupies the existing turn-owner plaque. */
+body.xlw-royal-ui #phaseTurnOwner[data-connection='thinking'],body.xlw-royal-ui #phaseTurnOwner[data-connection='waiting'] {color:#dbc58d !important;}
+body.xlw-royal-ui #phaseTurnOwner:is([data-connection='reconnecting'],[data-connection='syncing']) {color:#edc58b !important;}
+body.xlw-royal-ui #phaseTurnOwner[data-connection='paused'] {color:#f0a5b8 !important;}
+body.xlw-royal-ui #scoreBadgeFixed .score-badge-card.xlw-near-goal {border-top-color:#e7ce91 !important;box-shadow:inset 0 1px 0 #ffdfa340,0 0 14px #d9bb5330 !important;}
+body.xlw-royal-ui #boardWrap .slot.xlw-goal-contributor:not(.xlw-route-target) {outline:1px solid #e3c98d99;outline-offset:2px;}
+@media (max-width:1400px) {body.xlw-royal-ui #xlwActionFeedback {bottom:100px;}}
+@media (max-width:1100px),(pointer:coarse) {
+  body.xlw-royal-ui #xlwActionFeedback {bottom:100px;padding:6px 10px;font-size:10px;line-height:1.45;}
+  body.xlw-royal-ui #scoreBadgeFixed .score-lead-badge.xlw-score-delta {font-size:10px !important;}
+  body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source-line {font-size:8px;}
+  html body.xlw-royal-ui #scoreBadgeFixed .xlw-score-source .bonus-lbl {font-size:7px !important;line-height:1 !important;}
+}
