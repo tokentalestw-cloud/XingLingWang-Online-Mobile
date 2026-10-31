@@ -2621,7 +2621,9 @@ window.xlwUnitHasPoison = function(unit, zone, idx) {
   if (!unit || !unit.card) return false;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced(unit, zone, idx)) return false;
   if (unit.hasPoison) return true;
+  if (unit.card.id === "EWD-0005" || unit.card.id?.includes("EWD-0005") || unit.card.name?.includes("吃了毒蘑菇的野人") || unit.card.name?.includes("毒蘑菇")) return true;
   if (window.xlwCardHasKeyword(unit.card, "劇毒")) return true;
+  if (unit.card.keywords && (unit.card.keywords.includes("劇毒") || unit.card.keywords.some(k => k && k.includes("劇毒")))) return true;
   if (unit.card.effect_text && (unit.card.effect_text.includes("劇毒") || unit.card.effect_text.includes("塗毒"))) return true;
   if (unit.equipments && unit.equipments.some(e => {
     const n = typeof e === "string" ? e : (e ? (e.name || e.id || "") : "");
@@ -3057,12 +3059,13 @@ window.xlwGetDefensePhaseCombatants = function(isPlayerCasting) {
 
 function hasImmediateEffect(card) {
   if (!card) return false;
+  if (card.id === "EWD-0006" || card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪") return true;
   const name = card.name || "";
   const text = card.effect_text || "";
   const kw = card.keywords || [];
   if (kw.some(k => k && k.includes("立即")) || text.includes("立即") || name.includes("立即")) return true;
   
-  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王", "淨化老妖精", "老妖精"];
+  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王", "淨化老妖精", "老妖精"];
   return immediateNames.some(n => name.includes(n));
 }
 window.hasImmediateEffect = hasImmediateEffect;
@@ -8535,11 +8538,10 @@ async function performSummonToSlot(zone, idx) {
 
     if (!immediateEffectNegated && card) {
       // 進化野人: 學會投資的野人 (EWD-0006) 立即抽1張牌
-      if (card.id === "EWD-0006" || card.name?.includes("學會投資的野人")) {
+      if (card.id === "EWD-0006" || card.id?.includes("EWD-0006") || card.name?.includes("學會投資")) {
         const isPlayer = zone.startsWith("player_");
-        if (isPlayer && deck && deck.length > 0) {
-          const drawn = deck.pop();
-          hand.push(drawn);
+        if (isPlayer) {
+          draw(1);
           logBattle("✨ 學會投資的野人 效果發動：我方抽了一張牌！");
         } else if (!isPlayer && window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
           const drawn = window.XLW_ENEMY.deck.pop();
@@ -8634,36 +8636,59 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         if (isPlayer) {
           setTimeout(async () => {
-            const confirm = await showXLWConfirm("女野人 效果發動", "是否使你場上其他野人單位轉正並移動至女野人左右邊？");
-            if (confirm) {
-              const myFront = field["player_front"];
-              const myBack = field["player_back"];
-              let movedCount = 0;
-              const targetLanes = [idx - 1, idx + 1];
-              
-              for (const tl of targetLanes) {
-                if (tl >= 0 && tl < 5 && !field[zone][tl]) {
-                  let found = false;
-                  for (const z of ["player_front", "player_back"]) {
-                    for (let i = 0; i < 5; i++) {
-                      const u = field[z][i];
-                      if (u && u !== field[zone][idx] && u.card && u.card.faction === "進化野人" && u.tapped) {
-                        field[zone][tl] = u;
-                        field[z][i] = null;
-                        u.tapped = false;
-                        movedCount++;
-                        found = true;
-                        break;
-                      }
-                    }
-                    if (found) break;
+            const isSavage = (c) => c && (c.faction?.includes("野人") || c.race?.includes("野人") || c.deck?.includes("野人") || c.name?.includes("野人") || c.id?.includes("EWD") || (c.keywords && c.keywords.some(k => k && k.includes("野人"))));
+            const targetLanes = [idx - 1, idx + 1].filter(tl => tl >= 0 && tl < 5 && !field[zone][tl]);
+
+            const getCandidates = () => {
+              const res = [];
+              for (const z of ["player_front", "player_back"]) {
+                for (let i = 0; i < 5; i++) {
+                  const u = field[z][i];
+                  if (u && u !== field[zone][idx] && u.card && isSavage(u.card)) {
+                    if (window.xlwIsUnitUnmovable && window.xlwIsUnitUnmovable(u, z, i)) continue;
+                    res.push({ zone: z, idx: i, unit: u });
                   }
                 }
               }
-              if (movedCount > 0) {
-                logBattle("✨ 女野人 效果發動：成功轉正並移動了 " + movedCount + " 個野人單位！");
-                if (isMultiplayer) sendFullGameStateToOpponent();
-                render();
+              return res;
+            };
+
+            const initialCandidates = getCandidates();
+            if (targetLanes.length > 0 && initialCandidates.length > 0) {
+              const confirm = await showXLWConfirm("女野人 效果發動", "是否發動【女野人】效果，將我方場上其他野人單位移動至女野人左右邊（若為轉橫狀態則轉正，原為轉正則維持）？");
+              if (confirm) {
+                let movedCount = 0;
+                for (const tl of targetLanes) {
+                  const currentCandidates = getCandidates();
+                  if (currentCandidates.length === 0) break;
+
+                  const sideName = tl < idx ? "左側" : "右側";
+                  const choices = currentCandidates.map((c, i) => ({
+                    text: `${c.unit.card.name} (${c.zone.includes("front") ? "前排" : "後排"}${c.idx + 1}，${c.unit.tapped ? "轉橫中" : "已轉正"})`,
+                    value: i
+                  }));
+                  choices.push({ text: `不移動野人至${sideName}`, value: -1 });
+
+                  const chosenIdx = await showXLWChoiceModal(`女野人 效果：選擇移動至${sideName}的單位`, `請選擇要移動至女野人${sideName} (${zone.includes("front") ? "前排" : "後排"}${tl + 1}) 的野人：`, choices);
+                  if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
+                    const chosen = currentCandidates[chosenIdx];
+                    const u = chosen.unit;
+                    const wasTapped = Boolean(u.tapped);
+                    field[zone][tl] = u;
+                    field[chosen.zone][chosen.idx] = null;
+                    u.summonedZone = zone;
+                    if (wasTapped) {
+                      u.tapped = false;
+                    }
+                    movedCount++;
+                    logBattle(`✨ 女野人 效果：成功將【${u.card.name}】移動至女野人${sideName} (${zone.includes("front") ? "前排" : "後排"}${tl + 1})，${wasTapped ? "並將其轉正！" : "狀態維持轉正！"}`);
+                  }
+                }
+                if (movedCount > 0) {
+                  logBattle(`✨ 女野人 效果結算完成：共移動了 ${movedCount} 個野人單位！`);
+                  if (isMultiplayer) sendFullGameStateToOpponent();
+                  render();
+                }
               }
             }
           }, 500);
@@ -14682,7 +14707,51 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
     return;
   }
-  if (card.id === "EVL-0015" || card.id === "R-EVL-0015" || card.id === "SSR-EVL-0015" || card.name?.includes("預言家")) {
+  if (card.id === "EWD-0006" || card.id?.includes("EWD-0006") || card.name?.includes("學會投資")) {
+    if (window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+      const drawn = window.XLW_ENEMY.deck.pop();
+      if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
+      window.XLW_ENEMY.hand.push(drawn);
+      logBattle("✨ 對手 學會投資的野人 效果發動：對手抽了一張牌！");
+      render();
+    }
+  }
+  else if (card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪" || card.name?.includes("女野人")) {
+    const isSavage = (c) => c && (c.faction?.includes("野人") || c.race?.includes("野人") || c.deck?.includes("野人") || c.name?.includes("野人") || c.id?.includes("EWD") || (c.keywords && c.keywords.some(k => k && k.includes("野人"))));
+    const prefix = destZone.startsWith("player_") ? "player_" : "enemy_";
+    const targetLanes = [destIdx - 1, destIdx + 1].filter(tl => tl >= 0 && tl < 5 && !field[destZone][tl]);
+    let movedCount = 0;
+    for (const tl of targetLanes) {
+      let candidate = null;
+      for (const z of [prefix + "front", prefix + "back"]) {
+        for (let i = 0; i < 5; i++) {
+          const u = field[z][i];
+          if (u && u !== field[destZone][destIdx] && u.card && isSavage(u.card)) {
+            if (window.xlwIsUnitUnmovable && window.xlwIsUnitUnmovable(u, z, i)) continue;
+            candidate = { zone: z, idx: i, unit: u };
+            break;
+          }
+        }
+        if (candidate) break;
+      }
+      if (candidate) {
+        const u = candidate.unit;
+        const wasTapped = Boolean(u.tapped);
+        field[destZone][tl] = u;
+        field[candidate.zone][candidate.idx] = null;
+        u.summonedZone = destZone;
+        if (wasTapped) {
+          u.tapped = false;
+        }
+        movedCount++;
+        logBattle(`✨ 對手 女野人 效果：將【${u.card.name}】移動至女野人身旁，${wasTapped ? "並將其轉正！" : "狀態維持轉正！"}`);
+      }
+    }
+    if (movedCount > 0) {
+      render();
+    }
+  }
+  else if (card.id === "EVL-0015" || card.id === "R-EVL-0015" || card.id === "SSR-EVL-0015" || card.name?.includes("預言家")) {
     await window.xlwTriggerEnemyProphetEffect();
   }
   else if (card.id === "R-VRT-0037" || card.id === "SSR-VRT-0037" || card.name?.includes("魔王城參謀長")) {
@@ -16066,6 +16135,38 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     if (oppTargetZone) {
       logBattle(`✨ 三寶 效果發動：前方敵方單位【${field[oppTargetZone][oppTargetIdx].card.name}】同歸於盡破壞！`);
       await destroyUnit(oppTargetZone, oppTargetIdx, oppOwner, false);
+    }
+  }
+
+  // EWD-0005 吃了毒蘑菇的野人 / 具備劇毒的單位 戰鬥被擊破效果 (敵方攻擊者同歸於盡破壞)
+  if (isCombatDestruction && unit.card && (unit.card.id === "EWD-0005" || unit.card.name?.includes("毒蘑菇") || (window.xlwUnitHasPoison && window.xlwUnitHasPoison(unit, zone, idx))) && !window.isUnitSilenced(unit, zone, idx)) {
+    const isPlayer = zone.startsWith("player_");
+    const oppPrefix = isPlayer ? "enemy_" : "player_";
+    const oppOwner = isPlayer ? "enemy" : "player";
+    let oppTargetZone = null;
+    let oppTargetIdx = -1;
+    for (const r of ["front", "back"]) {
+      const z = oppPrefix + r;
+      const oppU = field[z][idx];
+      if (oppU && (oppU.attacking || oppU.tapped)) {
+        oppTargetZone = z;
+        oppTargetIdx = idx;
+        break;
+      }
+    }
+    if (!oppTargetZone) {
+      if (field[oppPrefix + "front"][idx]) {
+        oppTargetZone = oppPrefix + "front";
+        oppTargetIdx = idx;
+      } else if (field[oppPrefix + "back"][idx]) {
+        oppTargetZone = oppPrefix + "back";
+        oppTargetIdx = idx;
+      }
+    }
+    if (oppTargetZone && oppTargetIdx !== -1 && field[oppTargetZone][oppTargetIdx]) {
+      const oppU = field[oppTargetZone][oppTargetIdx];
+      logBattle(`✨ 劇毒同歸於盡：【${unit.card.name}】被擊倒，劇毒發作將進攻方【${oppU.card.name}】一同破壞送入墓地！`);
+      await destroyUnit(oppTargetZone, oppTargetIdx, oppOwner, false, true);
     }
   }
 
@@ -18012,16 +18113,16 @@ function checkAiAttackFavorability(attacker, attZone, attIdx, defender, defZone,
   }
   
   // 劇毒 (Poisonous)
-  const attackerHasPoison = (attackerCard.keywords && attackerCard.keywords.includes("劇毒")) ||
+  const attackerHasPoison = window.xlwUnitHasPoison ? window.xlwUnitHasPoison(attacker, attZone, attIdx) : ((attackerCard.keywords && attackerCard.keywords.includes("劇毒")) ||
                              (attackerCard.effect_text && attackerCard.effect_text.includes("劇毒")) ||
-                             (attacker.equipments && attacker.equipments.includes("塗毒"));
-  const defenderHasPoison = (defenderCard.keywords && defenderCard.keywords.includes("劇毒")) ||
+                             (attacker.equipments && attacker.equipments.includes("塗毒")));
+  const defenderHasPoison = window.xlwUnitHasPoison ? window.xlwUnitHasPoison(defender, defZone, defIdx) : ((defenderCard.keywords && defenderCard.keywords.includes("劇毒")) ||
                              (defenderCard.effect_text && defenderCard.effect_text.includes("劇毒")) ||
-                             (defender.equipments && defender.equipments.includes("塗毒"));
+                             (defender.equipments && defender.equipments.includes("塗毒")));
   if (attackerHasPoison) {
     defenderShouldDie = true;
   }
-  if (defenderHasPoison && !attackerHasRanged) {
+  if (defenderHasPoison) {
     attackerShouldDie = true;
   }
   
@@ -25550,6 +25651,8 @@ function setupWebSocketEvents() {
           } else if (card.id === "CAT-0002" || card.name?.includes("喵媽媽")) {
             window.XLW_enemyMeowMotherPending = true;
             logBattle("✨ 對手 喵媽媽 效果：下個回合的我方防守階段，對手被破壞的偷襲單位將回到手牌！");
+          } else if (card.id === "EWD-0006" || card.id?.includes("EWD-0006") || card.name?.includes("學會投資")) {
+            logBattle("✨ 對手 學會投資的野人 效果發動：對手抽了一張牌！");
           }
         }
 
