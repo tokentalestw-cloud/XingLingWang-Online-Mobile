@@ -3557,7 +3557,8 @@
     "tribute": 0,
     "keywords": [
       "阻擋",
-      "不可移動"
+      "不可移動",
+      "不可獻祭"
     ],
     "effect_text": "阻擋。此卡可打出或召喚至敵方場上,此單位不得被獻祭或移動",
     "image": "/static/card_images/r_art_0003.jpeg",
@@ -3579,7 +3580,8 @@
     "tribute": 0,
     "keywords": [
       "阻擋",
-      "不可移動"
+      "不可移動",
+      "不可獻祭"
     ],
     "effect_text": "阻擋。此卡可打出或召喚至敵方場上,此單位不得被獻祭或移動",
     "image": "/static/card_images/r_art_0003_新年.jpeg",

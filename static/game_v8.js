@@ -680,20 +680,20 @@ window.XLW_enemyMeowMotherPending = false;
 window.XLW_opponentHandyMeowChoice = {};
 
 
-// 全域不可移動判定函數 (沈思的男人、關鍵字不可移動、禁錮等)
+// 全域不可移動判定函數 (沉思的男人、關鍵字不可移動、禁錮等)
 function xlwIsUnitUnmovable(unit, zone, idx) {
   if (!unit) return false;
   const c = unit.card || unit;
   if (!c) return false;
 
-  // 沈思的男人 / 沉思的男人：完全不能被移動！
+  // 沉思的男人 / 沈思的男人：完全不能被移動！
   if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" ||
       c.name?.includes("沉思") || c.name?.includes("沈思")) {
     return true;
   }
 
   // 關鍵字判定
-  if (c.keywords && (c.keywords.includes("不可移動") || c.keywords.includes("不得移動") || c.keywords.includes("禁錮"))) {
+  if (c.keywords && (c.keywords.includes("不可移動") || c.keywords.includes("不得移動"))) {
     return true;
   }
 
@@ -703,7 +703,7 @@ function xlwIsUnitUnmovable(unit, zone, idx) {
     return true;
   }
 
-  // 禁錮判定
+  // 禁錮判定（受禁錮的單位亦無法移動）
   if (unit.confined) return true;
   if (typeof zone !== "undefined" && typeof idx !== "undefined" && isUnitConfined(zone, idx)) {
     return true;
@@ -713,7 +713,50 @@ function xlwIsUnitUnmovable(unit, zone, idx) {
 }
 window.xlwIsUnitUnmovable = xlwIsUnitUnmovable;
 
-// 新增：全域禁錮與狀態判定函數
+// 全域不可獻祭判定函數 (沉思的男人、香蕉侯、喵抓板、關鍵字不可獻祭等)
+function xlwIsUnitUnsacrificable(unit, zone, idx) {
+  if (!unit) return false;
+  const c = unit.card || unit;
+  if (!c) return false;
+
+  // 沉思的男人 / 沈思的男人：不能被獻祭！
+  if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" ||
+      c.name?.includes("沉思") || c.name?.includes("沈思")) {
+    return true;
+  }
+
+  // 香蕉侯
+  if (c.id === "R-ART-0035" || c.name?.includes("香蕉侯")) {
+    return true;
+  }
+
+  // 喵抓板
+  if (c.id === "R-CAT-0037" || c.name?.includes("喵抓板")) {
+    return true;
+  }
+
+  // 關鍵字判定
+  if (c.keywords && (c.keywords.includes("不可獻祭") || c.keywords.includes("不得獻祭") || c.keywords.includes("不能獻祭"))) {
+    return true;
+  }
+
+  // 效果文字判定
+  const text = c.effect_text || c.effect || c.description || "";
+  if (text.includes("不得被獻祭") || text.includes("不可被獻祭") || text.includes("不能被獻祭") || text.includes("無法被獻祭") || text.includes("不得獻祭") || text.includes("不可獻祭") || text.includes("不能獻祭")) {
+    return true;
+  }
+
+  // 禁錮狀態判定（受禁錮單位無法被獻祭）
+  if (unit.confined) return true;
+  if (typeof zone !== "undefined" && typeof idx !== "undefined" && isUnitConfined(zone, idx)) {
+    return true;
+  }
+
+  return false;
+}
+window.xlwIsUnitUnsacrificable = xlwIsUnitUnsacrificable;
+
+// 全域禁錮判定函數 (僅限真正的禁錮效果：被土蜘蛛、長脖子的女人、雪女、虎姑媽等效果禁錮，絕非沉思的男人)
 function isUnitConfined(zone, idx) {
   const slot = field[zone]?.[idx];
   if (!slot) return false;
@@ -723,17 +766,14 @@ function isUnitConfined(zone, idx) {
   const c = slot.card;
   if (!c) return false;
 
-  // 沈思的男人 / 沉思的男人：完全不能被移動！
+  // 沉思的男人不是禁錮狀態
   if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思") || c.name?.includes("沈思")) {
-    return true;
+    return false;
   }
 
-  const isConfinementSource = c.name && (c.name.includes("長脖子的女人") || c.name.includes("土蜘蛛") || c.name.includes("雪女") || c.name.includes("虎姑媽"));
-  if (!isConfinementSource) {
-    if ((c.keywords && (c.keywords.includes("禁錮") || c.keywords.includes("不可移動"))) ||
-        (c.effect_text && (c.effect_text.includes("不得被移動") || c.effect_text.includes("不可移動") || c.effect_text.includes("無法移動") || c.effect_text.includes("禁錮")))) {
-      return true;
-    }
+  // 迷路的尋寶小旅人 / 背後靈 等自帶禁錮單位
+  if (c.id === "C-NMS-0071" || c.name?.includes("迷路的尋寶小旅人") || c.id === "R-VLG-0046" || c.name?.includes("背後靈")) {
+    return true;
   }
 
   const oppPrefix = zone.startsWith("player") ? "enemy" : "player";
@@ -741,8 +781,8 @@ function isUnitConfined(zone, idx) {
   const oppBack = field[oppPrefix + "_back"][idx];
   
   // 土蜘蛛: 禁錮同星星戰線所有敵方單位
-  if (oppFront && oppFront.card && oppFront.card.name.includes("土蜘蛛")) return true;
-  if (oppBack && oppBack.card && oppBack.card.name.includes("土蜘蛛")) return true;
+  if (oppFront && oppFront.card && oppFront.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
+  if (oppBack && oppBack.card && oppBack.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppBack, oppPrefix + "_back", idx)) return true;
 
   // 長脖子的女人: 只會禁錮正前方1個敵方單位，且其在後排時不具禁錮效果
   if (zone.includes("front")) {
@@ -6455,7 +6495,7 @@ async function startTributeSummon(handIndex) {
     const clownIdx = graveyard.findIndex(c => c && (c.id === "R-VLG-0048" || c.name.includes("恐怖小丑")));
     const myUnits = [];
     for (const z of ["player_front", "player_back"]) {
-      field[z].forEach((u, i) => { if (u) myUnits.push({ zone: z, idx: i, unit: u }); });
+      field[z].forEach((u, i) => { if (u && !xlwIsUnitUnsacrificable(u, z, i)) myUnits.push({ zone: z, idx: i, unit: u }); });
     }
     if (clownIdx >= 0 && myUnits.length === 1) {
       const confirm = await showXLWConfirm("恐怖小丑 效果發動", "偵測到墓地中有【恐怖小丑】且我方場上只有 1 個單位！是否獻祭該單位（觸發 2 次其被獻祭效果）並從墓地特殊召喚恐怖小丑？");
@@ -6659,12 +6699,8 @@ function toggleTributeSelection(zone, idx) {
 
   // 不可獻祭判定
   const c = unit.card || unit;
-  if (c.id === "R-ART-0035" || c.name?.includes("香蕉侯") || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思的男人")) {
+  if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unit, zone, idx)) {
     setStatus(`【獻祭失敗】${c.name} 無法被獻祭！`);
-    return;
-  }
-  if (isUnitConfined(zone, idx)) {
-    setStatus(`【獻祭失敗】${c.name} 處於禁錮或不可獻祭狀態！`);
     return;
   }
 
@@ -7204,6 +7240,10 @@ window.xlwTriggerSubsituteNinja = async function(defZone, defIdx) {
 };
 
 window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
+  if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unit, zone, idx)) {
+    logBattle(`🛡️ 【${unit.card.name}】完全不能被獻祭！`);
+    return;
+  }
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
     logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
   } else {
@@ -7263,6 +7303,10 @@ window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
 };
 
 window.xlwEnemyTributeUnit = async function(unit, zone, idx) {
+  if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unit, zone, idx)) {
+    logBattle(`🛡️ 對手【${unit.card.name}】完全不能被獻祭！`);
+    return;
+  }
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
     logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
   } else {
@@ -18577,7 +18621,7 @@ window.aiFindBestSummonableCard = function() {
     const aiAvailableUnits = [];
     for (const z of ["enemy_front", "enemy_back"]) {
       field[z].forEach((u, i) => {
-        if (u && u.card) aiAvailableUnits.push({ zone: z, idx: i, unit: u });
+        if (u && u.card && !xlwIsUnitUnsacrificable(u, z, i)) aiAvailableUnits.push({ zone: z, idx: i, unit: u });
       });
     }
     // 依攻擊力低至高排序作為獻祭素材
@@ -24678,6 +24722,8 @@ function showModal(card, equipments, unitObj) {
         if (unitObj.ranged) statuses.push({ icon: "🏹", title: "遠程進攻", desc: "可跨越前排直接攻擊敵方後排目標", cls: "ranged" });
         if (unitObj.pierce) statuses.push({ icon: "🔪", title: "貫穿傷害", desc: "擊破敵方單位時多餘傷害穿透至比分", cls: "pierce" });
         if (unitObj.poison) statuses.push({ icon: "🤢", title: "劇毒致命", desc: "造成戰鬥傷害時必定消滅目標", cls: "poison" });
+        if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(unitObj)) statuses.push({ icon: "🗿", title: "不可移動", desc: "無法進行戰術移動或被位移效果移動", cls: "unmovable" });
+        if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unitObj)) statuses.push({ icon: "✨", title: "不可獻祭", desc: "無法作為上級召喚或效果的獻祭祭品", cls: "unsacrificable" });
 
         if (statuses.length > 0) {
           statusListHtml = `
