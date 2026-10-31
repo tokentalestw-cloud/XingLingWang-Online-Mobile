@@ -165,6 +165,7 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
   if (displayText === "我方進攻宣言") displayText = "我方進攻階段";
   if (displayText === "對方進攻階段" || displayText === "對手進攻階段") displayText = "對手進攻宣言";
   
+  if (!/勝利|失敗|結束|平局/.test(displayText)) window.xlwPlaySFX?.(/回合|遊戲開始/.test(displayText) ? (/對手|對方/.test(displayText) ? 'enemyTurn' : 'turn') : 'phase');
   const seq = (window._xlwBannerSeq = (window._xlwBannerSeq || 0) + 1);
   let banner = document.getElementById("xlw-phase-banner");
   if (!banner) {
@@ -1028,6 +1029,7 @@ async function init() {
 // 建立線上雙人新局
 function newGameMultiplayer() {
   window.XLWBFeedback?.resetScores();
+  window.XLWAudio?.resetBattle();
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   xlwOutgoingSeq = 0;
@@ -1288,6 +1290,7 @@ function initGameEmptyState() {
 
 function newGame() {
   window.XLWBFeedback?.resetScores();
+  window.XLWAudio?.resetBattle();
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
@@ -1410,6 +1413,7 @@ function shuffle(arr) {
 }
 
 function draw(n) {
+  const soundStartCount = hand.length;
   const deckName = $("deckSelect") ? $("deckSelect").value : "喵喵賊";
   for (let i = 0; i < n; i++) {
     if (deck.length === 0) {
@@ -1421,6 +1425,7 @@ function draw(n) {
       hand.push(c);
     }
   }
+  if (hand.length > soundStartCount && window.XLW_gameInProgress) window.xlwPlaySFX?.('draw');
 }
 
 // 智慧的般若/憤怒的般若：視覺化展示抽到的卡牌
@@ -1492,6 +1497,7 @@ async function performPlayerTurnStartDraw() {
     return;
   }
   
+  window.xlwPlaySFX?.('draw');
   const oppHasSmartPrajna = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
   const oppHasAngryPrajna = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
   
@@ -11834,7 +11840,7 @@ async function xlwAutoDeclarePlayerAttacks() {
 }
 
 async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
-  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('attack');
+  window.xlwPlaySFX?.('select');
   const unit = field[zone][idx];
   if (unit && !unit.attacking && window.XLW_playerCannotAttackThisTurn) {
     setStatus("座敷童子/和平巨人 效果生效：本回合我方無法進行任何進攻！");
@@ -12797,6 +12803,7 @@ async function xlwResolveEnemyDefensePhaseSafe() {
 
 
 function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, defPower) {
+  window.xlwPlaySFX?.(atkPower > defPower ? 'attack' : 'shield');
   return new Promise((resolve) => {
     const attEl = document.querySelector(`[data-zone="${attZone}"][data-index="${attIdx}"]`);
     const defEl = document.querySelector(`[data-zone="${defZone}"][data-index="${defIdx}"]`);
@@ -16233,6 +16240,7 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖�
     }
   }
 
+  window.xlwPlaySFX?.('destroy');
   // 2. 等待動畫完整播放結束
   await sleep(450);
 
@@ -24090,6 +24098,10 @@ function renderScore() {
     player:{total:playerStars,field:playerFieldStars,bonus:playerBonusScore,units:feedbackUnits.player,lanes:feedbackLanes.player},
     enemy:{total:enemyStars,field:enemyFieldStars,bonus:enemyBonusScore,units:feedbackUnits.enemy,lanes:feedbackLanes.enemy}
   }, !window.XLW_gameInProgress || (isMultiplayer && !window.XLW_sync?.ready));
+  window.XLWAudio?.observeBattle({
+    player:{total:playerStars,field:playerFieldStars,bonus:playerBonusScore,units:feedbackUnits.player,lanes:feedbackLanes.player},
+    enemy:{total:enemyStars,field:enemyFieldStars,bonus:enemyBonusScore,units:feedbackUnits.enemy,lanes:feedbackLanes.enemy}
+  }, !window.XLW_gameInProgress || (isMultiplayer && !window.XLW_sync?.ready));
   scoreBadge.innerHTML = `
     <div class="score-board-header">
       <div class="score-board-header-left">
@@ -24376,7 +24388,7 @@ function renderStablePanel() {
 
   // 隱藏舊的重疊按鈕
   Array.from(document.querySelectorAll("button")).forEach(btn => {
-    if (btn.closest("#stableActionPanel") || btn.id === "summonTravelerBtn") return;
+    if (btn.closest("#stableActionPanel, #xlwAudioSettings") || btn.id === "summonTravelerBtn") return;
     const txt = (btn.textContent || "").replace(/\s+/g,"");
     if (
       txt.includes("戰術") || txt.includes("進攻") || txt.includes("下一階段") ||
@@ -26367,7 +26379,7 @@ function setupWebSocketEvents() {
       if (typeof window.xlwShowPhaseBanner === 'function') {
         window.xlwShowPhaseBanner("⚠️ 對手宣告 Call Game！", "#ff4d4f");
       }
-      try { if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('phase'); } catch(e){}
+
       render();
       
       const playerHasReject = hand.some(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
@@ -27612,6 +27624,7 @@ window.XLW_animatingTributeSlots = window.XLW_animatingTributeSlots || new Set()
 window.XLW_slamTributeCards = window.XLW_slamTributeCards || new Set();
 
 async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
+  window.xlwPlaySFX?.(isRealTribute ? 'tribute' : 'summon');
   const key = `${zone}:${idx}`;
   window.XLW_animatingTributeSlots.add(key);
   
@@ -29367,6 +29380,7 @@ window.xlwShowSpellSuccessToast = function(card, subtitle = "") {
 };
 
 function xlwShowSpellActivationOverlay(card, side) {
+  window.xlwPlaySFX?.(card?.type === 'field' || card?.type === '場地' ? 'field' : 'spell');
   return new Promise((resolve) => {
     let overlay = document.getElementById("xlw-spell-activation-overlay");
     if (!overlay) {
@@ -32708,242 +32722,7 @@ window.xlwRender3DStacks = function() {
 
 
 
-// ===== 🔊 清晰大幅提升音量與重低音打擊 15 軌 Web Audio API 音效系統 =====
-(function() {
-  let audioCtx = null;
-  let sfxEnabled = localStorage.getItem('xlw_sfx_enabled') !== 'false';
-
-  function getAudioContext() {
-    if (!audioCtx) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        audioCtx = new AudioContextClass();
-      }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    return audioCtx;
-  }
-
-  window.xlwToggleSFX = function() {
-    sfxEnabled = !sfxEnabled;
-    localStorage.setItem('xlw_sfx_enabled', sfxEnabled ? 'true' : 'false');
-    const btn = document.getElementById('xlwSfxToggleBtn');
-    if (btn) {
-      btn.innerHTML = sfxEnabled ? '音效：開' : '音效：關';
-    }
-    if (sfxEnabled) window.xlwPlaySFX('phase');
-  };
-
-  window.xlwPlaySFX = function(type) {
-    if (!sfxEnabled) return;
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-
-      if (type === 'draw') {
-        // 1. 抽牌/滑牌聲 (高清晰滑音)
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(320, now);
-        osc.frequency.exponentialRampToValueAtTime(750, now + 0.09);
-        gain.gain.setValueAtTime(0.28, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.1);
-      } else if (type === 'summon') {
-        // 2. 單位登場召喚聲 (雙聲道重打擊扣牌音)
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc1.type = 'triangle';
-        osc2.type = 'sine';
-        osc1.frequency.setValueAtTime(160, now);
-        osc1.frequency.exponentialRampToValueAtTime(480, now + 0.14);
-        osc2.frequency.setValueAtTime(50, now);
-        osc2.frequency.exponentialRampToValueAtTime(20, now + 0.14);
-
-        gain.gain.setValueAtTime(0.48, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(ctx.destination);
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + 0.18);
-        osc2.stop(now + 0.18);
-      } else if (type === 'tribute') {
-        // 3. 獻祭召喚鐘聲 (黃金加強和弦)
-        [329.63, 440, 659.25, 880].forEach((f, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(f, now + i * 0.03);
-          gain.gain.setValueAtTime(0.35, now + i * 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 0.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + i * 0.03);
-          osc.stop(now + i * 0.03 + 0.4);
-        });
-      } else if (type === 'spell') {
-        // 4. 魔法發動聲 (閃耀音階)
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.04);
-          gain.gain.setValueAtTime(0.28, now + idx * 0.04);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.28);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.04);
-          osc.stop(now + idx * 0.04 + 0.28);
-        });
-      } else if (type === 'field') {
-        // 5. 場地魔法聲
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(140, now);
-        osc.frequency.exponentialRampToValueAtTime(360, now + 0.3);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.35);
-      } else if (type === 'coin') {
-        // 6. 硬幣旋轉聲
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1100, now);
-        osc.frequency.exponentialRampToValueAtTime(1900, now + 0.16);
-        gain.gain.setValueAtTime(0.32, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'attack') {
-        // 7. 攻擊戰鬥打擊聲 (超重低音 + 鋸齒撞擊波)
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc1.type = 'sawtooth';
-        osc2.type = 'sine';
-
-        osc1.frequency.setValueAtTime(260, now);
-        osc1.frequency.exponentialRampToValueAtTime(40, now + 0.22);
-        osc2.frequency.setValueAtTime(90, now);
-        osc2.frequency.exponentialRampToValueAtTime(20, now + 0.22);
-
-        gain.gain.setValueAtTime(0.55, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + 0.25);
-        osc2.stop(now + 0.25);
-      } else if (type === 'destroy') {
-        // 8. 單位碎裂破壞聲
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(450, now);
-        osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
-        gain.gain.setValueAtTime(0.42, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'shield') {
-        // 9. 盾牌抵擋金屬聲
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(950, now);
-        osc.frequency.exponentialRampToValueAtTime(400, now + 0.12);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.14);
-      } else if (type === 'click') {
-        // 11. 按鈕點擊聲
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(450, now);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.05);
-      } else if (type === 'phase') {
-        // 12. 回合/階段切換聲
-        [440, 554.37].forEach((freq) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now);
-          gain.gain.setValueAtTime(0.22, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.22);
-        });
-      } else if (type === 'victory') {
-        // 13. 勝利和弦
-        [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(f, now + i * 0.06);
-          gain.gain.setValueAtTime(0.35, now + i * 0.06);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.45);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + i * 0.06);
-          osc.stop(now + i * 0.06 + 0.45);
-        });
-      } else if (type === 'defeat') {
-        // 14. 失敗低音
-        [220, 196, 174.61, 146.83].forEach((f, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(f, now + i * 0.08);
-          gain.gain.setValueAtTime(0.32, now + i * 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + i * 0.08);
-          osc.stop(now + i * 0.08 + 0.4);
-        });
-      }
-    } catch (e) {}
-  };
-})();
-
-
-
+// Sound design and audio lifecycle are managed by astral_audio.js.
 
 // ===== 📱 iPhone 14 橫向擬真螢幕模擬器 (DOM 容器內部完整包含，排版0混亂) =====
 window.xlwIphone14SimActive = localStorage.getItem('xlw_iphone14_sim') === 'true';
@@ -33443,10 +33222,12 @@ window.XLW_Tutorial = {
     }
     
     this.active = true;
+    window.XLWAudio?.resetBattle();
     window.XLW_isPuzzleMode = false;
     document.body.classList.add("xlw-tutorial-active");
     document.getElementById("xlwPuzzleStatusBar")?.remove();
     window.XLWBFeedback?.resetScores();
+  window.XLWAudio?.resetBattle();
     this.currentStep = 0;
 
     const welcome = document.getElementById("xlwWelcomeOverlay");
@@ -34582,6 +34363,7 @@ window.xlwStartPuzzleMode = function() {
 // 啟動指定殘局關卡
 window.xlwStartPuzzleStage = function(stageNum) {
   window.XLWBFeedback?.resetScores();
+  window.XLWAudio?.resetBattle();
   window.XLW_currentPuzzleStage = stageNum;
 
   if (typeof window.xlwRequestFullScreen === 'function') {
@@ -35118,5 +34900,3 @@ window.xlwShowPuzzleFailModal = function(playerStars, enemyStars) {
   `;
   document.body.appendChild(overlay);
 };
-
-

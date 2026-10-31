@@ -1004,3 +1004,17 @@ body.xlw-royal-ui #boardWrap .slot.xlw-goal-contributor:not(.xlw-route-target) {
 .xlw-tutorial-active #xlwActionFeedback,
 .xlw-tutorial-active #status,
 .xlw-tutorial-active .puzzle-goal-badge { display: none !important; }
+
+/* Compact, keyboard-accessible audio settings; all dimensions use game viewport units. */
+#xlwAudioSettings { position:fixed; inset:0; z-index:3000100; display:grid; place-items:center; background:rgba(3,8,18,.68); }
+#xlwAudioSettings .xlw-audio-card { box-sizing:border-box; width:min(320px,calc(100 * var(--xvw,1vw) - 40px)); max-height:calc(100 * var(--xvh,1vh) - 24px); overflow:auto; padding:16px 20px; color:#e9f3f6; background:linear-gradient(145deg,#203343,#0a1422); border:1px solid #b8a774; border-radius:14px; box-shadow:0 16px 50px #0009,inset 0 1px #edf9ff20; font-size:14px; line-height:1.4; font-family:inherit; }
+#xlwAudioSettings label { display:block; margin:10px 0; }
+#xlwAudioSettings input[type=range] { display:block; width:100%; margin:5px 0 0; accent-color:#9adce2; height:24px; }
+#xlwAudioSettings input[type=checkbox] { width:20px; height:20px; accent-color:#9adce2; }
+#xlwAudioSettings output { float:right; color:#a8e0e8; font-variant-numeric:tabular-nums; }
+#xlwAudioSettings .xlw-audio-heading,#xlwAudioSettings .xlw-audio-enable,#xlwAudioSettings .xlw-audio-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+#xlwAudioSettings .xlw-audio-heading { color:#e8d59e; font-size:17px; }
+#xlwAudioSettings button { min-height:30px; padding:4px 10px; color:#e8f9ff; background:linear-gradient(#304858,#172b3b); border:1px solid #7a929b; border-radius:7px; cursor:pointer; }
+#xlwAudioSettings .xlw-audio-footer span { color:#a5b7c6; font-size:11px; }
+#xlwAudioSettings :focus-visible { outline:2px solid #b7f6ff; outline-offset:3px; }
+@media(max-height:360px) { #xlwAudioSettings .xlw-audio-card { padding:10px 16px; } #xlwAudioSettings label { margin:5px 0; } }
