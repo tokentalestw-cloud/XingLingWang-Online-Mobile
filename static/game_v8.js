@@ -227,7 +227,7 @@ window.xlwClearAllPendingResolvers = function() {
     ["XLW_equipSpellResolve", null],
     ["XLW_tempEquipSpellResolve", null],
     ["XLW_blackCatResolve", false],
-    ["XLW_aquariusHandResolve", null],
+    ["XLW_aquariusHandResolve", { hand: [] }],
     ["XLW_scarecrowMoveResolve", null],
     ["XLW_defenseCounterResolve", false],
     ["XLW_twoStrangersResolve", null],
@@ -257,7 +257,7 @@ window.xlwClearAllPendingResolvers = function() {
   window.XLW_thiefPlacementActive = false;
   window.XLW_scarecrowMoveActive = false;
   window.XLW_lanternPlacementActive = null;
-  document.querySelectorAll(".xlw-premium-confirm-overlay, .xlw-premium-choice-overlay").forEach(el => {
+  document.querySelectorAll(".xlw-premium-confirm-overlay, .xlw-premium-choice-overlay, .xlw-aquarius-overlay").forEach(el => {
     try {
       if (typeof el._xlwCancel === "function") {
         el._xlwCancel();
@@ -10796,49 +10796,83 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
       else if (card.name.includes("水瓶座")) {
         logBattle("好奇女巫 水瓶座 效果：展示對手所有手牌，嘗試進行同名卡牌除外！");
         if (!isMultiplayer) {
-          const oppHand = window.XLW_ENEMY.hand;
+          const oppHand = Array.isArray(window.XLW_ENEMY?.hand) ? window.XLW_ENEMY.hand : [];
           const myHand = hand;
           setTimeout(async () => {
-            const result = await showAquariusModal(oppHand, myHand);
-            if (result && result.success) {
-              const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
-              if (matchingCardInMyHand) {
-                logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
-                window.XLW_ENEMY.hand.splice(result.oppIdx, 1);
-                exileCard(result.oppCard, "enemy");
-                logBattle(`✨ 對手手牌中的 ${result.oppCard.name} 被成功除外！`);
-                render();
+            try {
+              const result = await showAquariusModal(oppHand, myHand);
+              if (result && result.success) {
+                const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
+                if (matchingCardInMyHand) {
+                  logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
+                  window.XLW_ENEMY.hand.splice(result.oppIdx, 1);
+                  exileCard(result.oppCard, "enemy");
+                  logBattle(`✨ 對手手牌中的 ${result.oppCard.name} 被成功除外！`);
+                  render();
+                }
               }
+            } catch (err) {
+              console.error("[Aquarius] Singleplayer modal error:", err);
             }
-          }, 500);
+          }, 300);
         } else {
           setTimeout(async () => {
-            setStatus("【水瓶座】正在等待對手展示手牌...");
-            const response = await new Promise(resolve => {
-              window.XLW_aquariusHandResolve = resolve;
-            });
-            const result = await showAquariusModal(response.hand, hand);
-            if (result && result.success) {
-              const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
-              if (matchingCardInMyHand) {
-                logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
-                ws.send(JSON.stringify({
-                  action: "aquarius_exile_success",
-                  cardName: result.cardName
-                }));
-                const oppIdx = window.XLW_ENEMY.hand.findIndex(c => c && c.name === result.cardName);
-                if (oppIdx >= 0) {
-                  const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
-                  exileCard(exiledCard, "enemy");
+            try {
+              setStatus("【水瓶座】正在展示對手手牌...");
+              let oppHand = window.XLW_pendingAquariusHand;
+              if (!oppHand || !Array.isArray(oppHand)) {
+                // 若前期尚未收到對手主動回傳的手牌，立即發送請求索取
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({
+                    action: "aquarius_request_reveal"
+                  }));
                 }
-                render();
+                const response = await new Promise(resolve => {
+                  window.XLW_aquariusHandResolve = resolve;
+                  // 安全機制：若對手 6 秒未回覆，使用快照中的敵方手牌，避免卡死
+                  setTimeout(() => {
+                    if (window.XLW_aquariusHandResolve === resolve) {
+                      window.XLW_aquariusHandResolve = null;
+                      resolve({ hand: window.XLW_ENEMY?.hand || [] });
+                    }
+                  }, 6000);
+                });
+                oppHand = response?.hand || window.XLW_ENEMY?.hand || [];
               }
-            } else {
-              ws.send(JSON.stringify({
-                action: "aquarius_complete"
-              }));
+              window.XLW_pendingAquariusHand = null;
+              if (!Array.isArray(oppHand)) oppHand = [];
+
+              const result = await showAquariusModal(oppHand, hand);
+              if (result && result.success) {
+                const matchingCardInMyHand = hand.find(c => c && c.name === result.cardName);
+                if (matchingCardInMyHand) {
+                  logBattle(`✨ 我方展示了手牌中的 ${matchingCardInMyHand.name}！`);
+                  if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                      action: "aquarius_exile_success",
+                      cardName: result.cardName
+                    }));
+                  }
+                  const oppIdx = window.XLW_ENEMY.hand.findIndex(c => c && c.name === result.cardName);
+                  if (oppIdx >= 0) {
+                    const exiledCard = window.XLW_ENEMY.hand.splice(oppIdx, 1)[0];
+                    exileCard(exiledCard, "enemy");
+                  }
+                  render();
+                  sendFullGameStateToOpponent(false);
+                }
+              } else {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({
+                    action: "aquarius_complete"
+                  }));
+                }
+              }
+            } catch (err) {
+              console.error("[Aquarius] Multiplayer modal error:", err);
+              setStatus("水瓶座效果處理異常，已自動恢復對戰流程。");
             }
-          }, 500);
+          }, 300);
         }
       }
       // 獸人種族立即效果實作
@@ -25856,9 +25890,18 @@ function setupWebSocketEvents() {
         render();
         await window.xlwCheckGoatResearcherTrigger();
       }
+    } else if (data.action === "aquarius_request_reveal") {
+      logBattle("好奇女巫 水瓶座 效果：對手請求展示我方手牌以供檢查。");
+      if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          action: "aquarius_hand_reveal",
+          hand: hand
+        }));
+      }
     } else if (data.action === "aquarius_hand_reveal") {
-      const oppHand = data.hand;
+      const oppHand = Array.isArray(data.hand) ? data.hand : [];
       window.XLW_ENEMY.hand = oppHand;
+      window.XLW_pendingAquariusHand = oppHand;
       if (window.XLW_aquariusHandResolve) {
         const resolve = window.XLW_aquariusHandResolve;
         window.XLW_aquariusHandResolve = null;
@@ -25873,6 +25916,7 @@ function setupWebSocketEvents() {
         logBattle(`🔮 對手展示了其手牌中的 ${cardName}，我方手牌中的 ${cardName} 被除外！`);
       }
       render();
+      sendFullGameStateToOpponent(false);
     } else if (data.action === "aquarius_complete") {
       setStatus("對手水瓶座效果結算完畢。");
       render();
@@ -26975,7 +27019,7 @@ function setupWebSocketEvents() {
       canBypass: (action, data) => Boolean(
         window.XLWBattleFlow?.canBypass(action, data) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
-        (action === "aquarius_hand_reveal" && window.XLW_aquariusHandResolve) ||
+        (["aquarius_hand_reveal", "aquarius_request_reveal"].includes(action)) ||
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
         (["spell_chain_add", "spell_chain_resolve"].includes(action) && window.XLW_pendingSpellResolve)
       ),
@@ -28380,10 +28424,21 @@ function showXLWChoiceModal(title, message, options) {
 // ===== 新增：墓地渲染與對戰倒數機制 =====
 
 async function showAquariusModal(oppHand, myHand) {
+  const safeOppHand = Array.isArray(oppHand) ? oppHand.filter(Boolean) : [];
+  const safeMyHand = Array.isArray(myHand) ? myHand.filter(Boolean) : [];
   return new Promise(resolve => {
+    let settled = false;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      try { overlay.remove(); } catch (_) {}
+      resolve(result);
+    };
+
     const overlay = document.createElement("div");
     overlay.className = "xlw-aquarius-overlay";
     overlay.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', sans-serif;";
+    overlay._xlwCancel = () => finish({ success: false });
 
     const content = document.createElement("div");
     content.className = "xlw-aquarius-content";
@@ -28405,43 +28460,49 @@ async function showAquariusModal(oppHand, myHand) {
     const oppCardsContainer = document.createElement("div");
     oppCardsContainer.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 25px 0;";
 
-    oppHand.forEach((c, idx) => {
-      if (!c) return;
-      const cardEl = document.createElement("div");
-      cardEl.className = "xlw-aq-card";
-      cardEl.style.cssText = "background:#2a211a;border:1.5px solid #5a4b3e;border-radius:6px;padding:10px;width:120px;text-align:center;cursor:pointer;position:relative;transition:all 0.2s ease;";
+    if (safeOppHand.length === 0) {
+      const emptyMsg = document.createElement("div");
+      emptyMsg.style.cssText = "color:#aaa;padding:15px;text-align:center;font-size:14px;width:100%;";
+      emptyMsg.textContent = "對手目前手中沒有任何卡牌。";
+      oppCardsContainer.appendChild(emptyMsg);
+    } else {
+      safeOppHand.forEach((c, idx) => {
+        if (!c) return;
+        const cardEl = document.createElement("div");
+        cardEl.className = "xlw-aq-card";
+        cardEl.style.cssText = "background:#2a211a;border:1.5px solid #5a4b3e;border-radius:6px;padding:10px;width:120px;text-align:center;cursor:pointer;position:relative;transition:all 0.2s ease;";
 
-      // Check if we have a match in myHand
-      const hasMatch = myHand.some(m => m && m.name === c.name);
-      if (hasMatch) {
-        cardEl.style.border = "2.5px solid #00ff7f";
-        cardEl.style.boxShadow = "0 0 10px rgba(0,255,127,0.4)";
-        const matchBadge = document.createElement("div");
-        matchBadge.textContent = "MATCH";
-        matchBadge.style.cssText = "position:absolute;top:-8px;right:-8px;background:#00ff7f;color:#000;font-size:8px;font-weight:bold;padding:2px 4px;border-radius:4px;";
-        cardEl.appendChild(matchBadge);
+        // Check if we have a match in myHand
+        const hasMatch = safeMyHand.some(m => m && m.name === c.name);
+        if (hasMatch) {
+          cardEl.style.border = "2.5px solid #00ff7f";
+          cardEl.style.boxShadow = "0 0 10px rgba(0,255,127,0.4)";
+          const matchBadge = document.createElement("div");
+          matchBadge.textContent = "MATCH";
+          matchBadge.style.cssText = "position:absolute;top:-8px;right:-8px;background:#00ff7f;color:#000;font-size:8px;font-weight:bold;padding:2px 4px;border-radius:4px;";
+          cardEl.appendChild(matchBadge);
 
-        cardEl.onclick = () => {
-          overlay.remove();
-          resolve({ success: true, cardName: c.name, oppCard: c, oppIdx: idx });
-        };
-      } else {
-        cardEl.style.opacity = "0.6";
-        cardEl.style.cursor = "not-allowed";
-      }
+          cardEl.onclick = () => {
+            finish({ success: true, cardName: c.name, oppCard: c, oppIdx: idx });
+          };
+        } else {
+          cardEl.style.opacity = "0.6";
+          cardEl.style.cursor = "not-allowed";
+        }
 
-      const nameEl = document.createElement("div");
-      nameEl.textContent = c.name;
-      nameEl.style.cssText = "font-weight:bold;font-size:12px;color:#ffd76a;word-break:break-all;";
-      cardEl.appendChild(nameEl);
+        const nameEl = document.createElement("div");
+        nameEl.textContent = c.name;
+        nameEl.style.cssText = "font-weight:bold;font-size:12px;color:#ffd76a;word-break:break-all;";
+        cardEl.appendChild(nameEl);
 
-      const typeEl = document.createElement("div");
-      typeEl.textContent = c.type === "unit" ? "單位" : "魔法";
-      typeEl.style.cssText = "font-size:10px;color:#888;margin-top:5px;";
-      cardEl.appendChild(typeEl);
+        const typeEl = document.createElement("div");
+        typeEl.textContent = c.type === "unit" ? "單位" : "魔法";
+        typeEl.style.cssText = "font-size:10px;color:#888;margin-top:5px;";
+        cardEl.appendChild(typeEl);
 
-      oppCardsContainer.appendChild(cardEl);
-    });
+        oppCardsContainer.appendChild(cardEl);
+      });
+    }
     oppSection.appendChild(oppCardsContainer);
     content.appendChild(oppSection);
 
@@ -28453,8 +28514,7 @@ async function showAquariusModal(oppHand, myHand) {
     closeBtn.textContent = "關閉 / 不進行除外";
     closeBtn.style.cssText = "background:linear-gradient(135deg, #ae2a2a, #821c1c);color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:bold;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.3);";
     closeBtn.onclick = () => {
-      overlay.remove();
-      resolve({ success: false });
+      finish({ success: false });
     };
     btnContainer.appendChild(closeBtn);
     content.appendChild(btnContainer);
