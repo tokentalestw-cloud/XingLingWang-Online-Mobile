@@ -30,8 +30,10 @@ async def add_smart_cache_headers(request, call_next):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     elif path.endswith(".html") or path == "/":
-        # HTML 頁面：採用 no-cache 搭配 revalidate，確保即時取得最新代碼版號
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        # HTML 頁面：絕不快取，確保即時取得最新代碼版號
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 class OptimizedStaticFiles(StaticFiles):
@@ -53,7 +55,9 @@ class OptimizedStaticFiles(StaticFiles):
             response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
         # HTML 檔案
         elif ext == ".html":
-            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
         else:
             response.headers["Cache-Control"] = "public, max-age=3600"
 
@@ -572,7 +576,9 @@ class CardSaveSchema(BaseModel):
 @app.get("/")
 def index():
     response = FileResponse(BASE / "static" / "index.html")
-    response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 
 @app.get("/api/cards")
