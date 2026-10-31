@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261030-3d-hud-v5">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261031-astral-forge-v4">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261031-astral-forge-v5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -149,6 +149,21 @@
 
   <!-- 全畫面星光閃爍氛圍層 (柔和深藍微光與多頻率星光點點) -->
   <div id="xlwStarlightAtmosphere" class="xlw-starlight-atmosphere">
+    <svg class="arena-celestial-map" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="800" cy="450" r="554"/>
+        <circle cx="800" cy="450" r="570" stroke-dasharray="2 26"/>
+        <path d="M38 615 115 540 190 574 260 700 320 675 M1310 185 1405 220 1454 315 1542 275 1590 390"/>
+        <path d="m250 150 7 19 19 7-19 7-7 19-7-19-19-7 19-7z M1330 690l5 14 14 5-14 5-5 14-5-14-14-5 14-5z"/>
+        <path d="M350 84h72m-36-36v72 M1174 800h58m-29-29v58" opacity=".5"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="38" cy="615" r="2.5"/><circle cx="115" cy="540" r="3"/><circle cx="190" cy="574" r="2"/>
+        <circle cx="260" cy="700" r="3"/><circle cx="320" cy="675" r="2"/>
+        <circle cx="1310" cy="185" r="2"/><circle cx="1405" cy="220" r="3"/><circle cx="1454" cy="315" r="2"/>
+        <circle cx="1542" cy="275" r="3"/><circle cx="1590" cy="390" r="2.5"/>
+      </g>
+    </svg>
     <div class="starlight-glow-ambient"></div>
     <div class="starlight-particles layer-1"></div>
     <div class="starlight-particles layer-2"></div>
@@ -835,7 +850,7 @@
 
   <!-- 導入核心重構對戰引擎 -->
   <script src="/static/online_sync.js?v=20261031-sync-v2" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261031-astral-forge-v4" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261031-astral-forge-v5" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

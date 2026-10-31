@@ -24874,6 +24874,17 @@ function adjustBoardScale() {
     };
     if (space.right <= space.left || space.bottom <= space.top) return;
     const fit = xlwFitBoardAroundToolbar(bounds, space, toolbar, gap);
+    // Align the visual fans to lane 3, including layouts with asymmetric side zones.
+    // Measure before applying the new board transform, then project into the new fit.
+    const laneCenter = selector => {
+      const lane = logicalRect(board.querySelector(selector));
+      return lane ? fit.x + (((lane.left + lane.right) / 2 - origin.left) / currentScale) * fit.scale
+        : (space.left + space.right) / 2;
+    };
+    const playerHandCenter = laneCenter(".player-back .slot:nth-child(3)");
+    const enemyHandCenter = laneCenter(".enemy-back .slot:nth-child(3)");
+    root.style.setProperty("--xlw-player-hand-center", playerHandCenter + "px");
+    root.style.setProperty("--xlw-enemy-hand-center", enemyHandCenter + "px");
     root.style.setProperty("--xlw-field-scale", String(fit.scale));
     root.style.setProperty("--xlw-field-x", fit.x + "px");
     root.style.setProperty("--xlw-field-y", fit.y + "px");

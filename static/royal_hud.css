@@ -868,3 +868,74 @@ html body.xlw-royal-ui .hand-panel {
   }
 }
 html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back:first-child { margin-left: 0 !important; }
+
+
+/* Astral Forge v5: a single laminated card, with both fans centred on rear lane 3. */
+html body.xlw-royal-ui .hand-panel { left: var(--xlw-player-hand-center, 50%) !important; }
+html body.xlw-royal-ui #xlwEnemyFloatingHand { left: var(--xlw-enemy-hand-center, 50%) !important; }
+body.xlw-royal-ui .hand-title { position: absolute !important; left: 0 !important; bottom: 10px; pointer-events: none; }
+body.xlw-royal-ui #hand { width: 100% !important; box-sizing: border-box !important; }
+html body.xlw-royal-ui #hand > .card:first-child { margin-left: 0 !important; }
+html body.xlw-royal-ui #hand .card {
+  border: 1px solid #d4c197 !important;
+  border-top-color: #f0e3c1 !important; border-bottom-color: #8c7855 !important;
+  box-shadow: 0 2px 3px #02071280, 0 7px 12px #02071259,
+    inset 0 1px 0 #fff3d74d !important;
+}
+html body.xlw-royal-ui #hand .card img { filter: none !important; }
+html body.xlw-royal-ui #hand .card::after {
+  background: linear-gradient(125deg, #fff9e31a, transparent 38% 74%, #02071314) !important;
+  box-shadow: inset 0 1px 0 #fff3d738 !important;
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back {
+  width: 30px !important; height: 42px !important; margin-left: -10px !important;
+  box-shadow: 0 2px 4px #02071280 !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  html body.xlw-royal-ui #hand .card:hover {
+    box-shadow: 0 4px 6px #02071280, 0 12px 20px #02071280,
+      0 0 12px #a6e3e92b, inset 0 1px 0 #fff3d74d !important;
+  }
+}
+@media (max-width: 1100px), (pointer: coarse) {
+  html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back {
+    width: 17px !important; height: 24px !important; margin-left: -6px !important;
+  }
+}
+html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back:first-child { margin-left: 0 !important; }
+
+/* Quiet celestial observatory: ink blue, teal below, plum above, engraved gold orbits. */
+body.xlw-royal-ui #xlwStarlightAtmosphere {
+  background:
+    radial-gradient(ellipse at 20% 76%, #26667552, transparent 49%),
+    radial-gradient(ellipse at 80% 15%, #66354e47, transparent 48%),
+    radial-gradient(ellipse at 50% 44%, #1b30484d, transparent 60%),
+    linear-gradient(145deg, #111e32, #0b1425 58%, #0b1020) !important;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-glow-ambient {
+  background: radial-gradient(ellipse at 12% 82%, #79d8e21a, transparent 35%),
+    radial-gradient(ellipse at 88% 10%, #edb8be14, transparent 38%) !important;
+  animation: xlw-observatory-breathe 16s ease-in-out infinite alternate;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .arena-celestial-map {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  color: #d2bb88; opacity: .17; pointer-events: none;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 42%, #04091480 100%);
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles.layer-1 {
+  animation: xlw-observatory-stars 12s ease-in-out infinite alternate !important;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles.layer-2 {
+  animation: xlw-observatory-stars 17s ease-in-out infinite alternate-reverse !important;
+}
+body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles.layer-3 {
+  opacity: .18; animation: none !important;
+}
+@keyframes xlw-observatory-breathe { from { opacity: .45; } to { opacity: .85; } }
+@keyframes xlw-observatory-stars { from { opacity: .14; } to { opacity: .38; } }
+@media (prefers-reduced-motion: reduce) {
+  body.xlw-royal-ui #xlwStarlightAtmosphere :is(.starlight-glow-ambient, .starlight-particles) { animation: none !important; }
+}
