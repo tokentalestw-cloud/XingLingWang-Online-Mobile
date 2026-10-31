@@ -1072,3 +1072,9 @@ body.xlw-royal-ui #boardWrap .slot.xlw-goal-contributor:not(.xlw-route-target) {
 .xlw-yuki-caption { min-width:0; padding:5px 28px; }
 .xlw-yuki-skip { width:36px; height:36px; display:grid; place-items:center; padding:8px; }
 .xlw-yuki-skip svg { display:block; pointer-events:none; }
+
+/* The transparent hand rail must not intercept the command buttons beneath it. */
+html body.xlw-royal-ui .hand-panel,
+html body.xlw-royal-ui #hand { pointer-events: none !important; }
+html body.xlw-royal-ui #hand .card { pointer-events: auto !important; }
+html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
