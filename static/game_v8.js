@@ -24438,45 +24438,48 @@ function renderStablePanel() {
     return div;
   })();
 
+  panel.style.touchAction = "manipulation";
+  const setContent = markup => window.XLWBattleFlow.renderPanel(panel, markup);
+
   if (window.XLW_defenseCounterActive) {
-    panel.innerHTML = `
+    setContent(`
       <button class="stable-action-btn primary" style="background: linear-gradient(135deg, #fa8c16, #fa541c); border-color: #ffd76a; color: #fff; height: auto; padding: 12px; font-size: 15px; cursor: pointer;" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">結束防守魔法並開始戰鬥結算</button>
-    `;
+    `);
     return;
   }
 
   // 起手換牌時顯示換牌按鈕
   if (mulliganActive) {
     if (isMultiplayer) {
-      panel.innerHTML = `
+      setContent(`
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
           <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
         </button>
-      `;
+      `);
     } else {
-      panel.innerHTML = `
+      setContent(`
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
           <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
         </button>
         <button class="stable-action-btn secondary" onclick="event.stopPropagation(); newGame()">
           <span class="btn-main-text">重置新局</span><span class="btn-sub-turn">RESET</span>
         </button>
-      `;
+      `);
     }
     return;
   }
 
   // 已確認起手換牌，但對手尚未就緒時，鎖定操作面板，避免發送提前結束回合指令
   if (phase === "起手換牌") {
-    panel.innerHTML = `
+    setContent(`
       <button class="stable-action-btn end" style="background: #2b2525; color: #888; border-color: #443c3c; cursor: not-allowed; font-size: 15px;" disabled>等待對手確認換牌...</button>
-    `;
+    `);
     return;
   }
 
   // 手牌超限除外模式的面板渲染
   if (window.XLW_exileExcessHandActive) {
-    panel.innerHTML = `
+    setContent(`
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
         <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
@@ -24487,13 +24490,13 @@ function renderStablePanel() {
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled>確認獻祭</button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled>取消選擇</button>
       <button id="stableActionEnd" class="stable-action-btn end" style="background: #fa8c16; color: #fff; cursor: not-allowed;" disabled>請點擊手牌置於除外區 (多餘 ${hand.length - 10} 張)</button>
-    `;
+    `);
     return;
   }
 
   // 對手回合（線上雙人模式或單人對抗AI）：直接鎖定整個面板，以防違規操作
   if (!isMyTurn) {
-    panel.innerHTML = `
+    setContent(`
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
         <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
@@ -24504,13 +24507,13 @@ function renderStablePanel() {
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled><span class="btn-icon">🩸</span><span class="btn-text">確認獻祭</span></button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled><span class="btn-icon">✕</span><span class="btn-text">取消選擇</span></button>
       <button id="stableActionEnd" class="stable-action-btn end enemy-turn" style="cursor: not-allowed;" disabled><span class="btn-main-text">對手行動中</span><span class="btn-sub-turn">ENEMY TURN</span></button>
-    `;
+    `);
     return;
   }
 
   // 待點選牌組抽牌狀態的面板渲染
   if (window.XLW_playerNeedsToDraw) {
-    panel.innerHTML = `
+    setContent(`
       <div class="stable-action-choice-group" style="opacity: 0.5; pointer-events: none;">
         <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 只能二選一</span></div>
         <div class="stable-action-row">
@@ -24521,13 +24524,13 @@ function renderStablePanel() {
       <button id="stableActionConfirm" class="stable-action-btn tribute" disabled><span class="btn-icon">🩸</span><span class="btn-text">確認獻祭</span></button>
       <button id="stableActionCancel" class="stable-action-btn tribute-cancel" disabled><span class="btn-icon">✕</span><span class="btn-text">取消選擇</span></button>
       <button id="stableActionEnd" class="stable-action-btn end deck-draw-pulse" onclick="event.stopPropagation(); window.xlwHandlePlayerDeckClick(event)"><span class="btn-main-text">抽取回合手牌</span><span class="btn-sub-turn">DRAW CARD</span></button>
-    `;
+    `);
     return;
   }
 
   // 正常對戰操作
   const isEnding = Boolean(window.XLW_isPlayerTurnEnding || phase === "結束階段");
-  panel.innerHTML = `
+  setContent(`
     <div class="stable-action-choice-group">
       <div class="stable-action-choice-tip"><span>⚡ 戰術 / 進攻 二選一</span></div>
       <div class="stable-action-row">
@@ -24554,7 +24557,7 @@ function renderStablePanel() {
         ? `<span class="btn-main-text">⏳ 結算中...</span><span class="btn-sub-turn">RESOLVING</span>` 
         : `<span class="btn-main-text">結束回合</span><span class="btn-sub-turn">END TURN</span>`}
     </button>
-  `;
+  `);
 
   // 按鈕狀態控制
   const tacticalBtn = $("stableActionTactical");

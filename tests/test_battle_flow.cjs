@@ -17,6 +17,13 @@ for(const [player,enemy,snapshot,expected]of [
  [true,true,{includeTurnPhase:true,XLW_enemyNeedsToDraw:false},[false,true]],
  [true,false,{},[true,false]]
 ]){const result=f.drawFlags(player,enemy,snapshot);assert.deepEqual([result.player,result.enemy],expected);tests++;}
+{
+ let replacements=0,pressedNode;const panel={set innerHTML(markup){replacements++;this.node={markup};},get innerHTML(){return this.node?.markup;}};
+ f.renderPanel(panel,'<button>confirm</button>');pressedNode=panel.node;
+ for(let i=0;i<100;i++)f.renderPanel(panel,'<button>confirm</button>');
+ assert.equal(panel.node,pressedNode);assert.equal(replacements,1);tests++;
+ f.renderPanel(panel,'<button disabled>waiting</button>');assert.notEqual(panel.node,pressedNode);assert.equal(replacements,2);tests++;
+}
 module.exports=(async()=>{
  for(const reply of ['sneak_recall','double_claw_choice','foodball_choice','foodball_summon','handy_meow_move_sync']){
   const ctx={crypto:{randomUUID},console,Promise,Date,Map,Set};vm.runInNewContext(flow,ctx);vm.runInNewContext(transport,ctx);const order=[];let release,client;

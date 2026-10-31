@@ -1,9 +1,17 @@
 (function(global){
   'use strict';
-  const scopes=new Map(),spent=new Map();
+  const scopes=new Map(),spent=new Map(),panelMarkup=new WeakMap();
   const replyFields={sneak_recall:['attZone','attIdx'],double_claw_choice:['attZone','attIdx'],foodball_choice:['zone','idx'],foodball_summon:['zone','idx'],handy_meow_move_sync:['fromZone','fromIdx']};
   const key=(zone,idx)=>zone+':'+idx;
   const signature=unit=>unit&&JSON.stringify([unit.card?.id,unit.card?.name,unit.summonedTurn]);
+  function renderPanel(panel,markup){
+    // Keep the button nodes alive across unrelated network/score renders.
+    // Replacing a pressed node prevents browsers from dispatching its click.
+    if(panelMarkup.get(panel)===markup)return false;
+    panel.innerHTML=markup;
+    panelMarkup.set(panel,markup);
+    return true;
+  }
   function exhaust(unit){if(!unit)return;unit.tapped=true;unit.attacking=false;unit.target=null;}
   function openCombat(attZone,attIdx,defZone,defIdx){
     const keys=[...new Set([key(attZone,attIdx),key(defZone,defIdx)])];
@@ -28,5 +36,5 @@
     return {player,enemy};
   }
   function forgetSide(side){for(const k of spent.keys())if(k.startsWith(side+'_'))spent.delete(k);}
-  global.XLWBattleFlow={drawFlags,openCombat,canBypass,settle,finish,reconcile,exhaust,forget(zone,idx){spent.delete(key(zone,idx));},forgetSide,reset(){scopes.clear();spent.clear();}};
+  global.XLWBattleFlow={renderPanel,drawFlags,openCombat,canBypass,settle,finish,reconcile,exhaust,forget(zone,idx){spent.delete(key(zone,idx));},forgetSide,reset(){scopes.clear();spent.clear();}};
 })(typeof window==='undefined'?globalThis:window);

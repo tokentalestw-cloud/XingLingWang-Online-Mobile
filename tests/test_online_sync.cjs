@@ -213,7 +213,7 @@ module.exports = (async () => {
   assert.equal(client.sock.sent.length, 0); assert.equal(client.sync.failed, true); tests++;
   // Exercise the actual setup function and transport together through a complete handshake.
   const setupStart = gameSource.indexOf('function setupWebSocketEvents() {');
-  const setupEnd = gameSource.indexOf('// Stop new local operations', setupStart);
+  const setupEnd = gameSource.indexOf('window.addEventListener("xlw-sync-ready"', setupStart);
   const setupSocket = socket();
   const setupContext = vm.createContext({ ws: setupSocket, room_id: 'room', player_id: 'a', player_role: 'player1',
     xlwOutgoingSeq: 0, xlwExpectedIncomingSeq: null, XLW_gameInProgress: false,
