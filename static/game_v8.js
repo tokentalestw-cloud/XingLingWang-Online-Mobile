@@ -1700,7 +1700,10 @@ window.xlwHandlePlayerDeckClick = async function(event) {
       window.xlwShowPhaseBanner("防守階段", "#3b82f6");
       setStatus(`抽牌完成！前一回合對手有進攻宣言，自動進入「防守階段」！`);
       render();
-      await sleep(500);
+      if (isMultiplayer) {
+        sendFullGameStateToOpponent(true);
+      }
+      await sleep(350);
       await xlwResolvePlayerDefensePhase();
     } else {
       window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
@@ -1709,9 +1712,9 @@ window.xlwHandlePlayerDeckClick = async function(event) {
       await checkCrazyFanSummon();
       setStatus(`抽牌完成！第 ${turn} 回合「召喚階段」開始！`);
       render();
-    }
-    if (isMultiplayer) {
-      sendFullGameStateToOpponent();
+      if (isMultiplayer) {
+        sendFullGameStateToOpponent(true);
+      }
     }
     return;
   }
@@ -1855,15 +1858,14 @@ window.xlwMulliganToggleFromModal = function(cardIdx) {
 
 async function confirmMulligan() {
   if (!mulliganActive) return;
+  try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
+  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   const confirmButton = $("stableActionMulliganConfirm") || document.getElementById("stableActionMulliganConfirm");
   if (confirmButton) {
     confirmButton.disabled = true;
     confirmButton.classList.add("btn-processing", "btn-pressed-instant");
     confirmButton.innerHTML = `<span class="btn-main-text">⏳ 確認中…</span><span class="btn-sub-turn">PROCESSING</span>`;
-    confirmButton.style.pointerEvents = "none";
   }
-  try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
-  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (typeof window.xlwCloseMulliganInspector === "function") {
     window.xlwCloseMulliganInspector();
   }
@@ -1891,11 +1893,13 @@ async function confirmMulligan() {
   
   if (isMultiplayer) {
     // 廣播給對手說我們 Mulligan 好了，並同步換牌後的手牌與牌庫
-    ws.send(JSON.stringify({
-      action: "mulligan_confirm",
-      hand: hand,
-      deck: deck
-    }));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "mulligan_confirm",
+        hand: hand,
+        deck: deck
+      }));
+    }
     setStatus("我方起手換牌已確認，正在等待對手換牌中...");
     render();
     await checkMulliganCompletion();
@@ -11988,7 +11992,9 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     unit.attacking = false;
     unit.target = null;
     unit.tapped = false;
-    logBattle(`\u6211\u65b9\u53d6\u6d88\u9032\u653b\u5ba3\u8a00\uff1a\u661f\u661f\u6230\u7dda${idx + 1}\uff0c${unitName(unit)}`);
+    logBattle(`我方取消進攻宣言：星星戰線${idx + 1}，${unitName(unit)}`);
+    const stillHasAttackers = ["player_front", "player_back"].some(z => field[z].some(u => u && u.attacking));
+    window.XLW_DEFENSE_RULE.enemyNeedsDefense = stillHasAttackers;
     
     if (isMultiplayer) {
       ws.send(JSON.stringify({
@@ -12058,8 +12064,9 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     unit.target = { zone: targetZone, idx: idx };
     unit.tapped = true;
     await xlwOnPlayerUnitTapped(zone, idx);
+    window.XLW_DEFENSE_RULE.enemyNeedsDefense = true;
     
-    logBattle(`\u6211\u65b9\u9032\u653b\u5ba3\u8a00\uff1a\u661f\u661f\u6230\u7dda${idx + 1}\uff0c${unitName(unit)}\u0020\u6307\u5411\u5c0d\u624b`);
+    logBattle(`我方進攻宣言：星星戰線${idx + 1}，${unitName(unit)} 指向對手`);
 
     if (isMultiplayer) {
       ws.send(JSON.stringify({
@@ -12598,6 +12605,9 @@ async function xlwResolvePlayerDefensePhase() {
     logBattle("—— 我方防守階段結束，進入召喚階段 ——");
     setStatus("防守階段結算完成！已進入「召喚階段」，您可以開始召喚單位。");
     render();
+    if (isMultiplayer) {
+      sendFullGameStateToOpponent(true);
+    }
     await xlwCheckBananaMarquisMovement(true);
     await window.xlwResolveTurnStartEffects(true);
 
@@ -19415,8 +19425,8 @@ async function runEnemyTurn() {
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
   if (window.XLW_isPlayerTurnEnding) return;
-  if (isMultiplayer && (!isMyTurn || mulliganActive || phase === "起手換牌" || !window.XLW_sync?.ready)) {
-    setStatus(mulliganActive || phase === "起手換牌" ? "請先完成雙方起手換牌。" : !window.XLW_sync?.ready ? "連線正在同步，請稍候。" : "目前為對手回合，請等待對手行動。");
+  if (isMultiplayer && (!isMyTurn || mulliganActive || phase === "起手換牌")) {
+    setStatus(mulliganActive || phase === "起手換牌" ? "請先完成雙方起手換牌。" : "目前為對手回合，請等待對手行動。");
     renderStablePanel();
     return;
   }
@@ -19433,7 +19443,6 @@ async function endPlayerTurnAndRunEnemy() {
     endBtnEl.disabled = true;
     endBtnEl.classList.add("btn-processing", "btn-pressed-instant");
     endBtnEl.innerHTML = `<span class="btn-main-text">⏳ 正在結算...</span><span class="btn-sub-turn">RESOLVING</span>`;
-    endBtnEl.style.pointerEvents = "none";
   }
 
   const revertButtonState = () => {
@@ -24420,16 +24429,6 @@ function renderStablePanel() {
         </button>
       `;
     }
-    const mConfirm = $("stableActionMulliganConfirm");
-    if (mConfirm) {
-      const handleDown = (e) => {
-        try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
-        if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
-        mConfirm.classList.add("btn-pressed-instant");
-      };
-      mConfirm.onpointerdown = handleDown;
-      mConfirm.ontouchstart = handleDown;
-    }
     return;
   }
 
@@ -24559,15 +24558,6 @@ function renderStablePanel() {
       endBtn.innerHTML = `<span>⏳ 正在結算回合...</span>`;
     } else {
       endBtn.disabled = isAiRunning || phase === "防守階段";
-      if (!endBtn.disabled) {
-        const handleEndDown = (e) => {
-          try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
-          if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
-          endBtn.classList.add("btn-pressed-instant");
-        };
-        endBtn.onpointerdown = handleEndDown;
-        endBtn.ontouchstart = handleEndDown;
-      }
     }
   }
 
@@ -25364,19 +25354,21 @@ function setupWebSocketEvents() {
           }
         }
 
-        // 當對手傳送包含進攻需求時，強制還原並鎖定敵方進攻單位的 attacking 狀態
-        if (s.enemyNeedsDefense) {
-          if (window.XLW_DEFENSE_RULE) window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
-          for (const zone of ["enemy_front", "enemy_back"]) {
-            if (field[zone]) {
-              field[zone].forEach(u => {
-                if (u && (u.target || u.attacking)) {
-                  u.attacking = true;
-                  u.tapped = true;
-                }
-              });
-            }
+        // 當對手傳送包含進攻需求或敵方場上有進攻/目標單位時，強制還原並鎖定敵方進攻單位的 attacking 狀態
+        let hasEnemyAttackersInState = false;
+        for (const zone of ["enemy_front", "enemy_back"]) {
+          if (field[zone]) {
+            field[zone].forEach(u => {
+              if (u && (u.target || u.attacking)) {
+                u.attacking = true;
+                u.tapped = true;
+                hasEnemyAttackersInState = true;
+              }
+            });
           }
+        }
+        if (s.enemyNeedsDefense || hasEnemyAttackersInState) {
+          if (window.XLW_DEFENSE_RULE) window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
         }
 
         // 同步場地卡數據（並對稱交換我方與敵方場地卡）
@@ -27039,17 +27031,6 @@ function setupWebSocketEvents() {
   };
 }
 
-// Stop new local operations while disconnected/resuming; existing choice dialogs can finish.
-for (const eventName of ["pointerdown", "click"]) {
-  document.addEventListener(eventName, event => {
-    const sync = window.XLW_sync;
-    if (!isMultiplayer || !sync || sync.ready || sync.processing > 0) return;
-    if (event.target.closest?.("#xlwReturnTitleBtn, #xlwSyncExit")) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    setStatus("正在恢復連線及補齊操作，請稍候再行動。");
-  }, true);
-}
 window.addEventListener("xlw-sync-ready", () => {
   setStatus(window.XLW_gameInProgress ? "雙人連線同步完成，可以繼續對決。" : "連線已就緒，等待雙方選擇牌組。");
 });

@@ -175,7 +175,7 @@ class ConnectionManager:
         old_socket = r.get(role_assigned, (None, None))[1]
         r["players"][role_assigned] = player_id
         r[role_assigned] = (player_id, websocket)
-        r["ready"][role_assigned] = websocket.query_params.get("protocol") != "2"
+        r["ready"][role_assigned] = not is_reconnect or websocket.query_params.get("protocol") != "2"
         if old_socket is not None and old_socket is not websocket:
             try:
                 await old_socket.close()
@@ -343,7 +343,7 @@ class ConnectionManager:
                 return
             message_id = message.get("message_id")
             if active_ws is not None and active_ws.query_params.get("protocol") == "2":
-                if not r["ready"].get(sender_role) and action != "leave_room":
+                if not r["ready"].get(sender_role) and action not in ("leave_room", "turn_order_pick", "turn_order_choice", "multi_deck_selected", "sync_deck", "mulligan_confirm", "end_turn"):
                     return
                 if action not in ("backup_client_state",):
                     if not isinstance(message_id, str) or len(message_id) > 100:

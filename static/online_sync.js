@@ -79,10 +79,11 @@
         catch (error) { this.stop(error); throw error; }
         finally { this.sendingAction = null; }
       }
-      if (this.ready) this.raw(message);
+      if (this.ready || this.socket?.readyState === 1) this.raw(message);
     }
     resend() {
-      if (!this.ready || this.failed) return;
+      if (this.failed) return;
+      if (!this.ready && this.socket?.readyState !== 1) return;
       for (const message of this.pending.values()) this.raw(message);
     }
     attach(socket) {
