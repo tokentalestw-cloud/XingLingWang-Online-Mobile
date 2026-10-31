@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import secrets
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -347,6 +348,9 @@ class ConnectionManager:
                     if delivery.duplicate(sender_role, message_id):
                         await active_ws.send_json({"type": "delivery_ack", "message_id": message_id})
                         return
+            if action in ("turn_order_pick", "turn_order_choice"):
+                await self._handle_turn_order(r, sender_role, message, active_ws)
+                return
             if sender_role:
                 if action == "backup_client_state":
                     state_data = message.get("state")
@@ -368,6 +372,7 @@ class ConnectionManager:
                 elif action in ("coin_toss_roll", "coin_toss_choice", "mulligan_confirm", "summon", "end_turn"):
                     r["game_active"] = True
                 elif action == "new_game":
+                    r["turn_order"] = None
                     r["decks"].clear()
                     r["sync_decks"].clear()
                     r["last_state"].clear()
@@ -402,6 +407,63 @@ class ConnectionManager:
                     print(f"Error broadcasting message to target player (retained for replay): {e}")
             if action == "leave_room":
                 self.rooms.pop(room_id, None)
+
+    async def _handle_turn_order(self, r, role, message, socket):
+        """Choose once on the server and journal the same event for BOTH clients."""
+        message_id = message.get("message_id")
+        action = message.get("action")
+        state = r.get("turn_order")
+        error = None
+        event = None
+        if action == "turn_order_pick":
+            selected = message.get("selected")
+            if role != "player1" or len(r["decks"]) < 2:
+                error = "請等待雙方完成牌組選擇，再由房主抽卡。"
+            elif type(selected) is not int or selected not in (0, 1):
+                error = "請從兩張決定卡中選一張。"
+            elif state is not None:
+                error = "已抽出決定卡，不能重新抽取。"
+            else:
+                cards = ["player1", "player2"]
+                if secrets.randbelow(2):
+                    cards.reverse()
+                state = {"draw_id": secrets.token_hex(12), "selected": selected,
+                         "winner_role": cards[selected], "first_role": None}
+                r["turn_order"] = state
+                event = dict(action="turn_order_reveal", **state)
+        else:
+            choice = message.get("choice")
+            if not state or role != state["winner_role"] or message.get("draw_id") != state["draw_id"]:
+                error = "只有取得決定權的玩家可以選擇先後攻。"
+            elif choice not in ("first", "second") or state["first_role"] is not None:
+                error = "先後攻選擇無效，或已經確認。"
+            else:
+                state["first_role"] = role if choice == "first" else ("player2" if role == "player1" else "player1")
+                event = dict(action="turn_order_confirmed", **state)
+        events = []
+        if event:
+            r["game_active"] = True
+            for recipient in ("player1", "player2"):
+                events.append((recipient, r["delivery"].append(recipient, event)))
+        if message_id:
+            r["delivery"].remember(role, message_id)
+            try:
+                await socket.send_json({"type": "delivery_ack", "message_id": message_id})
+            except Exception:
+                pass
+        if error:
+            try:
+                await socket.send_json({"type": "turn_order_error", "message": error})
+            except Exception:
+                pass
+        for recipient, event in events:
+            target = r.get(recipient, (None, None))[1]
+            if target is not None and r["ready"].get(recipient, False):
+                try:
+                    await target.send_json(event)
+                except Exception:
+                    pass  # Already committed for replay on reconnect.
+
 
     def flip_message_coordinates(self, msg: dict) -> dict:
         flipped = json.loads(json.dumps(msg))

@@ -25310,10 +25310,10 @@ function setupWebSocketEvents() {
       } else {
         setStatus("對手暫時斷線，正在等待其重新連線...");
       }
-    } else if (data.action === "coin_toss_roll") {
-      await showCoinRollResult(data.guess, data.result);
-    } else if (data.action === "coin_toss_choice") {
-      applyCoinTossChoice(data.winner_role, data.choice);
+    } else if (data.action === "turn_order_reveal" || data.action === "turn_order_confirmed") {
+      window.XLWTurnOrder.receive(data);
+    } else if (data.type === "turn_order_error") {
+      window.XLWTurnOrder.error(data.message);
     } else if (data.action === "mulligan_confirm") {
       opponent_mulligan_done = true;
       if (Array.isArray(data.hand)) {
@@ -30079,116 +30079,16 @@ async function showPlayerExtraDeck() {
   showExtraDeckDetailModal("我方額外牌庫", playerExtraDeck, "player");
 }
 
-// ===== 🪙 投擲硬幣與先後攻決定機制 =====
-
-function getOrCreateCoinTossOverlay() {
-  let overlay = document.getElementById("xlw-coin-toss-overlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "xlw-coin-toss-overlay";
-    overlay.className = "xlw-chain-overlay";
-    overlay.style.cssText = `
-      position: fixed;
-      inset: 0;
-      background: rgba(8, 6, 16, 0.92);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000000;
-      backdrop-filter: blur(14px);
-    `;
-    overlay.innerHTML = `
-      <div class="confirm-box xlw-coin-toss-box">
-        <h2 class="xlw-coin-toss-title">🪙 命運硬幣投擲 🪙</h2>
-        <div id="xlw-coin-graphic" class="xlw-coin-graphic">🪙</div>
-        <div id="xlw-coin-toss-status" class="xlw-coin-toss-status-bar"></div>
-        <div id="xlw-coin-toss-actions" class="xlw-coin-toss-actions-row"></div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
-  return overlay;
+// ===== 兩張同背決定卡：單人本機洗混、雙人伺服器統一決定 =====
+function xlwTurnOrderOptions(multi) {
+  return {multi,role:multi?player_role:"player1",send:message=>ws.send(JSON.stringify(message)),
+    onStart:goesFirst=>{
+      if (multi) { window.XLW_coinTossFirstGo = goesFirst; isMyTurn = goesFirst; startMultiplayerGameActual(); }
+      else startSinglePlayerGameActual(goesFirst);
+    }};
 }
-
-function startSinglePlayerCoinToss() {
-  if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('coin');
-  const overlay = getOrCreateCoinTossOverlay();
-  overlay.style.display = "flex";
-  
-  const graphic = document.getElementById("xlw-coin-graphic");
-  const status = document.getElementById("xlw-coin-toss-status");
-  const actions = document.getElementById("xlw-coin-toss-actions");
-  
-  graphic.style.transform = "none";
-  graphic.textContent = "🪙";
-  status.textContent = "請猜測硬幣的正反面，猜中者可決定先攻或後攻。";
-  actions.innerHTML = "";
-  
-  const frontBtn = document.createElement("button");
-  frontBtn.className = "forest-summon-btn";
-  frontBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-  frontBtn.textContent = "正面 (Heads)";
-  frontBtn.onclick = () => rollSinglePlayerCoin("正面");
-  
-  const backBtn = document.createElement("button");
-  backBtn.className = "forest-summon-btn";
-  backBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-  backBtn.textContent = "反面 (Tails)";
-  backBtn.onclick = () => rollSinglePlayerCoin("反面");
-  
-  actions.appendChild(frontBtn);
-  actions.appendChild(backBtn);
-}
-
-async function rollSinglePlayerCoin(playerGuess) {
-  const graphic = document.getElementById("xlw-coin-graphic");
-  const status = document.getElementById("xlw-coin-toss-status");
-  const actions = document.getElementById("xlw-coin-toss-actions");
-  
-  actions.innerHTML = "";
-  status.textContent = `您猜測了：${playerGuess}。硬幣旋轉中...`;
-  
-  graphic.style.animation = "spin 0.1s infinite linear";
-  await sleep(1000);
-  graphic.style.animation = "none";
-  
-  const coinResult = Math.random() < 0.5 ? "正面" : "反面";
-  graphic.textContent = coinResult === "正面" ? "🟡" : "⚪";
-  
-  const win = (playerGuess === coinResult);
-  if (win) {
-    status.innerHTML = `🎉 結果是【${coinResult}】！您猜對了！<br>請選擇您要先攻還是後攻：`;
-    
-    const firstBtn = document.createElement("button");
-    firstBtn.className = "forest-summon-btn";
-    firstBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    firstBtn.textContent = "我方先攻 (Go First)";
-    firstBtn.onclick = () => startSinglePlayerGameActual(true);
-    
-    const secondBtn = document.createElement("button");
-    secondBtn.className = "forest-summon-btn";
-    secondBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    secondBtn.textContent = "我方後攻 (Go Second)";
-    secondBtn.onclick = () => startSinglePlayerGameActual(false);
-    
-    actions.appendChild(firstBtn);
-    actions.appendChild(secondBtn);
-  } else {
-    status.innerHTML = `❌ 結果是【${coinResult}】！您猜錯了！<br>由對手 AI 決定先後攻中...`;
-    await sleep(1200);
-    
-    const aiFirst = Math.random() < 0.5;
-    if (aiFirst) {
-      status.innerHTML = `對手 AI 決定：<b>AI 先攻，我方後攻！</b><br>遊戲即將開始...`;
-      await sleep(1200);
-      startSinglePlayerGameActual(false);
-    } else {
-      status.innerHTML = `對手 AI 決定：<b>我方先攻，AI 後攻！</b><br>遊戲即將開始...`;
-      await sleep(1200);
-      startSinglePlayerGameActual(true);
-    }
-  }
-}
+function startSinglePlayerCoinToss() { window.XLWTurnOrder.start(xlwTurnOrderOptions(false)); }
+function getOrCreateCoinTossOverlay() { return document.getElementById("xlw-coin-toss-overlay"); }
 
 function startSinglePlayerGameActual(playerGoesFirst) {
   window.XLW_isPuzzleMode = false;
@@ -30215,116 +30115,7 @@ function startSinglePlayerGameActual(playerGoesFirst) {
   logBattle(`遊戲開始，我方為${isMyTurn ? "先攻" : "後攻"}，進入起手換牌階段。`);
 }
 
-function startMultiplayerCoinToss() {
-  const overlay = getOrCreateCoinTossOverlay();
-  overlay.style.display = "flex";
-  
-  const graphic = document.getElementById("xlw-coin-graphic");
-  const status = document.getElementById("xlw-coin-toss-status");
-  const actions = document.getElementById("xlw-coin-toss-actions");
-  
-  graphic.style.transform = "none";
-  graphic.textContent = "🪙";
-  actions.innerHTML = "";
-  
-  if (player_role === "player1") {
-    status.textContent = "請猜測硬幣的正反面，猜中者可決定先攻或後攻。";
-    
-    const frontBtn = document.createElement("button");
-    frontBtn.className = "forest-summon-btn";
-    frontBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    frontBtn.textContent = "正面 (Heads)";
-    frontBtn.onclick = () => rollMultiplayerCoin("正面");
-    
-    const backBtn = document.createElement("button");
-    backBtn.className = "forest-summon-btn";
-    backBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    backBtn.textContent = "反面 (Tails)";
-    backBtn.onclick = () => rollMultiplayerCoin("反面");
-    
-    actions.appendChild(frontBtn);
-    actions.appendChild(backBtn);
-  } else {
-    status.textContent = "等待房主進行硬幣投擲猜測...";
-  }
-}
-
-async function rollMultiplayerCoin(playerGuess) {
-  const coinResult = Math.random() < 0.5 ? "正面" : "反面";
-  if (isMultiplayer) {
-    ws.send(JSON.stringify({
-      action: "coin_toss_roll",
-      guess: playerGuess,
-      result: coinResult
-    }));
-  }
-  await showCoinRollResult(playerGuess, coinResult);
-}
-
-async function showCoinRollResult(guess, result) {
-  const graphic = document.getElementById("xlw-coin-graphic");
-  const status = document.getElementById("xlw-coin-toss-status");
-  const actions = document.getElementById("xlw-coin-toss-actions");
-  
-  actions.innerHTML = "";
-  status.textContent = `對手/房主猜測了：${guess}。硬幣旋轉中...`;
-  
-  graphic.style.animation = "spin 0.1s infinite linear";
-  await sleep(1000);
-  graphic.style.animation = "none";
-  
-  graphic.textContent = result === "正面" ? "🟡" : "⚪";
-  
-  const hostWin = (guess === result);
-  const winner = hostWin ? "player1" : "player2";
-  
-  if (player_role === winner) {
-    status.innerHTML = `🎉 結果是【${result}】！您贏得了先後攻選擇權！<br>請選擇您要先攻還是後攻：`;
-    
-    const firstBtn = document.createElement("button");
-    firstBtn.className = "forest-summon-btn";
-    firstBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    firstBtn.textContent = "我方先攻 (Go First)";
-    firstBtn.onclick = () => chooseMultiplayerTurnOrder("first");
-    
-    const secondBtn = document.createElement("button");
-    secondBtn.className = "forest-summon-btn";
-    secondBtn.style.cssText = "padding: 10px 24px; min-width: 150px; font-size: 14px; cursor: pointer; display: inline-block;";
-    secondBtn.textContent = "我方後攻 (Go Second)";
-    secondBtn.onclick = () => chooseMultiplayerTurnOrder("second");
-    
-    actions.appendChild(firstBtn);
-    actions.appendChild(secondBtn);
-  } else {
-    status.innerHTML = `❌ 結果是【${result}】！${winner === "player1" ? "房主" : "房客"}贏得了選擇權！<br>等待對手決定先後攻順序...`;
-  }
-}
-
-function chooseMultiplayerTurnOrder(choice) {
-  if (isMultiplayer) {
-    ws.send(JSON.stringify({
-      action: "coin_toss_choice",
-      winner_role: player_role,
-      choice: choice
-    }));
-  }
-  applyCoinTossChoice(player_role, choice);
-}
-
-function applyCoinTossChoice(winnerRole, choice) {
-  const overlay = getOrCreateCoinTossOverlay();
-  overlay.style.display = "none";
-  
-  if (player_role === winnerRole) {
-    isMyTurn = (choice === "first");
-  } else {
-    isMyTurn = (choice !== "first");
-  }
-  
-  window.XLW_coinTossFirstGo = isMyTurn; // 記錄硬幣決定之先後攻結果
-  
-  startMultiplayerGameActual();
-}
+function startMultiplayerCoinToss() { window.XLWTurnOrder.start(xlwTurnOrderOptions(true)); }
 
 function startMultiplayerGameActual() {
   window.XLW_isPuzzleMode = false;
@@ -30865,6 +30656,7 @@ function saveLocalGameState() {
       gameInProgress: window.XLW_gameInProgress || false,
       XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
       XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
+      turnOrder: window.XLWTurnOrder?.snapshot() || null,
       XLW_coinTossFirstGo: typeof window.XLW_coinTossFirstGo === "boolean" ? window.XLW_coinTossFirstGo : null,
       playerNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.playerNeedsDefense : false,
       enemyNeedsDefense: window.XLW_DEFENSE_RULE ? window.XLW_DEFENSE_RULE.enemyNeedsDefense : false,
@@ -30946,6 +30738,7 @@ window.xlwApplySavedStateObject = function(s) {
     window.XLW_playerNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
     window.XLW_enemyNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
     if (typeof s.XLW_coinTossFirstGo === "boolean") window.XLW_coinTossFirstGo = s.XLW_coinTossFirstGo;
+    if (s.turnOrder) window.XLWTurnOrder.restore(s.turnOrder, xlwTurnOrderOptions(true));
     
     if (s.playerNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
       window.XLW_DEFENSE_RULE.playerNeedsDefense = s.playerNeedsDefense;
@@ -32918,6 +32711,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
     return window.xlwLeaveOnlineRoom(true);
   }
   window.XLW_isPuzzleMode = false;
+  window.XLWTurnOrder?.hide();
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   const pModal = document.getElementById("xlwPuzzleModal"); if (pModal) pModal.remove();
   const resPanel = document.getElementById("xlwResultPanel"); if (resPanel) resPanel.classList.remove("show");
@@ -34186,7 +33980,7 @@ function renderEnemyFloatingHand() {
     document.body.appendChild(container);
   }
   
-  const coinOverlay = document.getElementById("xlwCoinOverlay");
+  const coinOverlay = document.getElementById("xlw-coin-toss-overlay");
   const coinShowing = coinOverlay && coinOverlay.style.display !== "none" && coinOverlay.style.display !== "";
   const welcomeOverlay = document.getElementById("xlwWelcomeOverlay");
   const welcomeShowing = welcomeOverlay && welcomeOverlay.style.display !== "none" && welcomeOverlay.style.display !== "";
@@ -34228,7 +34022,7 @@ function renderEnemyFloatingHand() {
 
 window.checkMultiplayerDecksReady = function() {
   if (window.XLW_myMultiDeckSelected && window.XLW_opponentMultiDeckSelected) {
-    setStatus("雙方皆已確認牌組！進入擲硬幣決定先後順序...");
+    setStatus("雙方皆已確認牌組！開始洗混決定卡，選擇先後攻決定權...");
     const modal = document.getElementById("xlwPreBattleDeckSelectOverlay");
     if (modal) modal.style.setProperty("display", "none", "important");
     newGameMultiplayer();
