@@ -24784,104 +24784,98 @@ function logBattle(text) {
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
+// Uniformly fit the visible battlefield, including side zones, inside the HUD rails.
+// Empty space in the old board wrapper must not influence the fit.
+function xlwFitBoardRect(bounds, space) {
+  const scale = Math.min(
+    (space.right - space.left) / (bounds.right - bounds.left),
+    (space.bottom - space.top) / (bounds.bottom - bounds.top)
+  );
+  return {
+    scale,
+    x: (space.left + space.right - (bounds.left + bounds.right) * scale) / 2,
+    y: (space.top + space.bottom - (bounds.top + bounds.bottom) * scale) / 2
+  };
+}
+
+let xlwBoardFitFrame = 0;
+let xlwBoardHudObserver = null;
 function adjustBoardScale() {
-  const board = $("boardWrap");
-  if (!board) return;
+  if (xlwBoardFitFrame) return;
+  xlwBoardFitFrame = requestAnimationFrame(() => {
+    xlwBoardFitFrame = 0;
+    const board = $("boardWrap");
+    if (!board || !board.getClientRects().length) return;
+    const root = document.documentElement;
+    const rotated = root.classList.contains("xlw-force-landscape") && innerHeight > innerWidth;
+    const width = rotated ? innerHeight : innerWidth;
+    const height = rotated ? innerWidth : innerHeight;
+    root.style.setProperty("--xlw-ui-width", width + "px");
+    root.style.setProperty("--xlw-ui-height", height + "px");
+    const compact = matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
+    root.classList.toggle("xlw-mobile-layout", compact);
+    document.body.classList.toggle("xlw-mobile-layout", compact);
 
-  // Keep the existing laptop board geometry legible between the two HUD rails.
-  const rotatedUI = document.documentElement.classList.contains("xlw-force-landscape") && window.innerHeight > window.innerWidth;
-  const uiWidth = rotatedUI ? window.innerHeight : window.innerWidth;
-  const uiHeight = rotatedUI ? window.innerWidth : window.innerHeight;
-  document.documentElement.style.setProperty("--xlw-ui-width", uiWidth + "px");
-  document.documentElement.style.setProperty("--xlw-ui-height", uiHeight + "px");
-  const mobileBoardScale = Math.max(0.22, Math.min((uiHeight - 132) / 794, (uiWidth - 356) / 1170, 0.4));
-  document.documentElement.style.setProperty("--xlw-ui-mobile-board-scale", String(mobileBoardScale));
-  const hudBoardScale = Math.max(0.35, Math.min(
-    (window.innerHeight - 242) / 794,
-    (window.innerWidth - 508) / 1170,
-    0.88
-  ));
-  document.documentElement.style.setProperty("--xlw-ui-board-scale", String(hudBoardScale));
+    // getBoundingClientRect is physical; the forced landscape UI uses logical axes.
+    const logicalRect = element => {
+      if (!element || !element.getClientRects().length || getComputedStyle(element).visibility === "hidden") return null;
+      const r = element.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return rotated
+        ? {left: r.top, right: r.bottom, top: height - r.right, bottom: height - r.left}
+        : {left: r.left, right: r.right, top: r.top, bottom: r.bottom};
+    };
+    const origin = logicalRect(board);
+    if (!origin) return;
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(board).transform);
+    const currentScale = Math.hypot(matrix.a, matrix.b) || 1;
+    const pieces = [...board.children]
+      .filter(e => e.matches(".row, .zone, .board-playmat, .battle-line-strip"))
+      .map(logicalRect).filter(Boolean);
+    if (!pieces.length) return;
+    // Reserve the bevel, shadows and badges around the fixed geometry as well.
+    const bounds = {
+      left: (Math.min(...pieces.map(r => r.left)) - origin.left) / currentScale - 12,
+      right: (Math.max(...pieces.map(r => r.right)) - origin.left) / currentScale + 12,
+      top: (Math.min(...pieces.map(r => r.top)) - origin.top) / currentScale - 12,
+      bottom: (Math.max(...pieces.map(r => r.bottom)) - origin.top) / currentScale + 16
+    };
+    const gap = compact ? 8 : 12;
+    const score = logicalRect($("scoreBadgeFixed"));
+    const commands = logicalRect($("stableActionPanel"));
+    const phasePanel = logicalRect($("phaseDisplayPanelHard"));
+    const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
+    const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
+    const hand = logicalRect(document.querySelector(".hand-panel"));
+    const space = {
+      left: Math.max(gap, score ? score.right + gap : gap),
+      right: Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
+      top: Math.max(gap, enemyHand ? enemyHand.bottom + gap : gap, toolbar ? toolbar.bottom + gap : gap),
+      bottom: Math.min(height - gap, hand ? hand.top - gap : height)
+    };
+    if (space.right <= space.left || space.bottom <= space.top) return;
+    const fit = xlwFitBoardRect(bounds, space);
+    root.style.setProperty("--xlw-field-scale", String(fit.scale));
+    root.style.setProperty("--xlw-field-x", fit.x + "px");
+    root.style.setProperty("--xlw-field-y", fit.y + "px");
 
-  const isMobile = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
-  const isPortraitMobile = false; // Forced to false to prevent portrait scaling recalculations and layout jumping on physical rotation
-  const isLandscapeMobile = isMobile && !isPortraitMobile;
-
-  const boardNaturalHeight = isPortraitMobile ? 920 : 940;
-  const boardNaturalWidth = isPortraitMobile ? 760 : 980;
-
-  let finalScale;
-  if (isMobile) {
-    if (isLandscapeMobile) {
-      // 📱 橫向手機：最大化戰場 (0.45 比例置中，以高度貼合螢幕為準)
-      finalScale = 0.40;
-      document.documentElement.classList.add("xlw-mobile-layout");
-      document.body.classList.add("xlw-mobile-layout");
-    } else {
-      // 📱 直向手機
-      const safeSidePadding = 0;
-      const availableWidth = Math.max(320, window.innerWidth - safeSidePadding);
-      finalScale = Math.min((availableWidth / boardNaturalWidth), 0.94);
-      document.documentElement.classList.add("xlw-mobile-layout");
-      document.body.classList.add("xlw-mobile-layout");
+    // Measure the actual strings: short labels can be larger without wrapping names.
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (context) board.querySelectorAll(".mini-meta-name, .mini-meta-stats, .forest-3d-overlay span, .grave-3d-overlay span").forEach(label => {
+      const css = getComputedStyle(label);
+      const max = label.matches(".mini-meta-name") ? 16 : label.matches(".mini-meta-stats") ? 14 : 20;
+      const available = Math.max(1, label.parentElement.clientWidth - 8);
+      context.font = `${css.fontWeight} ${max}px ${css.fontFamily}`;
+      const measured = context.measureText(label.textContent.trim()).width;
+      label.style.setProperty("--xlw-fit-font", Math.min(max, max * available / Math.max(1, measured)).toFixed(2) + "px");
+    });
+    if (!xlwBoardHudObserver && typeof ResizeObserver !== "undefined") {
+      xlwBoardHudObserver = new ResizeObserver(adjustBoardScale);
+      [$("scoreBadgeFixed"), $("stableActionPanel"), $("phaseDisplayPanelHard"), $("xlwEnemyFloatingHand"), document.querySelector(".hand-panel")]
+        .filter(Boolean).forEach(e => xlwBoardHudObserver.observe(e));
     }
-  } else {
-    // 💻 電腦版
-    const topbarH = 48;
-    const handPanelH = 200;
-    const padding = 16;
-    const availableHeight = window.innerHeight - topbarH - handPanelH - padding;
-    const availableWidth = window.innerWidth - 32;
-    const scaleH = availableHeight / boardNaturalHeight;
-    const scaleW = availableWidth / boardNaturalWidth;
-    finalScale = Math.min(scaleH, scaleW, 1.0);
-    document.documentElement.classList.remove("xlw-mobile-layout");
-    document.body.classList.remove("xlw-mobile-layout");
-  }
-
-  // 設定 CSS 變數與縮放樣式
-  document.documentElement.style.setProperty("--xlw-mobile-scale", String(finalScale));
-  
-  if (isMobile && isLandscapeMobile) {
-    board.style.transform = `translate(-50%, calc(-50% + 25px)) scale(${finalScale})`;
-    board.style.transformOrigin = "center center";
-    board.style.position = "absolute";
-    board.style.top = "50%";
-    board.style.left = "50%";
-    board.style.margin = "0";
-  } else {
-    board.style.transform = `scale(${finalScale})`;
-    board.style.transformOrigin = "top center";
-    board.style.position = "";
-    board.style.top = "";
-    board.style.left = "";
-    board.style.margin = "0 auto";
-  }
-
-  const shell = document.querySelector(".game-shell");
-  const wrap = document.querySelector(".board-wrap");
-
-  if (isMobile && isLandscapeMobile) {
-    if (shell) {
-      shell.style.height = "calc(100 * var(--xvh, 1vh))";
-      shell.style.minHeight = "calc(100 * var(--xvh, 1vh))";
-    }
-    if (wrap) {
-      wrap.style.height = "100%";
-      wrap.style.minHeight = "100%";
-    }
-  } else {
-    if (shell) {
-      const h = Math.ceil(boardNaturalHeight * finalScale);
-      shell.style.height = `${h}px`;
-      shell.style.minHeight = `${h}px`;
-    }
-    if (wrap) {
-      const h = Math.ceil(boardNaturalHeight * finalScale);
-      wrap.style.height = `${h}px`;
-      wrap.style.minHeight = `${h}px`;
-    }
-  }
+  });
 }
 
 function setupDebugToggle() {
@@ -32970,7 +32964,7 @@ window.xlwCheckLandscapeOrientation = function() {
   // 以「實際可視區域」判斷：只要視口是直的，就用 CSS 旋轉成橫向畫面。
   // （iOS 開啟「直向鎖定」時，視口永遠是直的 → 畫面永遠以橫向顯示、不會再變動）
   const isPortrait = window.innerHeight > window.innerWidth;
-  const shouldRotate = isTouchDevice && isPortrait;
+  const shouldRotate = isPortrait && (isTouchDevice || window.innerWidth <= 600);
   const root = document.documentElement;
   const changed = root.classList.contains("xlw-force-landscape") !== shouldRotate;
 
