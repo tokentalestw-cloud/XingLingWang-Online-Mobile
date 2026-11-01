@@ -476,6 +476,26 @@
     "art_subtype": "人型，勇者"
   },
   {
+    "id": "ASSR-SKT-0010",
+    "name": "火把骷髏 小哀妮",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "2",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你在戰術階段選擇佈陣時，可使你墓地的此卡被額外打出",
+    "image": "/static/card_images/assr_skt_0010.jpeg",
+    "original_file": "骷髏人/0002_93ASSR小哀妮.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "不死族"
+  },
+  {
     "id": "ASSR-VLG-0012",
     "name": "雪女",
     "deck": "妖怪村莊",
@@ -5345,6 +5365,28 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "R-CND-0032-泳裝",
+    "name": "擅自作主的甜點助手",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 1,
+    "tribute": 2,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "你的主要階段開始時限一次，可使你場上1吞食合體單位被置於你場上1需要祭品的單位下方(視為被吞食合體且該單位下方的單位數不得超過其所需祭品數)",
+    "image": "/static/card_images/r_cnd_0032_泳裝.jpeg",
+    "original_file": "甜點王國/0002_泳裝07_CND0032_甜點助手-複製.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
   },
   {
     "id": "R-CRB-0006",
@@ -12045,6 +12087,28 @@
     "trigger_condition": ""
   },
   {
+    "id": "SR-CND-0057",
+    "name": "甜點女王",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "3",
+    "score": 7,
+    "tribute": 2,
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "此卡的祭品須為甜點王國單位。你的戰術階段，可改為打出1張需要祭品的甜點王國單位卡並可移動任意數量單位",
+    "image": "/static/card_images/sr_cnd_0057.jpeg",
+    "original_file": "甜點王國/0006_44CND0057_甜品女王.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
+  },
+  {
     "id": "SR-CRB-0001",
     "name": "碳碳子",
     "deck": "碳碳族",
@@ -13456,6 +13520,28 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "SSR-CND-0057-泳裝",
+    "name": "甜點女王",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "3",
+    "score": 7,
+    "tribute": 2,
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "此卡的祭品須為甜點王國單位。你的戰術階段，可改為打出1張需要祭品的甜點王國單位卡並可移動任意數量單位",
+    "image": "/static/card_images/ssr_cnd_0057_泳裝.jpeg",
+    "original_file": "甜點王國/0001_泳裝23_CND0057_甜點女王-1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
   },
   {
     "id": "SSR-CRB-0001",
