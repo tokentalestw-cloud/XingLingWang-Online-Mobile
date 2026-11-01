@@ -8993,5 +8993,94 @@ body #phaseDisplayPanelHard #phaseTextHard,
   100% { transform: translateX(-50%) translateY(-4px); }
 }
 
+/* ===== 甜點王國：吞食合體 (Devour Fusion) 樣式 ===== */
+.xlw-fused-devour-unit {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.xlw-fused-devour-unit:hover {
+  transform: translateY(-2px);
+}
+
+.xlw-devour-count-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 6px;
+  z-index: 15;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  border: 1px solid #fbcfe8;
+  pointer-events: none;
+  animation: xlwDevourPulse 2s infinite ease-in-out;
+}
+
+.xlw-devour-tab-top {
+  position: absolute;
+  top: -14px;
+  left: 2px;
+  right: 2px;
+  height: 16px;
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.4);
+  border: 1px solid #fca5a5;
+  border-bottom: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+.xlw-devour-tab-bottom {
+  position: absolute;
+  bottom: -14px;
+  left: 2px;
+  right: 2px;
+  height: 16px;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  border: 1px solid #fde68a;
+  border-top: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+@keyframes xlwDevourPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+  }
+}
+
+
 
 

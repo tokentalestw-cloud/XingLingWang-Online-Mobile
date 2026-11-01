@@ -736,6 +736,138 @@
     "trigger_condition": ""
   },
   {
+    "id": "C-CND-0058",
+    "name": "跳跳糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "吞食合體。此單位被獻祭時，可使敵方場上1個星星數為2或以下的單位被破壞",
+    "image": "/static/card_images/c_cnd_0058.jpeg",
+    "original_file": "甜點王國/0005_45CND0058_跳跳糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "C-CND-0060",
+    "name": "軟糖幻影",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體，立即"
+    ],
+    "effect_text": "吞食合體。立即: 從你額外區尋找1張[幻影軟糖]並加入手牌",
+    "image": "/static/card_images/c_cnd_0060.jpeg",
+    "original_file": "甜點王國/0003_47CND0060_軟糖幻影.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3
+  },
+  {
+    "id": "C-CND-0061",
+    "name": "薄荷冰淇淋",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "0",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體",
+      "衰退",
+      "禁錮"
+    ],
+    "effect_text": "吞食合體 衰退\n使此單位正前方的單位被禁錮",
+    "image": "/static/card_images/c_cnd_0061.jpeg",
+    "original_file": "甜點王國/CND0061_薄荷冰淇淋.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "C-CND-0063",
+    "name": "焦糖脆片",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "吞食合體\n使合體後包含此卡的單位被賦予此單位被破壞時，可使此卡進入墓地代替破壞",
+    "image": "/static/card_images/c_cnd_0063.jpeg",
+    "original_file": "甜點王國/CND0063_焦糖脆片.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "C-CND-0065",
+    "name": "巨黏口香糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "-7",
+    "score": -6,
+    "tribute": 1,
+    "keywords": [
+      "吞食合體",
+      "無法移動",
+      "無法進攻",
+      "禁錮"
+    ],
+    "effect_text": "吞食合體 無法移動 無法進攻\n此卡可打出或召喚至敵方場上。\n使合體後包含此卡的單位被賦予禁錮",
+    "image": "/static/card_images/c_cnd_0065.jpeg",
+    "original_file": "甜點王國/CND0065_巨黏口香糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "C-CND-0066",
+    "name": "阿嬤軟糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "-2",
+    "score": -2,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "吞食合體\n此卡可打出或召喚至敵方場上。\n使你場上的合體後的單位-2⭐",
+    "image": "/static/card_images/c_cnd_0066.jpeg",
+    "original_file": "甜點王國/CND0066_阿嬤軟糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
     "id": "C-GOT-0060",
     "name": "細胞山羊",
     "deck": "山羊族",
@@ -890,6 +1022,51 @@
     ],
     "trigger_condition": "",
     "art_subtype": "永久，裝備"
+  },
+  {
+    "id": "C-VLG-0056",
+    "name": "芭蕉樹",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "盾",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "衰退",
+      "盾牌"
+    ],
+    "effect_text": "衰退。你的主要階段開始時限一次，使你額外區的1張「芭蕉精」被召喚",
+    "image": "/static/card_images/c_vlg_0056.jpeg",
+    "original_file": "妖怪村莊/VLG0056_芭蕉樹.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "植物"
+  },
+  {
+    "id": "C-VLG-0058",
+    "name": "一張紙妖",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "1",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "飛行，獻祭",
+      "飛行"
+    ],
+    "effect_text": "飛行。此單位被獻祭時，使你場上所有單位被賦予飛行直到你的下個主要階段開始時",
+    "image": "/static/card_images/c_vlg_0058.jpeg",
+    "original_file": "妖怪村莊/VLG0058_一張紙妖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
   },
   {
     "id": "CAT-0001",
@@ -1227,6 +1404,160 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "CND-0001",
+    "name": "糖果人",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "吞食合體。",
+    "image": "/static/card_images/cnd_0001.jpeg",
+    "original_file": "甜點王國/0010_CND0001_糖果人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "CND-0002",
+    "name": "大嘴驚喜包",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "4",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "立即，合體"
+    ],
+    "effect_text": "立即:使你所有合體後的單位被分開",
+    "image": "/static/card_images/cnd_0002.jpeg",
+    "original_file": "甜點王國/0011_CND0002改_大嘴.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "CND-0011",
+    "name": "水晶糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "合體"
+    ],
+    "effect_text": "使你場上所有合體後的單位不會被敵方魔法卡選為目標",
+    "image": "/static/card_images/cnd_0011.jpeg",
+    "original_file": "甜點王國/0024_CND0011改_水晶糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "CND-0012",
+    "name": "大熊軟糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "盾",
+    "score": 5,
+    "tribute": 0,
+    "keywords": [
+      "阻擋"
+    ],
+    "effect_text": "阻擋。",
+    "image": "/static/card_images/cnd_0012.jpeg",
+    "original_file": "甜點王國/0028_CND0012_大雄軟糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "CND-0013",
+    "name": "小熊軟糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "盾",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "阻擋，吞食合體"
+    ],
+    "effect_text": "阻擋。吞食合體。",
+    "image": "/static/card_images/cnd_0013.jpeg",
+    "original_file": "甜點王國/0029_CND0013_小熊軟糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "CND-0017",
+    "name": "糖漿溶解",
+    "deck": "甜點王國",
+    "type": "magic",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "合體"
+    ],
+    "effect_text": "使你所有合體後的單位被分開",
+    "image": "/static/card_images/cnd_0017.jpeg",
+    "original_file": "甜點王國/0034_CND0017改_糖漿溶解.jpg",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "CND-0020",
+    "name": "糖果拳",
+    "deck": "甜點王國",
+    "type": "magic",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "使你場上1進攻或防守的甜點王國單位被賦予+3攻擊力直到下一個主要階段結束",
+    "image": "/static/card_images/cnd_0020.jpeg",
+    "original_file": "甜點王國/0037_CND0020改_糖果拳.jpg",
+    "deck_eligible": true,
+    "mana": 1,
+    "usable_phases": [
+      "Main Phase",
+      "Defense Phase"
+    ],
     "trigger_condition": "",
     "art_subtype": "消耗"
   },
@@ -5367,6 +5698,27 @@
     "trigger_condition": ""
   },
   {
+    "id": "R-CND-0014",
+    "name": "被咬的夾心餅乾",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "5",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [
+      "立即，甜點王國"
+    ],
+    "effect_text": "立即:使你墓地1甜點王國單位洗回牌庫",
+    "image": "/static/card_images/r_cnd_0014.jpeg",
+    "original_file": "甜點王國/0030_CND0014改_夾心餅乾_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
     "id": "R-CND-0032-泳裝",
     "name": "擅自作主的甜點助手",
     "deck": "甜點王國",
@@ -5387,6 +5739,70 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
+  },
+  {
+    "id": "R-CND-0056",
+    "name": "糖果居民",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "1",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "吞食合體。",
+    "image": "/static/card_images/r_cnd_0056.jpeg",
+    "original_file": "甜點王國/0007_43CND0056_糖果居民.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的結束階段時，若你場上有合體後的單位包含[糖果人]，則可使你額外區的此卡被召喚",
+    "extra_deck_limit": 3
+  },
+  {
+    "id": "R-CND-0059",
+    "name": "幻影軟糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "吞食合體，立即"
+    ],
+    "effect_text": "吞食合體，立即: 從你額外區尋找1張[軟糖幻影]並加入手牌",
+    "image": "/static/card_images/r_cnd_0059.jpeg",
+    "original_file": "甜點王國/0004_46CND0059_幻影軟糖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "R-CND-0062",
+    "name": "焦糖烤布蕾",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "4",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "此單位被破壞時，可展示牌庫頂1張牌，若為甜點王國單位可使其被召喚，否則放回牌庫頂",
+    "image": "/static/card_images/r_cnd_0062.jpeg",
+    "original_file": "甜點王國/CND0062_焦糖烤布蕾.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
   },
   {
     "id": "R-CRB-0006",
@@ -10278,7 +10694,7 @@
     "image": "/static/card_images/r_vlg_0028.jpeg",
     "original_file": "妖怪村莊/IMG_5832.JPG",
     "deck_eligible": true,
-    "mana": 4,
+    "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
   },
@@ -12087,6 +12503,69 @@
     "trigger_condition": ""
   },
   {
+    "id": "SR-CND-0023",
+    "name": "千層派",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "5",
+    "score": 6,
+    "tribute": 1,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "此單位被破壞十，可使下方吞食合體單位留在場上",
+    "image": "/static/card_images/sr_cnd_0023.jpeg",
+    "original_file": "甜點王國/0040_CND0023改_千層派_SR閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "SR-CND-0023-特殊表情",
+    "name": "千層派",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "5",
+    "score": 6,
+    "tribute": 1,
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "此單位被破壞十，可使下方吞食合體單位留在場上",
+    "image": "/static/card_images/sr_cnd_0023_特殊表情.jpeg",
+    "original_file": "甜點王國/0041_4圖層_甜點王國_千層派_0.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "SR-CND-0043",
+    "name": "黑暗甜點界  超豪華蛋糕",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "6",
+    "score": 6,
+    "tribute": 3,
+    "keywords": [
+      "吞食合體，甜點王國，敵方效果抗性"
+    ],
+    "effect_text": "弱與此單位吞食合體的卡牌數量至少為X，則使你場上所有甜點王國單位被賦予以下效果。X=0: -1攻擊力；X=1: +2攻擊力:X=2: +1星星；X=3: 敵方效果抗性",
+    "image": "/static/card_images/sr_cnd_0043.jpeg",
+    "original_file": "甜點王國/0066_CND0043_超豪華甜點塔_0.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
     "id": "SR-CND-0057",
     "name": "甜點女王",
     "deck": "甜點王國",
@@ -13010,6 +13489,77 @@
     "art_subtype": "人型"
   },
   {
+    "id": "SR-VLG-0057",
+    "name": "芭蕉精",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "1",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "禁錮，獻祭，獎勵"
+    ],
+    "effect_text": "若你場上有「芭蕉樹」，則使此單位被禁錮。此單位被獻祭時，獎勵+2",
+    "image": "/static/card_images/sr_vlg_0057.jpeg",
+    "original_file": "妖怪村莊/VLG0057_芭蕉精_額外牌3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "場上有「芭蕉樹」時主要階段開始可召喚",
+    "extra_deck_limit": 3,
+    "art_subtype": "植物"
+  },
+  {
+    "id": "SR-VLG-0059",
+    "name": "腐爛神",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "8",
+    "score": 4,
+    "tribute": 3,
+    "keywords": [
+      "無法移動",
+      "禁錮",
+      "衰退"
+    ],
+    "effect_text": "無法移動。使此單位正前方及其左右邊的單位被賦予禁錮及衰退",
+    "image": "/static/card_images/sr_vlg_0059.jpeg",
+    "original_file": "妖怪村莊/VLG0059_腐爛妖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
+  },
+  {
+    "id": "SR-VLG-0060",
+    "name": "河神",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "4",
+    "score": 8,
+    "tribute": 3,
+    "keywords": [
+      "飛行，破圖",
+      "飛行"
+    ],
+    "effect_text": "飛行。你的結束階段時，使此單位正前方的單位向其左邊、右邊或後方被推擠，並使破圖的單位卡進入墓地",
+    "image": "/static/card_images/sr_vlg_0060.jpeg",
+    "original_file": "妖怪村莊/VLG0060_河神_額外牌1.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你場上的「腐爛神」因獻祭而進入墓地時，可使其升級為此卡並使其被召喚",
+    "extra_deck_limit": 1,
+    "art_subtype": "神族"
+  },
+  {
     "id": "SR-VRT-0001",
     "name": "酒館闆娘",
     "deck": "虛擬世界",
@@ -13522,6 +14072,27 @@
     "trigger_condition": ""
   },
   {
+    "id": "SSR-CND-0011",
+    "name": "水晶糖",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "合體"
+    ],
+    "effect_text": "使你場上所有合體後的單位不會被敵方魔法卡選為目標",
+    "image": "/static/card_images/ssr_cnd_0011.jpeg",
+    "original_file": "甜點王國/0027_CND0011改_水晶糖_SSR.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
     "id": "SSR-CND-0057-泳裝",
     "name": "甜點女王",
     "deck": "甜點王國",
@@ -13542,6 +14113,29 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "神族"
+  },
+  {
+    "id": "SSR-CND-0064",
+    "name": "糖果女孩",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "3",
+    "score": 3,
+    "tribute": 1,
+    "keywords": [
+      "吞食合體",
+      "立即"
+    ],
+    "effect_text": "吞食合體 立即:使你額外區及墓地加總至多2張「糖果居民」被召喚",
+    "image": "/static/card_images/ssr_cnd_0064.jpeg",
+    "original_file": "甜點王國/CND0064_糖果女孩.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-CRB-0001",
@@ -14542,6 +15136,29 @@
     "trigger_condition": "你打出單位後，若作為岐祭品的卡牌包含你場上的[貞美子]及[伽椰美子]，則可使該2張牌升級為此卡並被召喚至你場上",
     "extra_deck_limit": 1,
     "art_subtype": "人型"
+  },
+  {
+    "id": "SSR-VLG-0057",
+    "name": "芭蕉精",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "1",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "禁錮，獻祭，獎勵"
+    ],
+    "effect_text": "若你場上有「芭蕉樹」，則使此單位被禁錮。此單位被獻祭時，獎勵+2",
+    "image": "/static/card_images/ssr_vlg_0057.jpeg",
+    "original_file": "妖怪村莊/全圖_VLG0057_芭蕉精_額外牌3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "場上有「芭蕉樹」時主要階段開始可召喚",
+    "extra_deck_limit": 3,
+    "art_subtype": "植物"
   },
   {
     "id": "SSR-VRT-0031",
@@ -16839,5 +17456,29 @@
     ],
     "trigger_condition": "",
     "art_subtype": "場地"
+  },
+  {
+    "id": "價值拳",
+    "name": "價值拳",
+    "deck": "甜點王國",
+    "type": "magic",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "使你場上1甜點王國單位被賦予+X攻擊力直到下個主要階段開始時。X=該單位的星星數",
+    "image": "/static/card_images/價值拳.jpeg",
+    "original_file": "甜點王國/0069_CND0046_價值拳.jpg",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Main Phase",
+      "Defense Phase"
+    ],
+    "trigger_condition": ""
   }
 ]
