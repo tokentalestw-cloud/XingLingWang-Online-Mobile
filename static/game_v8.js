@@ -1180,6 +1180,9 @@ function newGameMultiplayer() {
   window.XLW_enemyDefenderGuardUsedTurn = null;
   enemyBonusScore = 0;
   
+  window.XLW_playerTurnDrawnAt=undefined;
+  window.XLW_peerCollectionBase=undefined;
+  window.XLWDuelConsistency?.reset();
   window.XLW_playerNeedsToDraw = false;
   window.XLW_defenderGuardUsedTurn = null;
   window.XLW_enemyDefenderGuardUsedTurn = null;
@@ -1505,6 +1508,9 @@ function newGame() {
 
   // 重置標記
   turn = 0;
+  window.XLW_playerTurnDrawnAt=undefined;
+  window.XLW_peerCollectionBase=undefined;
+  window.XLWDuelConsistency?.reset();
   window.XLW_playerNeedsToDraw = false;
   window.XLW_playerActionsPerformedThisTurn = false;
   window.XLW_opponentSneakRecall = {};
@@ -1629,6 +1635,8 @@ function showRevealedCardModal(card, ownerName) {
 
 // 智慧的般若/憤怒的般若：我方回合開始抽牌異步處理
 async function performPlayerTurnStartDraw() {
+  if(isMultiplayer){if(window.XLW_playerTurnDrawnAt===turn){window.XLW_playerNeedsToDraw=false;return;}window.XLW_playerTurnDrawnAt=turn;}
+
   // 草叢喵 墓地回牌組效果
   const catIndex = graveyard.findIndex(c => c && (c.id === "R-CAT-0027" || c.name.includes("草叢喵")));
   if (catIndex >= 0 && deck.length > 0) {
@@ -4567,6 +4575,20 @@ function triggerLittleTraveler(e) {
   render();
 }
 
+function xlwSpellOwnerCollections(){
+  for(const list of [hand,deck,graveyard,playerExileZone,playerExtraDeck])window.XLWDuelConsistency?.identify(list);
+  return {hand,deck,graveyard,exile:playerExileZone,extra:playerExtraDeck};
+}
+function xlwAcceptSpellOwnerCollections(collections){
+  if(!collections||!Array.isArray(collections.hand)||!Array.isArray(collections.deck))return false;
+  const previous=window.XLW_peerCollectionBase,merge=(current,key)=>window.XLWDuelConsistency?window.XLWDuelConsistency.mergeCollection(current||[],previous?.[key],collections[key]):collections[key];
+  window.XLW_ENEMY.hand=merge(window.XLW_ENEMY.hand,'hand');window.XLW_ENEMY.deck=merge(window.XLW_ENEMY.deck,'deck');
+  if(Array.isArray(collections.graveyard)){enemyGraveyard=merge(enemyGraveyard,'graveyard');window.XLW_ENEMY.grave=enemyGraveyard;}
+  if(Array.isArray(collections.exile))enemyExileZone=merge(enemyExileZone,'exile');
+  if(Array.isArray(collections.extra))enemyExtraDeck=merge(enemyExtraDeck,'extra');
+  window.XLW_peerCollectionBase=window.XLWDuelConsistency?.clone(collections);return true;
+}
+
 // 魔法反制與連鎖連線輔助函式
 async function castSpellChain(spellCard, effectCallback) {
   // 對手反制判定 (單機 VS AI 模式與 multiplayer 連鎖反制機制統一整合)
@@ -4576,6 +4598,7 @@ async function castSpellChain(spellCard, effectCallback) {
   if (isMultiplayer) {
     ws.send(JSON.stringify({
       action: "spell_chain_start",
+      ownerCollections: window.xlwSpellOwnerCollections?.(),
       card: spellCard
     }));
   }
@@ -4599,6 +4622,7 @@ async function castSpellChain(spellCard, effectCallback) {
   });
 
   if (response && response.countered) {
+    if(isMultiplayer)sendFullGameStateToOpponent(false);
     clearModes();
     render();
     return false;
@@ -4610,12 +4634,17 @@ async function castSpellChain(spellCard, effectCallback) {
   if (typeof effectCallback === "function") {
     await effectCallback();
   }
+  if(isMultiplayer)sendFullGameStateToOpponent(false);
+  clearModes();render();
   return true;
 }
 window.castSpellChain = castSpellChain;
 
 // 魔法卡點擊發動
 async function castSpell(handIndex) {
+  if(window.XLW_castSpellBusy || spellChainStack.length)return;
+  window.XLW_castSpellBusy=true;
+  window.XLWDuelConsistency?.identify(hand);
   try {
     xlwSanitizeGoatCardTypes();
     const card = hand[handIndex];
@@ -4695,6 +4724,7 @@ async function castSpell(handIndex) {
       renderScore();
       render();
     });
+    return;
   } else if (card.id === "CND-0017" || card.name?.includes("糖漿溶解")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
@@ -4704,6 +4734,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "CND-0020" || card.name?.includes("糖果拳")) {
     const targets = [];
     for (const z of ["player_front", "player_back"]) {
@@ -4734,6 +4765,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "價值拳" || card.name?.includes("價值拳")) {
     const targets = [];
     for (const z of ["player_front", "player_back"]) {
@@ -4766,6 +4798,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "SPT-0017" || card.name?.includes("大大術")) {
       const targets = [];
       for (const z of ["player_front", "player_back"]) {
@@ -4796,6 +4829,7 @@ async function castSpell(handIndex) {
           graveyard.push(spellCard);
           render();
       });
+    return;
   } else if (card.id === "SR-FMS-0016" || card.name?.includes("大三元")) {
     const ok = window.xlwCheckMahjongCombo(true, "大三元");
     if (!ok) {
@@ -4811,6 +4845,7 @@ async function castSpell(handIndex) {
       renderScore();
       render();
     });
+    return;
   } else if (card.id === "R-FMS-0019" || card.name?.includes("詐胡")) {
     const mahjongs = [];
     for (const z of ["player_front", "player_back"]) {
@@ -4845,6 +4880,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "R-FMS-0018" || card.name?.includes("聽牌")) {
     const myHuCards = hand.filter(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
     if (myHuCards.length === 0) {
@@ -4918,6 +4954,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "R-FMS-0023" || card.name?.includes("星駭隧道")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
@@ -4950,6 +4987,7 @@ async function castSpell(handIndex) {
       graveyard.push(spellCard);
       render();
     });
+    return;
   } else if (card.id === "R-FMS-0024" || card.name?.includes("民熊鬼屋")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
@@ -4981,15 +5019,18 @@ async function castSpell(handIndex) {
         render();
       }
     });
+    return;
   } else if (card.id === "ORC-0019" || card.name.includes("天下第一獸人作弊大會")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     
     await castSpellChain(spellCard, async () => {
+      graveyard.push(spellCard);
       window.XLW_orcCheatFairActive = true;
       logBattle("✨ 我方發動了【天下第一獸人作弊大會】！本回合我方獸人單位攻擊力平手改為我方戰鬥成功！");
       render();
     });
+    return;
   } else if (card.name.includes("山羊術")) {
     if (window.xlwIsGoatBlocked(true)) {
       setStatus("敵方場上有【山羊勇者魔羯座】，我方被限制無法施展山羊術！");
@@ -5474,6 +5515,7 @@ async function castSpell(handIndex) {
 
   // Remove card from hand immediately
   hand.splice(handIndex, 1);
+  render();
 
   await xlwShowSpellActivationOverlay(card, "player");
 
@@ -5484,6 +5526,7 @@ async function castSpell(handIndex) {
   if (isMultiplayer) {
     ws.send(JSON.stringify({
       action: "spell_chain_start",
+      ownerCollections: window.xlwSpellOwnerCollections?.(),
       card: card
     }));
   }
@@ -5507,6 +5550,7 @@ async function castSpell(handIndex) {
   });
 
   if (response.countered) {
+    if(isMultiplayer)sendFullGameStateToOpponent(false);
     clearModes();
     render();
     return;
@@ -7018,6 +7062,8 @@ async function castSpell(handIndex) {
       window.XLW_reportError(err.message, "castSpell", 0, 0, err.stack);
     }
     throw err;
+  } finally {
+    window.XLW_castSpellBusy=false;
   }
 }
 
@@ -12836,6 +12882,7 @@ async function selectPlayerTarget(zone, idx) {
     }
   }
 
+  if(isUnitAttackProtected(finalZone,finalIdx)){setStatus("【進攻失敗】目標受到牆壁上的香蕉保護！");return;}
   attacker.attacking = true;
   attacker.target = { zone: finalZone, idx: finalIdx };
   await window.xlwTriggerSubsituteNinja(finalZone, finalIdx);
@@ -12942,6 +12989,7 @@ async function xlwAutoDeclarePlayerAttacks() {
       }
     }
 
+    if(isUnitAttackProtected(finalZone,finalIdx))continue;
     playerAttacker.attacking = true;
     playerAttacker.target = { zone: finalZone, idx: finalIdx };
     playerAttacker.tapped = true;
@@ -14152,6 +14200,34 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
 }
 
 // 實行戰鬥判定 (防守方死亡送入對應墓地，包含卡牌碎裂火花動畫，全面支持 遠程、劇毒、偷襲、阻擋、貫穿 結算)
+async function xlwRecoverSamuraiCard(owner){
+  const local=owner==='player';
+  const list=local?graveyard:enemyGraveyard;
+  const candidates=list.filter(c=>c&&['unit','單位'].includes(c.type)&&(c.faction==='妖怪村莊'||c.deck==='妖怪村莊'||c.id?.includes('VLG')));
+  if(!candidates.length)return;
+  let selected;
+  if(!local&&isMultiplayer){
+    const requestId='samurai:'+turn+':'+Date.now()+':'+Math.random().toString(36).slice(2);
+    window.XLW_samuraiRecoveryWaiters=window.XLW_samuraiRecoveryWaiters||new Map();
+    selected=await new Promise(resolve=>{window.XLW_samuraiRecoveryWaiters.set(requestId,resolve);ws.send(JSON.stringify({action:'samurai_recover_request',requestId,cards:candidates}));});
+    window.XLW_samuraiRecoveryWaiters.delete(requestId);
+  }else if(local){
+    const choices=candidates.map((c,i)=>({text:c.name+' ('+c.id+')',value:i}));choices.push({text:'不發動，繼續對戰',value:'cancel'});
+    const choice=await showXLWChoiceModal('武士繪 戰鬥成功效果','選擇一張墓地中的妖怪村莊單位回收至手牌：',choices);
+    selected=choice===null||choice==='cancel'?null:candidates[Number(choice)];
+  }else selected=candidates[0];
+  if(!selected)return;
+  const current=local?graveyard:enemyGraveyard;
+  let index=current.indexOf(selected);
+  if(index<0&&selected._xlwInstanceId)index=current.findIndex(c=>c?._xlwInstanceId===selected._xlwInstanceId);
+  if(index<0)index=current.findIndex(c=>c&&c.id===selected.id&&c.name===selected.name);
+  if(index<0)return;
+  const recovered=current.splice(index,1)[0];
+  (local?hand:window.XLW_ENEMY.hand).push(recovered);
+  logBattle('武士繪 效果：'+(local?'我方':'對手')+'回收墓地中的 '+recovered.name+' 至手牌。');
+  render();
+}
+
 async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner) {
   const attacker = field[attZone]?.[attIdx];
   const defender = field[defZone]?.[defIdx];
@@ -14162,6 +14238,7 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     render();
     return "戰鬥目標已離場，本次進攻結束";
   }
+  if(isUnitAttackProtected(defZone,defIdx)){window.XLWBattleFlow?.settle(attacker,attZone,attIdx,turn);render();return '目標受到牆壁上的香蕉保護，本次進攻結束';}
   const closeCombatReplies = window.XLWBattleFlow?.openCombat(attZone,attIdx,defZone,defIdx) || (()=>{});
   let attackSpent = false;
   try {
@@ -15042,28 +15119,9 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     combatMsg = `${unitName(attacker)} 進攻了 ${unitName(defender)}，雙方皆安然無恙${sneakMsg}`;
   }
 
-  // 武士繪 (R-VLG-0011) 戰鬥成功回收效果
-  if (!attackerShouldDie && defenderShouldDie && defenderOwner === "enemy") {
-    if (attacker.card && attacker.card.name.includes("武士繪")) {
-      const yokaiInGrave = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
-      if (yokaiInGrave.length > 0) {
-        const choices = yokaiInGrave.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
-        const chosen = await showXLWChoiceModal("武士繪 戰鬥成功效果", "請選擇一張墓地中的妖怪村莊單位回收至手牌：", choices);
-        if (chosen !== null && chosen !== undefined) {
-          const cardToRecover = yokaiInGrave[chosen];
-          const graveIdx = graveyard.indexOf(cardToRecover);
-          if (graveIdx >= 0) {
-            graveyard.splice(graveIdx, 1);
-            hand.push(cardToRecover);
-            logBattle(`武士繪 效果：成功回收墓地中的 ${cardToRecover.name} 至手牌。`);
-            if (isMultiplayer) {
-              sendFullGameStateToOpponent(false);
-            }
-            render();
-          }
-        }
-      }
-    }
+  // Recovery belongs to the winning attacker, whichever phone resolves combat.
+  if (!attackerShouldDie && defenderShouldDie && attacker.card?.name?.includes("武士繪") && !window.isUnitSilenced(attacker,attZone,attIdx)) {
+    await xlwRecoverSamuraiCard(attZone.startsWith('player_')?'player':'enemy');
   }
 
   return combatMsg;
@@ -15217,6 +15275,7 @@ function canSummonCard(card, isPlayer) {
 
 function isUnitIndestructible(unit, zone, idx, isCombatDestruction = false) {
   if (!unit || !unit.card) return false;
+  if(zone && idx!==undefined && isUnitAttackProtected(zone,idx))return true;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced(unit, zone, idx)) return false;
   if (unit.indestructible) return true;
   const c = unit.card;
@@ -27351,19 +27410,19 @@ function setupWebSocketEvents() {
         enemyBonusScore = s.playerBonusScore;
         
         if (Array.isArray(s.enemyGraveyard)) {
-          graveyard = s.enemyGraveyard;
+          graveyard = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(graveyard,s.enemyCollectionBase?.graveyard,s.enemyGraveyard,"graveyard") : s.enemyGraveyard;
         }
         window.XLW_ENEMY.grave = Array.isArray(s.graveyard) ? s.graveyard : [];
         enemyGraveyard = window.XLW_ENEMY.grave;
         
         if (Array.isArray(s.enemyExileZone)) {
-          playerExileZone = s.enemyExileZone;
+          playerExileZone = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(playerExileZone,s.enemyCollectionBase?.exile,s.enemyExileZone,"exile") : s.enemyExileZone;
         }
         enemyExileZone = Array.isArray(s.playerExileZone) ? s.playerExileZone : [];
         
         // 同步雙方額外牌庫
         if (Array.isArray(s.enemyExtraDeck)) {
-          playerExtraDeck = s.enemyExtraDeck;
+          playerExtraDeck = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(playerExtraDeck,s.enemyCollectionBase?.extra,s.enemyExtraDeck,"extra") : s.enemyExtraDeck;
         }
         enemyExtraDeck = Array.isArray(s.playerExtraDeck) ? s.playerExtraDeck : [];
         window.XLW_playerExtraDeck = playerExtraDeck;
@@ -27379,20 +27438,17 @@ function setupWebSocketEvents() {
         window.xlwEnterActiveOnlineBoardUI();
 
         if (Array.isArray(s.enemyHand) && s.enemyHand.every(c => c !== null && typeof c === "object")) {
-          const chainCardsMe = (window.spellChainStack || []).filter(item => item && item.owner === "me").map(item => item.card);
-          hand = s.enemyHand.filter(c => {
-            if (!c) return false;
-            if (playerExileZone.some(ex => ex === c || (ex && c && (ex.id === c.id || (ex.name && c.name && ex.name === c.name && ex.id && c.id && ex.id.split('-')[0] === c.id.split('-')[0]))))) return false;
-            if (chainCardsMe.some(ch => ch === c || (ch && c && ch.id === c.id))) return false;
-            return true;
-          });
+          hand = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(hand,s.enemyCollectionBase?.hand,s.enemyHand,"hand") : s.enemyHand;
         }
         if (Array.isArray(s.enemyDeck) && s.enemyDeck.every(c => c !== null && typeof c === "object")) {
-          deck = s.enemyDeck;
+          deck = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(deck,s.enemyCollectionBase?.deck,s.enemyDeck,"deck") : s.enemyDeck;
         }
-        window.XLW_ENEMY.hand = Array.isArray(s.playerHand) ? s.playerHand : new Array(s.handCount || 0).fill(null);
-        window.XLW_ENEMY.deck = Array.isArray(s.playerDeck) ? s.playerDeck : new Array(s.deckCount || 0).fill(null);
-        
+        const previousPeer=window.XLW_peerCollectionBase;
+        const mirror=(current,base,incoming)=>window.XLWDuelConsistency?window.XLWDuelConsistency.mergeCollection(current||[],base,incoming):incoming;
+        window.XLW_ENEMY.hand = mirror(window.XLW_ENEMY.hand,previousPeer?.hand,Array.isArray(s.playerHand) ? s.playerHand : new Array(s.handCount || 0).fill(null));
+        window.XLW_ENEMY.deck = mirror(window.XLW_ENEMY.deck,previousPeer?.deck,Array.isArray(s.playerDeck) ? s.playerDeck : new Array(s.deckCount || 0).fill(null));
+        window.XLW_peerCollectionBase=window.XLWDuelConsistency?.clone({hand:s.playerHand,deck:s.playerDeck,graveyard:s.graveyard,exile:s.playerExileZone,extra:s.playerExtraDeck});
+
         // 同步跨回合戰場控制狀態（對稱翻轉）
         if (s.XLW_enemyFrontImprisonedUntilTurn !== undefined) window.XLW_playerFrontImprisonedUntilTurn = s.XLW_enemyFrontImprisonedUntilTurn;
         if (s.XLW_playerFrontImprisonedUntilTurn !== undefined) window.XLW_enemyFrontImprisonedUntilTurn = s.XLW_playerFrontImprisonedUntilTurn;
@@ -27419,7 +27475,7 @@ function setupWebSocketEvents() {
         window.enemyReceptionistTriggeredThisTurn = s.playerReceptionistTriggeredThisTurn || false;
         
         // Sync spell stack
-        window.spellChainStack = (s.spellChainStack || []).map(item => ({
+        if (!(window.spellChainStack||[]).length && !window.XLW_pendingSpellResolve) window.spellChainStack = (s.spellChainStack || []).map(item => ({
           card: item.card,
           owner: item.owner
         }));
@@ -27441,7 +27497,7 @@ function setupWebSocketEvents() {
 
         // 同步抽牌與防守狀態需求
         const drawFlags = window.XLWBattleFlow.drawFlags(window.XLW_playerNeedsToDraw, window.XLW_enemyNeedsToDraw, s);
-        window.XLW_playerNeedsToDraw = drawFlags.player;
+        window.XLW_playerNeedsToDraw = drawFlags.player && window.XLW_playerTurnDrawnAt!==turn;
         window.XLW_enemyNeedsToDraw = drawFlags.enemy;
         if (typeof s.XLW_coinTossFirstGo === "boolean") window.XLW_coinTossFirstGo = !s.XLW_coinTossFirstGo;
         if (s.playerNeedsDefense !== undefined && window.XLW_DEFENSE_RULE) {
@@ -27718,25 +27774,24 @@ function setupWebSocketEvents() {
         window.XLW_pendingSummonCounterResolve = null;
         resolve({ countered: data.countered });
       }
+    } else if (data.action === "samurai_recover_request") {
+      const cards=Array.isArray(data.cards)?data.cards:[];
+      const choices=cards.map((c,i)=>({text:c.name+' ('+c.id+')',value:i}));choices.push({text:'不發動，繼續對戰',value:'cancel'});
+      const choice=await showXLWChoiceModal('武士繪 戰鬥成功效果','選擇墓地中的妖怪村莊單位回收至手牌：',choices);
+      const selected=choice===null||choice==='cancel'?null:cards[Number(choice)];
+      ws.send(JSON.stringify({action:'samurai_recover_result',requestId:data.requestId,card:selected||null}));
+    } else if (data.action === "samurai_recover_result") {
+      const resolve=window.XLW_samuraiRecoveryWaiters?.get(data.requestId);if(resolve){window.XLW_samuraiRecoveryWaiters.delete(data.requestId);resolve(data.card||null);}
     } else if (data.action === "spell_chain_start") {
-      await xlwShowSpellActivationOverlay(data.card, "enemy");
+      void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack = [{ card: data.card, owner: "opponent" }];
-      if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
-        window.XLW_ENEMY.hand.pop();
-      }
+      if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_add") {
-      await xlwShowSpellActivationOverlay(data.card, "enemy");
+      void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack.push({ card: data.card, owner: "opponent" });
-      if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
-        const cIdx = window.XLW_ENEMY.hand.findIndex(c => c && data.card && (c.id === data.card.id || c.name === data.card.name));
-        if (cIdx >= 0) {
-          window.XLW_ENEMY.hand.splice(cIdx, 1);
-        } else {
-          window.XLW_ENEMY.hand.pop();
-        }
-      }
+      if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_resolve") {
@@ -28109,7 +28164,7 @@ function setupWebSocketEvents() {
       const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       const attacker = field[attZone][attIdx];
-      if (attacker) {
+      if (attacker && !isUnitAttackProtected(targetZone,targetIdx)) {
         window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
         attacker.target = { zone: targetZone, idx: targetIdx };
@@ -28984,6 +29039,7 @@ function setupWebSocketEvents() {
       key: syncKey, storage: sessionStorage,
       canBypass: (action, data) => Boolean(
         window.XLWBattleFlow?.canBypass(action, data) ||
+        (action === 'samurai_recover_result' && window.XLW_samuraiRecoveryWaiters?.has(data.requestId)) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
         (["aquarius_hand_reveal", "aquarius_request_reveal"].includes(action)) ||
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
@@ -30379,19 +30435,28 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     };
 
     overlay.onclick = (e) => {
+      e.stopPropagation();
       if (!preventOverlayClose && e.target === overlay) {
         cleanup(null);
       }
     };
 
+    if(/Call Game/.test(title)){
+      overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+      overlay.style.zIndex='2147483000';
+      const close=document.createElement('button');close.type='button';close.textContent='先不宣告，繼續對戰';close.className='xlw-callgame-close';
+      close.onclick=e=>{e.preventDefault();e.stopPropagation();cleanup('0');};box.appendChild(close);
+      overlay.onkeydown=e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();cleanup('0');}};
+      close.focus();
+    }
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
       const handleChoose = () => {
         const idx = parseInt(btn.dataset.optIdx, 10);
         cleanup(options[idx] ? options[idx].value : btn.dataset.value);
       };
-      btn.onclick = handleChoose;
+      btn.onclick = (e) => {e.stopPropagation();handleChoose();};
       btn.ontouchend = (e) => {
-        e.preventDefault();
+        e.preventDefault();e.stopPropagation();
         handleChoose();
       };
       btn.onmouseenter = () => {
@@ -32071,11 +32136,10 @@ function promptNextChainAction() {
           if (isMultiplayer && ws) {
             ws.send(JSON.stringify({
               action: "spell_chain_add",
+              ownerCollections: window.xlwSpellOwnerCollections?.(),
               card: c
             }));
-            if (typeof sendFullGameStateToOpponent === "function") {
-              sendFullGameStateToOpponent();
-            }
+
           }
           render();
 
@@ -32113,9 +32177,10 @@ function promptNextChainAction() {
           if (isMultiplayer && ws) {
             ws.send(JSON.stringify({
               action: "spell_chain_add",
+              ownerCollections: window.xlwSpellOwnerCollections?.(),
               card: dummyCard
             }));
-            sendFullGameStateToOpponent();
+
           }
           
           showSpellChainUI(spellChainStack);
@@ -32156,7 +32221,7 @@ function promptNextChainAction() {
         const autoPassBtn = document.createElement("button");
         autoPassBtn.className = "chain-action-btn auto-pass-btn";
         autoPassBtn.disabled = true;
-        autoPassBtn.textContent = "自動放行中 (1.5秒)...";
+        autoPassBtn.textContent = "自動放行中...";
         actionsDiv.appendChild(autoPassBtn);
 
         window.XLW_chainAutoPassTimeout = setTimeout(() => {
@@ -32164,7 +32229,7 @@ function promptNextChainAction() {
             ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
           }
           resolveLocalSpellChain();
-        }, 1500);
+        }, 350);
       }
     }
   }
@@ -32185,6 +32250,9 @@ function resolveLocalSpellChain() {
   
   if (!spellChainStack || spellChainStack.length === 0) return;
   
+  if(isMultiplayer && spellChainStack[0].owner !== "me") {
+    spellChainStack=[];render();return;
+  }
   // 1. Work backwards from the top of the stack to determine which counter/spell resolves
   const resolved = new Array(spellChainStack.length).fill(true);
   for (let i = spellChainStack.length - 1; i >= 1; i--) {
@@ -32229,28 +32297,15 @@ function resolveLocalSpellChain() {
       if (isItemCountered) {
         if (item.owner === "me") {
           graveyard.push(item.card);
-          const hIdx = hand.findIndex(c => c === item.card || (c && item.card && c.id && item.card.id && c.id === item.card.id));
-          if (hIdx !== -1) hand.splice(hIdx, 1);
+
         } else {
           enemyGraveyard.push(item.card);
-          if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
-            const ehIdx = window.XLW_ENEMY.hand.findIndex(c => c === item.card || (c && item.card && c.id && item.card.id && c.id === item.card.id));
-            if (ehIdx !== -1) window.XLW_ENEMY.hand.splice(ehIdx, 1);
-          }
+
         }
       } else {
         // It resolves!
         // (a) Exile the magic bomber card itself
         exileCard(item.card, cOwner);
-        if (item.owner === "me") {
-          const hIdx = hand.findIndex(c => c === item.card || (c && item.card && c.id && item.card.id && c.id === item.card.id));
-          if (hIdx !== -1) hand.splice(hIdx, 1);
-        } else {
-          if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
-            const ehIdx = window.XLW_ENEMY.hand.findIndex(c => c === item.card || (c && item.card && c.id && item.card.id && c.id === item.card.id));
-            if (ehIdx !== -1) window.XLW_ENEMY.hand.splice(ehIdx, 1);
-          }
-        }
         // (b) Exile the top card of its owner's deck
         if (item.owner === "me") {
           if (deck.length > 0) {
@@ -33090,6 +33145,7 @@ function saveLocalGameState() {
       enemy_grave: window.XLW_ENEMY && window.XLW_ENEMY.grave ? window.XLW_ENEMY.grave : [],
       enemy_deckName: window.XLW_ENEMY && window.XLW_ENEMY.deckName ? window.XLW_ENEMY.deckName : "",
       gameInProgress: window.XLW_gameInProgress || false,
+      XLW_playerTurnDrawnAt: window.XLW_playerTurnDrawnAt,
       XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
       XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
       turnOrder: window.XLWTurnOrder?.snapshot() || null,
@@ -33173,6 +33229,7 @@ window.xlwApplySavedStateObject = function(s) {
     opponent_mulligan_done = typeof s.opponent_mulligan_done === 'boolean' ? s.opponent_mulligan_done : opponent_mulligan_done;
     
     window.XLW_gameInProgress = typeof s.gameInProgress === 'boolean' ? s.gameInProgress : true;
+    window.XLW_playerTurnDrawnAt=s.XLW_playerTurnDrawnAt;
     window.XLW_playerNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
     window.XLW_enemyNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
     if (typeof s.XLW_coinTossFirstGo === "boolean") window.XLW_coinTossFirstGo = s.XLW_coinTossFirstGo;
@@ -33394,7 +33451,10 @@ if (typeof document !== "undefined") {
 
 function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_game_state") {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  for(const list of [hand,deck,graveyard,playerExileZone,playerExtraDeck]) window.XLWDuelConsistency?.identify(list);
+  const peerCollections=window.XLW_peerCollectionBase;
   const stateToSend = {
+    enemyCollectionBase: peerCollections ? window.XLWDuelConsistency.clone(peerCollections) : null,
     includeTurnPhase: Boolean(includeTurnPhase || isMyTurn),
     mulliganDone: !mulliganActive,
     field: field,
@@ -33407,15 +33467,15 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     isMyTurn: isMyTurn,
     opponent_mulligan_done: opponent_mulligan_done,
     graveyard: graveyard,
-    enemyGraveyard: window.XLW_ENEMY ? window.XLW_ENEMY.grave : enemyGraveyard,
+    enemyGraveyard: peerCollections ? (window.XLW_ENEMY ? window.XLW_ENEMY.grave : enemyGraveyard) : undefined,
     playerExileZone: playerExileZone,
-    enemyExileZone: enemyExileZone,
+    enemyExileZone: peerCollections ? (enemyExileZone) : undefined,
     playerExtraDeck: playerExtraDeck,
-    enemyExtraDeck: enemyExtraDeck,
+    enemyExtraDeck: peerCollections ? (enemyExtraDeck) : undefined,
     playerHand: hand,
     playerDeck: deck,
-    enemyHand: (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) ? window.XLW_ENEMY.hand : [],
-    enemyDeck: (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.deck)) ? window.XLW_ENEMY.deck : [],
+    enemyHand: peerCollections ? ((window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) ? window.XLW_ENEMY.hand : []) : undefined,
+    enemyDeck: peerCollections ? ((window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.deck)) ? window.XLW_ENEMY.deck : []) : undefined,
     handCount: hand.length,
     deckCount: deck.length,
     spellChainStack: (window.spellChainStack || []).map(item => ({
