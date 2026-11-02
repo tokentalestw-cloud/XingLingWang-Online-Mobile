@@ -66,6 +66,8 @@ window.field = field;
 
 let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
 let turn = 1;
+window.setPhase = function(p) { phase = p; };
+window.getPhase = function() { return phase; };
 
 
 // 行動次數標記
@@ -759,7 +761,46 @@ function xlwIsUnitUnsacrificable(unit, zone, idx) {
 }
 window.xlwIsUnitUnsacrificable = xlwIsUnitUnsacrificable;
 
-// 全域禁錮判定函數 (僅限真正的禁錮效果：被土蜘蛛、長脖子的女人、雪女、虎姑媽等效果禁錮，絕非沉思的男人)
+// 🧟 腐爛神 (SR-VLG-0059 / SSR-VLG-0001):
+// 腐爛神只會將正前方敵方單位以及其左右邊的單位禁錮以及賦予衰退，自身以及自身旁邊的單位都不會受影響。
+// 若敵方星星戰線前排有單位，則前排正對面及左右 (c-1, c, c+1) 被影響；
+// 若敵方星星戰線前排無單位，則後排正對面及左右 (c-1, c, c+1) 被影響。
+function isAffectedByRottenGod(zone, idx) {
+  if (typeof field === "undefined" || !field) return false;
+  const mySide = zone.startsWith("player") ? "player" : "enemy";
+  const oppSide = zone.startsWith("player") ? "enemy" : "player";
+
+  for (const godZone of [oppSide + "_front", oppSide + "_back"]) {
+    if (!field[godZone]) continue;
+    for (let godCol = 0; godCol < 5; godCol++) {
+      const godUnit = field[godZone][godCol];
+      if (!godUnit || !godUnit.card) continue;
+      const isGod = godUnit.card.id === "SR-VLG-0059" ||
+                    godUnit.card.id === "SSR-VLG-0001" ||
+                    godUnit.card.id === "SR-VLG-0001" ||
+                    godUnit.card.name?.includes("腐爛神");
+      if (!isGod || window.isUnitSilenced(godUnit, godZone, godCol)) continue;
+
+      // 判定腐爛神正前方的目標排：若我方前排有單位則為前排，否則若後排有單位則為後排
+      let targetZone = null;
+      if (field[mySide + "_front"]?.[godCol]) {
+        targetZone = mySide + "_front";
+      } else if (field[mySide + "_back"]?.[godCol]) {
+        targetZone = mySide + "_back";
+      }
+
+      if (targetZone && zone === targetZone) {
+        if (idx === godCol || idx === godCol - 1 || idx === godCol + 1) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+window.isAffectedByRottenGod = isAffectedByRottenGod;
+
+// 全域禁錮判定函數 (僅限真正的禁錮效果：被土蜘蛛、長脖子的女人、沉思的男人、腐爛神、雪女、虎姑媽等效果禁錮)
 function isUnitConfined(zone, idx) {
   const slot = field[zone]?.[idx];
   if (!slot) return false;
@@ -769,7 +810,7 @@ function isUnitConfined(zone, idx) {
   const c = slot.card;
   if (!c) return false;
 
-  // 沉思的男人不是禁錮狀態
+  // 沉思的男人自身不是禁錮狀態
   if (c.id === "ART-0003" || c.id === "R-ART-0003" || c.id === "R-ART-0003-新年" || c.name?.includes("沉思") || c.name?.includes("沈思")) {
     return false;
   }
@@ -800,37 +841,30 @@ function isUnitConfined(zone, idx) {
   if (oppFront && oppFront.card && oppFront.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
   if (oppBack && oppBack.card && oppBack.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppBack, oppPrefix + "_back", idx)) return true;
 
-  // 長脖子的女人: 只會禁錮正前方1個敵方單位，且其在後排時不具禁錮效果
-  if (zone.includes("front")) {
-    if (oppFront && oppFront.card && oppFront.card.name.includes("長脖子的女人") && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
+  // 長脖子的女人 / 沉思的男人: 正前方的敵方單位都會被禁錮
+  const isOppImprisonForwardUnit = (u) => {
+    if (!u || !u.card) return false;
+    const uc = u.card;
+    const isWoman = uc.id === "R-VLG-0006" || uc.name?.includes("長脖子的女人");
+    const isThinker = uc.id === "R-ART-0003" || uc.id === "R-ART-0003-新年" || uc.id === "ART-0003" || uc.name?.includes("沉思的男人") || uc.name?.includes("沈思的男人");
+    return isWoman || isThinker;
+  };
+
+  if ((oppFront && isOppImprisonForwardUnit(oppFront) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) ||
+      (oppBack && isOppImprisonForwardUnit(oppBack) && !window.isUnitSilenced(oppBack, oppPrefix + "_back", idx))) {
+    return true;
   }
 
   // 🍬 薄荷冰淇淋 (C-CND-0061): 使此單位正前方的單位被禁錮
   if (zone.includes("front")) {
-    // 若敵方前排是薄荷冰淇淋，禁錮我方前排
     if (oppFront && oppFront.card && (oppFront.card.id === "C-CND-0061" || oppFront.card.name?.includes("薄荷冰淇淋")) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
-    // 若我方後排是薄荷冰淇淋，禁錮我方前排
     const myBack = field[myPrefix + "_back"][idx];
     if (myBack && myBack.card && (myBack.card.id === "C-CND-0061" || myBack.card.name?.includes("薄荷冰淇淋")) && !window.isUnitSilenced(myBack, myPrefix + "_back", idx)) return true;
   }
 
-  // 🧟 腐爛神 (SR-VLG-0059): 使此單位正前方及其左右邊的單位被賦予禁錮及衰退
-  // 1. 正前方判定
-  if (zone.includes("front")) {
-    // 敵方前排正對面
-    if (oppFront && oppFront.card && (oppFront.card.id === "SR-VLG-0059" || oppFront.card.name?.includes("腐爛神")) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
-    // 同方後排正前方
-    const myBack = field[myPrefix + "_back"][idx];
-    if (myBack && myBack.card && (myBack.card.id === "SR-VLG-0059" || myBack.card.name?.includes("腐爛神")) && !window.isUnitSilenced(myBack, myPrefix + "_back", idx)) return true;
-  }
-  // 2. 左右邊判定 (同一排相鄰)
-  for (const adjIdx of [idx - 1, idx + 1]) {
-    if (adjIdx >= 0 && adjIdx <= 4) {
-      const adjUnit = field[zone]?.[adjIdx];
-      if (adjUnit && adjUnit.card && (adjUnit.card.id === "SR-VLG-0059" || adjUnit.card.name?.includes("腐爛神")) && !window.isUnitSilenced(adjUnit, zone, adjIdx)) {
-        return true;
-      }
-    }
+  // 🧟 腐爛神 (SR-VLG-0059 / SSR-VLG-0001): 使此單位正前方及其左右邊的敵方單位被賦予禁錮及衰退
+  if (isAffectedByRottenGod(zone, idx)) {
+    return true;
   }
 
   if (zone.includes("front")) {
@@ -2495,6 +2529,7 @@ window.hasFlying = function(unit) {
     if (idx >= 0 && window.isUnitSilenced(unit, unit.summonedZone, idx)) return false;
   }
   const c = unit.card || unit;
+  if (c && (c.id === "SR-VLG-0060" || c.id === "SSR-VLG-0060" || c.name?.includes("河神"))) return true;
   if (window.xlwCardHasKeyword(c, "飛行")) return true;
   if (unit.hasFlying) return true;
   const isP = unit.summonedZone ? unit.summonedZone.startsWith("player_") : true;
@@ -12578,6 +12613,7 @@ function selectPlayerAttacker(zone, idx) {
   setStatus(`已選攻擊者：${unitName(unit)}。請點選同戰線敵方目標宣告攻擊。`);
   render();
 }
+window.selectPlayerAttacker = selectPlayerAttacker;
 
 async function selectPlayerTarget(zone, idx) {
   if (phase !== "進攻宣言" || !selectedAttacker) return;
@@ -12612,7 +12648,7 @@ async function selectPlayerTarget(zone, idx) {
     return;
   }
 
-  // 前排優先攻擊限制 (遠程與飛行單位可以繞過前排直接攻擊後排，除非前排單位具備掩護)
+  // 前排優先攻擊限制 (遠程與飛行單位可以繞過前排直接攻擊後排，除非前排單位具備掩護；若前排是飛行單位，敵方非飛行單位亦可越過飛行單位攻擊後排)
   const hasRanged = (attacker.card && (
     (attacker.card.keywords && attacker.card.keywords.includes("遠程")) ||
     (attacker.card.effect_text && attacker.card.effect_text.includes("遠程")) ||
@@ -12624,14 +12660,23 @@ async function selectPlayerTarget(zone, idx) {
     frontDefender.card?.name?.includes("學會戰術的野人")
   ) && !window.isUnitSilenced(frontDefender, "enemy_front", idx);
 
+  // 飛行越過前排判定：若前排是飛行單位，敵方非飛行單位亦可越過前排直接攻擊後排
+  const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
+
   if (frontDefender && zone === "enemy_back") {
     if (frontHasCover) {
       setStatus("敵方前排單位具有【掩護】效果，後排單位受到掩護無法被直接攻擊！");
       return;
-    } else if (!hasRanged) {
-      setStatus("敵方同戰線前排仍有單位，必須優先攻擊前排！（除非是遠程或飛行單位）");
+    } else if (!hasRanged && !frontIsFlying) {
+      setStatus("敵方同戰線前排仍有單位，必須優先攻擊前排！（除非是遠程或飛行單位，或前排為飛行單位）");
       return;
     }
+  }
+
+  // 飛行防守保護：非飛行單位無法進攻飛行單位
+  if (window.hasFlying(defender) && !window.hasFlying(attacker)) {
+    setStatus("【飛行保護】非飛行單位無法進攻飛行單位！（若該飛行單位後排有單位，可直接攻擊其後排單位）");
+    return;
   }
 
   // 盾牌不能被進攻（具有破甲效果的單位除外）
@@ -12689,6 +12734,7 @@ async function selectPlayerTarget(zone, idx) {
   selectedAttacker = null;
   render();
 }
+window.selectPlayerTarget = selectPlayerTarget;
 
 // ===== 自動宣告與切換進攻宣言 =====
 async function xlwAutoDeclarePlayerAttacks() {
@@ -12716,6 +12762,7 @@ async function xlwAutoDeclarePlayerAttacks() {
     */
 
     const frontDefender = field.enemy_front[i];
+    const backDefender = field.enemy_back[i];
     const frontHasCover = frontDefender && (
       window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
       frontDefender.card?.name?.includes("學會戰術的野人")
@@ -12723,18 +12770,28 @@ async function xlwAutoDeclarePlayerAttacks() {
 
     const hasRanged = (window.xlwUnitHasRanged(playerAttacker, actualZone, i) || window.hasFlying(playerAttacker)) && !frontHasCover;
     const isBoarKnight = playerAttacker.card && (playerAttacker.card.id === "R-NMS-0061" || playerAttacker.card.name?.includes("野豬騎士")) && !frontHasCover;
-    const targetsBackFirst = hasRanged || isBoarKnight;
+    const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
+    const targetsBackFirst = (hasRanged || isBoarKnight || (frontIsFlying && !window.hasFlying(playerAttacker))) && backDefender;
 
     let targetZone = null;
     if (targetsBackFirst) {
-      targetZone = field.enemy_back[i] ? "enemy_back" : (field.enemy_front[i] ? "enemy_front" : null);
-    } else {
-      targetZone = field.enemy_front[i] ? "enemy_front" : (field.enemy_back[i] ? "enemy_back" : null);
+      targetZone = "enemy_back";
+    } else if (frontDefender) {
+      if (window.hasFlying(frontDefender) && !window.hasFlying(playerAttacker)) {
+        targetZone = backDefender ? "enemy_back" : null;
+      } else {
+        targetZone = "enemy_front";
+      }
+    } else if (backDefender) {
+      targetZone = "enemy_back";
     }
 
     if (!targetZone) continue;
 
     const targetDefender = field[targetZone][i];
+    if (window.hasFlying(targetDefender) && !window.hasFlying(playerAttacker)) {
+      continue;
+    }
     if (window.XLW_isShieldUnit(targetDefender)) {
       if (!hasArmorBreak(playerAttacker, actualZone, i)) {
         continue;
@@ -12880,6 +12937,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     }
 
     const frontDefender = field.enemy_front[idx];
+    const backDefender = field.enemy_back[idx];
     const frontHasCover = frontDefender && (
       window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
       frontDefender.card?.name?.includes("學會戰術的野人")
@@ -12887,21 +12945,36 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
 
     const hasRanged = (window.xlwUnitHasRanged(unit, zone, idx) || window.hasFlying(unit)) && !frontHasCover;
     const isBoarKnight = unit.card && (unit.card.id === "R-NMS-0061" || unit.card.name?.includes("野豬騎士")) && !frontHasCover;
-    const targetsBackFirst = hasRanged || isBoarKnight;
+    const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
+    const targetsBackFirst = (hasRanged || isBoarKnight || (frontIsFlying && !window.hasFlying(unit))) && backDefender;
 
     let targetZone = null;
     if (targetsBackFirst) {
-      targetZone = field.enemy_back[idx] ? "enemy_back" : (field.enemy_front[idx] ? "enemy_front" : null);
-    } else {
-      targetZone = field.enemy_front[idx] ? "enemy_front" : (field.enemy_back[idx] ? "enemy_back" : null);
+      targetZone = "enemy_back";
+    } else if (frontDefender) {
+      if (window.hasFlying(frontDefender) && !window.hasFlying(unit)) {
+        targetZone = backDefender ? "enemy_back" : null;
+      } else {
+        targetZone = "enemy_front";
+      }
+    } else if (backDefender) {
+      targetZone = "enemy_back";
     }
 
     if (!targetZone) {
-      setStatus("\u6575\u65b9\u540c\u661f\u661f\u6230\u7dda\u524d\u5f8c\u6392\u7686\u7121\u55ae\u4f4d\uff0c\u7121\u6cd5\u9032\u884c\u9032\u653b\u3002");
+      if (frontDefender && window.hasFlying(frontDefender) && !window.hasFlying(unit)) {
+        setStatus("【飛行保護】敵方前排為飛行單位，我方非飛行單位無法進攻；且敵方後排無單位！");
+      } else {
+        setStatus("敵方同星星戰線前後排皆無單位，無法進行進攻。");
+      }
       return;
     }
 
     const targetDefender = field[targetZone][idx];
+    if (window.hasFlying(targetDefender) && !window.hasFlying(unit)) {
+      setStatus("【飛行保護】非飛行單位無法進攻飛行單位！（若該飛行單位後排有單位，可直接攻擊其後排單位）");
+      return;
+    }
     if (targetDefender && window.XLW_isShieldUnit(targetDefender)) {
       if (hasArmorBreak(unit, zone, idx)) {
         // 具有破甲效果的單位可以對盾牌單位進攻！
@@ -12968,6 +13041,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
   window.XLW_DEFENSE_RULE.enemyNeedsDefense = playerAttackCount > 0;
   render();
 }
+window.xlwTogglePlayerAttack = xlwTogglePlayerAttack;
 
 function xlwExecuteBlackCatDestruction(zone, idx) {
   const targetUnit = field[zone][idx];
@@ -13366,7 +13440,7 @@ async function xlwResolvePlayerDefensePhase() {
               defIdx = lane;
               defender = frontUnit;
               logBattle(`✨ 我方前排【${frontUnit.card.name}】具有掩護，擋下了指向後排的進攻！`);
-            } else if (hasRanged || isBoarKnight || !frontUnit) {
+            } else if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
               defZone = "player_back";
               defIdx = tIdx;
               defender = field[tZone][tIdx];
@@ -13420,13 +13494,27 @@ async function xlwResolvePlayerDefensePhase() {
           }
 
           if (!defender) {
-            const targetsBackFirst = (hasRanged || isBoarKnight) && !frontHasCover && backUnit;
+            const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
+            const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
             if (targetsBackFirst) {
               defender = backUnit;
               defZone = "player_back";
               defIdx = lane;
+              if (frontIsFlying && !window.hasFlying(attacker)) {
+                logBattle(`✨ 飛行效果：我方前排【${frontUnit.card.name}】具有飛行，對手非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+              }
             } else if (frontUnit) {
-              if (window.XLW_isShieldUnit(frontUnit) && window.hasFlying(attacker) && !window.hasFlying(frontUnit) && backUnit) {
+              if (window.hasFlying(frontUnit) && !window.hasFlying(attacker)) {
+                if (backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
+                  defender = backUnit;
+                  defZone = "player_back";
+                  defIdx = lane;
+                  logBattle(`✨ 飛行效果：我方前排【${frontUnit.card.name}】具有飛行，對手非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+                } else {
+                  defender = null;
+                  logBattle(`✨ 飛行保護：我方前排【${frontUnit.card.name}】具有飛行，對手非飛行進攻單位無法進攻！`);
+                }
+              } else if (window.XLW_isShieldUnit(frontUnit) && window.hasFlying(attacker) && !window.hasFlying(frontUnit) && backUnit) {
                 defender = backUnit;
                 defZone = "player_back";
                 defIdx = lane;
@@ -13437,10 +13525,28 @@ async function xlwResolvePlayerDefensePhase() {
                 defIdx = lane;
               }
             } else if (backUnit) {
-              defender = backUnit;
-              defZone = "player_back";
-              defIdx = lane;
+              if (window.hasFlying(backUnit) && !window.hasFlying(attacker)) {
+                defender = null;
+                logBattle(`✨ 飛行保護：我方後排【${backUnit.card.name}】具有飛行，對手非飛行進攻單位無法進攻！`);
+              } else {
+                defender = backUnit;
+                defZone = "player_back";
+                defIdx = lane;
+              }
             }
+          }
+        }
+
+        // 飛行保護二次檢查：若選取的防守目標為飛行且進攻單位非飛行
+        if (defender && window.hasFlying(defender) && !window.hasFlying(attacker)) {
+          if (defZone === "player_front" && backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
+            defender = backUnit;
+            defZone = "player_back";
+            defIdx = lane;
+            logBattle(`✨ 飛行效果：我方前排【${frontUnit.card.name}】具有飛行，對手非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+          } else {
+            defender = null;
+            logBattle(`✨ 飛行保護：我方防守單位具有飛行，對手非飛行單位無法進攻！`);
           }
         }
 
@@ -13622,7 +13728,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
           defIdx = lane;
           defender = frontUnit;
           logBattle(`✨ 敵方前排【${frontUnit.card.name}】具有掩護，擋下了指向後排的進攻！`);
-        } else if (hasRanged || isBoarKnight || !frontUnit) {
+        } else if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
           defZone = "enemy_back";
           defIdx = tIdx;
           defender = field[tZone][tIdx];
@@ -13663,13 +13769,27 @@ async function xlwResolveEnemyLaneSafe(lane) {
       }
 
       if (!defender) {
-        const targetsBackFirst = (hasRanged || isBoarKnight) && !frontHasCover && backUnit;
+        const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
+        const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
         if (targetsBackFirst) {
           defender = backUnit;
           defZone = "enemy_back";
           defIdx = lane;
+          if (frontIsFlying && !window.hasFlying(attacker)) {
+            logBattle(`✨ 飛行效果：對手前排【${frontUnit.card.name}】具有飛行，我方非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+          }
         } else if (frontUnit) {
-          if (window.XLW_isShieldUnit(frontUnit) && window.hasFlying(attacker) && !window.hasFlying(frontUnit) && backUnit) {
+          if (window.hasFlying(frontUnit) && !window.hasFlying(attacker)) {
+            if (backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
+              defender = backUnit;
+              defZone = "enemy_back";
+              defIdx = lane;
+              logBattle(`✨ 飛行效果：對手前排【${frontUnit.card.name}】具有飛行，我方非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+            } else {
+              defender = null;
+              logBattle(`✨ 飛行保護：對手前排【${frontUnit.card.name}】具有飛行，我方非飛行進攻單位無法進攻！`);
+            }
+          } else if (window.XLW_isShieldUnit(frontUnit) && window.hasFlying(attacker) && !window.hasFlying(frontUnit) && backUnit) {
             defender = backUnit;
             defZone = "enemy_back";
             defIdx = lane;
@@ -13680,10 +13800,28 @@ async function xlwResolveEnemyLaneSafe(lane) {
             defIdx = lane;
           }
         } else if (backUnit) {
-          defender = backUnit;
-          defZone = "enemy_back";
-          defIdx = lane;
+          if (window.hasFlying(backUnit) && !window.hasFlying(attacker)) {
+            defender = null;
+            logBattle(`✨ 飛行保護：對手後排【${backUnit.card.name}】具有飛行，我方非飛行進攻單位無法進攻！`);
+          } else {
+            defender = backUnit;
+            defZone = "enemy_back";
+            defIdx = lane;
+          }
         }
+      }
+    }
+
+    // 飛行保護二次檢查：若選取的防守目標為飛行且進攻單位非飛行
+    if (defender && window.hasFlying(defender) && !window.hasFlying(attacker)) {
+      if (defZone === "enemy_front" && backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
+        defender = backUnit;
+        defZone = "enemy_back";
+        defIdx = lane;
+        logBattle(`✨ 飛行效果：對手前排【${frontUnit.card.name}】具有飛行，我方非飛行單位越過飛行單位，改為攻擊後排【${backUnit.card.name}】！`);
+      } else {
+        defender = null;
+        logBattle(`✨ 飛行保護：對手防守單位具有飛行，我方非飛行單位無法進攻！`);
       }
     }
 
@@ -15526,21 +15664,8 @@ function isDecayed(zone, idx) {
 
   if (hasDecayStatus) return true;
 
-  // 🧟 腐爛神 (SR-VLG-0059): 使此單位正前方及其左右邊的單位被賦予禁錮及衰退
-  const decayOppSide = zone.startsWith("player_") ? "enemy" : "player";
-  const decayMySide = zone.startsWith("player_") ? "player" : "enemy";
-  if (zone.includes("front")) {
-    const oppF = field[decayOppSide + "_front"][idx];
-    if (oppF && oppF.card && (oppF.card.id === "SR-VLG-0059" || oppF.card.name?.includes("腐爛神")) && !window.isUnitSilenced(oppF, decayOppSide + "_front", idx)) return true;
-    const myB = field[decayMySide + "_back"][idx];
-    if (myB && myB.card && (myB.card.id === "SR-VLG-0059" || myB.card.name?.includes("腐爛神")) && !window.isUnitSilenced(myB, decayMySide + "_back", idx)) return true;
-  }
-  for (const adj of [idx - 1, idx + 1]) {
-    if (adj >= 0 && adj <= 4) {
-      const adjU = field[zone]?.[adj];
-      if (adjU && adjU.card && (adjU.card.id === "SR-VLG-0059" || adjU.card.name?.includes("腐爛神")) && !window.isUnitSilenced(adjU, zone, adj)) return true;
-    }
-  }
+  // 🧟 腐爛神 (SR-VLG-0059 / SSR-VLG-0001): 使此單位正前方及其左右邊的敵方單位被賦予禁錮及衰退
+  if (isAffectedByRottenGod(zone, idx)) return true;
 
   if (zone === "player_front") {
     const oppFUnit = field["enemy_front"][idx];
@@ -20806,22 +20931,35 @@ async function runEnemyTurn() {
             const hasRanged = (window.xlwUnitHasRanged ? window.xlwUnitHasRanged(enemyAttacker, enemyAttackerZone, i) : window.xlwCardHasKeyword(enemyAttacker.card, "遠程")) || window.hasFlying(enemyAttacker);
             const isBoarKnight = enemyAttacker.card && (enemyAttacker.card.id === "R-NMS-0061" || enemyAttacker.card.name?.includes("野豬騎士"));
             const frontUnit = field.player_front[i];
+            const backUnit = field.player_back[i];
             const frontHasCover = frontUnit && (
               window.xlwCardHasKeyword(frontUnit.card, "掩護") ||
               frontUnit.card?.name?.includes("學會戰術的野人")
             ) && !window.isUnitSilenced(frontUnit, "player_front", i);
-            const targetsBackFirst = (hasRanged || isBoarKnight) && !frontHasCover;
+            const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
+            const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover) || (frontIsFlying && !window.hasFlying(enemyAttacker) && !frontHasCover);
 
             let targetZone = null;
             if (targetsBackFirst) {
-              targetZone = field.player_back[i] ? "player_back" : (field.player_front[i] ? "player_front" : null);
+              if (backUnit && (!window.hasFlying(backUnit) || window.hasFlying(enemyAttacker))) {
+                targetZone = "player_back";
+              } else if (!frontIsFlying || window.hasFlying(enemyAttacker)) {
+                targetZone = frontUnit ? "player_front" : null;
+              }
             } else {
-              targetZone = field.player_front[i] ? "player_front" : (field.player_back[i] ? "player_back" : null);
+              if (frontUnit && (!window.hasFlying(frontUnit) || window.hasFlying(enemyAttacker))) {
+                targetZone = "player_front";
+              } else if (backUnit && (!window.hasFlying(backUnit) || window.hasFlying(enemyAttacker))) {
+                targetZone = "player_back";
+              }
             }
 
             if (!targetZone) continue;
             
             const targetDefender = field[targetZone][i];
+            if (targetDefender && window.hasFlying(targetDefender) && !window.hasFlying(enemyAttacker)) {
+              continue;
+            }
             if (window.XLW_isShieldUnit(targetDefender)) {
               if (!hasArmorBreak(enemyAttacker, enemyAttackerZone, i)) {
                 continue;
@@ -33882,30 +34020,36 @@ window.xlwGetEmptyEnemySlots = function() {
   return list;
 };
 
-window.xlwSpecialSummonUnit = async function(card, isPlayer) {
+window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
   if (emptySlots.length === 0) {
     logBattle(`場上無空位，無法召喚【${card.name}】！`);
     return false;
   }
 
+  // 芭蕉精召喚規則或自訂前排優先：
+  // 芭蕉精因為芭蕉樹的效果額外召喚時，可以自行選擇召喚位置，但需遵守前排有空位必須優先召喚到前排，只有前排單位滿了才能召喚到後排。
+  const isBananaSpirit = card && (card.id === "SR-VLG-0057" || card.id === "SSR-VLG-0057" || card.id === "VLG-0010" || card.name?.includes("芭蕉精"));
+  const frontPriority = (options && options.frontPriority) || isBananaSpirit;
+
+  const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
+  const candidateSlots = (frontPriority && frontSlots.length > 0) ? frontSlots : emptySlots;
+
   let slot = null;
   if (isPlayer) {
-    const choices = emptySlots.map((s, i) => ({
+    const choices = candidateSlots.map((s, i) => ({
       text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
       value: i
     }));
-    const chosenIdx = await showXLWChoiceModal(`特殊召喚 【${card.name}】`, `請選擇召喚的位置：`, choices);
+    const titlePrompt = (frontPriority && frontSlots.length > 0) ?
+      `特殊召喚 【${card.name}】 (前排優先)` :
+      `特殊召喚 【${card.name}】`;
+    const chosenIdx = await showXLWChoiceModal(titlePrompt, `請選擇召喚的位置：`, choices);
     if (chosenIdx !== null && chosenIdx !== undefined) {
-      slot = emptySlots[chosenIdx];
+      slot = candidateSlots[chosenIdx];
     }
   } else {
-    const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
-    if (frontSlots.length > 0) {
-      slot = frontSlots[Math.floor(Math.random() * frontSlots.length)];
-    } else {
-      slot = emptySlots[Math.floor(Math.random() * emptySlots.length)];
-    }
+    slot = candidateSlots[Math.floor(Math.random() * candidateSlots.length)];
   }
 
   if (slot) {
@@ -34056,7 +34200,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
           const confirmSummon = await showXLWConfirm("【芭蕉樹】效果發動", "主要階段開始時，是否發動【芭蕉樹】效果，從額外區召喚 1 張【芭蕉精】？");
           if (confirmSummon) {
             const bananaCard = extraList.splice(bananaIdx, 1)[0];
-            const success = await window.xlwSpecialSummonUnit(bananaCard, true);
+            const success = await window.xlwSpecialSummonUnit(bananaCard, true, { frontPriority: true });
             if (!success) {
               extraList.push(bananaCard);
             } else {
@@ -34066,7 +34210,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
           }
         } else {
           const bananaCard = extraList.splice(bananaIdx, 1)[0];
-          const success = await window.xlwSpecialSummonUnit(bananaCard, false);
+          const success = await window.xlwSpecialSummonUnit(bananaCard, false, { frontPriority: true });
           if (!success) {
             extraList.push(bananaCard);
           } else {
