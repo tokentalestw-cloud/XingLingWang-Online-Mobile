@@ -15543,55 +15543,6 @@ async function resolveDecayStatus(isPlayerTurn) {
       }
     }
   }
-  // 🍬 甜點王國：糖果女孩 (SSR-CND-0064) 立即: 使你額外區及墓地加總至多2張「糖果居民」被召喚
-  if (card.id === "SSR-CND-0064" || card.name?.includes("糖果女孩")) {
-    const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-    const graveList = window.XLW_ENEMY?.grave || enemyGraveyard || [];
-    const checkZones = ["enemy_front", "enemy_back"];
-
-    for (let step = 0; step < 2; step++) {
-      let emptySlot = null;
-      for (const cz of checkZones) {
-        const fi = field[cz].findIndex(u => !u);
-        if (fi >= 0) {
-          emptySlot = { zone: cz, idx: fi };
-          break;
-        }
-      }
-      if (!emptySlot) break;
-
-      let residentCard = null;
-      let fromWhere = "";
-      const exIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
-      if (exIdx >= 0) {
-        residentCard = extraList.splice(exIdx, 1)[0];
-        fromWhere = "額外區";
-      } else {
-        const grIdx = graveList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
-        if (grIdx >= 0) {
-          residentCard = graveList.splice(grIdx, 1)[0];
-          fromWhere = "墓地";
-        }
-      }
-
-      if (residentCard) {
-        field[emptySlot.zone][emptySlot.idx] = {
-          card: residentCard,
-          tapped: false,
-          attacking: false,
-          target: null,
-          summonedTurn: turn,
-          summonedZone: emptySlot.zone,
-          equipments: []
-        };
-        logBattle(`🍬 對手【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至對手場上！`);
-      } else {
-        break;
-      }
-    }
-    if (typeof renderExtraDecks === "function") renderExtraDecks();
-    render();
-  }
 
   if (anyDestroyed) {
     render();
@@ -15783,6 +15734,55 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
       logBattle(`✨ 對手【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
       render();
     }
+  }
+  // 🍬 甜點王國：糖果女孩 (SSR-CND-0064) 立即: 使你額外區及墓地加總至多2張「糖果居民」被召喚
+  else if (card.id === "SSR-CND-0064" || card.name?.includes("糖果女孩")) {
+    const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
+    const graveList = window.XLW_ENEMY?.grave || enemyGraveyard || [];
+    const checkZones = ["enemy_front", "enemy_back"];
+
+    for (let step = 0; step < 2; step++) {
+      let emptySlot = null;
+      for (const cz of checkZones) {
+        const fi = field[cz].findIndex(u => !u);
+        if (fi >= 0) {
+          emptySlot = { zone: cz, idx: fi };
+          break;
+        }
+      }
+      if (!emptySlot) break;
+
+      let residentCard = null;
+      let fromWhere = "";
+      const exIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
+      if (exIdx >= 0) {
+        residentCard = extraList.splice(exIdx, 1)[0];
+        fromWhere = "額外區";
+      } else {
+        const grIdx = graveList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
+        if (grIdx >= 0) {
+          residentCard = graveList.splice(grIdx, 1)[0];
+          fromWhere = "墓地";
+        }
+      }
+
+      if (residentCard) {
+        field[emptySlot.zone][emptySlot.idx] = {
+          card: residentCard,
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: turn,
+          summonedZone: emptySlot.zone,
+          equipments: []
+        };
+        logBattle(`🍬 對手【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至對手場上！`);
+      } else {
+        break;
+      }
+    }
+    if (typeof renderExtraDecks === "function") renderExtraDecks();
+    render();
   }
   else if (card.id === "EWD-0006" || card.id?.includes("EWD-0006") || card.name?.includes("學會投資")) {
     if (window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
@@ -33934,7 +33934,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
     return field[z]?.some((u, i) => u && u.card && (u.card.id === "C-VLG-0056" || u.card.name?.includes("芭蕉樹")) && !window.isUnitSilenced(u, z, i));
   });
   if (hasBananaTree) {
-    const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const extraList = Array.isArray(isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || window.enemyExtraDeck || enemyExtraDeck)) ? (isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || window.enemyExtraDeck || enemyExtraDeck)) : [];
     const bananaIdx = extraList.findIndex(c => c && (c.id === "SR-VLG-0057" || c.id === "SSR-VLG-0057" || c.name?.includes("芭蕉精")));
     if (bananaIdx >= 0) {
       const emptySlots = isPlayerSide ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
@@ -34070,7 +34070,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
   }
 
   // 絕望勇者 絕望型態 / 聖女 額外牌組特召效果
-  const currentExtraDeck = isPlayerSide ? playerExtraDeck : (window.enemyExtraDeck || []);
+  const currentExtraDeck = Array.isArray(isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || window.enemyExtraDeck || enemyExtraDeck)) ? (isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || window.enemyExtraDeck || enemyExtraDeck)) : [];
   const upgradeTargets = currentExtraDeck.filter(c => c && (c.id === "R-BRV-0051" || c.id === "ASSR-BRV-0051" || c.id === "SR-VRV-0052" || c.id === "ASSR-BRV-0052" || c.name?.includes("絕望勇者") || c.name === "聖女"));
   
   if (upgradeTargets.length > 0) {
