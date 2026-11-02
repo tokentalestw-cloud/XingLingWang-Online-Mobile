@@ -63,6 +63,21 @@ let field = {
   enemy_back: [null, null, null, null, null],
 };
 window.field = field;
+Object.defineProperty(window, "graveyard", {
+  get: () => graveyard,
+  set: (val) => { graveyard = val; },
+  configurable: true
+});
+Object.defineProperty(window, "enemyGraveyard", {
+  get: () => enemyGraveyard,
+  set: (val) => { enemyGraveyard = val; },
+  configurable: true
+});
+Object.defineProperty(window, "hand", {
+  get: () => hand,
+  set: (val) => { hand = val; },
+  configurable: true
+});
 
 let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
 let turn = 1;
@@ -21387,13 +21402,17 @@ async function endPlayerTurnAndRunEnemy() {
           const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
           if (eligible.length > 0 && hasEmptySlot) {
             const choices = eligible.map((c, i) => ({ text: `${c.name} (祭品需求: ${c.tribute})`, value: i }));
+            choices.push({ text: "不發動 / 放棄召喚", value: -1 });
             const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
-            if (chosen !== null && chosen !== undefined) {
+            if (chosen !== null && chosen !== undefined && chosen !== -1) {
+              const cardToSummon = eligible[chosen];
+              if (!cardToSummon) return;
+
               const allValidSlots = [];
               for (const z of ["player_front", "player_back"]) {
                 for (let i = 0; i < 5; i++) {
                   if (!field[z][i]) {
-                    allValidSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排戰線" : "後排戰線"} ${i + 1}`, isFront: z.includes("front") });
+                    allValidSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排" : "後排"}${i + 1}`, isFront: z.includes("front") });
                   }
                 }
               }
@@ -21411,6 +21430,8 @@ async function endPlayerTurnAndRunEnemy() {
                   }
                   chosenSlot = validSlots[chosenSlotIdx];
                 }
+                if (!chosenSlot) return;
+
                 const destZone = chosenSlot.zone;
                 const destIdx = chosenSlot.idx;
                 const graveIdx = graveyard.indexOf(cardToSummon);
@@ -21442,9 +21463,12 @@ async function endPlayerTurnAndRunEnemy() {
             }
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error("恐怖的井 效果結算異常:", err);
+      }
     }
   };
+  window.runYokaiEndPhaseEffects = runYokaiEndPhaseEffects;
 
   const runArtEndPhaseEffects = async () => {
     const hasPalette = field["player_front"].concat(field["player_back"]).some(u => u && u.card && (u.card.id === "R-ART-0045" || u.card.name?.includes("調色盤")));
@@ -21617,6 +21641,7 @@ async function endPlayerTurnAndRunEnemy() {
     render();
   }
 }
+window.endPlayerTurnAndRunEnemy = endPlayerTurnAndRunEnemy;
 
 function playerUntap() {
   window.XLWBattleFlow?.forgetSide("player");
