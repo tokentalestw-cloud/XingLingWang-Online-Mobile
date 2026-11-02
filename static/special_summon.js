@@ -4,8 +4,10 @@
   const ASSET='/static/summon_fx/';
   const YUKI={name:'雪女',sound:'yuki',size:960,key:'yuki',video:ASSET+'yuki_summon_packed_v2.mp4',poster:ASSET+'yuki_summon_poster_v2.webp',duration:4000};
   const EMPEROR={name:'始皇帝',sound:'emperor',size:1152,key:'emperor',video:ASSET+'emperor_summon_packed_v2.mp4',poster:ASSET+'emperor_summon_poster_v2.webp',army:ASSET+'terracotta_army_v2.webp',duration:4100};
+  const CANDY={name:'糖果女孩',sound:'candy',size:960,key:'candy',video:ASSET+'candy_summon_packed_v1.mp4',poster:ASSET+'candy_summon_poster_v1.webp',duration:4100};
   function match(card){
     if(!card)return null;
+    if(/^(?:ASSR|R|SR|SSR|SSSR)-CND-0064$/.test(card.id||'')||(card.name==='糖果女孩'&&[card.deck,card.faction,card.race].includes('甜點王國')))return CANDY;
     if(/^(?:ASSR|R|SR|SSR|SSSR)-ART-0059$/.test(card.id||'')||(card.name==='始皇帝'&&[card.deck,card.faction,card.race].includes('藝術品')))return EMPEROR;
     return /^(?:ASSR|R|SR|SSR|SSSR)-VLG-0012$/.test(card.id||'')||
       (card.name==='雪女'&&[card.deck,card.faction,card.race].includes('妖怪村莊'))?YUKI:null;
@@ -38,11 +40,21 @@
     const image=document.createElement('canvas');image.width=image.height=48;const ctx=image.getContext('2d');ctx.translate(24,24);if(gold){ctx.fillStyle=near?'#fff1b4':'#dfaa52';ctx.shadowColor='#f8c367';ctx.shadowBlur=near?10:4;ctx.rotate(Math.PI/4);ctx.fillRect(-3,-3,6,6);return image;}ctx.strokeStyle='#e6faff';ctx.lineWidth=near?1.6:1.2;ctx.shadowColor='#8edfff';ctx.shadowBlur=near?4:1;
     for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-16);ctx.moveTo(0,-9);ctx.lineTo(-4,-12);ctx.moveTo(0,-9);ctx.lineTo(4,-12);ctx.stroke();}return image;
   }
+  function candySprite(near,tone){
+    const image=document.createElement('canvas');image.width=image.height=96;const ctx=image.getContext('2d');ctx.translate(48,48);
+    const colors=[['#ff76ad','#a92d66','#ffe1ee'],['#61e0d4','#177e99','#ddfff7'],['#ffd06b','#c36b2b','#fff7db']][tone];
+    ctx.shadowColor=colors[0];ctx.shadowBlur=near?8:3;ctx.strokeStyle=colors[1];ctx.lineWidth=2;
+    if(tone===2){ctx.fillStyle='#fff4da';ctx.fillRect(-2,8,4,25);}
+    else{ctx.fillStyle=colors[0];for(const direction of [-1,1]){ctx.beginPath();ctx.moveTo(direction*16,0);ctx.lineTo(direction*31,-13);ctx.lineTo(direction*27,0);ctx.lineTo(direction*31,13);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(direction*20,-2);ctx.lineTo(direction*28,-8);ctx.moveTo(direction*20,2);ctx.lineTo(direction*28,8);ctx.stroke();}}
+    const gradient=ctx.createLinearGradient(-12,-18,13,18);gradient.addColorStop(0,colors[2]);gradient.addColorStop(.35,colors[0]);gradient.addColorStop(1,colors[1]);ctx.fillStyle=gradient;
+    ctx.beginPath();ctx.ellipse(0,0,tone===2?18:20,tone===2?18:14,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.shadowBlur=0;ctx.strokeStyle=colors[2];ctx.lineWidth=3;ctx.beginPath();if(tone===2){ctx.arc(0,0,11,.2,5.5);ctx.arc(0,0,5,5.5,1,false);}else{ctx.moveTo(-7,-10);ctx.lineTo(4,10);ctx.moveTo(1,-11);ctx.lineTo(12,7);}ctx.stroke();ctx.fillStyle='#ffffffb8';ctx.beginPath();ctx.ellipse(-7,-7,6,2,-.35,0,Math.PI*2);ctx.fill();return image;
+  }
   function play(card,{zone='',idx=0}={}){
     const effect=match(card);if(!effect||!global.document)return Promise.resolve(false);
     if(active?.key===zone+':'+idx)return active.promise;
     active?.cancel();
-    let resolve;const promise=new Promise(done=>resolve=done),overlay=document.createElement('div');overlay.className='xlw-yuki-summon'+(effect.key==='emperor'?' xlw-emperor-summon':'');overlay.dataset.effect=effect.key;overlay.dataset.cardId=card.id||'';overlay.dataset.renderMode='poster';
+    let resolve;const promise=new Promise(done=>resolve=done),overlay=document.createElement('div');overlay.className='xlw-yuki-summon'+(effect.key==='yuki'?'':' xlw-'+effect.key+'-summon');overlay.dataset.effect=effect.key;overlay.dataset.cardId=card.id||'';overlay.dataset.renderMode='poster';
     overlay.innerHTML='<canvas class="xlw-yuki-snow far" aria-hidden="true"></canvas><div class="xlw-yuki-halo" aria-hidden="true"></div><div class="xlw-yuki-performer"><img class="xlw-yuki-poster" alt="雪女登場"><canvas class="xlw-yuki-video" aria-hidden="true"></canvas></div><canvas class="xlw-yuki-snow near" aria-hidden="true"></canvas><div class="xlw-yuki-caption"><strong>雪女</strong></div><button type="button" class="xlw-yuki-skip" aria-label="略過動畫"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
     if(effect.army)overlay.insertAdjacentHTML('afterbegin','<div class="xlw-emperor-army" aria-hidden="true"><img src="'+effect.army+'" alt=""></div>');
     overlay.querySelector('.xlw-yuki-caption strong').textContent=effect.name;
@@ -51,8 +63,8 @@
     const performer=overlay.querySelector('.xlw-yuki-performer'),poster=overlay.querySelector('.xlw-yuki-poster'),canvas=overlay.querySelector('.xlw-yuki-video');poster.src=effect.poster;poster.alt=effect.name+'登場';canvas.width=canvas.height=effect.size;
     let allowMovie=true,renderer=null,video=null,raf=0,loadTimer=0,hardTimer=0,fadeTimer=0,finished=false,disposed=false,lastFrameIndex=-1,lastSnow=0,elapsed=0;
     const oldFocus=document.activeElement;const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    let snow=[];const snowCanvases=[...overlay.querySelectorAll('.xlw-yuki-snow')],sprites=[flakeSprite(false,effect.key==='emperor'),flakeSprite(true,effect.key==='emperor')];
-    function size(){const width=overlay.clientWidth,height=overlay.clientHeight,dpr=Math.min(global.devicePixelRatio||1,1.5);for(const c of snowCanvases){c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}snow=snowParticles(width,height,reduced?20:(width<1000?64:90));if(effect.key==='emperor')for(const mote of snow){mote.size*=.45;mote.speed*=.45;}}
+    let snow=[];const snowCanvases=[...overlay.querySelectorAll('.xlw-yuki-snow')],sprites=effect.key==='candy'?[0,1,2,3,4,5].map(i=>candySprite(i>=3,i%3)):[flakeSprite(false,effect.key==='emperor'),flakeSprite(true,effect.key==='emperor')];
+    function size(){const width=overlay.clientWidth,height=overlay.clientHeight,dpr=Math.min(global.devicePixelRatio||1,1.5);for(const c of snowCanvases){c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}snow=snowParticles(width,height,reduced?20:(width<1000?64:90));if(effect.key==='candy')for(const sweet of snow){sweet.size=8+sweet.depth*22;sweet.speed*=.8;sweet.spin*=2;}if(effect.key==='emperor')for(const mote of snow){mote.size*=.45;mote.speed*=.45;}}
     function finish(){if(finished)return;finished=true;overlay.classList.add('is-leaving');if(video)video.pause();fadeTimer=setTimeout(dispose,reduced?80:240);}
     function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(raf);clearTimeout(loadTimer);clearTimeout(hardTimer);clearTimeout(fadeTimer);document.removeEventListener('visibilitychange',hidden);global.removeEventListener('pagehide',finish);global.removeEventListener('resize',size);if(video){video.onended=video.onerror=null;video.pause();video.removeAttribute('src');video.load();}renderer?.dispose();overlay.remove();if(active?.promise===promise)active=null;if(oldFocus?.isConnected)oldFocus.focus?.({preventScroll:true});resolve(true);}
     function hidden(){if(document.hidden){finished=true;dispose();}}
@@ -75,7 +87,7 @@
       const dt=Math.min((time-lastSnow)/1000,.05);
       if(time-lastSnow>=15){elapsed+=dt;lastSnow=time;
         const w=overlay.clientWidth,h=overlay.clientHeight;for(const c of snowCanvases)c.getContext('2d').clearRect(0,0,w,h);
-        for(const flake of snow){flake.y+=flake.speed*dt*(effect.key==='emperor'?-1:1);if(effect.key==='emperor'&&flake.y<-20){flake.y=h+20;flake.x=Math.random()*w;}flake.x+=Math.sin(elapsed*.7+flake.phase)*10*flake.depth*dt;if(flake.y>h+20){flake.y=-20;flake.x=Math.random()*w;}const ctx=snowCanvases[flake.depth>.66?1:0].getContext('2d');ctx.save();ctx.globalAlpha=.18+flake.depth*.65;ctx.translate(flake.x,flake.y);ctx.rotate(flake.phase+elapsed*flake.spin);const s=flake.size;ctx.drawImage(sprites[flake.depth>.66?1:0],-s,-s,s*2,s*2);ctx.restore();}
+        for(const flake of snow){flake.y+=flake.speed*dt*(effect.key==='emperor'?-1:1);if(effect.key==='emperor'&&flake.y<-20){flake.y=h+20;flake.x=Math.random()*w;}flake.x+=Math.sin(elapsed*.7+flake.phase)*10*flake.depth*dt;if(flake.y>h+20){flake.y=-20;flake.x=Math.random()*w;}const ctx=snowCanvases[flake.depth>.66?1:0].getContext('2d');ctx.save();ctx.globalAlpha=.18+flake.depth*.65;ctx.translate(flake.x,flake.y);ctx.rotate(flake.phase+elapsed*flake.spin);const s=flake.size;ctx.drawImage(sprites[effect.key==='candy'?(flake.depth>.66?3:0)+Math.min(2,Math.floor(flake.phase/6.283*3)):(flake.depth>.66?1:0)],-s,-s,s*2,s*2);ctx.restore();}
 
       }
       if(allowMovie&&video&&renderer&&!finished&&video.readyState>=2&&Math.floor(video.currentTime*60)!==lastFrameIndex){try{renderer.draw(video);lastFrameIndex=Math.floor(video.currentTime*60);overlay.dataset.renderMode='video';}catch(_){video.pause();video.onended=null;overlay.dataset.renderMode='poster';}}

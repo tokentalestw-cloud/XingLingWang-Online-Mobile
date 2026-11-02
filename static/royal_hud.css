@@ -1088,3 +1088,11 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
 .xlw-emperor-army img {display:block;width:100%;height:auto;opacity:.92;filter:drop-shadow(0 0 12px #d7a44d55);mask-image:linear-gradient(transparent,#000 8%,#000 80%,transparent);-webkit-mask-image:linear-gradient(transparent,#000 8%,#000 80%,transparent);}
 @keyframes xlwEmperorLegions {0%{opacity:0;transform:translate(-50%,-36%) scale(.75);filter:brightness(.4);}20%{opacity:.35;}48%{opacity:.9;filter:brightness(1);}100%{opacity:.9;transform:translate(-50%,-50%) scale(1.05);filter:brightness(1.08);}}
 @media(prefers-reduced-motion:reduce){.xlw-emperor-army{animation:none;opacity:.65;}.xlw-emperor-summon .xlw-yuki-performer{animation:none;}}
+
+/* Candy Kingdom: soft rose light behind the performer; sweets have two depth layers. */
+.xlw-candy-summon .xlw-yuki-halo {background:radial-gradient(ellipse,#f779b840,transparent 67%);box-shadow:0 0 75px #ef80b02b;}
+.xlw-candy-summon .xlw-yuki-performer {filter:drop-shadow(0 0 12px #ffbad857);}
+.xlw-candy-summon .xlw-yuki-caption {color:#ffe6f2;text-shadow:0 2px 4px #3c1029,0 0 16px #ff84c6;background:linear-gradient(90deg,transparent,#431d39d9,transparent);}
+.xlw-candy-summon .xlw-yuki-caption strong {letter-spacing:6px;}
+
+.xlw-candy-summon .xlw-yuki-poster,.xlw-candy-summon .xlw-yuki-video { -webkit-mask-image:linear-gradient(transparent,#000 3%,#000 96%,transparent);mask-image:linear-gradient(transparent,#000 3%,#000 96%,transparent);}
