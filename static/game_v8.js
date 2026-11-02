@@ -1659,8 +1659,8 @@ async function performPlayerTurnStartDraw() {
   }
   
   window.xlwPlaySFX?.('draw');
-  const oppHasSmartPrajna = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.card && u.card.name.includes("智慧的般若"));
-  const oppHasAngryPrajna = field["enemy_front"].concat(field["enemy_back"]).some(u => u && u.card && u.card.name.includes("憤怒的般若"));
+  const oppHasSmartPrajna = ["enemy_front", "enemy_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("智慧的般若") && !window.isUnitSilenced(u, z, i)));
+  const oppHasAngryPrajna = ["enemy_front", "enemy_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("憤怒的般若") && !window.isUnitSilenced(u, z, i)));
   
   if (oppHasAngryPrajna) {
     // 憤怒的般若：我方選擇1張除外
@@ -1676,9 +1676,9 @@ async function performPlayerTurnStartDraw() {
       keepCards = drawn.filter((_, idx) => idx !== chosenIdx);
     }
     
-    playerExileZone.push(exiledCard);
+    exileCard(exiledCard, "player");
     keepCards.forEach(c => hand.push(c));
-    logBattle(`憤怒的般若 效果：我方選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+    logBattle(`💥【憤怒的般若】效果：我方抽到 ${drawn.length} 張卡牌，選擇將抽出的卡片【${exiledCard.name}】除外！`);
     
     if (isMultiplayer) {
       ws.send(JSON.stringify({
@@ -1710,32 +1710,37 @@ async function performPlayerTurnStartDraw() {
       }));
     } else {
       // 單人模式 (AI對手)
-      // 若展示的是單位卡，且AI有憤怒的般若與智慧的般若，AI會自動升級進化
-      if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+      // 若展示的是單位卡（非魔法卡），且AI有憤怒的般若與智慧的般若，AI會自動升級進化
+      const isUnit = revealedCard && (revealedCard.type === "unit" || revealedCard.type === "單位") && revealedCard.type !== "magic" && revealedCard.type !== "魔法";
+      if (isUnit) {
         const hannyaSlots = [];
         for (const zone of ["enemy_front", "enemy_back"]) {
           field[zone].forEach((u, idx) => {
-            if (u && u.card && u.card.name.includes("智慧的般若")) {
+            if (u && u.card && u.card.name?.includes("智慧的般若") && !window.isUnitSilenced(u, zone, idx)) {
               hannyaSlots.push({ zone, idx, unit: u });
             }
           });
         }
         
-        const angryCard = enemyExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+        const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
+        const angryCard = extraList.find(c => c && (c.id === "SR-VLG-0049" || c.name?.includes("憤怒的般若")));
         if (hannyaSlots.length > 0 && angryCard) {
           const { zone, idx, unit } = hannyaSlots[0];
           exileCard(unit.card, "enemy");
-          enemyExtraDeck.splice(enemyExtraDeck.indexOf(angryCard), 1);
+          extraList.splice(extraList.indexOf(angryCard), 1);
           field[zone][idx] = {
             card: structuredClone(angryCard),
             tapped: false,
             attacking: false,
             target: null,
             summonedTurn: turn,
-            summonedZone: zone
+            summonedZone: zone,
+            equipments: []
           };
-          logBattle(`✨ 對手 額外進化：對手場上的【智慧的般若】已升級進化為【憤怒的般若】！`);
-          playerBonusScore = Math.max(0, playerBonusScore - 1);
+          logBattle(`✨ 對手 額外升級：對手場上的【智慧的般若】已升級進化為【憤怒的般若】！`);
+          triggerUpgradeBonus(false);
+          if (typeof renderExtraDecks === "function") renderExtraDecks();
+          render();
         }
       }
     }
@@ -6967,8 +6972,29 @@ async function castSpell(handIndex) {
       window.XLW_enemyCannotAttackOnNextTurn = true;
       logBattle(`✨ 和平巨人 效果：下個回合對手玩家不得發動進攻！`);
     } else if (text.includes("抽2張")) {
-      draw(2);
-      logBattle(`發動魔法 ${card.name}：抽 2 張牌`);
+      const oppHasAngry = ["enemy_front", "enemy_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("憤怒的般若") && !window.isUnitSilenced(u, z, i)));
+      if (oppHasAngry && deck.length >= 2) {
+        const drawnCards = [deck.pop(), deck.pop()];
+        const choices = drawnCards.map((c, idx) => ({ text: `${c.name} (${c.type === "unit" ? "單位" : "魔法"})`, value: idx }));
+        const chosenIdxVal = await showXLWChoiceModal("憤怒的般若：選擇除外的卡牌", "對手場上有【憤怒的般若】，請選擇一張抽到的卡牌進行除外：", choices);
+        const chosenIdx = (chosenIdxVal !== null && chosenIdxVal !== undefined) ? parseInt(chosenIdxVal, 10) : 0;
+        const exiled = drawnCards[chosenIdx];
+        const kept = drawnCards.find((_, i) => i !== chosenIdx);
+        exileCard(exiled, "player");
+        hand.push(kept);
+        logBattle(`發動魔法 ${card.name}：抽 2 張牌。因對手場上有【憤怒的般若】，選擇將【${exiled.name}】除外，【${kept.name}】加入手牌！`);
+        if (isMultiplayer) {
+          ws.send(JSON.stringify({
+            action: "hannya_exile_drawn_card",
+            exiledCard: exiled,
+            drawnCount: 2
+          }));
+        }
+        render();
+      } else {
+        draw(2);
+        logBattle(`發動魔法 ${card.name}：抽 2 張牌`);
+      }
     } else if (text.includes("抽1張")) {
       draw(1);
       logBattle(`發動魔法 ${card.name}：抽 1 張牌`);
@@ -20581,17 +20607,17 @@ async function runEnemyTurn() {
         }
       }
       
-      const hasSmartPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name?.includes("智慧的般若"));
-      const hasAngryPrajna = field["player_front"].concat(field["player_back"]).some(u => u && u.card && u.card.name?.includes("憤怒的般若"));
+      const hasSmartPrajna = ["player_front", "player_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("智慧的般若") && !window.isUnitSilenced(u, z, i)));
+      const hasAngryPrajna = ["player_front", "player_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("憤怒的般若") && !window.isUnitSilenced(u, z, i)));
 
       if (enemyDrawn.length > 0) {
         if (hasAngryPrajna) {
           const exileIdx = Math.floor(Math.random() * enemyDrawn.length);
           const exiledCard = enemyDrawn[exileIdx];
           exileCard(exiledCard, "enemy");
-          logBattle(`憤怒的般若 效果：對手選擇將抽出的卡片 ${exiledCard.name} 除外！`);
+          logBattle(`💥【憤怒的般若】效果：對手抽到 ${enemyDrawn.length} 張卡牌，選擇將其中 1 張抽出的卡牌【${exiledCard.name}】除外！`);
           enemyDrawn.forEach((c, idx) => {
-            if (idx !== exileIdx) window.XLW_ENEMY.hand.push(c);
+            if (idx !== exileIdx) (window.XLW_ENEMY.hand || []).push(c);
           });
         } else if (hasSmartPrajna) {
           let revealIdx = 0;
@@ -20605,11 +20631,62 @@ async function runEnemyTurn() {
             }
           }
           const revealedCard = enemyDrawn[revealIdx];
-          enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+          enemyDrawn.forEach(c => (window.XLW_ENEMY.hand || []).push(c));
           logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
           await showRevealedCardModal(revealedCard, "對手");
+
+          const isUnit = revealedCard && (revealedCard.type === "unit" || revealedCard.type === "單位") && revealedCard.type !== "magic" && revealedCard.type !== "魔法";
+          if (isUnit) {
+            const prajnaSlots = [];
+            for (const zone of ["player_front", "player_back"]) {
+              field[zone].forEach((u, idx) => {
+                if (u && u.card && u.card.name?.includes("智慧的般若") && !window.isUnitSilenced(u, zone, idx)) {
+                  prajnaSlots.push({ zone, idx, unit: u });
+                }
+              });
+            }
+
+            const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name?.includes("憤怒的般若")));
+            if (prajnaSlots.length > 0 && angryCard) {
+              const confirmUpgrade = await showXLWConfirm(
+                "智慧的般若 升級發動",
+                `對手展示的是單位卡【${revealedCard.name}】（非魔法卡）！\n是否將場上的【智慧的般若】升級為額外區的【憤怒的般若】？`
+              );
+              if (confirmUpgrade) {
+                let selectedSlot = prajnaSlots[0];
+                if (prajnaSlots.length > 1) {
+                  const choices = prajnaSlots.map((h, i) => ({
+                    text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 智慧的般若`,
+                    value: i
+                  }));
+                  const chosenIdx = await showXLWChoiceModal("選擇要升級的智慧的般若", "請選擇場上的【智慧的般若】：", choices);
+                  if (chosenIdx !== null && chosenIdx !== undefined) {
+                    selectedSlot = prajnaSlots[chosenIdx];
+                  }
+                }
+                const { zone, idx, unit } = selectedSlot;
+                exileCard(unit.card, "player");
+                playerExtraDeck.splice(playerExtraDeck.indexOf(angryCard), 1);
+                field[zone][idx] = {
+                  card: structuredClone(angryCard),
+                  tapped: false,
+                  attacking: false,
+                  target: null,
+                  summonedTurn: turn,
+                  summonedZone: zone,
+                  equipments: []
+                };
+                logBattle(`✨ 額外升級：【智慧的般若】成功升級為【憤怒的般若】！`);
+                triggerUpgradeBonus(true);
+                if (typeof renderExtraDecks === "function") renderExtraDecks();
+                render();
+              }
+            } else if (prajnaSlots.length > 0 && !angryCard) {
+              logBattle("智慧的般若 效果：對手展示了單位卡，但額外區已無【憤怒的般若】可供升級。");
+            }
+          }
         } else {
-          enemyDrawn.forEach(c => window.XLW_ENEMY.hand.push(c));
+          enemyDrawn.forEach(c => (window.XLW_ENEMY.hand || []).push(c));
         }
       }
       logBattle("對手整備：對手抽卡結算完成，單位全體轉正。");
@@ -28712,19 +28789,20 @@ function setupWebSocketEvents() {
       logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
       await showRevealedCardModal(revealedCard, "對手");
       
-      if (revealedCard.type === "unit" || revealedCard.type === "單位") {
+      const isUnit = revealedCard && (revealedCard.type === "unit" || revealedCard.type === "單位") && revealedCard.type !== "magic" && revealedCard.type !== "魔法";
+      if (isUnit) {
         const prajnaSlots = [];
         for (const zone of ["player_front", "player_back"]) {
           field[zone].forEach((u, idx) => {
-            if (u && u.card && u.card.name.includes("智慧的般若")) {
+            if (u && u.card && u.card.name?.includes("智慧的般若") && !window.isUnitSilenced(u, zone, idx)) {
               prajnaSlots.push({ zone, idx, unit: u });
             }
           });
         }
         
-        const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+        const angryCard = playerExtraDeck.find(c => c && (c.id === "SR-VLG-0049" || c.name?.includes("憤怒的般若")));
         if (prajnaSlots.length > 0 && angryCard) {
-          const yes = await showXLWConfirm("智慧的般若 進化", `對手展示了單位卡【${revealedCard.name}】，是否消耗額外區的【憤怒的般若】使場上的【智慧的般若】升級進化？`);
+          const yes = await showXLWConfirm("智慧的般若 升級", `對手展示了單位卡【${revealedCard.name}】（非魔法卡）！\n是否將場上的【智慧的般若】升級為額外區的【憤怒的般若】？`);
             if (yes) {
               let selected = prajnaSlots[0];
               if (prajnaSlots.length > 1) {
@@ -28732,7 +28810,7 @@ function setupWebSocketEvents() {
                   text: `${h.zone === "player_front" ? "前排" : "後排"}${h.idx + 1} 的 智慧的般若`,
                   value: i
                 }));
-                const chosenIdx = await showXLWChoiceModal("選擇要進化的智慧的般若", "請選擇場上的【智慧的般若】：", choices);
+                const chosenIdx = await showXLWChoiceModal("選擇要升級的智慧的般若", "請選擇場上的【智慧的般若】：", choices);
                 if (chosenIdx !== null && chosenIdx !== undefined) {
                   selected = prajnaSlots[chosenIdx];
                 }
@@ -28747,10 +28825,12 @@ function setupWebSocketEvents() {
                 attacking: false,
                 target: null,
                 summonedTurn: turn,
-                summonedZone: zone
+                summonedZone: zone,
+                equipments: []
               };
-              logBattle(`✨ 額外進化：【智慧的般若】成功升級為【憤怒的般若】！`);
-              enemyBonusScore = Math.max(0, enemyBonusScore - 1);
+              logBattle(`✨ 額外升級：【智慧的般若】成功升級為【憤怒的般若】！`);
+              triggerUpgradeBonus(true);
+              if (typeof renderExtraDecks === "function") renderExtraDecks();
               
               ws.send(JSON.stringify({
                 action: "hannya_evolve_sync",
@@ -28763,16 +28843,23 @@ function setupWebSocketEvents() {
         }
       }
     } else if (data.action === "hannya_evolve_sync") {
-      const zone = data.zone;
+      const invertZone = (z) => {
+        if (!z) return z;
+        if (z.startsWith("player_")) return z.replace("player_", "enemy_");
+        if (z.startsWith("enemy_")) return z.replace("enemy_", "player_");
+        return z;
+      };
+      const zone = invertZone(data.zone);
       const idx = data.idx;
       const angryHannya = data.angryHannya;
-      const oldUnit = field[zone][idx];
+      const oldUnit = field[zone]?.[idx];
       if (oldUnit) {
         exileCard(oldUnit.card, "enemy");
       }
-      const extraIdx = enemyExtraDeck.findIndex(c => c && (c.id === "SR-VLG-0049" || c.name.includes("憤怒的般若")));
+      const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
+      const extraIdx = extraList.findIndex(c => c && (c.id === "SR-VLG-0049" || c.name?.includes("憤怒的般若")));
       if (extraIdx >= 0) {
-        enemyExtraDeck.splice(extraIdx, 1);
+        extraList.splice(extraIdx, 1);
       }
       field[zone][idx] = {
         card: structuredClone(angryHannya),
@@ -28780,10 +28867,11 @@ function setupWebSocketEvents() {
         attacking: false,
         target: null,
         summonedTurn: turn,
-        summonedZone: zone
+        summonedZone: zone,
+        equipments: []
       };
-      logBattle(`✨ 額外進化：對手的【智慧的般若】已升級進化為【憤怒的般若】！`);
-      playerBonusScore = Math.max(0, playerBonusScore - 1);
+      logBattle(`✨ 額外升級：對手的【智慧的般若】已升級進化為【憤怒的般若】！`);
+      triggerUpgradeBonus(false);
       render();
     } else if (data.action === "extra_summon_resolved") {
       const oppZone = data.fromZone;
@@ -32677,8 +32765,7 @@ function showExtraDeckDetailModal(title, extraList, owner) {
         
         logBattle(`✨ 額外召喚：【${card.name}】降臨於我方 ${targetZone === "player_front" ? "前排" : "後排"}${targetIdx + 1}！`);
         
-        enemyBonusScore = Math.max(0, enemyBonusScore - 1);
-        logBattle(`💥 ${card.name} 效果：對手額外得分 -1 ★！`);
+        triggerUpgradeBonus(true);
         
         if (isMultiplayer) {
           ws.send(JSON.stringify({
