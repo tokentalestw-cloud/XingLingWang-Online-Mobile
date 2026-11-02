@@ -3487,7 +3487,14 @@ function hasFriendlyDessertQueen(side = "player") {
     if (field[z]) {
       for (let i = 0; i < 5; i++) {
         const u = field[z][i];
-        if (u && u.card && (u.card.id === "SR-CND-0057" || u.card.id === "SSR-CND-0057-泳裝" || u.card.name?.includes("甜點女王")) && !window.isUnitSilenced(u, z, i)) {
+        if (u && u.card && (
+          u.card.id === "SR-CND-0057" ||
+          u.card.id === "SSR-CND-0057-泳裝" ||
+          u.card.id === "SSR-CND-0057-異圖" ||
+          u.card.id?.includes("CND-0057") ||
+          u.card.name?.includes("甜點女王") ||
+          u.card.name?.includes("糖果女王")
+        ) && !window.isUnitSilenced(u, z, i)) {
           return true;
         }
       }
@@ -6424,10 +6431,13 @@ async function castSpell(handIndex) {
             }
           }
           if (emptySlots.length > 0) {
-            const slotChoices = emptySlots.map((s, idx) => ({ text: `${s.zone === "player_front" ? "前排" : "後排"}${s.idx + 1}`, value: idx }));
-            const chosenSlotIdx = await showXLWChoiceModal("最後的麵包與酒：選擇召喚格子", "請選擇召喚的目標格子（免祭品）：", slotChoices);
+            const frontSlots = emptySlots.filter(s => s.zone === "player_front");
+            const candidateSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
+            const slotChoices = candidateSlots.map((s, idx) => ({ text: `${s.zone === "player_front" ? "前排" : "後排"}${s.idx + 1}`, value: idx }));
+            const titlePrompt = frontSlots.length > 0 ? "最後的麵包與酒：選擇召喚格子 (前排優先)" : "最後的麵包與酒：選擇召喚格子";
+            const chosenSlotIdx = await showXLWChoiceModal(titlePrompt, "請選擇召喚的目標格子（免祭品）：", slotChoices);
             if (chosenSlotIdx !== null && chosenSlotIdx !== undefined) {
-              const targetSlot = emptySlots[chosenSlotIdx];
+              const targetSlot = candidateSlots[chosenSlotIdx];
               const handIdx = hand.indexOf(chosenCard);
               if (handIdx >= 0) {
                 selectedHandForSummon = handIdx;
@@ -7043,7 +7053,7 @@ async function startTributeSummon(handIndex) {
     }
   }
 
-  if (normalSummonUsed && !(window.XLW_Tutorial && window.XLW_Tutorial.active)) {
+  if (phase === "召喚階段" && normalSummonUsed && !(window.XLW_Tutorial && window.XLW_Tutorial.active)) {
     setStatus("本回合召喚階段已進行過普通/獻祭召喚。");
     return;
   }
@@ -7259,43 +7269,181 @@ function toggleTributeSelection(zone, idx) {
 }
 
 
-async function moveOrPushUnitToSlot(fromZone, fromIdx, toZone, toIdx) {
-  const movingUnit = field[fromZone][fromIdx];
-  if (!movingUnit) return;
-  if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(movingUnit, fromZone, fromIdx)) {
+async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
+  const movingUnit = field[startZone]?.[startIdx];
+  if (!movingUnit) return false;
+
+  const offBoardAction = options.offBoardAction || "graveyard";
+  const sourceName = options.sourceName || "推擠效果";
+  const side = startZone.startsWith("player_") ? "player" : "enemy";
+
+  if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(movingUnit, startZone, startIdx)) {
     logBattle(`🛡️ 【${movingUnit.card.name}】完全不能被移動！`);
-    return;
+    return false;
   }
-  
-  const existingUnit = field[toZone][toIdx];
-  if (existingUnit) {
-    if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingUnit, toZone, toIdx)) {
-      logBattle(`🛡️ 【${existingUnit.card.name}】完全不能被移動，無法被推擠！`);
-      return;
+
+  // 方向標準化
+  let normDir = direction;
+  if (direction === -1) normDir = "left";
+  if (direction === 1) normDir = "right";
+
+  // 沿著推擠方向建立格子序列 (整排或整列)
+  const slotSeq = [];
+  if (normDir === "left" || normDir === "right") {
+    const delta = normDir === "left" ? -1 : 1;
+    let curIdx = startIdx;
+    while (true) {
+      slotSeq.push({ zone: startZone, idx: curIdx, isOffBoard: false });
+      curIdx += delta;
+      if (curIdx < 0 || curIdx > 4) {
+        slotSeq.push({ zone: startZone, idx: curIdx, isOffBoard: true });
+        break;
+      }
     }
-    if (toZone.includes("front")) {
-      const backZone = toZone.replace("front", "back");
-      const existingBack = field[backZone][toIdx];
-      if (existingBack) {
-        logBattle(`💥 ${existingBack.card.name} 被推擠出戰線送入墓地！`);
-        await destroyUnit(backZone, toIdx, backZone.startsWith("player_") ? "player" : "enemy", false);
-      }
-      field[backZone][toIdx] = existingUnit;
-      if (field[backZone][toIdx]) {
-        field[backZone][toIdx].summonedZone = backZone;
-      }
+  } else if (normDir === "back") {
+    const isFront = startZone.includes("front");
+    const backZone = side + "_back";
+    slotSeq.push({ zone: startZone, idx: startIdx, isOffBoard: false });
+    if (isFront) {
+      slotSeq.push({ zone: backZone, idx: startIdx, isOffBoard: false });
+      slotSeq.push({ zone: backZone, idx: startIdx, isOffBoard: true });
     } else {
-      logBattle(`💥 ${existingUnit.card.name} 被推擠出戰線送入墓地！`);
-      await destroyUnit(toZone, toIdx, toZone.startsWith("player_") ? "player" : "enemy", false);
+      slotSeq.push({ zone: startZone, idx: startIdx, isOffBoard: true });
+    }
+  } else if (normDir === "front") {
+    const isBack = startZone.includes("back");
+    const frontZone = side + "_front";
+    slotSeq.push({ zone: startZone, idx: startIdx, isOffBoard: false });
+    if (isBack) {
+      slotSeq.push({ zone: frontZone, idx: startIdx, isOffBoard: false });
+      slotSeq.push({ zone: frontZone, idx: startIdx, isOffBoard: true });
+    } else {
+      slotSeq.push({ zone: startZone, idx: startIdx, isOffBoard: true });
     }
   }
-  field[toZone][toIdx] = movingUnit;
-  if (field[toZone][toIdx]) {
-    field[toZone][toIdx].summonedZone = toZone;
+
+  // 尋找被推動的單位鏈與推擠終點/碰撞點
+  const unitsInChain = [{ slot: slotSeq[0], unit: movingUnit }];
+  let crashTarget = null;
+  let offBoardUnit = null;
+  let emptySlotReached = null;
+
+  for (let k = 1; k < slotSeq.length; k++) {
+    const target = slotSeq[k];
+    if (target.isOffBoard) {
+      offBoardUnit = unitsInChain[unitsInChain.length - 1];
+      break;
+    }
+    const occupant = field[target.zone]?.[target.idx];
+    if (!occupant) {
+      emptySlotReached = target;
+      break;
+    }
+    // 檢查目標格子的單位是否處於禁錮狀態
+    const confined = isUnitConfined(target.zone, target.idx);
+    if (confined) {
+      crashTarget = {
+        crashingItem: unitsInChain[unitsInChain.length - 1],
+        confinedSlot: target,
+        confinedUnit: occupant
+      };
+      break;
+    }
+    // 檢查是否不可移動 (且非禁錮，如沈思的男人)
+    if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(occupant, target.zone, target.idx)) {
+      logBattle(`🛡️ 【${occupant.card.name}】完全不能被移動，阻擋了推擠！`);
+      return false;
+    }
+    // 可推動單位加入鏈條
+    unitsInChain.push({ slot: target, unit: occupant });
   }
-  field[fromZone][fromIdx] = null;
+
+  // 執行推擠與碰撞結算
+  if (crashTarget) {
+    const crashing = crashTarget.crashingItem;
+    const confined = crashTarget.confinedUnit;
+    const crashingOwner = crashing.slot.zone.startsWith("player_") ? "player" : "enemy";
+
+    logBattle(`💥【${crashing.unit.card.name}】被推擠時撞上被禁錮的【${confined.card.name}】，直接被破壞！推擠停止！`);
+    await destroyUnit(crashing.slot.zone, crashing.slot.idx, crashingOwner, false);
+
+    const crashingIdxInChain = unitsInChain.indexOf(crashing);
+    for (let i = crashingIdxInChain - 1; i >= 0; i--) {
+      const fromSlot = unitsInChain[i].slot;
+      const toSlot = unitsInChain[i + 1].slot;
+      const u = unitsInChain[i].unit;
+      field[toSlot.zone][toSlot.idx] = u;
+      u.summonedZone = toSlot.zone;
+      field[fromSlot.zone][fromSlot.idx] = null;
+    }
+  } else if (offBoardUnit) {
+    const pushedUnit = offBoardUnit.unit;
+    const pushedSlot = offBoardUnit.slot;
+    const unitOwner = pushedSlot.zone.startsWith("player_") ? "player" : "enemy";
+    const handList = unitOwner === "player" ? hand : (window.XLW_ENEMY?.hand || []);
+
+    if (offBoardAction === "hand") {
+      logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，返回手牌！`);
+      if (pushedUnit.equipments && pushedUnit.equipments.length > 0) {
+        const graveList = unitOwner === "player" ? graveyard : (window.XLW_ENEMY?.grave || []);
+        pushedUnit.equipments.forEach(eqName => {
+          const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+          if (isTempMagic) return;
+          const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+          graveList.push(structuredClone(cardObj));
+          logBattle(`✨ 裝備卡 ${eqName} 因單位回手進入墓地。`);
+        });
+        pushedUnit.equipments = [];
+      }
+      handList.push(pushedUnit.card);
+      field[pushedSlot.zone][pushedSlot.idx] = null;
+    } else {
+      logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，送入墓地！`);
+      await destroyUnit(pushedSlot.zone, pushedSlot.idx, unitOwner, false);
+    }
+
+    const offIdxInChain = unitsInChain.indexOf(offBoardUnit);
+    for (let i = offIdxInChain - 1; i >= 0; i--) {
+      const fromSlot = unitsInChain[i].slot;
+      const toSlot = unitsInChain[i + 1].slot;
+      const u = unitsInChain[i].unit;
+      field[toSlot.zone][toSlot.idx] = u;
+      u.summonedZone = toSlot.zone;
+      field[fromSlot.zone][fromSlot.idx] = null;
+    }
+  } else if (emptySlotReached) {
+    let dest = emptySlotReached;
+    for (let i = unitsInChain.length - 1; i >= 0; i--) {
+      const fromSlot = unitsInChain[i].slot;
+      const u = unitsInChain[i].unit;
+      field[dest.zone][dest.idx] = u;
+      u.summonedZone = dest.zone;
+      field[fromSlot.zone][fromSlot.idx] = null;
+      dest = fromSlot;
+    }
+    logBattle(`✨【${movingUnit.card.name}】推擠移動完成！`);
+  }
+
+  if (isMultiplayer) {
+    sendFullGameStateToOpponent();
+  }
   render();
+  return true;
 }
+window.xlwPushUnit = xlwPushUnit;
+
+async function moveOrPushUnitToSlot(fromZone, fromIdx, toZone, toIdx, options = {}) {
+  let dir = "right";
+  if (fromZone === toZone) {
+    dir = toIdx < fromIdx ? "left" : "right";
+  } else if (fromZone.includes("front") && toZone.includes("back")) {
+    dir = "back";
+  } else if (fromZone.includes("back") && toZone.includes("front")) {
+    dir = "front";
+  }
+  return await xlwPushUnit(fromZone, fromIdx, dir, options);
+}
+window.moveOrPushUnitToSlot = moveOrPushUnitToSlot;
 
 window.xlwIsShenaOnField = function() {
   for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
@@ -8065,27 +8213,13 @@ function confirmTribute() {
                 const dirChoices = [{ text: "向左推擠", value: -1 }, { text: "向右推擠", value: 1 }];
                 const chosenDir = await showXLWChoiceModal("製風龜龜 推擠方向", "請選擇推擠的方向：", dirChoices);
                 if (chosenDir !== null && chosenDir !== undefined) {
-                  const targetIdx = item.idx + chosenDir;
-                  logBattle(`✨ 製風龜龜 效果：將對手【${item.name}】向${chosenDir === -1 ? "左" : "右"}推擠！`);
-                  if (targetIdx < 0 || targetIdx > 4) {
-                    logBattle(`💥 ${item.name} 被推到場外，直接進入墓地！`);
-                    await destroyUnit(oppFrontZone, item.idx, "enemy", false);
-                  } else {
-                    await moveOrPushUnitToSlot(oppFrontZone, item.idx, oppFrontZone, targetIdx);
-                  }
+                  await xlwPushUnit(oppFrontZone, item.idx, chosenDir, { offBoardAction: "graveyard", sourceName: "製風龜龜" });
                 }
               }
             } else {
               const item = oppUnits[Math.floor(Math.random() * oppUnits.length)];
               const pushDir = Math.random() < 0.5 ? -1 : 1;
-              const targetIdx = item.idx + pushDir;
-              logBattle(`✨ 對手 製風龜龜 效果：將我方【${item.name}】向${pushDir === -1 ? "左" : "右"}推擠！`);
-              if (targetIdx < 0 || targetIdx > 4) {
-                logBattle(`💥 ${item.name} 被推到場外，直接進入墓地！`);
-                await destroyUnit(oppFrontZone, item.idx, "player", false);
-              } else {
-                await moveOrPushUnitToSlot(oppFrontZone, item.idx, oppFrontZone, targetIdx);
-              }
+              await xlwPushUnit(oppFrontZone, item.idx, pushDir, { offBoardAction: "graveyard", sourceName: "製風龜龜" });
             }
           }
         }
@@ -8093,13 +8227,12 @@ function confirmTribute() {
         // (f-5) 魔神仔: 將敵方後排所有單位向前推擠
         if (unit.card.id === "R-VLG-0055" || unit.card.name.includes("魔神仔")) {
           const isPlayer = t.zone.startsWith("player_");
-          const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
           const oppBackZone = isPlayer ? "enemy_back" : "player_back";
           
           logBattle(`✨ 魔神仔 效果：推擠對手後排所有單位向前排！`);
           for (let i = 0; i < 5; i++) {
             if (field[oppBackZone][i]) {
-              await moveOrPushUnitToSlot(oppBackZone, i, oppFrontZone, i);
+              await xlwPushUnit(oppBackZone, i, "front", { offBoardAction: "graveyard", sourceName: "魔神仔" });
             }
           }
         }
@@ -9258,8 +9391,10 @@ async function performSummonToSlot(zone, idx) {
 
         let summonedCount = 0;
         for (let step = 0; step < 2; step++) {
-          const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+          let emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
           if (emptySlots.length === 0) break;
+          const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
+          const validSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
 
           let residentCard = null;
           let fromWhere = "";
@@ -9278,25 +9413,28 @@ async function performSummonToSlot(zone, idx) {
           if (residentCard) {
             let targetSlot = null;
             if (isPlayer) {
-              const choices = emptySlots.map((s, i) => ({
+              const choices = validSlots.map((s, i) => ({
                 text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
                 value: i
               }));
               choices.push({ text: "不進行召喚", value: -1 });
+              const titlePrompt = frontSlots.length > 0 ?
+                `【糖果女孩】召喚【糖果居民】(${step + 1}/2) (前排優先)` :
+                `【糖果女孩】召喚【糖果居民】(${step + 1}/2)`;
               const chosenIdx = await showXLWChoiceModal(
-                `【糖果女孩】召喚【糖果居民】(${step + 1}/2)`,
+                titlePrompt,
                 `從${fromWhere}召喚【${residentCard.name}】，請選擇召喚位置：`,
                 choices
               );
               if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
-                targetSlot = emptySlots[chosenIdx];
+                targetSlot = validSlots[chosenIdx];
               } else {
                 if (fromWhere === "額外區") extraList.push(residentCard);
                 else graveList.push(residentCard);
                 break;
               }
             } else {
-              targetSlot = emptySlots[0];
+              targetSlot = validSlots[0];
             }
 
             if (targetSlot) {
@@ -9777,49 +9915,10 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         const oppFront = isPlayer ? "enemy_front" : "player_front";
         const oppBack = isPlayer ? "enemy_back" : "player_back";
-        const oppHand = isPlayer ? (window.XLW_ENEMY.hand || []) : hand;
-        
-        let targetUnit = field[oppFront][idx];
-        if (targetUnit) {
-          if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppFront, idx)) {
-            logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
-          } else {
-            // Push front unit backward
-            const existingBack = field[oppBack][idx];
-            if (existingBack) {
-              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingBack, oppBack, idx)) {
-                logBattle(`🛡️ 【${existingBack.card.name}】完全不能被移動，阻擋了推擠！`);
-              } else {
-                // Back unit is pushed off-field -> returns to hand!
-                logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
-                oppHand.push(existingBack.card);
-                field[oppBack][idx] = targetUnit;
-                targetUnit.summonedZone = oppBack;
-                field[oppFront][idx] = null;
-                logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-                render();
-              }
-            } else {
-              field[oppBack][idx] = targetUnit;
-              targetUnit.summonedZone = oppBack;
-              field[oppFront][idx] = null;
-              logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-              render();
-            }
-          }
-        } else {
-          // Front is empty, check if back has unit -> push off-field -> returns to hand!
-          targetUnit = field[oppBack][idx];
-          if (targetUnit) {
-            if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppBack, idx)) {
-              logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
-            } else {
-              logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
-              oppHand.push(targetUnit.card);
-              field[oppBack][idx] = null;
-              render();
-            }
-          }
+        if (field[oppFront][idx]) {
+          await xlwPushUnit(oppFront, idx, "back", { offBoardAction: "hand", sourceName: "西南季風" });
+        } else if (field[oppBack][idx]) {
+          await xlwPushUnit(oppBack, idx, "back", { offBoardAction: "hand", sourceName: "西南季風" });
         }
       }
 
@@ -9840,26 +9939,14 @@ async function performSummonToSlot(zone, idx) {
               const dirChoices = [{ text: "向左推擠", value: -1 }, { text: "向右推擠", value: 1 }];
               const chosenDir = await showXLWChoiceModal("東北季風 推擠方向", "請選擇推擠方向：", dirChoices);
               if (chosenDir !== null && chosenDir !== undefined) {
-                const targetIdx = item.idx + chosenDir;
-                if (targetIdx < 0 || targetIdx > 4) {
-                  logBattle(`💥 【${item.name}】被推擠出戰線，送入墓地！`);
-                  await destroyUnit(oppFront, item.idx, "enemy", false);
-                } else {
-                  await moveOrPushUnitToSlot(oppFront, item.idx, oppFront, targetIdx);
-                }
+                await xlwPushUnit(oppFront, item.idx, chosenDir, { offBoardAction: "graveyard", sourceName: "東北季風" });
               }
             }
           } else {
             // AI northeast push
             const item = oppUnits[Math.floor(Math.random() * oppUnits.length)];
             const pushDir = Math.random() < 0.5 ? -1 : 1;
-            const targetIdx = item.idx + pushDir;
-            if (targetIdx < 0 || targetIdx > 4) {
-              logBattle(`💥 【${item.name}】被推擠出戰線，送入墓地！`);
-              await destroyUnit(oppFront, item.idx, "player", false);
-            } else {
-              await moveOrPushUnitToSlot(oppFront, item.idx, oppFront, targetIdx);
-            }
+            await xlwPushUnit(oppFront, item.idx, pushDir, { offBoardAction: "graveyard", sourceName: "東北季風" });
           }
         }
       }
@@ -17084,46 +17171,10 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   else if (card.name?.includes("西南季風")) {
     const oppFront = isPlayer ? "enemy_front" : "player_front";
     const oppBack = isPlayer ? "enemy_back" : "player_back";
-    const oppHand = isPlayer ? (window.XLW_ENEMY.hand || []) : hand;
-    
-    let targetUnit = field[oppFront][destIdx];
-    if (targetUnit) {
-      if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppFront, destIdx)) {
-        logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
-      } else {
-        const existingBack = field[oppBack][destIdx];
-        if (existingBack) {
-          if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(existingBack, oppBack, destIdx)) {
-            logBattle(`🛡️ 【${existingBack.card.name}】完全不能被移動，阻擋了推擠！`);
-          } else {
-            logBattle(`💥 【${existingBack.card.name}】被推擠出戰線，返回其手牌！`);
-            oppHand.push(existingBack.card);
-            field[oppBack][destIdx] = targetUnit;
-            targetUnit.summonedZone = oppBack;
-            field[oppFront][destIdx] = null;
-            logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-            render();
-          }
-        } else {
-          field[oppBack][destIdx] = targetUnit;
-          targetUnit.summonedZone = oppBack;
-          field[oppFront][destIdx] = null;
-          logBattle(`✨ 西南季風 效果：推擠對手【${targetUnit.card.name}】至後排！`);
-          render();
-        }
-      }
-    } else {
-      targetUnit = field[oppBack][destIdx];
-      if (targetUnit) {
-        if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(targetUnit, oppBack, destIdx)) {
-          logBattle(`🛡️ 【${targetUnit.card.name}】完全不能被移動，西南季風推擠無效！`);
-        } else {
-          logBattle(`💥 【${targetUnit.card.name}】被推擠出戰線，返回其手牌！`);
-          oppHand.push(targetUnit.card);
-          field[oppBack][destIdx] = null;
-          render();
-        }
-      }
+    if (field[oppFront][destIdx]) {
+      await xlwPushUnit(oppFront, destIdx, "back", { offBoardAction: "hand", sourceName: "西南季風" });
+    } else if (field[oppBack][destIdx]) {
+      await xlwPushUnit(oppBack, destIdx, "back", { offBoardAction: "hand", sourceName: "西南季風" });
     }
   }
   // SR-FMS-0020 東北季風
@@ -17142,25 +17193,13 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
           const dirChoices = [{ text: "向左推擠", value: -1 }, { text: "向右推擠", value: 1 }];
           const chosenDir = await showXLWChoiceModal("東北季風 推擠方向", "請選擇推擠方向：", dirChoices);
           if (chosenDir !== null && chosenDir !== undefined) {
-            const targetIdx = item.idx + chosenDir;
-            if (targetIdx < 0 || targetIdx > 4) {
-              logBattle(`💥 【${item.name}】被推擠出戰線，送入墓地！`);
-              await destroyUnit(oppFront, item.idx, "enemy", false);
-            } else {
-              await moveOrPushUnitToSlot(oppFront, item.idx, oppFront, targetIdx);
-            }
+            await xlwPushUnit(oppFront, item.idx, chosenDir, { offBoardAction: "graveyard", sourceName: "東北季風" });
           }
         }
       } else {
         const item = oppUnits[Math.floor(Math.random() * oppUnits.length)];
         const pushDir = Math.random() < 0.5 ? -1 : 1;
-        const targetIdx = item.idx + pushDir;
-        if (targetIdx < 0 || targetIdx > 4) {
-          logBattle(`💥 【${item.name}】被推擠出戰線，送入墓地！`);
-          await destroyUnit(oppFront, item.idx, "player", false);
-        } else {
-          await moveOrPushUnitToSlot(oppFront, item.idx, oppFront, targetIdx);
-        }
+        await xlwPushUnit(oppFront, item.idx, pushDir, { offBoardAction: "graveyard", sourceName: "東北季風" });
       }
     }
   }
@@ -19453,17 +19492,22 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
         if (isPlayerSide) {
           const confirmSummon = await showXLWConfirm("【糖果居民】效果發動", "你的結束階段時，場上有包含【糖果人】的合體單位！\n是否特殊召喚額外區的【糖果居民】？");
           if (confirmSummon) {
-            const choices = emptySlots.map((s, i) => ({
+            const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
+            const validSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
+            const choices = validSlots.map((s, i) => ({
               text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
               value: i
             }));
+            const titlePrompt = frontSlots.length > 0 ?
+              "【糖果居民】召喚位置選擇 (前排優先)" :
+              "【糖果居民】召喚位置選擇";
             const chosenIdx = await showXLWChoiceModal(
-              "【糖果居民】召喚位置選擇",
+              titlePrompt,
               "請選擇要特殊召喚【糖果居民】的位置：",
               choices
             );
             if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
-              const targetSlot = emptySlots[chosenIdx];
+              const targetSlot = validSlots[chosenIdx];
               const residentCard = extraList.splice(residentIdx, 1)[0];
               field[targetSlot.zone][targetSlot.idx] = {
                 card: residentCard,
@@ -19481,7 +19525,9 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             }
           }
         } else {
-          const targetSlot = emptySlots[0];
+          const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
+          const validSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
+          const targetSlot = validSlots[0];
           const residentCard = extraList.splice(residentIdx, 1)[0];
           field[targetSlot.zone][targetSlot.idx] = {
             card: residentCard,
@@ -19524,7 +19570,6 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             continue;
           }
 
-          const targetOwner = targetZone.startsWith("player_") ? "player" : "enemy";
           let pushDir = null;
           if (isPlayerSide) {
             const choices = [
@@ -19550,37 +19595,9 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
             }
           }
 
-          if (pushDir === "left") {
-            const destIdx = targetIdx - 1;
-            if (destIdx < 0) {
-              logBattle(`💥【河神】效果：【${targetUnit.card.name}】被推擠出左側戰線破圖，送入墓地！`);
-              await destroyUnit(targetZone, targetIdx, targetOwner, false);
-            } else {
-              logBattle(`🌊【河神】效果：將【${targetUnit.card.name}】向其左邊推擠！`);
-              await moveOrPushUnitToSlot(targetZone, targetIdx, targetZone, destIdx);
-            }
-          } else if (pushDir === "right") {
-            const destIdx = targetIdx + 1;
-            if (destIdx > 4) {
-              logBattle(`💥【河神】效果：【${targetUnit.card.name}】被推擠出右側戰線破圖，送入墓地！`);
-              await destroyUnit(targetZone, targetIdx, targetOwner, false);
-            } else {
-              logBattle(`🌊【河神】效果：將【${targetUnit.card.name}】向其右邊推擠！`);
-              await moveOrPushUnitToSlot(targetZone, targetIdx, targetZone, destIdx);
-            }
-          } else if (pushDir === "back") {
-            if (targetZone.includes("back")) {
-              logBattle(`💥【河神】效果：【${targetUnit.card.name}】被推擠出後方戰線破圖，送入墓地！`);
-              await destroyUnit(targetZone, targetIdx, targetOwner, false);
-            } else {
-              const destZone = targetOwner + "_back";
-              logBattle(`🌊【河神】效果：將【${targetUnit.card.name}】向其後方推擠！`);
-              await moveOrPushUnitToSlot(targetZone, targetIdx, destZone, targetIdx);
-            }
+          if (pushDir) {
+            await xlwPushUnit(targetZone, targetIdx, pushDir, { offBoardAction: "graveyard", sourceName: "河神" });
           }
-
-          if (isMultiplayer) sendFullGameStateToOpponent();
-          render();
         }
       }
     }
@@ -21337,30 +21354,7 @@ async function endPlayerTurnAndRunEnemy() {
               );
             }
             if (confirmUse) {
-              const backUnit = field["enemy_back"][idx];
-              if (backUnit) {
-                if (backUnit.equipments && backUnit.equipments.length > 0) {
-                  backUnit.equipments.forEach(eqName => {
-                    const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-                    if (isTempMagic) return;
-                    const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
-                    const cloned = structuredClone(cardObj);
-                    cloned.type = "magic";
-                    window.XLW_ENEMY.grave.push(cloned);
-                    enemyGraveyard = window.XLW_ENEMY.grave;
-                    logBattle(`✨ 裝備卡 ${cloned.name} 因對手單位回手進入對手墓地。`);
-                  });
-                  backUnit.equipments = [];
-                }
-                if (window.XLW_ENEMY.hand) {
-                  window.XLW_ENEMY.hand.push(backUnit.card);
-                }
-                logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排，原後排單位 ${backUnit.card.name} 被推回對手手牌！`);
-              } else {
-                logBattle(`掃把精 效果：將對手 ${oppUnit.card.name} 推至後排！`);
-              }
-              field["enemy_back"][idx] = oppUnit;
-              field["enemy_front"][idx] = null;
+              await xlwPushUnit("enemy_front", idx, "back", { offBoardAction: "hand", sourceName: "掃把精" });
 
               const hasBottleInGrave = graveyard.some(c => c && c.name.includes("瓶子長長"));
               const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
@@ -22431,8 +22425,12 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
   const tributeCost = getCardTributeCost(card);
   if (tributeCost > 0) {
     if (phase === "戰術佈陣") {
-      setStatus("【戰術限制】戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚！");
-      return;
+      if ((hasFriendlyDessertQueen("player") && isDessertCard(card)) || window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive) {
+        // 糖果女王或特定效果允許戰術佈陣階段進行獻祭召喚
+      } else {
+        setStatus("【戰術限制】戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚！");
+        return;
+      }
     }
     startTributeSummon(idx);
   } else {
@@ -24756,13 +24754,16 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                   if (chosenRogueIdx !== null && chosenRogueIdx !== undefined) {
                     const rogueItem = handRogues[chosenRogueIdx];
                     
-                    const slotChoices = emptySlots.map((item, i) => ({
+                    const frontSlots = emptySlots.filter(item => item.zone.includes("front"));
+                    const candidateSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
+                    const slotChoices = candidateSlots.map((item, i) => ({
                       text: `${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1}`,
                       value: i
                     }));
-                    const chosenSlotIdx = await showXLWChoiceModal("選擇召喚位置", "請選擇場上空格：", slotChoices);
+                    const titlePrompt = frontSlots.length > 0 ? "選擇召喚位置 (前排優先)" : "選擇召喚位置";
+                    const chosenSlotIdx = await showXLWChoiceModal(titlePrompt, "請選擇場上空格：", slotChoices);
                     if (chosenSlotIdx !== null && chosenSlotIdx !== undefined) {
-                      const dest = emptySlots[chosenSlotIdx];
+                      const dest = candidateSlots[chosenSlotIdx];
                       const summonCard = hand.splice(rogueItem.idx, 1)[0];
                       
                       field[dest.zone][dest.idx] = {
@@ -34069,7 +34070,7 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   // 芭蕉精召喚規則或自訂前排優先：
   // 芭蕉精因為芭蕉樹的效果額外召喚時，可以自行選擇召喚位置，但需遵守前排有空位必須優先召喚到前排，只有前排單位滿了才能召喚到後排。
   const isBananaSpirit = card && (card.id === "SR-VLG-0057" || card.id === "SSR-VLG-0057" || card.id === "VLG-0010" || card.name?.includes("芭蕉精"));
-  const frontPriority = (options && options.frontPriority) || isBananaSpirit;
+  const frontPriority = (options && options.frontPriority !== undefined) ? options.frontPriority : true;
 
   const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
   const candidateSlots = (frontPriority && frontSlots.length > 0) ? frontSlots : emptySlots;
