@@ -62,6 +62,7 @@ let field = {
   enemy_front: [null, null, null, null, null],
   enemy_back: [null, null, null, null, null],
 };
+window.field = field;
 
 let phase = "召喚階段"; // 起手換牌 / 防守階段 / 召喚階段 / 戰術佈陣 / 進攻宣言 / 結束階段
 let turn = 1;
@@ -3456,52 +3457,132 @@ async function xlwSeparateAllFusedUnits(isPlayer = true) {
   const sidePrefix = isPlayer ? "player_" : "enemy_";
   let separatedCount = 0;
   if (typeof field === "undefined" || !field) return 0;
-  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-    if (!field[z]) continue;
-    for (let i = 0; i < 5; i++) {
-      const u = field[z][i];
-      if (u && u.devourCards && u.devourCards.length > 0) {
-        const cardsToSeparate = [...u.devourCards];
-        u.devourCards = [];
-        for (const d of cardsToSeparate) {
-          let placed = false;
-          for (const targetZ of [sidePrefix + "front", sidePrefix + "back"]) {
-            if (!field[targetZ]) continue;
-            for (let sIdx = 0; sIdx < 5; sIdx++) {
-              if (!field[targetZ][sIdx]) {
-                field[targetZ][sIdx] = {
-                  card: structuredClone(d.card),
-                  tapped: false,
-                  attacking: false,
-                  target: null,
-                  summonedTurn: turn,
-                  summonedZone: targetZ,
-                  equipments: []
-                };
-                logBattle(`✨ 分開合體：【${d.card.name}】回到戰場 ${targetZ.includes("front") ? "前排" : "後排"}${sIdx + 1}！`);
-                placed = true;
-                separatedCount++;
-                break;
-              }
-            }
-            if (placed) break;
-          }
-          if (!placed) {
-            if (isPlayer) {
-              hand.push(d.card);
-              logBattle(`✨ 戰場已滿，分開的【${d.card.name}】回到我方手牌！`);
-            } else {
-              if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-              if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-              window.XLW_ENEMY.hand.push(d.card);
-              logBattle(`✨ 戰場已滿，分開的【${d.card.name}】回到對手手牌！`);
-            }
-            separatedCount++;
-          }
+
+  // 分開順序依照星星戰線結算：由星星戰線1前排、星星戰線1後排一直到最後星星戰線5後排
+  const laneOrder = [];
+  for (let col = 0; col < 5; col++) {
+    laneOrder.push({ zone: sidePrefix + "front", idx: col });
+    laneOrder.push({ zone: sidePrefix + "back", idx: col });
+  }
+
+  for (const slotRef of laneOrder) {
+    const { zone: origZone, idx: origIdx } = slotRef;
+    const u = field[origZone] ? field[origZone][origIdx] : null;
+    if (!u || !u.devourCards || u.devourCards.length === 0) continue;
+
+    const devouredList = [...u.devourCards];
+    u.devourCards = [];
+
+    // 先清空原位置，讓玩家在符合規則下可自由選擇兩個單位（主體與合體卡）的放置位置
+    field[origZone][origIdx] = null;
+
+    const unitsToPlace = [
+      {
+        unitObj: u,
+        card: u.card,
+        isHost: true,
+        displayName: `${u.card.name} (主體)`
+      },
+      ...devouredList.map(d => ({
+        unitObj: {
+          card: structuredClone(d.card),
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: turn,
+          summonedZone: origZone,
+          equipments: []
+        },
+        card: d.card,
+        isHost: false,
+        displayName: `${d.card.name} (合體卡)`
+      }))
+    ];
+
+    const isOrigFront = origZone.includes("front");
+
+    for (let uIdx = 0; uIdx < unitsToPlace.length; uIdx++) {
+      const item = unitsToPlace[uIdx];
+
+      // 計算符合規則的可用空格：
+      // 原先站在前排的合體單位拆開後都在前排，除非前排滿了才會放到後排；
+      // 後排的合體單位拆開後都會放在後排
+      const frontZone = sidePrefix + "front";
+      const backZone = sidePrefix + "back";
+
+      const emptyFrontSlots = [];
+      const emptyBackSlots = [];
+      if (field[frontZone]) {
+        for (let s = 0; s < 5; s++) {
+          if (!field[frontZone][s]) emptyFrontSlots.push({ zone: frontZone, idx: s });
         }
       }
+      if (field[backZone]) {
+        for (let s = 0; s < 5; s++) {
+          if (!field[backZone][s]) emptyBackSlots.push({ zone: backZone, idx: s });
+        }
+      }
+
+      let legalSlots = [];
+      if (isOrigFront) {
+        if (emptyFrontSlots.length > 0) {
+          legalSlots = emptyFrontSlots;
+        } else {
+          legalSlots = emptyBackSlots;
+        }
+      } else {
+        if (emptyBackSlots.length > 0) {
+          legalSlots = emptyBackSlots;
+        } else {
+          legalSlots = emptyFrontSlots;
+        }
+      }
+
+      if (legalSlots.length === 0) {
+        if (isPlayer) {
+          hand.push(item.card);
+          logBattle(`✨ 戰場已滿，分開的【${item.card.name}】回到我方手牌！`);
+        } else {
+          if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
+          if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
+          window.XLW_ENEMY.hand.push(item.card);
+          logBattle(`✨ 戰場已滿，分開的【${item.card.name}】回到對手手牌！`);
+        }
+        separatedCount++;
+        continue;
+      }
+
+      let chosenSlot = null;
+      if (isPlayer) {
+        const choices = legalSlots.map((s, cIdx) => ({
+          text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
+          value: cIdx
+        }));
+        const promptTitle = `【合體分開】選擇放置位置 (${uIdx + 1}/${unitsToPlace.length})`;
+        const promptDesc = `原【${u.card.name}】合體單位（原位於 ${isOrigFront ? "前排" : "後排"}${origIdx + 1}）分開：\n請選擇【${item.displayName}】要放置的戰場位置：`;
+
+        let chosenIdx = await showXLWChoiceModal(promptTitle, promptDesc, choices);
+        if (chosenIdx === null || chosenIdx === undefined || chosenIdx < 0 || chosenIdx >= legalSlots.length) {
+          chosenIdx = 0;
+        }
+        chosenSlot = legalSlots[chosenIdx];
+      } else {
+        const origInLegal = legalSlots.find(s => s.zone === origZone && s.idx === origIdx);
+        if (item.isHost && origInLegal) {
+          chosenSlot = origInLegal;
+        } else {
+          chosenSlot = legalSlots[0];
+        }
+      }
+
+      item.unitObj.summonedZone = chosenSlot.zone;
+      field[chosenSlot.zone][chosenSlot.idx] = item.unitObj;
+      logBattle(`✨ 分開合體：【${item.card.name}】放置於 ${chosenSlot.zone.includes("front") ? "前排" : "後排"}${chosenSlot.idx + 1}！`);
+      separatedCount++;
+      render();
     }
   }
+
   if (separatedCount > 0) {
     render();
     if (isMultiplayer && ws) {
@@ -9053,35 +9134,8 @@ async function performSummonToSlot(zone, idx) {
     }
 
     if (!immediateEffectNegated && card) {
-      // 🍬 甜點王國：軟糖幻影 (C-CND-0060) 立即: 從你額外區尋找1張[幻影軟糖]並加入手牌
-      if (card.id === "C-CND-0060" || card.name === "軟糖幻影") {
-        const isPlayer = zone.startsWith("player_");
-        const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-        let found = extraList.find(c => c && (c.id === "R-CND-0059" || c.name === "幻影軟糖"));
-        if (found) {
-          extraList.splice(extraList.indexOf(found), 1);
-        } else {
-          const t = allCards.find(c => c && (c.id === "R-CND-0059" || c.name === "幻影軟糖"));
-          if (t) found = structuredClone(t);
-        }
-        if (found) {
-          if (isPlayer) {
-            hand.push(found);
-            logBattle(`✨【軟糖幻影】立即效果：從額外區將【${found.name}】加入我方手牌！`);
-          } else {
-            if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-            if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-            window.XLW_ENEMY.hand.push(found);
-            logBattle(`✨ 對手【軟糖幻影】立即效果：從額外區將【${found.name}】加入對手手牌！`);
-          }
-          if (typeof renderExtraDecks === "function") renderExtraDecks();
-          if (isMultiplayer) sendFullGameStateToOpponent();
-          render();
-        }
-      }
-
-      // 🍬 甜點王國：幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
-      if (card.id === "R-CND-0059" || card.name === "幻影軟糖") {
+      // 🍬 甜點王國：軟糖幻影 (C-CND-0060) / 幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
+      if (card.id === "C-CND-0060" || card.name === "軟糖幻影" || card.id === "R-CND-0059" || card.name === "幻影軟糖") {
         const isPlayer = zone.startsWith("player_");
         const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
         let found = extraList.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
@@ -9094,12 +9148,12 @@ async function performSummonToSlot(zone, idx) {
         if (found) {
           if (isPlayer) {
             hand.push(found);
-            logBattle(`✨【幻影軟糖】立即效果：從額外區將【${found.name}】加入我方手牌！`);
+            logBattle(`✨【${card.name}】立即效果：從額外區將【${found.name}】加入我方手牌！`);
           } else {
             if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
             if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
             window.XLW_ENEMY.hand.push(found);
-            logBattle(`✨ 對手【幻影軟糖】立即效果：從額外區將【${found.name}】加入對手手牌！`);
+            logBattle(`✨ 對手【${card.name}】立即效果：從額外區將【${found.name}】加入對手手牌！`);
           }
           if (typeof renderExtraDecks === "function") renderExtraDecks();
           if (isMultiplayer) sendFullGameStateToOpponent();
@@ -9160,15 +9214,8 @@ async function performSummonToSlot(zone, idx) {
 
         let summonedCount = 0;
         for (let step = 0; step < 2; step++) {
-          let emptySlot = null;
-          for (const cz of checkZones) {
-            const fi = field[cz].findIndex(u => !u);
-            if (fi >= 0) {
-              emptySlot = { zone: cz, idx: fi };
-              break;
-            }
-          }
-          if (!emptySlot) break;
+          const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+          if (emptySlots.length === 0) break;
 
           let residentCard = null;
           let fromWhere = "";
@@ -9185,17 +9232,43 @@ async function performSummonToSlot(zone, idx) {
           }
 
           if (residentCard) {
-            field[emptySlot.zone][emptySlot.idx] = {
-              card: residentCard,
-              tapped: false,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: emptySlot.zone,
-              equipments: []
-            };
-            summonedCount++;
-            logBattle(`🍬【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至 ${emptySlot.zone.includes("front") ? "前排" : "後排"}${emptySlot.idx + 1}！`);
+            let targetSlot = null;
+            if (isPlayer) {
+              const choices = emptySlots.map((s, i) => ({
+                text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
+                value: i
+              }));
+              choices.push({ text: "不進行召喚", value: -1 });
+              const chosenIdx = await showXLWChoiceModal(
+                `【糖果女孩】召喚【糖果居民】(${step + 1}/2)`,
+                `從${fromWhere}召喚【${residentCard.name}】，請選擇召喚位置：`,
+                choices
+              );
+              if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
+                targetSlot = emptySlots[chosenIdx];
+              } else {
+                if (fromWhere === "額外區") extraList.push(residentCard);
+                else graveList.push(residentCard);
+                break;
+              }
+            } else {
+              targetSlot = emptySlots[0];
+            }
+
+            if (targetSlot) {
+              field[targetSlot.zone][targetSlot.idx] = {
+                card: residentCard,
+                tapped: false,
+                attacking: false,
+                target: null,
+                summonedTurn: turn,
+                summonedZone: targetSlot.zone,
+                equipments: []
+              };
+              summonedCount++;
+              logBattle(`🍬【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
+              render();
+            }
           } else {
             break;
           }
@@ -15677,27 +15750,8 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
     return;
   }
-  // 🍬 甜點王國：軟糖幻影 (C-CND-0060) 立即: 從你額外區尋找1張[幻影軟糖]並加入手牌
-  if (card.id === "C-CND-0060" || card.name === "軟糖幻影") {
-    const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-    let found = extraList.find(c => c && (c.id === "R-CND-0059" || c.name === "幻影軟糖"));
-    if (found) {
-      extraList.splice(extraList.indexOf(found), 1);
-    } else {
-      const t = allCards.find(c => c && (c.id === "R-CND-0059" || c.name === "幻影軟糖"));
-      if (t) found = structuredClone(t);
-    }
-    if (found) {
-      if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-      if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-      window.XLW_ENEMY.hand.push(found);
-      logBattle(`✨ 對手【軟糖幻影】立即效果：從額外區將【${found.name}】加入對手手牌！`);
-      if (typeof renderExtraDecks === "function") renderExtraDecks();
-      render();
-    }
-  }
-  // 🍬 甜點王國：幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
-  else if (card.id === "R-CND-0059" || card.name === "幻影軟糖") {
+  // 🍬 甜點王國：軟糖幻影 (C-CND-0060) / 幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
+  if (card.id === "C-CND-0060" || card.name === "軟糖幻影" || card.id === "R-CND-0059" || card.name === "幻影軟糖") {
     const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
     let found = extraList.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
     if (found) {
@@ -15710,7 +15764,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
       if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
       if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
       window.XLW_ENEMY.hand.push(found);
-      logBattle(`✨ 對手【幻影軟糖】立即效果：從額外區將【${found.name}】加入對手手牌！`);
+      logBattle(`✨ 對手【${card.name}】立即效果：從額外區將【${found.name}】加入對手手牌！`);
       if (typeof renderExtraDecks === "function") renderExtraDecks();
       render();
     }
@@ -19253,45 +19307,51 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
     const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
     const residentIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
     if (residentIdx >= 0) {
-      let emptySlot = null;
-      for (const z of checkCandyZones) {
-        const idx = field[z].findIndex(u => !u);
-        if (idx >= 0) {
-          emptySlot = { zone: z, idx: idx };
-          break;
-        }
-      }
-      if (emptySlot) {
+      const emptySlots = isPlayerSide ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+      if (emptySlots.length > 0) {
         if (isPlayerSide) {
           const confirmSummon = await showXLWConfirm("【糖果居民】效果發動", "你的結束階段時，場上有包含【糖果人】的合體單位！\n是否特殊召喚額外區的【糖果居民】？");
           if (confirmSummon) {
-            const residentCard = extraList.splice(residentIdx, 1)[0];
-            field[emptySlot.zone][emptySlot.idx] = {
-              card: residentCard,
-              tapped: false,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: emptySlot.zone,
-              equipments: []
-            };
-            logBattle(`✨【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】到我方場上！`);
-            if (typeof renderExtraDecks === "function") renderExtraDecks();
-            if (isMultiplayer) sendFullGameStateToOpponent();
-            render();
+            const choices = emptySlots.map((s, i) => ({
+              text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
+              value: i
+            }));
+            const chosenIdx = await showXLWChoiceModal(
+              "【糖果居民】召喚位置選擇",
+              "請選擇要特殊召喚【糖果居民】的位置：",
+              choices
+            );
+            if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
+              const targetSlot = emptySlots[chosenIdx];
+              const residentCard = extraList.splice(residentIdx, 1)[0];
+              field[targetSlot.zone][targetSlot.idx] = {
+                card: residentCard,
+                tapped: false,
+                attacking: false,
+                target: null,
+                summonedTurn: turn,
+                summonedZone: targetSlot.zone,
+                equipments: []
+              };
+              logBattle(`✨【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
+              if (typeof renderExtraDecks === "function") renderExtraDecks();
+              if (isMultiplayer) sendFullGameStateToOpponent();
+              render();
+            }
           }
         } else {
+          const targetSlot = emptySlots[0];
           const residentCard = extraList.splice(residentIdx, 1)[0];
-          field[emptySlot.zone][emptySlot.idx] = {
+          field[targetSlot.zone][targetSlot.idx] = {
             card: residentCard,
             tapped: false,
             attacking: false,
             target: null,
             summonedTurn: turn,
-            summonedZone: emptySlot.zone,
+            summonedZone: targetSlot.zone,
             equipments: []
           };
-          logBattle(`✨ 對手【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】到對手場上！`);
+          logBattle(`✨ 對手【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
           if (typeof renderExtraDecks === "function") renderExtraDecks();
           render();
         }
@@ -22494,7 +22554,7 @@ function renderField() {
           cardEl.appendChild(equipContainer);
         }
 
-        // 🍬 甜點王國：吞食合體視覺呈現（底層卡牌露出上方攻擊力或下方星星數）
+        // 🍬 甜點王國：吞食合體標記與合體計數標籤
         if (obj.devourCards && obj.devourCards.length > 0) {
           cardEl.classList.add("xlw-fused-devour-unit");
           cardEl.style.boxShadow = "0 0 16px rgba(236, 72, 153, 0.7), 0 4px 10px rgba(0, 0, 0, 0.5)";
@@ -22503,32 +22563,8 @@ function renderField() {
           const fusionBadge = document.createElement("div");
           fusionBadge.className = "xlw-devour-count-badge";
           fusionBadge.innerHTML = `🍬 合體 ×${obj.devourCards.length}`;
-          fusionBadge.style.cssText = "position: absolute; top: 2px; right: 2px; background: linear-gradient(135deg, #ec4899, #db2777); color: white; font-size: 10px; font-weight: 900; padding: 1px 5px; border-radius: 6px; z-index: 15; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border: 1px solid #fbcfe8; pointer-events: none;";
+          fusionBadge.title = `吞食合體單位（共包含 ${obj.devourCards.length} 張底層卡牌）`;
           cardEl.appendChild(fusionBadge);
-
-          // 露出上方攻擊力
-          const atkExposed = obj.devourCards.filter(d => d.expose === "atk");
-          if (atkExposed.length > 0) {
-            const topTab = document.createElement("div");
-            topTab.className = "xlw-devour-tab-top";
-            topTab.style.cssText = "position: absolute; top: -14px; left: 2px; right: 2px; height: 16px; background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; font-size: 11px; font-weight: 900; border-radius: 4px 4px 0 0; display: flex; align-items: center; justify-content: center; z-index: 12; box-shadow: 0 -2px 5px rgba(0,0,0,0.4); border: 1px solid #fca5a5; border-bottom: none; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;";
-            const text = atkExposed.map(d => `⚔️+${d.value}`).join(" ");
-            topTab.innerHTML = text;
-            topTab.title = atkExposed.map(d => `${d.card.name}: +${d.value}攻`).join("\n");
-            cardEl.appendChild(topTab);
-          }
-
-          // 露出下方星星數
-          const starsExposed = obj.devourCards.filter(d => d.expose === "stars");
-          if (starsExposed.length > 0) {
-            const bottomTab = document.createElement("div");
-            bottomTab.className = "xlw-devour-tab-bottom";
-            bottomTab.style.cssText = "position: absolute; bottom: -14px; left: 2px; right: 2px; height: 16px; background: linear-gradient(135deg, #d97706, #f59e0b); color: white; font-size: 11px; font-weight: 900; border-radius: 0 0 4px 4px; display: flex; align-items: center; justify-content: center; z-index: 12; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid #fde68a; border-top: none; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;";
-            const text = starsExposed.map(d => `⭐+${d.value}★`).join(" ");
-            bottomTab.innerHTML = text;
-            bottomTab.title = starsExposed.map(d => `${d.card.name}: +${d.value}★`).join("\n");
-            cardEl.appendChild(bottomTab);
-          }
         }
 
         if (typeof selectedTributes !== "undefined" && selectedTributes.find(t => t.key === key)) {
@@ -25019,7 +25055,84 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
           
         };
 
-        slot.appendChild(cardEl);
+        let targetSlotNode = cardEl;
+
+        // 🍬 甜點王國：吞食合體實體卡牌堆疊呈現（底層卡向上移露出攻擊力，向下移露出星星數）
+        if (obj.devourCards && obj.devourCards.length > 0) {
+          slot.style.overflow = "visible";
+          cardEl.style.position = "relative";
+          cardEl.style.zIndex = "10";
+
+          const stackEl = document.createElement("div");
+          stackEl.className = "xlw-card-stack";
+
+          // 分組：露出攻擊力（往上移）與露出星星數（往下移）
+          const atkExposed = obj.devourCards.filter(d => d.expose === "atk");
+          const starsExposed = obj.devourCards.filter(d => d.expose === "stars");
+          const otherExposed = obj.devourCards.filter(d => d.expose !== "atk" && d.expose !== "stars");
+
+          // 露出上方攻擊力（向上移位階梯：-22px, -36px...）
+          atkExposed.forEach((d, aIdx) => {
+            const shiftY = -22 - (aIdx * 14);
+            const underCard = document.createElement("div");
+            underCard.className = "xlw-devour-under-card xlw-devour-expose-atk";
+            underCard.style.transform = `translateY(${shiftY}px)`;
+            underCard.style.zIndex = `${5 - aIdx}`;
+            underCard.title = `【合體底層卡】${d.card.name}（+${d.value} 攻）\n點擊可檢視卡牌詳情`;
+            underCard.innerHTML = `
+              <img src="${d.card.image || '/static/card_back.jpeg'}" alt="${d.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';">
+              <div class="xlw-devour-peek-badge atk">⚔️ +${d.value} ${d.card.name}</div>
+            `;
+            underCard.onclick = (e) => {
+              e.stopPropagation();
+              showModal(d.card);
+            };
+            stackEl.appendChild(underCard);
+          });
+
+          // 露出下方星星數（向下移位階梯：22px, 36px...）
+          starsExposed.forEach((d, sIdx) => {
+            const shiftY = 22 + (sIdx * 14);
+            const underCard = document.createElement("div");
+            underCard.className = "xlw-devour-under-card xlw-devour-expose-stars";
+            underCard.style.transform = `translateY(${shiftY}px)`;
+            underCard.style.zIndex = `${4 - sIdx}`;
+            underCard.title = `【合體底層卡】${d.card.name}（+${d.value}★ 星數）\n點擊可檢視卡牌詳情`;
+            underCard.innerHTML = `
+              <img src="${d.card.image || '/static/card_back.jpeg'}" alt="${d.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';">
+              <div class="xlw-devour-peek-badge stars">⭐ +${d.value}★ ${d.card.name}</div>
+            `;
+            underCard.onclick = (e) => {
+              e.stopPropagation();
+              showModal(d.card);
+            };
+            stackEl.appendChild(underCard);
+          });
+
+          // 其他未指定露出類型的底層卡
+          otherExposed.forEach((d, oIdx) => {
+            const shiftY = -18 - (oIdx * 12);
+            const underCard = document.createElement("div");
+            underCard.className = "xlw-devour-under-card";
+            underCard.style.transform = `translateY(${shiftY}px)`;
+            underCard.style.zIndex = `${3 - oIdx}`;
+            underCard.title = `【合體底層卡】${d.card.name}\n點擊可檢視卡牌詳情`;
+            underCard.innerHTML = `
+              <img src="${d.card.image || '/static/card_back.jpeg'}" alt="${d.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';">
+              <div class="xlw-devour-peek-badge atk">🍬 ${d.card.name}</div>
+            `;
+            underCard.onclick = (e) => {
+              e.stopPropagation();
+              showModal(d.card);
+            };
+            stackEl.appendChild(underCard);
+          });
+
+          stackEl.appendChild(cardEl);
+          targetSlotNode = stackEl;
+        }
+
+        slot.appendChild(targetSlotNode);
 
         // 渲染已裝備之魔法卡（置於單位卡下方，堆疊並僅露出最上方裝備效果字樣）
         if (obj.equipments && obj.equipments.length > 0) {

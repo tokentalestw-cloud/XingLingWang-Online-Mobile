@@ -9020,54 +9020,130 @@ body #phaseDisplayPanelHard #phaseTextHard,
   animation: xlwDevourPulse 2s infinite ease-in-out;
 }
 
-.xlw-devour-tab-top {
-  position: absolute;
-  top: -14px;
-  left: 2px;
-  right: 2px;
-  height: 16px;
-  background: linear-gradient(135deg, #b91c1c, #ef4444);
-  color: white;
-  font-size: 11px;
-  font-weight: 900;
-  border-radius: 4px 4px 0 0;
+/* ===== 吞食合體實體卡牌堆疊質感 (Devour Fusion Physical Stack) ===== */
+.xlw-card-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 12;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.4);
-  border: 1px solid #fca5a5;
-  border-bottom: none;
-  pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0 2px;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  overflow: visible !important;
 }
 
-.xlw-devour-tab-bottom {
+.slot.tapped-slot .xlw-card-stack {
+  transform: rotate(90deg) !important;
+  filter: grayscale(0.25) brightness(0.7) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.3s ease, filter 0.3s ease !important;
+}
+
+.slot.tapped-slot .xlw-card-stack .card {
+  transform: none !important;
+  filter: none !important;
+}
+
+.slot.tapped-slot .xlw-card-stack:hover {
+  filter: grayscale(0.12) brightness(0.82) !important;
+}
+
+.slot.xlw-my-attacker .xlw-card-stack,
+.slot.tapped-slot.xlw-my-attacker .xlw-card-stack,
+.slot.xlw-player-attacker-selected .xlw-card-stack,
+.slot.tapped-slot.xlw-player-attacker-selected .xlw-card-stack,
+.slot.xlw-player-declared-attacker .xlw-card-stack,
+.slot.tapped-slot.xlw-player-declared-attacker .xlw-card-stack {
+  transform: rotate(-30deg) !important;
+  box-shadow: 0 8px 20px rgba(250, 84, 28, 0.5) !important;
+  border-color: #fa541c !important;
+  z-index: 10 !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.15) !important;
+}
+.slot.xlw-my-attacker .xlw-card-stack .card,
+.slot.tapped-slot.xlw-my-attacker .xlw-card-stack .card,
+.slot.xlw-player-attacker-selected .xlw-card-stack .card,
+.slot.tapped-slot.xlw-player-attacker-selected .xlw-card-stack .card,
+.slot.xlw-player-declared-attacker .xlw-card-stack .card,
+.slot.tapped-slot.xlw-player-declared-attacker .xlw-card-stack .card {
+  transform: none !important;
+}
+
+.slot.xlw-enemy-attacker .xlw-card-stack,
+.slot.tapped-slot.xlw-enemy-attacker .xlw-card-stack,
+.slot.xlw-enemy-declared-attacker .xlw-card-stack,
+.slot.tapped-slot.xlw-enemy-declared-attacker .xlw-card-stack {
+  transform: rotate(30deg) !important;
+  box-shadow: 0 8px 20px rgba(250, 84, 28, 0.5) !important;
+  border-color: #fa541c !important;
+  z-index: 10 !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.15) !important;
+}
+.slot.xlw-enemy-attacker .xlw-card-stack .card,
+.slot.tapped-slot.xlw-enemy-attacker .xlw-card-stack .card,
+.slot.xlw-enemy-declared-attacker .xlw-card-stack .card,
+.slot.tapped-slot.xlw-enemy-declared-attacker .xlw-card-stack .card {
+  transform: none !important;
+}
+
+.xlw-devour-under-card {
   position: absolute;
-  bottom: -14px;
-  left: 2px;
-  right: 2px;
-  height: 16px;
-  background: linear-gradient(135deg, #d97706, #f59e0b);
-  color: white;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 35%, #2a1f18 0%, #110e0c 100%);
+  border: 1.5px solid rgba(255, 215, 106, 0.72);
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.xlw-devour-under-card:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 14px rgba(255, 215, 106, 0.85);
+}
+
+.xlw-devour-under-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.xlw-devour-peek-badge {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  height: 18px;
+  border-radius: 4px;
+  color: #ffffff;
   font-size: 11px;
   font-weight: 900;
-  border-radius: 0 0 4px 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 12;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-  border: 1px solid #fde68a;
-  border-top: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 2px #000000;
   pointer-events: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 2px;
+  padding: 0 4px;
+}
+
+.xlw-devour-peek-badge.atk {
+  top: 2px;
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+  border: 1.2px solid #fca5a5;
+}
+
+.xlw-devour-peek-badge.stars {
+  bottom: 2px;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  border: 1.2px solid #fde68a;
 }
 
 @keyframes xlwDevourPulse {
