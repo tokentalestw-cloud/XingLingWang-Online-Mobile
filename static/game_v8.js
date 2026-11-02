@@ -841,18 +841,12 @@ function isUnitConfined(zone, idx) {
   if (oppFront && oppFront.card && oppFront.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
   if (oppBack && oppBack.card && oppBack.card.name.includes("土蜘蛛") && !window.isUnitSilenced(oppBack, oppPrefix + "_back", idx)) return true;
 
-  // 長脖子的女人 / 沉思的男人: 正前方的敵方單位都會被禁錮
-  const isOppImprisonForwardUnit = (u) => {
-    if (!u || !u.card) return false;
-    const uc = u.card;
-    const isWoman = uc.id === "R-VLG-0006" || uc.name?.includes("長脖子的女人");
-    const isThinker = uc.id === "R-ART-0003" || uc.id === "R-ART-0003-新年" || uc.id === "ART-0003" || uc.name?.includes("沉思的男人") || uc.name?.includes("沈思的男人");
-    return isWoman || isThinker;
-  };
-
-  if ((oppFront && isOppImprisonForwardUnit(oppFront) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) ||
-      (oppBack && isOppImprisonForwardUnit(oppBack) && !window.isUnitSilenced(oppBack, oppPrefix + "_back", idx))) {
-    return true;
+  // 🦒 長脖子的女人 (R-VLG-0006): 只會禁錮敵方正前方的單位
+  // 正前方的定義為：長脖子的女人位於前排以及敵方單位位於同一星星戰線前排，才會被禁錮，同一星星戰線敵方後排單位不會被禁錮。長脖子的女人位於後排時亦不生效。
+  if (zone.includes("front")) {
+    if (oppFront && oppFront.card && (oppFront.card.id === "R-VLG-0006" || oppFront.card.name?.includes("長脖子的女人")) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) {
+      return true;
+    }
   }
 
   // 🍬 薄荷冰淇淋 (C-CND-0061): 使此單位正前方的單位被禁錮
@@ -3212,13 +3206,13 @@ window.xlwGetDefensePhaseCombatants = function(isPlayerCasting) {
 
 function hasImmediateEffect(card) {
   if (!card) return false;
-  if (card.id === "EWD-0006" || card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪") return true;
+  if (card.id === "EWD-0006" || card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪" || card.id === "R-VLG-0016") return true;
   const name = card.name || "";
   const text = card.effect_text || "";
   const kw = card.keywords || [];
-  if (kw.some(k => k && k.includes("立即")) || text.includes("立即") || name.includes("立即")) return true;
+  if (kw.some(k => k && k.includes("立即")) || text.includes("立即") || name.includes("立即") || name.includes("燈籠小鬼")) return true;
   
-  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王", "淨化老妖精", "老妖精"];
+  const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王", "淨化老妖精", "老妖精", "燈籠小鬼", "座敷童子", "雪女"];
   return immediateNames.some(n => name.includes(n));
 }
 window.hasImmediateEffect = hasImmediateEffect;
@@ -11512,7 +11506,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         window.XLW_enemyCannotAttackOnNextTurn = true;
         logBattle("座敷童子 效果：對手下個回合將無法進行任何進攻！");
       }
-      else if (card.name.includes("燈籠小鬼")) {
+      else if (card.id === "R-VLG-0016" || card.name?.includes("燈籠小鬼")) {
         logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
         await runLanternImpPlacementFlow();
       }
@@ -12241,11 +12235,14 @@ async function runLanternImpPlacementFlow() {
         }));
       }
     }
+  } catch (err) {
+    console.error("runLanternImpPlacementFlow error:", err);
   } finally {
     window.XLW_lanternPlacementActive = null;
     window.XLW_lanternResolve = null;
     selectedHandForSummon = prevSelected;
     window.XLW_bypassNormalSummonLimit = prevBypass;
+    render();
   }
 }
 
@@ -15643,12 +15640,16 @@ function isDecayed(zone, idx) {
   const u = field[zone]?.[idx];
   if (!u) return false;
 
+  const c = u.card || u;
+  // 🧟 腐爛神 (SR-VLG-0059 / SSR-VLG-0001 / SR-VLG-0001): 自身免疫衰退，絕不會被施加衰退負面效果
+  if (c && (c.id === "SR-VLG-0059" || c.id === "SSR-VLG-0001" || c.id === "SR-VLG-0001" || c.name?.includes("腐爛神"))) {
+    return false;
+  }
+
   // 闆娘助手 (VRT-0002) 效果：使與此單位同排的所有單位衰退無效化
   if (field[zone] && field[zone].some(unit => unit && unit.card && (unit.card.id === "VRT-0002" || unit.card.name?.includes("闆娘助手")))) {
     return false;
   }
-
-  const c = u.card || u;
   
   let hasDecayStatus = false;
   if (u.decay) hasDecayStatus = true;
@@ -16624,7 +16625,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     window.XLW_playerCannotAttackOnNextTurn = true;
     logBattle("座敷童子 效果：我方下個回合將無法進行任何進攻！");
   }
-  else if (card.name?.includes("燈籠小鬼")) {
+  else if (card.id === "R-VLG-0016" || card.name?.includes("燈籠小鬼")) {
     logBattle("燈籠小鬼 效果：準備在雙方場上特殊召喚小旅人！");
     
     // 1. First Little Traveler on opponent's side (from AI's perspective, which is enemy_front / enemy_back)
@@ -21122,6 +21123,10 @@ async function runEnemyTurn() {
 async function endPlayerTurnAndRunEnemy() {
   window.XLWInputDiagnostics?.mark("endTurn:entry",{ending:!!window.XLW_isPlayerTurnEnding,myTurn:isMyTurn,phase});
   if (window.XLW_isPlayerTurnEnding) return;
+  if (window.XLW_lanternPlacementActive) {
+    setStatus("⚠️ 請先完成【燈籠小鬼】召喚小旅人的位置選擇！");
+    return;
+  }
   if (isMultiplayer && (!isMyTurn || mulliganActive || phase === "起手換牌")) {
     setStatus(mulliganActive || phase === "起手換牌" ? "請先完成雙方起手換牌。" : "目前為對手回合，請等待對手行動。");
     renderStablePanel();
@@ -21384,20 +21389,23 @@ async function endPlayerTurnAndRunEnemy() {
             const choices = eligible.map((c, i) => ({ text: `${c.name} (祭品需求: ${c.tribute})`, value: i }));
             const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
             if (chosen !== null && chosen !== undefined) {
-              const cardToSummon = eligible[chosen];
-              const validSlots = [];
+              const allValidSlots = [];
               for (const z of ["player_front", "player_back"]) {
                 for (let i = 0; i < 5; i++) {
-                  if (!field[z][i] && xlwCanSummonToZone(z, cardToSummon)) {
-                    validSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排戰線" : "後排戰線"} ${i + 1}` });
+                  if (!field[z][i]) {
+                    allValidSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排戰線" : "後排戰線"} ${i + 1}`, isFront: z.includes("front") });
                   }
                 }
               }
+              // 恐怖的井召喚規則：只能選擇空位，且前排戰線有空格則必須優先召喚至前排戰線
+              const frontSlots = allValidSlots.filter(s => s.isFront);
+              const validSlots = frontSlots.length > 0 ? frontSlots : allValidSlots;
               if (validSlots.length > 0) {
                 let chosenSlot = validSlots[0];
                 if (validSlots.length > 1) {
                   const slotChoices = validSlots.map((s, idx) => ({ text: s.label, value: idx }));
-                  const chosenSlotIdx = await showXLWChoiceModal("恐怖的井 選擇召喚位置", `請選擇【${cardToSummon.name}】要放置的戰線位置：`, slotChoices);
+                  const titlePrompt = frontSlots.length > 0 ? "恐怖的井 選擇召喚位置 (前排優先)" : "恐怖的井 選擇召喚位置";
+                  const chosenSlotIdx = await showXLWChoiceModal(titlePrompt, `請選擇【${cardToSummon.name}】要放置的戰線位置：`, slotChoices);
                   if (chosenSlotIdx === null || chosenSlotIdx === undefined || chosenSlotIdx === -1) {
                     return;
                   }
@@ -22517,6 +22525,12 @@ function renderHand() {
 
       if (mulliganActive) {
         toggleMulliganCard(idx);
+        return;
+      }
+
+      if (window.XLW_lanternPlacementActive) {
+        showModal(card);
+        setStatus("【燈籠小鬼】請先在場上空格放置小旅人！");
         return;
       }
 
@@ -27585,7 +27599,7 @@ function setupWebSocketEvents() {
         sendFullGameStateToOpponent(false);
         ws.send(JSON.stringify({
           action: "counter_summon_response",
-          countered: starryCountered || !field[zone]?.[idx] ? true :
+          countered: starryCountered ? true :
             (interruptCountered || immediateEffectNegated ? "interrupt" : false)
         }));
         if (card && card.id === "TOKEN_TRAVELER") {
