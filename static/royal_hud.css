@@ -1096,3 +1096,10 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
 .xlw-candy-summon .xlw-yuki-caption strong {letter-spacing:6px;}
 
 .xlw-candy-summon .xlw-yuki-poster,.xlw-candy-summon .xlw-yuki-video { -webkit-mask-image:linear-gradient(transparent,#000 3%,#000 96%,transparent);mask-image:linear-gradient(transparent,#000 3%,#000 96%,transparent);}
+
+/* Torch skeleton: warm firelight with a full-height transparent character. */
+.xlw-annie-summon .xlw-yuki-halo {background:radial-gradient(ellipse,#ff8b3540,transparent 67%);box-shadow:0 0 75px #ef58252b;}
+.xlw-annie-summon .xlw-yuki-performer {filter:drop-shadow(0 0 12px #ffad6557);}
+.xlw-annie-summon .xlw-yuki-caption {color:#fff0d2;text-shadow:0 2px 4px #42170b,0 0 16px #ff8a45;background:linear-gradient(90deg,transparent,#431d10d9,transparent);white-space:nowrap;}
+.xlw-annie-summon .xlw-yuki-caption strong {letter-spacing:3px;padding-left:3px;font-size:clamp(20px,calc(6 * var(--xvh,1vh)),34px);}
+.xlw-annie-summon .xlw-yuki-poster,.xlw-annie-summon .xlw-yuki-video {-webkit-mask-image:none;mask-image:none;}
