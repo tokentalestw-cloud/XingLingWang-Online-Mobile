@@ -227,18 +227,31 @@ window.xlwShowPhaseBanner = async function(text, color = "#ffe600") {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const $ = (id) => document.getElementById(id);
 
-window.xlwClearAllPendingResolvers = function() {
+function xlwPendingRequiredSpellTarget(){
+  return Boolean(window.XLW_tempEquipSpellActive && window.XLW_tempEquipSpellCard);
+}
+function xlwSpellActionPending(){
+  return xlwPendingRequiredSpellTarget() || Boolean(window.XLW_castSpellBusy || window.XLW_pendingSpellResolve || (window.spellChainStack||[]).length);
+}
+function xlwRequireSpellCompletion(){
+  if(!xlwSpellActionPending())return false;
+  setStatus(xlwPendingRequiredSpellTarget()?'請先點選一個合法單位，完成【'+window.XLW_tempEquipSpellCard.name+'】的效果，才能結束發動或進行其他操作。':'魔法連鎖尚在處理，請先完成反制及效果選擇。');return true;
+}
+
+window.xlwClearAllPendingResolvers = function(force = false) {
+  if(force){window.XLW_tempEquipSpellActive=false;window.XLW_tempEquipSpellCard=null;}
+  if(!force && xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
   if (window.XLW_pendingSummonCounterResolve) {
     console.log("[WS-Safety] Resolving stuck summon counter check");
     const r = window.XLW_pendingSummonCounterResolve;
     window.XLW_pendingSummonCounterResolve = null;
-    try { r({ countered: false }); } catch (e) {}
+    try { r({ countered: Boolean(force) }); } catch (e) {}
   }
   if (window.XLW_pendingSpellResolve) {
     console.log("[WS-Safety] Resolving stuck spell chain check");
     const r = window.XLW_pendingSpellResolve;
     window.XLW_pendingSpellResolve = null;
-    try { r({ countered: false }); } catch (e) {}
+    try { r({ countered: Boolean(force) }); } catch (e) {}
   }
   const boardResolvers = [
     ["XLW_summonPlacementResolve", null],
@@ -1155,6 +1168,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
   window.XLWBattleFlow?.reset();
@@ -1422,6 +1436,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
   window.XLWBattleFlow?.reset();
@@ -4521,6 +4536,7 @@ function validPlayerAttackLine(zone, lane) {
 
 // ===== 6. 召喚與獻祭召喚系統 =====
 function clearModes(keepTributeWaiting = false) {
+  if(xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
   selectedHandForSummon = null;
   selectedHandForSpell = null;
   selectedHandForTribute = null;
@@ -6396,7 +6412,8 @@ async function castSpell(handIndex) {
       }
       setStatus(`✨【${card.name}】正常發動成功！${promptBounty}`);
       render();
-      await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+      const targetResult=await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+      if(targetResult===null)return;
     } else if (isTempEquipMagic) {
       window.XLW_tempEquipSpellActive = true;
       window.XLW_tempEquipSpellCard = card;
@@ -6415,7 +6432,8 @@ async function castSpell(handIndex) {
       }
       setStatus(`✨【${card.name}】正常發動成功！${promptText}`);
       render();
-      await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+      const targetResult=await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
+      if(targetResult===null)return;
     } else if (card.id === "SPT-0018" || card.name?.includes("觀光樂園")) {
       window.XLW_sightseeingParadiseActive = (window.XLW_sightseeingParadiseActive || 0) + 1;
       logBattle(`✨ 發動魔法【觀光樂園】：將在我方回合結束時召喚 3 個小旅人！`);
@@ -7066,13 +7084,18 @@ async function castSpell(handIndex) {
     throw err;
   } finally {
     window.XLW_castSpellBusy=false;
+    renderStablePanel();
   }
 }
 
 // 點手牌的獻祭怪進入獻祭模式
 // 點手牌的獻祭怪進入獻祭模式
 async function startTributeSummon(handIndex) {
+  if(xlwRequireSpellCompletion())return;
   const card = hand[handIndex];
+  if(!card)return;
+  if(selectedTributeCard && selectedTributeCard!==card)clearModes();
+  if(!canSummonCard(card,true))return;
   const targetCost = getCardTributeCost(card);
   if (!card || card.type !== "unit" || targetCost <= 0) return;
 
@@ -9052,8 +9075,9 @@ async function performSummonToSlot(zone, idx) {
       if (idxInHand < 0 && selectedTributeCard) {
         idxInHand = hand.findIndex(c => c && (c.id === selectedTributeCard.id || c.name === selectedTributeCard.name));
       }
-      if (idxInHand < 0) {
-        idxInHand = hand.findIndex(c => c && getCardTributeCost(c) > 0);
+      if (idxInHand < 0 && selectedHandForSummon!==null) {
+        const candidate=hand[Number(selectedHandForSummon)];
+        if(candidate && (!selectedTributeCard || candidate._xlwInstanceId && candidate._xlwInstanceId===selectedTributeCard._xlwInstanceId))idxInHand=Number(selectedHandForSummon);
       }
       if (idxInHand >= 0) {
         selectedHandForSummon = idxInHand;
@@ -12559,6 +12583,7 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
 async function changeActionPhase(targetPhase) {
+  if(xlwRequireSpellCompletion())return;
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (selectedHandForTribute !== null || tributeWaitingPosition) {
     setStatus("⚠️ 正在進行獻祭召喚中，請先完成放置或點選「取消」！");
@@ -13265,6 +13290,7 @@ function xlwExecuteBlackCatDestruction(zone, idx) {
 
 // ===== 9. 防守階段 (Defense Phase) 自動對決結算 =====
 window.XLW_endDefenseCounter = function() {
+  if(xlwRequireSpellCompletion())return;
   if (window.XLW_defenseCounterResolve) {
     const resolve = window.XLW_defenseCounterResolve;
     window.XLW_defenseCounterResolve = null;
@@ -15150,14 +15176,15 @@ function isLastCard(c) {
          (c.name?.includes("最後的"));
 }
 
-function canSummonCard(card, isPlayer) {
+function canSummonCard(card, isPlayer, options = {}) {
+  const report=message=>{if(!options.silent)setStatus(message);};
   // SR-FMS-0036 麻祖 限制
   if (card.id === "SR-FMS-0036" || card.name?.includes("麻祖")) {
     const exile = isPlayer ? playerExileZone : enemyExileZone;
     const hasHu = exile.some(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
     if (!hasHu) {
       if (isPlayer) {
-        setStatus("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
+        report("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
       }
       return false;
     }
@@ -15169,7 +15196,7 @@ function canSummonCard(card, isPlayer) {
     const hasHu = exile.some(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
     if (!hasHu) {
       if (isPlayer) {
-        setStatus("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
+        report("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
       }
       return false;
     }
@@ -15180,7 +15207,7 @@ function canSummonCard(card, isPlayer) {
     const ok = window.xlwCheckMahjongCombo(isPlayer, "小四喜");
     if (!ok) {
       if (isPlayer) {
-        setStatus("【召喚限制】高塔101號 需要我方場上備齊東、南、西、北！");
+        report("【召喚限制】高塔101號 需要我方場上備齊東、南、西、北！");
       }
       return false;
     }
@@ -15191,7 +15218,7 @@ function canSummonCard(card, isPlayer) {
     const hasUnits = zones.some(z => field[z].some(u => u !== null));
     if (hasUnits) {
       if (isPlayer) {
-        setStatus("【召喚限制】海中的干貝 火野貝 只能在場上沒有 any 我方單位時才能召喚！");
+        report("【召喚限制】海中的干貝 火野貝 只能在場上沒有 any 我方單位時才能召喚！");
       }
       return false;
     }
@@ -15208,7 +15235,7 @@ function canSummonCard(card, isPlayer) {
     });
     const ok = tappedOrcCount >= 2;
     if (!ok && isPlayer) {
-      setStatus("【召喚限制】永鬥神 奈祖爾 需要我方場上有 2 個或以上橫置的獸人單位！");
+      report("【召喚限制】永鬥神 奈祖爾 需要我方場上有 2 個或以上橫置的獸人單位！");
     }
     return ok;
   }
@@ -15217,7 +15244,7 @@ function canSummonCard(card, isPlayer) {
     const catCount = graveList.filter(c => c && (c.deck === "喵喵賊" || c.faction === "喵喵賊" || c.id?.includes("CAT") || c.id?.includes("cat"))).length;
     const ok = catCount >= 3;
     if (!ok && isPlayer) {
-      setStatus("【召喚限制】惡魔招財喵 需要我方墓地有 3 個 or 以上的喵喵賊卡牌！");
+      report("【召喚限制】惡魔招財喵 需要我方墓地有 3 個 or 以上的喵喵賊卡牌！");
     }
     return ok;
   }
@@ -15228,7 +15255,7 @@ function canSummonCard(card, isPlayer) {
       field[z].some((u, i) => u && u.card && (u.card.id === "R-NMS-0023" || u.card.name?.includes("人口安全局局員")) && !window.isUnitSilenced(u, z, i))
     );
     if (opponentHasOfficer && (window.XLW_playerSummonCountThisTurn >= 2)) {
-      setStatus("【人口安全局局員】限制：對手場上有安全局局員，本回合我方召喚上限為 2 次！");
+      report("【人口安全局局員】限制：對手場上有安全局局員，本回合我方召喚上限為 2 次！");
       return false;
     }
   } else {
@@ -15251,7 +15278,7 @@ function canSummonCard(card, isPlayer) {
     }
     const ok = lastCount >= 3;
     if (!ok && isPlayer) {
-      setStatus(`【召喚限制】${card.name} 需要我方後排有 3 個或以上的「最後的」單位！`);
+      report(`【召喚限制】${card.name} 需要我方後排有 3 個或以上的「最後的」單位！`);
     }
     return ok;
   }
@@ -15271,7 +15298,7 @@ function canSummonCard(card, isPlayer) {
     }
     if (anyTapped) {
       if (isPlayer) {
-        setStatus(`【召喚限制】${card.name} 打出前，我方場上所有單位必須皆未橫置！`);
+        report(`【召喚限制】${card.name} 打出前，我方場上所有單位必須皆未橫置！`);
       }
       return false;
     }
@@ -15875,18 +15902,19 @@ function isDecayed(zone, idx) {
   // 🧟 腐爛神 (SR-VLG-0059 / SSR-VLG-0001): 使此單位正前方及其左右邊的敵方單位被賦予禁錮及衰退
   if (isAffectedByRottenGod(zone, idx)) return true;
 
-  if (zone === "player_front") {
-    const oppFUnit = field["enemy_front"][idx];
-    if (oppFUnit && isCursedStatue(oppFUnit)) return true;
-    const oppBUnit = field["enemy_back"][idx];
-    if (oppBUnit && isCursedStatue(oppBUnit)) return true; // Allow backline statue to decay frontline enemy
-  } else if (zone === "enemy_front") {
-    const oppFUnit = field["player_front"][idx];
-    if (oppFUnit && isCursedStatue(oppFUnit)) return true;
-    const oppBUnit = field["player_back"][idx];
-    if (oppBUnit && isCursedStatue(oppBUnit)) return true;
+  const column=['player_back','player_front','enemy_front','enemy_back'];
+  const targetRow=column.indexOf(zone);
+  for(let row=0;row<column.length;row++){
+    const statue=field[column[row]]?.[idx];
+    if(!isCursedStatue(statue) || window.isUnitSilenced(statue,column[row],idx))continue;
+    for(const direction of [-1,1]){
+      for(let next=row+direction;next>=0&&next<column.length;next+=direction){
+        if(!field[column[next]]?.[idx])continue;
+        if(next===targetRow)return true;
+        break;
+      }
+    }
   }
-
 
   return false;
 }
@@ -15894,12 +15922,15 @@ function isDecayed(zone, idx) {
 function isCursedStatue(u) {
   if (!u) return false;
   const c = u.card || u;
-  return c && (c.id === "R-ART-0040" || c.name?.includes("詛咒斷臂雕像"));
+  return c && (/^(?:R|SR|SSR|ASSR|SSSR)-ART-0040$/.test(c.id||'') || /詛咒(?:的)?斷臂雕像/.test(c.name||''));
 }
 
 async function resolveDecayStatus(isPlayerTurn) {
   let anyDestroyed = false;
   const zones = ["player_front", "player_back", "enemy_front", "enemy_back"];
+  // Capture all end-phase decay before destroying an aura source in an earlier row.
+  const decayAtEnd=new Map();
+  for(const zone of zones){if(zone.startsWith('player_')!==isPlayerTurn)continue;for(let i=0;i<5;i++){const unit=field[zone][i];if(unit && unit._xlwDecayResolvedTurn!==turn && isDecayed(zone,i))decayAtEnd.set(zone+':'+i,{unit,tapped:Boolean(unit.tapped)});}}
   for (const zone of zones) {
     const isPlayerUnit = zone.startsWith("player_");
     if (isPlayerUnit !== isPlayerTurn) continue;
@@ -15907,9 +15938,12 @@ async function resolveDecayStatus(isPlayerTurn) {
     for (let i = 0; i < 5; i++) {
       const u = field[zone][i];
       if (u) {
-        if (isDecayed(zone, i)) {
+        const pending=decayAtEnd.get(zone+':'+i);
+        const sameInstance=pending && (pending.unit===u || (pending.unit.card?._xlwInstanceId && pending.unit.card._xlwInstanceId===u.card?._xlwInstanceId && pending.unit.summonedTurn===u.summonedTurn));
+        if (sameInstance) {
+          u._xlwDecayResolvedTurn=turn;
           const c = u.card || u;
-          if (!u.tapped) {
+          if (!pending.tapped) {
             u.tapped = true;
             logBattle(`💀 【衰退】效果：將直立的【${c.name}】（${isPlayerUnit ? '我方' : '對手'}）橫置！`);
           } else {
@@ -21309,6 +21343,7 @@ async function runEnemyTurn() {
 }
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
+  if(xlwRequireSpellCompletion())return;
   window.XLWInputDiagnostics?.mark("endTurn:entry",{ending:!!window.XLW_isPlayerTurnEnding,myTurn:isMyTurn,phase});
   if (window.XLW_isPlayerTurnEnding) return;
   if (window.XLW_lanternPlacementActive) {
@@ -22394,7 +22429,7 @@ window.xlwCanPlayHandCard = function(card, idx) {
     }
 
     // 麻祖、高塔101等特殊限制
-    if (typeof canSummonCard === "function" && !canSummonCard(card, true)) {
+    if (typeof canSummonCard === "function" && !canSummonCard(card, true, {silent:true})) {
       return false;
     }
 
@@ -22524,6 +22559,9 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
 
 // 執行手牌單位召喚處理邏輯
 window.xlwExecuteHandUnitSummon = async function(card, idx) {
+  if(xlwRequireSpellCompletion())return;
+  const oldCard=selectedTributeCard || (selectedHandForTribute!==null?hand[selectedHandForTribute]:null);
+  if(oldCard && oldCard!==card && (!oldCard._xlwInstanceId || oldCard._xlwInstanceId!==card?._xlwInstanceId))clearModes();
   // 檢查階段是否允許召喚
   let canPlay = (phase === "召喚階段" || phase === "戰術佈陣");
   if (!canPlay) {
@@ -23194,6 +23232,7 @@ function renderField() {
 
             window.XLW_tempEquipSpellActive = false;
             window.XLW_tempEquipSpellCard = null;
+            setStatus('【'+spellCard.name+'】效果已套用至【'+obj.card.name+'】。');
             if (window.XLW_tempEquipSpellResolve) {
               const resolve = window.XLW_tempEquipSpellResolve;
               window.XLW_tempEquipSpellResolve = null;
@@ -26417,6 +26456,9 @@ function renderStablePanel() {
   window.XLWTouchActions?.bind(panel);
   const setContent = markup => window.XLWBattleFlow.renderPanel(panel, markup);
 
+  if(xlwSpellActionPending()){
+    setContent('<div role="status" style="color:#ffd76a;padding:10px;text-align:center">'+(xlwPendingRequiredSpellTarget()?'請點選場上的合法單位完成魔法效果':'魔法連鎖處理中')+'</div><button class="stable-action-btn end" disabled>完成效果後才能繼續</button>');return;
+  }
   if (window.XLW_defenseCounterActive) {
     setContent(`
       <button class="stable-action-btn primary" style="background: linear-gradient(135deg, #fa8c16, #fa541c); border-color: #ffd76a; color: #fff; height: auto; padding: 12px; font-size: 15px; cursor: pointer;" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">結束防守魔法並開始戰鬥結算</button>
@@ -31989,6 +32031,7 @@ function hideSpellChainUI() {
 }
 
 function aiRespondToSpellChain() {
+  if(!spellChainStack[spellChainStack.length-1]?.card)return;
   if (spellChainStack.length === 0) return;
   const lastItem = spellChainStack[spellChainStack.length - 1];
   if (lastItem.owner !== "me") return; 
@@ -32075,6 +32118,10 @@ function aiRespondToSpellChain() {
 }
 
 function promptNextChainAction() {
+  const lastItem=spellChainStack[spellChainStack.length-1];
+  if(!lastItem?.card){if(window.XLW_chainAutoPassTimeout)clearTimeout(window.XLW_chainAutoPassTimeout);window.XLW_chainAutoPassTimeout=null;hideSpellChainUI();return;}
+  let decisionTaken=false;
+  const takeDecision=()=>{if(decisionTaken || spellChainStack[spellChainStack.length-1]!==lastItem)return false;decisionTaken=true;return true;};
   const overlay = getOrCreateSpellChainOverlay();
   const statusText = document.getElementById("xlw-chain-status");
   const actionsDiv = document.getElementById("xlw-chain-actions");
@@ -32085,14 +32132,14 @@ function promptNextChainAction() {
     window.XLW_chainAutoPassTimeout = null;
   }
 
-  const lastItem = spellChainStack[spellChainStack.length - 1];
+
   
   // Who is the next responder?
   if (lastItem.owner === "me") {
     statusText.textContent = "⌛ 等待對手確認是否進行連鎖反制...";
     if (!isMultiplayer) {
       setTimeout(() => {
-        aiRespondToSpellChain();
+        if(takeDecision())aiRespondToSpellChain();
       }, 1000);
     }
   } else {
@@ -32146,6 +32193,7 @@ function promptNextChainAction() {
         counterBtn.className = "chain-action-btn counter-btn";
         counterBtn.textContent = `🔥 使用 ${c.name}`;
         counterBtn.onclick = async () => {
+          if(!takeDecision())return;
           actionsDiv.innerHTML = "";
           statusText.textContent = `🔥 正在連鎖施放 ${c.name}...`;
           
@@ -32159,7 +32207,8 @@ function promptNextChainAction() {
           }
           
           // Add to local stack
-          spellChainStack.push({ card: c, owner: "me" });
+          const addedItem={card:c,owner:'me'};
+          spellChainStack.push(addedItem);
           
           // Sync with opponent immediately
           if (isMultiplayer && ws) {
@@ -32174,6 +32223,8 @@ function promptNextChainAction() {
 
           await xlwShowSpellActivationOverlay(c, "player");
           
+          // A remote auto-pass can resolve the chain while this local animation plays.
+          if(spellChainStack[spellChainStack.length-1]!==addedItem)return;
           // Update UI
           showSpellChainUI(spellChainStack);
           promptNextChainAction();
@@ -32188,6 +32239,7 @@ function promptNextChainAction() {
         mushBtn.className = "chain-action-btn mushroom-btn";
         mushBtn.textContent = `🍄 橫置【酒醉的魔法魔菇】反制`;
         mushBtn.onclick = async () => {
+          if(!takeDecision())return;
           actionsDiv.innerHTML = "";
           statusText.textContent = `🍄 正在發動【酒醉的魔法魔菇】的反制效果...`;
           
@@ -32224,6 +32276,7 @@ function promptNextChainAction() {
       passBtn.className = "chain-action-btn pass-btn";
       passBtn.textContent = "❌ 放棄反制 / 結算魔法";
       passBtn.onclick = () => {
+        if(!takeDecision())return;
         actionsDiv.innerHTML = "";
         statusText.textContent = "⌛ 正在送出連鎖決議...";
         if (isMultiplayer && ws) {
@@ -32242,6 +32295,7 @@ function promptNextChainAction() {
     } else {
       if (!isMultiplayer) {
         window.XLW_chainAutoPassTimeout = setTimeout(() => {
+          if(!takeDecision())return;
           resolveLocalSpellChain();
         }, 800);
       } else {
@@ -32254,6 +32308,7 @@ function promptNextChainAction() {
         actionsDiv.appendChild(autoPassBtn);
 
         window.XLW_chainAutoPassTimeout = setTimeout(() => {
+          if(!takeDecision())return;
           if (isMultiplayer && ws) {
             ws.send(JSON.stringify({ action: "spell_chain_resolve" }));
           }
