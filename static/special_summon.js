@@ -5,7 +5,7 @@
   const YUKI={name:'雪女',sound:'yuki',size:960,key:'yuki',video:ASSET+'yuki_summon_packed_v2.mp4',poster:ASSET+'yuki_summon_poster_v2.webp',duration:4000};
   const EMPEROR={name:'始皇帝',sound:'emperor',size:1152,key:'emperor',video:ASSET+'emperor_summon_packed_v2.mp4',poster:ASSET+'emperor_summon_poster_v2.webp',army:ASSET+'terracotta_army_v2.webp',duration:4100};
   const CANDY={name:'糖果女孩',sound:'candy',size:960,key:'candy',video:ASSET+'candy_summon_packed_v1.mp4',poster:ASSET+'candy_summon_poster_v1.webp',duration:4100};
-  const ANNIE={name:'火把骷髏 小哀妮',sound:'annie',size:960,key:'annie',video:ASSET+'annie_summon_packed_v1.mp4',poster:ASSET+'annie_summon_poster_v1.webp',duration:4200};
+  const ANNIE={name:'火把骷髏 小哀妮',sound:'annie',size:960,key:'annie',video:ASSET+'annie_summon_packed_v2.mp4',poster:ASSET+'annie_summon_poster_v2.webp',duration:4200};
   function match(card){
     if(!card)return null;
     if(/^(?:ASSR|R|SR|SSR|SSSR|VR|PR)-SKT-0010(?:-.+)?$/.test(card.id||'')||(/^火把骷髏\s*小哀妮$/.test(card.name||'')&&[card.deck,card.faction,card.race].includes('骷髏人')))return ANNIE;
