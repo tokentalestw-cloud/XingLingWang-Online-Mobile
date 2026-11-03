@@ -572,6 +572,7 @@ class CardSaveSchema(BaseModel):
     usable_phases: List[str]
     trigger_condition: Optional[str] = ""
     previous_id: Optional[str] = None
+    force_overwrite: Optional[bool] = False
 
 @app.get("/")
 def index():
@@ -710,6 +711,14 @@ def save_new_card(card: CardSaveSchema):
         except:
             cards = []
 
+    # 衝突檢測：檢查是否有其他卡片（不同 original_file）已使用此 ID
+    conflicting_card = next((c for c in cards if c.get("id") == card.id and c.get("original_file") != card.original_file), None)
+    if conflicting_card and not getattr(card, 'force_overwrite', False):
+        raise HTTPException(
+            status_code=409, 
+            detail=f"卡牌 ID 衝突！ID【{card.id}】已被《{conflicting_card.get('name')}》（來自相片「{conflicting_card.get('original_file')}」）佔用！若為印刷勘誤請改為正確陣營代碼，如確定要覆蓋原卡牌請勾選/確認強制覆蓋。"
+        )
+
     # 尋找是否已有這張卡牌的已入庫資料
     existing_card = None
     if card.previous_id:
@@ -736,12 +745,14 @@ def save_new_card(card: CardSaveSchema):
     elif not dest_path.exists():
         raise HTTPException(status_code=400, detail=f"找不到原始照片且伺服器端無快取")
 
-    # 如果修改了 ID 且舊圖片存在，則刪除舊的圖片檔
+    # 如果修改了 ID 且舊圖片存在，檢查舊圖片是否未被其他卡牌引用，才刪除舊的圖片檔
     if old_dest_path and old_dest_path.exists() and old_dest_path != dest_path:
-        try:
-            os.remove(old_dest_path)
-        except Exception as e:
-            print(f"刪除舊圖片 {old_dest_path} 失敗:", e)
+        still_used = any(c.get("id") != card.previous_id and c.get("image") == f"/static/card_images/{old_dest_filename}" for c in cards)
+        if not still_used:
+            try:
+                os.remove(old_dest_path)
+            except Exception as e:
+                print(f"刪除舊圖片 {old_dest_path} 失敗:", e)
 
     # 刪除已存在的卡牌（覆寫）
     if card.previous_id:

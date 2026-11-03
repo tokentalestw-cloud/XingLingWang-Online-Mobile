@@ -1077,6 +1077,15 @@
         .map(k => k.trim())
         .filter(Boolean);
 
+      // 檢查是否與既有卡牌發生 ID 衝突（ID 相同但原始相片不同）
+      const conflictCard = databaseCards.find(c => c.id === cId && c.original_file && c.original_file !== cOriginalFile);
+      let forceOverwrite = false;
+      if (conflictCard) {
+        const ok = confirm(`⚠️ 警告：卡牌 ID【${cId}】已被既有卡牌《${conflictCard.name}》（來自「${conflictCard.original_file}」）使用！\n\n如果繼續儲存，將會【直接刪除並覆蓋】《${conflictCard.name}》，導致該卡牌被解除寫入！\n\n若此卡牌為印刷勘誤（例如碳碳族卡片印刷成 VLG 編號），請改為正確陣營代碼（例如 R-CRB-0013）。\n\n您確定要強制覆蓋《${conflictCard.name}》嗎？`);
+        if (!ok) return;
+        forceOverwrite = true;
+      }
+
       const payload = {
         id: cId,
         name: cName,
@@ -1095,17 +1104,19 @@
         trigger_condition: document.getElementById("cTriggerCondition").value.trim(),
         art_subtype: document.getElementById("cSubtype").value.trim(),
         original_file: cOriginalFile,
-        previous_id: currentEditingCardId
+        previous_id: currentEditingCardId,
+        force_overwrite: forceOverwrite
       };
 
       try {
-        const res = await fetch("/api/admin/save", {
+        const response = await fetch("/api/admin/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
-        }).then(r => r.json());
+        });
+        const res = await response.json();
 
-        if (res.status === "success") {
+        if (response.ok && res.status === "success") {
           showToast(`✔ ${res.message}`);
           
           const oldTab = currentTab;

@@ -5638,6 +5638,24 @@ body.xlw-iphone14-sim-active .game-shell #phaseDisplayPanelHard,
    BATTLE CATS STYLE WELCOME SPLASH SCREEN (鞎憭扳?剝◢?潛?交迭餈?Ｘ見撘頂蝯?
    ========================================================================== */
 
+.game-shell, header.topbar, #stableActionPanel, #xlwEnemyInfoPanel {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+body.xlw-game-started .game-shell,
+body.xlw-game-started header.topbar,
+body.xlw-game-started #stableActionPanel,
+body.xlw-game-started #xlwEnemyInfoPanel,
+body.xlw-direct-room .game-shell,
+body.xlw-direct-room header.topbar,
+body.xlw-direct-room #stableActionPanel,
+body.xlw-direct-room #xlwEnemyInfoPanel {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
 .xlw-welcome-overlay {
   position: fixed !important;
   top: 0 !important;

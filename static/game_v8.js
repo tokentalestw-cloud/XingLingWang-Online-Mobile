@@ -1160,6 +1160,7 @@ function newGameMultiplayer() {
   window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   window.XLW_isPuzzleMode = false;
+  document.body.classList.add("xlw-game-started");
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   xlwOutgoingSeq = 0;
   xlwExpectedIncomingSeq = null;
@@ -1429,6 +1430,7 @@ function newGame() {
   window.XLW_isPuzzleMode = false;
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   window.XLW_gameInProgress = true;
+  document.body.classList.add("xlw-game-started");
   // 確保重設為單人對抗 AI 模式，阻斷 any 線上同步邏輯與狀態鎖！
   isMultiplayer = false;
   isMyTurn = true; 
@@ -12503,7 +12505,7 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
 
   let summonUsed = false;
   if (currentPhaseName === "召喚階段") {
-    summonUsed = normalSummonUsed || (window.XLW_playerSummonCountThisTurn > 0);
+    summonUsed = normalSummonUsed;
   } else if (currentPhaseName === "戰術佈陣") {
     summonUsed = tacticalSummonUsed;
   } else {
@@ -12584,8 +12586,12 @@ async function changeActionPhase(targetPhase) {
 
   if (targetPhase === "進攻宣言") {
     if (phase === "戰術佈陣") {
-      setStatus("在戰術佈陣階段已執行過行動，無法改為執行進攻宣言。");
-      return;
+      const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
+      if (hasTacticalActed) {
+        setStatus("在戰術佈陣階段已召喚或移動過單位，無法改為執行進攻宣言。");
+        return;
+      }
+      logBattle("我方未在戰術佈陣執行行動，改為執行進攻宣言。");
     }
     await checkPopulationCap(true);
   }
@@ -15449,6 +15455,20 @@ function isUnitMagicImmune(unit, zone, idx) {
   if (unit.magicImmuneUntilTurn && unit.magicImmuneUntilTurn >= turn) return true;
   
   const c = unit.card;
+  if (!c) return false;
+
+  // 符咒獸人 (R-ORC-0029)：不會被敵方魔法卡選為目標
+  if (c.id === "R-ORC-0029" || c.name?.includes("符咒獸人")) {
+    return true;
+  }
+  // 符咒獸人裝備符咒帽或具有魔法抗性
+  if (unit.equipments && unit.equipments.some(eq => {
+    const eqName = typeof eq === "string" ? eq : (eq?.name || eq?.id || "");
+    return eqName.includes("符咒獸人") || eqName.includes("符咒帽") || eqName.includes("魔法抗性");
+  })) {
+    return true;
+  }
+
   const isArtMagicImmune = c.id === "ART-0005" || c.name?.includes("鎧甲擺件") ||
                            c.id === "ART-0009" || c.name?.includes("梵老爹") ||
                            c.id === "ART-0015" || c.name?.includes("番茄之子") ||
@@ -23134,7 +23154,11 @@ function renderField() {
                 return;
               }
               if (isUnitMagicImmune(obj, zone, idx)) {
-                setStatus("該單位具有魔法免疫，無法被魔法指定！");
+                if (obj.card && (obj.card.id === "R-ORC-0029" || obj.card.name?.includes("符咒獸人"))) {
+                  setStatus("【符咒獸人】不會被對手的魔法卡指定！");
+                } else {
+                  setStatus("該單位具有魔法免疫，無法被魔法指定！");
+                }
                 return;
               }
             }
@@ -23474,7 +23498,11 @@ function renderField() {
                 return;
               }
               if (isUnitMagicImmune(obj, zone, idx)) {
-                setStatus("該單位具有魔法免疫，無法被變為山羊！");
+                if (obj.card && (obj.card.id === "R-ORC-0029" || obj.card.name?.includes("符咒獸人"))) {
+                  setStatus("【符咒獸人】不會被對手的魔法卡指定，無法被變為山羊！");
+                } else {
+                  setStatus("該單位具有魔法免疫，無法被變為山羊！");
+                }
                 return;
               }
             }
@@ -26526,7 +26554,8 @@ function renderStablePanel() {
     if (phase === "召喚階段" || phase === "進攻宣言") {
       canSwitchToAttack = true;
     } else if (phase === "戰術佈陣") {
-      canSwitchToAttack = false;
+      const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
+      canSwitchToAttack = !hasTacticalActed;
     }
     attackBtn.disabled = isAiRunning || isEnding || isTributeOngoing || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");
@@ -35306,6 +35335,8 @@ window.xlwConfirmPreBattle = function() {
     modal.style.setProperty("display", "none", "important");
   }
   
+  document.body.classList.add("xlw-game-started");
+
   const overlay = document.getElementById("xlwWelcomeOverlay");
   if (overlay) {
     overlay.classList.add("xlw-welcome-fadeout");
@@ -35357,6 +35388,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
     return window.xlwLeaveOnlineRoom(true);
   }
   window.XLW_isPuzzleMode = false;
+  document.body.classList.remove("xlw-game-started", "xlw-direct-room");
   window.XLWTurnOrder?.hide();
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   const pModal = document.getElementById("xlwPuzzleModal"); if (pModal) pModal.remove();
@@ -35666,7 +35698,7 @@ window.XLW_Tutorial = {
     window.XLWBattleFlow?.reset();
     window.XLWSpecialSummon?.cancel();
     window.XLW_isPuzzleMode = false;
-    document.body.classList.add("xlw-tutorial-active");
+    document.body.classList.add("xlw-tutorial-active", "xlw-game-started");
     document.getElementById("xlwPuzzleStatusBar")?.remove();
     window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
@@ -36552,6 +36584,9 @@ function showWelcomeOverlayOnLoad() {
     // 只有在當前網址帶有 room 參數或同分頁 active sessionStorage 重新整理時，才跳過首頁進入棋盤
     if (hasUrlRoom || hasValidTabSession) {
       console.log("Active online session detected on load, bypassing welcome overlay.");
+      document.body.classList.add("xlw-game-started", "xlw-direct-room");
+      const overlay = document.getElementById("xlwWelcomeOverlay");
+      if (overlay) overlay.style.setProperty("display", "none", "important");
       return;
     }
   } catch (e) {}
@@ -36836,6 +36871,7 @@ window.xlwStartPuzzleStage = function(stageNum) {
   if (oldModal) oldModal.remove();
 
   window.XLW_isPuzzleMode = true;
+  document.body.classList.add("xlw-game-started");
   window.XLW_gameInProgress = true;
   isMultiplayer = false;
   isMyTurn = true;
