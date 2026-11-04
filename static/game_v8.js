@@ -1168,6 +1168,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
@@ -1436,6 +1437,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
@@ -21440,19 +21442,13 @@ async function endPlayerTurnAndRunEnemy() {
   let canDeclare2 = (calculateUnitCount(true) - calculateUnitCount(false)) >= diffReq;
   
   if (!window.XLW_isPuzzleMode && !window.xlwIsShenaOnField() && !window.XLW_callGameDeclared && !countdownActive && (canDeclare1 || canDeclare2)) {
-    let choices = [];
-    if (canDeclare1) {
-      choices.push({ text: `以條件 (1) 宣告提早結束：總分數達到 ${scoreReq} 分以上`, value: "1" });
-    }
-    if (canDeclare2) {
-      choices.push({ text: `以條件 (2) 宣告提早結束：場上單位比敵方多 ${diffReq} 個以上`, value: "2" });
-    }
-    choices.push({ text: "不宣告，正常結束回合", value: "0" });
-    
     const choiceVal = await showXLWChoiceModal(
-      "提早結束 (Call Game) 宣告", 
-      "您符合宣告提早結束的條件，是否進行宣告？（宣告後，若下回合主要階段開始前仍符合條件，我方將直接獲得勝利）", 
-      choices,
+      "Call Game",
+      "",
+      [
+        { text: "Call Game", value: canDeclare1 ? "1" : "2" },
+        { text: "不宣告 Call Game", value: "0" }
+      ],
       { preventOverlayClose: true, preventExternalCancel: true }
     );
     const chosen = parseInt(choiceVal, 10);
@@ -27318,7 +27314,7 @@ function setupWebSocketEvents() {
   
   ws.onmessage = async (event) => {
     try {
-      const data = JSON.parse(event.data);
+      const data = event.parsedData ?? JSON.parse(event.data);
       if (data.type === "opponent_disconnected") window.XLWBFeedback?.peer("offline");
       if (["opponent_joined", "opponent_rejoined"].includes(data.type)) window.XLWBFeedback?.peer("online");
       
@@ -27581,7 +27577,8 @@ function setupWebSocketEvents() {
         if (s.countdownRemaining !== undefined) { countdownRemaining = s.countdownRemaining; window.countdownRemaining = s.countdownRemaining; }
         if (s.countdownTriggerTurn !== undefined) { countdownTriggerTurn = s.countdownTriggerTurn; window.countdownTriggerTurn = s.countdownTriggerTurn; }
         if (s.countdownTriggerRole !== undefined) { countdownTriggerRole = s.countdownTriggerRole; window.countdownTriggerRole = s.countdownTriggerRole; }
-        if (s.callGameDeclared !== undefined) {
+        if (s.callGameDeclared !== undefined &&
+            !(s.callGameDeclared && Number.isFinite(s.callGameTurn) && s.callGameTurn === window.XLW_callGameRejectedTurn)) {
           window.XLW_callGameDeclared = Boolean(s.callGameDeclared);
           window.XLW_callGameCondition = s.callGameCondition || null;
           window.XLW_callGameTurn = s.callGameTurn || null;
@@ -27835,7 +27832,10 @@ function setupWebSocketEvents() {
         if (card && card.id === "TOKEN_TRAVELER") {
           playTravelerSummonAnimation("#enemyForest", zone, idx);
         } else if (card && (window.XLWSpecialSummon?.match(card) || (Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0)))) {
-          await playTributeSummonAnimation(zone, idx, true);
+          // The counter is settled. Keep presentation outside the ordered message queue.
+          void playTributeSummonAnimation(zone, idx, true).catch(error => {
+            console.warn("Remote summon presentation unavailable", error);
+          });
         } else {
           render();
         }
@@ -28444,9 +28444,13 @@ function setupWebSocketEvents() {
     } else if (data.action === "card_reveal_sync") {
       if (data.card) {
         window.XLW_isRevealSyncing = true;
-        await window.xlwShowRevealOverlay(data.card, data.isPlayer ? "enemy" : "player");
+        try {
+          void window.xlwShowRevealOverlay(data.card, data.isPlayer ? "enemy" : "player")
+            .catch(error => console.warn("Remote reveal presentation unavailable", error));
+        } finally {
+          window.XLW_isRevealSyncing = false;
+        }
         logBattle(`✨ 對手同步展示卡牌：【${data.card.name}】`);
-        window.XLW_isRevealSyncing = false;
       }
     } else if (data.action === "field_spell_sync") {
       const targetEl = data.side === "player" ? $("enemyField") : $("playerField");
@@ -28739,7 +28743,9 @@ function setupWebSocketEvents() {
       if (playerHasReject) {
         const useReject = await showXLWConfirm("【駁回!!】手牌反制觸發", "對手宣告了提早結束 (Call Game)，是否從手牌發動【駁回!!】進行無效化？");
         if (useReject) {
+          window.XLWDuelConsistency?.identify(hand);
           const rIdx = hand.findIndex(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
+          if (rIdx < 0) return;
           const rCard = hand.splice(rIdx, 1)[0];
           graveyard.push(rCard);
           
@@ -28747,31 +28753,40 @@ function setupWebSocketEvents() {
           window.XLW_callGameCondition = null;
           window.XLW_callGameDeclaringPlayer = null;
           window.XLW_callGameNegatedThisTurn = true;
+          window.XLW_callGameRejectedTurn = data.turn;
           logBattle("✨ 我方從手牌中發動了【駁回!!】，無效化了對手的提早結束宣告！");
           render();
           
           if (isMultiplayer) {
             ws.send(JSON.stringify({
-              action: "call_game_negate"
+              action: "call_game_negate",
+              turn: data.turn,
+              card: rCard
             }));
           }
         }
       }
     } else if (data.action === "call_game_negate") {
+        if (Number.isFinite(data.turn) && data.turn !== window.XLW_callGameTurn) return;
+        window.XLW_callGameRejectedTurn = data.turn;
         window.XLW_callGameDeclared = false;
         window.XLW_callGameCondition = null;
         window.XLW_callGameDeclaringPlayer = null;
         window.XLW_callGameNegatedThisTurn = true;
         
         if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
-          const rIdx = window.XLW_ENEMY.hand.findIndex(c => c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
+          const rIdx = window.XLW_ENEMY.hand.findIndex(c => data.card?._xlwInstanceId
+            ? c?._xlwInstanceId === data.card._xlwInstanceId
+            : c && (c.id === "R-NMG-0033" || c.name?.includes("駁回")));
           if (rIdx >= 0) {
             const rCard = window.XLW_ENEMY.hand.splice(rIdx, 1)[0];
             window.XLW_ENEMY.grave.push(rCard);
             enemyGraveyard = window.XLW_ENEMY.grave;
-          } else {
-            window.XLW_ENEMY.hand.pop();
           }
+        }
+        if (data.card && data.card._xlwInstanceId && !window.XLW_ENEMY.grave.some(card => card?._xlwInstanceId === data.card._xlwInstanceId)) {
+          window.XLW_ENEMY.grave.push(data.card);
+          enemyGraveyard = window.XLW_ENEMY.grave;
         }
         logBattle("✨ 對手發動了手牌中的【駁回!!】，無效化了我方的提早結束宣告！本回合我方不得再次宣告提早結束。");
         render();
@@ -28782,12 +28797,12 @@ function setupWebSocketEvents() {
       logBattle("\u3010\u5c0d\u624b\u5ba3\u544a\u5931\u6557\u3011\u5c0d\u624b\u5148\u524d\u5ba3\u544a\u7684\u63d0\u65e9\u7d50\u675f\u689d\u4ef6\u5df2\u4e0d\u6eff\u8db3\uff0c\u5c0d\u623d\u7e7c\u7e8c\uff01");
       render();
     } else if (data.action === "end_turn") {
-      if (Number.isFinite(data.next_turn) && data.next_turn <= turn && isMyTurn) return;
+      if (!Number.isSafeInteger(data.next_turn) || data.next_turn < turn || (data.next_turn === turn && isMyTurn)) return;
       window.XLWBattleFlow?.reset();
       if (data.state) {
         // Apply the board and turn transition as one queued operation. The nested
         // snapshot does not render an actionable draw button before initialization.
-        await gameMessageHandler({ data: JSON.stringify({ action: "sync_game_state", state: data.state, turnHandoff: true }) });
+        await gameMessageHandler({ parsedData: { action: "sync_game_state", state: data.state, turnHandoff: true } });
       }
       // 結束階段，清理對手回合結束時到期的臨時狀態裝備
       xlwCleanExpiredTempEquips(turn);
@@ -29116,7 +29131,7 @@ function setupWebSocketEvents() {
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
         (["spell_chain_add", "spell_chain_resolve"].includes(action) && window.XLW_pendingSpellResolve)
       ),
-      process: data => gameMessageHandler({ data: JSON.stringify(data) }),
+      process: data => gameMessageHandler({ parsedData: data }),
       checkpoint: () => { if (saveLocalGameState() === false) throw new Error("無法儲存對局進度，請檢查瀏覽器儲存空間。"); },
       fail: message => {
         setStatus("同步已暫停：" + message);
@@ -29144,7 +29159,7 @@ function setupWebSocketEvents() {
     }
   }
   // Keep the same queue during reconnect so in-flight animations cannot be overtaken.
-  window.XLW_sync.process = data => gameMessageHandler({ data: JSON.stringify(data) });
+  window.XLW_sync.process = data => gameMessageHandler({ parsedData: data });
   window.XLW_sync.attach(connection);
   if (window.XLW_savedLegacyState) {
     window.XLW_sync.stop(new Error("這是舊版對局存檔，請雙方更新頁面後重新開局。"));
@@ -30485,7 +30500,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
 
     box.innerHTML = `
       <div style="font-size: 20px; font-weight: 900; color: #ffd76a; text-shadow: 0 0 10px rgba(255, 215, 106, 0.6); margin-bottom: 12px;">${title}</div>
-      <div style="font-size: 14px; color: #c4b9a6; line-height: 1.6; margin-bottom: 20px;">${message}</div>
+      ${message ? `<div style="font-size: 14px; color: #c4b9a6; line-height: 1.6; margin-bottom: 20px;">${message}</div>` : ""}
       <div style="display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; padding-right: 4px;">
         ${buttonsHTML}
       </div>
@@ -30515,10 +30530,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     if(/Call Game/.test(title)){
       overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
       overlay.style.zIndex='2147483000';
-      const close=document.createElement('button');close.type='button';close.textContent='先不宣告，繼續對戰';close.className='xlw-callgame-close';
-      close.onclick=e=>{e.preventDefault();e.stopPropagation();cleanup('0');};box.appendChild(close);
       overlay.onkeydown=e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();cleanup('0');}};
-      close.focus();
+      box.querySelector('.xlw-choice-btn[data-value="0"]')?.focus();
     }
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
       const handleChoose = () => {
@@ -33174,7 +33187,7 @@ window.xlwEnterActiveOnlineBoardUI = function() {
 // Coalesce render bursts while retaining immediate saves at explicit checkpoints.
 let xlwLocalSaveTimer = null;
 function scheduleLocalGameStateSave() {
-  if (!isMultiplayer || !room_id || !player_id || xlwLocalSaveTimer !== null) return;
+  if (!isMultiplayer || !room_id || !player_id || window.XLW_sync?.processing > 0 || xlwLocalSaveTimer !== null) return;
   xlwLocalSaveTimer = setTimeout(saveLocalGameState, 200);
 }
 window.addEventListener("pagehide", () => {
@@ -33184,11 +33197,11 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden" && xlwLocalSaveTimer !== null) saveLocalGameState();
 });
 function saveLocalGameState() {
-  if (window.XLW_sync?.processing > 0) return true;
   if (xlwLocalSaveTimer !== null) {
     clearTimeout(xlwLocalSaveTimer);
     xlwLocalSaveTimer = null;
   }
+  if (window.XLW_sync?.processing > 0) return true;
   if (!isMultiplayer || !room_id || !player_id) return;
   const key = "XLW_GAME_STATE_" + room_id + "_" + player_id;
   try {
@@ -33199,6 +33212,7 @@ function saveLocalGameState() {
       player_id: player_id,
       role: player_role,
       sync_metadata: window.XLW_sync?.metadata() || window.XLW_syncMetadata || null,
+      callGameRejectedTurn: window.XLW_callGameRejectedTurn ?? null,
       pendingInteraction: Boolean(window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
         ["summon", "spell_chain_start", "coin_toss_choice"].includes(window.XLW_sync?.sendingAction)),
       field: field,
@@ -33286,6 +33300,7 @@ function saveLocalGameState() {
 window.xlwApplySavedStateObject = function(s) {
   if (!s) return false;
   try {
+    window.XLW_callGameRejectedTurn = s.callGameRejectedTurn ?? null;
     window.XLW_syncMetadata = s.sync_metadata || null;
     window.XLW_syncMetadataKey = "XLW_SYNC_" + s.room_id + "_" + s.player_id;
     window.XLW_savedPendingInteraction = Boolean(s.pendingInteraction);
