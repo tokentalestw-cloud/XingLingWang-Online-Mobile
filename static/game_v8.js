@@ -22995,6 +22995,16 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
 async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = false) {
   const unit = field[zone]?.[idx];
   if (!unit) return;
+  const activeDestructions = window.XLW_activeDestructions ||= new WeakSet();
+  if (activeDestructions.has(unit)) return;
+  activeDestructions.add(unit);
+  try {
+
+
+  if (isUnitIndestructible(unit, zone, idx, isCombatDestruction)) {
+    logBattle(`✨ ${unitName(unit)} 具有破壞抗性，免於被破壞！`);
+    return;
+  }
 
   // 🤖 保險箱 (RBT-0025): 此單位不會被戰鬥破壞
   if (isCombatDestruction && unit.card && (unit.card.id === "RBT-0025" || unit.card.name?.includes("保險箱") || (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0025" || d.card.name?.includes("保險箱")))))) {
@@ -23628,10 +23638,6 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖�
     }
   }
 
-  if (isUnitIndestructible(unit, zone, idx, isCombatDestruction)) {
-    logBattle(`✨ ${unitName(unit)} 具有破壞抗性，免於被破壞！`);
-    return;
-  }
 
   // 1. 尋找格子並播放 CSS 碎裂與紅光粒子動畫
   const slot = document.querySelector(`[data-zone="${zone}"][data-index="${idx}"]`);
@@ -24723,6 +24729,9 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖�
         render();
       }
     }
+  }
+  } finally {
+    activeDestructions.delete(unit);
   }
 }
 
