@@ -526,7 +526,19 @@
         </div>
         <div class="form-group">
           <label for="cScore">星星分數 (底端星)</label>
-          <input type="number" id="cScore" value="1" min="0" max="10">
+          <input type="text" id="cScore" value="1" list="scoreOptions" placeholder="數字或 X" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 4px; color: #fff; padding: 6px 10px;">
+          <datalist id="scoreOptions">
+            <option value="0">
+            <option value="1">
+            <option value="2">
+            <option value="3">
+            <option value="4">
+            <option value="5">
+            <option value="6">
+            <option value="7">
+            <option value="X">
+            <option value="-X">
+          </datalist>
         </div>
       </div>
         <!-- 法力點數與使用時機 -->
@@ -1086,6 +1098,12 @@
         forceOverwrite = true;
       }
 
+      // 處理星星分數 (可為數字或 X, -X)
+      const rawScore = document.getElementById("cScore").value.trim();
+      const scoreVal = (rawScore.toUpperCase() === "X" || rawScore.toUpperCase() === "-X")
+        ? rawScore.toUpperCase()
+        : (parseInt(rawScore, 10) || 0);
+
       const payload = {
         id: cId,
         name: cName,
@@ -1093,7 +1111,7 @@
         type: cType,
         faction: cDeck,
         attack: atkVal,
-        score: parseInt(document.getElementById("cScore").value, 10) || 0,
+        score: scoreVal,
         tribute: parseInt(document.getElementById("cTribute").value, 10) || 0,
         keywords: keywords,
         mana: parseInt(document.getElementById("cMana").value, 10) || 0,

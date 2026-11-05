@@ -894,8 +894,19 @@
       <section class="library-panel">
         <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
           <h2 id="libraryTitle">可用藝術品卡牌</h2>
-          <div style="display: flex; gap: 10px; align-items: center;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <input type="text" id="nameFilter" placeholder="搜尋卡牌名稱..." oninput="handleSearchInput()" class="search-input">
+            <select id="starFilter" onchange="handleStarFilter()" class="deck-select" style="min-width: 95px; padding: 4px 8px; font-size: 11.5px; border-color: rgba(255, 215, 106, 0.4);">
+              <option value="all">★ 全部星數</option>
+              <option value="0">0★</option>
+              <option value="1">1★</option>
+              <option value="2">2★</option>
+              <option value="3">3★</option>
+              <option value="4">4★</option>
+              <option value="5">5★</option>
+              <option value="6">6★+</option>
+              <option value="X">X★ (可變)</option>
+            </select>
             <div class="card-filter-wrap">
               <button class="filter-btn active" id="filterMainBtn" onclick="toggleFilterType('main')">主牌組單位/魔法</button>
               <button class="filter-btn" id="filterExtraBtn" onclick="toggleFilterType('extra')">額外戰術牌組</button>
@@ -1636,6 +1647,11 @@
       renderLibrary();
     }
 
+    // 處理星數篩選變更 (支援 0~6+ 及 X★)
+    function handleStarFilter() {
+      renderLibrary();
+    }
+
     // 星靈王嚴格的種族/陣營歸屬過濾
     function normDeckName(v) {
       v = String(v || "").trim();
@@ -1754,6 +1770,20 @@
       const filterText = filterInput ? filterInput.value.trim().toLowerCase() : "";
       if (filterText) {
         displayCards = displayCards.filter(c => c.name && c.name.toLowerCase().includes(filterText));
+      }
+
+      // 星數篩選 (支援 0~6+ 以及 X 變動星數)
+      const starSelect = document.getElementById("starFilter");
+      const starVal = starSelect ? starSelect.value : "all";
+      if (starVal !== "all") {
+        if (starVal === "X") {
+          displayCards = displayCards.filter(c => String(c.score).toUpperCase() === "X" || String(c.score).toUpperCase() === "-X");
+        } else if (starVal === "6") {
+          displayCards = displayCards.filter(c => typeof c.score === "number" && c.score >= 6);
+        } else {
+          const targetStar = parseInt(starVal, 10);
+          displayCards = displayCards.filter(c => c.score === targetStar);
+        }
       }
 
       // 用尾數編號由小到大排列
