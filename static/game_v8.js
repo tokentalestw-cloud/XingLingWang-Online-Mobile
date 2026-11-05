@@ -5937,14 +5937,14 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
 
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
   if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
-    const isPlayer = z && z.startsWith("player_");
+    const isPlayer = zone && zone.startsWith("player_");
     const wheel = isPlayer ? (window.XLW_playerRouletteWheel || []) : (window.XLW_enemyRouletteWheel || []);
     baseAtk = wheel.length;
   }
 
   // 👴 老旅人 (SPT-0002): X = 你場上小旅人的數量
   if (c.id === "SPT-0002" || c.name?.includes("老旅人")) {
-    const sidePrefix = z && z.startsWith("player_") ? "player_" : "enemy_";
+    const sidePrefix = zone && zone.startsWith("player_") ? "player_" : "enemy_";
     let travelerCount = 0;
     for (const tz of [sidePrefix + "front", sidePrefix + "back"]) {
       (field[tz] || []).forEach((u, ti) => {
@@ -5956,61 +5956,33 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
 
   // 🔥 火焰旅人 (SR-SPT-0023): 進攻時+4攻擊力
   if ((c.id === "SR-SPT-0023" || c.name?.includes("火焰旅人")) && unit.attacking) {
-    bonusAtk += 4;
+    baseAtk += 4;
   }
 
   // 小旅人（以及具有加乘的有健身的小旅人）獲得的場上加成
-  const isLittleOrFit = window.xlwIsLittleTraveler(unit, z, i) || c.id === "R-SPT-0005" || c.name?.includes("有健身的小旅人");
-  if (isLittleOrFit && z) {
-    const sidePrefix = z.startsWith("player_") ? "player_" : "enemy_";
+  const isLittleOrFit = window.xlwIsLittleTraveler(unit, zone, lane) || c.id === "R-SPT-0005" || c.name?.includes("有健身的小旅人");
+  if (isLittleOrFit && zone) {
+    const sidePrefix = zone.startsWith("player_") ? "player_" : "enemy_";
     // 🦁 勇氣旅人 (SPT-0007): 此卡左右邊的小旅人+3攻擊力
-    if (i > 0 && field[z][i - 1]?.card && (field[z][i - 1].card.id === "SPT-0007" || field[z][i - 1].card.name?.includes("勇氣旅人")) && !window.isUnitSilenced(field[z][i - 1], z, i - 1)) {
-      bonusAtk += 3;
+    if (lane > 0 && field[zone][lane - 1]?.card && (field[zone][lane - 1].card.id === "SPT-0007" || field[zone][lane - 1].card.name?.includes("勇氣旅人")) && !window.isUnitSilenced(field[zone][lane - 1], zone, lane - 1)) {
+      baseAtk += 3;
     }
-    if (i < 4 && field[z][i + 1]?.card && (field[z][i + 1].card.id === "SPT-0007" || field[z][i + 1].card.name?.includes("勇氣旅人")) && !window.isUnitSilenced(field[z][i + 1], z, i + 1)) {
-      bonusAtk += 3;
+    if (lane < 4 && field[zone][lane + 1]?.card && (field[zone][lane + 1].card.id === "SPT-0007" || field[zone][lane + 1].card.name?.includes("勇氣旅人")) && !window.isUnitSilenced(field[zone][lane + 1], zone, lane + 1)) {
+      baseAtk += 3;
     }
     // 🚶 中旅人 (SPT-0010): 使你場上所有小旅人+1攻擊力
     const hasMedium = ["front", "back"].some(r => 
       (field[sidePrefix + r] || []).some((u, ti) => u && u.card && (u.card.id === "SPT-0010" || u.card.name?.includes("中旅人")) && !window.isUnitSilenced(u, sidePrefix + r, ti))
     );
-    if (hasMedium) bonusAtk += 1;
+    if (hasMedium) baseAtk += 1;
 
     // 🍺 催酒的旅店老闆娘 (R-SPT-0030 / SSR-SPT-0030): 防守階段+2攻擊力
     if (phase === "防守階段" || window.XLW_defenseCounterActive) {
       const hasLandlady = ["front", "back"].some(r => 
         (field[sidePrefix + r] || []).some((u, ti) => u && u.card && (u.card.id === "R-SPT-0030" || u.card.id === "SSR-SPT-0030" || u.card.name?.includes("催酒的旅店老闆娘")) && !window.isUnitSilenced(u, sidePrefix + r, ti))
       );
-      if (hasLandlady) bonusAtk += 2;
+      if (hasLandlady) baseAtk += 2;
     }
-  }
-
-  // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
-  if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
-    const isPlayer = z && z.startsWith("player_");
-    const wheel = isPlayer ? (window.XLW_playerRouletteWheel || []) : (window.XLW_enemyRouletteWheel || []);
-    return wheel.length;
-  }
-
-  // 🍷 詩配酒旅人 (R-SPT-0050): 若你的牌庫還有牌，使你場上所有小旅人被賦予+3★
-  const isLittleOrFitStars = window.xlwIsLittleTraveler(unit, z, i) || c.id === "R-SPT-0005" || c.name?.includes("有健身的小旅人");
-  if (isLittleOrFitStars && z) {
-    const isPlayerSide = z.startsWith("player_");
-    const sidePrefix = isPlayerSide ? "player_" : "enemy_";
-    const sideDeck = isPlayerSide ? deck : (window.XLW_ENEMY?.deck || []);
-    if (sideDeck && sideDeck.length > 0) {
-      const hasPoet = ["front", "back"].some(r => 
-        (field[sidePrefix + r] || []).some((u, ti) => u && u.card && (u.card.id === "R-SPT-0050" || u.card.name?.includes("詩配酒旅人")) && !window.isUnitSilenced(u, sidePrefix + r, ti))
-      );
-      if (hasPoet) baseStars += 3;
-    }
-    // 紅配綠旅人 (SPT-0011 / SPT-0011-ALT) 提早結束成功獎勵加成
-    if (unit.redGreenBonusStars) baseStars += unit.redGreenBonusStars;
-  }
-
-  // 💀 怨念的小旅人 (SPT-0057): -2★
-  if (c.id === "SPT-0057" || c.name?.includes("怨念的小旅人")) {
-    return -2;
   }
 
   // 🍃 葉靈 (SR-NMS-0079): X = 此單位的灌溉值 + 1
@@ -6756,6 +6728,34 @@ function getUnitStars(unit, zone, lane) {
   }
   const c = unit.card || unit;
   let baseStars = Number(c.score ?? c.stars ?? 0) + Number(unit.bonusScore ?? 0);
+
+  // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
+  if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
+    const isPlayer = zone && zone.startsWith("player_");
+    const wheel = isPlayer ? (window.XLW_playerRouletteWheel || []) : (window.XLW_enemyRouletteWheel || []);
+    return wheel.length;
+  }
+
+  // 🍷 詩配酒旅人 (R-SPT-0050): 若你的牌庫還有牌，使你場上所有小旅人被賦予+3★
+  const isLittleOrFitStars = window.xlwIsLittleTraveler(unit, zone, lane) || c.id === "R-SPT-0005" || c.name?.includes("有健身的小旅人");
+  if (isLittleOrFitStars && zone) {
+    const isPlayerSide = zone.startsWith("player_");
+    const sidePrefix = isPlayerSide ? "player_" : "enemy_";
+    const sideDeck = isPlayerSide ? deck : (window.XLW_ENEMY?.deck || []);
+    if (sideDeck && sideDeck.length > 0) {
+      const hasPoet = ["front", "back"].some(r =>
+        (field[sidePrefix + r] || []).some((u, ti) => u && u.card && (u.card.id === "R-SPT-0050" || u.card.name?.includes("詩配酒旅人")) && !window.isUnitSilenced(u, sidePrefix + r, ti))
+      );
+      if (hasPoet) baseStars += 3;
+    }
+    // 紅配綠旅人 (SPT-0011 / SPT-0011-ALT) 提早結束成功獎勵加成
+    if (unit.redGreenBonusStars) baseStars += unit.redGreenBonusStars;
+  }
+
+  // 💀 怨念的小旅人 (SPT-0057): -2★
+  if (c.id === "SPT-0057" || c.name?.includes("怨念的小旅人")) {
+    return -2;
+  }
 
   // 🍃 葉靈 (SR-NMS-0079): X = 此單位的灌溉值 + 1
   if (c.id === "SR-NMS-0079" || (c.name?.includes("葉靈") && !c.name?.includes("訓練師"))) {
