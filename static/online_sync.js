@@ -18,6 +18,8 @@
       this.processing = 0;
       this.ready = false;
       this.pending = new Map();
+      this.encodedPending = new Map();
+      this.lastOutbox = null;
       this.backupTimer = null;
       this.latestBackup = null;
       try {
@@ -32,12 +34,30 @@
       this.cursor = meta.cursor;
     }
     persistOutbox() {
-      try { this.storage.setItem(this.key + ':outbox', JSON.stringify([...this.pending.values()])); }
+      try {
+        const entries = [];
+        for (const [id, message] of this.pending) {
+          if (!this.encodedPending.has(id)) this.encodedPending.set(id, JSON.stringify(message));
+          entries.push(this.encodedPending.get(id));
+        }
+        for (const id of this.encodedPending.keys()) {
+          if (!this.pending.has(id)) this.encodedPending.delete(id);
+        }
+        const outbox = '[' + entries.join(',') + ']';
+        if (outbox !== this.lastOutbox) {
+          this.storage.setItem(this.key + ':outbox', outbox);
+          this.lastOutbox = outbox;
+        }
+      }
       catch (_) { this.stop(new Error('瀏覽器無法儲存連線紀錄，請檢查儲存空間。')); throw new Error('Cannot persist outgoing game operation'); }
     }
     raw(message) {
       if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("wire:send",{action:message.action,ready:this.ready,buffered:this.socket?.bufferedAmount});
-      if (this.socket?.readyState === 1) this.originalSend.call(this.socket, JSON.stringify(message));
+      if (this.socket?.readyState === 1) {
+        const encoded = message.message_id && this.pending.get(message.message_id) === message
+          ? this.encodedPending.get(message.message_id) : null;
+        this.originalSend.call(this.socket, encoded || JSON.stringify(message));
+      }
     }
     queueBackup(message) {
       this.latestBackup = message;
@@ -72,6 +92,7 @@
       if (this.failed) throw new Error('Online synchronization is paused');
       message.message_id ||= global.crypto.randomUUID();
       if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("send:entry",{action:message.action});
+      if (this.pending.get(message.message_id) !== message) this.encodedPending.delete(message.message_id);
       this.pending.set(message.message_id, message);
       this.persistOutbox();
       // Persist locally-mutated game state before the peer can acknowledge this action.
@@ -93,6 +114,12 @@
       this.originalSend = socket.send;
       this.ready = false;
       socket.send = value => this.send(JSON.parse(value));
+      // Preserve the snapshot at the send boundary, including during retries.
+      socket.sendObject = message => this.send(
+        typeof global.structuredClone === 'function'
+          ? global.structuredClone(message)
+          : JSON.parse(JSON.stringify(message))
+      );
       socket.onmessage = event => {
         if (socket !== this.socket || this.failed) return;
         let data;

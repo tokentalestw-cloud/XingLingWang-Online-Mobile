@@ -35389,26 +35389,8 @@ function setupDebugToggle() {
 
 function setupWebSocketEvents() {
   const connection = ws;
-  // Wrap ws.send to inject sequence numbers for game actions
-  if (ws && !ws.XLW_isWrapped) {
-    ws.XLW_isWrapped = true;
-    const originalSend = ws.send;
-    ws.send = function(dataStr) {
-      try {
-        const parsed = JSON.parse(dataStr);
-        if (parsed && parsed.action && parsed.action !== "ping" && parsed.action !== "pong") {
-          if (!parsed.seq) {
-            xlwOutgoingSeq++;
-            parsed.seq = xlwOutgoingSeq;
-          }
-          dataStr = JSON.stringify(parsed);
-          console.log(`[WS-Send] Action: ${parsed.action}, Seq: ${parsed.seq}`);
-        }
-      } catch(e) {}
-      return originalSend.apply(this, [dataStr]);
-    };
-  }
-
+  // Protocol 2 tracks message_id/server_seq in OnlineSync. Keep the native
+  // socket writer free of extra full-payload parse/stringify wrappers.
   ws.onopen = () => {
     console.log("WebSocket connected to room " + room_id);
     if (window.XLW_gameInProgress) {
@@ -41548,7 +41530,7 @@ window.xlwSaveOnlineSession = function(rid, pid, role) {
       url.searchParams.set("room", sRoom);
       url.searchParams.set("player", sPlayer);
       if (sRole) url.searchParams.set("role", sRole);
-      window.history.replaceState(null, "", url.toString());
+      if (url.href !== window.location.href) window.history.replaceState(null, "", url.toString());
     }
   } catch (e) {
     console.warn("xlwSaveOnlineSession error:", e);
@@ -41869,10 +41851,9 @@ function saveLocalGameState() {
 
     // If websocket is active, push a backup to the server as well
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        action: "backup_client_state",
-        state: state
-      }));
+      const backup = { action: "backup_client_state", state };
+      if (typeof ws.sendObject === "function") ws.sendObject(backup);
+      else ws.send(JSON.stringify(backup));
     }
   } catch (e) {
     console.error("saveLocalGameState failed:", e);
@@ -42206,11 +42187,13 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     playerDeckName: (typeof deckName !== 'undefined' ? deckName : (window.XLW_selectedDeckName || "")),
     isGameOverFlag: Boolean(isGameOverFlag)
   };
-  ws.send(JSON.stringify({
-    action: action,
+  const message = {
+    action,
     next_turn: action === "end_turn" ? turn : undefined,
     state: stateToSend
-  }));
+  };
+  if (typeof ws.sendObject === "function") ws.sendObject(message);
+  else ws.send(JSON.stringify(message));
 }
 
 // ===== 24. 喵喵賊與額外牌組效果實裝助手 =====
