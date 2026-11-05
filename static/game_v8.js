@@ -13461,7 +13461,7 @@ async function performSummonToSlot(zone, idx) {
     if (isMultiplayer) {
       if (!window.XLW_isFoodBallSummoning) {
         summonMessageSent = true;
-        const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+        const isFromHand = !isSpecialSummon && (selectedHandForSummon !== "TRAVELER" &&
                             selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
                             selectedHandForSummon !== "GRAVEYARD_WELL" &&
                             selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
@@ -13844,7 +13844,7 @@ async function performSummonToSlot(zone, idx) {
         }
         for (const d of destroyedUnits) {
           logBattle(`🌶️【地獄辣椒糖】立即效果：破壞【${d.unit.card.name}】！`);
-          await destroyUnitAt(d.zone, d.idx, false);
+          await destroyUnit(d.zone, d.idx, d.zone.startsWith("player_") ? "player" : "enemy", false);
         }
         if (isMultiplayer) sendFullGameStateToOpponent();
         render();
@@ -17244,7 +17244,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         toIdx: idx
       }));
     } else if (!summonMessageSent) {
-      const isFromHand = (selectedHandForSummon !== "TRAVELER" &&
+      const isFromHand = !isSpecialSummon && (selectedHandForSummon !== "TRAVELER" &&
                           selectedHandForSummon !== "GRAVEYARD_UMBRELLA" &&
                           selectedHandForSummon !== "GRAVEYARD_WELL" &&
                           selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
@@ -25254,6 +25254,8 @@ async function triggerBossLadySummon() {
 }
 
 async function runNeutralEndPhaseEffects(isPlayerSide) {
+  const mySidePrefix = isPlayerSide ? "player_" : "enemy_";
+  const oppSidePrefix = isPlayerSide ? "enemy_" : "player_";
   await window.xlwResolveEndPhaseEffects(isPlayerSide);
   const side = isPlayerSide ? "player" : "enemy";
   const frontZone = isPlayerSide ? "player_front" : "enemy_front";
@@ -25633,7 +25635,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
           const hasExpiredOrMushroom = u.devourCards.some(d => d.card && (d.card.id === "R-CND-0039" || d.card.id === "R-CND-0040" || d.card.name?.includes("過期軟糖") || d.card.name?.includes("香菇軟糖")));
           if (hasExpiredOrMushroom && getUnitAtk(u, z, i) <= 0) {
             logBattle(`🍬【${u.card.name}】包含過期軟糖/香菇軟糖且攻擊力小於等於 0，發動破壞！`);
-            await destroyUnitAt(z, i, false);
+            await destroyUnit(z, i, z.startsWith("player_") ? "player" : "enemy", false);
           }
         }
       }
@@ -25674,7 +25676,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
               const tu = field[myZ]?.[ti];
               if (tu && tu.card && (tu.card.name?.includes("小旅人") || tu.card.id === "TOKEN_TRAVELER")) {
                 logBattle(`🤮【嘔吐果凍】賦予效果：破壞場上的【小旅人】！`);
-                await destroyUnitAt(myZ, ti, false);
+                await destroyUnit(myZ, ti, myZ.startsWith("player_") ? "player" : "enemy", false);
                 travelerDestroyed = true;
                 break;
               }
@@ -25683,7 +25685,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
           }
           if (!travelerDestroyed) {
             logBattle(`🤮【嘔吐果凍】賦予效果：場上無小旅人，主體【${u.card.name}】被破壞！`);
-            await destroyUnitAt(z, i, false);
+            await destroyUnit(z, i, z.startsWith("player_") ? "player" : "enemy", false);
           }
         }
       }
@@ -25746,8 +25748,6 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
 
   // 🌊 妖怪村莊：河神 (SR-VLG-0060)
   // "飛行。你的結束階段時，使此單位正前方的單位向其左邊、右邊或後方被推擠，並使破圖的單位卡進入墓地"
-  const mySidePrefix = isPlayerSide ? "player_" : "enemy_";
-  const oppSidePrefix = isPlayerSide ? "enemy_" : "player_";
   for (const r of ["front", "back"]) {
     const rZone = mySidePrefix + r;
     for (let i = 0; i < 5; i++) {
@@ -27950,6 +27950,7 @@ async function endPlayerTurnAndRunEnemy() {
     }
   };
 
+  try {
   if (window.XLW_playerNeedsToDraw) {
     logBattle("⚠️ 檢測到尚未完成抽牌，系統自動為您點選牌庫抽牌！");
     await window.xlwHandlePlayerDeckClick();
@@ -27982,14 +27983,11 @@ async function endPlayerTurnAndRunEnemy() {
   }
 
   clearModes();
-
-  try {
     window.XLW_playerCurseSummonActive = false;
     window.XLW_playerFacelessManActive = false;
     window.XLW_enemyFacelessManActive = false;
     window.XLW_legendaryBootsPlayedThisTurn = false;
     window.XLW_mageFigurineUsedThisTurn = false;
-    window.XLW_playerExiledCardsThisTurn = 0;
     window.XLW_falconUsedThisTurn = false;
     window.XLW_witchSquadUsedThisTurn = false;
     window.XLW_envyUsedThisTurn = false;
@@ -28003,7 +28001,6 @@ async function endPlayerTurnAndRunEnemy() {
     window.XLW_swimDemonUsedThisTurn = false;
     window.XLW_travelersReturnedToForestThisTurn = 0;
     window.XLW_enemyManaSpentThisTurn = 0;
-    window.XLW_playerWheelSpinsThisTurn = 0;
     window.XLW_knifeMonkeyUsedThisTurn = false;
     window.XLW_bucketMonkeyUsedThisTurn = false;
     window.XLW_signboardUsedThisTurn = false;
@@ -28469,6 +28466,8 @@ async function endPlayerTurnAndRunEnemy() {
   await runNeutralEndPhaseEffects(true);
 
   await resolveDecayStatus(true);
+  window.XLW_playerExiledCardsThisTurn = 0;
+  window.XLW_playerWheelSpinsThisTurn = 0;
 
   // 檢查倒數階段
   handleTurnEndCountdownLogic();
@@ -28551,6 +28550,9 @@ async function endPlayerTurnAndRunEnemy() {
   }
   } catch (errEndTurn) {
     console.error("endPlayerTurnAndRunEnemy 執行異常:", errEndTurn);
+    setStatus("回合結算中斷：" + (errEndTurn.message || String(errEndTurn)));
+    if (isMultiplayer && window.XLW_sync) window.XLW_sync.stop(errEndTurn);
+    window.XLW_reportError?.(errEndTurn.message || String(errEndTurn), "endPlayerTurnAndRunEnemy", 0, 0, errEndTurn.stack);
   } finally {
     window.XLW_isPlayerTurnEnding = false;
     render();
