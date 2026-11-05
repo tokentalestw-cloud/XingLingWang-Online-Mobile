@@ -22993,6 +22993,8 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
 }
 
 async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = false) {
+  const unit = field[zone]?.[idx];
+  if (!unit) return;
 
   // 🤖 保險箱 (RBT-0025): 此單位不會被戰鬥破壞
   if (isCombatDestruction && unit.card && (unit.card.id === "RBT-0025" || unit.card.name?.includes("保險箱") || (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0025" || d.card.name?.includes("保險箱")))))) {
@@ -23031,9 +23033,6 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
       return; // 成功代替破壞
     }
   }
-
-  const unit = field[zone][idx];
-  if (!unit) return;
 
   // 小骷的好麻吉疊疊樂 (R-SKT-0052) 破壞前代替效果
   if (unit.card && (unit.card.id === "R-SKT-0052" || unit.card.name?.includes("小骷的好麻吉疊疊樂"))) {
