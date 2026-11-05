@@ -44213,106 +44213,6 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
     }
   }
 
-  // 勇者公會：魔族四天王 賢者 (ASSR-BRV-0015 / BRV-0015)
-  // "你的結束階段時，可使你獎勵+X並使敵方場上所有單位被賦予+1攻擊力直到你的下回合結束時。X=你場上[金幣小魔]的數量+1"
-  let sageUnit = null;
-  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-    field[z].forEach((u, i) => {
-      if (!sageUnit && u && u.card && (u.card.id === "BRV-0015" || u.card.id === "ASSR-BRV-0015" || u.card.name?.includes("賢者")) && !window.isUnitSilenced(u, z, i)) {
-        sageUnit = u;
-      }
-    });
-  }
-  if (sageUnit) {
-    const impsCount = window.countCoinImps ? window.countCoinImps(isPlayerSide ? "player" : "enemy") : 0;
-    const X = impsCount + 1;
-    const doSage = isPlayerSide ? await showXLWConfirm("【魔族四天王 賢者】效果發動", `結束階段時，是否發動【賢者】效果？\n使你獎勵 +${X}★，並使敵方場上所有單位被賦予 +1 攻擊力直到你的下回合結束時。`) : true;
-    if (doSage) {
-      if (isPlayerSide) {
-        playerBonusScore += X;
-        logBattle(`✨【魔族四天王 賢者】效果發動：我方獎勵 +${X}★！`);
-      } else {
-        enemyBonusScore += X;
-        logBattle(`✨ 對手【魔族四天王 賢者】效果發動：對手獎勵 +${X}★！`);
-      }
-      renderScore();
-      const oppPrefix = isPlayerSide ? "enemy_" : "player_";
-      for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
-        field[oz].forEach(ou => {
-          if (ou) {
-            ou.tempSageBuffUntilTurn = turn + 2;
-          }
-        });
-      }
-      logBattle(`✨【魔族四天王 賢者】效果：使${isPlayerSide ? "對手" : "我方"}場上所有單位獲得 +1 攻擊力直到下回合結束！`);
-      render();
-    }
-  }
-
-  // 勇者公會：這個怪物 (BRV-0020)
-  // "敵方魔法抗性。你的結束階段時，使你場上1個未被賦予「這個痛苦」的其他單位被賦予你額外區的1張「這個痛苦」，否則使此單位被破壞。"
-  const monsterList = [];
-  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-    field[z].forEach((u, i) => {
-      if (u && u.card && (u.card.id === "BRV-0020" || u.card.id === "R-BRV-0020" || u.card.name?.includes("這個怪物")) && !window.isUnitSilenced(u, z, i)) {
-        monsterList.push({ zone: z, idx: i, unit: u });
-      }
-    });
-  }
-  for (const monster of monsterList) {
-    const otherUnits = [];
-    for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-      field[z].forEach((u, i) => {
-        if (u && u !== monster.unit) {
-          const hasPain = (u.equipments && u.equipments.some(e => e.includes("這個痛苦") || e.includes("BRV-0027")));
-          if (!hasPain) {
-            otherUnits.push({ zone: z, idx: i, unit: u });
-          }
-        }
-      });
-    }
-    const currentExtra = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-    const painCardIdx = currentExtra.findIndex(c => c && (c.id === "BRV-0027" || c.id === "R-BRV-0027" || c.name?.includes("這個痛苦")));
-
-    if (otherUnits.length > 0 && painCardIdx >= 0) {
-      const painCard = currentExtra.splice(painCardIdx, 1)[0];
-      let targetUnitObj = null;
-      if (isPlayerSide) {
-        const choices = otherUnits.map((item, idx) => ({
-          text: `${item.unit.card.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
-          value: idx
-        }));
-        const pickedIdx = await showXLWChoiceModal("【這個怪物】效果", "結束階段：選擇一個未被賦予「這個痛苦」的其他單位被賦予「這個痛苦」：", choices);
-        const sel = (pickedIdx !== null && pickedIdx !== undefined) ? pickedIdx : 0;
-        targetUnitObj = otherUnits[sel].unit;
-      } else {
-        targetUnitObj = otherUnits[0].unit;
-      }
-      targetUnitObj.equipments = targetUnitObj.equipments || [];
-      targetUnitObj.equipments.push("這個痛苦");
-      targetUnitObj.decay = true;
-      logBattle(`✨【這個怪物】效果：將額外區的【這個痛苦】賦予至【${targetUnitObj.card.name}】（施加衰退）！`);
-      if (typeof renderExtraDecks === "function") renderExtraDecks();
-      render();
-    } else {
-      logBattle(`💀【這個怪物】效果：無可賦予「這個痛苦」之其他單位，【這個怪物】被破壞！`);
-      await destroyUnit(monster.zone, monster.idx, isPlayerSide ? "player" : "enemy", false);
-    }
-  }
-
-  // 傳送門 (BRV-0046) 等消逝單位在回合結束時消逝並返回額外牌庫
-  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-    for (let i = 0; i < 5; i++) {
-      const u = field[z][i];
-      if (u && u.card && (u.card.id?.includes("BRV-0046") || u.card.name?.includes("傳送門") || window.xlwCardHasKeyword(u.card, "消逝"))) {
-        logBattle(`✨【${u.card.name}】具備【消逝】，在回合結束時消逝並返回額外牌庫！`);
-        const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-        extraList.push(u.card);
-        field[z][i] = null;
-      }
-    }
-  }
-
   // 忍喵 (R-CAT-0013) 效果
   if (isPlayerSide) {
     const oppUnits = field.enemy_front.concat(field.enemy_back).filter(u => u !== null).length;
@@ -44417,6 +44317,106 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
 window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
   const sidePrefix = isPlayerSide ? "player_" : "enemy_";
   const graveList = isPlayerSide ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+
+  // 勇者公會：魔族四天王 賢者 (ASSR-BRV-0015 / BRV-0015)
+  // "你的結束階段時，可使你獎勵+X並使敵方場上所有單位被賦予+1攻擊力直到你的下回合結束時。X=你場上[金幣小魔]的數量+1"
+  let sageUnit = null;
+  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+    field[z].forEach((u, i) => {
+      if (!sageUnit && u && u.card && (u.card.id === "BRV-0015" || u.card.id === "ASSR-BRV-0015" || u.card.name?.includes("賢者")) && !window.isUnitSilenced(u, z, i)) {
+        sageUnit = u;
+      }
+    });
+  }
+  if (sageUnit) {
+    const impsCount = window.countCoinImps ? window.countCoinImps(isPlayerSide ? "player" : "enemy") : 0;
+    const X = impsCount + 1;
+    const doSage = isPlayerSide ? await showXLWConfirm("【魔族四天王 賢者】效果發動", `結束階段時，是否發動【賢者】效果？\n使你獎勵 +${X}★，並使敵方場上所有單位被賦予 +1 攻擊力直到你的下回合結束時。`) : true;
+    if (doSage) {
+      if (isPlayerSide) {
+        playerBonusScore += X;
+        logBattle(`✨【魔族四天王 賢者】效果發動：我方獎勵 +${X}★！`);
+      } else {
+        enemyBonusScore += X;
+        logBattle(`✨ 對手【魔族四天王 賢者】效果發動：對手獎勵 +${X}★！`);
+      }
+      renderScore();
+      const oppPrefix = isPlayerSide ? "enemy_" : "player_";
+      for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+        field[oz].forEach(ou => {
+          if (ou) {
+            ou.tempSageBuffUntilTurn = turn + 2;
+          }
+        });
+      }
+      logBattle(`✨【魔族四天王 賢者】效果：使${isPlayerSide ? "對手" : "我方"}場上所有單位獲得 +1 攻擊力直到下回合結束！`);
+      render();
+    }
+  }
+
+  // 勇者公會：這個怪物 (BRV-0020)
+  // "敵方魔法抗性。你的結束階段時，使你場上1個未被賦予「這個痛苦」的其他單位被賦予你額外區的1張「這個痛苦」，否則使此單位被破壞。"
+  const monsterList = [];
+  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+    field[z].forEach((u, i) => {
+      if (u && u.card && (u.card.id === "BRV-0020" || u.card.id === "R-BRV-0020" || u.card.name?.includes("這個怪物")) && !window.isUnitSilenced(u, z, i)) {
+        monsterList.push({ zone: z, idx: i, unit: u });
+      }
+    });
+  }
+  for (const monster of monsterList) {
+    const otherUnits = [];
+    for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u !== monster.unit) {
+          const hasPain = (u.equipments && u.equipments.some(e => e.includes("這個痛苦") || e.includes("BRV-0027")));
+          if (!hasPain) {
+            otherUnits.push({ zone: z, idx: i, unit: u });
+          }
+        }
+      });
+    }
+    const currentExtra = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const painCardIdx = currentExtra.findIndex(c => c && (c.id === "BRV-0027" || c.id === "R-BRV-0027" || c.name?.includes("這個痛苦")));
+
+    if (otherUnits.length > 0 && painCardIdx >= 0) {
+      const painCard = currentExtra.splice(painCardIdx, 1)[0];
+      let targetUnitObj = null;
+      if (isPlayerSide) {
+        const choices = otherUnits.map((item, idx) => ({
+          text: `${item.unit.card.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+          value: idx
+        }));
+        const pickedIdx = await showXLWChoiceModal("【這個怪物】效果", "結束階段：選擇一個未被賦予「這個痛苦」的其他單位被賦予「這個痛苦」：", choices);
+        const sel = (pickedIdx !== null && pickedIdx !== undefined) ? pickedIdx : 0;
+        targetUnitObj = otherUnits[sel].unit;
+      } else {
+        targetUnitObj = otherUnits[0].unit;
+      }
+      targetUnitObj.equipments = targetUnitObj.equipments || [];
+      targetUnitObj.equipments.push("這個痛苦");
+      targetUnitObj.decay = true;
+      logBattle(`✨【這個怪物】效果：將額外區的【這個痛苦】賦予至【${targetUnitObj.card.name}】（施加衰退）！`);
+      if (typeof renderExtraDecks === "function") renderExtraDecks();
+      render();
+    } else {
+      logBattle(`💀【這個怪物】效果：無可賦予「這個痛苦」之其他單位，【這個怪物】被破壞！`);
+      await destroyUnit(monster.zone, monster.idx, isPlayerSide ? "player" : "enemy", false);
+    }
+  }
+
+  // 傳送門 (BRV-0046) 等消逝單位在回合結束時消逝並返回額外牌庫
+  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+    for (let i = 0; i < 5; i++) {
+      const u = field[z][i];
+      if (u && u.card && (u.card.id?.includes("BRV-0046") || u.card.name === "傳送門" || window.xlwCardHasKeyword(u.card, "消逝"))) {
+        logBattle(`✨【${u.card.name}】具備【消逝】，在回合結束時消逝並返回額外牌庫！`);
+        const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+        extraList.push(u.card);
+        field[z][i] = null;
+      }
+    }
+  }
 
   // 💀 骷髏人牌組：結束階段效果
   // 1. 迷你骷 (C-SKT-0011 / R-SKT-0011)
