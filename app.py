@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 
 BASE = Path(__file__).parent
 app = FastAPI(title="星靈王 Web Final")
@@ -560,7 +560,7 @@ class CardSaveSchema(BaseModel):
     type: str
     faction: str
     attack: str # 可以是數字字串，也可以是 "盾"
-    score: int
+    score: Union[int, str] # 可以是數字，也可以是 "X" 或 "-X"
     tribute: int
     keywords: List[str]
     effect_text: str

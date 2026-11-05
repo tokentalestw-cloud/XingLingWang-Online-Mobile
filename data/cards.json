@@ -408,8 +408,8 @@
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0005",
-    "name": "魔族四天王 墮落狂魔 (插畫版)",
+    "id": "ASSR-BRV-0005-插畫",
+    "name": "魔族四天王 墮落狂魔",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -421,17 +421,18 @@
       "敵方魔法抗性"
     ],
     "effect_text": "敵方魔法抗性。使敵方場上所有單位被賦予+1攻擊力。",
-    "image": "/static/card_images/assr_brv_0005.jpeg",
+    "image": "/static/card_images/assr_brv_0005_插畫.jpeg",
     "original_file": "勇者公會/0078_04_墮落狂魔插畫版.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0006",
-    "name": "魔族四天王 水妖 (插畫版)",
+    "id": "ASSR-BRV-0006-插畫",
+    "name": "魔族四天王 水妖",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -443,17 +444,17 @@
       "遠程攻擊"
     ],
     "effect_text": "遠程攻擊。敵方在其回合第一個打出或召喚的單位入場時，你可使其向左或向右移動一格。",
-    "image": "/static/card_images/assr_brv_0006.jpeg",
+    "image": "/static/card_images/assr_brv_0006_插畫.jpeg",
     "original_file": "勇者公會/0075_02_水妖插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0007",
-    "name": "魔族四天王 戰鬼 (插畫版)",
+    "id": "ASSR-BRV-0007-插畫",
+    "name": "魔族四天王 戰鬼",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -463,9 +464,9 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使此單位被賦予+X攻擊力。X=此單位被賦予的魔法卡數量的兩倍。",
-    "image": "/static/card_images/assr_brv_0007.jpeg",
+    "image": "/static/card_images/assr_brv_0007_插畫.jpeg",
     "original_file": "勇者公會/0072_05_戰鬼插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -494,8 +495,8 @@
     "art_subtype": "人型，魔族"
   },
   {
-    "id": "ASSR-BRV-0016",
-    "name": "首席勇者 (插畫版)",
+    "id": "ASSR-BRV-0016-插畫",
+    "name": "首席勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -503,19 +504,21 @@
     "attack": "8",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "進攻的此單位將進攻敵方場上所有非橫放單位位置。使被此單位戰鬥破壞的單位由破壞改為被橫放。此單位戰鬥時不會被破壞。",
-    "image": "/static/card_images/assr_brv_0016.jpeg",
+    "image": "/static/card_images/assr_brv_0016_插畫.jpeg",
     "original_file": "勇者公會/0062_07_首席勇者插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型/勇者"
   },
   {
-    "id": "ASSR-BRV-0017",
-    "name": "絕望勇者 (插畫版)",
+    "id": "ASSR-BRV-0017-插畫",
+    "name": "絕望勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -527,17 +530,17 @@
       "立即"
     ],
     "effect_text": "立即：使敵方場上1個無需祭品的單位被破壞。",
-    "image": "/static/card_images/assr_brv_0017.jpeg",
+    "image": "/static/card_images/assr_brv_0017_插畫.jpeg",
     "original_file": "勇者公會/0059_08_絕望勇者插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
-    "id": "ASSR-BRV-0018",
-    "name": "聖女勇者 (插畫版)",
+    "id": "ASSR-BRV-0018-插畫",
+    "name": "聖女勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -545,19 +548,21 @@
     "attack": "3",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "若此單位處於非橫放狀態，你場上的其他單位被破壞時，可改為使此單位被橫放。",
-    "image": "/static/card_images/assr_brv_0018.jpeg",
+    "image": "/static/card_images/assr_brv_0018_插畫.jpeg",
     "original_file": "勇者公會/0056_09_聖女勇者插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
-    "id": "ASSR-BRV-0024",
-    "name": "青龍 (插畫版)",
+    "id": "ASSR-BRV-0024-插畫",
+    "name": "青龍",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -570,17 +575,17 @@
       "飛行"
     ],
     "effect_text": "貫穿。飛行。",
-    "image": "/static/card_images/assr_brv_0024.jpeg",
+    "image": "/static/card_images/assr_brv_0024_插畫.jpeg",
     "original_file": "勇者公會/0048_10_青龍插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0047",
-    "name": "前魔族四天王 炎魔 (插畫版)",
+    "id": "ASSR-BRV-0047-插畫",
+    "name": "前魔族四天王 炎魔",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -588,19 +593,21 @@
     "attack": "6",
     "score": 5,
     "tribute": 2,
-    "keywords": [],
-    "effect_text": "使你場上所有原始攻擊力為3或以下的魔族單位被賦予+2攻擊力。",
-    "image": "/static/card_images/assr_brv_0047.jpeg",
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。使你場上所有原始攻擊力為3或以下的魔族單位被賦予+2攻擊力。",
+    "image": "/static/card_images/assr_brv_0047_插畫.jpeg",
     "original_file": "勇者公會/0015_11_炎魔插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0048",
-    "name": "前魔族四天王 慾望女王 (插畫版)",
+    "id": "ASSR-BRV-0048-插畫",
+    "name": "前魔族四天王 慾望女王",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -610,17 +617,17 @@
     "tribute": 2,
     "keywords": [],
     "effect_text": "使敵方打出或召喚的單位須優先打出或召喚至此單位正前方。",
-    "image": "/static/card_images/assr_brv_0048.jpeg",
+    "image": "/static/card_images/assr_brv_0048_插畫.jpeg",
     "original_file": "勇者公會/0013_12_慾望女王插畫版.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0050",
-    "name": "魔王 (插畫版)",
+    "id": "ASSR-BRV-0050-魔王",
+    "name": "魔王",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -628,18 +635,21 @@
     "attack": "5",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
-    "effect_text": "【升級條件】你的防守階段結束時，若本回合你有單位被戰鬥破壞且與其戰鬥的單位攻擊力至少比其多3，則可使你場上的「公平勇者」升級為此卡。\n【效果】使敵方場上所有單位被賦予「此單位無法進攻攻擊力與其不同的魔族單位」。",
-    "image": "/static/card_images/assr_brv_0050.jpeg",
+    "keywords": [
+      "魔族"
+    ],
+    "effect_text": "使敵方場上所有單位被賦予「此單位無法進攻攻擊力與其不同的魔族單位」。",
+    "image": "/static/card_images/assr_brv_0050_魔王.jpeg",
     "original_file": "勇者公會/0011_13_魔王插畫版.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你的防守階段結束時，若本回合你有單位被戰鬥破壞且與其戰鬥的單位攻擊力至少比其多3，則可使你場上的「公平勇者」升級為此卡。",
+    "extra_deck_limit": 3,
     "art_subtype": "魔族"
   },
   {
-    "id": "ASSR-BRV-0051",
+    "id": "ASSR-BRV-0051-插畫",
     "name": "絕望勇者 絕望型態",
     "deck": "勇者公會",
     "type": "unit",
@@ -652,7 +662,7 @@
       "升級"
     ],
     "effect_text": "升級為此卡時，使雙方前排戰線所有其他單位被破壞",
-    "image": "/static/card_images/assr_brv_0051.jpeg",
+    "image": "/static/card_images/assr_brv_0051_插畫.jpeg",
     "original_file": "勇者公會/0010_14_絕望勇者絕望型態插畫版.jpg",
     "deck_eligible": false,
     "mana": 0,
@@ -662,7 +672,7 @@
     "art_subtype": "人型，勇者"
   },
   {
-    "id": "ASSR-BRV-0052",
+    "id": "ASSR-BRV-0052-插畫",
     "name": "聖女",
     "deck": "勇者公會",
     "type": "unit",
@@ -675,7 +685,7 @@
       "破壞抗性"
     ],
     "effect_text": "破壞抗性。你的主要階段開始時限一次，可使你場上1個單位被賦予的1張魔法卡回手牌或進入墓地",
-    "image": "/static/card_images/assr_brv_0052.jpeg",
+    "image": "/static/card_images/assr_brv_0052_插畫.jpeg",
     "original_file": "勇者公會/0003_15_聖女勇者插畫版.jpg",
     "deck_eligible": false,
     "mana": 0,
@@ -685,8 +695,28 @@
     "art_subtype": "人型，勇者"
   },
   {
+    "id": "ASSR-SKT-0009",
+    "name": "老骷",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "5",
+    "score": 2,
+    "tribute": 4,
+    "keywords": [],
+    "effect_text": "立即:使你場上1個 不死族單位被破壞，若成功則使敵方場上1個單位被破壞\n“沒有什麼比填飽肚子更重要了…”",
+    "image": "/static/card_images/assr_skt_0009.jpeg",
+    "original_file": "骷髏人/SKT0009_老骷_製卡.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "不死族"
+  },
+  {
     "id": "ASSR-SKT-0010",
-    "name": "火把點蠟小哀妮 (ASSR)",
+    "name": "火把點蠟小哀妮",
     "deck": "骷髏人",
     "type": "unit",
     "faction": "骷髏人",
@@ -698,7 +728,7 @@
     "effect_text": "你在戰術階段選擇佈陣時，可使你墓地的此卡被額外打出。",
     "image": "/static/card_images/assr_skt_0010.jpeg",
     "original_file": "骷髏人/0002_93ASSR小哀妮.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -896,7 +926,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0009",
@@ -910,7 +940,7 @@
     "tribute": 0,
     "keywords": [
       "立即",
-      "無法移動"
+      "，無法移動"
     ],
     "effect_text": "立即：抽1張牌。無法移動。防守的此單位被戰鬥破壞時，使敵方抽2張牌。",
     "image": "/static/card_images/brv_0009.jpeg",
@@ -919,7 +949,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0010",
@@ -941,7 +971,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0011",
@@ -1000,7 +1030,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "寶物，魔族"
+    ],
     "effect_text": "若你場上有至少2個寶物單位，則使你場上1個魔族單位被破壞，若成功使你額外區1張「金幣小魔」被召喚。",
     "image": "/static/card_images/brv_0013.jpeg",
     "original_file": "勇者公會/0066_BRV0013_法術_貪婪的誘餌.jpg",
@@ -1023,16 +1055,16 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "無法被獻祭"
+      "飛行，獻祭，獎勵"
     ],
-    "effect_text": "無法被獻祭。此卡可打出或召喚至敵方場上任意位置。此單位被破壞時，使敵方獎勵+3。",
+    "effect_text": "飛行。無法被獻祭。此卡可打出或召喚至敵方場上任意位置。此單位被破壞時，使敵方獎勵+3。",
     "image": "/static/card_images/brv_0014.jpeg",
     "original_file": "勇者公會/0065_BRV0014_貪婪蝙蝠.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0015",
@@ -1066,7 +1098,9 @@
     "attack": "8",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "進攻的此單位將進攻敵方場上所有非橫放單位位置。使被此單位戰鬥破壞的單位由破壞改為被橫放。此單位戰鬥時不會被破壞。",
     "image": "/static/card_images/brv_0016.jpeg",
     "original_file": "勇者公會/0064_BRV0016_首席勇者.jpg",
@@ -1084,7 +1118,7 @@
     "faction": "勇者公會",
     "race": "勇者公會",
     "attack": "5",
-    "score": 0,
+    "score": 1,
     "tribute": 1,
     "keywords": [
       "立即"
@@ -1096,7 +1130,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "BRV-0018",
@@ -1108,7 +1142,9 @@
     "attack": "3",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "若此單位處於非橫放狀態，你場上的其他單位被破壞時，可改為使此單位被橫放。",
     "image": "/static/card_images/brv_0018.jpeg",
     "original_file": "勇者公會/0058_BRV0018_補師勇者.jpg",
@@ -1116,7 +1152,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "BRV-0019",
@@ -1128,7 +1164,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "橫放，獎勵"
+    ],
     "effect_text": "若敵方場上至少有3個橫放單位，則使敵方場上所有單位被轉正並使你獎勵+X。X=被轉正的單位數量。",
     "image": "/static/card_images/brv_0019.jpeg",
     "original_file": "勇者公會/0055_BRV0019_法術_重睡計畫.jpg",
@@ -1214,7 +1252,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "勇者公會"
+    ],
     "effect_text": "使你場上或墓地1張勇者公會單位卡回手牌。",
     "image": "/static/card_images/brv_0023.jpeg",
     "original_file": "勇者公會/0051_BRV0023_法術_光榮回歸.jpg",
@@ -1260,7 +1300,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個☆為1的單位被破壞。",
+    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個星星為1的單位被破壞。",
     "image": "/static/card_images/brv_0025.jpeg",
     "original_file": "勇者公會/0047_BRV0025_見習魔法師.jpg",
     "deck_eligible": true,
@@ -1279,7 +1319,9 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "升級"
+    ],
     "effect_text": "你場上單位升級時，召喚2個小旅人。",
     "image": "/static/card_images/brv_0026.jpeg",
     "original_file": "勇者公會/0046_BRV0026_新手村阿姨.jpg",
@@ -1300,8 +1342,7 @@
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "消逝",
-      "衰退"
+      "消逝，衰退"
     ],
     "effect_text": "消逝。使場上1個未被賦予「這個痛苦」的單位被賦予衰退。",
     "image": "/static/card_images/brv_0027.jpeg",
@@ -1312,6 +1353,7 @@
       "Main Phase"
     ],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "永久"
   },
   {
@@ -1327,14 +1369,15 @@
     "keywords": [
       "遠程攻擊"
     ],
-    "effect_text": "【升級條件】你場上的「見習弓箭手」戰鬥成功時，若與其戰鬥的單位位於後排戰線，則可使其升級為此卡。\n【效果】遠程攻擊。此單位可進攻敵方場上2個任意單位位置。",
+    "effect_text": "遠程攻擊。此單位可進攻敵方場上2個任意單位位置。",
     "image": "/static/card_images/brv_0028.jpeg",
     "original_file": "勇者公會/0044_BRV0028_額外牌_雙弓勇者.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "trigger_condition": "你場上的「見習弓箭手」戰鬥成功時，若與其戰鬥的單位位於後排戰線，則可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "BRV-0029",
@@ -1347,17 +1390,17 @@
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "貫穿",
-      "破甲"
+      "貫穿，破甲"
     ],
-    "effect_text": "【升級條件】你場上的「見習劍士」戰鬥成功時，若其攻擊力至少比與其戰鬥的單位多3，則可使其升級為此卡。\n【效果】貫穿。破甲。",
+    "effect_text": "貫穿。破甲。",
     "image": "/static/card_images/brv_0029.jpeg",
     "original_file": "勇者公會/0042_BRV0029_額外牌_大劍勇者-1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "trigger_condition": "你場上的「見習劍士」戰鬥成功時，若其攻擊力至少比與其戰鬥的單位多3，則可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "BRV-0030",
@@ -1369,8 +1412,10 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "你場上的單位進攻戰鬥成功時，與其戰鬥的單位每個滿足的條件使你獎勵+1：攻擊力大於3；★大於3；為需要祭品的單位。",
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你場上的單位進攻戰鬥成功時，與其戰鬥的單位每個滿足的條件使你獎勵+1：攻擊力大於3；星星大於3；為需要祭品的單位。",
     "image": "/static/card_images/brv_0030.jpeg",
     "original_file": "勇者公會/0040_BRV0030_法術_好戰者任務看板.jpg",
     "deck_eligible": true,
@@ -1379,7 +1424,7 @@
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地/任務"
+    "art_subtype": "場地，任務"
   },
   {
     "id": "BRV-0031",
@@ -1434,8 +1479,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "無法進攻",
-      "禁錮"
+      "無法進攻，禁錮，獎勵"
     ],
     "effect_text": "此卡可打出或召喚至敵方場上。禁錮。無法進攻。此單位被破壞時，若此卡持有者的額外區至少有2張「金幣小魔」，則其可使其中2張「金幣小魔」被召喚至你場上，然後使敵方獎勵+3。",
     "image": "/static/card_images/brv_0033.jpeg",
@@ -1444,7 +1488,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0034",
@@ -1456,7 +1500,9 @@
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "魔族"
+    ],
     "effect_text": "一回合限一次，你場上其他魔族單位被戰鬥破壞時，可使你額外區1張「金幣小魔」被召喚。",
     "image": "/static/card_images/brv_0034.jpeg",
     "original_file": "勇者公會/0035_BRV0034_魔族保險員.jpg",
@@ -1476,7 +1522,9 @@
     "attack": "4",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "獎勵，藥水"
+    ],
     "effect_text": "你的主要階段限一次，可使你場上1個「金幣小魔」被破壞或若你獎勵至少為X則可獎勵-X，若成功則你額外區尋找1張藥水牌並加入手牌。X=該藥水牌的法力值。",
     "image": "/static/card_images/brv_0035.jpeg",
     "original_file": "勇者公會/0034_BRV0035_藥水商人.jpg",
@@ -1497,13 +1545,14 @@
     "score": 4,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "【升級條件】你場上的「見習魔法師」發動其效果並成功破壞1個非小旅人單位時，可使其升級為此卡。\n【效果】你的主要階段限一次，你使用魔法卡時，可使敵方場上1個☆為X的單位被破壞。X=該魔法卡法力值。",
+    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個星星為X的單位被破壞。X=該魔法卡法力值。",
     "image": "/static/card_images/brv_0036.jpeg",
     "original_file": "勇者公會/0032_BRV0036_額外牌_巫師勇者.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你場上的「見習魔法師」發動其效果並成功破壞1個非小旅人單位時，可使其升級為此卡",
+    "extra_deck_limit": 1,
     "art_subtype": "人型/勇者"
   },
   {
@@ -1517,8 +1566,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "消逝",
-      "阻擋"
+      "消逝，阻擋"
     ],
     "effect_text": "消逝。使你場上1個單位被賦予阻擋直到你的下個主要階段開始時。",
     "image": "/static/card_images/brv_0037.jpeg",
@@ -1526,11 +1574,12 @@
     "deck_eligible": false,
     "mana": 2,
     "usable_phases": [
-      "Defense Phase",
-      "Main Phase"
+      "Main Phase",
+      "Defense Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗/藥水"
+    "extra_deck_limit": 2,
+    "art_subtype": "消耗，藥水"
   },
   {
     "id": "BRV-0038",
@@ -1554,7 +1603,8 @@
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗/藥水"
+    "extra_deck_limit": 3,
+    "art_subtype": "消耗，藥水"
   },
   {
     "id": "BRV-0039",
@@ -1567,7 +1617,7 @@
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "消逝"
+      "消逝，橫放"
     ],
     "effect_text": "消逝。使你場上1個橫放單位被轉正。",
     "image": "/static/card_images/brv_0039.jpeg",
@@ -1578,7 +1628,8 @@
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗/藥水"
+    "extra_deck_limit": 3,
+    "art_subtype": "消耗，藥水"
   },
   {
     "id": "BRV-0040",
@@ -1591,7 +1642,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，獎勵，藥水"
     ],
     "effect_text": "立即：若你獎勵至少為1，則獎勵-1，若成功則你額外區尋找1張藥水牌並加入手牌。",
     "image": "/static/card_images/brv_0040.jpeg",
@@ -1620,7 +1671,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "BRV-0042",
@@ -1630,17 +1681,19 @@
     "faction": "勇者公會",
     "race": "勇者公會",
     "attack": "7",
-    "score": 0,
+    "score": "X",
     "tribute": 1,
-    "keywords": [],
-    "effect_text": "此卡的祭品須為「金幣小魔」。此單位被戰鬥破壞時，使敵方獎勵+4。★=你場上金幣小魔數量的兩倍。",
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "此卡的祭品須為「金幣小魔」。此單位被戰鬥破壞時，使敵方獎勵+4。星星=你場上金幣小魔數量的兩倍。",
     "image": "/static/card_images/brv_0042.jpeg",
     "original_file": "勇者公會/0022_BRV0042_金幣大魔.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "魔族/寶物"
+    "art_subtype": "魔族，寶物"
   },
   {
     "id": "BRV-0043",
@@ -1649,11 +1702,11 @@
     "type": "unit",
     "faction": "勇者公會",
     "race": "勇者公會",
-    "attack": "2",
-    "score": 99,
+    "attack": "９９",
+    "score": 2,
     "tribute": 0,
     "keywords": [
-      "無法進攻"
+      "無法進攻，升級，藥水"
     ],
     "effect_text": "無法進攻。你場上的單位升級時，可使你額外區尋找最多2張藥水牌並加入手牌。",
     "image": "/static/card_images/brv_0043.jpeg",
@@ -1675,13 +1728,14 @@
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "【升級條件】你場上的小旅人戰鬥成功時，若你場上有「熱心勇者」，則可使該小旅人升級為此卡。",
+    "effect_text": "",
     "image": "/static/card_images/brv_0044.jpeg",
     "original_file": "勇者公會/0020_BRV0044_額外牌_菜鳥勇者.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你場上的小旅人戰鬥成功時，若你場上有「熱心勇者」，則可使該小旅人升級為此卡",
+    "extra_deck_limit": 5,
     "art_subtype": "人型/勇者"
   },
   {
@@ -1715,9 +1769,7 @@
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "消逝",
-      "無法進攻",
-      "禁錮"
+      "消逝，無法進攻，禁錮"
     ],
     "effect_text": "無法進攻。消逝。禁錮。同名卡一回合限一次，你的主要階段，可使你場上「傳送門」左邊或右邊的1個單位被移動至你場上「傳送門」的左邊或右邊。",
     "image": "/static/card_images/brv_0046.jpeg",
@@ -1726,6 +1778,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 2,
     "art_subtype": "建築"
   },
   {
@@ -1738,8 +1791,10 @@
     "attack": "6",
     "score": 5,
     "tribute": 2,
-    "keywords": [],
-    "effect_text": "使你場上所有原始攻擊力為3或以下的魔族單位被賦予+2攻擊力。",
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。使你場上所有原始攻擊力為3或以下的魔族單位被賦予+2攻擊力。",
     "image": "/static/card_images/brv_0047.jpeg",
     "original_file": "勇者公會/0016_BRV0047_前魔族四天王炎魔.jpg",
     "deck_eligible": true,
@@ -1778,14 +1833,17 @@
     "attack": "5",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
-    "effect_text": "【升級條件】你的防守階段結束時，若本回合你有單位被戰鬥破壞且與其戰鬥的單位攻擊力至少比其多3，則可使你場上的「公平勇者」升級為此卡。\n【效果】使敵方場上所有單位被賦予「此單位無法進攻攻擊力與其不同的魔族單位」。",
+    "keywords": [
+      "魔族"
+    ],
+    "effect_text": "使敵方場上所有單位被賦予「此單位無法進攻攻擊力與其不同的魔族單位」。",
     "image": "/static/card_images/brv_0050.jpeg",
     "original_file": "勇者公會/0012_BRV0050_額外牌_魔王.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你場上的小旅人戰鬥成功時，若你場上有「熱心勇者」，則可使該小旅人升級為此卡",
+    "extra_deck_limit": 3,
     "art_subtype": "魔族"
   },
   {
@@ -1834,6 +1892,49 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "藝術品"
+  },
+  {
+    "id": "C-ART-0063",
+    "name": "女陶俑",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "-1",
+    "score": 2,
+    "tribute": 2,
+    "keywords": [
+      "敵方魔法抗性，橫放"
+    ],
+    "effect_text": "敵方魔法抗性。此單位被橫放時,可使場上2個單位被橫放",
+    "image": "/static/card_images/c_art_0063.jpeg",
+    "original_file": "藝術品/ART0063_女陶俑_額外2.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 2,
+    "art_subtype": "陶俑"
+  },
+  {
+    "id": "C-ART-0066",
+    "name": "魁儡操縱師",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "2",
+    "score": 0,
+    "tribute": 2,
+    "keywords": [],
+    "effect_text": "你的主要階段開始時限一次,可使你額外區1張「被操縱的鎧甲擺件」被召喚",
+    "image": "/static/card_images/c_art_0066.jpeg",
+    "original_file": "藝術品/ART0066_魁儡操縱師.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
   },
   {
     "id": "C-CAT-0023",
@@ -1897,6 +1998,75 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "C-CAT-0057",
+    "name": "路邊的靴子",
+    "deck": "喵喵賊",
+    "type": "magic",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "從你墓地或牌庫尋找1張卡名帶有靴喵的單位卡並加入手牌",
+    "image": "/static/card_images/c_cat_0057.jpeg",
+    "original_file": "喵喵賊/CAT0057_路邊的靴子.jpg",
+    "deck_eligible": true,
+    "mana": 1,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "C-CAT-0058",
+    "name": "偷襲匕首",
+    "deck": "喵喵賊",
+    "type": "magic",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "偷襲"
+    ],
+    "effect_text": "視為該次 偷襲 額外成功1次",
+    "image": "/static/card_images/c_cat_0058.jpeg",
+    "original_file": "喵喵賊/CAT0058_偷襲匕首.jpg",
+    "deck_eligible": true,
+    "mana": 2,
+    "usable_phases": [
+      "Enemy Phase"
+    ],
+    "trigger_condition": "你的單位偷襲成功時",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "C-CAT-0061",
+    "name": "英雄靴喵",
+    "deck": "喵喵賊",
+    "type": "unit",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "6",
+    "score": 1,
+    "tribute": 5,
+    "keywords": [
+      "偷襲",
+      "敵方效果抗性，立即，獎勵"
+    ],
+    "effect_text": "偷襲 敵方效果抗性\n立即:獎勵+X。你的其他單位 偷襲 成功時,可從手牌額外打出此卡。\nX=你除外區「旅途的經驗」數量",
+    "image": "/static/card_images/c_cat_0061.jpeg",
+    "original_file": "喵喵賊/CAT0061_英雄靴喵.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的主要階段,可使你手牌的5張「旅途的經驗」被除外,若成功則使你手牌的「靴喵」或「勇者靴喵」升級 為此卡",
+    "extra_deck_limit": 1
   },
   {
     "id": "C-CND-0018",
@@ -2552,6 +2722,53 @@
     "art_subtype": "永久，裝備"
   },
   {
+    "id": "C-ORC-0067",
+    "name": "找不到飛斧的飛斧獸人",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "獸人裝備，獎勵"
+    ],
+    "effect_text": "此單位被賦予 獸人 裝備 魔法卡時,使該魔法卡進入墓地,並 獎勵+1 及抽1張牌",
+    "image": "/static/card_images/c_orc_0067.jpeg",
+    "original_file": "獸人/ORC0067_找不到飛斧的獸人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "C-ORC-0068",
+    "name": "飛回手上的迴旋飛斧",
+    "deck": "獸人",
+    "type": "magic",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "0",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "獸人，貫穿"
+    ],
+    "effect_text": "使你場上1個 獸人 單位被賦予 貫穿 及最終攻擊力兩倍計算",
+    "image": "/static/card_images/c_orc_0068.jpeg",
+    "original_file": "獸人/ORC0068_飛斧獸人的迴旋飛斧_額外牌1.jpg",
+    "deck_eligible": false,
+    "mana": 3,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "你場上的「找不到飛斧的飛斧獸人」戰鬥成功時,使你場上的「迴旋飛斧」升級為此卡並加入手牌",
+    "extra_deck_limit": 1,
+    "art_subtype": "永久，裝備"
+  },
+  {
     "id": "C-RBT-0006",
     "name": "磁場搗亂機",
     "deck": "機械軍團",
@@ -2599,10 +2816,11 @@
   },
   {
     "id": "C-SKT-0011",
-    "name": "迷你骷 (C版)",
-    "faction": "骷髏人",
+    "name": "迷你骷",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 0,
     "tribute": 0,
@@ -2610,7 +2828,7 @@
     "effect_text": "你的結束階段結束後，使你墓地的此卡被召喚。",
     "image": "/static/card_images/c_skt_0011.jpeg",
     "original_file": "骷髏人/0008_56SKT0053_迷你骷.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -2618,10 +2836,11 @@
   },
   {
     "id": "C-SKT-0025",
-    "name": "骷妖 (C版)",
-    "faction": "骷髏人",
+    "name": "骷妖",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 3,
     "tribute": 1,
@@ -2631,7 +2850,7 @@
     "effect_text": "立即：使敵方玩家丟掉1張手牌，你可丟掉1張手牌。",
     "image": "/static/card_images/c_skt_0025.jpeg",
     "original_file": "骷髏人/0007_55SKT0025_骷妖.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -2640,9 +2859,10 @@
   {
     "id": "C-SKT-0053",
     "name": "瘟疫傳教士",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 4,
     "tribute": 1,
@@ -2661,17 +2881,66 @@
   {
     "id": "C-SKT-0055",
     "name": "盜墓賊",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的結束階段時，若你場上有「守墓神」，則可使你額外區的此卡進入敵方墓地且不須歸還。同名卡一回合限一次，你的主要階段可使你墓地的此卡被除外。你的結束階段時，若此卡在墓地，使敵方獎勵+2。",
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "同名卡一回合限一次，你的主要階段可使你墓地的此卡被除外。你的結束階段時，若此卡在墓地，使敵方獎勵+2。",
     "image": "/static/card_images/c_skt_0055.jpeg",
     "original_file": "骷髏人/0004_59SKT0055_盜墓賊_額外牌3.jpg",
     "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的結束階段時，若你場上有「守墓神」，則可使你額外區的此卡進入敵方墓地且不須歸還",
+    "extra_deck_limit": 3,
+    "art_subtype": "不死族"
+  },
+  {
+    "id": "C-SKT-0059",
+    "name": "法巫骷髏頭",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "2",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "飛行"
+    ],
+    "effect_text": "飛行。你的主要階段開始時限一次,可展示牌庫頂2張牌並使其任意數量的魔法卡加入手牌,其餘則進入墓地",
+    "image": "/static/card_images/c_skt_0059.jpeg",
+    "original_file": "骷髏人/SKT0059_法巫骷髏頭_額外牌1.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你場上的「骷髏頭」立即效果使魔法卡進入墓地時,可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "不死族"
+  },
+  {
+    "id": "C-SKT-0060",
+    "name": "運輸局會計員 凱蒂",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "2",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "骷髏人，綁架"
+    ],
+    "effect_text": "你的主要階段限一次,可使你場上任意數量 骷髏人 單位被破壞,若成功則使你墓地1個星星為X的單位被綁架(3)。\nX=該次破壞的單位星星加總",
+    "image": "/static/card_images/c_skt_0060.jpeg",
+    "original_file": "骷髏人/SKT0060_運輸局會計員凱蒂.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -3154,18 +3423,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "轉盤"
+    ],
     "effect_text": "主要階段。若你轉盤為3或以上，則輪轉1次。",
     "image": "/static/card_images/ccs_0002.jpeg",
     "original_file": "馬戲團/0006_CCS0002_飛機大砲_庫洛姆.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -3189,8 +3460,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0005",
@@ -7552,11 +7822,12 @@
     "art_subtype": "機械"
   },
   {
-    "id": "NY-SKT-0015",
-    "name": "造墓者小布 (新年版)",
-    "faction": "骷髏人",
+    "id": "NY-SKT-0015-新年",
+    "name": "造墓者小布",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
@@ -7564,9 +7835,9 @@
       "立即"
     ],
     "effect_text": "立即：從你牌庫尋找1場地卡展示並加入手牌，然後重洗牌庫。",
-    "image": "/static/card_images/ny_skt_0015.jpeg",
+    "image": "/static/card_images/ny_skt_0015_新年.jpeg",
     "original_file": "骷髏人/0033_NY-SKT-0010.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -8514,6 +8785,28 @@
     "trigger_condition": ""
   },
   {
+    "id": "R-ART-0038-泳裝",
+    "name": "金衣服的女人",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "5",
+    "score": 3,
+    "tribute": 4,
+    "keywords": [
+      "敵方魔法抗性"
+    ],
+    "effect_text": "敵方魔法抗性\n你場上每個橫放的 藝術品 單位使此單位的+1星星",
+    "original_file": "藝術品/泳裝02_藝術品0038_金衣服的女人-複製.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "藝術品",
+    "image": "/static/card_images/r_art_0038_swimsuit.jpeg"
+  },
+  {
     "id": "R-ART-0038-金",
     "name": "金衣服的女人",
     "deck": "藝術品",
@@ -8903,6 +9196,76 @@
     "trigger_condition": ""
   },
   {
+    "id": "R-ART-0064",
+    "name": "弓箭手陶俑",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "敵方魔法抗性",
+      "遠程攻擊"
+    ],
+    "effect_text": "敵方魔法抗性。遠程攻擊。",
+    "image": "/static/card_images/r_art_0064.jpeg",
+    "original_file": "藝術品/ART0064_弓箭陶俑_額外3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3,
+    "art_subtype": "陶俑"
+  },
+  {
+    "id": "R-ART-0065",
+    "name": "法師陶俑",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "0",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "敵方魔法抗性，橫放"
+    ],
+    "effect_text": "敵方魔法抗性。一回合限一次,你場上的單位被橫放時,可使你場上另一個單位被轉正",
+    "image": "/static/card_images/r_art_0065.jpeg",
+    "original_file": "藝術品/ART0065_法師陶俑_額外3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 1,
+    "art_subtype": "陶俑"
+  },
+  {
+    "id": "R-ART-0067",
+    "name": "被操縱的鎧甲擺件",
+    "deck": "藝術品",
+    "type": "unit",
+    "faction": "藝術品",
+    "race": "藝術品",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "魔法抗性"
+    ],
+    "effect_text": "魔法抗性",
+    "image": "/static/card_images/r_art_0067.jpeg",
+    "original_file": "藝術品/ART0067_被操縱的鎧甲擺件_額外2.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 2,
+    "art_subtype": "藝術品"
+  },
+  {
     "id": "R-BRV-0001",
     "name": "公平勇者",
     "deck": "勇者公會",
@@ -8989,8 +9352,8 @@
     "art_subtype": "魔族"
   },
   {
-    "id": "R-BRV-0005",
-    "name": "魔族四天王 墮落狂魔 (閃)",
+    "id": "R-BRV-0005-閃",
+    "name": "魔族四天王 墮落狂魔",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -9002,17 +9365,17 @@
       "敵方魔法抗性"
     ],
     "effect_text": "敵方魔法抗性。使敵方場上所有單位被賦予+1攻擊力。",
-    "image": "/static/card_images/r_brv_0005.jpeg",
+    "image": "/static/card_images/r_brv_0005_閃.jpeg",
     "original_file": "勇者公會/0079_BRV0005_魔族四天王-墮落狂魔_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "魔族"
   },
   {
-    "id": "R-BRV-0007",
-    "name": "魔族四天王 戰鬼 (閃)",
+    "id": "R-BRV-0007-閃",
+    "name": "魔族四天王 戰鬼",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -9022,9 +9385,9 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使此單位被賦予+X攻擊力。X=此單位被賦予的魔法卡數量的兩倍。",
-    "image": "/static/card_images/r_brv_0007.jpeg",
+    "image": "/static/card_images/r_brv_0007_閃.jpeg",
     "original_file": "勇者公會/0073_BRV0007_戰鬼_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -9050,7 +9413,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "寶物,魔族"
+    "art_subtype": "寶物，魔族"
   },
   {
     "id": "R-BRV-0015",
@@ -9075,8 +9438,8 @@
     "art_subtype": "人型，魔族"
   },
   {
-    "id": "R-BRV-0016",
-    "name": "首席勇者 (閃)",
+    "id": "R-BRV-0016-閃",
+    "name": "首席勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -9084,41 +9447,43 @@
     "attack": "8",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "進攻的此單位將進攻敵方場上所有非橫放單位位置。使被此單位戰鬥破壞的單位由破壞改為被橫放。此單位戰鬥時不會被破壞。",
-    "image": "/static/card_images/r_brv_0016.jpeg",
+    "image": "/static/card_images/r_brv_0016_閃.jpeg",
     "original_file": "勇者公會/0063_BRV0016_首席勇者_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型/勇者"
   },
   {
-    "id": "R-BRV-0017",
-    "name": "絕望勇者 (閃)",
+    "id": "R-BRV-0017-閃",
+    "name": "絕望勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
     "race": "勇者公會",
     "attack": "5",
-    "score": 0,
+    "score": 1,
     "tribute": 1,
     "keywords": [
       "立即"
     ],
     "effect_text": "立即：使敵方場上1個無需祭品的單位被破壞。",
-    "image": "/static/card_images/r_brv_0017.jpeg",
+    "image": "/static/card_images/r_brv_0017_閃.jpeg",
     "original_file": "勇者公會/0061_BRV0017_絕望勇者_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
-    "id": "R-BRV-0018",
-    "name": "聖女勇者 (閃)",
+    "id": "R-BRV-0018-閃",
+    "name": "聖女勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -9126,19 +9491,21 @@
     "attack": "3",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "若此單位處於非橫放狀態，你場上的其他單位被破壞時，可改為使此單位被橫放。",
-    "image": "/static/card_images/r_brv_0018.jpeg",
+    "image": "/static/card_images/r_brv_0018_閃.jpeg",
     "original_file": "勇者公會/0057_BRV0018_補師勇者_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "art_subtype": "人型，勇者"
   },
   {
-    "id": "R-BRV-0024",
-    "name": "青龍 (閃)",
+    "id": "R-BRV-0024-閃",
+    "name": "青龍",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -9151,9 +9518,9 @@
       "飛行"
     ],
     "effect_text": "貫穿。飛行。",
-    "image": "/static/card_images/r_brv_0024.jpeg",
+    "image": "/static/card_images/r_brv_0024_閃.jpeg",
     "original_file": "勇者公會/0049_BRV0024_青龍_閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -9170,7 +9537,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個★為1的單位被破壞。",
+    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個星星為1的單位被破壞。",
     "image": "/static/card_images/r_brv_0025.jpeg",
     "original_file": "勇者公會/0001_泳裝20_BRV0025_見習魔法師.jpg",
     "deck_eligible": true,
@@ -9364,6 +9731,27 @@
     "effect_text": "偷襲。你的其他單位偷襲成功時，可從手牌額外打出此卡；此卡可打出/召喚在後排戰線",
     "image": "/static/card_images/r_cat_0014.jpeg",
     "original_file": "喵喵賊/IMG_6034.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "R-CAT-0014-泳裝",
+    "name": "叮噹喵",
+    "deck": "喵喵賊",
+    "type": "unit",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "1",
+    "score": 5,
+    "tribute": 0,
+    "keywords": [
+      "偷襲"
+    ],
+    "effect_text": "偷襲。你的其他單位偷襲成功時，可從手牌額外打出此卡；此卡可打出/召喚在後排戰線",
+    "image": "/static/card_images/r_cat_0014_泳裝.jpeg",
+    "original_file": "喵喵賊/泳裝05_CAT0014_叮噹喵.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -9964,6 +10352,29 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "R-CAT-0059",
+    "name": "旅途的經驗",
+    "deck": "喵喵賊",
+    "type": "magic",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你場上卡名帶有靴喵的單位被破壞時，使其由被破壞改為回手牌,並除外此卡",
+    "image": "/static/card_images/r_cat_0059.jpeg",
+    "original_file": "喵喵賊/CAT0059_升級的經驗值.jpg",
+    "deck_eligible": false,
+    "mana": 1,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "你場上卡名帶有靴喵的單位偷襲成功時，可從你額外區尋找至多2張此卡並加入手牌",
+    "extra_deck_limit": 10,
+    "art_subtype": "消耗"
   },
   {
     "id": "R-CCS-0001",
@@ -15077,6 +15488,28 @@
     "art_subtype": "消耗/永久"
   },
   {
+    "id": "R-NMG-0041",
+    "name": "飛來一顆石頭",
+    "deck": "中立",
+    "type": "magic",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "若該單位的原始攻擊力及原始星星皆不超過1,則使該單位被破壞",
+    "image": "/static/card_images/r_nmg_0041.jpeg",
+    "original_file": "中立單位/2.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [
+      "Opponent Play Unit"
+    ],
+    "trigger_condition": "敵方打出/召喚單位至其場上時",
+    "art_subtype": "消耗"
+  },
+  {
     "id": "R-NMS-0012-3",
     "name": "山羊術",
     "deck": "中立",
@@ -15742,9 +16175,49 @@
     "keywords": [
       "魔法抗性"
     ],
-    "effect_text": "魔法抗性\n使正前方單位被賦予魔法抗性",
+    "effect_text": "魔法抗性。使正前方單位被賦予魔法抗性",
     "image": "/static/card_images/r_nms_0075.jpeg",
     "original_file": "中立單位/IMG_6386.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-NMS-0084",
+    "name": "中星城獵鷹隊",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "4",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "敵方防守階段限一次,你場上的單位被破壞後,可使此單位被移動至其原位置,若成功移動則使此單位轉正並進攻",
+    "image": "/static/card_images/r_nms_0084.jpeg",
+    "original_file": "中立單位/競技賽_NMS0084_中星獵鷹隊_小圖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-NMS-0097",
+    "name": "中星城法巫隊",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "3",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [],
+    "effect_text": "你在你的防守階段使用魔法卡時限一次,可從你牌庫尋找1張可在防守階段使用的魔法卡並加入手牌",
+    "image": "/static/card_images/r_nms_0097.jpeg",
+    "original_file": "中立單位/NMS0097_競技賽_中星城法巫隊_小圖-1.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -16444,6 +16917,28 @@
     "art_subtype": "人型"
   },
   {
+    "id": "R-ORC-0047-泳裝",
+    "name": "獸人姑姑",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "獸人"
+    ],
+    "effect_text": "一回合限一次，你的獸人單位回手牌時，可使你手牌另一張無需祭品的獸人單位卡被額外打出",
+    "image": "/static/card_images/r_orc_0047_泳裝.jpeg",
+    "original_file": "獸人/泳裝06_ORC0047_獸人姑姑.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
     "id": "R-ORC-0048",
     "name": "獸人奶奶",
     "deck": "獸人",
@@ -16673,6 +17168,28 @@
     "art_subtype": "人型"
   },
   {
+    "id": "R-ORC-0066",
+    "name": "傭兵獸人",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "6",
+    "score": 0,
+    "tribute": 2,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你的主要階段開始時限一次,使此單位回手牌。此單位進攻戰鬥成功時,獎勵+6",
+    "image": "/static/card_images/r_orc_0066.jpeg",
+    "original_file": "獸人/ORC0066_傭兵獸人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
     "id": "R-RBT-0006",
     "name": "磁場搗亂機 (閃)",
     "deck": "機械軍團",
@@ -16740,10 +17257,11 @@
   },
   {
     "id": "R-SKT-0006-PROMO",
-    "name": "除屍雞 (PROMO)",
-    "faction": "骷髏人",
+    "name": "除屍雞",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
@@ -16753,7 +17271,7 @@
     "effect_text": "立即：從你牌庫尋找1不死族單位使其送入墓地，並重洗牌庫。",
     "image": "/static/card_images/r_skt_0006_promo.jpeg",
     "original_file": "骷髏人/0015_4圖層_R閃_骷髏人_除濕機_0.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -16761,10 +17279,11 @@
   },
   {
     "id": "R-SKT-0006-泳裝",
-    "name": "除屍雞 鷲峰良 (泳裝)",
-    "faction": "骷髏人",
+    "name": "除屍雞",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
@@ -16774,7 +17293,7 @@
     "effect_text": "立即：從你牌庫尋找1不死族單位使其送入墓地，並重洗牌庫。",
     "image": "/static/card_images/r_skt_0006_泳裝.jpeg",
     "original_file": "骷髏人/0016_18泳裝SKT0006_除屍雞_鷲峰良.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -16783,13 +17302,16 @@
   {
     "id": "R-SKT-0007",
     "name": "墓園長 阿古拉",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族，獎勵"
+    ],
     "effect_text": "你場上每個其他不死族單位戰鬥成功時，可使其被除外並獲得與其★相同的獎勵。",
     "image": "/static/card_images/r_skt_0007.jpeg",
     "original_file": "骷髏人/0017_SKT0007改_獻祭使者_R閃.jpg",
@@ -16841,10 +17363,11 @@
   },
   {
     "id": "R-SKT-0015-PROMO",
-    "name": "造墓者小布 (PROMO)",
-    "faction": "骷髏人",
+    "name": "造墓者小布",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
@@ -16854,7 +17377,7 @@
     "effect_text": "立即：從你牌庫尋找1張場地牌加入手牌，並重洗牌庫。",
     "image": "/static/card_images/r_skt_0015_promo.jpeg",
     "original_file": "骷髏人/0034_SKT-0015-promo.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -16863,20 +17386,23 @@
   {
     "id": "R-SKT-0018",
     "name": "撿骨",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "magic",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "使你墓地1不死族單位回手牌。",
     "image": "/static/card_images/r_skt_0018.jpeg",
     "original_file": "骷髏人/0038_SKT0018改撿骨_R普.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -16884,13 +17410,16 @@
   {
     "id": "R-SKT-0021",
     "name": "中骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你的召喚階段，可改為除外你墓地1不死族單位後，從你墓地打出此卡。",
     "image": "/static/card_images/r_skt_0021.jpeg",
     "original_file": "骷髏人/0041_SKT0021_中骷_R普.jpg",
@@ -16903,9 +17432,10 @@
   {
     "id": "R-SKT-0022",
     "name": "魚骨頭",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": -2,
     "tribute": 0,
@@ -16922,9 +17452,10 @@
   {
     "id": "R-SKT-0023",
     "name": "小瘟疫",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 1,
     "tribute": 0,
@@ -16943,14 +17474,15 @@
   {
     "id": "R-SKT-0027",
     "name": "骷髏護士長",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，不死族"
     ],
     "effect_text": "立即：使你墓地1不死族單位洗回牌庫。",
     "image": "/static/card_images/r_skt_0027.jpeg",
@@ -16963,15 +17495,18 @@
   },
   {
     "id": "R-SKT-0028",
-    "name": "白骨女士",
-    "faction": "骷髏人",
+    "name": "骷髏女士",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 1,
-    "keywords": [],
-    "effect_text": "你墓地每2個不死族單位，使此單位+1★。",
+    "keywords": [
+      "不死族"
+    ],
+    "effect_text": "你墓地每2個不死族單位，使此單位+1星星",
     "image": "/static/card_images/r_skt_0028.jpeg",
     "original_file": "骷髏人/0051_SKT-0028.jpg",
     "deck_eligible": true,
@@ -16983,13 +17518,16 @@
   {
     "id": "R-SKT-0029",
     "name": "次元炸骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "此卡進入墓地時，可使你墓地2個其他不死族單位被除外，若成功使敵方墓地1★為2或以下的單位被除外。",
     "image": "/static/card_images/r_skt_0029.jpeg",
     "original_file": "骷髏人/0052_SKT-0029.jpg",
@@ -16997,18 +17535,21 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "不死族/虛擬"
+    "art_subtype": "不死族，虛擬"
   },
   {
     "id": "R-SKT-0030",
     "name": "暴骷公爵",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你的主要階段開始時，可除外此單位，若成功使你墓地1不死族單位被召喚。",
     "image": "/static/card_images/r_skt_0030.jpeg",
     "original_file": "骷髏人/0053_SKT-0030.jpg",
@@ -17059,13 +17600,16 @@
   {
     "id": "R-SKT-0033",
     "name": "惡靈幫 惡棍骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你墓地的其他不死族單位卡被除外時，可使你墓地的此卡被召喚。",
     "image": "/static/card_images/r_skt_0033.jpeg",
     "original_file": "骷髏人/0056_SKT-0033.jpg",
@@ -17077,14 +17621,17 @@
   },
   {
     "id": "R-SKT-0034",
-    "name": "惡靈幫 女士小月",
-    "faction": "骷髏人",
+    "name": "惡靈幫女騎士 小月",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "同名卡一回合限一次，你墓地的此卡被除外時可改為使其被召喚，並使你獎勵+1。",
     "image": "/static/card_images/r_skt_0034.jpeg",
     "original_file": "骷髏人/0057_SKT-0034.jpg",
@@ -17096,14 +17643,17 @@
   },
   {
     "id": "R-SKT-0035",
-    "name": "惡靈幫 幫主骷霸",
-    "faction": "骷髏人",
+    "name": "惡靈幫幫主 骷霸",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "5",
     "score": 4,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "此卡的祭品可為除外你墓地2張不死族單位卡。",
     "image": "/static/card_images/r_skt_0035.jpeg",
     "original_file": "骷髏人/0059_SKT-0035.jpg",
@@ -17116,13 +17666,16 @@
   {
     "id": "R-SKT-0037",
     "name": "幽靈人口",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你墓地的此卡可視為2張不死族單位卡。",
     "image": "/static/card_images/r_skt_0037.jpeg",
     "original_file": "骷髏人/0062_SKT-0037.jpg",
@@ -17135,13 +17688,16 @@
   {
     "id": "R-SKT-0038",
     "name": "骷髏好兄弟",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族，獎勵"
+    ],
     "effect_text": "此卡進入墓地時，若其不是從場上進入墓地，你墓地每3張不死族單位卡使你獎勵+1。",
     "image": "/static/card_images/r_skt_0038.jpeg",
     "original_file": "骷髏人/0063_SKT-0038.jpg",
@@ -17154,14 +17710,15 @@
   {
     "id": "R-SKT-0039",
     "name": "惡靈幫 巨棍骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 2,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "此單位進攻時戰鬥成功可使你墓地1張單位卡被除外，若成功使敵方場上1個★為2或以下的單位被破壞。",
+    "effect_text": "此單位進攻時戰鬥成功可使你墓地1張單位卡被除外，若成功使敵方場上1個星星數為2或以下的單位被破壞。",
     "image": "/static/card_images/r_skt_0039.jpeg",
     "original_file": "骷髏人/0064_SKT0039_惡靈幫巨棍骷.jpg",
     "deck_eligible": true,
@@ -17173,17 +17730,17 @@
   {
     "id": "R-SKT-0041",
     "name": "墓園管理員 小凱希",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "立即",
-      "綁架"
+      "立即，綁架"
     ],
-    "effect_text": "立即：使你墓地1張2★或以下的不死族單位卡被綁架。",
+    "effect_text": "立即：使你墓地1張2星或以下的不死族單位卡被綁架。",
     "image": "/static/card_images/r_skt_0041.jpeg",
     "original_file": "骷髏人/0066_SKT0041_墓園管理員小凱希.jpg",
     "deck_eligible": true,
@@ -17195,13 +17752,16 @@
   {
     "id": "R-SKT-0042",
     "name": "大胖骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你墓地的單位卡被除外時，可使此單位被破壞，若成功使你墓地2張無需祭品的不死族單位卡被額外打出。",
     "image": "/static/card_images/r_skt_0042.jpeg",
     "original_file": "骷髏人/0067_SKT0042_大胖骷.jpg",
@@ -17214,16 +17774,17 @@
   {
     "id": "R-SKT-0043",
     "name": "大骷龍",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "7",
     "score": 4,
     "tribute": 4,
     "keywords": [
-      "立即"
+      "貫穿，立即"
     ],
-    "effect_text": "立即：使雙方墓地所有卡牌被除外。",
+    "effect_text": "貫穿。立即：使雙方墓地所有卡牌被除外。",
     "image": "/static/card_images/r_skt_0043.jpeg",
     "original_file": "骷髏人/0068_SKT0043_大骷龍.jpg",
     "deck_eligible": true,
@@ -17235,13 +17796,16 @@
   {
     "id": "R-SKT-0044",
     "name": "瘟疫姊",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "你的結束階段時，若本回合有卡牌從非場上的區域進入墓地，使你獎勵+1，若上述卡牌包含雙方的卡牌，改為使你獎勵+2。",
     "image": "/static/card_images/r_skt_0044.jpeg",
     "original_file": "骷髏人/0069_SKT0044_瘟疫姊.jpg",
@@ -17254,13 +17818,16 @@
   {
     "id": "R-SKT-0045",
     "name": "地雷骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "你墓地的此卡被除外時，使敵方墓地1張單位卡被除外，若成功使你獎勵+1。",
     "image": "/static/card_images/r_skt_0045.jpeg",
     "original_file": "骷髏人/0070_SKT0045_地雷骷.jpg",
@@ -17273,14 +17840,17 @@
   {
     "id": "R-SKT-0046",
     "name": "胖骷伯爵",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "此單位被破壞時，使你墓地原始★加總等於2的任意張不死族單位卡被召喚。",
+    "keywords": [
+      "不死族"
+    ],
+    "effect_text": "此單位被破壞時，使你墓地原始星星數加總等於2的任意張不死族單位卡被召喚。",
     "image": "/static/card_images/r_skt_0046.jpeg",
     "original_file": "骷髏人/0071_SKT0046_胖骷伯爵.jpg",
     "deck_eligible": true,
@@ -17311,15 +17881,15 @@
   {
     "id": "R-SKT-0048",
     "name": "墓地運輸者 凱拉",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 2,
     "tribute": 1,
     "keywords": [
-      "立即",
-      "綁架"
+      "立即，不死族，綁架"
     ],
     "effect_text": "立即：使你場上1個不死族單位被破壞，若成功可使你墓地1張單位卡被綁架。",
     "image": "/static/card_images/r_skt_0048.jpeg",
@@ -17332,10 +17902,11 @@
   },
   {
     "id": "R-SKT-0049",
-    "name": "定時爆炸骷",
-    "faction": "骷髏人",
+    "name": "定時炸骷",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": 2,
     "tribute": 0,
@@ -17352,39 +17923,47 @@
   {
     "id": "R-SKT-0051",
     "name": "小骷的朋友",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "1",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "你場上的「小骷」戰鬥成功時，可使你額外區最多3張此卡的同名卡進入墓地。你墓地的此卡可視為3張不死族單位卡。",
+    "keywords": [
+      "不死族"
+    ],
+    "effect_text": "你墓地的此卡可視為3張不死族單位卡。",
     "image": "/static/card_images/r_skt_0051.jpeg",
     "original_file": "骷髏人/0077_SKT0051_小骷的朋友_額外牌10.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你場上的「小骷」戰鬥成功時，可使你額外區最多3張此卡的同名卡進入墓地",
+    "extra_deck_limit": 10,
     "art_subtype": "不死族"
   },
   {
     "id": "R-SKT-0052",
     "name": "小骷的好麻吉疊疊樂",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "6",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
-    "effect_text": "你的召喚階段，可改為使你墓地4張「小骷的朋友」被置於你的額外區，若成功則使你額外區的1張此卡被召喚。此單位被破壞前，可使你墓地1張「小骷的朋友」被置於你的額外區，若成功則使該次破壞無效化。",
+    "keywords": [
+      "消逝"
+    ],
+    "effect_text": "消逝。此單位被破壞前，可使你墓地1張「小骷的朋友」被置於你的額外區，若成功則使該次破壞無效化。",
     "image": "/static/card_images/r_skt_0052.jpeg",
     "original_file": "骷髏人/0078_SKT0052_小骷的好麻吉疊疊樂_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你的召喚階段，可改為使你墓地4張「小骷的朋友」被置於你的額外區，若成功則使你額外區的1張此卡被召喚",
+    "extra_deck_limit": 2,
     "art_subtype": "不死族"
   },
   {
@@ -17406,6 +17985,27 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
+    "art_subtype": "不死族"
+  },
+  {
+    "id": "R-SKT-0058",
+    "name": "小骷龍",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "2",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的結束階段時，使你墓地的此卡被召喚",
+    "image": "/static/card_images/r_skt_0058.jpeg",
+    "original_file": "骷髏人/SKT0058_小骷龍_額外牌2.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的結束階段時,你除外區每有1張本回合因你的效果而被除外的卡牌,便可使你額外區的1張此卡進入墓地",
+    "extra_deck_limit": 2,
     "art_subtype": "不死族"
   },
   {
@@ -21944,9 +22544,10 @@
   {
     "id": "SKT-0002",
     "name": "大骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 2,
     "tribute": 1,
@@ -21965,14 +22566,15 @@
   {
     "id": "SKT-0003",
     "name": "骷髏法師 古斯",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 5,
     "tribute": 3,
     "keywords": [
-      "立即"
+      "立即，不死族"
     ],
     "effect_text": "立即：使你墓地2不死族被召喚。",
     "image": "/static/card_images/skt_0003.jpeg",
@@ -21986,13 +22588,16 @@
   {
     "id": "SKT-0004",
     "name": "骷髏拳擊手",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "X",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "X=你墓地中不死族數量。",
     "image": "/static/card_images/skt_0004.jpeg",
     "original_file": "骷髏人/0012_SKT0004_骷髏戰士.jpg",
@@ -22025,15 +22630,16 @@
   },
   {
     "id": "SKT-0008",
-    "name": "骨者",
-    "faction": "骷髏人",
+    "name": "擲骨者",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "遠程攻擊，不死族"
     ],
     "effect_text": "遠程攻擊。此卡進攻時戰鬥成功可使你墓地1個3★或以下的不死族單位被召喚。",
     "image": "/static/card_images/skt_0008.jpeg",
@@ -22047,14 +22653,15 @@
   {
     "id": "SKT-0009",
     "name": "老骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "5",
     "score": 4,
     "tribute": 2,
     "keywords": [
-      "立即"
+      "立即，不死族"
     ],
     "effect_text": "立即：使你場上1不死族單位被破壞，使敵方場上1單位被破壞。",
     "image": "/static/card_images/skt_0009.jpeg",
@@ -22068,9 +22675,10 @@
   {
     "id": "SKT-0010",
     "name": "火把骷髏小哀妮",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
@@ -22085,38 +22693,40 @@
     "art_subtype": "不死族"
   },
   {
-    "id": "SKT-0010-PR",
-    "name": "火把骷髏小哀妮 (動漫節)",
-    "faction": "骷髏人",
+    "id": "SKT-0010-GAME SHOW",
+    "name": "火把骷髏小哀妮",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [],
     "effect_text": "你在戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
-    "image": "/static/card_images/skt_0010_pr.jpeg",
-    "original_file": "骷髏人/0021_SKT0010_PR_小哀妮_動漫節.jpg",
-    "deck_eligible": false,
+    "image": "/static/card_images/skt_0010_game show.jpeg",
+    "original_file": "骷髏人/0023_SKT-0010-promo-illus.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "不死族"
   },
   {
-    "id": "SKT-0010-PROMO",
-    "name": "火把骷髏小哀妮 (PROMO)",
-    "faction": "骷髏人",
+    "id": "SKT-0010-PR-動漫展",
+    "name": "火把骷髏小哀妮",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
-    "image": "/static/card_images/skt_0010_promo.jpeg",
-    "original_file": "骷髏人/0023_SKT-0010-promo-illus.jpg",
-    "deck_eligible": false,
+    "effect_text": "你在戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
+    "image": "/static/card_images/skt_0010_pr_動漫展.jpeg",
+    "original_file": "骷髏人/0021_SKT0010_PR_小哀妮_動漫節.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -22125,14 +22735,15 @@
   {
     "id": "SKT-0012",
     "name": "炸骷",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "當此卡進入墓地時，使敵方場上1個2★或以下的單位被破壞。",
+    "effect_text": "當此卡進入墓地時，使敵方場上1個2星或以下的單位被破壞。",
     "image": "/static/card_images/skt_0012.jpeg",
     "original_file": "骷髏人/0028_SKT0012改_炸骷.jpg",
     "deck_eligible": true,
@@ -22143,14 +22754,17 @@
   },
   {
     "id": "SKT-0013",
-    "name": "饒舌骷 YO Man",
-    "faction": "骷髏人",
+    "name": "饒舌骷",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "此卡的祭品可為除外你墓地1不死族。",
     "image": "/static/card_images/skt_0013.jpeg",
     "original_file": "骷髏人/0030_SKT0013_饒舌骷.jpg",
@@ -22203,9 +22817,10 @@
   {
     "id": "SKT-0017",
     "name": "邪降儀式",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "magic",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -22216,7 +22831,7 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -22224,20 +22839,23 @@
   {
     "id": "SKT-0019",
     "name": "快樂墓園",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "magic",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "當你的單位進入墓地前可改為除外該單位，每次使用此效果除外1單位使你獎勵+1。",
     "image": "/static/card_images/skt_0019.jpeg",
     "original_file": "骷髏人/0039_SKT0019_快樂墓園.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "場地"
@@ -22245,9 +22863,10 @@
   {
     "id": "SKT-0020",
     "name": "死亡馬車",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "magic",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -22258,7 +22877,7 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -22892,8 +23511,8 @@
     "art_subtype": "神族"
   },
   {
-    "id": "SR-BRV-0006",
-    "name": "魔族四天王 水妖 (閃)",
+    "id": "SR-BRV-0006-閃",
+    "name": "魔族四天王 水妖",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -22905,9 +23524,9 @@
       "遠程攻擊"
     ],
     "effect_text": "遠程攻擊。敵方在其回合第一個打出或召喚的單位入場時，你可使其向左或向右移動一格。",
-    "image": "/static/card_images/sr_brv_0006.jpeg",
+    "image": "/static/card_images/sr_brv_0006_閃.jpeg",
     "original_file": "勇者公會/0076_BRV0006_魔族四天王水妖_SR閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -23125,6 +23744,28 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "SR-CAT-0060",
+    "name": "勇者靴喵",
+    "deck": "喵喵賊",
+    "type": "unit",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "5",
+    "score": 1,
+    "tribute": 4,
+    "keywords": [
+      "偷襲，立即，獎勵"
+    ],
+    "effect_text": "偷襲。立即:獎勵+X，X=你除外區的「旅途的經驗」數量",
+    "image": "/static/card_images/sr_cat_0060.jpeg",
+    "original_file": "喵喵賊/CAT0060_勇者靴喵.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的主要階段,可使你手牌的3張「旅途的經驗」被除外,若成功則使你手牌的「靴喵」升級 為此卡",
+    "extra_deck_limit": 1
   },
   {
     "id": "SR-CCS-0023",
@@ -24449,6 +25090,28 @@
     "trigger_condition": ""
   },
   {
+    "id": "SR-NMS-0079",
+    "name": "葉靈",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "X",
+    "score": "X",
+    "tribute": 0,
+    "keywords": [
+      "消逝，灌溉"
+    ],
+    "effect_text": "消逝。你的主要階段開始時限一次,使此單位被 灌溉1。X=此單位的灌溉值+1",
+    "image": "/static/card_images/sr_nms_0079.jpeg",
+    "original_file": "中立單位/4.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 2
+  },
+  {
     "id": "SR-ORC-0021",
     "name": "角鬥士獸人 洛克塔",
     "deck": "獸人",
@@ -24603,6 +25266,30 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "SR-ORC-0065",
+    "name": "獸人傭兵營",
+    "deck": "獸人",
+    "type": "magic",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你的召喚階段,可 獎勵-X,若成功則使你手牌的 獸人 單位卡所需祭品-X 直到召喚階段結束",
+    "image": "/static/card_images/sr_orc_0065.jpeg",
+    "original_file": "獸人/ORC0065_獸人傭兵營.jpg",
+    "deck_eligible": true,
+    "mana": 3,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "場地"
   },
   {
     "id": "SR-RBT-0023",
@@ -24777,14 +25464,17 @@
   },
   {
     "id": "SR-SKT-0024",
-    "name": "馬尾骷髏小可",
-    "faction": "骷髏人",
+    "name": "馬尾骷髏 小可",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獻祭"
+    ],
     "effect_text": "被獻祭時，可從你牌庫尋找1單位使其送入墓地並重洗牌庫。",
     "image": "/static/card_images/sr_skt_0024.jpeg",
     "original_file": "骷髏人/0044_SKT0024_小可_SR閃.jpg",
@@ -24796,18 +25486,21 @@
   },
   {
     "id": "SR-SKT-0024-PROMO",
-    "name": "馬尾骷髏小可 (PROMO)",
-    "faction": "骷髏人",
+    "name": "馬尾骷髏小可",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獻祭"
+    ],
     "effect_text": "被獻祭時，可從你牌庫尋找1單位使其送入墓地並重洗牌庫。",
     "image": "/static/card_images/sr_skt_0024_promo.jpeg",
     "original_file": "骷髏人/0045_1742968366980.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -24837,9 +25530,10 @@
   {
     "id": "SR-SKT-0026",
     "name": "守墓神",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 3,
     "tribute": 0,
@@ -24855,14 +25549,17 @@
   },
   {
     "id": "SR-SKT-0036",
-    "name": "惡靈幫 策士",
-    "faction": "骷髏人",
+    "name": "惡靈幫騎士",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你墓地的此卡被除外時，可改為使其被洗回牌庫，若成功尋找你牌庫1張不死族單位卡使其進入墓地。",
     "image": "/static/card_images/sr_skt_0036.jpeg",
     "original_file": "骷髏人/0061_SKT-0036.jpg",
@@ -24875,13 +25572,16 @@
   {
     "id": "SR-SKT-0040",
     "name": "骷髏阿姨",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "你的結束階段時，使你墓地1張不死族單位卡被除外，若成功使你召喚1個小旅人。",
     "image": "/static/card_images/sr_skt_0040.jpeg",
     "original_file": "骷髏人/0065_SKT0040_骷髏阿姨.jpg",
@@ -24894,15 +25594,15 @@
   {
     "id": "SR-SKT-0050",
     "name": "棺材船",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 2,
     "tribute": 4,
     "keywords": [
-      "立即",
-      "綁架"
+      "立即，不死族，綁架，橫放"
     ],
     "effect_text": "立即：使你墓地3張不死族單位卡被綁架(3)。此單位離場後，使被其綁架的所有單位卡改為以橫放狀態被召喚。",
     "image": "/static/card_images/sr_skt_0050.jpeg",
@@ -24916,16 +25616,39 @@
   {
     "id": "SR-SKT-0056",
     "name": "狂骷男爵",
-    "faction": "骷髏人",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 6,
     "tribute": 3,
-    "keywords": [],
-    "effect_text": "你的主要階段開始時限一次，可使此單位被破壞，若成功使敵方場上原始★加總小於等於此單位★的任意個單位被破壞。",
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。你的主要階段開始時限一次，可使此單位被破壞，若成功使敵方場上原始星星數加總小於等於此單位星星數的任意個單位被破壞。",
     "image": "/static/card_images/sr_skt_0056.jpeg",
     "original_file": "骷髏人/0003_60SKT0056_狂骷子爵.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "不死族"
+  },
+  {
+    "id": "SR-SKT-0057",
+    "name": "狂骷侯爵",
+    "deck": "骷髏人",
+    "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
+    "attack": "8",
+    "score": 6,
+    "tribute": 4,
+    "keywords": [],
+    "effect_text": "你的主要階段開始時限一次，墓地單位卡數量較多的玩家使另一方場上1個單位被破壞",
+    "image": "/static/card_images/sr_skt_0057.jpeg",
+    "original_file": "骷髏人/SKT0057_狂骷侯爵.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -25927,7 +26650,7 @@
   },
   {
     "id": "SSR-BRV-0028",
-    "name": "雙弓勇者 (魔王討伐隊)",
+    "name": "雙弓勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -25938,18 +26661,19 @@
     "keywords": [
       "遠程攻擊"
     ],
-    "effect_text": "【升級條件】你場上的「見習弓箭手」戰鬥成功時，若與其戰鬥的單位位於後排戰線，則可使其升級為此卡。\n【效果】遠程攻擊。此單位可進攻敵方場上2個任意單位位置。",
+    "effect_text": "遠程攻擊。此單位可進攻敵方場上2個任意單位位置。",
     "image": "/static/card_images/ssr_brv_0028.jpeg",
     "original_file": "勇者公會/0043_魔王討伐隊_雙弓勇者_1-1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "trigger_condition": "你場上的「見習弓箭手」戰鬥成功時，若與其戰鬥的單位位於後排戰線，則可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "SSR-BRV-0029",
-    "name": "大劍勇者 (魔王討伐隊)",
+    "name": "大劍勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -25958,21 +26682,21 @@
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "貫穿",
-      "破甲"
+      "貫穿，破甲"
     ],
-    "effect_text": "【升級條件】你場上的「見習劍士」戰鬥成功時，若其攻擊力至少比與其戰鬥的單位多3，則可使其升級為此卡。\n【效果】貫穿。破甲。",
+    "effect_text": "貫穿。破甲。",
     "image": "/static/card_images/ssr_brv_0029.jpeg",
     "original_file": "勇者公會/0041_魔王討伐隊_大劍勇者_1-1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "trigger_condition": "你場上的「見習劍士」戰鬥成功時，若其攻擊力至少比與其戰鬥的單位多3，則可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "SSR-BRV-0036",
-    "name": "巫師勇者 (魔王討伐隊)",
+    "name": "巫師勇者",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -25981,18 +26705,19 @@
     "score": 4,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "【升級條件】你場上的「見習魔法師」發動其效果並成功破壞1個非小旅人單位時，可使其升級為此卡。\n【效果】你的主要階段限一次，你使用魔法卡時，可使敵方場上1個☆為X的單位被破壞。X=該魔法卡法力值。",
+    "effect_text": "你的主要階段限一次，你使用魔法卡時，可使敵方場上1個星星為X的單位被破壞。X=該魔法卡法力值。",
     "image": "/static/card_images/ssr_brv_0036.jpeg",
     "original_file": "勇者公會/0031_魔王討伐隊_巫師勇者_額外牌1_1-1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/勇者"
+    "trigger_condition": "你場上的「見習魔法師」發動其效果並成功破壞1個非小旅人單位時，可使其升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，勇者"
   },
   {
     "id": "SSR-BRV-0040",
-    "name": "藥水學徒 (魔王討伐隊)",
+    "name": "藥水學徒",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -26001,12 +26726,12 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，獎勵，藥水"
     ],
     "effect_text": "立即：若你獎勵至少為1，則獎勵-1，若成功則你額外區尋找1張藥水牌並加入手牌。",
     "image": "/static/card_images/ssr_brv_0040.jpeg",
     "original_file": "勇者公會/0024_魔王討伐隊_藥水學徒_1-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -26014,7 +26739,7 @@
   },
   {
     "id": "SSR-BRV-0045",
-    "name": "傳送門NPC (魔王討伐隊)",
+    "name": "傳送門NPC",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -26026,7 +26751,7 @@
     "effect_text": "你的主要階段限一次，可使你額外區1張「傳送門」被召喚至你場上任意位置。",
     "image": "/static/card_images/ssr_brv_0045.jpeg",
     "original_file": "勇者公會/0018_魔王討伐隊_傳送門科技員_1-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -26177,6 +26902,30 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "SSR-CAT-0062",
+    "name": "傳奇靴喵",
+    "deck": "喵喵賊",
+    "type": "unit",
+    "faction": "喵喵賊",
+    "race": "喵喵賊",
+    "attack": "8",
+    "score": 1,
+    "tribute": 7,
+    "keywords": [
+      "偷襲",
+      "敵方魔法抗性",
+      "敵方效果抗性，立即"
+    ],
+    "effect_text": "偷襲。敵方魔法抗性。敵方效果抗性。\n立即:獎勵+X。同名卡一回合限一次,你的其他單位偷襲成功時,可從手牌額外打出此卡,且此單位亦可進攻。X=你除外區的「旅途的經驗」數量",
+    "image": "/static/card_images/ssr_cat_0062.jpeg",
+    "original_file": "喵喵賊/全圖_CAT0062_傳奇靴喵.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的主要階段,可使你手牌的7張「旅途的經驗」被除外,若成功則使你手牌的「靴喵」、「勇者靴喵」或「英雄靴喵」升級 為此卡",
+    "extra_deck_limit": 1
   },
   {
     "id": "SSR-CCS-0001",
@@ -27403,7 +28152,7 @@
     "type": "unit",
     "faction": "中立",
     "race": "中立",
-    "attack": "0",
+    "attack": "X",
     "score": 1,
     "tribute": 0,
     "keywords": [],
@@ -27414,6 +28163,48 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": ""
+  },
+  {
+    "id": "SSR-NMS-0078",
+    "name": "葉靈訓練師 米兒",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你使用魔法卡時,可使你額外區1張「葉靈」被召喚",
+    "image": "/static/card_images/ssr_nms_0078.jpeg",
+    "original_file": "中立單位/3.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSR-NMS-0080",
+    "name": "遊俠 艾列克斯",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "5",
+    "score": 3,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即:查看敵方牌庫頂1張牌,若為單位卡則可使其被除外,否則放回牌庫頂",
+    "image": "/static/card_images/ssr_nms_0080.jpeg",
+    "original_file": "中立單位/5.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-ORC-0003",
@@ -27591,6 +28382,28 @@
     "art_subtype": "人型"
   },
   {
+    "id": "SSR-ORC-0064",
+    "name": "鍛造之神 阿庫瑪",
+    "deck": "獸人",
+    "type": "unit",
+    "faction": "獸人",
+    "race": "獸人",
+    "attack": "7",
+    "score": 0,
+    "tribute": 7,
+    "keywords": [
+      "獎勵，獸人裝備"
+    ],
+    "effect_text": "你的召喚階段,若你 獎勵 至少為4,則可改為 獎勵-4 並使你手牌的此卡被打出。\n此單位戰鬥成功時,獎勵+X。你的主要階段限一次,可從你場上/墓地/牌庫尋找1張 獸人 裝備 魔法卡並加入手牌。X=你場上的 獸人 裝備 卡數量",
+    "image": "/static/card_images/ssr_orc_0064.jpeg",
+    "original_file": "獸人/ORC0064_鍛造之神阿庫瑪_製卡.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族/人型"
+  },
+  {
     "id": "SSR-RBT-0002",
     "name": "機械美杜莎 (SSR版)",
     "deck": "機械軍團",
@@ -27764,18 +28577,19 @@
   },
   {
     "id": "SSR-SKT-0010",
-    "name": "火把骷髏小哀妮 (SSR)",
-    "faction": "骷髏人",
+    "name": "火把骷髏小哀妮",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
+    "effect_text": "你在戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
     "image": "/static/card_images/ssr_skt_0010.jpeg",
     "original_file": "骷髏人/0024_SKT0010改_小哀妮_SSR-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27783,18 +28597,19 @@
   },
   {
     "id": "SSR-SKT-0010-泳裝",
-    "name": "火把骷髏小哀妮 (泳裝)",
-    "faction": "骷髏人",
+    "name": "火把骷髏 小哀妮",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的戰術階段選擇佈陣時，可使你墓地的此卡被額外打出。",
+    "effect_text": "你在戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
     "image": "/static/card_images/ssr_skt_0010_泳裝.jpeg",
     "original_file": "骷髏人/0001_泳裝22_SKT0010_哀妮.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27802,18 +28617,19 @@
   },
   {
     "id": "SSR-SKT-0012",
-    "name": "炸骷 (SSR)",
-    "faction": "骷髏人",
+    "name": "炸骷",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "當此卡進入墓地時，使敵方場上1個2★或以下的單位被破壞。",
+    "effect_text": "當此卡進入墓地時，使敵方場上1個2星或以下的單位被破壞。",
     "image": "/static/card_images/ssr_skt_0012.jpeg",
     "original_file": "骷髏人/0029_SSR-SKT-0012.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27821,20 +28637,21 @@
   },
   {
     "id": "SSR-SKT-0015",
-    "name": "造墓者小布 (SSR)",
-    "faction": "骷髏人",
+    "name": "造墓者小布",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [
       "立即"
     ],
-    "effect_text": "立即：從你牌庫尋找1張場地牌加入手牌，並重洗牌庫。",
+    "effect_text": "立即：從你牌庫尋找1場地卡並加入手牌，然後重洗牌庫。",
     "image": "/static/card_images/ssr_skt_0015.jpeg",
     "original_file": "骷髏人/0035_SKT0015_小布_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -27842,18 +28659,21 @@
   },
   {
     "id": "SSR-SKT-0024",
-    "name": "馬尾骷髏小可 (SSR)",
-    "faction": "骷髏人",
+    "name": "馬尾骷髏小可",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獻祭"
+    ],
     "effect_text": "被獻祭時，可從你牌庫尋找1單位使其送入墓地並重洗牌庫。",
     "image": "/static/card_images/ssr_skt_0024.jpeg",
     "original_file": "骷髏人/0046_骷髏人_小可.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27861,20 +28681,21 @@
   },
   {
     "id": "SSR-SKT-0027",
-    "name": "骷髏護士長 希翁 (SSR)",
-    "faction": "骷髏人",
+    "name": "骷髏護士長",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "3",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，不死族"
     ],
     "effect_text": "立即：使你墓地1不死族單位洗回牌庫。",
     "image": "/static/card_images/ssr_skt_0027.jpeg",
     "original_file": "骷髏人/0050_SSR-SKT-0027.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -27882,18 +28703,21 @@
   },
   {
     "id": "SSR-SKT-0034",
-    "name": "惡靈幫 女士小月 (SSR)",
-    "faction": "骷髏人",
+    "name": "惡靈幫女騎士小月",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "同名卡一回合限一次，你墓地的此卡被除外時可改為使其被召喚，並使你獎勵+1。",
     "image": "/static/card_images/ssr_skt_0034.jpeg",
     "original_file": "骷髏人/0058_骷髏人_小月卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27901,18 +28725,21 @@
   },
   {
     "id": "SSR-SKT-0035",
-    "name": "惡靈幫 幫主骷霸 (SSR)",
-    "faction": "骷髏人",
+    "name": "惡靈幫幫主 骷霸",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "5",
     "score": 4,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "不死族"
+    ],
     "effect_text": "此卡的祭品可為除外你墓地2張不死族單位卡。",
     "image": "/static/card_images/ssr_skt_0035.jpeg",
     "original_file": "骷髏人/0060_09骷髏人_骷霸.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27920,21 +28747,21 @@
   },
   {
     "id": "SSR-SKT-0048",
-    "name": "墓地運輸者 凱拉 (SSR)",
-    "faction": "骷髏人",
+    "name": "墓地運輸者 凱拉",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "4",
     "score": 2,
     "tribute": 1,
     "keywords": [
-      "立即",
-      "綁架"
+      "立即，不死族，綁架"
     ],
     "effect_text": "立即：使你場上1個不死族單位被破壞，若成功可使你墓地1張單位卡被綁架。",
     "image": "/static/card_images/ssr_skt_0048.jpeg",
     "original_file": "骷髏人/0074_骷髏人_運輸學姊凱拉_1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -28614,7 +29441,7 @@
   },
   {
     "id": "SSSR-BRV-0031",
-    "name": "小魔護士 (PROMO)",
+    "name": "小魔護士",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -28626,7 +29453,7 @@
     "effect_text": "你的主要階段限一次，可使你墓地1張「金幣小魔」被召喚。",
     "image": "/static/card_images/sssr_brv_0031.jpeg",
     "original_file": "勇者公會/0038_1770933651389.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28634,7 +29461,7 @@
   },
   {
     "id": "SSSR-BRV-0035",
-    "name": "藥水商人 (PROMO)",
+    "name": "藥水商人",
     "deck": "勇者公會",
     "type": "unit",
     "faction": "勇者公會",
@@ -28642,11 +29469,13 @@
     "attack": "4",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "獎勵，藥水"
+    ],
     "effect_text": "你的主要階段限一次，可使你場上1個「金幣小魔」被破壞或若你獎勵至少為X則可獎勵-X，若成功則你額外區尋找1張藥水牌並加入手牌。X=該藥水牌的法力值。",
     "image": "/static/card_images/sssr_brv_0035.jpeg",
     "original_file": "勇者公會/0033_1770933652480-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29180,6 +30009,28 @@
     "art_subtype": "機械"
   },
   {
+    "id": "SSSR-NMS-0014",
+    "name": "莉茲",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即:抽1張牌",
+    "image": "/static/card_images/sssr_nms_0014.jpeg",
+    "original_file": "中立單位/S01_NMS0014_莉茲RGB-1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
     "id": "SSSR-NMS-0019",
     "name": "鬧鐘人",
     "deck": "中立",
@@ -29218,6 +30069,26 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-NMS-0025",
+    "name": "魔法炸彈客",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "敵方使用魔法卡時,可使你手牌的此卡與你牌庫頂1張牌被除外,若成功則使該魔法卡無效化並使其被除外",
+    "image": "/static/card_images/sssr_nms_0025.jpeg",
+    "original_file": "中立單位/星銳王_炸彈客_製圖RGB.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
   },
   {
     "id": "SSSR-NMS-0027",
@@ -29898,7 +30769,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "升級"
+      "升級，獎勵"
     ],
     "effect_text": "你持有的卡牌升級時，獎勵+2",
     "image": "/static/card_images/sssr_nms_0065.jpeg",
@@ -29998,6 +30869,28 @@
     "art_subtype": "神族"
   },
   {
+    "id": "SSSR-NMS-0074",
+    "name": "娜娜",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "4",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即:抽2張牌,使敵方抽1張牌",
+    "image": "/static/card_images/sssr_nms_0074.jpeg",
+    "original_file": "中立單位/NMS0074_6月例賽_娜娜_0.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
     "id": "SSSR-NMS-0075",
     "name": "中星城菁英",
     "deck": "中立",
@@ -30010,9 +30903,178 @@
     "keywords": [
       "魔法抗性"
     ],
-    "effect_text": "魔法抗性\n使正前方單位被賦予魔法抗性",
+    "effect_text": "魔法抗性。使正前方單位被賦予 魔法抗性",
     "image": "/static/card_images/sssr_nms_0075.jpeg",
-    "original_file": "中立單位/IMG_6387.JPG",
+    "original_file": "中立單位/中星城菁英RGB.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-NMS-0076",
+    "name": "神罰七宗罪 傲慢",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "0",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你的結束階段時,獎勵+2,若你的總分比敵方低,則改為使敵方 獎勵+2",
+    "image": "/static/card_images/sssr_nms_0076.jpeg",
+    "original_file": "中立單位/NMS0076_6.5彈店冠神_傲慢.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
+  },
+  {
+    "id": "SSSR-NMS-0081",
+    "name": "森狸薩滿 璃果",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "立即，破壞抗性"
+    ],
+    "effect_text": "立即:使你場上1個單位被賦予+2攻擊力及破壞抗性 直到下一個主要階段開始時,並在你的下一個主要階段開始時使其被破壞",
+    "image": "/static/card_images/sssr_nms_0081.jpeg",
+    "original_file": "中立單位/這個-1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-NMS-0082",
+    "name": "扭曲森林保衛員",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "敵方效果抗性"
+    ],
+    "effect_text": "敵方效果抗性",
+    "image": "/static/card_images/sssr_nms_0082.jpeg",
+    "original_file": "中立單位/NMS0000_8月例賽_扭曲森林保衛員_最終4層圖01-拷貝-1.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "敵方打出或召喚單位時,若其與被你的「山區迷霧」除外過的卡牌同名,則可使你額外區的此卡被召喚",
+    "extra_deck_limit": 3,
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-NMS-0083",
+    "name": "櫻花女武士",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "4",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "灌溉"
+    ],
+    "effect_text": "此單位戰鬥成功時,使此單位被 灌溉2。\n此單位被破壞時,可 灌溉-1代替破壞",
+    "image": "/static/card_images/sssr_nms_0083.jpeg",
+    "original_file": "中立單位/NMS0083_9月例賽_櫻花女武士.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-NMS-0084",
+    "name": "中星城獵鷹隊",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立單位",
+    "attack": "4",
+    "score": 0,
+    "tribute": 2,
+    "keywords": [],
+    "effect_text": "敵方防守階段限一次,你場上的單位被破壞後,可使此單位被移動至其原位置,若成功移動則使此單位轉正並進攻",
+    "original_file": "中立單位/競技賽_NMS0084_中星獵鷹隊.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型",
+    "image": "/static/card_images/sssr_nms_0084.jpeg"
+  },
+  {
+    "id": "SSSR-NMS-0085",
+    "name": "神罰七宗罪 嫉妒",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "一回合限一次,敵方打出/召喚單位、發動單位卡效果 或 使用魔法卡時,你可查看牌庫,並尋找1張與該卡卡名相同的卡牌然後加入手牌",
+    "image": "/static/card_images/sssr_nms_0085.jpeg",
+    "original_file": "中立單位/NMS0085_7.0彈店冠神_忌妒-2.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族"
+  },
+  {
+    "id": "SSSR-NMS-0091",
+    "name": "小森狸",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "1",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的防守階段限一次,可使此單位被移動至你場上任意位置",
+    "image": "/static/card_images/sssr_nms_0091.jpeg",
+    "original_file": "中立單位/NMS0091_10月例賽_小森狸.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "中立單位"
+  },
+  {
+    "id": "SSSR-NMS-0097",
+    "name": "中星城法巫隊",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "3",
+    "score": 5,
+    "tribute": 1,
+    "keywords": [],
+    "effect_text": "你在你的防守階段使用魔法卡時限一次,可從你牌庫尋找1張可在防守階段使用的魔法卡並加入手牌",
+    "image": "/static/card_images/sssr_nms_0097.jpeg",
+    "original_file": "中立單位/NMS0097_競技賽_中星城法巫隊-1.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -30121,6 +31183,29 @@
     "effect_text": "立即:你的下個主要階段開始前，使敵方前排單位受到禁錮",
     "image": "/static/card_images/sssr_vlg_0012.jpeg",
     "original_file": "妖怪村莊/IMG_6083.JPG",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "SSSR-VLG-0012-PROMO",
+    "name": "雪女 (冠軍PROMO)",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "5",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "禁錮",
+      "立即"
+    ],
+    "effect_text": "立即:你的下個主要階段開始前，使敵方前排戰線的單位受到禁錮",
+    "image": "/static/card_images/sssr_vlg_0012_promo.png",
+    "original_file": "妖怪村莊/星靈王雪女_最終4層圖01-1-1.png",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -30731,6 +31816,49 @@
     "art_subtype": "機械"
   },
   {
+    "id": "SW-VLG-0012",
+    "name": "雪女 (泳裝)",
+    "deck": "妖怪村莊",
+    "type": "unit",
+    "faction": "妖怪村莊",
+    "race": "妖怪村莊",
+    "attack": "5",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "禁錮",
+      "立即"
+    ],
+    "effect_text": "立即:你的下個主要階段開始前，使敵方前排戰線的單位受到禁錮",
+    "image": "/static/card_images/sw_vlg_0012.jpeg",
+    "original_file": "妖怪村莊/泳裝21_妖怪_雪女繪圖.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "UR-NMS-0077",
+    "name": "蘭蘭",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段開始時限一次,若你有場地魔法卡,則可抽1張牌",
+    "image": "/static/card_images/ur_nms_0077.jpeg",
+    "original_file": "中立單位/1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
     "id": "VR-CND-0007",
     "name": "巨型糖果機 (VR版)",
     "deck": "甜點王國",
@@ -30795,19 +31923,20 @@
     "art_subtype": "機械"
   },
   {
-    "id": "VR-SKT-0010",
-    "name": "火把骷髏小哀妮 (VR)",
-    "faction": "骷髏人",
+    "id": "VR-SKT-0010-VR",
+    "name": "火把骷髏小哀妮",
     "deck": "骷髏人",
     "type": "unit",
+    "faction": "骷髏人",
+    "race": "骷髏人",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [],
     "effect_text": "你在戰術階段選擇佈陣時，可從你墓地額外打出此卡。",
-    "image": "/static/card_images/vr_skt_0010.jpeg",
+    "image": "/static/card_images/vr_skt_0010_vr.jpeg",
     "original_file": "骷髏人/0022_VR-SKT-0010-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
