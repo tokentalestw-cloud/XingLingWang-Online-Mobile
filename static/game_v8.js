@@ -336,37 +336,46 @@ const LITTLE_TRAVELER = {
 // ===== 高效卡牌影像預載入與 GPU 解碼快取系統 =====
 const _xlwPreloadedImageUrls = new Set();
 
+const xlwImagePreloadQueue = { high: [], low: [] };
+let xlwActiveImagePreloads = 0;
+
 function preloadCardImages(cardsList, priority = "high") {
   if (!Array.isArray(cardsList) || cardsList.length === 0) return;
-  
-  const urls = new Set();
-  urls.add("/static/card_back.jpeg");
-  if (typeof LITTLE_TRAVELER !== "undefined" && LITTLE_TRAVELER.image) {
-    urls.add(LITTLE_TRAVELER.image);
-  }
-
-  cardsList.forEach(c => {
-    if (c && c.image && !_xlwPreloadedImageUrls.has(c.image)) {
-      urls.add(c.image);
-    }
-  });
-
-  urls.forEach(url => {
-    if (_xlwPreloadedImageUrls.has(url)) return;
+  const queue = priority === "high" ? xlwImagePreloadQueue.high : xlwImagePreloadQueue.low;
+  const urls = new Set(["/static/card_back.jpeg", LITTLE_TRAVELER.image]);
+  for (const card of cardsList) if (card?.image) urls.add(card.image);
+  for (const url of urls) {
+    if (_xlwPreloadedImageUrls.has(url)) continue;
     _xlwPreloadedImageUrls.add(url);
+    queue.push(url);
+  }
+  xlwPumpImagePreloads();
+}
+
+function xlwPumpImagePreloads() {
+  while (xlwActiveImagePreloads < 3) {
+    const priority = xlwImagePreloadQueue.high.length ? "high" : "low";
+    const url = xlwImagePreloadQueue[priority].shift();
+    if (!url) return;
+    xlwActiveImagePreloads++;
+    let settled = false;
+    const complete = failed => {
+      if (settled) return;
+      settled = true;
+      if (failed) _xlwPreloadedImageUrls.delete(url);
+      xlwActiveImagePreloads--;
+      xlwPumpImagePreloads();
+    };
     try {
       const img = new Image();
-      // Failed requests must remain eligible for a later preload attempt.
-      img.onerror = () => _xlwPreloadedImageUrls.delete(url);
-      if (priority === "high" && "fetchPriority" in img) {
-        img.fetchPriority = "high";
-      }
+      img.onload = () => complete(false);
+      img.onerror = () => complete(true);
+      img.fetchPriority = priority;
       img.src = url;
-      if (img.decode) {
-        img.decode().catch(() => {});
-      }
-    } catch (e) { _xlwPreloadedImageUrls.delete(url); }
-  });
+    } catch (_) {
+      complete(true);
+    }
+  }
 }
 
 // 對戰即將開始或進行中，立刻對雙方主牌組與額外牌組進行深度快取預解碼
@@ -383,26 +392,10 @@ function preloadDuelAssets() {
 }
 
 // 閒置時分批預先載入卡牌庫中的牌面
-function preloadCommonCardsIdle(cardsList) {
-  if (!Array.isArray(cardsList) || cardsList.length === 0) return;
-  let idx = 0;
-  function processBatch() {
-    const batch = cardsList.slice(idx, idx + 10);
-    idx += 10;
-    preloadCardImages(batch, "low");
-    if (idx < cardsList.length) {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(processBatch, { timeout: 2000 });
-      } else {
-        setTimeout(processBatch, 250);
-      }
-    }
-  }
-  if (window.requestIdleCallback) {
-    window.requestIdleCallback(processBatch, { timeout: 2000 });
-  } else {
-    setTimeout(processBatch, 400);
-  }
+function preloadCommonCardsIdle() {
+  // Only shared pieces are needed before deck selection. Card art is queued
+  // from the two selected decks instead of downloading the entire catalogue.
+  preloadCardImages([LITTLE_TRAVELER], "low");
 }
 
 // ===== 線上雙人對戰網路狀態 =====
