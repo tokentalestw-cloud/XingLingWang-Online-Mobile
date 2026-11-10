@@ -1007,6 +1007,92 @@ function populateLobbyDecksDropdown() {
   }
 }
 
+function populateAiDecksDropdown() {
+  const aiFactionSelect = document.getElementById("aiFactionSelect");
+  const aiDeckSelect = document.getElementById("aiDeckSelect");
+  if (!aiDeckSelect) return;
+
+  const currentFaction = aiFactionSelect ? aiFactionSelect.value : "隨機";
+  const curVal = aiDeckSelect.value;
+
+  aiDeckSelect.innerHTML = "";
+
+  if (!currentFaction || currentFaction === "隨機") {
+    const optRandom = document.createElement("option");
+    optRandom.value = "隨機";
+    optRandom.textContent = "🎲 隨機牌組 (全牌組隨機)";
+    aiDeckSelect.appendChild(optRandom);
+
+    const allKeys = Object.keys(decks || {}).filter(key => !key.endsWith("_extra") && key !== "中立單位");
+    allKeys.forEach(key => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = key;
+      aiDeckSelect.appendChild(opt);
+    });
+  } else {
+    const optRandomFac = document.createElement("option");
+    optRandomFac.value = "隨機";
+    optRandomFac.textContent = `🎲 隨機牌組 (${currentFaction} 隨機)`;
+    aiDeckSelect.appendChild(optRandomFac);
+
+    const factionKeys = Object.keys(decks || {}).filter(key => 
+      !key.endsWith("_extra") && 
+      key !== "中立單位" && 
+      (key.startsWith(currentFaction + "_") || key === currentFaction || (typeof normDeckName === "function" ? normDeckName(key) === currentFaction : key.includes(currentFaction)))
+    );
+
+    factionKeys.forEach(key => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = key;
+      aiDeckSelect.appendChild(opt);
+    });
+  }
+
+  if (curVal && Array.from(aiDeckSelect.options).some(o => o.value === curVal)) {
+    aiDeckSelect.value = curVal;
+  } else {
+    aiDeckSelect.value = "隨機";
+  }
+}
+window.populateAiDecksDropdown = populateAiDecksDropdown;
+
+function populateAiFactionsDropdown(factionOrder = []) {
+  const aiFactionSelect = document.getElementById("aiFactionSelect");
+  if (!aiFactionSelect) return;
+
+  const curVal = aiFactionSelect.value || "隨機";
+  aiFactionSelect.innerHTML = "";
+
+  const randomOpt = document.createElement("option");
+  randomOpt.value = "隨機";
+  randomOpt.textContent = "🎲 隨機種族";
+  aiFactionSelect.appendChild(randomOpt);
+
+  const factions = (Array.isArray(factionOrder) && factionOrder.length > 0) ? factionOrder : [
+    "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
+    "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
+    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+  ];
+
+  factions.forEach(fac => {
+    const opt = document.createElement("option");
+    opt.value = fac;
+    opt.textContent = fac;
+    aiFactionSelect.appendChild(opt);
+  });
+
+  if (curVal && (curVal === "隨機" || factions.includes(curVal))) {
+    aiFactionSelect.value = curVal;
+  } else {
+    aiFactionSelect.value = "隨機";
+  }
+
+  populateAiDecksDropdown();
+}
+window.populateAiFactionsDropdown = populateAiFactionsDropdown;
+
 function populateDeckSelect() {
   const factionSelect = document.getElementById("factionSelect");
   if (factionSelect) {
@@ -1082,6 +1168,7 @@ async function init() {
     if (!decks || typeof decks !== "object") decks = {};
 
     populateDeckSelect();
+    populateAiFactionsDropdown(factionOrder);
     
     // 確保所有卡牌圖片有正確預設值
     allCards.forEach(c => {
@@ -1192,6 +1279,12 @@ async function init() {
         if (factionSelect) {
           factionSelect.addEventListener("change", () => {
             populateLobbyDecksDropdown();
+          });
+        }
+        const aiFactionSelect = document.getElementById("aiFactionSelect");
+        if (aiFactionSelect) {
+          aiFactionSelect.addEventListener("change", () => {
+            populateAiDecksDropdown();
           });
         }
       }
@@ -1575,12 +1668,32 @@ function newGame() {
     return cloned;
   });
 
-  // 對手 AI 牌組選擇與初始化
+  // 對手 AI 陣營與牌組選擇與初始化
+  const aiFactionSelect = $("aiFactionSelect");
   const aiDeckSelect = $("aiDeckSelect");
+  let aiFactionChoice = aiFactionSelect ? aiFactionSelect.value : "隨機";
   let aiDeckChoice = aiDeckSelect ? aiDeckSelect.value : "隨機";
+
   if (aiDeckChoice === "隨機" || !aiDeckChoice) {
-    const availableAIDecks = ["妖怪村莊", "發電獸", "碳碳族", "藝術品", "喵喵賊", "獸人", "虛擬世界", "勇者公會", "歡樂島"];
-    aiDeckChoice = availableAIDecks[Math.floor(Math.random() * availableAIDecks.length)];
+    if (aiFactionChoice && aiFactionChoice !== "隨機") {
+      const factionKeys = Object.keys(decks || {}).filter(key => 
+        !key.endsWith("_extra") && 
+        key !== "中立單位" && 
+        (key.startsWith(aiFactionChoice + "_") || key === aiFactionChoice || (typeof normDeckName === "function" ? normDeckName(key) === aiFactionChoice : key.includes(aiFactionChoice)))
+      );
+      if (factionKeys.length > 0) {
+        aiDeckChoice = factionKeys[Math.floor(Math.random() * factionKeys.length)];
+      } else {
+        aiDeckChoice = aiFactionChoice;
+      }
+    } else {
+      const allAvailableDecks = Object.keys(decks || {}).filter(k => !k.endsWith("_extra") && k !== "中立單位");
+      if (allAvailableDecks.length > 0) {
+        aiDeckChoice = allAvailableDecks[Math.floor(Math.random() * allAvailableDecks.length)];
+      } else {
+        aiDeckChoice = "妖怪村莊";
+      }
+    }
   }
   xlwInitEnemyDeck(aiDeckChoice);
   logBattle(`🎮 單人對決開始！我方使用【${deckName}】牌組，對手 AI 使用【${aiDeckChoice}】牌組！`);
@@ -47582,12 +47695,31 @@ window.xlwChooseMode = function(mode) {
     modalDeckSelect.value = deckSelect.value;
   }
   
-  // Populate Opponent Decks
+  // Populate Opponent Factions & Decks
+  const aiFactionSelect = document.getElementById("aiFactionSelect");
+  const modalAiFactionSelect = document.getElementById("modalAiFactionSelect");
+  if (aiFactionSelect && modalAiFactionSelect) {
+    modalAiFactionSelect.innerHTML = aiFactionSelect.innerHTML;
+    modalAiFactionSelect.value = aiFactionSelect.value;
+  }
+  
   const aiDeckSelect = document.getElementById("aiDeckSelect");
   const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
   if (aiDeckSelect && modalAiDeckSelect) {
     modalAiDeckSelect.innerHTML = aiDeckSelect.innerHTML;
     modalAiDeckSelect.value = aiDeckSelect.value;
+  }
+  
+  if (modalAiFactionSelect && modalAiDeckSelect && aiFactionSelect && aiDeckSelect) {
+    modalAiFactionSelect.onchange = () => {
+      aiFactionSelect.value = modalAiFactionSelect.value;
+      populateAiDecksDropdown();
+      modalAiDeckSelect.innerHTML = aiDeckSelect.innerHTML;
+      modalAiDeckSelect.value = aiDeckSelect.value;
+    };
+    modalAiDeckSelect.onchange = () => {
+      aiDeckSelect.value = modalAiDeckSelect.value;
+    };
   }
   
   // Set up event listeners for faction selection changes
@@ -47655,6 +47787,12 @@ window.xlwConfirmPreBattle = function() {
     deckSelect.value = modalDeckSelect.value;
   }
   
+  const modalAiFactionSelect = document.getElementById("modalAiFactionSelect");
+  const aiFactionSelect = document.getElementById("aiFactionSelect");
+  if (modalAiFactionSelect && aiFactionSelect) {
+    aiFactionSelect.value = modalAiFactionSelect.value;
+  }
+
   const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
   const aiDeckSelect = document.getElementById("aiDeckSelect");
   if (modalAiDeckSelect && aiDeckSelect) {

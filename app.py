@@ -1050,14 +1050,6 @@ def delete_deck(data: DeckDeleteSchema):
     
     decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
     
-    base_factions = [
-        "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
-        "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-        "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
-    ]
-    if data.deck_name in base_factions:
-        raise HTTPException(status_code=400, detail="不可刪除基礎種族牌組！")
-        
     if data.deck_name in decks_data:
         del decks_data[data.deck_name]
     extra_key = data.deck_name + "_extra"
@@ -1094,8 +1086,6 @@ def rename_deck(data: DeckRenameSchema):
         "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
         "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
     ]
-    if data.old_name in base_factions:
-        raise HTTPException(status_code=400, detail="不可修改基礎種族牌組名稱！")
         
     if data.old_name not in decks_data:
         raise HTTPException(status_code=404, detail="找不到指定的舊牌組！")

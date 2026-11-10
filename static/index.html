@@ -228,17 +228,11 @@
       <select id="deckSelect" aria-label="選擇牌組"></select>
 
       <span class="group-label" style="margin-left: 8px;">👾 對手:</span>
+      <select id="aiFactionSelect" aria-label="選擇對手種族">
+        <option value="隨機">🎲 隨機種族</option>
+      </select>
       <select id="aiDeckSelect" aria-label="選擇對手AI牌組">
         <option value="隨機">🎲 隨機牌組</option>
-        <option value="妖怪村莊">妖怪村莊</option>
-        <option value="發電獸">發電獸</option>
-        <option value="碳碳族">碳碳族</option>
-        <option value="藝術品">藝術品</option>
-        <option value="喵喵賊">喵喵賊</option>
-        <option value="獸人">獸人</option>
-        <option value="虛擬世界">虛擬世界</option>
-        <option value="勇者公會">勇者公會</option>
-        <option value="歡樂島">歡樂島</option>
       </select>
     </div>
 
@@ -983,8 +977,11 @@
       
       <!-- 對手牌組選擇 (僅在單人模式顯示) -->
       <div id="prebattleEnemyGroup" class="prebattle-field-group">
-        <div class="prebattle-label">對手 AI 牌組：</div>
-        <select id="modalAiDeckSelect" class="prebattle-select"></select>
+        <div class="prebattle-label">對手 AI 陣營與牌組：</div>
+        <div class="prebattle-selects-row">
+          <select id="modalAiFactionSelect" class="prebattle-select" aria-label="選擇對手AI陣營"></select>
+          <select id="modalAiDeckSelect" class="prebattle-select" aria-label="選擇對手AI牌組"></select>
+        </div>
       </div>
       
       <!-- 確認按鈕 (位於右下角) -->

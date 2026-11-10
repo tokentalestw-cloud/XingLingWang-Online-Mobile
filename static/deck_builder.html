@@ -1383,15 +1383,15 @@
       }
     }
 
-    // 刪除自訂牌組
+    // 刪除牌組
     async function deletePresetDeck(targetName = null) {
       const deckName = targetName || selectedDeckName;
       if (!deckName) {
-        alert("請先選擇要刪除的自訂牌組！");
+        alert("請先選擇要刪除的牌組！");
         return;
       }
 
-      if (!confirm(`您確定要刪除自訂牌組「${deckName}」嗎？此操作無法還原！`)) return;
+      if (!confirm(`您確定要刪除牌組「${deckName}」嗎？此操作無法還原！`)) return;
 
       try {
         const res = await fetch("/api/decks/delete", {
@@ -1404,9 +1404,22 @@
           delete currentDecks[deckName];
           delete currentDecks[deckName + "_extra"];
 
+          if (selectedDeckName === deckName) {
+            const remainingKeys = getCustomDeckKeys();
+            selectedDeckName = remainingKeys.length > 0 ? remainingKeys[0] : "";
+            if (selectedDeckName) {
+              loadDeck(selectedDeckName);
+            } else {
+              selectedDeck = [];
+              selectedExtraIds = [];
+              renderCurrentDeck();
+              updateCounter();
+            }
+          }
+
           populateDeckDropdown();
           renderDeckListModal();
-          showToast(`✔ 成功刪除自訂牌組「${deckName}」！`);
+          showToast(`✔ 成功刪除牌組「${deckName}」！`);
         } else {
           alert("刪除失敗: " + (res.message || res.detail));
         }
