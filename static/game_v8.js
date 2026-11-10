@@ -95,15 +95,15 @@ window.XLW_enemySummonCountThisTurn = 0;
     logBattle("⚡ 受到【磁場搗亂機】電磁干擾，對手本回合不得使用魔法卡！");
   }
 
-  // 🤖 電腦客 (RBT-0036): 對手抽牌時隨機查看其抽到的 1 張牌
+  // 🤖 電腦駭客 (RBT-0036 / R-RBT-0036): 對手抽牌時隨機查看其抽到的 1 張牌
   const hasCombinedHacker = ["player_front", "player_back"].some(z => 
-    (field[z] || []).some(u => u && (u.card.id === "RBT-0036" || u.card.name?.includes("電腦客")) && u.devourCards && u.devourCards.length > 0 && !window.isUnitSilenced(u))
+    (field[z] || []).some(u => u && (u.card.id === "RBT-0036" || u.card.id === "R-RBT-0036" || u.card.name?.includes("電腦客") || u.card.name?.includes("電腦駭客")) && u.devourCards && u.devourCards.length > 0 && !window.isUnitSilenced(u))
   );
   if (hasCombinedHacker) {
     const aiHand = window.XLW_ENEMY?.hand || enemyHand || [];
     if (aiHand.length > 0) {
       const peekCard = aiHand[Math.floor(Math.random() * aiHand.length)];
-      logBattle(`💻【電腦客】監控攔截：截獲對手抽牌數據！探知對手手牌包含【${peekCard.name}】！`);
+      logBattle(`💻【電腦駭客】監控攔截：截獲對手抽牌數據！探知對手手牌包含【${peekCard.name}】！`);
     }
   }
 
@@ -881,18 +881,18 @@ function isUnitConfined(zone, idx) {
   const oppBack = field[oppPrefix + "_back"][idx];
   
   
-  // 🤖 暗黑巨大冷藏櫃 (RBT-0029): 使你場上所有機械單位不會受到禁錮
+  // 🤖 暗黑巨大冷藏櫃 (RBT-0029 / R-RBT-0029): 使你場上所有機械單位不會受到禁錮
   const mySidePrefix = zone.startsWith("player") ? "player_" : "enemy_";
   const hasFreezer = [mySidePrefix + "front", mySidePrefix + "back"].some(z => 
-    (field[z] || []).some(u => u && u.card && (u.card.id === "RBT-0029" || u.card.name?.includes("暗黑巨大冷藏櫃")) && !window.isUnitSilenced(u))
+    (field[z] || []).some(u => u && u.card && (u.card.id === "RBT-0029" || u.card.id === "R-RBT-0029" || u.card.name?.includes("暗黑巨大冷藏櫃")) && !window.isUnitSilenced(u))
   );
   if (hasFreezer && typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(slot, zone, idx)) {
     return false;
   }
 
-  // 🤖 大冰箱 (RBT-0035): 若此單位為合體後的單位，則使此單位前方所有敵方單位受到禁錮
+  // 🤖 大冰箱 (RBT-0035 / R-RBT-0035): 若此單位為合體後的單位，則使此單位前方所有敵方單位受到禁錮
   for (const oppSlot of [oppFront, oppBack]) {
-    if (oppSlot && oppSlot.card && (oppSlot.card.id === "RBT-0035" || oppSlot.card.name?.includes("大冰箱")) && oppSlot.devourCards && oppSlot.devourCards.length > 0 && !window.isUnitSilenced(oppSlot)) {
+    if (oppSlot && oppSlot.card && (oppSlot.card.id === "RBT-0035" || oppSlot.card.id === "R-RBT-0035" || oppSlot.card.name?.includes("大冰箱")) && oppSlot.devourCards && oppSlot.devourCards.length > 0 && !window.isUnitSilenced(oppSlot)) {
       return true;
     }
   }
@@ -1743,10 +1743,10 @@ async function performPlayerTurnStartDraw() {
   window.XLW_splashRobotUsedThisTurn = false;
   window.XLW_copycatScientistUsedThisTurn = false;
 
-  // 🤖 壞掉的古代機神噴火器 (RBT-0048): 主要階段開始時，破壞前方所有敵方單位
+  // 🤖 壞掉的古代機神噴火器 (RBT-0048 / R-RBT-0048): 主要階段開始時，破壞前方所有敵方單位
   for (const z of ["player_front", "player_back"]) {
     (field[z] || []).forEach(async (u, i) => {
-      if (u && (u.card.id === "RBT-0048" || u.card.name?.includes("壞掉的古代機神噴火器")) && u.devourCards && u.devourCards.length > 0) {
+      if (u && (u.card.id === "RBT-0048" || u.card.id === "R-RBT-0048" || u.card.name?.includes("壞掉的古代機神噴火器")) && u.devourCards && u.devourCards.length > 0) {
         const hasCoreOrRemains = u.devourCards.some(d => window.xlwIsAncientCore(d.card) || window.xlwIsAncientRemains(d.card));
         if (hasCoreOrRemains) {
           const doFire = await showXLWConfirm("【壞掉的古代機神噴火器】噴火！", `主要階段開始：是否啟動星星戰線 ${i + 1} 的噴火器，破壞正前方所有敵方單位？`);
@@ -1761,9 +1761,9 @@ async function performPlayerTurnStartDraw() {
     });
   }
 
-  // 🤖 神之眼 (RBT-0060): 抽牌階段若為合體單位，改為抽1張並從牌庫檢索1張卡牌
+  // 🤖 神之眼 (RBT-0060 / R-RBT-0060): 抽牌階段若為合體單位，改為抽1張並從牌庫檢索1張卡牌
   const hasCombinedGodEye = ["player_front", "player_back"].some(z => 
-    (field[z] || []).some(u => u && (u.card.id === "RBT-0060" || u.card.name?.includes("神之眼")) && u.devourCards && u.devourCards.length > 0 && !window.isUnitSilenced(u))
+    (field[z] || []).some(u => u && (u.card.id === "RBT-0060" || u.card.id === "R-RBT-0060" || u.card.name?.includes("神之眼")) && u.devourCards && u.devourCards.length > 0 && !window.isUnitSilenced(u))
   );
   if (hasCombinedGodEye && deck.length > 0) {
     const doGodEye = await showXLWConfirm("【神之眼】全知全能", "抽牌階段：場上有合體後的【神之眼】！\n是否改為抽 1 張牌，並從牌庫自選 1 張任意卡牌加入手牌？");
@@ -2710,8 +2710,8 @@ window.hasFlying = function(unit) {
   const c = unit.card || unit;
   if (c && (c.id === "SR-VLG-0060" || c.id === "SSR-VLG-0060" || c.name?.includes("河神"))) return true;
   
-  // 飛機哥 (RBT-0062): 若合體後的單位包含此卡，則使該單位被賦予飛行
-  if (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0062" || d.card.name?.includes("飛機哥")))) return true;
+  // 飛機哥 (RBT-0062 / R-RBT-0062): 若合體後的單位包含此卡，則使該單位被賦予飛行
+  if (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0062" || d.card.id === "R-RBT-0062" || d.card.name?.includes("飛機哥")))) return true;
   if (window.xlwCardHasKeyword(c, "飛行")) return true;
   if (unit.hasFlying) return true;
   const isP = unit.summonedZone ? unit.summonedZone.startsWith("player_") : true;
@@ -4649,6 +4649,7 @@ window.xlwIsCircusCard = function(c) {
   if (!c) return false;
   return c.faction === "馬戲團" || c.deck === "馬戲團" || c.race === "馬戲團" ||
          (c.id && (c.id.includes("CCS") || c.id.includes("CRS") || c.id.includes("CIR"))) ||
+         (c.keywords && (c.keywords.includes("馬戲團") || c.keywords.some(k => k && k.includes("馬戲團")))) ||
          (c.name && (c.name.includes("馬戲團") || c.name.includes("小丑") || c.name.includes("表演") || c.name.includes("飛熊") || c.name.includes("巨熊") || c.name.includes("猴子") || c.name.includes("喵草")));
 };
 
@@ -4836,8 +4837,8 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
       await window.xlwSummonLittleTraveler(isPlayer);
       await window.xlwSummonLittleTraveler(isPlayer);
     }
-    // 火圈巨熊 (CCS-0007 / SSR-CCS-0007): 開盤破壞敵方 1 個單位
-    else if (revealed.id === "CCS-0007" || revealed.id === "SSR-CCS-0007" || revealed.name?.includes("火圈巨熊")) {
+    // 火圈巨熊 (CCS-0007 / SSR-CCS-0007 / SSR-CCS-0007-金框): 開盤破壞敵方 1 個單位
+    else if (revealed.id === "CCS-0007" || revealed.id === "SSR-CCS-0007" || revealed.id === "SSR-CCS-0007-金框" || revealed.id?.includes("CCS-0007") || revealed.name?.includes("火圈巨熊")) {
       const oppPrefix = isPlayer ? "enemy_" : "player_";
       const oppUnits = [];
       for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
@@ -4979,7 +4980,7 @@ window.xlwIsLittleTraveler = function(unit, zone, idx) {
 window.xlwHasRevolutionTravelerOnField = function(isPlayerSide) {
   const sidePrefix = isPlayerSide ? "player_" : "enemy_";
 
-  // 🤖 自嗨機器人 (RBT-0033) & 潑水節的自嗨機器人 (RBT-0056): 結束階段孤單自嗨加成
+  // 🤖 自嗨機器人 (RBT-0033 / R-RBT-0033) & 潑水節的自嗨機器人 (RBT-0056 / R-RBT-0056 / SSR-RBT-0056): 結束階段孤單自嗨加成
   let myUnitCount = 0;
   let onlyUnit = null;
   for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
@@ -4992,11 +4993,11 @@ window.xlwHasRevolutionTravelerOnField = function(isPlayerSide) {
   }
   if (myUnitCount === 1 && onlyUnit) {
     const oc = onlyUnit.card;
-    if ((oc.id === "RBT-0033" || oc.name === "自嗨機器人") && onlyUnit.devourCards && onlyUnit.devourCards.length > 0) {
+    if ((oc.id === "RBT-0033" || oc.id === "R-RBT-0033" || oc.name === "自嗨機器人" || oc.name?.includes("自嗨機器人")) && onlyUnit.devourCards && onlyUnit.devourCards.length > 0) {
       if (isPlayerSide) playerBonusScore += 2; else enemyBonusScore += 2;
       renderScore();
       logBattle("🤖【自嗨機器人】結束階段效果：獨自狂歡！獎勵 +2★！");
-    } else if (oc.id === "RBT-0056" || oc.id === "SSR-RBT-0056" || oc.name?.includes("潑水節的自嗨機器人")) {
+    } else if (oc.id === "RBT-0056" || oc.id === "R-RBT-0056" || oc.id === "SSR-RBT-0056" || oc.name?.includes("潑水節的自嗨機器人")) {
       if (isPlayerSide) playerBonusScore += 2; else enemyBonusScore += 2;
       renderScore();
       logBattle("💦【潑水節的自嗨機器人】結束階段效果：自嗨狂歡！獎勵 +2★！");
@@ -5351,23 +5352,23 @@ window.xlwIsUnitMech = function(unit, zone, idx) {
   const isPlayer = zone ? zone.startsWith("player_") : true;
   const oppSide = isPlayer ? "enemy_" : "player_";
 
-  // 機械美杜莎 (RBT-0002 / SSR-RBT-0002 / SW-RBT-0002): 敵方場上所有單位視為機械
+  // 機械美杜莎 (RBT-0002 / RBT-0002-泳裝 / SSR-RBT-0002 / SW-RBT-0002): 敵方場上所有單位視為機械
   for (const z of [oppSide + "front", oppSide + "back"]) {
-    if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0002" || u.card.id === "SSR-RBT-0002" || u.card.id === "SW-RBT-0002" || u.card.name?.includes("機械美杜莎")) && !window.isUnitSilenced(u))) {
+    if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0002" || u.card.id === "RBT-0002-泳裝" || u.card.id === "SSR-RBT-0002" || u.card.id === "SW-RBT-0002" || u.card.name?.includes("機械美杜莎")) && !window.isUnitSilenced(u))) {
       return true;
     }
   }
 
-  // 機械大豬 (RBT-0034): 使敵方前排戰線所有單位視為機械
+  // 機械大豬 (RBT-0034 / R-RBT-0034): 使敵方前排戰線所有單位視為機械
   if (zone && zone.includes("front")) {
     for (const z of [oppSide + "front", oppSide + "back"]) {
-      if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0034" || u.card.name?.includes("機械大豬")) && !window.isUnitSilenced(u))) {
+      if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0034" || u.card.id === "R-RBT-0034" || u.card.name?.includes("機械大豬")) && !window.isUnitSilenced(u))) {
         return true;
       }
     }
   }
 
-  // 機械中豬 (RBT-0028): 使此卡前方所有敵方單位被視為機械
+  // 機械中豬 (RBT-0028 / R-RBT-0028): 使此卡前方所有敵方單位被視為機械
   // 機械小豬 (RBT-0014): 此卡前方的第一個敵方單位視為機械
   if (idx !== undefined && idx >= 0) {
     const oppFrontUnit = field[oppSide + "front"] ? field[oppSide + "front"][idx] : null;
@@ -5378,7 +5379,7 @@ window.xlwIsUnitMech = function(unit, zone, idx) {
       if (!pigUnit || !pigUnit.card || window.isUnitSilenced(pigUnit)) return false;
       const pid = pigUnit.card.id || "";
       const pname = pigUnit.card.name || "";
-      if (pid === "RBT-0028" || pname.includes("機械中豬")) return true;
+      if (pid === "RBT-0028" || pid === "R-RBT-0028" || pname.includes("機械中豬")) return true;
       if ((pid === "RBT-0014" || pname.includes("機械小豬")) && targetIsFirst) return true;
       return false;
     };
@@ -5408,7 +5409,7 @@ window.xlwHasMechCombine = function(card) {
 // 卡牌是否為古代機神核心 (包含人造機神核心)
 window.xlwIsAncientCore = function(card) {
   if (!card) return false;
-  return card.id === "SR-RBT-0038" || card.id === "SSR-RBT-0038" || card.id === "RBT-0039" || card.name?.includes("機神核心") || card.name?.includes("人造機神核心");
+  return card.id === "SR-RBT-0038" || card.id === "SSR-RBT-0038" || card.id === "RBT-0039" || card.id === "R-RBT-0039" || card.name?.includes("機神核心") || card.name?.includes("人造機神核心");
 };
 
 // 卡牌是否為古代機神遺骸單位
@@ -5416,7 +5417,7 @@ window.xlwIsAncientRemains = function(card) {
   if (!card) return false;
   const id = card.id || "";
   const name = card.name || "";
-  return id === "RBT-0040" || id === "RBT-0041" || id === "RBT-0042" || id === "RBT-0043" || id === "RBT-0044" || id === "RBT-0059" || name.includes("遺骸");
+  return id.includes("RBT-0040") || id.includes("RBT-0041") || id.includes("RBT-0042") || id.includes("RBT-0043") || id.includes("RBT-0044") || id.includes("RBT-0059") || name.includes("遺骸");
 };
 
 // 執行機械合體核心處理
@@ -5463,9 +5464,9 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     });
   }
 
-  // (B) 廢棄的零件 (RBT-0031) / 廢棄的齒輪屑屑 (RBT-0054): 墓地特召檢測
+  // (B) 廢棄的零件 (RBT-0031 / R-RBT-0031) / 廢棄的齒輪屑屑 (RBT-0054 / R-RBT-0054): 墓地特召檢測
   const graveList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
-  const scrapCards = graveList.filter(c => c && (c.id === "RBT-0031" || c.id === "RBT-0054" || c.name?.includes("廢棄的零件") || c.name?.includes("廢棄的齒輪屑屑")));
+  const scrapCards = graveList.filter(c => c && (c.id === "RBT-0031" || c.id === "R-RBT-0031" || c.id === "RBT-0054" || c.id === "R-RBT-0054" || c.name?.includes("廢棄的零件") || c.name?.includes("廢棄的齒輪屑屑")));
   if (scrapCards.length > 0) {
     const emptySlots = [];
     for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
@@ -5496,10 +5497,10 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // (C) 廢棄的齒輪屑屑 (RBT-0054) 額外效果：場上「廢棄的零件」合體後，額外區的此卡入墓
-  if (sourceCard.id === "RBT-0031" || sourceCard.name?.includes("廢棄的零件")) {
+  // (C) 廢棄的齒輪屑屑 (RBT-0054 / R-RBT-0054) 額外效果：場上「廢棄的零件」合體後，額外區的此卡入墓
+  if (sourceCard.id === "RBT-0031" || sourceCard.id === "R-RBT-0031" || sourceCard.name?.includes("廢棄的零件")) {
     const extraDeck = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-    const chipIdx = extraDeck.findIndex(c => c && (c.id === "RBT-0054" || c.name?.includes("廢棄的齒輪屑屑")));
+    const chipIdx = extraDeck.findIndex(c => c && (c.id === "RBT-0054" || c.id === "R-RBT-0054" || c.name?.includes("廢棄的齒輪屑屑")));
     if (chipIdx >= 0) {
       const chip = extraDeck.splice(chipIdx, 1)[0];
       graveList.push(chip);
@@ -5508,19 +5509,19 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // (D) 盜版機神科學家 (RBT-0058): 一回合限一次，遺骸單位合體時，額外區召喚「盜版遺骸」
+  // (D) 盜版機神科學家 (RBT-0058 / R-RBT-0058): 一回合限一次，遺骸單位合體時，額外區召喚「盜版遺骸」
   const hasRemainsInvolved = window.xlwIsAncientRemains(sourceCard) || window.xlwIsAncientRemains(targetCard);
   if (hasRemainsInvolved && !window.XLW_copycatScientistUsedThisTurn) {
     let hasScientist = false;
     for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-      if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0058" || u.card.name?.includes("盜版機神科學家")) && !window.isUnitSilenced(u))) {
+      if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0058" || u.card.id === "R-RBT-0058" || u.card.name?.includes("盜版機神科學家")) && !window.isUnitSilenced(u))) {
         hasScientist = true;
         break;
       }
     }
     if (hasScientist) {
       const extraDeck = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-      const copycatIdx = extraDeck.findIndex(c => c && (c.id === "RBT-0059" || c.name?.includes("盜版遺骸")));
+      const copycatIdx = extraDeck.findIndex(c => c && (c.id === "RBT-0059" || c.id === "R-RBT-0059" || c.name?.includes("盜版遺骸")));
       if (copycatIdx >= 0) {
         window.XLW_copycatScientistUsedThisTurn = true;
         const copycatCard = extraDeck.splice(copycatIdx, 1)[0];
@@ -5555,8 +5556,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     logBattle(`🪙【推幣機】合體效果：獎勵 +1★！`);
   }
 
-  // 4.2 旅人車車 (RBT-0022 / VR-RBT-0022): 此卡合體時召喚1個小旅人
-  if (combinedCards.some(c => c.id === "RBT-0022" || c.id === "VR-RBT-0022" || c.name?.includes("旅人車車"))) {
+  // 4.2 旅人車車 (RBT-0022 / VR-RBT-0022 / SR-RBT-0022-VR): 此卡合體時召喚1個小旅人
+  if (combinedCards.some(c => c.id === "RBT-0022" || c.id === "VR-RBT-0022" || c.id === "SR-RBT-0022-VR" || c.name?.includes("旅人車車"))) {
     logBattle(`🚗【旅人車車】合體效果：召喚 1 個小旅人！`);
     if (typeof window.xlwSummonLittleTraveler === "function") {
       await window.xlwSummonLittleTraveler(isPlayer);
@@ -5639,8 +5640,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // 4.7 閃亮燈球 (RBT-0037): 使敵方前排戰線所有單位被賦予-1攻擊力直到你下個回合主要階段開始時
-  if (combinedCards.some(c => c.id === "RBT-0037" || c.name?.includes("閃亮燈球"))) {
+  // 4.7 閃亮燈球 (RBT-0037 / R-RBT-0037): 使敵方前排戰線所有單位被賦予-1攻擊力直到你下個回合主要階段開始時
+  if (combinedCards.some(c => c.id === "RBT-0037" || c.id === "R-RBT-0037" || c.name?.includes("閃亮燈球"))) {
     const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
     (field[oppFrontZone] || []).forEach(u => {
       if (u) {
@@ -5651,8 +5652,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     logBattle(`💡【閃亮燈球】合體效果：使敵方前排所有單位攻擊力 -1！`);
   }
 
-  // 4.8 古代機神遺骸左手 (RBT-0041): 包含此卡與機神核心，使敵方場上1個☆<=1單位被破壞
-  if (combinedCards.some(c => c.id === "RBT-0041" || c.name?.includes("古代機神遺骸左手"))) {
+  // 4.8 古代機神遺骸左手 (RBT-0041 / Ｒ-RBT-0041 / R-RBT-0041): 包含此卡與機神核心，使敵方場上1個☆<=1單位被破壞
+  if (combinedCards.some(c => c.id === "RBT-0041" || c.id === "Ｒ-RBT-0041" || c.id === "R-RBT-0041" || c.name?.includes("古代機神遺骸左手"))) {
     const hasCore = combinedCards.some(c => window.xlwIsAncientCore(c));
     if (hasCore) {
       const oppSide = isPlayer ? "enemy_" : "player_";
@@ -5677,8 +5678,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // 4.9 古代機神遺骸右手 (RBT-0042): 包含此卡與機神核心，使你墓地1張遺骸單位卡回手牌
-  if (combinedCards.some(c => c.id === "RBT-0042" || c.name?.includes("古代機神遺骸右手"))) {
+  // 4.9 古代機神遺骸右手 (RBT-0042 / R-RBT-0042): 包含此卡與機神核心，使你墓地1張遺骸單位卡回手牌
+  if (combinedCards.some(c => c.id === "RBT-0042" || c.id === "R-RBT-0042" || c.name?.includes("古代機神遺骸右手"))) {
     const hasCore = combinedCards.some(c => window.xlwIsAncientCore(c));
     if (hasCore) {
       const graveRemains = graveList.filter(c => window.xlwIsAncientRemains(c));
@@ -5697,8 +5698,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // 4.10 巨大機械針頭 (RBT-0057): 使場上1個單位被轉正或被橫放
-  if (combinedCards.some(c => c.id === "RBT-0057" || c.name?.includes("巨大機械針頭"))) {
+  // 4.10 巨大機械針頭 (RBT-0057 / R-RBT-0057): 使場上1個單位被轉正或被橫放
+  if (combinedCards.some(c => c.id === "RBT-0057" || c.id === "R-RBT-0057" || c.name?.includes("巨大機械針頭"))) {
     const allFieldUnits = [];
     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
       (field[z] || []).forEach((u, i) => {
@@ -5717,8 +5718,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // 4.11 深淵雷射眼 (RBT-0027 / SW-RBT-0027): 破壞1個與此合體後單位★相同的敵方單位
-  if (combinedCards.some(c => c.id === "RBT-0027" || c.id === "SW-RBT-0027" || c.name?.includes("深淵雷射眼"))) {
+  // 4.11 深淵雷射眼 (RBT-0027 / R-RBT-0027 / SSRS-RBT-0027 / SW-RBT-0027): 破壞1個與此合體後單位★相同的敵方單位
+  if (combinedCards.some(c => c.id === "RBT-0027" || c.id === "R-RBT-0027" || c.id === "SSRS-RBT-0027" || c.id === "SW-RBT-0027" || c.name?.includes("深淵雷射眼"))) {
     const myStars = getUnitStars(targetUnit, targetZone, targetIdx);
     const oppSide = isPlayer ? "enemy_" : "player_";
     const sameStarUnits = [];
@@ -5771,8 +5772,8 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     }
   }
 
-  // 4.14 潤滑油齒輪 (RBT-0064): 此卡合體後，使此合體後的單位被分開
-  if (combinedCards.some(c => c.id === "RBT-0064" || c.name?.includes("潤滑油齒輪"))) {
+  // 4.14 潤滑油齒輪 (RBT-0064 / C-RBT-0064): 此卡合體後，使此合體後的單位被分開
+  if (combinedCards.some(c => c.id === "RBT-0064" || c.id === "C-RBT-0064" || c.name?.includes("潤滑油齒輪"))) {
     logBattle(`⚙️【潤滑油齒輪】效果觸發：齒輪潤滑，立即將合體單位分開！`);
     await xlwSeparateSingleFusedUnit(targetZone, targetIdx, isPlayer);
   }
@@ -5873,8 +5874,8 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
     logBattle(`✨ 分開合體：【${item.card.name}】放置於 ${chosenSlot.zone.includes("front") ? "前排" : "後排"}${chosenSlot.idx + 1}！`);
 
     
-    // 旅人車車 (RBT-0022 / VR-RBT-0022) 分開後召喚 1 個小旅人
-    if (item.card && (item.card.id === "RBT-0022" || item.card.id === "VR-RBT-0022" || item.card.name?.includes("旅人車車"))) {
+    // 旅人車車 (RBT-0022 / VR-RBT-0022 / SR-RBT-0022-VR) 分開後召喚 1 個小旅人
+    if (item.card && (item.card.id === "RBT-0022" || item.card.id === "VR-RBT-0022" || item.card.id === "SR-RBT-0022-VR" || item.card.name?.includes("旅人車車"))) {
       logBattle(`🚗【旅人車車】分開效果：召喚 1 個小旅人！`);
       if (typeof window.xlwSummonLittleTraveler === "function") {
         await window.xlwSummonLittleTraveler(isPlayer);
@@ -6736,6 +6737,27 @@ function getUnitStars(unit, zone, lane) {
     return wheel.length;
   }
 
+  // 👴 老旅人 (SPT-0002): X = 你場上小旅人數量
+  if (c.id === "SPT-0002" || c.name?.includes("老旅人")) {
+    const sidePrefix = zone && zone.startsWith("player_") ? "player_" : "enemy_";
+    let travelerCount = 0;
+    for (const tz of [sidePrefix + "front", sidePrefix + "back"]) {
+      (field[tz] || []).forEach((u, ti) => {
+        if (u && window.xlwIsLittleTraveler(u, tz, ti)) travelerCount++;
+      });
+    }
+    return travelerCount + Number(unit.bonusScore ?? 0);
+  }
+
+  // 🍬 超科學怪薑餅人 (R-CND-0050 / SSR-CND-0050): X = 此卡因吞食合體被賦予的攻擊力及★加總
+  if (c.id === "R-CND-0050" || c.id === "SSR-CND-0050" || c.name?.includes("超科學怪薑餅人")) {
+    let devourSum = 0;
+    if (unit.devourCards && unit.devourCards.length > 0) {
+      devourSum = unit.devourCards.reduce((s, d) => s + Number(d.value || 0), 0);
+    }
+    return devourSum + Number(unit.bonusScore ?? 0);
+  }
+
   // 🍷 詩配酒旅人 (R-SPT-0050): 若你的牌庫還有牌，使你場上所有小旅人被賦予+3★
   const isLittleOrFitStars = window.xlwIsLittleTraveler(unit, zone, lane) || c.id === "R-SPT-0005" || c.name?.includes("有健身的小旅人");
   if (isLittleOrFitStars && zone) {
@@ -7413,7 +7435,7 @@ async function castSpell(handIndex) {
       render();
     });
     return;
-  } else if (card.id === "RBT-0052" || card.name?.includes("緊急分離彈射")) {
+  } else if (card.id === "RBT-0052" || card.id === "R-RBT-0052" || card.name?.includes("緊急分離彈射")) {
     const attackingCombined = [];
     for (const z of ["player_front", "player_back"]) {
       (field[z] || []).forEach((u, i) => {
@@ -7440,7 +7462,7 @@ async function castSpell(handIndex) {
       render();
     });
     return;
-  } else if (card.id === "RBT-0063" || card.name === "螺絲釘") {
+  } else if (card.id === "RBT-0063" || card.id === "C-RBT-0063" || card.name?.includes("螺絲釘")) {
     const combined = [];
     for (const z of ["player_front", "player_back"]) {
       (field[z] || []).forEach((u, i) => {
@@ -12253,7 +12275,7 @@ async function confirmTribute() {
         }
 
         // 🍬 NY-CND-0016 糖果旅人: 此單位被獻祭時，召喚2個小旅人
-        if (unit.card.id === "NY-CND-0016" || unit.card.id === "R-CND-0016" || unit.card.name?.includes("糖果旅人")) {
+        if (unit.card.id === "NY-CND-0016" || unit.card.id === "R-CND-0016" || unit.card.id === "R-CND-0016-新年" || unit.card.name?.includes("糖果旅人")) {
           const isPlayer = t.zone.startsWith("player_");
           for (let sp = 0; sp < 2; sp++) {
             const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
@@ -13559,8 +13581,8 @@ async function performSummonToSlot(zone, idx) {
       // ==========================================
       // 🤖 機械軍團 立即效果 (Immediate Effects)
       // ==========================================
-      // 1. 磁場搗亂機 (C-RBT-0006 / R-RBT-0006 / PROMO-RBT-0006): 立即：使敵方玩家下個回合不得使用魔法卡
-      if (card.id === "C-RBT-0006" || card.id === "R-RBT-0006" || card.id === "PROMO-RBT-0006" || card.name?.includes("磁場搗亂機")) {
+      // 1. 磁場搗亂機 (C-RBT-0006 / R-RBT-0006 / R-RBT-0006-閃 / PROMO-RBT-0006): 立即：使敵方玩家下個回合不得使用魔法卡
+      if (card.id === "C-RBT-0006" || card.id === "R-RBT-0006" || card.id === "R-RBT-0006-閃" || card.id === "PROMO-RBT-0006" || card.name?.includes("磁場搗亂機")) {
         window.XLW_enemyCannotCastSpellsUntilTurn = turn + 2;
         logBattle("⚡【磁場搗亂機】立即效果：強力電磁脈衝！敵方玩家下個回合不得使用魔法卡！");
       }
@@ -13635,8 +13657,8 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      // 6. 恐怖的垃圾收藏家 (NY-RBT-0030 / RBT-0030): 立即：使你墓地1個3★或以下的機械合體單位被召喚，並可使其發動機械合體
-      if (card.id === "NY-RBT-0030" || card.id === "RBT-0030" || card.name?.includes("恐怖的垃圾收藏家")) {
+      // 6. 恐怖的垃圾收藏家 (NY-RBT-0030 / RBT-0030 / R-RBT-0030): 立即：使你墓地1個3★或以下的機械合體單位被召喚，並可使其發動機械合體
+      if (card.id === "NY-RBT-0030" || card.id === "RBT-0030" || card.id === "R-RBT-0030" || card.name?.includes("恐怖的垃圾收藏家")) {
         const graveMechs = graveyard.filter(c => c && c.type === "unit" && (c.score <= 3 || c.stars <= 3) && window.xlwHasMechCombine(c));
         if (graveMechs.length > 0) {
           const emptySlots = [];
@@ -13687,8 +13709,8 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      // 7. 古代機神遺骸頭部 (RBT-0040): 立即：從你牌庫尋找「機神核心」展示並加入手牌，然後重洗牌庫
-      if (card.id === "RBT-0040" || card.name?.includes("古代機神遺骸頭部")) {
+      // 7. 古代機神遺骸頭部 (RBT-0040 / R-RBT-0040): 立即：從你牌庫尋找「機神核心」展示並加入手牌，然後重洗牌庫
+      if (card.id === "RBT-0040" || card.id === "R-RBT-0040" || card.name?.includes("古代機神遺骸頭部")) {
         const coreIdx = deck.findIndex(c => window.xlwIsAncientCore(c));
         if (coreIdx >= 0) {
           const coreCard = deck.splice(coreIdx, 1)[0];
@@ -13716,8 +13738,8 @@ async function performSummonToSlot(zone, idx) {
         logBattle("💀【古代機神巨人】滅世完成：敵方戰場、手牌、牌庫全部送入墓地！");
       }
 
-      // 9. 古代機神駕駛員 (RBT-0047): 立即：若你場上有「古代機神巨人」，使其發動立即效果
-      if (card.id === "RBT-0047" || card.name?.includes("古代機神駕駛員")) {
+      // 9. 古代機神駕駛員 (RBT-0047 / R-RBT-0047): 立即：若你場上有「古代機神巨人」，使其發動立即效果
+      if (card.id === "RBT-0047" || card.id === "R-RBT-0047" || card.name?.includes("古代機神駕駛員")) {
         let hasGiant = false;
         for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
           if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0045" || u.card.id === "SSR-RBT-0045" || u.card.name?.includes("古代機神巨人")))) {
@@ -13740,8 +13762,8 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      // 10. 震撼彈 (RBT-0049): 立即：使敵方前排戰線所有單位被賦予無法移動直到你的下個主要階段開始時或此單位離場後
-      if (card.id === "RBT-0049" || card.name?.includes("震撼彈")) {
+      // 10. 震撼彈 (RBT-0049 / R-RBT-0049): 立即：使敵方前排戰線所有單位被賦予無法移動直到你的下個主要階段開始時或此單位離場後
+      if (card.id === "RBT-0049" || card.id === "R-RBT-0049" || card.name?.includes("震撼彈")) {
         const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
         (field[oppFrontZone] || []).forEach(u => {
           if (u) {
@@ -14076,8 +14098,8 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      // 🚩 起義旅人 (SPT-0058): 立即：召喚至多X個小旅人。X=敵方場上的單位數量
-      if (card.id === "SPT-0058" || card.name?.includes("起義旅人")) {
+      // 🚩 起義旅人 (SPT-0058 / C-SPT-0058): 立即：召喚至多X個小旅人。X=敵方場上的單位數量
+      if (card.id === "SPT-0058" || card.id === "C-SPT-0058" || card.name?.includes("起義旅人")) {
         const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
         let oppUnitCount = 0;
         for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
@@ -15475,8 +15497,8 @@ async function performSummonToSlot(zone, idx) {
       render();
   }
 
-  // 特殊旅人預組 - SPT-0004 / R-SPT-0004 機械旅人 (進場召喚1小旅人)
-  if ((card.id === "SPT-0004" || card.id === "R-SPT-0004" || card.name?.includes("機械旅人")) && !card.name?.includes("多頭機械旅人")) {
+  // 特殊旅人預組 - SPT-0004 / R-SPT-0004 / R-SPT-0004-新年 機械旅人 (進場召喚1小旅人)
+  if ((card.id === "SPT-0004" || card.id === "R-SPT-0004" || card.id === "R-SPT-0004-新年" || card.name?.includes("機械旅人")) && !card.name?.includes("多頭機械旅人")) {
       const isPlayer = zone.startsWith("player_");
       logBattle(`✨ ${isPlayer ? "我方" : "對手"} 機械旅人 效果觸發：進場時召喚 1 個小旅人！`);
       await (window.promptAndSummonTraveler || promptAndSummonTraveler)(isPlayer ? "player" : "enemy", 1, "機械旅人");
@@ -18186,9 +18208,9 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     
     logBattle(`我方進攻宣言：星星戰線${idx + 1}，${unitName(unit)} 指向對手`);
 
-    // 🤖 戰鬥支援機器人 (RBT-0050): 進攻時，從手牌發動機械合體並使其進攻
+    // 🤖 戰鬥支援機器人 (RBT-0050 / R-RBT-0050): 進攻時，從手牌發動機械合體並使其進攻
     if (typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(unit, zone, idx)) {
-      const supportBotIdx = hand.findIndex(c => c && (c.id === "RBT-0050" || c.name?.includes("戰鬥支援機器人")));
+      const supportBotIdx = hand.findIndex(c => c && (c.id === "RBT-0050" || c.id === "R-RBT-0050" || c.name?.includes("戰鬥支援機器人")));
       if (supportBotIdx >= 0) {
         const doSupport = await showXLWConfirm("【戰鬥支援機器人】支援出擊", "手牌中有【戰鬥支援機器人】！是否發動機械合體至當前進攻單位並一同出擊？");
         if (doSupport) {
@@ -20137,8 +20159,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
     await applyCombatSuccessReward(attacker, defender, successOwner, true);
 
-    // 🤖 禁閉屋 (RBT-0053): 戰鬥成功改為被綁架(2)
-    if (attackerCard && (attackerCard.id === "RBT-0053" || attackerCard.name?.includes("禁閉屋")) && defender && window.xlwIsUnitMech(defender, defZone, defIdx)) {
+    // 🤖 禁閉屋 (RBT-0053 / R-RBT-0053): 戰鬥成功改為被綁架(2)
+    if (attackerCard && (attackerCard.id === "RBT-0053" || attackerCard.id === "R-RBT-0053" || attackerCard.name?.includes("禁閉屋")) && defender && window.xlwIsUnitMech(defender, defZone, defIdx)) {
       defender.isKidnapped = 2;
       defender.tapped = true;
       logBattle(`🏠【禁閉屋】戰鬥成功：將敵方機械單位【${defenderCard.name}】捕獲拘禁(綁架 2 回合)！`);
@@ -20760,8 +20782,8 @@ function isUnitMagicImmune(unit, zone, idx) {
     );
     if (hasResistBot) return true;
 
-    // 古代機神遺骸左腳 (RBT-0043)
-    const hasLeftFoot = unit.card.id === "RBT-0043" || unit.card.name?.includes("古代機神遺骸左腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0043" || d.card.name?.includes("古代機神遺骸左腳")));
+    // 古代機神遺骸左腳 (RBT-0043 / R-RBT-0043)
+    const hasLeftFoot = unit.card.id === "RBT-0043" || unit.card.id === "R-RBT-0043" || unit.card.name?.includes("古代機神遺骸左腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0043" || d.card.id === "R-RBT-0043" || d.card.name?.includes("古代機神遺骸左腳")));
     const hasCoreOrRemains = unit.devourCards.some(d => window.xlwIsAncientCore(d.card) || window.xlwIsAncientRemains(d.card));
     if (hasLeftFoot && hasCoreOrRemains) return true;
   }
@@ -20938,17 +20960,34 @@ function hasPigmentArtistOnField(side) {
 }
 
 function isUnitEffectImmune(unit, zone, idx) {
+  if (!unit || !unit.card) return false;
+
+  let z = zone;
+  let i = idx;
+  if (!z || i === undefined || i === -1) {
+    if (typeof field !== "undefined" && field) {
+      for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+        const testIdx = field[testZone].indexOf(unit);
+        if (testIdx >= 0) {
+          z = testZone;
+          i = testIdx;
+          break;
+        }
+      }
+    }
+  }
+  if (z && i !== undefined && i !== -1 && window.isUnitSilenced(unit, z, i)) return false;
 
   if (unit.enemyEffectImmune) return true;
-  if (unit.card && (unit.card.id === "RBT-0045" || unit.card.id === "SSR-RBT-0045" || unit.card.name?.includes("古代機神巨人"))) return true;
+  if (unit.card && (unit.card.id === "RBT-0045" || unit.card.id === "R-RBT-0045" || unit.card.id === "SSR-RBT-0045" || unit.card.name?.includes("古代機神巨人"))) return true;
   if (unit.devourCards && unit.devourCards.length > 0) {
-    const hasRightFoot = unit.card.id === "RBT-0044" || unit.card.name?.includes("古代機神遺骸右腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0044" || d.card.name?.includes("古代機神遺骸右腳")));
+    const hasRightFoot = unit.card.id === "RBT-0044" || unit.card.id === "R-RBT-0044" || unit.card.name?.includes("古代機神遺骸右腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0044" || d.card.id === "R-RBT-0044" || d.card.name?.includes("古代機神遺骸右腳")));
     const hasCoreOrRemains = unit.devourCards.some(d => window.xlwIsAncientCore(d.card) || window.xlwIsAncientRemains(d.card));
     if (hasRightFoot && hasCoreOrRemains) return true;
   }
 
-  if (!unit || !unit.card) return false;
   if (unit.card.name?.includes("英雄靴喵") || unit.card.name?.includes("傳奇靴喵") || unit.card.id === "C-CAT-0061" || unit.card.id === "SSR-CAT-0062") return true;
+
   // 🗿 旅人紀念碑 (R-SPT-0031): 使你場上所有其他單位被賦予敵方效果抗性
   if (z && !unit.card?.name?.includes("旅人紀念碑") && unit.card?.id !== "R-SPT-0031") {
     const sidePrefix = z.startsWith("player_") ? "player_" : "enemy_";
@@ -20958,21 +20997,9 @@ function isUnitEffectImmune(unit, zone, idx) {
     if (hasMonument) return true;
   }
 
-  // 🌲 扭曲森林保衛員 (SSSR-NMS-0082): 敵方效果抗性
-  if (unit.card.id === "SSSR-NMS-0082" || unit.card.name?.includes("扭曲森林保衛員") || (unit.card.keywords && (unit.card.keywords.includes("敵方效果抗性") || unit.card.keywords.includes("效果抗性")))) return true;
-  let z = zone;
-  let i = idx;
-  if (!z || i === undefined || i === -1) {
-    for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-      const testIdx = field[testZone].indexOf(unit);
-      if (testIdx >= 0) {
-        z = testZone;
-        i = testIdx;
-        break;
-      }
-    }
-  }
-  if (z && i !== undefined && i !== -1 && window.isUnitSilenced(unit, z, i)) return false;
+  // 🌲 扭曲森林保衛員 (SSSR-NMS-0082) / 任何有敵方效果抗性關鍵字的單位
+  if (unit.card.id === "SSSR-NMS-0082" || unit.card.name?.includes("扭曲森林保衛員") || 
+      (unit.card.keywords && (unit.card.keywords.includes("敵方效果抗性") || unit.card.keywords.includes("效果抗性") || unit.card.keywords.some(k => k && (k.includes("敵方效果抗性") || k.includes("效果抗性")))))) return true;
 
   // 小幫主 (VRT-0010) 效果：使你場上所有其他酒客單位被賦予敵方效果抗性
   if (z) {
@@ -23358,8 +23385,8 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     }
   }
 
-  // 特殊旅人預組 - SPT-0009 胖旅人 (被破壞時召喚 2 個小旅人)
-if (unit.card && (unit.card.id === "SPT-0009" || unit.card.name?.includes("胖旅人"))) {
+  // 特殊旅人預組 - SPT-0009 / SSR-SPT-0009 胖旅人 (被破壞時召喚 2 個小旅人)
+if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009" || unit.card.name?.includes("胖旅人"))) {
     const isPlayer = zone.startsWith("player_");
     logBattle(`✨ ${isPlayer ? "我方" : "對手"} 胖旅人 被破壞效果觸發：召喚 2 個小旅人！`);
     setTimeout(async () => {
@@ -25553,7 +25580,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
   });
 
   // 🍬 甜點王國：糖果居民 (R-CND-0056) 結束階段特召效果
-  // "你的結束階段時，若你場上有合體後的單位包含[糖果人]，則可使你額外區的此卡被召喚"
+  // 僅在卡片效果文字包含結束階段特召時觸發
   const checkCandyZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
   let hasFusedWithCandyMan = false;
   for (const z of checkCandyZones) {
@@ -25572,7 +25599,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
 
   if (hasFusedWithCandyMan) {
     const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-    const residentIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
+    const residentIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")) && c.effect_text?.includes("結束階段"));
     if (residentIdx >= 0) {
       const emptySlots = isPlayerSide ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
       if (emptySlots.length > 0) {
@@ -29108,8 +29135,8 @@ window.xlwCanPlayHandCard = function(card, idx) {
     if (emptySlots.length > 0) return true;
   }
 
-  // 🛌 躺平旅人 (R-SPT-0025 / SPT-0025-ALT): 若本回合至少 3 個小旅人回森林可額外打出
-  if (phase === "召喚階段" && (card.id === "R-SPT-0025" || card.id === "SPT-0025-ALT" || card.name?.includes("躺平旅人")) && (window.XLW_travelersReturnedToForestThisTurn || 0) >= 3) {
+  // 🛌 躺平旅人 (R-SPT-0025 / C-SPT-0025 / SPT-0025-ALT): 若本回合至少 3 個小旅人回森林可額外打出
+  if (phase === "召喚階段" && (card.id === "R-SPT-0025" || card.id === "C-SPT-0025" || card.id === "SPT-0025-ALT" || card.name?.includes("躺平旅人")) && (window.XLW_travelersReturnedToForestThisTurn || 0) >= 3) {
     const emptySlots = window.xlwGetEmptyPlayerSlots();
     if (emptySlots.length > 0) return true;
   }
@@ -29125,7 +29152,7 @@ window.xlwCanPlayHandCard = function(card, idx) {
     if (combC < 2) return false;
   }
   // 🤖 古代機神巨人: 需要備齊核心與 5 遺骸
-  if (card.id === "RBT-0045" || card.id === "SSR-RBT-0045" || card.name?.includes("古代機神巨人")) {
+  if (card.id === "RBT-0045" || card.id === "R-RBT-0045" || card.id === "SSR-RBT-0045" || card.name?.includes("古代機神巨人")) {
     let hasCore = false, hasH = false, hasLA = false, hasRA = false, hasLL = false, hasRL = false;
     for (const z of ["player_front", "player_back"]) {
       (field[z] || []).forEach(u => {
@@ -29133,11 +29160,11 @@ window.xlwCanPlayHandCard = function(card, idx) {
         const cl = [u.card, ...(u.devourCards || []).map(d => d.card)];
         cl.forEach(c => {
           if (window.xlwIsAncientCore(c)) hasCore = true;
-          if (c.id === "RBT-0040" || c.name?.includes("頭部")) hasH = true;
-          if (c.id === "RBT-0041" || c.name?.includes("左手")) hasLA = true;
-          if (c.id === "RBT-0042" || c.name?.includes("右手")) hasRA = true;
-          if (c.id === "RBT-0043" || c.name?.includes("左腳")) hasLL = true;
-          if (c.id === "RBT-0044" || c.name?.includes("右腳")) hasRL = true;
+          if (c.id === "RBT-0040" || c.id === "R-RBT-0040" || c.name?.includes("頭部")) hasH = true;
+          if (c.id === "RBT-0041" || c.id === "Ｒ-RBT-0041" || c.id === "R-RBT-0041" || c.name?.includes("左手")) hasLA = true;
+          if (c.id === "RBT-0042" || c.id === "R-RBT-0042" || c.name?.includes("右手")) hasRA = true;
+          if (c.id === "RBT-0043" || c.id === "R-RBT-0043" || c.name?.includes("左腳")) hasLL = true;
+          if (c.id === "RBT-0044" || c.id === "R-RBT-0044" || c.name?.includes("右腳")) hasRL = true;
         });
       });
     }
@@ -29456,8 +29483,8 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     }
   }
 
-  // 🛌 躺平旅人 (R-SPT-0025 / SPT-0025-ALT): 回森林 3 個小旅人額外打出
-  if (phase === "召喚階段" && (card.id === "R-SPT-0025" || card.id === "SPT-0025-ALT" || card.name?.includes("躺平旅人")) && (window.XLW_travelersReturnedToForestThisTurn || 0) >= 3) {
+  // 🛌 躺平旅人 (R-SPT-0025 / C-SPT-0025 / SPT-0025-ALT): 回森林 3 個小旅人額外打出
+  if (phase === "召喚階段" && (card.id === "R-SPT-0025" || card.id === "C-SPT-0025" || card.id === "SPT-0025-ALT" || card.name?.includes("躺平旅人")) && (window.XLW_travelersReturnedToForestThisTurn || 0) >= 3) {
     hand.splice(idx, 1);
     const success = await window.xlwSpecialSummonUnit(card, true);
     if (success) {
@@ -29494,8 +29521,8 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     }
   }
 
-  // 🤖 古代機神巨人 (RBT-0045 / SSR-RBT-0045): 除外場上機神核心與5張遺骸打出
-  if (card.id === "RBT-0045" || card.id === "SSR-RBT-0045" || card.name?.includes("古代機神巨人")) {
+  // 🤖 古代機神巨人 (RBT-0045 / R-RBT-0045 / SSR-RBT-0045): 除外場上機神核心與5張遺骸打出
+  if (card.id === "RBT-0045" || card.id === "R-RBT-0045" || card.id === "SSR-RBT-0045" || card.name?.includes("古代機神巨人")) {
     const coreFound = [];
     const headFound = [];
     const leftArmFound = [];
@@ -29511,11 +29538,11 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
 
         allCardsInSlot.forEach(c => {
           if (window.xlwIsAncientCore(c)) coreFound.push({ zone: z, idx: i, name: c.name });
-          if (c.id === "RBT-0040" || c.name?.includes("頭部")) headFound.push({ zone: z, idx: i });
-          if (c.id === "RBT-0041" || c.name?.includes("左手")) leftArmFound.push({ zone: z, idx: i });
-          if (c.id === "RBT-0042" || c.name?.includes("右手")) rightArmFound.push({ zone: z, idx: i });
-          if (c.id === "RBT-0043" || c.name?.includes("左腳")) leftLegFound.push({ zone: z, idx: i });
-          if (c.id === "RBT-0044" || c.name?.includes("右腳")) rightLegFound.push({ zone: z, idx: i });
+          if (c.id === "RBT-0040" || c.id === "R-RBT-0040" || c.name?.includes("頭部")) headFound.push({ zone: z, idx: i });
+          if (c.id === "RBT-0041" || c.id === "Ｒ-RBT-0041" || c.id === "R-RBT-0041" || c.name?.includes("左手")) leftArmFound.push({ zone: z, idx: i });
+          if (c.id === "RBT-0042" || c.id === "R-RBT-0042" || c.name?.includes("右手")) rightArmFound.push({ zone: z, idx: i });
+          if (c.id === "RBT-0043" || c.id === "R-RBT-0043" || c.name?.includes("左腳")) leftLegFound.push({ zone: z, idx: i });
+          if (c.id === "RBT-0044" || c.id === "R-RBT-0044" || c.name?.includes("右腳")) rightLegFound.push({ zone: z, idx: i });
         });
       });
     }
@@ -31187,8 +31214,8 @@ function renderField() {
               }
             }
 
-            // 🏊‍♂️ 惡魔旅人 泳裝 (SPT-0006-泳裝) 主動技能: 破壞 2 個單位，從墓地特殊召喚 1 單位
-            if (obj.card.id === "SPT-0006-泳裝" || (obj.card.name?.includes("惡魔旅人") && obj.card.name?.includes("泳裝"))) {
+            // 🏊‍♂️ 惡魔旅人 (SPT-0006-泳裝) 主動技能: 破壞 2 個單位，從墓地特殊召喚 1 單位
+            if (obj.card.id === "SPT-0006-泳裝" || obj.card.name?.includes("惡魔旅人")) {
               if (window.isUnitSilenced(obj, zone, idx)) {
                 setStatus("該單位處於沉默狀態，無法發動效果。");
                 return;
@@ -33298,7 +33325,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
             if (isMyTurn && (phase === "主要階段" || phase === "召喚階段" || phase === "戰術佈陣") && window.xlwHasMechCombine(obj.card)) {
               const mySidePrefix = zone.startsWith("player_") ? "player_" : "enemy_";
               if (mySidePrefix === "player_") {
-                const isHugBear = obj.card.id === "RBT-0009" || obj.card.id === "SW-RBT-0009" || obj.card.name?.includes("抱抱熊");
+                const isHugBear = obj.card.id === "RBT-0009" || obj.card.id === "R-RBT-0009-泳裝" || obj.card.id === "SW-RBT-0009" || obj.card.name?.includes("抱抱熊");
                 const possibleTargets = [];
                 for (const z of ["player_front", "player_back"]) {
                   (field[z] || []).forEach((u, i) => {
@@ -33362,8 +33389,8 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               }
             }
 
-            // (3) 潑水節的自嗨機器人 (RBT-0056 / SSR-RBT-0056): 破壞我方合體單位，破壞敵方1個單位
-            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0056" || obj.card.id === "SSR-RBT-0056" || obj.card.name?.includes("潑水節的自嗨機器人"))) {
+            // (3) 潑水節的自嗨機器人 (RBT-0056 / R-RBT-0056 / SSR-RBT-0056): 破壞我方合體單位，破壞敵方1個單位
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0056" || obj.card.id === "R-RBT-0056" || obj.card.id === "SSR-RBT-0056" || obj.card.name?.includes("潑水節的自嗨機器人"))) {
               if (window.XLW_splashRobotUsedThisTurn) {
                 setStatus("潑水節的自嗨機器人 效果本回合已使用過！");
                 return;
@@ -33403,8 +33430,8 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               }
             }
 
-            // (4) 自嗨機器人 (RBT-0033) 升級為 潑水節的自嗨機器人 (RBT-0056)
-            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0033" || obj.card.name === "自嗨機器人")) {
+            // (4) 自嗨機器人 (RBT-0033 / R-RBT-0033) 升級為 潑水節的自嗨機器人 (RBT-0056 / R-RBT-0056)
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0033" || obj.card.id === "R-RBT-0033" || obj.card.name?.includes("自嗨機器人"))) {
               if (zone === "player_back" && idx === 2 && obj.devourCards && obj.devourCards.length > 0) {
                 let unitTotal = 0;
                 for (const z of ["player_front", "player_back"]) {
@@ -33431,8 +33458,8 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               }
             }
 
-            // (5) 古代機神駕駛員 (RBT-0047): 主要階段限一次，手牌古代機神額外打出
-            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0047" || obj.card.name?.includes("古代機神駕駛員"))) {
+            // (5) 古代機神駕駛員 (RBT-0047 / R-RBT-0047): 主要階段限一次，手牌古代機神額外打出
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "RBT-0047" || obj.card.id === "R-RBT-0047" || obj.card.name?.includes("古代機神駕駛員"))) {
               if (window.XLW_pilotUsedThisTurn) {
                 setStatus("古代機神駕駛員 效果本回合已使用過！");
                 return;
@@ -39427,9 +39454,9 @@ async function checkCallGameAtTurnStart(isMyTurnStarting) {
     }
     
     if (met) {
-      // 🌿 紅配綠旅人 (SPT-0011 / SPT-0011-ALT): 提早結束成功時，使你場上所有小旅人+2★
+      // 🌿 紅配綠旅人 (SPT-0011 / C-SPT-0011 / SPT-0011-ALT): 提早結束成功時，使你場上所有小旅人+2★
       const hasRedGreen = ["player_front", "player_back"].some(pz => 
-        (field[pz] || []).some((u, i) => u && u.card && (u.card.id === "SPT-0011" || u.card.id === "SPT-0011-ALT" || u.card.name?.includes("紅配綠旅人")) && !window.isUnitSilenced(u, pz, i))
+        (field[pz] || []).some((u, i) => u && u.card && (u.card.id === "SPT-0011" || u.card.id === "C-SPT-0011" || u.card.id === "SPT-0011-ALT" || u.card.name?.includes("紅配綠旅人")) && !window.isUnitSilenced(u, pz, i))
       );
       if (hasRedGreen) {
         logBattle("🌿【紅配綠旅人】提早結束成功：我方場上所有小旅人獲得 +2★ 榮譽加成！");

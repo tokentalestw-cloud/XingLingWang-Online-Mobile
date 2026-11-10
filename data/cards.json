@@ -2070,29 +2070,27 @@
   },
   {
     "id": "C-CND-0018",
-    "name": "糖果城堡 (C版)",
+    "name": "糖果城堡",
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "場地",
+    "race": "甜點王國",
     "attack": "0",
-    "score": 0,
+    "score": 1,
     "tribute": 0,
     "keywords": [],
     "effect_text": "主要階段。戰鬥時，使你場上所有合體後的防守單位+2攻擊力。",
     "image": "/static/card_images/c_cnd_0018.jpeg",
     "original_file": "甜點王國/0009_41CND0018_糖果城堡.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 3,
-    "usable_phases": [
-      "主要階段"
-    ],
+    "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "場地"
   },
   {
     "id": "C-CND-0021",
-    "name": "抹茶蛋糕 (C版)",
+    "name": "抹茶蛋糕",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -2106,11 +2104,10 @@
     "effect_text": "吞食合體。",
     "image": "/static/card_images/c_cnd_0021.jpeg",
     "original_file": "甜點王國/0008_42CND0021_抹茶蛋糕.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "C-CND-0058",
@@ -2179,8 +2176,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "C-CND-0063",
@@ -2242,14 +2238,13 @@
     "keywords": [
       "吞食合體"
     ],
-    "effect_text": "吞食合體。此卡可打出或召喚至敵方場上。使你場上的合體後的單位-2★。",
+    "effect_text": "吞食合體。此卡可打出或召喚至敵方場上。使你場上的合體後的單位-2星。",
     "image": "/static/card_images/c_cnd_0066.jpeg",
     "original_file": "甜點王國/CND0066_阿嬤軟糖.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "C-GOT-0001",
@@ -2769,29 +2764,6 @@
     "art_subtype": "永久，裝備"
   },
   {
-    "id": "C-RBT-0006",
-    "name": "磁場搗亂機",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "1",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "立即"
-    ],
-    "effect_text": "機械合體。立即：使敵方玩家下個回合不得使用魔法卡。",
-    "image": "/static/card_images/c_rbt_0006.jpeg",
-    "original_file": "機械軍團/0009_48RBT0006_磁場搗亂機.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
     "id": "C-RBT-0012",
     "name": "鋼鐵哥",
     "deck": "機械軍團",
@@ -2809,6 +2781,52 @@
     "image": "/static/card_images/c_rbt_0012.jpeg",
     "original_file": "機械軍團/0008_49RBT0012_鋼鐵哥.jpg",
     "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "C-RBT-0063",
+    "name": "螺絲釘",
+    "deck": "機械軍團",
+    "type": "magic",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "敵方效果抗性"
+    ],
+    "effect_text": "主要階段。使你場上1個合體後的單位被賦予敵方效果抗性。",
+    "image": "/static/card_images/c_rbt_0063.jpeg",
+    "original_file": "機械軍團/0005_52RBT0063_螺絲釘-1.jpg",
+    "deck_eligible": true,
+    "mana": 1,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "永久"
+  },
+  {
+    "id": "C-RBT-0064",
+    "name": "潤滑油齒輪",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此卡合體後，使此合體後的單位被分開。",
+    "image": "/static/card_images/c_rbt_0064.jpeg",
+    "original_file": "機械軍團/0004_53RBT0064_潤滑油齒輪.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -2945,6 +2963,68 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "不死族"
+  },
+  {
+    "id": "C-SPT-0011",
+    "name": "紅配綠旅人",
+    "deck": "特殊旅人",
+    "type": "unit",
+    "faction": "特殊旅人",
+    "race": "特殊旅人",
+    "attack": "4",
+    "score": 4,
+    "tribute": 2,
+    "keywords": [],
+    "effect_text": "你宣言提早結束並成功時，使你場上所有小旅人+2星。",
+    "image": "/static/card_images/c_spt_0011.jpeg",
+    "original_file": "特殊旅人/0007_22SPT0011_紅配綠旅人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "C-SPT-0025",
+    "name": "躺平旅人",
+    "deck": "特殊旅人",
+    "type": "unit",
+    "faction": "特殊旅人",
+    "race": "特殊旅人",
+    "attack": "0",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，若你本回合有至少3個小旅人回森林，可從你手牌額外打出此卡。",
+    "image": "/static/card_images/c_spt_0025.jpeg",
+    "original_file": "特殊旅人/0008_23SPT0025_躺平旅人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "C-SPT-0058",
+    "name": "起義旅人",
+    "deck": "特殊旅人",
+    "type": "unit",
+    "faction": "特殊旅人",
+    "race": "特殊旅人",
+    "attack": "4",
+    "score": 4,
+    "tribute": 2,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：召喚至多X個小旅人。X=敵方場上的單位數量。",
+    "image": "/static/card_images/c_spt_0058.jpeg",
+    "original_file": "特殊旅人/0003_27SPT0058_起義旅人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
   },
   {
     "id": "C-STP-0014",
@@ -3468,18 +3548,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "主要階段。“你們的肝都是我的” 若你轉盤為3或以上，則輪轉1次，並使場上1個攻擊力等於X的單位被破壞，若成功且該單位為你的單位，則使你獎勵+X。X=該次開盤的單位卡攻擊力。",
+    "keywords": [
+      "轉盤，開盤"
+    ],
+    "effect_text": " 若你轉盤為3或以上，則輪轉1次，並使場上1個攻擊力等於X的單位被破壞，若成功且該單位為你的單位，則使你獎勵+X。X=該次開盤的單位卡攻擊力。",
     "image": "/static/card_images/ccs_0005.jpeg",
     "original_file": "馬戲團/0013_CCS0005_深夜限定秀_帕豹1.jpg",
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -3490,7 +3572,7 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "機械",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
@@ -3554,12 +3636,12 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，轉盤，開盤"
     ],
     "effect_text": "立即：若你轉盤為3或以上，輪轉1次，並使此單位前方第一個攻擊力小於等於X的敵方單位被破壞。X=因此卡效果開盤的單位卡攻擊力。",
     "image": "/static/card_images/ccs_0010.jpeg",
@@ -3596,11 +3678,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "你開盤時，可使你開盤的單位卡被賦予+3攻擊力直到該卡因開盤而進入墓地時。",
     "image": "/static/card_images/ccs_0014.jpeg",
     "original_file": "馬戲團/0030_CCS0014_押注的觀眾_鳥居-1.jpg",
@@ -3616,12 +3700,12 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "3",
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，馬戲團，上靶"
     ],
     "effect_text": "立即：使你場上任意數量的馬戲團單位上靶。",
     "image": "/static/card_images/ccs_0015.jpeg",
@@ -3643,7 +3727,7 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "遠程攻擊，開盤，馬戲團"
     ],
     "effect_text": "遠程攻擊。一回合限一次，你開盤時，可使你手牌1張攻擊力小於等於X且無需祭品的馬戲團單位卡被召喚。X=該次開盤的單位卡攻擊力。",
     "image": "/static/card_images/ccs_0016.jpeg",
@@ -3651,8 +3735,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0017",
@@ -3661,11 +3744,11 @@
     "type": "unit",
     "faction": "馬戲團",
     "race": "馬戲團",
-    "attack": "0",
+    "attack": "盾",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "阻擋"
+      "阻擋，開盤，馬戲團"
     ],
     "effect_text": "阻擋。一回合限一次，你開盤時，可使你墓地1張攻擊力小於等於X且無需祭品的馬戲團單位卡被召喚。X=該次開盤的單位卡攻擊力。",
     "image": "/static/card_images/ccs_0017.jpeg",
@@ -3673,8 +3756,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0018",
@@ -3682,12 +3764,12 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "3",
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "上靶"
+      "上靶，開盤，轉盤"
     ],
     "effect_text": "上靶。開盤：使你墓地1張法力值為X的馬戲團魔法卡回手牌。X=你轉盤的數量。",
     "image": "/static/card_images/ccs_0018.jpeg",
@@ -3704,18 +3786,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "主要階段。使你墓地2張馬戲團單位卡上靶。",
     "image": "/static/card_images/ccs_0020.jpeg",
     "original_file": "馬戲團/0037_CCS0020_表演還沒結束-1.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -3730,19 +3814,20 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "上靶"
+    ],
     "effect_text": "此卡上靶時，使敵方場上1個2★或以下的單位被破壞。",
     "image": "/static/card_images/ccs_0021.jpeg",
     "original_file": "馬戲團/0038_CCS0021_自爆猴子_三毛.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0021-PROMO",
-    "name": "自爆猴子 (PROMO)",
+    "name": "自爆猴子",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -3750,15 +3835,16 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "上靶"
+    ],
     "effect_text": "此卡上靶時，使敵方場上1個2★或以下的單位被破壞。",
     "image": "/static/card_images/ccs_0021_promo.jpeg",
     "original_file": "馬戲團/0039_789786-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0022",
@@ -3771,7 +3857,7 @@
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，輪轉"
     ],
     "effect_text": "立即：輪轉1次。若你轉盤為7或以上，改為輪轉3次。",
     "image": "/static/card_images/ccs_0022.jpeg",
@@ -3779,8 +3865,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "CCS-0029",
@@ -3788,18 +3873,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "場地",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "轉盤，獎勵"
+    ],
     "effect_text": "你的主要階段開始時限一次，若你轉盤至少為3，則輪轉1次。你的結束階段時，若你本回合曾發動輪轉，則使你獎勵+1。",
     "image": "/static/card_images/ccs_0029.jpeg",
     "original_file": "馬戲團/0049_CCS0029_馬戲團戲院-1.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "場地"
@@ -3815,7 +3902,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，上靶，馬戲團，獎勵"
     ],
     "effect_text": "立即：使此單位上靶，若成功則使你轉盤1張無需祭品的馬戲團單位卡被召喚。開盤：使此卡被放回你牌庫頂，並使你獎勵+1。",
     "image": "/static/card_images/ccs_0030.jpeg",
@@ -3823,8 +3910,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "CCS-0031",
@@ -3837,7 +3923,7 @@
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "上靶"
+      "上靶，開盤"
     ],
     "effect_text": "上靶。開盤：可使此卡被賦予+3攻擊力直到此卡因開盤而進入墓地時。",
     "image": "/static/card_images/ccs_0031.jpeg",
@@ -3845,8 +3931,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CCS-0032",
@@ -3854,11 +3939,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "機械",
+    "race": "馬戲團",
     "attack": "4",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "一回合限一次，你開盤時，若你開盤的卡牌攻擊力大於等於此單位，使你抽1張牌。",
     "image": "/static/card_images/ccs_0032.jpeg",
     "original_file": "馬戲團/0053_CCS0032_招牌人偶.jpg",
@@ -3874,12 +3961,12 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "3",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，馬戲團，上靶"
     ],
     "effect_text": "立即：使你墓地1張無需祭品的馬戲團單位卡上靶。",
     "image": "/static/card_images/ccs_0033.jpeg",
@@ -3901,7 +3988,7 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，轉盤，綁架，開盤"
     ],
     "effect_text": "立即：若你轉盤為5或以上，輪轉1次，並使敵方場上1個攻擊力小於等於X的單位被綁架。X=因此卡效果開盤的單位卡攻擊力。",
     "image": "/static/card_images/ccs_0034.jpeg",
@@ -3909,8 +3996,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "CCS-0035",
@@ -3918,7 +4004,7 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "X",
     "score": "X",
     "tribute": 0,
@@ -4028,15 +4114,16 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "使你場上所有合體後的單位+2攻擊力。",
     "image": "/static/card_images/cnd_0006.jpeg",
     "original_file": "甜點王國/0016_CND0006改_甜甜圈先生.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "CND-0007",
@@ -4217,7 +4304,7 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "消耗",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -4228,7 +4315,7 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -4239,18 +4326,21 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "消耗",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "甜點王國"
+    ],
     "effect_text": "主要/防守階段。使你場上1個進攻或防守的甜點王國單位被賦予+3攻擊力直到下一個主要階段結束。",
     "image": "/static/card_images/cnd_0020.jpeg",
     "original_file": "甜點王國/0037_CND0020改_糖果拳.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要/防守階段"
+      "Main Phase",
+      "Defense Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -7718,26 +7808,6 @@
     "art_subtype": "機械"
   },
   {
-    "id": "NY-CND-0016",
-    "name": "糖果旅人 (新年限定)",
-    "deck": "甜點王國",
-    "type": "unit",
-    "faction": "甜點王國",
-    "race": "甜點王國",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "此單位被獻祭時，召喚2個小旅人。",
-    "image": "/static/card_images/ny_cnd_0016.jpeg",
-    "original_file": "甜點王國/0033_NY-CND-0016.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
-  },
-  {
     "id": "NY-EVL-0016",
     "name": "守墓黑妖精 薩德",
     "deck": "妖精",
@@ -7798,28 +7868,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "山羊族"
-  },
-  {
-    "id": "NY-RBT-0030",
-    "name": "恐怖的垃圾收藏家 (新年限定)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 3,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使你墓地1個3★或以下的機械合體單位被召喚，並可使其發動機械合體。",
-    "image": "/static/card_images/ny_rbt_0030.jpeg",
-    "original_file": "機械軍團/0050_NY-RBT-0030.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
   },
   {
     "id": "NY-SKT-0015-新年",
@@ -8239,29 +8287,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "建築"
-  },
-  {
-    "id": "PROMO-RBT-0006",
-    "name": "磁場搗亂機 (PROMO)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "1",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "立即"
-    ],
-    "effect_text": "機械合體。立即：使敵方玩家下個回合不得使用魔法卡。",
-    "image": "/static/card_images/promo_rbt_0006.jpeg",
-    "original_file": "機械軍團/0017_4圖層_R閃_機械軍團_磁場搗亂_0.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
   },
   {
     "id": "R-0RC-0044",
@@ -10382,11 +10407,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的結束階段時，使你墓地的此卡與另一張馬戲團單位卡上靶。",
     "image": "/static/card_images/r_ccs_0001.jpeg",
     "original_file": "馬戲團/0002_CCS0001_惡作劇小鬼_庫洛姆-1.jpg",
@@ -10398,7 +10425,7 @@
   },
   {
     "id": "R-CCS-0003",
-    "name": "喵草 (R閃)",
+    "name": "喵草",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -10412,11 +10439,10 @@
     "effect_text": "上靶。開盤：使此卡被召喚。",
     "image": "/static/card_images/r_ccs_0003.jpeg",
     "original_file": "馬戲團/0008_CCS0003_喵草_R閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CCS-0004",
@@ -10424,11 +10450,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "轉盤，輪轉"
+    ],
     "effect_text": "你的主要階段限一次，若你轉盤為3或以上，可輪轉1次。",
     "image": "/static/card_images/r_ccs_0004.jpeg",
     "original_file": "馬戲團/0009_CCS0004_馬戲團深夜小丑_帕豹-1.jpg",
@@ -10440,11 +10468,11 @@
   },
   {
     "id": "R-CCS-0006",
-    "name": "表演人偶 (R閃)",
+    "name": "表演人偶",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "機械",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
@@ -10454,7 +10482,7 @@
     "effect_text": "上靶。此卡上靶時，使你召喚1個小旅人。開盤：使你召喚2個小旅人。",
     "image": "/static/card_images/r_ccs_0006.jpeg",
     "original_file": "馬戲團/0015_CCS0006_人偶表演師_神崎_R閃.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -10466,11 +10494,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "開盤：使敵方場上1個非小旅人單位變為小旅人。",
     "image": "/static/card_images/r_ccs_0009.jpeg",
     "original_file": "馬戲團/0020_CCS0009_布丁2.jpg",
@@ -10482,19 +10512,21 @@
   },
   {
     "id": "R-CCS-0009-PROMO",
-    "name": "布丁魔術師 (高雄展特卡)",
+    "name": "布丁魔術師",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "開盤：使敵方場上1個非小旅人單位變為小旅人。",
     "image": "/static/card_images/r_ccs_0009_promo.jpeg",
     "original_file": "馬戲團/0021_CCS0009_布丁_高雄展特卡.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -10502,21 +10534,21 @@
   },
   {
     "id": "R-CCS-0010-泳裝",
-    "name": "噴火狐狸 (泳裝)",
+    "name": "噴火狐狸",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，轉盤，開盤"
     ],
     "effect_text": "立即：若你轉盤為3或以上，輪轉1次，並使此單位前方第一個攻擊力小於等於X的敵方單位被破壞。X=因此卡效果開盤的單位卡攻擊力。",
-    "image": "/static/card_images/r_ccs_0010_swimsuit.jpeg",
+    "image": "/static/card_images/r_ccs_0010_泳裝.jpeg",
     "original_file": "馬戲團/0001_泳裝18_CCS0010_噴火狐狸-複製.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -10528,18 +10560,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶，轉盤"
+    ],
     "effect_text": "主要階段。使你場上1個馬戲團單位上靶，若成功則使你轉盤1張所需祭品數與其相同的其他馬戲團單位卡被召喚。",
     "image": "/static/card_images/r_ccs_0011.jpeg",
     "original_file": "馬戲團/0024_CCS0011_胡亂演出_庫洛姆達亞帕豹-1.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -10550,11 +10584,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "4",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的主要階段限一次，可從你墓地尋找1張馬戲團單位卡使其上靶。此單位被破壞時，可從你牌庫尋找1張馬戲團單位卡使其上靶。",
     "image": "/static/card_images/r_ccs_0012.jpeg",
     "original_file": "馬戲團/0027_CCS0012_馬戲團團長_神崎-1.jpg",
@@ -10570,18 +10606,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶，轉盤，輪轉"
+    ],
     "effect_text": "主要階段。使你場上任意數量的馬戲團單位上靶，若你轉盤為7或以上，則輪轉5次。",
     "image": "/static/card_images/r_ccs_0019.jpeg",
     "original_file": "馬戲團/0036_CCS0019_終曲-1.jpg",
     "deck_eligible": true,
     "mana": 4,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -10592,18 +10630,20 @@
     "deck": "馬戲團",
     "type": "magic",
     "faction": "馬戲團",
-    "race": "消耗",
+    "race": "馬戲團",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "防守階段。使你場上另一個馬戲團單位上靶，若成功則使敵方場上1個單位被橫放。",
+    "keywords": [
+      "馬戲團，上靶，橫放"
+    ],
+    "effect_text": "使你場上另一個馬戲團單位上靶，若成功則使敵方場上1個單位被橫放。",
     "image": "/static/card_images/r_ccs_0025.jpeg",
     "original_file": "馬戲團/0043_CCS0025_背鍋遊戲-1.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "防守階段"
+      "Defense Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -10619,7 +10659,7 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，馬戲團，上靶，獎勵"
     ],
     "effect_text": "立即：從你牌庫尋找1張無需祭品的馬戲團單位卡並使其上靶。開盤：使你獎勵+2。",
     "image": "/static/card_images/r_ccs_0026.jpeg",
@@ -10627,8 +10667,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "R-CCS-0027",
@@ -10636,13 +10675,12 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "4",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "貫穿",
-      "滑行"
+      "貫穿，上靶，開盤，滑行"
     ],
     "effect_text": "貫穿。你的主要階段限一次，可使你手牌的此卡被展示並使其上靶。開盤：使敵方場上1個單位變為此卡，並使此單位被賦予滑行直到其離場後。",
     "image": "/static/card_images/r_ccs_0027.jpeg",
@@ -10663,19 +10701,20 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "輪轉，開盤，上靶"
+    ],
     "effect_text": "一回合限一次，你1張卡牌的所有輪轉效果結束後，可使其中1張因該卡開盤而進入墓地的卡牌上靶。",
     "image": "/static/card_images/r_ccs_0028.jpeg",
     "original_file": "馬戲團/0047_CCS0028_打鼓猴子_三毛-1.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CCS-0031",
-    "name": "壯膽觀眾 (R閃)",
+    "name": "壯膽觀眾",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -10684,16 +10723,15 @@
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "上靶"
+      "上靶，開盤"
     ],
     "effect_text": "上靶。開盤：可使此卡被賦予+3攻擊力直到此卡因開盤而進入墓地時。",
     "image": "/static/card_images/r_ccs_0031.jpeg",
     "original_file": "馬戲團/0052_CCS0031_壯膽觀眾_R閃-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0005",
@@ -10749,7 +10787,7 @@
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，甜點王國"
     ],
     "effect_text": "立即：使你墓地1個甜點王國單位洗回牌庫。",
     "image": "/static/card_images/r_cnd_0014.jpeg",
@@ -10757,8 +10795,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "R-CND-0016",
@@ -10781,23 +10818,44 @@
     "art_subtype": ""
   },
   {
+    "id": "R-CND-0016-新年",
+    "name": "糖果旅人",
+    "deck": "甜點王國",
+    "type": "unit",
+    "faction": "甜點王國",
+    "race": "甜點王國",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "此單位被獻祭時，召喚2個小旅人。",
+    "image": "/static/card_images/r_cnd_0016_新年.jpeg",
+    "original_file": "甜點王國/0033_NY-CND-0016.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
     "id": "R-CND-0018",
     "name": "糖果城堡",
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "場地",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "主要階段。戰鬥時，使你場上所有合體後的防守單位+2攻擊力。",
     "image": "/static/card_images/r_cnd_0018.jpeg",
     "original_file": "甜點王國/0035_CND0018改_糖果城保_R普.jpg",
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "場地"
@@ -10830,18 +10888,20 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "消耗",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "甜點王果，獎勵"
+    ],
     "effect_text": "主要階段。使你場上1個甜點王國單位被除外，獎勵+X。X=該單位的★。",
     "image": "/static/card_images/r_cnd_0024.jpeg",
     "original_file": "甜點王國/0042_CND0024改_賞味期限_R普.jpg",
     "deck_eligible": true,
     "mana": 4,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -10852,12 +10912,12 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "永久",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "吞食合體"
+      "甜點王國，吞食合體"
     ],
     "effect_text": "主要階段。使你場上1個尚未合體的甜點王國單位被賦予吞食合體。",
     "image": "/static/card_images/r_cnd_0025.jpeg",
@@ -10865,7 +10925,7 @@
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "永久"
@@ -10887,8 +10947,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0027",
@@ -10924,7 +10983,7 @@
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，甜點王國"
     ],
     "effect_text": "立即：展示你牌庫頂1張牌，若是甜點王國單位使其被召喚，否則使其進入墓地。",
     "image": "/static/card_images/r_cnd_0029.jpeg",
@@ -10932,8 +10991,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "R-CND-0031",
@@ -10963,11 +11021,13 @@
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "你的主要階段開始時限一次，可使你場上1個吞食合體單位被置於你場上1個需要祭品的單位下方（視為吞食合體且該單位下方的單位數不得超過其所需祭品數）。",
     "image": "/static/card_images/r_cnd_0032.jpeg",
     "original_file": "甜點王國/0051_CND-0032-1.jpg",
@@ -10979,19 +11039,21 @@
   },
   {
     "id": "R-CND-0032-泳裝",
-    "name": "擅自作主的甜點助手 (泳裝)",
+    "name": "擅自作主的甜點助手",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "你的主要階段開始時限一次，可使你場上1個吞食合體單位被置於你場上1個需要祭品的單位下方（視為吞食合體且該單位下方的單位數不得超過其所需祭品數）。",
-    "image": "/static/card_images/r_cnd_0032_swimsuit.jpeg",
+    "image": "/static/card_images/r_cnd_0032_泳裝.jpeg",
     "original_file": "甜點王國/0002_泳裝07_CND0032_甜點助手-複製.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -11019,19 +11081,19 @@
   },
   {
     "id": "R-CND-0033-泳裝",
-    "name": "甜點推網紅 火野貝 (泳裝)",
+    "name": "甜點推薦網紅",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "虛擬",
+    "race": "甜點王國",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段限一次，可查看你牌庫底1張牌，並可將其放到牌庫頂。",
-    "image": "/static/card_images/r_cnd_0033_swimsuit.jpeg",
+    "image": "/static/card_images/r_cnd_0033_泳裝.jpeg",
     "original_file": "甜點王國/0053_16泳裝CND0033_甜點網紅_火野貝.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -11061,11 +11123,11 @@
   },
   {
     "id": "R-CND-0035-泳裝",
-    "name": "香蕉船 夏伊拉 (泳裝)",
+    "name": "香蕉船",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "香蕉",
+    "race": "甜點王國",
     "attack": "3",
     "score": 2,
     "tribute": 1,
@@ -11073,9 +11135,9 @@
       "滑行"
     ],
     "effect_text": "滑行。",
-    "image": "/static/card_images/r_cnd_0035_swimsuit.jpeg",
+    "image": "/static/card_images/r_cnd_0035_泳裝.jpeg",
     "original_file": "甜點王國/0057_17泳裝CND0035_香蕉船_夏伊拉.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -11083,15 +11145,17 @@
   },
   {
     "id": "R-CND-0036",
-    "name": "黑暗甜點界強迫餵食阿姨",
+    "name": "黑暗甜點界 強迫餵食阿姨",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "你的主要階段限一次，可使場上1個吞食合體單位被置於敵方場上1個需要祭品的單位下方（視為吞食合體且該單位下方的單位數不得超過其所需祭品數）。",
     "image": "/static/card_images/r_cnd_0036.jpeg",
     "original_file": "甜點王國/0058_CND0036_黑暗甜點界_強迫餵食阿姨.jpg",
@@ -11107,11 +11171,13 @@
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "4",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "合體，獎勵"
+    ],
     "effect_text": "你的主要階段開始時限一次，若此單位為合體後的單位，則使其下方單位被除外使你獎勵+X。X=因此卡效果被除外的單位卡★。",
     "image": "/static/card_images/r_cnd_0038.jpeg",
     "original_file": "甜點王國/0061_CND0038_大胃王雅雅.jpg",
@@ -11123,7 +11189,7 @@
   },
   {
     "id": "R-CND-0039",
-    "name": "黑暗甜點界過期軟糖",
+    "name": "黑暗甜點界 過期軟糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -11135,18 +11201,17 @@
       "吞食合體",
       "無法進攻"
     ],
-    "effect_text": "【賦予效果】若合體後的單位包含此卡，該單位被賦予：此單位攻擊力小於等於0時，使此單位被破壞。<br>【效果】無法進攻。吞食合體。此卡可打出或召喚至敵方場上。",
+    "effect_text": "無法進攻。吞食合體。此卡可打出或召喚至敵方場上。若合體後的單位包含此卡，該單位被賦予：此單位攻擊力小於等於0時，使此單位被破壞。",
     "image": "/static/card_images/r_cnd_0039.jpeg",
     "original_file": "甜點王國/0062_CND0039_黑暗甜點界過期軟糖.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0040",
-    "name": "黑暗甜點界香菇軟糖",
+    "name": "黑暗甜點界 香菇軟糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -11158,18 +11223,17 @@
       "吞食合體",
       "無法進攻"
     ],
-    "effect_text": "【賦予效果】若合體後的單位包含此卡，該單位被賦予：此單位攻擊力小於等於0時，使此單位被破壞。<br>【效果】無法進攻。吞食合體。此卡可打出或召喚至敵方場上。",
+    "effect_text": "無法進攻。吞食合體。此卡可打出或召喚至敵方場上。若合體後的單位包含此卡，該單位被賦予：此單位攻擊力小於等於0時，使此單位被破壞。",
     "image": "/static/card_images/r_cnd_0040.jpeg",
     "original_file": "甜點王國/0063_CND0040_暗黑甜點界香菇軟糖.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0041",
-    "name": "黑暗甜點界歡樂軟糖",
+    "name": "黑暗甜點界 歡樂軟糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -11187,12 +11251,11 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0042",
-    "name": "黑暗甜點界糖漿暴食君",
+    "name": "黑暗甜點界 糖漿暴食君",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -11201,7 +11264,7 @@
     "score": -1,
     "tribute": 3,
     "keywords": [
-      "禁錮"
+      "禁錮，吞食合體"
     ],
     "effect_text": "此卡可打出或召喚至敵方場上。使此單位受到禁錮。你的主要階段開始時，若敵方場上有至少2個★為負的吞食合體單位，可使你手牌的此卡被額外打出。",
     "image": "/static/card_images/r_cnd_0042.jpeg",
@@ -11209,16 +11272,15 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0044",
-    "name": "黑暗甜點界間諜助手",
+    "name": "黑暗甜點界 間諜助手",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "3",
     "score": 3,
     "tribute": 0,
@@ -11238,18 +11300,20 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "消耗",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "主要階段。從你牌庫尋找1張原始★等於X的甜點王國單位卡，並使你手牌至少1張甜點王國單位卡被展示，若你展示的卡牌原始★加總等於X，則因此卡效果尋找的卡牌加入手牌並使展示的手牌洗回牌庫。",
+    "keywords": [
+      "甜點王國"
+    ],
+    "effect_text": "主要階段。從你牌庫尋找1張原始星星等於X的甜點王國單位卡，並使你手牌至少1張甜點王國單位卡被展示，若你展示的卡牌原始星星加總等於X，則因此卡效果尋找的卡牌加入手牌並使展示的手牌洗回牌庫。",
     "image": "/static/card_images/r_cnd_0045.jpeg",
     "original_file": "甜點王國/0068_CND0045_甜點買賣.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -11260,7 +11324,7 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "消耗",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -11271,23 +11335,26 @@
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要/防守階段"
+      "Main Phase",
+      "Defense Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
   },
   {
     "id": "R-CND-0047",
-    "name": "黑暗甜點界廚餘回收者",
+    "name": "黑暗甜點界 廚餘回收者",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段開始時限一次，可使你墓地1張★為負且無需祭品的吞食合體單位卡被召喚。",
+    "keywords": [
+      "吞食合體"
+    ],
+    "effect_text": "你的主要階段開始時限一次，可使你墓地1張星星為負且無需祭品的吞食合體單位卡被召喚。",
     "image": "/static/card_images/r_cnd_0047.jpeg",
     "original_file": "甜點王國/0070_CND0047_廚餘回收者.jpg",
     "deck_eligible": true,
@@ -11298,15 +11365,17 @@
   },
   {
     "id": "R-CND-0048",
-    "name": "黑暗甜點界偏食家",
+    "name": "黑暗甜點界 偏食評鑑家",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "敵方選擇祭品前，若其場上有由你持有的吞食合體單位，則你可選擇其中一個作為祭品決定留下的數值為何。",
     "image": "/static/card_images/r_cnd_0048.jpeg",
     "original_file": "甜點王國/0071_CND0048_強迫餵食大叔.jpg",
@@ -11322,22 +11391,23 @@
     "deck": "甜點王國",
     "type": "magic",
     "faction": "甜點王國",
-    "race": "場地",
+    "race": "甜點王國",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "敵方魔法抗性"
+      "合體，敵方魔法抗性"
     ],
-    "effect_text": "【升級條件】你的主要階段，若你場上的合體後的甜點王國單位數量至少為2，可使你場上的「糖果城堡」升級為此卡。<br>【效果】主要階段。使你場上所有合體後的單位被賦予+2攻擊力及敵方魔法抗性。",
+    "effect_text": "【主要階段。使你場上所有合體後的單位被賦予+2攻擊力及敵方魔法抗性。",
     "image": "/static/card_images/r_cnd_0049.jpeg",
     "original_file": "甜點王國/0072_CND0049_水晶糖果城堡.jpg",
     "deck_eligible": false,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
-    "trigger_condition": "",
+    "trigger_condition": "的主要階段，若你場上的合體後的甜點王國單位數量至少為2，可使你場上的「糖果城堡」升級為此卡。",
+    "extra_deck_limit": 1,
     "art_subtype": "場地"
   },
   {
@@ -11351,14 +11421,14 @@
     "score": "X",
     "tribute": 3,
     "keywords": [],
-    "effect_text": "【升級條件】你選擇你「科學怪薑餅人」的祭品數量為3時，可使該卡升級為此卡並獻祭所選祭品使其被打出。<br>【效果】此單位在戰鬥時不會被破壞。X=此卡因吞食合體被賦予的攻擊力及★加總。",
+    "effect_text": "此單位在戰鬥時不會被破壞。X=此卡因吞食合體被賦予的攻擊力及★加總。",
     "image": "/static/card_images/r_cnd_0050.jpeg",
     "original_file": "甜點王國/0073_CND0050_超科學怪薑餅人.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": "你選擇你「科學怪薑餅人」的祭品數量為3時，可使該卡升級為此卡並獻祭所選祭品使其被打出。",
+    "extra_deck_limit": 1
   },
   {
     "id": "R-CND-0051",
@@ -11366,7 +11436,7 @@
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "香蕉",
+    "race": "甜點王國",
     "attack": "4",
     "score": 4,
     "tribute": 0,
@@ -11374,13 +11444,14 @@
       "滑行",
       "吞食合體"
     ],
-    "effect_text": "【升級條件】你場上合體後的「香蕉船」被分開後，可使其升級為此卡。<br>【效果】滑行。吞食合體。若合體後的單位包含此卡，使該單位被賦予滑行。",
+    "effect_text": "滑行。吞食合體。若合體後的單位包含此卡，使該單位被賦予滑行。",
     "image": "/static/card_images/r_cnd_0051.jpeg",
     "original_file": "甜點王國/0075_CND0051_香蕉切片聖代.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你場上合體後的「香蕉船」被分開後，可使其升級為此卡。",
+    "extra_deck_limit": 1,
     "art_subtype": "香蕉"
   },
   {
@@ -11396,14 +11467,13 @@
     "keywords": [
       "吞食合體"
     ],
-    "effect_text": "【賦予效果】若合體後的單位包含此卡，則使其被賦予：你的結束階段時，使你場上1個小旅人被破壞或使此單位被破壞。<br>【效果】吞食合體。此卡可打出或召喚至敵方場上。你的結束階段時，使敵方召喚1個小旅人。",
+    "effect_text": "此卡可打出或召喚至敵方場上。你的結束階段時，使敵方召喚1個小旅人。若合體後的單位包含此卡，則使其被賦予：你的結束階段時，使你場上1個小旅人被破壞或使此單位被破壞。",
     "image": "/static/card_images/r_cnd_0052.jpeg",
     "original_file": "甜點王國/0076_CND0052_嘔吐果凍.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0053",
@@ -11425,12 +11495,11 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0054",
-    "name": "黑暗甜點界大麻煩軟糖",
+    "name": "黑暗甜點界 大麻煩軟糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -11449,8 +11518,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CND-0056",
@@ -11465,15 +11533,14 @@
     "keywords": [
       "吞食合體"
     ],
-    "effect_text": "吞食合體。你的結束階段時，若你場上有合體後的單位包含「糖果人」，可使你額外區的此卡被召喚。",
+    "effect_text": "吞食合體。",
     "image": "/static/card_images/r_cnd_0056.jpeg",
     "original_file": "甜點王國/0007_43CND0056_糖果居民.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "extra_deck_limit": 3,
-    "art_subtype": ""
+    "trigger_condition": "你的結束階段時，若你場上有合體後的單位包含「糖果人」，可使你額外區的此卡被召喚。",
+    "extra_deck_limit": 3
   },
   {
     "id": "R-CND-0059",
@@ -11495,8 +11562,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "R-CND-0062",
@@ -11508,15 +11574,16 @@
     "attack": "4",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "甜點王國"
+    ],
     "effect_text": "此單位被破壞時，可展示牌庫頂1張牌，若為甜點王國單位可使其被召喚，否則放回牌庫頂。",
     "image": "/static/card_images/r_cnd_0062.jpeg",
     "original_file": "甜點王國/CND0062_焦糖烤布蕾.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "R-CRB-0006",
@@ -16338,7 +16405,7 @@
   },
   {
     "id": "R-ORC-0014",
-    "name": "獸人跳戰者",
+    "name": "獸人挑戰者",
     "deck": "獸人",
     "type": "unit",
     "faction": "獸人",
@@ -17191,7 +17258,7 @@
   },
   {
     "id": "R-RBT-0006",
-    "name": "磁場搗亂機 (閃)",
+    "name": "磁場搗亂機",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -17205,8 +17272,700 @@
     ],
     "effect_text": "機械合體。立即：使敵方玩家下個回合不得使用魔法卡。",
     "image": "/static/card_images/r_rbt_0006.jpeg",
-    "original_file": "機械軍團/0016_RBT_0006改磁場搗亂機_R閃.jpg",
+    "original_file": "機械軍團/0009_48RBT0006_磁場搗亂機.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0006-閃",
+    "name": "磁場搗亂機",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "1",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "立即"
+    ],
+    "effect_text": "機械合體。立即：使敵方玩家下個回合不得使用魔法卡。",
+    "image": "/static/card_images/r_rbt_0006_閃.jpeg",
+    "original_file": "機械軍團/0017_4圖層_R閃_機械軍團_磁場搗亂_0.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0009-泳裝",
+    "name": "抱抱熊",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "-2",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體（可與敵方單位合體）。",
+    "image": "/static/card_images/r_rbt_0009_泳裝.jpeg",
+    "original_file": "機械軍團/0022_15泳裝RBT0009_抱抱熊_李青.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0027",
+    "name": "深淵雷射眼",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此卡合體時，在本次合體處理完畢後使場上1個與此合體後單位星星相同的敵方單位被破壞。",
+    "image": "/static/card_images/r_rbt_0027.jpeg",
+    "original_file": "機械軍團/0045_RBT_0027深淵雷射眼_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0028",
+    "name": "機械中豬",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。使此卡前方所有敵方單位被視為機械。",
+    "image": "/static/card_images/r_rbt_0028.jpeg",
+    "original_file": "機械軍團/0047_RBT_0028機械中豬_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0029",
+    "name": "暗黑巨大冷藏櫃",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "5",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "無法進攻"
+    ],
+    "effect_text": "機械合體。無法進攻。使你場上所有機械單位不會受到禁錮。",
+    "image": "/static/card_images/r_rbt_0029.jpeg",
+    "original_file": "機械軍團/0048_RBT_0029冷藏櫃_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0030",
+    "name": "恐怖的垃圾收藏家",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 3,
+    "tribute": 1,
+    "keywords": [
+      "立即，機械合體"
+    ],
+    "effect_text": "立即：使你墓地1個3星或以下的機械合體單位被召喚，並可使其發動機械合體。",
+    "image": "/static/card_images/r_rbt_0030.jpeg",
+    "original_file": "機械軍團/0049_RBT_0030垃圾收藏家_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0031",
+    "name": "廢棄的零件",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "1",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "無法進攻"
+    ],
+    "effect_text": "機械合體。無法進攻。你場上的單位發動機械合體時，可使你墓地的此卡被召喚。",
+    "image": "/static/card_images/r_rbt_0031.jpeg",
+    "original_file": "機械軍團/0051_RBT_0031廢棄的零件_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0033",
+    "name": "自嗨機器人",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體，獎勵"
+    ],
+    "effect_text": "機械合體。你的結束階段時，若你場上只有此單位且此單位為合體後的單位，獎勵+2。",
+    "image": "/static/card_images/r_rbt_0033.jpeg",
+    "original_file": "機械軍團/0053_RBT-0033.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0034",
+    "name": "機械大豬",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "5",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。使敵方前排戰線所有單位視為機械。",
+    "image": "/static/card_images/r_rbt_0034.jpeg",
+    "original_file": "機械軍團/0054_RBT-0034.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0035",
+    "name": "大冰箱",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體，禁錮"
+    ],
+    "effect_text": "機械合體。若此單位為合體後的單位，則使此單位前方所有敵方單位受到禁錮。",
+    "image": "/static/card_images/r_rbt_0035.jpeg",
+    "original_file": "機械軍團/0055_RBT-0035.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0036",
+    "name": "電腦駭客",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。敵方抽牌時，若此單位為合體後的單位，你隨機查看其所抽出的1張牌。",
+    "image": "/static/card_images/r_rbt_0036.jpeg",
+    "original_file": "機械軍團/0056_RBT-0036.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械，虛擬"
+  },
+  {
+    "id": "R-RBT-0037",
+    "name": "閃亮燈球",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此單位合體時，使敵方前排戰線所有單位被賦予-1攻擊力直到你下個回合主要階段開始時。",
+    "image": "/static/card_images/r_rbt_0037.jpeg",
+    "original_file": "機械軍團/0057_RBT-0037.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0039",
+    "name": "人造機神核心",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "無法進攻"
+    ],
+    "effect_text": "機械合體。無法進攻。此卡的卡名可視為「機神核心」。",
+    "image": "/static/card_images/r_rbt_0039.jpeg",
+    "original_file": "機械軍團/0060_RBT-0039.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0040",
+    "name": "古代機神遺骸頭部",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "1",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "，立即"
+    ],
+    "effect_text": "機械合體。立即：從你牌庫尋找「機神核心」展示並加入手牌，然後重洗牌庫。",
+    "image": "/static/card_images/r_rbt_0040.jpeg",
+    "original_file": "機械軍團/0061_RBT-0040.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0042",
+    "name": "古代機神遺骸右手",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體，遺骸"
+    ],
+    "effect_text": "機械合體。此單位合體時，若本次合體的單位包含此卡與「機神核心」，使你墓地1張遺骸單位卡回手牌。",
+    "image": "/static/card_images/r_rbt_0042.jpeg",
+    "original_file": "機械軍團/0063_RBT-0042.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0043",
+    "name": "古代機神遺骸左腳",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "敵方魔法抗性，遺骸，機械合體"
+    ],
+    "effect_text": "機械合體。敵方魔法抗性。若合體後的單位包含此卡與「機神核心」或遺骸單位卡，使該單位被賦予敵方魔法抗性。",
+    "image": "/static/card_images/r_rbt_0043.jpeg",
+    "original_file": "機械軍團/0064_RBT-0043.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0044",
+    "name": "古代機神遺骸右腳",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "敵方效果抗性，機械合體"
+    ],
+    "effect_text": "機械合體。敵方效果抗性。若合體後的單位包含此卡與「機神核心」或遺骸單位卡，使該單位被賦予敵方效果抗性。",
+    "image": "/static/card_images/r_rbt_0044.jpeg",
+    "original_file": "機械軍團/0065_RBT-0044.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0045",
+    "name": "古代機神巨人",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "12",
+    "score": 12,
+    "tribute": 0,
+    "keywords": [
+      "敵方魔法抗性",
+      "，敵方效果抗性，立即"
+    ],
+    "effect_text": "你的召喚階段，可改為使你場上1張「機神核心」及5張遺骸單位卡被除外，並從你手牌打出此卡。（包含於合體後的單位的卡牌被除外時須除外整個單位）敵方魔法抗性。敵方效果抗性。立即：使敵方牌庫/手牌/場上所有卡牌進入墓地。",
+    "image": "/static/card_images/r_rbt_0045.jpeg",
+    "original_file": "機械軍團/0066_RBT-0045.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "神族，機械"
+  },
+  {
+    "id": "R-RBT-0047",
+    "name": "古代機神駕駛員",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：若你場上有「古代機神巨人」，使其發動立即效果。你的主要階段限一次，可使你手牌1張卡名帶有古代機神的單位卡被額外打出。",
+    "image": "/static/card_images/r_rbt_0047.jpeg",
+    "original_file": "機械軍團/0069_RBT0047_古代機神駕駛員.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-RBT-0048",
+    "name": "壞掉的古代機神噴火器",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "5",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "無法進攻，合體，遺骸"
+    ],
+    "effect_text": "無法進攻。你的主要階段開始時限一次，若此單位為合體後的單位且包含「機神核心」或其他遺骸單位卡，可使其前方的所有敵方單位被破壞。",
+    "image": "/static/card_images/r_rbt_0048.jpeg",
+    "original_file": "機械軍團/0070_RBT0048_巨型火箭炮.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0049",
+    "name": "震撼彈",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：使敵方前排戰線所有單位被賦予無法移動直到你的下個主要階段開始時或此單位離場後。",
+    "image": "/static/card_images/r_rbt_0049.jpeg",
+    "original_file": "機械軍團/0071_RBT0049_震撼彈.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0050",
+    "name": "戰鬥支援機器人",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。你在戰術階段選擇進攻時，可使你手牌的此卡對你場上1個機械單位發動機械合體並使其進攻。",
+    "image": "/static/card_images/r_rbt_0050.jpeg",
+    "original_file": "機械軍團/0072_RBT0050_戰鬥支援機器人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0052",
+    "name": "緊急分離彈射",
+    "deck": "機械軍團",
+    "type": "magic",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "敵方防守階段使用魔法卡時，使你場上1個處於進攻的合體後的單位被分開。",
+    "image": "/static/card_images/r_rbt_0052.jpeg",
+    "original_file": "機械軍團/0074_RBT0052_緊急彈射.jpg",
+    "deck_eligible": true,
+    "mana": 1,
+    "usable_phases": [
+      "Opponent Use Magic"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "R-RBT-0053",
+    "name": "禁閉屋",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此單位進攻時戰鬥成功，使被進攻的機械單位由破壞改為被綁架(2)。",
+    "image": "/static/card_images/r_rbt_0053.jpeg",
+    "original_file": "機械軍團/0075_754615_0.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0054",
+    "name": "廢棄的齒輪屑屑",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "1",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體",
+      "無法進攻"
+    ],
+    "effect_text": "機械合體。無法進攻。你場上的單位發動機械合體時，可使你墓地的此卡被召喚。",
+    "image": "/static/card_images/r_rbt_0054.jpeg",
+    "original_file": "機械軍團/0076_RBT0054_廢棄零件屑屑.jpg",
     "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你場上的「廢棄的零件」發動機械合體後，可使你額外區的此卡進入墓地",
+    "extra_deck_limit": 2,
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0056",
+    "name": "潑水節的自嗨機器人",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "5",
+    "score": 4,
+    "tribute": 0,
+    "keywords": [
+      "機械合體，獎勵"
+    ],
+    "effect_text": "機械合體。你的主要階段限一次，可使你場上1個合體後的單位被破壞，若成功使敵方場上1個單位被破壞。你的結束階段時，若你場上只有此單位，獎勵+2。",
+    "image": "/static/card_images/r_rbt_0056.jpeg",
+    "original_file": "機械軍團/0078_RBT0056_渴望自嗨的機器人.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "你的主要階段，若你場上合體後的「自嗨機器人」位於三號星星戰線後排位置且你場上沒有其他單位，可使「自嗨機器人」升級為此卡並與原本合體的卡牌以相同的合體狀態置於原位置",
+    "extra_deck_limit": 1,
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0057",
+    "name": "巨大機械針頭",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體，橫放"
+    ],
+    "effect_text": "機械合體。此單位合體時，可使場上1個單位被轉正或被橫放。",
+    "image": "/static/card_images/r_rbt_0057.jpeg",
+    "original_file": "機械軍團/0080_RBT0057_巨大機械針頭.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0058",
+    "name": "盜版機神科學家",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "遺骸，機械合體"
+    ],
+    "effect_text": "一回合限一次，你場上的遺骸單位發動機械合體或成為機械合體的目標時，可使你額外區1張「盜版遺骸」被召喚。",
+    "image": "/static/card_images/r_rbt_0058.jpeg",
+    "original_file": "機械軍團/0081_RBT0058_盜版機神科學家.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-RBT-0059",
+    "name": "盜版遺骸",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。",
+    "image": "/static/card_images/r_rbt_0059.jpeg",
+    "original_file": "機械軍團/0082_RBT0059_盜版遺骸.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3,
+    "art_subtype": "遺骸，機械"
+  },
+  {
+    "id": "R-RBT-0060",
+    "name": "神之眼",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。你的抽牌階段，若此單位為合體後的單位，可改為抽1張牌並從你牌庫尋找1張任意卡牌並加入手牌，該卡牌無須給敵方檢視。",
+    "image": "/static/card_images/r_rbt_0060.jpeg",
+    "original_file": "機械軍團/0083_RBT0060_神之眼.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-RBT-0062",
+    "name": "飛機哥",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "飛行，機械合體"
+    ],
+    "effect_text": "機械合體。飛行。若合體後的單位包含此卡，則使該單位被賦予飛行。",
+    "image": "/static/card_images/r_rbt_0062.jpeg",
+    "original_file": "機械軍團/0006_51RBT0062_飛機哥.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -18029,8 +18788,8 @@
     "image": "/static/card_images/r_spt_0003.jpeg"
   },
   {
-    "id": "R-SPT-0004",
-    "name": "機械旅人 新年",
+    "id": "R-SPT-0004-新年",
+    "name": "機械旅人",
     "deck": "特殊旅人",
     "type": "unit",
     "faction": "特殊旅人",
@@ -18042,7 +18801,7 @@
       "立即"
     ],
     "effect_text": "立即:召喚一個小旅人",
-    "image": "/static/card_images/r_spt_0004.jpeg",
+    "image": "/static/card_images/r_spt_0004_新年.jpeg",
     "original_file": "特殊旅人/0013_NY-SPT-0004.jpg",
     "deck_eligible": true,
     "mana": 0,
@@ -18148,7 +18907,7 @@
   },
   {
     "id": "R-SPT-0015-泳裝",
-    "name": "討拍旅人 火野貝",
+    "name": "討拍旅人",
     "deck": "特殊旅人",
     "type": "unit",
     "faction": "特殊旅人",
@@ -18159,14 +18918,13 @@
     "keywords": [
       "立即"
     ],
-    "effect_text": "立即：使此單位前方所有敵方小旅人被破壞。",
+    "effect_text": "立即:使此卡前方所有敵方小旅人被破壞",
+    "image": "/static/card_images/r_spt_0015_泳裝.jpeg",
     "original_file": "特殊旅人/0031_05泳裝SPT0015_討拍旅人_火野貝.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0015_泳裝.jpeg"
+    "trigger_condition": ""
   },
   {
     "id": "R-SPT-0020",
@@ -18180,16 +18938,16 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使你場上所有小旅人被賦予劇毒，直到下一個主要階段結束。",
+    "image": "/static/card_images/r_spt_0020.jpeg",
     "original_file": "特殊旅人/0037_SPT0020_針對性病毒_R普.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 4,
     "usable_phases": [
       "Main Phase",
       "Defense Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/r_spt_0020.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "R-SPT-0021",
@@ -18203,13 +18961,12 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "此卡被破壞時回手牌。",
+    "image": "/static/card_images/r_spt_0021.jpeg",
     "original_file": "特殊旅人/0038_SPT0021_太空旅人_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "太空/人型",
-    "image": "/static/card_images/r_spt_0021.jpeg"
+    "trigger_condition": ""
   },
   {
     "id": "R-SPT-0022",
@@ -18225,13 +18982,13 @@
       "立即"
     ],
     "effect_text": "立即：使場上所有的小旅人被破壞。",
+    "image": "/static/card_images/r_spt_0022.jpeg",
     "original_file": "特殊旅人/0039_SPT0022_狂怒旅人_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0022.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0025",
@@ -18263,17 +19020,19 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "遠程攻擊，破甲"
+    ],
     "effect_text": "使你場上1個小旅人被賦予遠程攻擊以及破甲，直到下個回合結束。",
+    "image": "/static/card_images/r_spt_0027.jpeg",
     "original_file": "特殊旅人/0047_SPT0027.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 1,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/r_spt_0027.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "R-SPT-0028",
@@ -18287,15 +19046,15 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使你場上1個非小旅人單位變為小旅人，使敵方玩家重複上述動作。",
+    "image": "/static/card_images/r_spt_0028.jpeg",
     "original_file": "特殊旅人/0048_SPT0028.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 3,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/r_spt_0028.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "R-SPT-0030",
@@ -18309,13 +19068,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的防守階段開始時，使你場上所有小旅人被賦予+2攻擊力直到防守階段結束。",
+    "image": "/static/card_images/r_spt_0030.jpeg",
     "original_file": "特殊旅人/0050_SPT-0030.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0030.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0031",
@@ -18324,18 +19083,19 @@
     "type": "unit",
     "faction": "特殊旅人",
     "race": "特殊旅人",
-    "attack": "0",
+    "attack": "盾",
     "score": 8,
     "tribute": 5,
-    "keywords": [],
+    "keywords": [
+      "敵方效果抗性"
+    ],
     "effect_text": "此卡的祭品須為小旅人。使你場上所有其他單位被賦予敵方效果抗性。",
+    "image": "/static/card_images/r_spt_0031.jpeg",
     "original_file": "特殊旅人/0052_SPT-0031.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "建築/紀念碑",
-    "image": "/static/card_images/r_spt_0031.jpeg"
+    "trigger_condition": ""
   },
   {
     "id": "R-SPT-0032",
@@ -18348,14 +19108,14 @@
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的主要階段時，可使此單位被除外並破壞你場上X個小旅人，若成功則使敵方場上1★等於X的單位被破壞（X至少為1）。",
+    "effect_text": "你的主要階段時，可使此單位被除外並破壞你場上X個小旅人，若成功則使敵方場上1星星等於X的單位被破壞（X至少為1）。",
+    "image": "/static/card_images/r_spt_0032.jpeg",
     "original_file": "特殊旅人/0053_SPT-0032.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0032.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0033",
@@ -18367,15 +19127,17 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "一回合限一次，敵方使其場上的小旅人移動時，你獎勵+1。",
+    "image": "/static/card_images/r_spt_0033.jpeg",
     "original_file": "特殊旅人/0054_SPT-0033.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0033.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0034",
@@ -18409,15 +19171,15 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段開始時限一次，可召喚1個小旅人，並在本回合結束階段時使你場上2個小旅人回森林。",
+    "image": "/static/card_images/r_spt_0035.jpeg",
     "original_file": "特殊旅人/0056_SPT-0035.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 3,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/r_spt_0035.jpeg"
+    "art_subtype": "場地"
   },
   {
     "id": "R-SPT-0037",
@@ -18429,15 +19191,17 @@
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "橫放"
+    ],
     "effect_text": "你場上的小旅人被敵方破壞時，可改為使此單位被橫放；若此單位已處於橫放，則改為使此單位被破壞。",
+    "image": "/static/card_images/r_spt_0037.jpeg",
     "original_file": "特殊旅人/0058_SPT-0037.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0037.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0038",
@@ -18451,13 +19215,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你宣告提早結束並成功時，若你場上有5個或以上的小旅人，可從你手牌額外打出此卡。",
+    "image": "/static/card_images/r_spt_0038.jpeg",
     "original_file": "特殊旅人/0059_SPT-0038.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0038.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0039",
@@ -18492,16 +19256,16 @@
     "score": 5,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，劇毒"
     ],
     "effect_text": "立即：使敵方召喚1個小旅人。使此單位前方所有敵方單位被賦予劇毒。",
+    "image": "/static/card_images/r_spt_0040.jpeg",
     "original_file": "特殊旅人/0061_SPT-0040.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0040.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0041",
@@ -18515,13 +19279,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "一回合限一次，敵方召喚小旅人時，使你召喚1個小旅人。",
+    "image": "/static/card_images/r_spt_0041.jpeg",
     "original_file": "特殊旅人/0062_SPT0041讀書旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0041.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0042",
@@ -18535,13 +19299,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "此單位進攻時，你召喚2個小旅人並使其進攻。你的結束階段時，使本回合因此卡效果召喚而未進攻的小旅人被破壞。",
+    "image": "/static/card_images/r_spt_0042.jpeg",
     "original_file": "特殊旅人/0063_SPT0042帶小弟的小旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0042.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0043",
@@ -18575,15 +19339,17 @@
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "劇毒"
+    ],
     "effect_text": "此卡因卡牌效果被召喚時，使此單位被賦予劇毒直到下個回合結束時。",
+    "image": "/static/card_images/r_spt_0044.jpeg",
     "original_file": "特殊旅人/0065_SPT0044當刺客的小旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "小旅人",
-    "image": "/static/card_images/r_spt_0044.jpeg"
+    "art_subtype": "小旅人"
   },
   {
     "id": "R-SPT-0045",
@@ -18595,15 +19361,17 @@
     "attack": "3",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "特殊旅人"
+    ],
     "effect_text": "使你場上所有無需祭品的特殊旅人單位被視為小旅人。",
+    "image": "/static/card_images/r_spt_0045.jpeg",
     "original_file": "特殊旅人/0066_SPT0045小丑旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0045.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0047",
@@ -18616,16 +19384,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，獎勵"
     ],
     "effect_text": "立即：使你場上的「魔法森林」被破壞，若成功使你獎勵+X。X=該「魔法森林」被破壞時下方的卡牌★加總。",
+    "image": "/static/card_images/r_spt_0047.jpeg",
     "original_file": "特殊旅人/0069_SPT0047縱火旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0047.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0048",
@@ -18639,15 +19407,14 @@
     "tribute": 1,
     "keywords": [],
     "effect_text": "你的主要階段限一次，可使敵方場上1個小旅人向任意方向被推擠，並使被破圖的單位卡回手牌；若破圖的單位卡為小旅人，改為使其被綁架(5)。",
-    "extra_summon_condition": "你的主要階段開始時，若敵方前排戰線至少有2個小旅人，則可使你場上的「沼澤旅人」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/r_spt_0048.jpeg",
     "original_file": "特殊旅人/0070_SPT0048_泥沼旅人_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0048.jpeg"
+    "trigger_condition": "你的主要階段開始時，若敵方前排戰線至少有2個小旅人，則可使你場上的[沼澤旅人]升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0049",
@@ -18661,15 +19428,14 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段，可使你手牌的此卡被額外打出。",
-    "extra_summon_condition": "回合結束時，若本回合有至少5個小旅人回森林，可使你場上或手牌的「躺平旅人」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/r_spt_0049.jpeg",
     "original_file": "特殊旅人/0071_SPT0049_躺平旅人_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0049.jpeg"
+    "trigger_condition": "回合結束時，若本回合有至少5個小旅人回森林，則可使你場上或手牌的[躺平旅人]升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0050",
@@ -18681,17 +19447,18 @@
     "attack": "6",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "你宣言提早結束並失敗時，可使你場上的[紅配綠旅人]升級為此卡"
+    ],
     "effect_text": "若你的牌庫還有牌，使你場上所有小旅人被賦予+3★。",
-    "extra_summon_condition": "你宣言提早結束並失敗時，可使你場上的「紅配綠旅人」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/r_spt_0050.jpeg",
     "original_file": "特殊旅人/0072_SPT0050_詩配酒旅人_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0050.jpeg"
+    "extra_deck_limit": 1,
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0051",
@@ -18763,15 +19530,17 @@
     "attack": "4",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "禁錮"
+    ],
     "effect_text": "使敵方場上所有「怨念的小旅人」及前排戰線的小旅人被禁錮。",
+    "image": "/static/card_images/r_spt_0056.jpeg",
     "original_file": "特殊旅人/0005_25SPT0056_咒縛旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/r_spt_0056.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "R-SPT-0059",
@@ -21325,6 +22094,26 @@
     "art_subtype": "機械"
   },
   {
+    "id": "RBT-0002-泳裝",
+    "name": "機械美杜莎",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "敵方場上所有單位視為機械。",
+    "image": "/static/card_images/rbt_0002_泳裝.jpeg",
+    "original_file": "機械軍團/0001_泳裝08_RBT_0002每度殺.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
     "id": "RBT-0003",
     "name": "抗性機器人",
     "deck": "機械軍團",
@@ -21468,9 +22257,9 @@
     "score": 6,
     "tribute": 2,
     "keywords": [
-      "掩護"
+      "機械，掩護，合體"
     ],
-    "effect_text": "使你場上所有機械單位被賦予掩護，且每個合體後的單位使此卡+2★。",
+    "effect_text": "使你場上所有機械單位被賦予掩護，且每個合體後的單位使此卡+2星。",
     "image": "/static/card_images/rbt_0010.jpeg",
     "original_file": "機械軍團/0023_RBT_0010改瑪琪.jpg",
     "deck_eligible": true,
@@ -21508,7 +22297,7 @@
     "type": "unit",
     "faction": "機械軍團",
     "race": "機械軍團",
-    "attack": "0",
+    "attack": "盾",
     "score": 3,
     "tribute": 0,
     "keywords": [
@@ -21534,8 +22323,10 @@
     "attack": "4",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "此卡前方所有敵方機械單位-2攻擊力。",
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。此卡前方所有敵方機械單位-2攻擊力。",
     "image": "/static/card_images/rbt_0013.jpeg",
     "original_file": "機械軍團/0029_RBT_0013噪音機器人.jpg",
     "deck_eligible": true,
@@ -21622,7 +22413,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "主要階段。使場上1個合體後的單位被分開至其場上任意位置。",
     "image": "/static/card_images/rbt_0017.jpeg",
     "original_file": "機械軍團/0033_RBT_0017拆解2RGB.jpg",
@@ -21644,7 +22437,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "你的主要階段，可棄掉X張手牌來分開你X個合體後的單位。",
     "image": "/static/card_images/rbt_0018.jpeg",
     "original_file": "機械軍團/0034_RBT_0018改分解場_R普.jpg",
@@ -21666,7 +22461,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "每當你合體的單位被破壞時，可棄掉該合體後的其中1張單位代替破壞（不算分開單位）。",
     "image": "/static/card_images/rbt_0019.jpeg",
     "original_file": "機械軍團/0035_RBT_0019改緊急維修廠.jpg",
@@ -21688,7 +22485,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "機械"
+    ],
     "effect_text": "使你場上1個機械單位被破壞，並使敵方場上1個機械單位被破壞。",
     "image": "/static/card_images/rbt_0020.jpeg",
     "original_file": "機械軍團/0036_RBT_0020改熱水.jpg",
@@ -21767,118 +22566,6 @@
     "art_subtype": "機械"
   },
   {
-    "id": "RBT-0027",
-    "name": "深淵雷射眼",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此卡合體時，在本次合體處理完畢後使場上1個與此合體後單位★相同的敵方單位被破壞。",
-    "image": "/static/card_images/rbt_0027.jpeg",
-    "original_file": "機械軍團/0045_RBT_0027深淵雷射眼_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0028",
-    "name": "機械中豬",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。使此卡前方所有敵方單位被視為機械。",
-    "image": "/static/card_images/rbt_0028.jpeg",
-    "original_file": "機械軍團/0047_RBT_0028機械中豬_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0029",
-    "name": "暗黑巨大冷藏櫃",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "5",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "無法進攻"
-    ],
-    "effect_text": "機械合體。無法進攻。使你場上所有機械單位不會受到禁錮。",
-    "image": "/static/card_images/rbt_0029.jpeg",
-    "original_file": "機械軍團/0048_RBT_0029冷藏櫃_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0030",
-    "name": "恐怖的垃圾收藏家",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 3,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使你墓地1個3★或以下的機械合體單位被召喚，並可使其發動機械合體。",
-    "image": "/static/card_images/rbt_0030.jpeg",
-    "original_file": "機械軍團/0049_RBT_0030垃圾收藏家_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0031",
-    "name": "廢棄的零件",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "1",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "無法進攻"
-    ],
-    "effect_text": "機械合體。無法進攻。你場上的單位發動機械合體時，可使你墓地的此卡被召喚。",
-    "image": "/static/card_images/rbt_0031.jpeg",
-    "original_file": "機械軍團/0051_RBT_0031廢棄的零件_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
     "id": "RBT-0032",
     "name": "重拳手卡特琳",
     "deck": "機械軍團",
@@ -21896,609 +22583,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "機械/虛擬"
-  },
-  {
-    "id": "RBT-0033",
-    "name": "自嗨機器人",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。你的結束階段時，若你場上只有此單位且此單位為合體後的單位，獎勵+2。",
-    "image": "/static/card_images/rbt_0033.jpeg",
-    "original_file": "機械軍團/0053_RBT-0033.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0034",
-    "name": "機械大豬",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "5",
-    "score": 4,
-    "tribute": 1,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。使敵方前排戰線所有單位視為機械。",
-    "image": "/static/card_images/rbt_0034.jpeg",
-    "original_file": "機械軍團/0054_RBT-0034.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0035",
-    "name": "大冰箱",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。若此單位為合體後的單位，則使此單位前方所有敵方單位受到禁錮。",
-    "image": "/static/card_images/rbt_0035.jpeg",
-    "original_file": "機械軍團/0055_RBT-0035.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0036",
-    "name": "電腦客",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。敵方抽牌時，若此單位為合體後的單位，你隨機查看其所抽出的1張牌。",
-    "image": "/static/card_images/rbt_0036.jpeg",
-    "original_file": "機械軍團/0056_RBT-0036.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械/虛擬"
-  },
-  {
-    "id": "RBT-0037",
-    "name": "閃亮燈球",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此單位合體時，使敵方前排戰線所有單位被賦予-1攻擊力直到你下個回合主要階段開始時。",
-    "image": "/static/card_images/rbt_0037.jpeg",
-    "original_file": "機械軍團/0057_RBT-0037.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0039",
-    "name": "人造機神核心",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "無法進攻"
-    ],
-    "effect_text": "機械合體。無法進攻。此卡的卡名可視為「機神核心」。",
-    "image": "/static/card_images/rbt_0039.jpeg",
-    "original_file": "機械軍團/0060_RBT-0039.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0040",
-    "name": "古代機神遺骸頭部",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "1",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "立即"
-    ],
-    "effect_text": "機械合體。立即：從你牌庫尋找「機神核心」展示並加入手牌，然後重洗牌庫。",
-    "image": "/static/card_images/rbt_0040.jpeg",
-    "original_file": "機械軍團/0061_RBT-0040.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0041",
-    "name": "古代機神遺骸左手",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此單位合體時，若本次合體的單位包含此卡與「機神核心」，使敵方場上1個☆為1或以下的單位被破壞。",
-    "image": "/static/card_images/rbt_0041.jpeg",
-    "original_file": "機械軍團/0062_RBT-0041.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0042",
-    "name": "古代機神遺骸右手",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此單位合體時，若本次合體的單位包含此卡與「機神核心」，使你墓地1張遺骸單位卡回手牌。",
-    "image": "/static/card_images/rbt_0042.jpeg",
-    "original_file": "機械軍團/0063_RBT-0042.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0043",
-    "name": "古代機神遺骸左腳",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "敵方魔法抗性",
-      "機械合體"
-    ],
-    "effect_text": "機械合體。敵方魔法抗性。若合體後的單位包含此卡與「機神核心」或遺骸單位卡，使該單位被賦予敵方魔法抗性。",
-    "image": "/static/card_images/rbt_0043.jpeg",
-    "original_file": "機械軍團/0064_RBT-0043.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0044",
-    "name": "古代機神遺骸右腳",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "敵方效果抗性",
-      "機械合體"
-    ],
-    "effect_text": "機械合體。敵方效果抗性。若合體後的單位包含此卡與「機神核心」或遺骸單位卡，使該單位被賦予敵方效果抗性。",
-    "image": "/static/card_images/rbt_0044.jpeg",
-    "original_file": "機械軍團/0065_RBT-0044.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0045",
-    "name": "古代機神巨人",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "12",
-    "score": 12,
-    "tribute": 0,
-    "keywords": [
-      "敵方魔法抗性",
-      "敵方效果抗性",
-      "立即"
-    ],
-    "effect_text": "你的召喚階段，可改為使你場上1張「機神核心」及5張遺骸單位卡被除外，並從你手牌打出此卡。（包含於合體後的單位的卡牌被除外時須除外整個單位）敵方魔法抗性。敵方效果抗性。立即：使敵方牌庫/手牌/場上所有卡牌進入墓地。",
-    "image": "/static/card_images/rbt_0045.jpeg",
-    "original_file": "機械軍團/0066_RBT-0045.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "神族/機械"
-  },
-  {
-    "id": "RBT-0047",
-    "name": "古代機神駕駛員",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：若你場上有「古代機神巨人」，使其發動立即效果。你的主要階段限一次，可使你手牌1張卡名帶有古代機神的單位卡被額外打出。",
-    "image": "/static/card_images/rbt_0047.jpeg",
-    "original_file": "機械軍團/0069_RBT0047_古代機神駕駛員.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型"
-  },
-  {
-    "id": "RBT-0048",
-    "name": "壞掉的古代機神噴火器",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "5",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "無法進攻"
-    ],
-    "effect_text": "無法進攻。你的主要階段開始時限一次，若此單位為合體後的單位且包含「機神核心」或其他遺骸單位卡，可使其前方的所有敵方單位被破壞。",
-    "image": "/static/card_images/rbt_0048.jpeg",
-    "original_file": "機械軍團/0070_RBT0048_巨型火箭炮.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0049",
-    "name": "震撼彈",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使敵方前排戰線所有單位被賦予無法移動直到你的下個主要階段開始時或此單位離場後。",
-    "image": "/static/card_images/rbt_0049.jpeg",
-    "original_file": "機械軍團/0071_RBT0049_震撼彈.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0050",
-    "name": "戰鬥支援機器人",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。你在戰術階段選擇進攻時，可使你手牌的此卡對你場上1個機械單位發動機械合體並使其進攻。",
-    "image": "/static/card_images/rbt_0050.jpeg",
-    "original_file": "機械軍團/0072_RBT0050_戰鬥支援機器人.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0052",
-    "name": "緊急分離彈射",
-    "deck": "機械軍團",
-    "type": "magic",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "敵方使用魔法卡時，使你場上1個處於進攻的合體後的單位被分開。（敵方防守階段）",
-    "image": "/static/card_images/rbt_0052.jpeg",
-    "original_file": "機械軍團/0074_RBT0052_緊急彈射.jpg",
-    "deck_eligible": true,
-    "mana": 1,
-    "usable_phases": [
-      "Opponent Defense Phase"
-    ],
-    "trigger_condition": "",
-    "art_subtype": "消耗"
-  },
-  {
-    "id": "RBT-0053",
-    "name": "禁閉屋",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此單位進攻時戰鬥成功，使被進攻的機械單位由破壞改為被綁架(2)。",
-    "image": "/static/card_images/rbt_0053.jpeg",
-    "original_file": "機械軍團/0075_754615_0.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0054",
-    "name": "廢棄的齒輪屑屑",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "1",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體",
-      "無法進攻"
-    ],
-    "effect_text": "【額外效果】你場上的「廢棄的零件」發動機械合體後，可使你額外區的此卡進入墓地。\n【效果】機械合體。無法進攻。你場上的單位發動機械合體時，可使你墓地的此卡被召喚。",
-    "image": "/static/card_images/rbt_0054.jpeg",
-    "original_file": "機械軍團/0076_RBT0054_廢棄零件屑屑.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0056",
-    "name": "潑水節的自嗨機器人",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "5",
-    "score": 4,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "【升級條件】你的主要階段，若你場上合體後的「自嗨機器人」位於三號星星戰線後排位置且你場上沒有其他單位，可使「自嗨機器人」升級為此卡並與原本合體的卡牌以相同的合體狀態置於原位置。\n【效果】機械合體。你的主要階段限一次，可使你場上1個合體後的單位被破壞，若成功使敵方場上1個單位被破壞。你的結束階段時，若你場上只有此單位，獎勵+2。",
-    "image": "/static/card_images/rbt_0056.jpeg",
-    "original_file": "機械軍團/0078_RBT0056_渴望自嗨的機器人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0057",
-    "name": "巨大機械針頭",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此單位合體時，可使場上1個單位被轉正或被橫放。",
-    "image": "/static/card_images/rbt_0057.jpeg",
-    "original_file": "機械軍團/0080_RBT0057_巨大機械針頭.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0058",
-    "name": "盜版機神科學家",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "一回合限一次，你場上的遺骸單位發動機械合體或成為機械合體的目標時，可使你額外區1張「盜版遺骸」被召喚。",
-    "image": "/static/card_images/rbt_0058.jpeg",
-    "original_file": "機械軍團/0081_RBT0058_盜版機神科學家.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型"
-  },
-  {
-    "id": "RBT-0059",
-    "name": "盜版遺骸",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。",
-    "image": "/static/card_images/rbt_0059.jpeg",
-    "original_file": "機械軍團/0082_RBT0059_盜版遺骸.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "遺骸/機械"
-  },
-  {
-    "id": "RBT-0060",
-    "name": "神之眼",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。你的抽牌階段，若此單位為合體後的單位，可改為抽1張牌並從你牌庫尋找1張任意卡牌並加入手牌，該卡牌無須給敵方檢視。",
-    "image": "/static/card_images/rbt_0060.jpeg",
-    "original_file": "機械軍團/0083_RBT0060_神之眼.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0062",
-    "name": "飛機哥",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "飛行",
-      "機械合體"
-    ],
-    "effect_text": "機械合體。飛行。若合體後的單位包含此卡，則使該單位被賦予飛行。",
-    "image": "/static/card_images/rbt_0062.jpeg",
-    "original_file": "機械軍團/0006_51RBT0062_飛機哥.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "RBT-0063",
-    "name": "螺絲釘",
-    "deck": "機械軍團",
-    "type": "magic",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [
-      "敵方效果抗性"
-    ],
-    "effect_text": "主要階段。使你場上1個合體後的單位被賦予敵方效果抗性。",
-    "image": "/static/card_images/rbt_0063.jpeg",
-    "original_file": "機械軍團/0005_52RBT0063_螺絲釘-1.jpg",
-    "deck_eligible": true,
-    "mana": 1,
-    "usable_phases": [
-      "Main Phase"
-    ],
-    "trigger_condition": "",
-    "art_subtype": "永久"
-  },
-  {
-    "id": "RBT-0064",
-    "name": "潤滑油齒輪",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此卡合體後，使此合體後的單位被分開。",
-    "image": "/static/card_images/rbt_0064.jpeg",
-    "original_file": "機械軍團/0004_53RBT0064_潤滑油齒輪.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
+    "art_subtype": "機械，虛擬"
   },
   {
     "id": "RBT-0065",
@@ -22910,17 +22995,17 @@
     "faction": "特殊旅人",
     "race": "特殊旅人",
     "attack": "X",
-    "score": 0,
+    "score": "X",
     "tribute": 0,
     "keywords": [],
     "effect_text": "X=你場上小旅人的數量。",
+    "image": "/static/card_images/spt_0002.jpeg",
     "original_file": "特殊旅人/0010_SPT0002_老旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/spt_0002.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SPT-0004",
@@ -22965,7 +23050,7 @@
   },
   {
     "id": "SPT-0006-泳裝",
-    "name": "惡魔旅人 泳裝",
+    "name": "惡魔旅人",
     "deck": "特殊旅人",
     "type": "unit",
     "faction": "特殊旅人",
@@ -22974,14 +23059,13 @@
     "score": 4,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "你的主要階段限一次，可使你場上2個單位被破壞，若成功使你墓地1單位卡被召喚。",
+    "effect_text": "你的主要階段，可破壞你場上2個單位，使你墓地1單位被召喚(一回合限一次)",
+    "image": "/static/card_images/spt_0006_泳裝.jpeg",
     "original_file": "特殊旅人/0001_泳裝04_SPT0006_惡魔旅人.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "惡魔/旅人",
-    "image": "/static/card_images/spt_0006_泳裝.jpeg"
+    "trigger_condition": ""
   },
   {
     "id": "SPT-0007",
@@ -23053,34 +23137,14 @@
     "score": 4,
     "tribute": 2,
     "keywords": [],
-    "effect_text": "你宣言提早結束並成功時，使你場上所有小旅人+2★。",
+    "effect_text": "你宣言提早結束並成功時，使你場上所有小旅人+2星。",
+    "image": "/static/card_images/spt_0011.jpeg",
     "original_file": "特殊旅人/0024_SPT0011改_紅配綠.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/spt_0011.jpeg"
-  },
-  {
-    "id": "SPT-0011-ALT",
-    "name": "紅配綠旅人",
-    "deck": "特殊旅人",
-    "type": "unit",
-    "faction": "特殊旅人",
-    "race": "特殊旅人",
-    "attack": "4",
-    "score": 4,
-    "tribute": 2,
-    "keywords": [],
-    "effect_text": "你宣言提早結束並成功時，使你場上的小旅人+2★。",
-    "original_file": "特殊旅人/0007_22SPT0011_紅配綠旅人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/spt_0011_alt.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SPT-0012",
@@ -23239,35 +23303,15 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使敵方玩家下個回合不得進攻你的小旅人。",
+    "image": "/static/card_images/spt_0019.jpeg",
     "original_file": "特殊旅人/0036_SPT0019_觀光意外險.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 1,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/spt_0019.jpeg"
-  },
-  {
-    "id": "SPT-0025-ALT",
-    "name": "躺平旅人",
-    "deck": "特殊旅人",
-    "type": "unit",
-    "faction": "特殊旅人",
-    "race": "特殊旅人",
-    "attack": "0",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，若你本回合有至少3個小旅人回森林，可使你手牌的此卡被額外打出。",
-    "original_file": "特殊旅人/0008_23SPT0025_躺平旅人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/spt_0025_alt.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "SPT-0057",
@@ -23280,38 +23324,15 @@
     "score": -2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "無特殊效果。",
-    "extra_summon_condition": "你場上的小旅人被破壞時，若你場上有「咒縛旅人」，可使你額外區的此卡被召喚至你或敵方場上。",
-    "extra_deck_limit": 3,
+    "effect_text": "",
+    "image": "/static/card_images/spt_0057.jpeg",
     "original_file": "特殊旅人/0004_26SPT0057_怨念小旅人.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "小旅人",
-    "image": "/static/card_images/spt_0057.jpeg"
-  },
-  {
-    "id": "SPT-0058",
-    "name": "起義旅人",
-    "deck": "特殊旅人",
-    "type": "unit",
-    "faction": "特殊旅人",
-    "race": "特殊旅人",
-    "attack": "4",
-    "score": 4,
-    "tribute": 2,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：召喚至多X個小旅人。X=敵方場上的單位數量。",
-    "original_file": "特殊旅人/0003_27SPT0058_起義旅人.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/spt_0058.jpeg"
+    "trigger_condition": "你場上的小旅人被破壞時，若你場上有[咒縛旅人]，則可使你額外區的此卡被召喚至你或敵方場上",
+    "extra_deck_limit": 5,
+    "art_subtype": "小旅人"
   },
   {
     "id": "SR-ART-0021",
@@ -23793,11 +23814,13 @@
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "6",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "轉盤，輪轉，綁架，開盤"
+    ],
     "effect_text": "你的主要階段限一次，若你轉盤為5或以上，可輪轉1次，並使敵方場上1個攻擊力小於等於X的單位被綁架(3)。X=因此卡效果開盤的單位卡攻擊力。",
     "image": "/static/card_images/sr_ccs_0024.jpeg",
     "original_file": "馬戲團/0042_CCS0024_訓獸師_庫洛姆泰多-1.jpg",
@@ -23826,8 +23849,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0023",
@@ -23839,19 +23861,20 @@
     "attack": "5",
     "score": 6,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "此單位被破壞時，可使下方吞食合體單位留在場上。",
     "image": "/static/card_images/sr_cnd_0023.jpeg",
     "original_file": "甜點王國/0040_CND0023改_千層派_SR閃.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0023-PROMO",
-    "name": "千層派 (PROMO)",
+    "name": "千層派",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -23859,15 +23882,16 @@
     "attack": "5",
     "score": 6,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "此單位被破壞時，可使下方吞食合體單位留在場上。",
     "image": "/static/card_images/sr_cnd_0023_promo.jpeg",
     "original_file": "甜點王國/0041_4圖層_甜點王國_千層派_0.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0028",
@@ -23889,12 +23913,11 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0028-PROMO",
-    "name": "暗黑巧克力餅乾 (PROMO)",
+    "name": "暗黑巧克力餅乾",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -23909,11 +23932,10 @@
     "effect_text": "吞食合體。無法進攻。此卡可打出或召喚在敵方場上。",
     "image": "/static/card_images/sr_cnd_0028_promo.jpeg",
     "original_file": "甜點王國/0047_CND-0028-promo.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0030",
@@ -23921,12 +23943,12 @@
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "5",
     "score": 3,
     "tribute": 1,
     "keywords": [
-      "敵方魔法抗性"
+      "合體，敵方魔法抗性"
     ],
     "effect_text": "若你場上有合體後的單位，此單位被賦予敵方魔法抗性。此單位進攻戰鬥成功時，可使你場上1個其他合體後的單位被分開。",
     "image": "/static/card_images/sr_cnd_0030.jpeg",
@@ -23959,7 +23981,7 @@
   },
   {
     "id": "SR-CND-0037",
-    "name": "黑暗甜點界咳頌",
+    "name": "黑暗甜點界 咳頌",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -23977,8 +23999,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0043",
@@ -23991,7 +24012,7 @@
     "score": 6,
     "tribute": 3,
     "keywords": [
-      "敵方效果抗性"
+      "吞食合體，甜點王國，敵方效果抗性"
     ],
     "effect_text": "若與此單位吞食合體的卡牌數量至少為X，則使你場上所有甜點王國單位被賦予以下效果。X=0：-1攻擊力；X=1：+2攻擊力；X=2：+1★；X=3：敵方效果抗性。",
     "image": "/static/card_images/sr_cnd_0043.jpeg",
@@ -23999,12 +24020,11 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SR-CND-0055",
-    "name": "黑暗甜點界地獄辣椒糖",
+    "name": "黑暗甜點界 地獄辣椒糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -24022,8 +24042,7 @@
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "SR-CND-0057",
@@ -24031,11 +24050,13 @@
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "神族",
+    "race": "甜點王國",
     "attack": "3",
     "score": 7,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "甜點王國"
+    ],
     "effect_text": "此卡的祭品須為甜點王國單位。你的戰術階段，可改為打出1張需要祭品的甜點王國單位卡並可移動任意數量單位。",
     "image": "/static/card_images/sr_cnd_0057.jpeg",
     "original_file": "甜點王國/0006_44CND0057_甜品女王.jpg",
@@ -25292,6 +25313,28 @@
     "art_subtype": "場地"
   },
   {
+    "id": "SR-RBT-0022-VR",
+    "name": "旅人車車",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此卡合體時召喚1個小旅人，分開後召喚1個小旅人。",
+    "image": "/static/card_images/sr_rbt_0022_vr.jpeg",
+    "original_file": "機械軍團/0039_VR-RBT-0022-1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
     "id": "SR-RBT-0023",
     "name": "碰碰車",
     "deck": "機械軍團",
@@ -25323,7 +25366,9 @@
     "attack": "2",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "機械合體，獎勵"
+    ],
     "effect_text": "每當你場上的單位發動機械合體時，獎勵+1。",
     "image": "/static/card_images/sr_rbt_0024.jpeg",
     "original_file": "機械軍團/0041_RBT_0024機械女孩_R閃.jpg",
@@ -25385,7 +25430,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "#%#$!@%，機械合體，遺骸"
+    ],
     "effect_text": "主要階段。使由你持有的卡牌敘述中的「#%#$!@%」改為「若合體後的單位包含此卡，使該單位被賦予：合體的此單位仍可對遺骸單位發動合體或成為其機械合體的目標」。",
     "image": "/static/card_images/sr_rbt_0046.jpeg",
     "original_file": "機械軍團/0068_RBT-0046.jpg",
@@ -25407,7 +25454,9 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "機械，機械合體"
+    ],
     "effect_text": "你場上的機械單位進攻戰鬥成功時，可使你場上1個機械合體單位對其發動機械合體。",
     "image": "/static/card_images/sr_rbt_0051.jpeg",
     "original_file": "機械軍團/0073_RBT0051_戰鬥機械操作員.jpg",
@@ -25430,13 +25479,14 @@
     "keywords": [
       "機械合體"
     ],
-    "effect_text": "【升級條件】你選擇你「碰碰車」的祭品時，若該祭品為合體後的單位，則可使該卡升級為此卡並獻祭所有祭品被打出。\n【效果】機械合體。此單位無法以機械合體以外的方式移動。此卡合體時，使此卡前方的1個敵方單位被破壞，並在本次合體處理完畢後使與此卡合體的另1張單位卡進入墓地。",
+    "effect_text": "機械合體。此單位無法以機械合體以外的方式移動。此卡合體時，使此卡前方的1個敵方單位被破壞，並在本次合體處理完畢後使與此卡合體的另1張單位卡進入墓地。",
     "image": "/static/card_images/sr_rbt_0055.jpeg",
     "original_file": "機械軍團/0077_RBT0055_碰碰碰碰車.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你選擇你「碰碰車」的祭品時，若該祭品為合體後的單位，則可使該卡升級為此卡並獻祭所有祭品被打出。",
+    "extra_deck_limit": 1,
     "art_subtype": "機械"
   },
   {
@@ -25450,8 +25500,7 @@
     "score": 5,
     "tribute": 2,
     "keywords": [
-      "貫穿",
-      "機械合體"
+      "貫穿，機械合體"
     ],
     "effect_text": "貫穿。機械合體。合體後的此單位被破壞時，可使與此卡合體的其他單位卡進入墓地代替破壞，並使此卡發動機械合體。",
     "image": "/static/card_images/sr_rbt_0061.jpeg",
@@ -25727,13 +25776,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段，若場上小旅人的數量加總為5或以上，才可從你手牌打出此卡。使敵方玩家一回合最多只能使用法力值加總等同於場上小旅人數量的魔法卡。",
+    "image": "/static/card_images/sr_spt_0026_promo.jpeg",
     "original_file": "特殊旅人/0045_4圖層_旅人_革命旅人_0.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/sr_spt_0026_promo.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SR-SPT-0029",
@@ -25764,15 +25813,17 @@
     "attack": "4",
     "score": 4,
     "tribute": 2,
-    "keywords": [],
-    "effect_text": "你的主要階段限一次，可使你場上X個小旅人被破壞，若成功使敵方場上1個★等同X的單位被綁架。",
+    "keywords": [
+      "綁架"
+    ],
+    "effect_text": "你的主要階段限一次，可使你場上X個小旅人被破壞，若成功使敵方場上1個星星等同X的單位被綁架。",
+    "image": "/static/card_images/sr_spt_0036.jpeg",
     "original_file": "特殊旅人/0057_SPT-0036.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型",
-    "image": "/static/card_images/sr_spt_0036.jpeg"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "SR-SPT-0046",
@@ -25786,15 +25837,15 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你場上的小旅人被破壞時，可使其被置於此卡下方。一回合限一次，你因卡牌效果召喚小旅人時，可改為使此卡下方的單位卡被召喚。",
+    "image": "/static/card_images/sr_spt_0046.jpeg",
     "original_file": "特殊旅人/0068_SPT0046魔法森林.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 2,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/sr_spt_0046.jpeg"
+    "art_subtype": "場地"
   },
   {
     "id": "SR-SPT-0052",
@@ -25810,15 +25861,14 @@
       "消逝"
     ],
     "effect_text": "消逝。",
-    "extra_summon_condition": "由「學會當忍者的小旅人」之效果召喚至場上。",
-    "extra_deck_limit": 2,
+    "image": "/static/card_images/sr_spt_0052.jpeg",
     "original_file": "特殊旅人/0074_SPT0052_旅人的殘影_額外牌2.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "小旅人",
-    "image": "/static/card_images/sr_spt_0052.jpeg"
+    "extra_deck_limit": 2,
+    "art_subtype": "小旅人"
   },
   {
     "id": "SR-SPT-0055",
@@ -25830,15 +25880,17 @@
     "attack": "3",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "此卡被召喚時，可使此單位前方1個小旅人被破壞，若成功獎勵+2。",
+    "image": "/static/card_images/sr_spt_0055.jpeg",
     "original_file": "特殊旅人/0006_24SPT0055_當牛仔的小旅人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "小旅人",
-    "image": "/static/card_images/sr_spt_0055.jpeg"
+    "art_subtype": "小旅人"
   },
   {
     "id": "SR-STP-0023",
@@ -26929,19 +26981,21 @@
   },
   {
     "id": "SSR-CCS-0001",
-    "name": "惡作劇的小朋友 (SSR版)",
+    "name": "惡作劇的小朋友",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的結束階段時，使你墓地的此卡與另一張馬戲團單位卡上靶。",
     "image": "/static/card_images/ssr_ccs_0001.jpeg",
     "original_file": "馬戲團/0004_01馬戲團_惡作劇小朋友2.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -26949,19 +27003,21 @@
   },
   {
     "id": "SSR-CCS-0004",
-    "name": "馬戲團深夜小丑 (SSR版)",
+    "name": "馬戲團深夜小丑",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "轉盤，輪轉"
+    ],
     "effect_text": "你的主要階段限一次，若你轉盤為3或以上，可輪轉1次。",
     "image": "/static/card_images/ssr_ccs_0004.jpeg",
     "original_file": "馬戲團/0011_02馬戲團_深夜小丑2.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -26969,7 +27025,7 @@
   },
   {
     "id": "SSR-CCS-0007",
-    "name": "火圈巨熊 (SSR版)",
+    "name": "火圈巨熊",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -26977,19 +27033,20 @@
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "開盤：使敵方場上1個單位被破壞。",
     "image": "/static/card_images/ssr_ccs_0007.jpeg",
     "original_file": "馬戲團/0017_16馬戲團_火圈巨熊.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
-    "id": "SSR-CCS-0007-XTP",
-    "name": "火圈巨熊 (XTP SSR版)",
+    "id": "SSR-CCS-0007-金框",
+    "name": "火圈巨熊",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -26997,31 +27054,34 @@
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "開盤：使敵方場上1個單位被破壞。",
-    "image": "/static/card_images/ssr_ccs_0007_xtp.jpeg",
+    "image": "/static/card_images/ssr_ccs_0007_金框.jpeg",
     "original_file": "馬戲團/0018_07馬戲團_火圈巨熊.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SSR-CCS-0009",
-    "name": "布丁魔術師 (SSR版)",
+    "name": "布丁魔術師",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "開盤"
+    ],
     "effect_text": "開盤：使敵方場上1個非小旅人單位變為小旅人。",
     "image": "/static/card_images/ssr_ccs_0009.jpeg",
     "original_file": "馬戲團/0022_17馬戲團_布丁魔法師.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27029,19 +27089,21 @@
   },
   {
     "id": "SSR-CCS-0012",
-    "name": "馬戲團團長 (SSR版)",
+    "name": "馬戲團團長",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "4",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的主要階段限一次，可從你墓地尋找1張馬戲團單位卡使其上靶。此單位被破壞時，可從你牌庫尋找1張馬戲團單位卡使其上靶。",
     "image": "/static/card_images/ssr_ccs_0012.jpeg",
     "original_file": "馬戲團/0028_18馬戲團_神崎團長.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27049,21 +27111,21 @@
   },
   {
     "id": "SSR-CCS-0018",
-    "name": "狐狸魔術師 (SSR版)",
+    "name": "狐狸魔術師",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "3",
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "上靶"
+      "上靶，開盤，轉盤"
     ],
     "effect_text": "上靶。開盤：使你墓地1張法力值為X的馬戲團魔法卡回手牌。X=你轉盤的數量。",
     "image": "/static/card_images/ssr_ccs_0018.jpeg",
     "original_file": "馬戲團/0035_19馬戲團_狐狸魔術師.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27071,7 +27133,7 @@
   },
   {
     "id": "SSR-CCS-0028",
-    "name": "打鼓猴子 (SSR版)",
+    "name": "打鼓猴子",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -27079,19 +27141,20 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "輪轉，開盤，上靶"
+    ],
     "effect_text": "一回合限一次，你1張卡牌的所有輪轉效果結束後，可使其中1張因該卡開盤而進入墓地的卡牌上靶。",
     "image": "/static/card_images/ssr_ccs_0028.jpeg",
     "original_file": "馬戲團/0048_20馬戲團_三毛猴子.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SSR-CND-0003",
-    "name": "薑餅人 (SSR版)",
+    "name": "薑餅人",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -27103,15 +27166,14 @@
     "effect_text": "被獻祭時抽1張牌。",
     "image": "/static/card_images/ssr_cnd_0003.jpeg",
     "original_file": "甜點王國/0013_CND0003_薑餅人_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SSR-CND-0006",
-    "name": "甜甜圈先生 (SSR版)",
+    "name": "甜甜圈先生",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -27119,19 +27181,20 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "使你場上所有合體後的單位+2攻擊力。",
     "image": "/static/card_images/ssr_cnd_0006.jpeg",
     "original_file": "甜點王國/0017_SSR-CND-0006.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SSR-CND-0007",
-    "name": "巨型糖果機 (SSR版)",
+    "name": "巨型糖果機",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -27145,15 +27208,14 @@
     "effect_text": "立即：展示牌庫頂3張牌，若是甜點王國單位則召喚，否則送進墓地。",
     "image": "/static/card_images/ssr_cnd_0007.jpeg",
     "original_file": "甜點王國/0019_SSR-CND-0007.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "SSR-CND-0011",
-    "name": "水晶糖 (SSR版)",
+    "name": "水晶糖",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -27161,23 +27223,24 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "合體"
+    ],
     "effect_text": "使你場上所有合體後的單位不會被敵方魔法卡選為目標。",
     "image": "/static/card_images/ssr_cnd_0011.jpeg",
     "original_file": "甜點王國/0027_CND0011改_水晶糖_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": ""
   },
   {
     "id": "SSR-CND-0034",
-    "name": "地獄廚神 (SSR版)",
+    "name": "地獄廚神",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "神族",
+    "race": "甜點王國",
     "attack": "5",
     "score": 3,
     "tribute": 1,
@@ -27185,7 +27248,7 @@
     "effect_text": "你的主要階段限一次，可使此單位橫放，若成功則使你墓地1個吞食合體單位被召喚。",
     "image": "/static/card_images/ssr_cnd_0034.jpeg",
     "original_file": "甜點王國/0055_甜點王國_廚神卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27193,19 +27256,21 @@
   },
   {
     "id": "SSR-CND-0036",
-    "name": "黑暗甜點界強迫餵食阿姨 (SSR版)",
+    "name": "黑暗甜點界 強迫餵食阿姨",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "人型",
+    "race": "甜點王國",
     "attack": "3",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "吞食合體"
+    ],
     "effect_text": "你的主要階段限一次，可使場上1個吞食合體單位被置於敵方場上1個需要祭品的單位下方（視為吞食合體且該單位下方的單位數不得超過其所需祭品數）。",
     "image": "/static/card_images/ssr_cnd_0036.jpeg",
     "original_file": "甜點王國/0059_07甜點王國_強迫餵食.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27213,7 +27278,7 @@
   },
   {
     "id": "SSR-CND-0050",
-    "name": "超科學怪薑餅人 (SSR版)",
+    "name": "超科學怪薑餅人",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -27222,30 +27287,32 @@
     "score": "X",
     "tribute": 3,
     "keywords": [],
-    "effect_text": "【升級條件】你選擇你「科學怪薑餅人」的祭品數量為3時，可使該卡升級為此卡並獻祭所選祭品使其被打出。<br>【效果】此單位在戰鬥時不會被破壞。X=此卡因吞食合體被賦予的攻擊力及★加總。",
+    "effect_text": "此單位在戰鬥時不會被破壞。X=此卡因吞食合體被賦予的攻擊力及★加總。",
     "image": "/static/card_images/ssr_cnd_0050.jpeg",
     "original_file": "甜點王國/0074_甜點王國_超科學怪薑餅人_1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": ""
+    "trigger_condition": "你的結束階段時，若你場上有合體後的單位包含「糖果人」，可使你額外區的此卡被召喚。",
+    "extra_deck_limit": 1
   },
   {
     "id": "SSR-CND-0057-泳裝",
-    "name": "甜點女王 (泳裝)",
+    "name": "甜點女王",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
-    "race": "神族",
+    "race": "甜點王國",
     "attack": "3",
     "score": 7,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "甜點王國"
+    ],
     "effect_text": "此卡的祭品須為甜點王國單位。你的戰術階段，可改為打出1張需要祭品的甜點王國單位卡並可移動任意數量單位。",
-    "image": "/static/card_images/ssr_cnd_0057_swimsuit.jpeg",
+    "image": "/static/card_images/ssr_cnd_0057_泳裝.jpeg",
     "original_file": "甜點王國/0001_泳裝23_CND0057_甜點女王-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28405,7 +28472,7 @@
   },
   {
     "id": "SSR-RBT-0002",
-    "name": "機械美杜莎 (SSR版)",
+    "name": "機械美杜莎",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28417,7 +28484,7 @@
     "effect_text": "敵方場上所有單位視為機械。",
     "image": "/static/card_images/ssr_rbt_0002.jpeg",
     "original_file": "機械軍團/0012_RBT_0002每度殺_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28425,7 +28492,7 @@
   },
   {
     "id": "SSR-RBT-0007",
-    "name": "重組小兵 (SSR版)",
+    "name": "重組小兵",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28439,7 +28506,7 @@
     "effect_text": "立即：使你場上所有合體後的單位被分開。",
     "image": "/static/card_images/ssr_rbt_0007.jpeg",
     "original_file": "機械軍團/0019_08機械軍團_重組小兵.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28447,7 +28514,7 @@
   },
   {
     "id": "SSR-RBT-0010",
-    "name": "機械師瑪琪 (SSR版)",
+    "name": "機械師瑪琪",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28456,12 +28523,12 @@
     "score": 6,
     "tribute": 2,
     "keywords": [
-      "掩護"
+      "機械，掩護，合體"
     ],
-    "effect_text": "使你場上所有機械單位被賦予掩護，且每個合體後的單位使此卡+2★。",
+    "effect_text": "使你場上所有機械單位被賦予掩護，且每個合體後的單位使此卡+2星。",
     "image": "/static/card_images/ssr_rbt_0010.jpeg",
     "original_file": "機械軍團/0024_RBT_0010改瑪琪_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28469,7 +28536,7 @@
   },
   {
     "id": "SSR-RBT-0024",
-    "name": "機械女孩蔓蒂 (SSR版)",
+    "name": "機械女孩蔓蒂",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28477,11 +28544,13 @@
     "attack": "2",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "機械合體，獎勵"
+    ],
     "effect_text": "每當你場上的單位發動機械合體時，獎勵+1。",
     "image": "/static/card_images/ssr_rbt_0024.jpeg",
     "original_file": "機械軍團/0042_SSR-RBT-0024.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28489,7 +28558,7 @@
   },
   {
     "id": "SSR-RBT-0026",
-    "name": "禁忌改裝師 (SSR版)",
+    "name": "禁忌改裝師",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28498,10 +28567,10 @@
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的主要階段，若你場上有至少2個合體後的單位，則可使你手牌的此卡被額外打出。你的主要階段限一次，可使你場上1個合體後的單位被分開，並可使分開後的任意個機械合體單位發動機械合體。",
+    "effect_text": "你的主要階段，若你場上有2個或以上合體後的單位，才可從手牌額外打出此卡。你的主要階段，可分開你場上1個合體後的單位，並可使被分開後的所有機械合體單位發動機械合體（一回合限一次）。",
     "image": "/static/card_images/ssr_rbt_0026.jpeg",
     "original_file": "機械軍團/0002_91禁忌改裝師.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28509,7 +28578,7 @@
   },
   {
     "id": "SSR-RBT-0038",
-    "name": "機神核心 (SSR插畫版)",
+    "name": "機神核心",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28523,7 +28592,7 @@
     "effect_text": "機械合體。#%#$!@%",
     "image": "/static/card_images/ssr_rbt_0038.jpeg",
     "original_file": "機械軍團/0059_機械軍團_機神核心卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28531,7 +28600,7 @@
   },
   {
     "id": "SSR-RBT-0045",
-    "name": "古代機神巨人 (SSR插畫版)",
+    "name": "古代機神巨人",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28541,21 +28610,20 @@
     "tribute": 0,
     "keywords": [
       "敵方魔法抗性",
-      "敵方效果抗性",
-      "立即"
+      "，敵方效果抗性，立即"
     ],
     "effect_text": "你的召喚階段，可改為使你場上1張「機神核心」及5張遺骸單位卡被除外，並從你手牌打出此卡。（包含於合體後的單位的卡牌被除外時須除外整個單位）敵方魔法抗性。敵方效果抗性。立即：使敵方牌庫/手牌/場上所有卡牌進入墓地。",
     "image": "/static/card_images/ssr_rbt_0045.jpeg",
     "original_file": "機械軍團/0067_機械軍團_古代機神巨人卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "神族/機械"
+    "art_subtype": "神族，機械"
   },
   {
     "id": "SSR-RBT-0056",
-    "name": "潑水節的自嗨機器人 (SSR版)",
+    "name": "潑水節的自嗨機器人",
     "deck": "機械軍團",
     "type": "unit",
     "faction": "機械軍團",
@@ -28564,15 +28632,16 @@
     "score": 4,
     "tribute": 0,
     "keywords": [
-      "機械合體"
+      "機械合體，獎勵"
     ],
-    "effect_text": "【升級條件】你的主要階段，若你場上合體後的「自嗨機器人」位於三號星星戰線後排位置且你場上沒有其他單位，可使「自嗨機器人」升級為此卡並與原本合體的卡牌以相同的合體狀態置於原位置。\n【效果】機械合體。你的主要階段限一次，可使你場上1個合體後的單位被破壞，若成功使敵方場上1個單位被破壞。你的結束階段時，若你場上只有此單位，獎勵+2。",
+    "effect_text": "機械合體。你的主要階段限一次，可使你場上1個合體後的單位被破壞，若成功使敵方場上1個單位被破壞。你的結束階段時，若你場上只有此單位，獎勵+2。",
     "image": "/static/card_images/ssr_rbt_0056.jpeg",
     "original_file": "機械軍團/0079_機械軍團_潑水自嗨機器人_1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
+    "trigger_condition": "你選擇你「碰碰車」的祭品時，若該祭品為合體後的單位，則可使該卡升級為此卡並獻祭所有祭品被打出。",
+    "extra_deck_limit": 1,
     "art_subtype": "機械"
   },
   {
@@ -28797,14 +28866,13 @@
     "score": 2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "此卡被破壞時，召喚2個小旅人。",
+    "effect_text": "此卡被破壞時，召喚2個小旅人",
+    "image": "/static/card_images/ssr_spt_0009.jpeg",
     "original_file": "特殊旅人/0022_SSR-SPT-0009.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/ssr_spt_0009.jpeg"
+    "trigger_condition": ""
   },
   {
     "id": "SSR-SPT-0024",
@@ -28818,13 +28886,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "當此卡與小旅人同時在你場上時，使此卡被破壞。",
+    "image": "/static/card_images/ssr_spt_0024.jpeg",
     "original_file": "特殊旅人/0042_SPT0024_泡澡旅人_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/ssr_spt_0024.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-SPT-0026",
@@ -28838,17 +28906,17 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段，若場上小旅人的數量加總為5或以上，才可從你手牌打出此卡。使敵方玩家一回合最多只能使用法力值加總等同於場上小旅人數量的魔法卡。",
+    "image": "/static/card_images/ssr_spt_0026.jpeg",
     "original_file": "特殊旅人/0046_特殊旅人_革命旅人卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/ssr_spt_0026.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-SPT-0030",
-    "name": "催酒的旅店老闆娘 黑銀夜鳥",
+    "name": "催酒的旅店老闆娘",
     "deck": "特殊旅人",
     "type": "unit",
     "faction": "特殊旅人",
@@ -28858,13 +28926,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的防守階段開始時，使你場上所有小旅人被賦予+2攻擊力直到防守階段結束。",
+    "image": "/static/card_images/ssr_spt_0030.jpeg",
     "original_file": "特殊旅人/0051_SSR-SPT-0030.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/ssr_spt_0030.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-SPT-0045",
@@ -28876,15 +28944,17 @@
     "attack": "3",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "特殊旅人"
+    ],
     "effect_text": "使你場上所有無需祭品的特殊旅人單位被視為小旅人。",
+    "image": "/static/card_images/ssr_spt_0045.jpeg",
     "original_file": "特殊旅人/0067_04特殊旅人_小丑旅人.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型",
-    "image": "/static/card_images/ssr_spt_0045.jpeg"
+    "art_subtype": "人型"
   },
   {
     "id": "SSR-SPT-0053",
@@ -28897,14 +28967,14 @@
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "此單位進攻時，可使此單位回手牌並使你額外區1張「小旅人的殘影」被召喚至其原位置，若成功則使你手牌的此卡被召喚，並使你場上所有「小旅人的殘影」進攻。",
+    "effect_text": "此單位進攻時，可使此單位回手牌並使你額外區1張「小旅人的殘影」被召喚至其原位置，若成功使你手牌的此卡被召喚，並使你場上所有「小旅人的殘影」進攻。",
+    "image": "/static/card_images/ssr_spt_0053.jpeg",
     "original_file": "特殊旅人/0076_特殊旅人_學會忍者的小旅人_1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "小旅人",
-    "image": "/static/card_images/ssr_spt_0053.jpeg"
+    "art_subtype": "小旅人"
   },
   {
     "id": "SSR-STP-0005",
@@ -29417,6 +29487,28 @@
     "art_subtype": "虛擬，亡靈"
   },
   {
+    "id": "SSRS-RBT-0027",
+    "name": "深淵雷射眼",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此卡合體時，在本次合體處理完畢後使場上1個與此合體後單位星星相同的敵方單位被破壞。",
+    "image": "/static/card_images/ssrs_rbt_0027.jpeg",
+    "original_file": "機械軍團/0046_全圖泳裝RBT0027_深淵雷射眼_夏伊拉.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "機械"
+  },
+  {
     "id": "SSSR-BRV-0002",
     "name": "金幣小魔",
     "deck": "勇者公會",
@@ -29504,19 +29596,21 @@
   },
   {
     "id": "SSSR-CCS-0001",
-    "name": "惡作劇的小朋友 (SSSR PROMO)",
+    "name": "惡作劇的小朋友",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的結束階段時，使你墓地的此卡與另一張馬戲團單位卡上靶。",
     "image": "/static/card_images/sssr_ccs_0001.jpeg",
     "original_file": "馬戲團/0005_1770817203763.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29524,19 +29618,21 @@
   },
   {
     "id": "SSSR-CCS-0004",
-    "name": "馬戲團深夜小丑 (SSSR PROMO)",
+    "name": "馬戲團深夜小丑",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "轉盤，輪轉"
+    ],
     "effect_text": "你的主要階段限一次，若你轉盤為3或以上，可輪轉1次。",
     "image": "/static/card_images/sssr_ccs_0004.jpeg",
     "original_file": "馬戲團/0012_1770817204816.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29544,7 +29640,7 @@
   },
   {
     "id": "SSSR-CCS-0026",
-    "name": "馬戲團好夥伴 (SSSR PROMO)",
+    "name": "馬戲團好夥伴",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
@@ -29553,16 +29649,15 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，馬戲團，上靶，獎勵"
     ],
     "effect_text": "立即：從你牌庫尋找1張無需祭品的馬戲團單位卡並使其上靶。開盤：使你獎勵+2。",
     "image": "/static/card_images/sssr_ccs_0026.jpeg",
     "original_file": "馬戲團/0045_1770817204426.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "SSSR-CRB-0012",
@@ -31693,19 +31788,21 @@
   },
   {
     "id": "STR-CCS-0001",
-    "name": "惡作劇的小朋友 (STR版)",
+    "name": "惡作劇的小朋友",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "馬戲團，上靶"
+    ],
     "effect_text": "你的結束階段時，使你墓地的此卡與另一張馬戲團單位卡上靶。",
     "image": "/static/card_images/str_ccs_0001.jpeg",
     "original_file": "馬戲團/0003_馬戲團_惡作劇小朋友-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -31713,19 +31810,21 @@
   },
   {
     "id": "STR-CCS-0004",
-    "name": "馬戲團深夜小丑 (STR版)",
+    "name": "馬戲團深夜小丑",
     "deck": "馬戲團",
     "type": "unit",
     "faction": "馬戲團",
-    "race": "人型",
+    "race": "馬戲團",
     "attack": "5",
     "score": 5,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "轉盤，輪轉"
+    ],
     "effect_text": "你的主要階段限一次，若你轉盤為3或以上，可輪轉1次。",
     "image": "/static/card_images/str_ccs_0004.jpeg",
     "original_file": "馬戲團/0010_馬戲團_深夜小丑-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -31750,70 +31849,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "山羊"
-  },
-  {
-    "id": "SW-RBT-0002",
-    "name": "機械美杜莎 (泳裝)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "使敵方場上所有單位被視為機械。",
-    "image": "/static/card_images/sw_rbt_0002.jpeg",
-    "original_file": "機械軍團/0001_泳裝08_RBT_0002每度殺.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "SW-RBT-0009",
-    "name": "抱抱熊 李青 (泳裝)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "-2",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體（可與敵方單位合體）。",
-    "image": "/static/card_images/sw_rbt_0009.jpeg",
-    "original_file": "機械軍團/0022_15泳裝RBT0009_抱抱熊_李青.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
-  },
-  {
-    "id": "SW-RBT-0027",
-    "name": "深淵雷射眼 夏伊拉 (泳裝)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "3",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此卡合體時，在本次合體處理完畢後使場上1個與此合體後單位★相同的敵方單位被破壞。",
-    "image": "/static/card_images/sw_rbt_0027.jpeg",
-    "original_file": "機械軍團/0046_全圖泳裝RBT0027_深淵雷射眼_夏伊拉.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
   },
   {
     "id": "SW-VLG-0012",
@@ -31860,7 +31895,7 @@
   },
   {
     "id": "VR-CND-0007",
-    "name": "巨型糖果機 (VR版)",
+    "name": "巨型糖果機",
     "deck": "甜點王國",
     "type": "unit",
     "faction": "甜點王國",
@@ -31874,11 +31909,10 @@
     "effect_text": "立即：展示牌庫頂3張牌，若是甜點王國單位則召喚，否則送進墓地。",
     "image": "/static/card_images/vr_cnd_0007.jpeg",
     "original_file": "甜點王國/0020_VR-CND-0007-1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": ""
+    "trigger_condition": "立即"
   },
   {
     "id": "VR-GOT-0012",
@@ -31899,28 +31933,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "山羊"
-  },
-  {
-    "id": "VR-RBT-0022",
-    "name": "旅人車車 (VR版)",
-    "deck": "機械軍團",
-    "type": "unit",
-    "faction": "機械軍團",
-    "race": "機械軍團",
-    "attack": "2",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。此卡合體時召喚1個小旅人，分開後召喚1個小旅人。",
-    "image": "/static/card_images/vr_rbt_0022.jpeg",
-    "original_file": "機械軍團/0039_VR-RBT-0022-1.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "機械"
   },
   {
     "id": "VR-SKT-0010-VR",
@@ -32627,5 +32639,27 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
+  },
+  {
+    "id": "Ｒ-RBT-0041",
+    "name": "古代機神遺骸左手",
+    "deck": "機械軍團",
+    "type": "unit",
+    "faction": "機械軍團",
+    "race": "機械軍團",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "機械合體"
+    ],
+    "effect_text": "機械合體。此單位合體時，若本次合體的單位包含此卡與「機神核心」，使敵方場上1個星星為1或以下的單位被破壞。",
+    "image": "/static/card_images/ｒ_rbt_0041.jpeg",
+    "original_file": "機械軍團/0062_RBT-0041.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "遺骸，機械"
   }
 ]
