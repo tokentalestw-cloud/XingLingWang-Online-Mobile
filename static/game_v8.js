@@ -1009,33 +1009,24 @@ function populateLobbyDecksDropdown() {
 
 function populateAiDecksDropdown() {
   const aiFactionSelect = document.getElementById("aiFactionSelect");
+  const modalAiFactionSelect = document.getElementById("modalAiFactionSelect");
   const aiDeckSelect = document.getElementById("aiDeckSelect");
-  if (!aiDeckSelect) return;
+  const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
+  if (!aiDeckSelect && !modalAiDeckSelect) return;
 
-  const currentFaction = aiFactionSelect ? aiFactionSelect.value : "隨機";
-  const curVal = aiDeckSelect.value;
+  const currentFaction = (modalAiFactionSelect && modalAiFactionSelect.value) || (aiFactionSelect && aiFactionSelect.value) || "隨機";
+  const curVal = (modalAiDeckSelect && modalAiDeckSelect.value) || (aiDeckSelect && aiDeckSelect.value) || "隨機";
 
-  aiDeckSelect.innerHTML = "";
+  let optionsHtml = "";
 
   if (!currentFaction || currentFaction === "隨機") {
-    const optRandom = document.createElement("option");
-    optRandom.value = "隨機";
-    optRandom.textContent = "🎲 隨機牌組 (全牌組隨機)";
-    aiDeckSelect.appendChild(optRandom);
-
+    optionsHtml += '<option value="隨機">🎲 隨機牌組 (全牌組隨機)</option>';
     const allKeys = Object.keys(decks || {}).filter(key => !key.endsWith("_extra") && key !== "中立單位");
     allKeys.forEach(key => {
-      const opt = document.createElement("option");
-      opt.value = key;
-      opt.textContent = key;
-      aiDeckSelect.appendChild(opt);
+      optionsHtml += `<option value="${key}">${key}</option>`;
     });
   } else {
-    const optRandomFac = document.createElement("option");
-    optRandomFac.value = "隨機";
-    optRandomFac.textContent = `🎲 隨機牌組 (${currentFaction} 隨機)`;
-    aiDeckSelect.appendChild(optRandomFac);
-
+    optionsHtml += `<option value="隨機">🎲 隨機牌組 (${currentFaction} 隨機)</option>`;
     const factionKeys = Object.keys(decks || {}).filter(key => 
       !key.endsWith("_extra") && 
       key !== "中立單位" && 
@@ -1043,32 +1034,29 @@ function populateAiDecksDropdown() {
     );
 
     factionKeys.forEach(key => {
-      const opt = document.createElement("option");
-      opt.value = key;
-      opt.textContent = key;
-      aiDeckSelect.appendChild(opt);
+      optionsHtml += `<option value="${key}">${key}</option>`;
     });
   }
 
-  if (curVal && Array.from(aiDeckSelect.options).some(o => o.value === curVal)) {
-    aiDeckSelect.value = curVal;
-  } else {
-    aiDeckSelect.value = "隨機";
-  }
+  [aiDeckSelect, modalAiDeckSelect].forEach(sel => {
+    if (sel) {
+      sel.innerHTML = optionsHtml;
+      if (curVal && Array.from(sel.options).some(o => o.value === curVal)) {
+        sel.value = curVal;
+      } else {
+        sel.value = "隨機";
+      }
+    }
+  });
 }
 window.populateAiDecksDropdown = populateAiDecksDropdown;
 
 function populateAiFactionsDropdown(factionOrder = []) {
   const aiFactionSelect = document.getElementById("aiFactionSelect");
-  if (!aiFactionSelect) return;
+  const modalAiFactionSelect = document.getElementById("modalAiFactionSelect");
+  if (!aiFactionSelect && !modalAiFactionSelect) return;
 
-  const curVal = aiFactionSelect.value || "隨機";
-  aiFactionSelect.innerHTML = "";
-
-  const randomOpt = document.createElement("option");
-  randomOpt.value = "隨機";
-  randomOpt.textContent = "🎲 隨機種族";
-  aiFactionSelect.appendChild(randomOpt);
+  const curVal = (modalAiFactionSelect && modalAiFactionSelect.value) || (aiFactionSelect && aiFactionSelect.value) || "隨機";
 
   const factions = (Array.isArray(factionOrder) && factionOrder.length > 0) ? factionOrder : [
     "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
@@ -1076,18 +1064,21 @@ function populateAiFactionsDropdown(factionOrder = []) {
     "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
   ];
 
+  let optionsHtml = '<option value="隨機">🎲 隨機種族</option>';
   factions.forEach(fac => {
-    const opt = document.createElement("option");
-    opt.value = fac;
-    opt.textContent = fac;
-    aiFactionSelect.appendChild(opt);
+    optionsHtml += `<option value="${fac}">${fac}</option>`;
   });
 
-  if (curVal && (curVal === "隨機" || factions.includes(curVal))) {
-    aiFactionSelect.value = curVal;
-  } else {
-    aiFactionSelect.value = "隨機";
-  }
+  [aiFactionSelect, modalAiFactionSelect].forEach(sel => {
+    if (sel) {
+      sel.innerHTML = optionsHtml;
+      if (curVal && (curVal === "隨機" || factions.includes(curVal))) {
+        sel.value = curVal;
+      } else {
+        sel.value = "隨機";
+      }
+    }
+  });
 
   populateAiDecksDropdown();
 }
@@ -47696,29 +47687,34 @@ window.xlwChooseMode = function(mode) {
   }
   
   // Populate Opponent Factions & Decks
+  populateAiFactionsDropdown();
+
   const aiFactionSelect = document.getElementById("aiFactionSelect");
   const modalAiFactionSelect = document.getElementById("modalAiFactionSelect");
-  if (aiFactionSelect && modalAiFactionSelect) {
-    modalAiFactionSelect.innerHTML = aiFactionSelect.innerHTML;
-    modalAiFactionSelect.value = aiFactionSelect.value;
-  }
-  
   const aiDeckSelect = document.getElementById("aiDeckSelect");
   const modalAiDeckSelect = document.getElementById("modalAiDeckSelect");
-  if (aiDeckSelect && modalAiDeckSelect) {
-    modalAiDeckSelect.innerHTML = aiDeckSelect.innerHTML;
+
+  if (modalAiFactionSelect && aiFactionSelect) {
+    modalAiFactionSelect.value = aiFactionSelect.value;
+  }
+  if (modalAiDeckSelect && aiDeckSelect) {
     modalAiDeckSelect.value = aiDeckSelect.value;
   }
-  
+
   if (modalAiFactionSelect && modalAiDeckSelect && aiFactionSelect && aiDeckSelect) {
     modalAiFactionSelect.onchange = () => {
       aiFactionSelect.value = modalAiFactionSelect.value;
       populateAiDecksDropdown();
-      modalAiDeckSelect.innerHTML = aiDeckSelect.innerHTML;
-      modalAiDeckSelect.value = aiDeckSelect.value;
     };
     modalAiDeckSelect.onchange = () => {
       aiDeckSelect.value = modalAiDeckSelect.value;
+    };
+    aiFactionSelect.onchange = () => {
+      modalAiFactionSelect.value = aiFactionSelect.value;
+      populateAiDecksDropdown();
+    };
+    aiDeckSelect.onchange = () => {
+      modalAiDeckSelect.value = aiDeckSelect.value;
     };
   }
   

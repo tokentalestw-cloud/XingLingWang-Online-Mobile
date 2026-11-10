@@ -230,6 +230,24 @@
       <span class="group-label" style="margin-left: 8px;">👾 對手:</span>
       <select id="aiFactionSelect" aria-label="選擇對手種族">
         <option value="隨機">🎲 隨機種族</option>
+        <option value="藝術品">藝術品</option>
+        <option value="喵喵賊">喵喵賊</option>
+        <option value="妖怪村莊">妖怪村莊</option>
+        <option value="獸人">獸人</option>
+        <option value="虛擬世界">虛擬世界</option>
+        <option value="勇者公會">勇者公會</option>
+        <option value="妖精">妖精</option>
+        <option value="山羊族">山羊族</option>
+        <option value="機械軍團">機械軍團</option>
+        <option value="歡樂島">歡樂島</option>
+        <option value="特殊旅人">特殊旅人</option>
+        <option value="甜點王國">甜點王國</option>
+        <option value="發電獸">發電獸</option>
+        <option value="碳碳族">碳碳族</option>
+        <option value="蒸汽世界">蒸汽世界</option>
+        <option value="進化野人">進化野人</option>
+        <option value="馬戲團">馬戲團</option>
+        <option value="骷髏人">骷髏人</option>
       </select>
       <select id="aiDeckSelect" aria-label="選擇對手AI牌組">
         <option value="隨機">🎲 隨機牌組</option>
@@ -958,7 +976,7 @@
   <script src="/static/battle_flow.js?v=20261101-inputcheck-v10"></script>
   <script src="/static/touch_actions.js?v=20261101-inputcheck-v10"></script>
   <script src="/static/duel_consistency.js?v=20261103-duel-v2"></script>
-  <script src="/static/game_v8.js?v=20261106-destroy-v1" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261111-ai-faction-v2" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
@@ -979,8 +997,30 @@
       <div id="prebattleEnemyGroup" class="prebattle-field-group">
         <div class="prebattle-label">對手 AI 陣營與牌組：</div>
         <div class="prebattle-selects-row">
-          <select id="modalAiFactionSelect" class="prebattle-select" aria-label="選擇對手AI陣營"></select>
-          <select id="modalAiDeckSelect" class="prebattle-select" aria-label="選擇對手AI牌組"></select>
+          <select id="modalAiFactionSelect" class="prebattle-select" aria-label="選擇對手AI陣營">
+            <option value="隨機">🎲 隨機種族</option>
+            <option value="藝術品">藝術品</option>
+            <option value="喵喵賊">喵喵賊</option>
+            <option value="妖怪村莊">妖怪村莊</option>
+            <option value="獸人">獸人</option>
+            <option value="虛擬世界">虛擬世界</option>
+            <option value="勇者公會">勇者公會</option>
+            <option value="妖精">妖精</option>
+            <option value="山羊族">山羊族</option>
+            <option value="機械軍團">機械軍團</option>
+            <option value="歡樂島">歡樂島</option>
+            <option value="特殊旅人">特殊旅人</option>
+            <option value="甜點王國">甜點王國</option>
+            <option value="發電獸">發電獸</option>
+            <option value="碳碳族">碳碳族</option>
+            <option value="蒸汽世界">蒸汽世界</option>
+            <option value="進化野人">進化野人</option>
+            <option value="馬戲團">馬戲團</option>
+            <option value="骷髏人">骷髏人</option>
+          </select>
+          <select id="modalAiDeckSelect" class="prebattle-select" aria-label="選擇對手AI牌組">
+            <option value="隨機">🎲 隨機牌組</option>
+          </select>
         </div>
       </div>
       
