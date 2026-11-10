@@ -1737,6 +1737,63 @@ async function performPlayerTurnStartDraw() {
   }
   // 🍬 鬆餅博士 (CND-0015): 你的抽牌階段，改為抽3張選2張加入手牌，其餘放回牌庫頂
   
+  // 🐐 山羊族 & ⚙️ 蒸氣世界 回合重置
+  window.XLW_infiniteGoatsActive = false;
+  window.XLW_goatPeggyUsedThisTurn = false;
+  window.XLW_goatResearcherTriggeredThisTurn = false;
+  window.XLW_steamLiberatorActiveThisTurn = false;
+  window.XLW_turretSummonedThisTurn = false;
+  window.XLW_bonnieUsedThisTurn = false;
+  window.XLW_horrificDummyUsedThisTurn = false;
+  window.XLW_puppeteerUsedThisTurn = false;
+  window.XLW_pipiUsedThisTurn = false;
+  window.XLW_tankUsedThisTurn = false;
+  window.XLW_royalStarUsedThisTurn = false;
+  window.XLW_henkUsedThisTurn = false;
+  window.XLW_goldCapUsedThisTurn = false;
+  window.XLW_supplyOfficerUsedThisTurn = false;
+  window.XLW_steamSupplyTributeDiscount = 0;
+  window.XLW_playerEnergyConsumedCountThisTurn = 0;
+  window.XLW_blockedStarLanesUntilNextTurn = [];
+
+  // 🌌 黑洞羊 (GOT-0034 / SSR-GOT-0034) 躍遷檢查
+  await window.xlwCheckBlackHoleGoatProgress(true);
+
+  // 🌀 時空小山羊 (GOT-0051) 時空裂縫歸來
+  if (window.XLW_banishedTimeGoats && window.XLW_banishedTimeGoats.length > 0) {
+    const toReturn = [...window.XLW_banishedTimeGoats];
+    window.XLW_banishedTimeGoats = [];
+    for (const item of toReturn) {
+      logBattle(`🌀【時空小山羊】時空歸來！召喚【${item.card.name}】重返戰場！`);
+      await window.xlwSpecialSummonUnit(item.card, item.isPlayer);
+    }
+  }
+
+  // 💨 蒸汽魔盜團指揮官 奧麗 (R-STP-0039): 主要階段開始時，使你場上所有滑行單位被轉正，每轉正1個單位充能+1
+  const slidingUnitsToUntap = [];
+  for (const z of ["player_front", "player_back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && u.tapped && (u.card.keywords?.includes("滑行") || u.card.name?.includes("滑行") || u.card.name?.includes("索羅") || u.card.name?.includes("毒氣兵") || u.card.name?.includes("蒸汽船"))) {
+        slidingUnitsToUntap.push(u);
+      }
+    });
+  }
+  if (slidingUnitsToUntap.length > 0) {
+    slidingUnitsToUntap.forEach(u => { u.tapped = false; });
+    logBattle(`💨【奧麗】整隊號令！轉正了場上 ${slidingUnitsToUntap.length} 個滑行單位！`);
+    await window.xlwChargeEnergy(slidingUnitsToUntap.length, true);
+  }
+
+  // 🧪 利息能量瓶 (R-STP-0059): 你的下個主要階段開始時，使墓地的此卡回手牌，若成功則充能4
+  const bottleIdx = graveyard.findIndex(c => c && (c.id === "R-STP-0059" || c.name?.includes("利息能量瓶")) && c._interestPendingTurn && c._interestPendingTurn <= turn);
+  if (bottleIdx >= 0) {
+    const bottleCard = graveyard.splice(bottleIdx, 1)[0];
+    delete bottleCard._interestPendingTurn;
+    hand.push(bottleCard);
+    logBattle("🧪【利息能量瓶】連本帶利！卡牌回收至手牌，並注入 4 點充能！");
+    await window.xlwChargeEnergy(4, true);
+  }
+
   // 🤖 機械軍團回合重置
   window.XLW_pilotUsedThisTurn = false;
   window.XLW_remodellerUsedThisTurn = false;
@@ -2306,6 +2363,8 @@ window.xlwUnitHasSneak = function(unit, zone) {
   }
 
   const hasBaseSneak = window.xlwCardHasKeyword(card, "偷襲") ||
+                       window.xlwCardHasKeyword(card, "偷竊") ||
+                       card.id === "GOT-0015" || card.name?.includes("喵山羊") ||
                        unit.sneak ||
                        (unit.equipments && unit.equipments.includes("你看不到我 (偷襲)"));
   if (hasBaseSneak) return true;
@@ -2385,7 +2444,7 @@ function xlwCanSummonToZone(zone, card) {
   if (zone !== "player_front" && zone !== "player_back" && zone !== "enemy_front" && zone !== "enemy_back") return false;
   
   if (zone === "player_back") {
-    if (card && (card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+    if (card && (card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
       // Allowed to summon directly to backline
     } else {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
@@ -5401,6 +5460,7 @@ window.xlwIsCombinedUnit = function(unit) {
 window.xlwHasMechCombine = function(card) {
   if (!card) return false;
   if (card.id === "C-RBT-0012" || card.id === "RBT-0012" || card.id === "RBT-0015" || card.name?.includes("鋼鐵哥") || card.name?.includes("小砲")) return true;
+  if (card.id === "GOT-0010" || card.name?.includes("鋼鐵山羊")) return true;
   if (card.keywords && card.keywords.includes("機械合體")) return true;
   if (card.effect_text && (card.effect_text.includes("機械合體") || card.effect_text.includes("可與敵方單位合體"))) return true;
   return false;
@@ -5934,6 +5994,60 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (!isShield) {
     baseAtk = Number(c.attack ?? c.atk ?? 0);
     baseAtk = Number.isFinite(baseAtk) ? baseAtk : 0;
+  }
+
+  // 💻 虛擬羊 (GOT-0030): 使你場上所有虛擬單位被賦予+1攻擊力
+  if (typeof window.isVirtualUnit === "function" && window.isVirtualUnit(unit) && zone) {
+    const isPlayerSide = zone.startsWith("player_");
+    const testZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+    const hasVirtualGoat = testZones.some(tz => 
+      (field[tz] || []).some(u => u && u.card && (u.card.id === "GOT-0030" || u.card.name?.includes("虛擬羊")) && !window.isUnitSilenced(u))
+    );
+    if (hasVirtualGoat) baseAtk += 1;
+  }
+
+  // 🧬 細胞山羊 (C-GOT-0060 / GOT-0056): X=你場上「細胞山羊」的數量
+  if (c.id === "C-GOT-0060" || c.id === "GOT-0056" || c.name?.includes("細胞山羊")) {
+    let cellCount = 0;
+    const isPlayerSide = zone && zone.startsWith("player_");
+    const prefix = isPlayerSide ? "player_" : "enemy_";
+    for (const z of [prefix + "front", prefix + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && (u.card.id === "C-GOT-0060" || u.card.id === "GOT-0056" || u.card.name?.includes("細胞山羊"))) cellCount++;
+      });
+    }
+    baseAtk = cellCount;
+  }
+
+  // 🦨 臭臭山羊 (GOT-0007): 此卡左右兩旁的單位-2攻擊力
+  if (typeof field !== "undefined" && zone && lane !== undefined && lane !== null && field[zone]) {
+    if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card?.id === "GOT-0007" || field[zone][lane - 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane - 1], zone, lane - 1)) {
+      baseAtk -= 2;
+    }
+    if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card?.id === "GOT-0007" || field[zone][lane + 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane + 1], zone, lane + 1)) {
+      baseAtk -= 2;
+    }
+  }
+
+  // 🐐 紅山羊 (GOT-0023 / C-GOT-0023): 使你場上所有山羊單位被賦予+1攻擊力
+  if (typeof field !== "undefined" && zone && window.xlwIsGoatUnit(unit, zone, lane)) {
+    const isPlayerSide = zone.startsWith("player_");
+    const prefix = isPlayerSide ? "player_" : "enemy_";
+    let redGoatCount = 0;
+    for (const z of [prefix + "front", prefix + "back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && (u.card.id === "GOT-0023" || u.card.id === "C-GOT-0023" || u.card.name?.includes("紅山羊")) && !window.isUnitSilenced(u, z, i)) redGoatCount++;
+      });
+    }
+    if (redGoatCount > 0) baseAtk += redGoatCount;
+  }
+
+  // 🗡️ 航海道具 突刺人偶 (R-STP-0033): 若處於進攻且前方第一個敵方在後排，+2攻擊力
+  if (unit.attacking && (c.id === "R-STP-0033" || c.name?.includes("突刺人偶")) && typeof field !== "undefined") {
+    const oppPrefix = (zone && zone.startsWith("player_")) ? "enemy_" : "player_";
+    if (field[oppPrefix + "front"] && !field[oppPrefix + "front"][lane] && field[oppPrefix + "back"] && field[oppPrefix + "back"][lane]) {
+      baseAtk += 2;
+    }
   }
 
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
@@ -7114,6 +7228,600 @@ function validPlayerAttackLine(zone, lane) {
   return true;
 }
 
+
+// ==========================================
+// 🐐 山羊族 (Goat Clan / GOT) 核心引擎
+// ==========================================
+window.XLW_GOAT_SYSTEM_IMPLEMENTED = true;
+window.XLW_playerBlackHoleLane = window.XLW_playerBlackHoleLane || 0;
+window.XLW_enemyBlackHoleLane = window.XLW_enemyBlackHoleLane || 0;
+window.XLW_infiniteGoatsActive = false;
+window.XLW_goatPeggyUsedThisTurn = false;
+window.XLW_goatResearcherTriggeredThisTurn = false;
+window.XLW_banishedTimeGoats = []; // 時空小山羊暫時除外列表
+window.XLW_blockedStarLanesUntilNextTurn = []; // 金星羊封鎖的戰線
+
+// 判斷卡片是否為山羊卡
+window.xlwIsGoatCard = function(c) {
+  if (!c) return false;
+  if (c.faction === "山羊族" || c.deck === "山羊族" || c.race === "山羊族" || c.race === "山羊" || c.faction === "山羊") return true;
+  if (c.id && (c.id.includes("GOT") || c.id.includes("got"))) return true;
+  if (c.keywords && (c.keywords.includes("山羊") || c.keywords.some(k => k && k.includes("山羊")))) return true;
+  if (c.name && (c.name.includes("山羊") || c.name.includes("羊") || c.name.includes("黑洞羊") || c.name.includes("太羊") || c.name.includes("夕羊") || c.name.includes("火星羊") || c.name.includes("月亮羊") || c.name.includes("回溯羊") || c.name.includes("金星羊") || c.name.includes("冥王星羊") || c.name.includes("隕石羊") || c.name.includes("爛羊"))) return true;
+  return false;
+};
+
+// 判斷場上單位是否視為山羊
+window.xlwIsGoatUnit = function(unit, zone, idx) {
+  if (!unit || !unit.card) return false;
+  if (unit.isTransformedToGoat || unit.goatPolymorphed || unit.card.isTransformedToGoat) return true;
+  if (unit.isTreatedAsGoatUntilPhase && unit.isTreatedAsGoatUntilPhase >= turn) return true;
+  if (window.xlwIsGoatCard(unit.card)) return true;
+
+  // 月亮羊 (SR-GOT-0037): 使此單位前方第一個敵方單位被視為山羊
+  if (typeof field !== "undefined" && zone && idx !== undefined && idx !== null) {
+    const isPlayer = zone.startsWith("player_");
+    const oppPrefix = isPlayer ? "enemy_" : "player_";
+    const oppFront = field[oppPrefix + "front"] ? field[oppPrefix + "front"][idx] : null;
+    const oppBack = field[oppPrefix + "back"] ? field[oppPrefix + "back"][idx] : null;
+    if (oppFront && (oppFront.card?.id === "SR-GOT-0037" || oppFront.card?.name?.includes("月亮羊")) && !window.isUnitSilenced(oppFront)) {
+      const isFirstEnemy = zone.endsWith("front") || !field[zone.replace("back", "front")][idx];
+      if (isFirstEnemy) return true;
+    } else if (!oppFront && oppBack && (oppBack.card?.id === "SR-GOT-0037" || oppBack.card?.name?.includes("月亮羊")) && !window.isUnitSilenced(oppBack)) {
+      const isFirstEnemy = zone.endsWith("front") || !field[zone.replace("back", "front")][idx];
+      if (isFirstEnemy) return true;
+    }
+  }
+
+  return false;
+};
+
+// 計算場上山羊數量
+window.xlwCountGoats = function(sideFilter = "all") {
+  if (typeof field === "undefined" || !field) return 0;
+  let count = 0;
+  const zones = [];
+  if (sideFilter === true || sideFilter === "player") {
+    zones.push("player_front", "player_back");
+  } else if (sideFilter === false || sideFilter === "enemy") {
+    zones.push("enemy_front", "enemy_back");
+  } else {
+    zones.push("player_front", "player_back", "enemy_front", "enemy_back");
+  }
+  for (const z of zones) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && window.xlwIsGoatUnit(u, z, i)) count++;
+    });
+  }
+  return count;
+};
+
+// 執行山羊變形（山羊術轉換）
+window.xlwTransformUnitToGoat = async function(unit, zone, idx, goatCard, isPlayerSide, byPlayer = true) {
+  if (!unit || !unit.card) return false;
+  const origName = unit.card.name;
+  const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
+  
+  // 原卡牌送墓
+  if (targetOwner === "player") {
+    graveyard.push(unit.card);
+  } else {
+    if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: [] };
+    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+    window.XLW_ENEMY.grave.push(unit.card);
+    enemyGraveyard = window.XLW_ENEMY.grave;
+  }
+
+  // 裝備卡送墓
+  if (unit.equipments && unit.equipments.length > 0) {
+    unit.equipments.forEach(eqName => {
+      const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
+      if (isTempMagic) return;
+      const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
+      const cloned = structuredClone(cardObj);
+      cloned.type = "magic";
+      if (targetOwner === "player") {
+        graveyard.push(cloned);
+      } else {
+        window.XLW_ENEMY.grave.push(cloned);
+      }
+    });
+  }
+
+  // 變形為山羊卡
+  const transformedCard = structuredClone(goatCard);
+  transformedCard.type = "unit";
+  transformedCard.creator = byPlayer ? "player" : "enemy";
+  
+  unit.card = transformedCard;
+  unit.isTransformedToGoat = true;
+  unit.goatPolymorphed = true;
+  unit.equipments = [];
+  unit.atkModifier = 0;
+  unit.piercing = goatCard.keywords?.includes("貫穿") || false;
+  unit.hasPoison = goatCard.keywords?.includes("劇毒") || false;
+  unit.isShield = goatCard.keywords?.includes("阻擋") || (goatCard.art_subtype === "盾牌") || false;
+
+  logBattle(`🐐【山羊術】施放！將 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 的【${origName}】變形為【${goatCard.name}】！`);
+
+  // 觸發山羊變形連鎖反應
+  await window.xlwTriggerGoatPolymorphReactions(zone, idx, targetOwner, byPlayer);
+  render();
+  return true;
+};
+
+// 觸發山羊變形被動連鎖反應
+window.xlwTriggerGoatPolymorphReactions = async function(zone, idx, targetOwner, byPlayer) {
+  const isCasterPlayer = byPlayer;
+  const casterPrefix = isCasterPlayer ? "player_" : "enemy_";
+
+  // 1. 山羊學院 (C-GOT-0018 / GOT-0018): 你使場上的單位被變為山羊時，獎勵+1
+  const casterFieldZones = [casterPrefix + "front", casterPrefix + "back"];
+  const hasGoatAcademy = (currentFieldMagic && (currentFieldMagic.id === "C-GOT-0018" || currentFieldMagic.id === "GOT-0018" || currentFieldMagic.name?.includes("山羊學院")) && ((isCasterPlayer && currentFieldMagic.isPlayerField) || (!isCasterPlayer && !currentFieldMagic.isPlayerField)));
+  if (hasGoatAcademy) {
+    if (isCasterPlayer) {
+      playerBonusScore += 1;
+      logBattle("🏫【山羊學院】效果：使場上單位變為山羊，我方獲得 +1★ 獎勵！");
+    } else {
+      enemyBonusScore += 1;
+      logBattle("🏫【山羊學院】效果：對手獲得 +1★ 獎勵！");
+    }
+  }
+
+  // 2. 羊主任 (GOT-0044): 你場上的其他單位被變為山羊時，使你獎勵+1
+  for (const z of casterFieldZones) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && (u.card.id === "GOT-0044" || u.card.name?.includes("羊主任")) && !window.isUnitSilenced(u, z, i)) {
+        if (targetOwner === (isCasterPlayer ? "player" : "enemy")) {
+          if (isCasterPlayer) {
+            playerBonusScore += 1;
+            logBattle(`👔【羊主任】效果：我方單位變為山羊，獲得 +1★ 獎勵！`);
+          } else {
+            enemyBonusScore += 1;
+            logBattle(`👔【羊主任】效果：對手獲得 +1★ 獎勵！`);
+          }
+        }
+      }
+    });
+  }
+
+  // 3. 羊女士碧琪 (GOT-0055 / SSSR-GOT-0055): 你的回合限一次，你使場上的單位被變為山羊時，抽1張牌
+  if (isCasterPlayer && !window.XLW_goatPeggyUsedThisTurn) {
+    const hasPeggy = casterFieldZones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "GOT-0055" || u.card.id === "SSSR-GOT-0055" || u.card.name?.includes("羊女士碧琪")) && !window.isUnitSilenced(u, z, i)));
+    if (hasPeggy && deck.length > 0) {
+      window.XLW_goatPeggyUsedThisTurn = true;
+      const drawnCard = deck.pop();
+      hand.push(drawnCard);
+      logBattle(`👒【羊女士碧琪】效果發動：抽 1 張牌【${drawnCard.name}】！`);
+    }
+  }
+
+  // 4. 細胞山羊研究員 (GOT-0053 / R-GOT-0053 / SSSR-GOT-0053): 召喚細胞山羊
+  await window.xlwCheckGoatResearcherTrigger();
+
+  // 5. 幽靈山羊 (C-GOT-0022 / SR-GOT-0022): 你使敵方場上的單位被變為山羊時，可使你墓地的此卡被額外打出
+  if (targetOwner !== (isCasterPlayer ? "player" : "enemy")) {
+    if (isCasterPlayer) {
+      const ghostIdx = graveyard.findIndex(c => c && (c.id === "C-GOT-0022" || c.id === "SR-GOT-0022" || c.name?.includes("幽靈山羊")));
+      if (ghostIdx >= 0) {
+        const emptySlots = [];
+        for (const z of ["player_front", "player_back"]) {
+          field[z].forEach((u, i) => { if (!u) emptySlots.push({ zone: z, idx: i }); });
+        }
+        if (emptySlots.length > 0) {
+          const doRes = await showXLWConfirm("【幽靈山羊】墓地額外打出", "敵方單位變為山羊！是否從墓地特殊召喚【幽靈山羊】入場？");
+          if (doRes) {
+            const ghostCard = graveyard.splice(ghostIdx, 1)[0];
+            const slot = emptySlots[0];
+            field[slot.zone][slot.idx] = {
+              card: ghostCard,
+              tapped: false,
+              attacking: false,
+              target: null,
+              summonedTurn: turn,
+              summonedZone: slot.zone
+            };
+            logBattle(`👻【幽靈山羊】怨靈降臨！從墓地特殊召喚至 ${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}！`);
+          }
+        }
+      }
+    }
+  }
+};
+
+// 手牌發動「山羊術」變形場上單位
+window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
+  // 檢查是否需要祭品 (例如盾牌山羊 GOT-0014 需要 1 祭品)
+  const reqTrib = getCardTributeCost(card);
+  if (reqTrib > 0) {
+    const myUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && !window.xlwIsUnitUnsacrificable?.(u, z, i)) {
+          myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+        }
+      });
+    }
+    if (myUnits.length < reqTrib) {
+      setStatus(`發動【${card.name}】需要 ${reqTrib} 個祭品，我方場上祭品不足！`);
+      return;
+    }
+    const tribChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+    const pPick = await showXLWChoiceModal(`【${card.name}】獻祭`, `發動此山羊術需要 1 個祭品，請選擇獻祭單位：`, tribChoices);
+    if (pPick === null || pPick === undefined) return;
+    const sacrificed = myUnits[pPick];
+    logBattle(`🔥 獻祭了我方【${sacrificed.name}】作為【${card.name}】的施法代價！`);
+    await destroyUnit(sacrificed.zone, sacrificed.idx, "player", false);
+  }
+
+  // 選擇場上任意合法目標變形
+  const allFieldUnits = [];
+  for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && !window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i)) {
+        allFieldUnits.push({ zone: z, idx: i, name: u.card.name, isPlayer: z.startsWith("player_"), unit: u });
+      }
+    });
+  }
+
+  if (allFieldUnits.length === 0) {
+    setStatus("場上沒有可作為「山羊術」目標的單位！");
+    return;
+  }
+
+  const choices = allFieldUnits.map((item, cIdx) => ({
+    text: `${item.isPlayer ? "我方" : "對手"}【${item.name}】(${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+    value: cIdx
+  }));
+
+  const pick = await showXLWChoiceModal(`【${card.name}】選擇變形目標`, `請選擇要變形為【${card.name}】的單位：`, choices);
+  if (pick === null || pick === undefined) return;
+
+  const target = allFieldUnits[pick];
+  hand.splice(handIdx, 1);
+
+  // 若非「無限山羊」生效中，消耗本回合正常召喚次數
+  if (!window.XLW_infiniteGoatsActive) {
+    if (phase === "召喚階段") normalSummonUsed = true;
+    if (phase === "戰術佈陣") tacticalSummonUsed = true;
+  }
+
+  await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, card, target.isPlayer, true);
+  render();
+};
+
+// 黑洞羊 (GOT-0034 / SSR-GOT-0034) 檢查
+window.xlwCheckBlackHoleGoatProgress = async function(isPlayer = true) {
+  const lane = isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane;
+  if (!lane || lane < 1 || lane >= 5) return;
+
+  const totalGoats = window.xlwCountGoats(isPlayer ? "player" : "enemy");
+  const reqGoats = lane * 2;
+  if (totalGoats >= reqGoats) {
+    if (isPlayer) {
+      window.XLW_playerBlackHoleLane++;
+      logBattle(`🌌【黑洞羊】星辰引力！場上山羊數量(${totalGoats})達標，黑洞羊躍遷至【星星戰線 ${window.XLW_playerBlackHoleLane}】！`);
+      if (window.XLW_playerBlackHoleLane >= 5) {
+        logBattle("💥【黑洞羊】奇點爆發！黑洞羊抵達星星戰線 5，引發超時空引力塌縮，我方獲得特殊勝利！");
+        if (typeof triggerGameEnd === "function") {
+          triggerGameEnd(true, "【黑洞羊】特殊勝利！");
+        } else if (typeof showGameResultModal === "function") {
+          showGameResultModal("我方獲勝！", "黑洞羊抵達星星戰線 5 引發超時空特殊勝利！");
+        }
+      }
+    } else {
+      window.XLW_enemyBlackHoleLane++;
+      logBattle(`🌌 對手【黑洞羊】躍遷至【星星戰線 ${window.XLW_enemyBlackHoleLane}】！`);
+      if (window.XLW_enemyBlackHoleLane >= 5) {
+        logBattle("💥 對手【黑洞羊】抵達星星戰線 5，對手獲得特殊勝利！");
+        if (typeof triggerGameEnd === "function") {
+          triggerGameEnd(false, "對手黑洞羊特殊勝利！");
+        }
+      }
+    }
+    render();
+  }
+};
+
+
+// ==========================================
+// ⚙️ 蒸氣世界 (Steam World / STP) 核心引擎
+// ==========================================
+window.XLW_STEAM_SYSTEM_IMPLEMENTED = true;
+window.XLW_playerSteamEnergy = window.XLW_playerSteamEnergy || 0;
+window.XLW_enemySteamEnergy = window.XLW_enemySteamEnergy || 0;
+window.XLW_playerEnergyConsumedCountThisTurn = 0;
+window.XLW_steamSupplyTributeDiscount = 0;
+window.XLW_steamLiberatorActiveThisTurn = false;
+window.XLW_turretSummonedThisTurn = false;
+window.XLW_bonnieUsedThisTurn = false;
+window.XLW_horrificDummyUsedThisTurn = false;
+window.XLW_puppeteerUsedThisTurn = false;
+window.XLW_pipiUsedThisTurn = false;
+window.XLW_tankUsedThisTurn = false;
+window.XLW_royalStarUsedThisTurn = false;
+window.XLW_henkUsedThisTurn = false;
+window.XLW_goldCapUsedThisTurn = false;
+
+// 判斷卡片是否為蒸氣世界卡
+window.xlwIsSteamCard = function(c) {
+  if (!c) return false;
+  if (c.faction === "蒸汽世界" || c.deck === "蒸汽世界" || c.race === "蒸汽世界" || c.faction === "蒸氣世界" || c.deck === "蒸氣世界" || c.race === "蒸氣世界") return true;
+  if (c.id && (c.id.includes("STP") || c.id.includes("stp"))) return true;
+  if (c.keywords && (c.keywords.includes("通電") || c.keywords.includes("滑行") || c.keywords.some(k => k && (k.includes("通電") || k.includes("滑行"))))) return true;
+  if (c.name && (c.name.includes("蒸汽") || c.name.includes("蒸氣") || c.name.includes("老水手") || c.name.includes("水管工") || c.name.includes("水雷") || c.name.includes("魔盜團") || c.name.includes("電能方塊") || c.name.includes("能源場") || c.name.includes("能源廠") || c.name.includes("能源瓶"))) return true;
+  return false;
+};
+
+// 取得蒸氣能量上限
+window.xlwGetMaxSteamEnergy = function(isPlayer = true) {
+  // 解放能源廠 (R-STP-0054): 你的充能能量上限改為4
+  if (currentFieldMagic && (currentFieldMagic.id === "R-STP-0054" || currentFieldMagic.name?.includes("解放能源廠"))) {
+    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
+      return 4;
+    }
+  }
+  // 超載能源場 (C-STP-0025 / R-STP-0025): 你的充能能量上限改為6
+  if (currentFieldMagic && (currentFieldMagic.id === "C-STP-0025" || currentFieldMagic.id === "R-STP-0025" || currentFieldMagic.name?.includes("超載能源場"))) {
+    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
+      return 6;
+    }
+  }
+  return 5;
+};
+
+// 取得當前蒸氣能量
+window.xlwGetSteamEnergy = function(isPlayer = true) {
+  return isPlayer ? (window.XLW_playerSteamEnergy || 0) : (window.XLW_enemySteamEnergy || 0);
+};
+
+// 充能 (Charge Energy)
+window.xlwChargeEnergy = async function(amount, isPlayer = true, sourceUnit = null) {
+  if (amount <= 0) return 0;
+  const sidePrefix = isPlayer ? "player_" : "enemy_";
+  const zones = [sidePrefix + "front", sidePrefix + "back"];
+
+  // 1. 回歸老水手 (SR-STP-0055): 你充能X時，改為使你獎勵+X
+  const hasReturnedSailor = zones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "SR-STP-0055" || u.card.name?.includes("回歸老水手")) && !window.isUnitSilenced(u, z, i)));
+  if (hasReturnedSailor) {
+    if (isPlayer) {
+      playerBonusScore += amount;
+      logBattle(`⚓【回歸老水手】充能轉換！充能 +${amount} 改為獎勵 +${amount}★！`);
+    } else {
+      enemyBonusScore += amount;
+      logBattle(`⚓【回歸老水手】對手充能轉換為獎勵 +${amount}★！`);
+    }
+    render();
+    return 0;
+  }
+
+  // 2. 黑暗道具 充能增幅器 (R-STP-0028): 你充能時，若你場上有商人單位，該充能額外+1
+  const hasMerchant = zones.some(z => (field[z] || []).some((u, i) => u && (u.card.race?.includes("商人") || u.card.name?.includes("商人") || u.card.id === "SR-STP-0026" || u.card.id === "SR-STP-0031") && !window.isUnitSilenced(u, z, i)));
+  const hasAmp = zones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "R-STP-0028" || u.card.name?.includes("充能增幅器")) && !window.isUnitSilenced(u, z, i)));
+  let finalAmount = amount;
+  if (hasAmp && hasMerchant) {
+    finalAmount += 1;
+    logBattle(`⚡【黑暗道具 充能增幅器】效果：場上有商人單位，充能額外 +1！`);
+  }
+
+  const maxCap = window.xlwGetMaxSteamEnergy(isPlayer);
+  const current = isPlayer ? window.XLW_playerSteamEnergy : window.XLW_enemySteamEnergy;
+  const newEnergy = Math.min(maxCap, current + finalAmount);
+  const actualAdded = newEnergy - current;
+
+  if (isPlayer) {
+    window.XLW_playerSteamEnergy = newEnergy;
+    logBattle(`🔋【蒸氣充能】+${finalAmount}！目前蒸氣能量：${window.XLW_playerSteamEnergy}/${maxCap}`);
+  } else {
+    window.XLW_enemySteamEnergy = newEnergy;
+    logBattle(`🔋 對手【蒸氣充能】+${finalAmount}！對手蒸氣能量：${window.XLW_enemySteamEnergy}/${maxCap}`);
+  }
+
+  render();
+
+  // 觸發全場「通電」反應！
+  if (actualAdded > 0 || finalAmount > 0) {
+    await window.xlwTriggerElectrify(isPlayer, sourceUnit);
+  }
+
+  return actualAdded;
+};
+
+// 消耗能量 (Consume Energy)
+window.xlwConsumeEnergy = function(cost, isPlayer = true) {
+  if (cost <= 0) return true;
+  let finalCost = cost;
+
+  // 解放能源廠 (R-STP-0054): 使你的耗能牌耗能-2，最低耗能為0
+  if (currentFieldMagic && (currentFieldMagic.id === "R-STP-0054" || currentFieldMagic.name?.includes("解放能源廠"))) {
+    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
+      finalCost = Math.max(0, finalCost - 2);
+    }
+  }
+
+  // 黑暗道具 解放器 (R-STP-0029): 本回合你所有耗能牌的耗能-1，若有商人改為-2 (最少為1)
+  if (window.XLW_steamLiberatorActiveThisTurn && isPlayer) {
+    const sidePrefix = "player_";
+    const hasMerchant = [sidePrefix + "front", sidePrefix + "back"].some(z => (field[z] || []).some((u, i) => u && (u.card.race?.includes("商人") || u.card.name?.includes("商人") || u.card.id === "SR-STP-0026" || u.card.id === "SR-STP-0031") && !window.isUnitSilenced(u, z, i)));
+    const discount = hasMerchant ? 2 : 1;
+    finalCost = Math.max(1, finalCost - discount);
+  }
+
+  const current = isPlayer ? window.XLW_playerSteamEnergy : window.XLW_enemySteamEnergy;
+  if (current < finalCost) {
+    return false;
+  }
+
+  if (isPlayer) {
+    window.XLW_playerSteamEnergy -= finalCost;
+    window.XLW_playerEnergyConsumedCountThisTurn = (window.XLW_playerEnergyConsumedCountThisTurn || 0) + 1;
+    logBattle(`⚙️ 消耗了 ${finalCost} 點蒸氣能量（剩餘 ${window.XLW_playerSteamEnergy}/${window.xlwGetMaxSteamEnergy(true)}）。`);
+    // 檢查「解放能源廠」解鎖條件：本回合已發動耗能至少 4 次
+    if (window.XLW_playerEnergyConsumedCountThisTurn >= 4) {
+      window.xlwCheckLiberatorUpgrade();
+    }
+  } else {
+    window.XLW_enemySteamEnergy -= finalCost;
+    logBattle(`⚙️ 對手消耗了 ${finalCost} 點蒸氣能量。`);
+  }
+
+  render();
+  return true;
+};
+
+// 檢查解放能源廠升級 (解放器 -> 解放能源廠)
+window.xlwCheckLiberatorUpgrade = async function() {
+  const liberatorInHand = hand.find(c => c && (c.id === "R-STP-0029" || c.name?.includes("黑暗道具 解放器")));
+  const liberatorInGrave = graveyard.find(c => c && (c.id === "R-STP-0029" || c.name?.includes("黑暗道具 解放器")));
+  if (!liberatorInHand && !liberatorInGrave) return;
+
+  const allCardsList = (typeof allCards !== "undefined" && allCards) ? allCards : [];
+  const factoryCard = allCardsList.find(c => c && (c.id === "R-STP-0054" || c.name?.includes("解放能源廠"))) || {
+    id: "R-STP-0054",
+    name: "解放能源廠",
+    type: "magic",
+    art_subtype: "場地",
+    faction: "蒸汽世界",
+    effect_text: "主要階段：使你的充能能量上限改為4。使你的耗能牌耗能-2，最低耗能為0。"
+  };
+
+  const doUpgrade = await showXLWConfirm("【解放能源廠】升級啟動", "本回合耗能已達 4 次！是否將【黑暗道具 解放器】升級為【解放能源廠】並加入手牌？");
+  if (doUpgrade) {
+    if (liberatorInHand) hand.splice(hand.indexOf(liberatorInHand), 1);
+    else if (liberatorInGrave) graveyard.splice(graveyard.indexOf(liberatorInGrave), 1);
+    hand.push(structuredClone(factoryCard));
+    logBattle("🏭【解放能源廠】超頻運轉！成功將【黑暗道具 解放器】升級為【解放能源廠】加入手牌！");
+    render();
+  }
+};
+
+// 觸發「通電」反應
+window.xlwTriggerElectrify = async function(isPlayer = true, sourceUnit = null) {
+  const sidePrefix = isPlayer ? "player_" : "enemy_";
+  const zones = [sidePrefix + "front", sidePrefix + "back"];
+
+  logBattle(`⚡【通電】電力接通！蒸氣電路全面通電！`);
+
+  for (const z of zones) {
+    for (let i = 0; i < (field[z] || []).length; i++) {
+      const u = field[z][i];
+      if (!u || !u.card || window.isUnitSilenced(u, z, i)) continue;
+
+      const c = u.card;
+
+      // 1. 通電道具 電能方塊 (R-STP-0046): 通電：使你獎勵+2
+      if (c.id === "R-STP-0046" || c.name?.includes("電能方塊")) {
+        if (isPlayer) {
+          playerBonusScore += 2;
+          logBattle(`⚡【電能方塊】通電效果：獲得 +2★ 獎勵！`);
+        } else {
+          enemyBonusScore += 2;
+          logBattle(`⚡ 對手【電能方塊】通電效果：獲得 +2★ 獎勵！`);
+        }
+      }
+
+      // 2. 蒸汽砲塔 (R-STP-0051): 通電：使此單位轉正
+      if (c.id === "R-STP-0051" || c.name?.includes("蒸汽砲塔")) {
+        if (u.tapped) {
+          u.tapped = false;
+          logBattle(`⚡【蒸汽砲塔】通電效果：砲管就位，轉正自身！`);
+        }
+      }
+
+      // 3. 蒸汽充能塔 (R-STP-0052): 通電：使你充能+2 (每回合限一次)
+      if ((c.id === "R-STP-0052" || c.name?.includes("蒸汽充能塔")) && !u._electrifiedThisTurn) {
+        u._electrifiedThisTurn = true;
+        logBattle(`⚡【蒸汽充能塔】通電共鳴！`);
+        setTimeout(() => { window.xlwChargeEnergy(2, isPlayer, u); }, 100);
+      }
+
+      // 4. 蒸汽城堡守衛 (R-STP-0053): 通電：+2攻擊力直到下回合結束時
+      if (c.id === "R-STP-0053" || c.name?.includes("蒸汽城堡守衛")) {
+        u.atkModifier = (u.atkModifier || 0) + 2;
+        logBattle(`⚡【蒸汽城堡守衛】通電充能：獲得 +2 攻擊力！`);
+      }
+
+      // 5. 蒸汽魔盜團總部 移動城堡 (R-STP-0050 / SSR-STP-0050): 通電：一回合限一次，可使額外區1張「蒸汽砲塔」被召喚
+      if ((c.id === "R-STP-0050" || c.id === "SSR-STP-0050" || c.name?.includes("移動城堡")) && !window.XLW_turretSummonedThisTurn) {
+        window.XLW_turretSummonedThisTurn = true;
+        const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+        const turretCard = extraList.find(tc => tc && (tc.id === "R-STP-0051" || tc.name?.includes("蒸汽砲塔")));
+        if (turretCard) {
+          const backSlot = sidePrefix + "back";
+          let summonTarget = null;
+          if (!field[backSlot][i]) {
+            summonTarget = { zone: backSlot, idx: i };
+          } else {
+            for (const ez of zones) {
+              const freeIdx = field[ez].findIndex(slotU => !slotU);
+              if (freeIdx >= 0) { summonTarget = { zone: ez, idx: freeIdx }; break; }
+            }
+          }
+          if (summonTarget) {
+            extraList.splice(extraList.indexOf(turretCard), 1);
+            field[summonTarget.zone][summonTarget.idx] = {
+              card: structuredClone(turretCard),
+              tapped: false, // 通電轉正
+              attacking: false,
+              target: null,
+              summonedTurn: turn,
+              summonedZone: summonTarget.zone
+            };
+            logBattle(`🏰【移動城堡】通電效果：從額外牌庫部署【蒸汽砲塔】至 ${summonTarget.zone.includes("front") ? "前排" : "後排"}${summonTarget.idx + 1}！`);
+          }
+        }
+      }
+
+      // 6. 裝備卡通電判定
+      if (u.equipments && u.equipments.length > 0) {
+        if (u.equipments.includes("通電道具 通電裝") || u.equipments.some(e => e.includes("通電裝"))) {
+          logBattle(`⚡【通電裝】通電效果：額外充能 +2！`);
+          setTimeout(() => { window.xlwChargeEnergy(2, isPlayer, u); }, 100);
+        }
+        if (u.equipments.includes("通電道具 人偶百寶袋") || u.equipments.some(e => e.includes("人偶百寶袋"))) {
+          logBattle(`⚡【人偶百寶袋】通電效果：召喚 1 個小旅人！`);
+          for (const sz of zones) {
+            const fi = field[sz].findIndex(su => !su);
+            if (fi >= 0) {
+              field[sz][fi] = { card: structuredClone(LITTLE_TRAVELER), tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: sz };
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 7. 通電寶 (R-STP-0045 / SSR-STP-0045): 你場上的卡牌發動通電時，可使你手牌的此卡被額外打出
+  if (isPlayer) {
+    const tongIdx = hand.findIndex(c => c && (c.id === "R-STP-0045" || c.id === "SSR-STP-0045" || c.name?.includes("通電寶")));
+    if (tongIdx >= 0) {
+      const emptySlots = [];
+      for (const z of ["player_front", "player_back"]) {
+        field[z].forEach((u, i) => { if (!u) emptySlots.push({ zone: z, idx: i }); });
+      }
+      if (emptySlots.length > 0) {
+        const doSum = await showXLWConfirm("【通電寶】額外打出", "場上發動通電！手牌有【通電寶】，是否將其額外特殊召喚入場？");
+        if (doSum) {
+          const tongCard = hand.splice(tongIdx, 1)[0];
+          const slot = emptySlots[0];
+          field[slot.zone][slot.idx] = {
+            card: tongCard,
+            tapped: false,
+            attacking: false,
+            target: null,
+            summonedTurn: turn,
+            summonedZone: slot.zone
+          };
+          logBattle(`⚡【通電寶】伴隨電流轟鳴，額外特殊召喚至 ${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}！`);
+        }
+      }
+    }
+  }
+
+  render();
+};
+
 // ===== 6. 召喚與獻祭召喚系統 =====
 function clearModes(keepTributeWaiting = false) {
   if(xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
@@ -7275,7 +7983,7 @@ async function castSpell(handIndex) {
 
   window.XLW_playerActionsPerformedThisTurn = true;
 
-  const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+  const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("黑球") || card.id === "R-STP-0030" || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
   if (isPureCounter) {
     if (card.id === "ART-0020" || card.name.includes("星空")) {
       setStatus("【提示】反制魔法卡無法直接打出，必須在對手召喚單位時發動進行反制。");
@@ -7308,6 +8016,568 @@ async function castSpell(handIndex) {
       return;
     }
   
+
+  // ==========================================
+  // 🐐 山羊族 (GOT) 魔法卡 (Goat Spells)
+  // ==========================================
+  // 1. 山羊炸彈 (GOT-0017): 使敵方至多3個山羊單位遭到破壞（不得在倒數階段使用）
+  } else if (card.id === "GOT-0017" || card.name === "山羊炸彈") {
+    if (countdownActive) {
+      setStatus("【山羊炸彈】不得在倒數階段使用！");
+      return;
+    }
+    const oppGoats = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsGoatUnit(u, z, i) && !window.isUnitEffectImmune(u, z, i)) {
+          oppGoats.push({ zone: z, idx: i, name: u.card.name });
+        }
+      });
+    }
+    if (oppGoats.length === 0) {
+      setStatus("敵方場上沒有可破壞的山羊單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const maxToDestroy = Math.min(3, oppGoats.length);
+      const chosenToDestroy = [];
+      while (chosenToDestroy.length < maxToDestroy) {
+        const remaining = oppGoats.filter(item => !chosenToDestroy.includes(item));
+        if (remaining.length === 0) break;
+        const choices = remaining.map((item, idx) => ({ text: `${item.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`, value: idx }));
+        if (chosenToDestroy.length > 0) choices.push({ text: "結束選擇 (不再破壞)", value: -1 });
+        const pick = await showXLWChoiceModal(`【山羊炸彈】選擇破壞目標 (${chosenToDestroy.length + 1}/${maxToDestroy})`, "選擇敵方山羊單位：", choices);
+        if (pick === null || pick === undefined || pick === -1) break;
+        chosenToDestroy.push(remaining[pick]);
+      }
+      for (const target of chosenToDestroy) {
+        logBattle(`💥【山羊炸彈】轟炸！破壞了敵方山羊【${target.name}】！`);
+        await destroyUnit(target.zone, target.idx, "enemy", false);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 2. 山羊學院 (C-GOT-0018 / GOT-0018): 場地魔法，你使場上的單位被變為山羊時，獎勵+1
+  } else if (card.id === "C-GOT-0018" || card.id === "GOT-0018" || card.name?.includes("山羊學院")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      currentFieldMagic = structuredClone(spellCard);
+      currentFieldMagic.isPlayerField = true;
+      currentFieldMagic.art_subtype = "場地";
+      logBattle("🏫【山羊學院】展開！場地生效中：每當你使場上的單位變為山羊時，獎勵 +1★！");
+      render();
+    });
+    return;
+
+  // 3. 魔王山羊術 (C-GOT-0019 / GOT-0019): 使場上1單位變為此卡（此卡在場時視為單位，5攻3星）
+  } else if (card.id === "C-GOT-0019" || card.id === "GOT-0019" || card.name?.includes("魔王山羊術")) {
+    const allFieldUnits = [];
+    for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && !window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i)) {
+          allFieldUnits.push({ zone: z, idx: i, name: u.card.name, isPlayer: z.startsWith("player_"), unit: u });
+        }
+      });
+    }
+    if (allFieldUnits.length === 0) {
+      setStatus("場上沒有可變形的單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = allFieldUnits.map((u, i) => ({ text: `${u.isPlayer ? "我方" : "對手"}【${u.name}】(${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【魔王山羊術】選擇變形目標", "請選擇要變為【魔王山羊術】(5攻3星) 的單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = allFieldUnits[pick];
+        const demonGoatUnit = structuredClone(spellCard);
+        demonGoatUnit.type = "unit";
+        demonGoatUnit.attack = 5;
+        demonGoatUnit.score = 3;
+        demonGoatUnit.tribute = 0;
+        await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, demonGoatUnit, target.isPlayer, true);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 4. 無限山羊 (C-GOT-0020 / GOT-0020): 本回合你將山羊族單位視為「山羊術」打出時不視為打出單位
+  } else if (card.id === "C-GOT-0020" || card.id === "GOT-0020" || card.name?.includes("無限山羊")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      window.XLW_infiniteGoatsActive = true;
+      logBattle("🐐【無限山羊】發動！本回合將山羊族單位視為「山羊術」使用時不計入召喚次數！");
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 5. 彩虹羊噴泉 (GOT-0027): 場地魔法，主要階段可捨棄手牌X張山羊單位，場上所有山羊+2X攻擊力直到下個回合結束
+  } else if (card.id === "GOT-0027" || card.name?.includes("彩虹羊噴泉")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      currentFieldMagic = structuredClone(spellCard);
+      currentFieldMagic.isPlayerField = true;
+      currentFieldMagic.art_subtype = "場地";
+      logBattle("⛲【彩虹羊噴泉】展開！");
+      
+      const goatHands = hand.filter(c => c && window.xlwIsGoatCard(c));
+      if (goatHands.length > 0) {
+        const doDiscard = await showXLWConfirm("【彩虹羊噴泉】啟動噴泉能量", `手牌有 ${goatHands.length} 張山羊族單位，是否捨棄以提升全場山羊攻擊力（每捨棄1張+2攻）？`);
+        if (doDiscard) {
+          let discardedCount = 0;
+          for (let k = 0; k < goatHands.length; k++) {
+            const currentGoatHands = hand.filter(c => c && window.xlwIsGoatCard(c));
+            if (currentGoatHands.length === 0) break;
+            const choices = currentGoatHands.map((c, i) => ({ text: c.name, value: i }));
+            if (discardedCount > 0) choices.push({ text: "停止捨棄", value: -1 });
+            const pick = await showXLWChoiceModal(`【彩虹羊噴泉】選擇捨棄山羊 (${discardedCount + 1})`, "請選擇捨棄的山羊單位：", choices);
+            if (pick === null || pick === undefined || pick === -1) break;
+            const chosenCard = currentGoatHands[pick];
+            hand.splice(hand.indexOf(chosenCard), 1);
+            graveyard.push(chosenCard);
+            discardedCount++;
+          }
+          if (discardedCount > 0) {
+            const buff = discardedCount * 2;
+            for (const z of ["player_front", "player_back"]) {
+              (field[z] || []).forEach((u, i) => {
+                if (u && window.xlwIsGoatUnit(u, z, i)) {
+                  u.atkModifier = (u.atkModifier || 0) + buff;
+                }
+              });
+            }
+            logBattle(`🌈【彩虹羊噴泉】彩光四射！捨棄了 ${discardedCount} 張山羊，全場山羊獲得 +${buff} 攻擊力！`);
+          }
+        }
+      }
+      render();
+    });
+    return;
+
+  // 6. 宇宙山羊的洗腦 (GOT-0054): 使敵方場上1個單位被賦予山羊特殊類型直到你的下個階段開始時
+  } else if (card.id === "GOT-0054" || card.name?.includes("宇宙山羊的洗腦")) {
+    const oppUnits = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && !window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i)) {
+          oppUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+        }
+      });
+    }
+    if (oppUnits.length === 0) {
+      setStatus("敵方場上沒有可洗腦的單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【宇宙山羊的洗腦】選擇目標", "請選擇要催眠洗腦為山羊的敵方單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = oppUnits[pick];
+        target.unit.isTreatedAsGoatUntilPhase = turn + 1;
+        logBattle(`🌀【宇宙山羊的洗腦】發動！敵方【${target.name}】被強制洗腦，暫時視為山羊單位！`);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+
+  // ==========================================
+  // ⚙️ 蒸氣世界 (STP) 魔法卡 (Steam Spells)
+  // ==========================================
+  // 1. 金屬盾牌 (R-STP-0015): 耗能1。使你1蒸汽世界單位被賦予阻擋及掩護
+  } else if (card.id === "R-STP-0015" || card.name?.includes("金屬盾牌")) {
+    if (window.xlwGetSteamEnergy(true) < 1) {
+      setStatus("蒸氣能量不足！需要耗能 1 點。");
+      return;
+    }
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【金屬盾牌】裝備目標", "請選擇要裝備金屬盾牌的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        window.xlwConsumeEnergy(1, true);
+        const target = mySteamUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("金屬盾牌");
+        target.unit.isShield = true;
+        logBattle(`🛡️【金屬盾牌】裝備成功！我方【${target.name}】獲得【阻擋】與【掩護】！`);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 2. 蒸汽槍 (R-STP-0016 / R-STP-0016-泳裝): 耗能1。使你1蒸汽世界單位被賦予+1攻擊力及遠程攻擊
+  } else if (card.id?.includes("STP-0016") || card.name?.includes("蒸汽槍")) {
+    if (window.xlwGetSteamEnergy(true) < 1) {
+      setStatus("蒸氣能量不足！需要耗能 1 點。");
+      return;
+    }
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【蒸汽槍】裝備目標", "請選擇要裝備蒸汽槍的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        window.xlwConsumeEnergy(1, true);
+        const target = mySteamUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("蒸汽槍");
+        target.unit.atkModifier = (target.unit.atkModifier || 0) + 1;
+        target.unit.hasRanged = true;
+        logBattle(`🔫【蒸汽槍】裝備成功！我方【${target.name}】獲得 +1 攻擊力與【遠程攻擊】！`);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 3. 超載能源場 (C-STP-0025 / R-STP-0025): 場地魔法，充能上限改為6，結束階段充能+1
+  } else if (card.id === "C-STP-0025" || card.id === "R-STP-0025" || card.name?.includes("超載能源場")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      currentFieldMagic = structuredClone(spellCard);
+      currentFieldMagic.isPlayerField = true;
+      currentFieldMagic.art_subtype = "場地";
+      logBattle("⚡【超載能源場】展開！充能上限提升至 6，回合結束時將自動充能 +1！");
+      render();
+    });
+    return;
+
+  // 4. 黑暗道具 解放器 (R-STP-0029): 本回合耗能牌耗能-1，若有商人改為-2 (最低為1)
+  } else if (card.id === "R-STP-0029" || card.name?.includes("黑暗道具 解放器")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      window.XLW_steamLiberatorActiveThisTurn = true;
+      logBattle("🔓【黑暗道具 解放器】啟動！本回合耗能牌耗能 -1（場上有商人時 -2）！");
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 5. 老舊道具 蒸汽電池 (R-STP-0043): 耗能X。使你場上X個蒸汽世界單位被轉正
+  } else if (card.id === "R-STP-0043" || card.name?.includes("蒸汽電池")) {
+    const tappedSteam = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && u.tapped && window.xlwIsSteamCard(u.card)) tappedSteam.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (tappedSteam.length === 0) {
+      setStatus("場上沒有橫置的蒸汽世界單位！");
+      return;
+    }
+    const availableEnergy = window.xlwGetSteamEnergy(true);
+    if (availableEnergy < 1) {
+      setStatus("蒸氣能量不足！需要至少耗能 1 點。");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const maxUntap = Math.min(availableEnergy, tappedSteam.length);
+      for (let k = 0; k < maxUntap; k++) {
+        const u = tappedSteam[k];
+        u.unit.tapped = false;
+      }
+      window.xlwConsumeEnergy(maxUntap, true);
+      logBattle(`🔋【老舊道具 蒸汽電池】釋放電流！消耗 ${maxUntap} 能量，轉正了 ${maxUntap} 個蒸汽世界單位！`);
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 6. 通電道具 狠活科技 (R-STP-0047): 道具/永久，賦予通電：一回合一次耗能2破壞敵方1單位
+  } else if (card.id === "R-STP-0047" || card.name?.includes("狠活科技")) {
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【通電道具 狠活科技】裝備目標", "請選擇要裝備狠活科技的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = mySteamUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("通電道具 狠活科技");
+        logBattle(`⚡【通電道具 狠活科技】裝備至【${target.name}】！獲得通電破壞異能！`);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 7. 通電道具 通電裝 (R-STP-0048): 道具/永久，賦予通電：充能+2
+  } else if (card.id === "R-STP-0048" || card.name?.includes("通電裝")) {
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【通電道具 通電裝】裝備目標", "請選擇要裝備通電裝的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = mySteamUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("通電道具 通電裝");
+        logBattle(`⚡【通電道具 通電裝】裝備至【${target.name}】！通電時額外充能 +2！`);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 8. 通電道具 人偶百寶袋 (R-STP-0049): 道具/永久，賦予通電：召喚1小旅人
+  } else if (card.id === "R-STP-0049" || card.name?.includes("人偶百寶袋")) {
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【通電道具 人偶百寶袋】裝備目標", "請選擇要裝備人偶百寶袋的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = mySteamUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("通電道具 人偶百寶袋");
+        logBattle(`🎒【通電道具 人偶百寶袋】裝備至【${target.name}】！通電時自動召喚小旅人！`);
+      } else {
+        hand.push(spellCard);
+      }
+      render();
+    });
+    return;
+
+  // 9. 解放能源廠 (R-STP-0054): 場地魔法，充能上限改為4，耗能牌耗能-2 (最低0)
+  } else if (card.id === "R-STP-0054" || card.name?.includes("解放能源廠")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      currentFieldMagic = structuredClone(spellCard);
+      currentFieldMagic.isPlayerField = true;
+      currentFieldMagic.art_subtype = "場地";
+      logBattle("🏭【解放能源廠】展開！充能上限改為 4，所有耗能牌耗能 -2（最低 0）！");
+      render();
+    });
+    return;
+
+  // 10. 利息能量瓶 (R-STP-0059): 耗能2。下個主要階段開始時墓地回手牌並充能4
+  } else if (card.id === "R-STP-0059" || card.name?.includes("利息能量瓶")) {
+    if (window.xlwGetSteamEnergy(true) < 2) {
+      setStatus("蒸氣能量不足！需要耗能 2 點。");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      window.xlwConsumeEnergy(2, true);
+      spellCard._interestPendingTurn = turn + 1;
+      graveyard.push(spellCard);
+      logBattle("🧪【利息能量瓶】能量存儲！消耗 2 點能量，將於下個主要階段開始時回手牌並充能 4 點！");
+      render();
+    });
+    return;
+
+  // 11. 蒸汽大砲 (STP-0017): 耗能5。使敵方一條星星戰線上的所有單位被破壞
+  } else if (card.id === "STP-0017" || card.name?.includes("蒸汽大砲")) {
+    if (window.xlwGetSteamEnergy(true) < 5) {
+      setStatus("蒸氣能量不足！需要耗能 5 點。");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const laneChoices = [0, 1, 2, 3, 4].map(l => ({ text: `星星戰線 ${l + 1}`, value: l }));
+      const pick = await showXLWChoiceModal("【蒸汽大砲】選擇砲轟戰線", "請選擇要毀滅的敵方星星戰線：", laneChoices);
+      if (pick !== null && pick !== undefined) {
+        window.xlwConsumeEnergy(5, true);
+        const l = Number(pick);
+        logBattle(`💣【蒸汽大砲】全力轟擊！摧毀敵方星星戰線 ${l + 1} 上的所有單位！`);
+        for (const ez of ["enemy_front", "enemy_back"]) {
+          if (field[ez][l]) await destroyUnit(ez, l, "enemy", false);
+        }
+      } else {
+        hand.push(spellCard);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 12. 能量轉換 (STP-0018): 破壞場上1單位，充能X (X=該單位★數量)
+  } else if (card.id === "STP-0018" || card.name?.includes("能量轉換")) {
+    const myUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u) myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (myUnits.length === 0) {
+      setStatus("場上沒有我方單位可供轉換！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.unit.card.score || u.unit.card.stars}★)`, value: i }));
+      const pick = await showXLWChoiceModal("【能量轉換】選擇犧牲單位", "選擇要破壞轉換能量的單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const target = myUnits[pick];
+        const stars = getUnitStars(target.unit, target.zone, target.idx);
+        logBattle(`⚡【能量轉換】犧牲了【${target.name}】，轉化為 ${stars} 點蒸氣充能！`);
+        await destroyUnit(target.zone, target.idx, "player", false);
+        await window.xlwChargeEnergy(stars, true);
+      } else {
+        hand.push(spellCard);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 13. 裝備升級 (STP-0019): 耗能3。使你1蒸汽世界單位被賦予+5攻擊力或+3★
+  } else if (card.id === "STP-0019" || card.name?.includes("裝備升級")) {
+    if (window.xlwGetSteamEnergy(true) < 3) {
+      setStatus("蒸氣能量不足！需要耗能 3 點。");
+      return;
+    }
+    const mySteamUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && window.xlwIsSteamCard(u.card)) mySteamUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (mySteamUnits.length === 0) {
+      setStatus("場上沒有我方蒸汽世界單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = mySteamUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【裝備升級】選擇強化目標", "請選擇要升級的蒸汽世界單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const modePick = await showXLWChoiceModal("【裝備升級】選擇強化屬性", "請選擇強化效果：", [
+          { text: "⚔️ +5 攻擊力", value: "atk" },
+          { text: "⭐ +3★ 星星分數", value: "stars" }
+        ]);
+        window.xlwConsumeEnergy(3, true);
+        const target = mySteamUnits[pick];
+        if (modePick === "atk") {
+          target.unit.atkModifier = (target.unit.atkModifier || 0) + 5;
+          logBattle(`⚙️【裝備升級】渦輪增壓！【${target.name}】獲得 +5 攻擊力！`);
+        } else {
+          target.unit.starsModifier = (target.unit.starsModifier || 0) + 3;
+          logBattle(`⚙️【裝備升級】精密鍍金！【${target.name}】獲得 +3★ 分數！`);
+        }
+      } else {
+        hand.push(spellCard);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 14. 滑板鞋 (STP-0020): 耗能2。使你1單位被賦予在戰術階段選擇佈陣時仍可進攻
+  } else if (card.id === "STP-0020" || card.name?.includes("滑板鞋")) {
+    if (window.xlwGetSteamEnergy(true) < 2) {
+      setStatus("蒸氣能量不足！需要耗能 2 點。");
+      return;
+    }
+    const myUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u) myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
+      });
+    }
+    if (myUnits.length === 0) {
+      setStatus("場上沒有我方單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【滑板鞋】裝備目標", "請選擇要穿上滑板鞋的單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        window.xlwConsumeEnergy(2, true);
+        const target = myUnits[pick];
+        target.unit.equipments = target.unit.equipments || [];
+        target.unit.equipments.push("滑板鞋");
+        target.unit.canAttackAfterTactical = true;
+        logBattle(`🛼【滑板鞋】裝備至【${target.name}】！獲得佈陣後仍可進攻的特性！`);
+      } else {
+        hand.push(spellCard);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
   // ==========================================
   // 🤖 機械軍團 魔法卡 (Mechanical Spells)
   // ==========================================
@@ -11253,6 +12523,55 @@ async function startTributeSummon(handIndex) {
     }
   }
 
+  // ⚙️ 蒸氣世界 耗能代替祭品判定
+  if (card && (card.id === "SR-STP-0024" || card.name?.includes("末日號"))) {
+    if (window.xlwGetSteamEnergy(true) >= 3) {
+      const useEnergy = await showXLWConfirm("【末日號】耗能替代祭品", "【末日號】可耗能 3 點代替祭品，是否耗能 3 點代替場上獻祭？");
+      if (useEnergy && window.xlwConsumeEnergy(3, true)) {
+        selectedTributes.push({ key: `doom_energy1_${Date.now()}`, zone: "dummy", idx: -1 });
+        selectedTributes.push({ key: `doom_energy2_${Date.now()}`, zone: "dummy", idx: -1 });
+        selectedTributes.push({ key: `doom_energy3_${Date.now()}`, zone: "dummy", idx: -1 });
+        const newHandIndex = hand.indexOf(card);
+        if (newHandIndex >= 0) {
+          selectedHandForTribute = newHandIndex;
+          selectedTributeCard = card;
+          confirmTribute();
+          return;
+        }
+      }
+    }
+  }
+  if (card && (card.id === "STP-0006" || card.id === "SSR-STP-0006" || card.name?.includes("蒸汽半械人"))) {
+    if (window.xlwGetSteamEnergy(true) >= 2) {
+      const useEnergy = await showXLWConfirm("【蒸汽半械人】耗能替代祭品", "【蒸汽半械人】可耗能 2 點代替祭品，是否耗能 2 點代替場上獻祭？");
+      if (useEnergy && window.xlwConsumeEnergy(2, true)) {
+        selectedTributes.push({ key: `cyborg_energy_${Date.now()}`, zone: "dummy", idx: -1 });
+        const newHandIndex = hand.indexOf(card);
+        if (newHandIndex >= 0) {
+          selectedHandForTribute = newHandIndex;
+          selectedTributeCard = card;
+          confirmTribute();
+          return;
+        }
+      }
+    }
+  }
+  if (card && (card.id === "STP-0013" || card.id === "SSR-STP-0013" || card.name?.includes("深海潛水員"))) {
+    if (window.xlwGetSteamEnergy(true) >= 5) {
+      const useEnergy = await showXLWConfirm("【深海潛水員】耗能替代祭品", "【深海潛水員】可耗能 5 點代替祭品，是否耗能 5 點代替場上獻祭？");
+      if (useEnergy && window.xlwConsumeEnergy(5, true)) {
+        for (let k = 0; k < 3; k++) selectedTributes.push({ key: `diver_energy${k}_${Date.now()}`, zone: "dummy", idx: -1 });
+        const newHandIndex = hand.indexOf(card);
+        if (newHandIndex >= 0) {
+          selectedHandForTribute = newHandIndex;
+          selectedTributeCard = card;
+          confirmTribute();
+          return;
+        }
+      }
+    }
+  }
+
   // 惡靈幫幫主 骷霸 (R-SKT-0035 / SSR-SKT-0035): 此卡的祭品可為除外你墓地2張不死族單位卡
   if (card && (card.id?.includes("SKT-0035") || card.name?.includes("骷霸"))) {
     const undeadGrave = graveyard.filter(c => c && window.xlwIsUndeadCard(c));
@@ -11328,7 +12647,16 @@ async function startTributeSummon(handIndex) {
 
 function toggleTributeSelection(zone, idx) {
   if (selectedHandForTribute === null) return;
-  if (!zone.startsWith("player_")) return;
+  const cardForTrib = hand[selectedHandForTribute];
+  const isDaBa = cardForTrib && (cardForTrib.id === "SR-GOT-0050" || cardForTrib.name?.includes("羊頭惡魔") || cardForTrib.name?.includes("大巴"));
+  if (!zone.startsWith("player_")) {
+    if (!isDaBa) return;
+    const targetUnit = field[zone]?.[idx];
+    if (!targetUnit || !window.xlwIsGoatUnit(targetUnit, zone, idx)) {
+      setStatus("【羊頭惡魔 大巴】只能選取敵方場上的「山羊」單位作為祭品！");
+      return;
+    }
+  }
 
   const unit = field[zone][idx];
   if (!unit) return;
@@ -12257,6 +13585,45 @@ async function confirmTribute() {
       if (t.zone === "dummy") continue; 
       const unit = field[t.zone][t.idx];
       if (unit && unit.card) {
+        // 🐐 GOT-0040 火圈山羊: 此單位被獻祭時，可使此卡被視為「山羊術」並對你場上的單位使用
+        if (unit.card.id === "GOT-0040" || unit.card.name?.includes("火圈山羊")) {
+          const isPlayer = t.zone.startsWith("player_");
+          const myZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+          const myTargets = [];
+          for (const mz of myZones) {
+            (field[mz] || []).forEach((u, idx) => {
+              if (u && u !== unit && u.card && !window.xlwIsGoatUnit(u) && !window.isUnitMagicImmune(u, mz, idx)) {
+                myTargets.push({ zone: mz, idx, name: u.card.name, unit: u });
+              }
+            });
+          }
+          if (myTargets.length > 0) {
+            if (isPlayer) {
+              const doTrans = await showXLWConfirm("【火圈山羊】獻祭效果", "【火圈山羊】被獻祭！是否視為發動「山羊術」，將我方場上 1 個單位變身為山羊（3攻擊力/1★）？");
+              if (doTrans) {
+                const choices = myTargets.map((item, idx) => ({
+                  text: `${item.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+                  value: idx
+                }));
+                const pick = await showXLWChoiceModal("【火圈山羊】選擇變身目標", "請選擇變身為山羊的目標：", choices);
+                if (pick && pick.value !== undefined) {
+                  const targetItem = myTargets[pick.value];
+                  if (targetItem && field[targetItem.zone][targetItem.idx]) {
+                    window.xlwTransformUnitToGoat(targetItem.zone, targetItem.idx, 3, 1, "火圈山羊術");
+                    await window.xlwTriggerGoatPolymorphReactions(isPlayer ? "player" : "enemy");
+                  }
+                }
+              }
+            } else {
+              const targetItem = myTargets[0];
+              if (targetItem && field[targetItem.zone][targetItem.idx]) {
+                window.xlwTransformUnitToGoat(targetItem.zone, targetItem.idx, 3, 1, "火圈山羊術");
+                await window.xlwTriggerGoatPolymorphReactions("enemy");
+              }
+            }
+          }
+        }
+
         // 🍬 CND-0003 薑餅人: 被獻祭時抽1張牌
         if (unit.card.id === "CND-0003" || unit.card.id === "SSR-CND-0003" || unit.card.name?.includes("薑餅人")) {
           const isPlayer = t.zone.startsWith("player_");
@@ -13313,6 +14680,31 @@ async function performSummonToSlot(zone, idx) {
       };
     }
     field[zone][idx].card.creator = zone.startsWith("player_") ? "player" : "enemy";
+    // 🦅 鳥人 艾菲 (R-STP-0021): 敵方打在正前方時充能+2
+    const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
+    const oppFacingUnit = field[oppPrefix + "front"] ? field[oppPrefix + "front"][idx] : null;
+    if (oppFacingUnit && (oppFacingUnit.card.id === "R-STP-0021" || oppFacingUnit.card.name?.includes("鳥人 艾菲")) && !window.isUnitSilenced(oppFacingUnit)) {
+      logBattle(`🦅【鳥人 艾菲】警戒高飛！前方迎來敵軍，充能 +2！`);
+      window.xlwChargeEnergy(2, !zone.startsWith("player_"));
+    }
+    // 💣 航海道具 定時水雷 (R-STP-0036): 敵方召喚單位時若攻擊力<=此單位攻擊力，可同歸於盡破壞
+    if (field[oppPrefix + "front"]) {
+      field[oppPrefix + "front"].forEach(async (ou, oi) => {
+        if (ou && (ou.card.id === "R-STP-0036" || ou.card.name?.includes("定時水雷")) && !window.isUnitSilenced(ou)) {
+          const myAtk = Number(card.attack ?? card.atk ?? 0) || 0;
+          const mineAtk = getUnitAtk(ou, oppPrefix + "front", oi);
+          if (myAtk <= mineAtk) {
+            const doTrigger = !zone.startsWith("player_") ? await showXLWConfirm("【定時水雷】引爆", `敵方打出了攻擊力 ${myAtk} <= 定時水雷攻擊力 (${mineAtk}) 的【${card.name}】，是否引爆定時水雷同歸於盡？`) : true;
+            if (doTrigger) {
+              logBattle(`💥【定時水雷】轟隆引爆！與敵方單位【${card.name}】同歸於盡！`);
+              await destroyUnit(oppPrefix + "front", oi, !zone.startsWith("player_") ? "player" : "enemy", false);
+              await destroyUnit(zone, idx, zone.startsWith("player_") ? "player" : "enemy", false);
+            }
+          }
+        }
+      });
+    }
+
     if (zone.startsWith("player_")) {
       window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
       window.XLW_turnExtraSummonsCount = (window.XLW_turnExtraSummonsCount || 0) + 1;
@@ -13342,6 +14734,14 @@ async function performSummonToSlot(zone, idx) {
       window.XLW_playerActionsPerformedThisTurn = true;
     } else {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
+    }
+
+    // 🚂 蒸汽旅客 (STP-0009): 每當你召喚小旅人時，充能+1
+    const pZones = isPlayerTraveler ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+    const hasSteamPassenger = pZones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "STP-0009" || u.card.name?.includes("蒸汽旅客")) && !window.isUnitSilenced(u, z, i)));
+    if (hasSteamPassenger) {
+      logBattle(`🚂【蒸汽旅客】旅客上車！充能 +1！`);
+      window.xlwChargeEnergy(1, isPlayerTraveler);
     }
 
     // 樹葉旅人 (SR-SPT-0029) 效果觸發：一回合限一次，你召喚小旅人時，召喚1個小旅人
@@ -13577,6 +14977,525 @@ async function performSummonToSlot(zone, idx) {
     }
 
     if (!immediateEffectNegated && card) {
+
+
+      // ==========================================
+      // 🐐 山羊族 立即效果 (Goat Immediate Effects)
+      // ==========================================
+      // 1. 魔法山羊 (GOT-0001 / C-GOT-0001 / R-GOT-0001): 使墓地1張帶有「山羊術」的卡牌回手牌
+      if (card.id === "GOT-0001" || card.id === "C-GOT-0001" || card.id === "R-GOT-0001" || card.name?.includes("魔法山羊")) {
+        const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
+        const goatSpells = myGrave.filter(c => c && c.name?.includes("山羊術"));
+        if (goatSpells.length > 0) {
+          if (isPlayer) {
+            const choices = goatSpells.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("【魔法山羊】回收山羊術", "請選擇回收至手牌的山羊術卡牌：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = goatSpells[pick];
+              myGrave.splice(myGrave.indexOf(target), 1);
+              hand.push(target);
+              logBattle(`✨【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
+            }
+          } else {
+            const target = goatSpells[0];
+            myGrave.splice(myGrave.indexOf(target), 1);
+            (window.XLW_ENEMY?.hand || []).push(target);
+            logBattle(`✨ 對手【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
+          }
+        }
+      }
+
+      // 2. 閃電山羊 (GOT-0009): 立即：使敵方1個山羊單位被破壞
+      if (card.id === "GOT-0009" || card.name?.includes("閃電山羊")) {
+        const oppPrefix = isPlayer ? "enemy_" : "player_";
+        const oppGoats = [];
+        for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+          (field[oz] || []).forEach((u, i) => {
+            if (u && window.xlwIsGoatUnit(u, oz, i) && !window.isUnitEffectImmune(u, oz, i)) {
+              oppGoats.push({ zone: oz, idx: i, name: u.card.name });
+            }
+          });
+        }
+        if (oppGoats.length > 0) {
+          if (isPlayer) {
+            const choices = oppGoats.map((g, i) => ({ text: `${g.name} (${g.zone.includes("front") ? "前排" : "後排"}${g.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【閃電山羊】破壞山羊", "請選擇要以雷霆擊碎的敵方山羊單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = oppGoats[pick];
+              logBattle(`⚡【閃電山羊】天雷降臨！擊破了敵方山羊【${target.name}】！`);
+              await destroyUnit(target.zone, target.idx, "enemy", false);
+            }
+          } else {
+            const target = oppGoats[0];
+            logBattle(`⚡ 對手【閃電山羊】天雷降臨！擊破了我方山羊【${target.name}】！`);
+            await destroyUnit(target.zone, target.idx, "player", false);
+          }
+        }
+      }
+
+      // 3. 羊商人 (GOT-0013 / C-GOT-0013 / SSR-GOT-0013): 抽2張牌或使墓地1張山羊單位回手牌
+      if (card.id === "GOT-0013" || card.id === "C-GOT-0013" || card.id === "SSR-GOT-0013" || card.name?.includes("羊商人")) {
+        if (isPlayer) {
+          const myGrave = graveyard.filter(c => c && window.xlwIsGoatCard(c) && c.type === "unit");
+          const modeChoice = await showXLWChoiceModal("【羊商人】交易二選一", "請選擇羊商人的交易效果：", [
+            { text: "🃏 抽 2 張牌", value: "draw" },
+            { text: `🐐 從墓地回收 1 張山羊單位 (${myGrave.length} 張可選)`, value: "recover" }
+          ]);
+          if (modeChoice === "recover" && myGrave.length > 0) {
+            const choices = myGrave.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("選擇回收的山羊", "選擇回收至手牌的山羊單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = myGrave[pick];
+              graveyard.splice(graveyard.indexOf(target), 1);
+              hand.push(target);
+              logBattle(`✨【羊商人】效果：將墓地中的山羊【${target.name}】回收至手牌！`);
+            }
+          } else {
+            for (let k = 0; k < 2; k++) {
+              if (deck.length > 0) hand.push(deck.pop());
+            }
+            logBattle("✨【羊商人】效果：抽了 2 張牌！");
+          }
+        } else {
+          for (let k = 0; k < 2; k++) {
+            if (window.XLW_ENEMY?.deck && window.XLW_ENEMY.deck.length > 0) {
+              window.XLW_ENEMY.hand.push(window.XLW_ENEMY.deck.pop());
+            }
+          }
+          logBattle("✨ 對手【羊商人】效果：抽了 2 張牌！");
+        }
+      }
+
+      // 4. 牧羊人 琪琪 (SR-GOT-0021): 立即：使場上任意數量山羊單位移動至你指定的位置
+      if (card.id === "SR-GOT-0021" || card.name?.includes("牧羊人 琪琪")) {
+        if (isPlayer) {
+          const doMove = await showXLWConfirm("【牧羊人 琪琪】趕羊移動", "立即效果：是否移動場上的山羊單位至其他合法位置？");
+          if (doMove) {
+            logBattle("🪈【牧羊人 琪琪】吹響牧笛，指揮羊群調整戰線！");
+            let continueMoving = true;
+            while (continueMoving) {
+              const goats = [];
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => {
+                  if (u && window.xlwIsGoatUnit(u, z, i)) goats.push({ zone: z, idx: i, name: u.card.name, unit: u });
+                });
+              }
+              const emptySlots = [];
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => { if (!u) emptySlots.push({ zone: z, idx: i }); });
+              }
+              if (goats.length === 0 || emptySlots.length === 0) break;
+              const gChoices = goats.map((g, i) => ({ text: `${g.name} (${g.zone.includes("front") ? "前排" : "後排"}${g.idx + 1})`, value: i }));
+              gChoices.push({ text: "結束調動", value: -1 });
+              const gPick = await showXLWChoiceModal("選擇調動的山羊", "請選擇要移動的山羊：", gChoices);
+              if (gPick === null || gPick === undefined || gPick === -1) break;
+              const chosenGoat = goats[gPick];
+              const sChoices = emptySlots.map((s, i) => ({ text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`, value: i }));
+              const sPick = await showXLWChoiceModal("選擇移動位置", "請選擇目標位置：", sChoices);
+              if (sPick === null || sPick === undefined) break;
+              const targetSlot = emptySlots[sPick];
+              field[targetSlot.zone][targetSlot.idx] = chosenGoat.unit;
+              field[chosenGoat.zone][chosenGoat.idx] = null;
+              logBattle(`✨【牧羊人 琪琪】將【${chosenGoat.name}】引導至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
+              render();
+            }
+          }
+        }
+      }
+
+      // 5. 校長山羊 (SR-GOT-0028): 立即：從牌庫尋找1張山羊族場地卡加入手牌
+      if (card.id === "SR-GOT-0028" || card.name?.includes("校長山羊")) {
+        const myDeck = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
+        const fieldGoatCards = myDeck.filter(c => c && window.xlwIsGoatCard(c) && (c.art_subtype === "場地" || c.magic_type === "場地" || c.name?.includes("場") || c.name?.includes("學院") || c.name?.includes("噴泉") || c.name?.includes("太羊")));
+        if (fieldGoatCards.length > 0) {
+          if (isPlayer) {
+            const choices = fieldGoatCards.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("【校長山羊】檢索場地", "請選擇加入手牌的山羊族場地卡：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = fieldGoatCards[pick];
+              deck.splice(deck.indexOf(target), 1);
+              hand.push(target);
+              shuffle(deck);
+              logBattle(`🏫【校長山羊】效果：從牌庫檢索場地卡【${target.name}】加入手牌！`);
+            }
+          } else {
+            const target = fieldGoatCards[0];
+            myDeck.splice(myDeck.indexOf(target), 1);
+            (window.XLW_ENEMY?.hand || []).push(target);
+            logBattle(`🏫 對手【校長山羊】效果：從牌庫檢索場地卡【${target.name}】加入手牌！`);
+          }
+        }
+      }
+
+      // 6. 牧山羊犬 (SR-GOT-0032): 立即：使墓地1張★為1或以下的山羊單位被召喚
+      if (card.id === "SR-GOT-0032" || card.name?.includes("牧山羊犬")) {
+        const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
+        const lowStarGoats = myGrave.filter(c => c && window.xlwIsGoatCard(c) && c.type === "unit" && ((c.score || c.stars || 0) <= 1));
+        const emptySlots = [];
+        const sideP = isPlayer ? "player_" : "enemy_";
+        for (const z of [sideP + "front", sideP + "back"]) {
+          (field[z] || []).forEach((u, i) => { if (!u) emptySlots.push({ zone: z, idx: i }); });
+        }
+        if (lowStarGoats.length > 0 && emptySlots.length > 0) {
+          if (isPlayer) {
+            const choices = lowStarGoats.map((c, i) => ({ text: `${c.name} (${c.score || c.stars}★)`, value: i }));
+            const pick = await showXLWChoiceModal("【牧山羊犬】召喚小羊", "選擇從墓地特殊召喚的山羊單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = lowStarGoats[pick];
+              graveyard.splice(graveyard.indexOf(target), 1);
+              const slot = emptySlots[0];
+              field[slot.zone][slot.idx] = { card: target, tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: slot.zone };
+              logBattle(`🐕【牧山羊犬】汪汪呼喚！從墓地特殊召喚【${target.name}】至 ${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}！`);
+            }
+          } else {
+            const target = lowStarGoats[0];
+            myGrave.splice(myGrave.indexOf(target), 1);
+            const slot = emptySlots[0];
+            field[slot.zone][slot.idx] = { card: target, tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: slot.zone };
+            logBattle(`🐕 對手【牧山羊犬】從墓地特殊召喚【${target.name}】！`);
+          }
+        }
+      }
+
+      // 7. 宇宙山羊 金星羊 (GOT-0035): 立即：宣言1條星星戰線，敵方下回合不得將單位打出或召喚至該戰線
+      if (card.id === "GOT-0035" || card.name?.includes("金星羊")) {
+        if (isPlayer) {
+          const laneChoices = [0, 1, 2, 3, 4].map(l => ({ text: `星星戰線 ${l + 1}`, value: l }));
+          const pick = await showXLWChoiceModal("【金星羊】封鎖星星戰線", "請宣言 1 條禁止敵方下回合召喚單位的戰線：", laneChoices);
+          if (pick !== null && pick !== undefined) {
+            const l = Number(pick);
+            window.XLW_blockedStarLanesUntilNextTurn = window.XLW_blockedStarLanesUntilNextTurn || [];
+            window.XLW_blockedStarLanesUntilNextTurn.push(l);
+            logBattle(`🪐【宇宙山羊 金星羊】金星引力封鎖！敵方下個回合不得在【星星戰線 ${l + 1}】打出或召喚任何單位！`);
+          }
+        }
+      }
+
+      // 8. 宇宙山羊 夕羊 (GOT-0038): 立即：若場地為太羊，使黑洞羊前進到下一張戰線牌
+      if (card.id === "GOT-0038" || card.name?.includes("夕羊")) {
+        const isSunGoat = currentFieldMagic && (currentFieldMagic.id === "GOT-0036" || currentFieldMagic.name?.includes("太羊"));
+        if (isSunGoat) {
+          const curLane = isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane;
+          if (curLane >= 1 && curLane < 4) {
+            if (isPlayer) window.XLW_playerBlackHoleLane++;
+            else window.XLW_enemyBlackHoleLane++;
+            logBattle(`🌅【宇宙山羊 夕羊】夕陽照耀！場地太羊共鳴，黑洞羊躍遷至【星星戰線 ${isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane}】！`);
+          }
+        }
+      }
+
+      // 9. 宇宙山羊 火星羊 (GOT-0039): 立即：若黑洞羊在戰線1或2，無效化下一張非山羊術魔法卡
+      if (card.id === "GOT-0039" || card.name?.includes("火星羊")) {
+        const lane = isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane;
+        if (lane === 1 || lane === 2) {
+          window.XLW_marsGoatNegateActive = true;
+          logBattle("🔴【宇宙山羊 火星羊】火星護盾啟動！下一張被使用的非「山羊術」魔法卡將被直接無效化！");
+        }
+      }
+
+      // 10. 宇宙山羊 冥王星羊 (GOT-0042): 立即：使此單位與左右單位獲得破壞抗性且無法移動/進攻直到下個主要階段開始
+      if (card.id === "GOT-0042" || card.name?.includes("冥王星羊")) {
+        const affected = [idx];
+        if (idx > 0) affected.push(idx - 1);
+        if (idx < 4) affected.push(idx + 1);
+        for (const i of affected) {
+          const u = field[zone][i];
+          if (u) {
+            u.indestructibleUntilTurn = turn + 2;
+            u.cannotAttackUntilTurn = turn + 2;
+            u.isUnmovable = true;
+          }
+        }
+        logBattle(`❄️【宇宙山羊 冥王星羊】冥王星極寒凍結！此單位與相鄰單位獲得破壞免疫，但暫時無法移動或進攻！`);
+      }
+
+      // 11. 太空羊妹妹 (GOT-0043 / SSR-GOT-0043 / XTP-GOT-0043): 立即：牌庫尋找「黑洞羊」或宇宙山羊加入手牌
+      if (card.id?.includes("GOT-0043") || card.name?.includes("太空羊妹妹")) {
+        const myDeck = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
+        const targetCards = myDeck.filter(c => c && (c.name?.includes("黑洞羊") || c.name?.includes("宇宙山羊")));
+        if (targetCards.length > 0) {
+          if (isPlayer) {
+            const choices = targetCards.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("【太空羊妹妹】呼叫星際同伴", "請選擇檢索加入手牌的卡牌：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = targetCards[pick];
+              deck.splice(deck.indexOf(target), 1);
+              hand.push(target);
+              shuffle(deck);
+              logBattle(`👧【太空羊妹妹】從星際牌庫檢索了【${target.name}】加入手牌！`);
+            }
+          } else {
+            const target = targetCards[0];
+            myDeck.splice(myDeck.indexOf(target), 1);
+            (window.XLW_ENEMY?.hand || []).push(target);
+            logBattle(`👧 對手【太空羊妹妹】檢索了【${target.name}】加入手牌！`);
+          }
+        }
+      }
+
+      // 12. 宇宙山羊 回溯羊 (GOT-0046): 立即：若已倒數階段且有黑洞羊，結束時翻回正面
+      if (card.id === "GOT-0046" || card.name?.includes("回溯羊")) {
+        if (countdownActive && ((isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane) >= 1)) {
+          window.XLW_retroGoatPendingThisTurn = true;
+          logBattle("⏳【宇宙山羊 回溯羊】時空倒流準備！本回合結束時將翻開所有星星戰線牌！");
+        }
+      }
+
+      // 13. 宇宙太空飛船 (GOT-0049): 立即：使場上所有「隕石羊」被破壞，召喚最多3張「隕石碎片羊」
+      if (card.id === "GOT-0049" || card.name?.includes("宇宙太空飛船")) {
+        let destroyedMeteorCount = 0;
+        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+          for (let i = 0; i < 5; i++) {
+            const u = field[z][i];
+            if (u && (u.card.id === "GOT-0047" || u.card.name?.includes("隕石羊"))) {
+              await destroyUnit(z, i, z.startsWith("player_") ? "player" : "enemy", false);
+              destroyedMeteorCount++;
+            }
+          }
+        }
+        if (destroyedMeteorCount > 0) {
+          const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+          const fragments = extraList.filter(c => c && (c.id === "GOT-0048" || c.name?.includes("隕石碎片羊")));
+          const toSummon = Math.min(3, fragments.length);
+          for (let k = 0; k < toSummon; k++) {
+            const frag = fragments[k];
+            extraList.splice(extraList.indexOf(frag), 1);
+            await window.xlwSpecialSummonUnit(frag, isPlayer);
+          }
+          logBattle(`🛸【宇宙太空飛船】星際轟炸！擊碎隕石羊，分裂召喚了 ${toSummon} 個【隕石碎片羊】！`);
+        }
+      }
+
+      // 14. 時空小山羊 (GOT-0051): 立即：使此單位與你場上1個其他山羊除外，下個主要階段開始時召喚
+      if (card.id === "GOT-0051" || card.name?.includes("時空小山羊")) {
+        const sideP = isPlayer ? "player_" : "enemy_";
+        const otherGoats = [];
+        for (const z of [sideP + "front", sideP + "back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && (z !== zone || i !== idx) && window.xlwIsGoatUnit(u, z, i)) {
+              otherGoats.push({ zone: z, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (otherGoats.length > 0) {
+          let chosen = otherGoats[0];
+          if (isPlayer && otherGoats.length > 1) {
+            const choices = otherGoats.map((g, i) => ({ text: `${g.name} (${g.zone.includes("front") ? "前排" : "後排"}${g.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【時空小山羊】挑選時空旅行夥伴", "請選擇一同除外的友方山羊：", choices);
+            if (pick !== null && pick !== undefined) chosen = otherGoats[pick];
+          }
+          window.XLW_banishedTimeGoats = window.XLW_banishedTimeGoats || [];
+          window.XLW_banishedTimeGoats.push({ card: card, isPlayer });
+          window.XLW_banishedTimeGoats.push({ card: chosen.unit.card, isPlayer });
+          field[zone][idx] = null;
+          field[chosen.zone][chosen.idx] = null;
+          logBattle(`🌀【時空小山羊】時空躍遷！攜同【${chosen.name}】穿梭進入時空裂縫，將於下個主要階段開始時歸來！`);
+          render();
+        }
+      }
+
+
+      // ==========================================
+      // ⚙️ 蒸氣世界 立即效果 (Steam Immediate Effects)
+      // ==========================================
+      // 1. 末日醫生 烏鴉 (STP-0005 / SSR-STP-0005): 使敵方所有攻擊力<=3的單位橫放，每橫放1單位充能+1
+      if (card.id === "STP-0005" || card.id === "SSR-STP-0005" || card.name?.includes("末日醫生")) {
+        const oppPrefix = isPlayer ? "enemy_" : "player_";
+        let tappedCount = 0;
+        for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+          (field[oz] || []).forEach((u, i) => {
+            if (u && !u.tapped && getUnitAtk(u, oz, i) <= 3 && !window.isUnitEffectImmune(u, oz, i)) {
+              u.tapped = true;
+              tappedCount++;
+            }
+          });
+        }
+        logBattle(`🩺【末日醫生 烏鴉】麻醉噴霧！橫放了敵方 ${tappedCount} 個攻擊力 <= 3 的單位！`);
+        if (tappedCount > 0) {
+          await window.xlwChargeEnergy(tappedCount, isPlayer);
+        }
+      }
+
+      // 2. 水管工人 (STP-0011): 立即：充能+1
+      if (card.id === "STP-0011" || card.name?.includes("水管工")) {
+        logBattle("🔧【水管工人】疏通閥門！");
+        await window.xlwChargeEnergy(1, isPlayer);
+      }
+
+      // 3. 維修阿莫德 (STP-0010 / R-STP-0010 / NY-STP-0010): 立即：使墓地1蒸汽世界牌回手牌
+      if (card.id?.includes("STP-0010") || card.name?.includes("維修阿莫德")) {
+        const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
+        const steamCards = myGrave.filter(c => c && window.xlwIsSteamCard(c));
+        if (steamCards.length > 0) {
+          if (isPlayer) {
+            const choices = steamCards.map((c, i) => ({ text: `${c.name} (${c.type === "unit" ? "單位" : "魔法"})`, value: i }));
+            const pick = await showXLWChoiceModal("【維修阿莫德】回收零件", "請選擇回收至手牌的蒸汽世界卡牌：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = steamCards[pick];
+              graveyard.splice(graveyard.indexOf(target), 1);
+              hand.push(target);
+              logBattle(`🔧【維修阿莫德】效果：從墓地回收了【${target.name}】！`);
+            }
+          } else {
+            const target = steamCards[0];
+            myGrave.splice(myGrave.indexOf(target), 1);
+            (window.XLW_ENEMY?.hand || []).push(target);
+            logBattle(`🔧 對手【維修阿莫德】效果：從墓地回收了【${target.name}】！`);
+          }
+        }
+      }
+
+      // 🔋 STP-TOKEN001 / STP-TOKEN002 充能能量 Token
+    if (card.id === "STP-TOKEN001" || card.name?.includes("充能能量+1")) {
+      window.xlwChargeEnergy("player", 1);
+      logBattle("🔋 使用【充能能量+1】：我方蒸氣能量電池充能 +1！");
+      render();
+      return;
+    }
+    if (card.id === "STP-TOKEN002" || card.name?.includes("充能能量+2")) {
+      window.xlwChargeEnergy("player", 2);
+      logBattle("🔋 使用【充能能量+2】：我方蒸氣能量電池充能 +2！");
+      render();
+      return;
+    }
+
+    // 4. 蒸汽能量方塊 (STP-0014 / R-STP-0014 / VR-STP-0014 / C-STP-0014): 立即：耗能X獎勵+X
+      if (card.id === "C-STP-0014" || card.id?.includes("STP-0014") || card.name?.includes("蒸汽能量方塊") || card.name?.includes("蒸汽能量方塊 (C版)")) {
+        const currentEnergy = window.xlwGetSteamEnergy(isPlayer);
+        if (currentEnergy > 0) {
+          if (isPlayer) {
+            const numChoices = [];
+            for (let k = 1; k <= currentEnergy; k++) {
+              numChoices.push({ text: `消耗 ${k} 能量，獲得 +${k}★ 獎勵`, value: k });
+            }
+            numChoices.push({ text: "不消耗", value: 0 });
+            const pickVal = await showXLWChoiceModal("【蒸汽能量方塊】能量變現", "請選擇要轉換為分數的能量數量：", numChoices);
+            const chosenCost = pickVal !== null && pickVal !== undefined ? Number(pickVal) : 0;
+            if (chosenCost > 0) {
+              window.xlwConsumeEnergy(chosenCost, true);
+              playerBonusScore += chosenCost;
+              logBattle(`💎【蒸汽能量方塊】能量超頻！消耗 ${chosenCost} 點能量，獲得 +${chosenCost}★ 獎勵！`);
+              renderScore();
+            }
+          } else {
+            window.xlwConsumeEnergy(currentEnergy, false);
+            enemyBonusScore += currentEnergy;
+            logBattle(`💎 對手【蒸汽能量方塊】消耗 ${currentEnergy} 點能量，獲得 +${currentEnergy}★ 獎勵！`);
+            renderScore();
+          }
+        }
+      }
+
+      // 5. 小烏鴉 (R-STP-0022): 立即：使1單位橫放，充能+1
+      if (card.id === "R-STP-0022" || card.name?.includes("小烏鴉")) {
+        const untappteds = [];
+        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && !u.tapped && !window.isUnitEffectImmune(u, z, i)) untappteds.push({ zone: z, idx: i, name: u.card.name, isPlayer: z.startsWith("player_") });
+          });
+        }
+        if (untappteds.length > 0) {
+          if (isPlayer) {
+            const choices = untappteds.map((u, i) => ({ text: `${u.isPlayer ? "我方" : "對手"}【${u.name}】(${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【小烏鴉】羽翼干擾", "選擇要轉為橫放的單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = untappteds[pick];
+              field[target.zone][target.idx].tapped = true;
+              logBattle(`🐦【小烏鴉】俯衝干擾！將【${target.name}】橫置！`);
+            }
+          } else {
+            const target = untappteds.find(u => u.isPlayer) || untappteds[0];
+            field[target.zone][target.idx].tapped = true;
+            logBattle(`🐦 對手【小烏鴉】將【${target.name}】橫置！`);
+          }
+        }
+        await window.xlwChargeEnergy(1, isPlayer);
+      }
+
+      // 6. 末日號 (SR-STP-0024): 立即：使你前排戰線的所有其他單位被破壞
+      if (card.id === "SR-STP-0024" || card.name?.includes("末日號")) {
+        const frontZ = isPlayer ? "player_front" : "enemy_front";
+        logBattle("💥【末日號】排山倒海！前方巨型艦身壓碎前排其他單位！");
+        for (let i = 0; i < 5; i++) {
+          if (i !== idx && field[frontZ][i]) {
+            await destroyUnit(frontZ, i, isPlayer ? "player" : "enemy", false);
+          }
+        }
+      }
+
+      // 7. 黑暗商人 皮皮 (SR-STP-0026 / SSSR-STP-0026): 立即：充能+2。檢索1張道具牌，將1張手牌洗回牌庫
+      if (card.id?.includes("STP-0026") || card.name?.includes("皮皮")) {
+        logBattle("🎩【黑暗商人 皮皮】黑市開張！");
+        await window.xlwChargeEnergy(2, isPlayer);
+        if (isPlayer) {
+          const itemCards = deck.filter(c => c && (c.name?.includes("道具") || c.art_subtype?.includes("道具") || c.keywords?.includes("道具")));
+          if (itemCards.length > 0) {
+            const choices = itemCards.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("【黑暗商人 皮皮】檢索道具", "請選擇加入手牌的道具卡：", choices);
+            if (pick !== null && pick !== undefined) {
+              const chosen = itemCards[pick];
+              deck.splice(deck.indexOf(chosen), 1);
+              hand.push(chosen);
+              logBattle(`✨【黑暗商人 皮皮】檢索道具【${chosen.name}】加入手牌！`);
+              if (hand.length > 0) {
+                const returnChoices = hand.map((c, i) => ({ text: c.name, value: i }));
+                const returnPick = await showXLWChoiceModal("【黑暗商人 皮皮】洗回手牌", "請選擇 1 張手牌洗回牌庫：", returnChoices);
+                const retIdx = returnPick !== null && returnPick !== undefined ? returnPick : 0;
+                const retCard = hand.splice(retIdx, 1)[0];
+                deck.push(retCard);
+                shuffle(deck);
+                logBattle(`✨ 將【${retCard.name}】洗回牌庫！`);
+              }
+            }
+          }
+        }
+      }
+
+      // 8. 航海商人 佐希 (SR-STP-0031): 立即：可耗能2，查看牌庫頂5張選1道具加入手牌
+      if (card.id === "SR-STP-0031" || card.name?.includes("佐希")) {
+        if (window.xlwGetSteamEnergy(isPlayer) >= 2) {
+          let doSearch = true;
+          if (isPlayer) doSearch = await showXLWConfirm("【航海商人 佐希】尋寶探索", "是否耗能 2 點查看牌庫頂 5 張牌並挑選 1 張道具卡？");
+          if (doSearch && window.xlwConsumeEnergy(2, isPlayer)) {
+            const myDeck = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
+            const top5 = myDeck.slice(-5).reverse();
+            const items = top5.filter(c => c && (c.name?.includes("道具") || c.art_subtype?.includes("道具") || c.keywords?.includes("道具")));
+            if (items.length > 0) {
+              if (isPlayer) {
+                const choices = items.map((c, i) => ({ text: c.name, value: i }));
+                const pick = await showXLWChoiceModal("【航海商人 佐希】挑選道具", "請選擇加入手牌的道具卡：", choices);
+                if (pick !== null && pick !== undefined) {
+                  const target = items[pick];
+                  deck.splice(deck.indexOf(target), 1);
+                  hand.push(target);
+                  logBattle(`🧭【航海商人 佐希】在貨物中找到了【${target.name}】加入手牌！`);
+                }
+              } else {
+                const target = items[0];
+                myDeck.splice(myDeck.indexOf(target), 1);
+                (window.XLW_ENEMY?.hand || []).push(target);
+                logBattle(`🧭 對手【航海商人 佐希】檢索了【${target.name}】加入手牌！`);
+              }
+            }
+          }
+        }
+      }
+
+      // 9. 蒸汽魔盜團 毒氣兵 (C-STP-0060): 立即：可耗能2，若成功被賦予毒及貫穿直到下個主要階段開始時
+      if (card.id === "C-STP-0060" || card.name?.includes("毒氣兵")) {
+        if (window.xlwGetSteamEnergy(isPlayer) >= 2) {
+          let doPoison = true;
+          if (isPlayer) doPoison = await showXLWConfirm("【蒸汽魔盜團 毒氣兵】毒氣超頻", "是否耗能 2 點使毒氣兵獲得【劇毒】與【貫穿】？");
+          if (doPoison && window.xlwConsumeEnergy(2, isPlayer)) {
+            const u = field[zone][idx];
+            if (u) {
+              u.hasPoison = true;
+              u.piercing = true;
+              logBattle("☠️【蒸汽魔盜團 毒氣兵】綠色瓦斯噴射！獲得【劇毒】與【貫穿】特性！");
+            }
+          }
+        }
+      }
 
       // ==========================================
       // 🤖 機械軍團 立即效果 (Immediate Effects)
@@ -17561,10 +19480,17 @@ async function changeActionPhase(targetPhase) {
     if (phase === "戰術佈陣") {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
       if (hasTacticalActed) {
-        setStatus("在戰術佈陣階段已召喚或移動過單位，無法改為執行進攻宣言。");
-        return;
+        const canAnyoneAttack = ["player_front", "player_back"].some(z => 
+          (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
+        );
+        if (!canAnyoneAttack) {
+          setStatus("在戰術佈陣階段已召喚或移動過單位，且無【飛天山羊】或【滑板鞋】等特殊單位，無法改為執行進攻宣言。");
+          return;
+        }
+        logBattle("🛼 我方雖在戰術佈陣執行了行動，但擁有【飛天山羊】或配備【滑板鞋】的單位，允許進入進攻宣言！");
+      } else {
+        logBattle("我方未在戰術佈陣執行行動，改為執行進攻宣言。");
       }
-      logBattle("我方未在戰術佈陣執行行動，改為執行進攻宣言。");
     }
     await checkPopulationCap(true);
   }
@@ -17972,6 +19898,7 @@ async function xlwAutoDeclarePlayerAttacks() {
     const backDefender = field.enemy_back[i];
     const frontHasCover = frontDefender && (
       window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
+      frontDefender.card?.id === "STP-0002" || frontDefender.card?.name?.includes("蒸汽盾牌兵") ||
       frontDefender.card?.name?.includes("學會戰術的野人")
     ) && !window.isUnitSilenced(frontDefender, "enemy_front", i);
 
@@ -18207,6 +20134,85 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     window.XLW_DEFENSE_RULE.enemyNeedsDefense = true;
     
     logBattle(`我方進攻宣言：星星戰線${idx + 1}，${unitName(unit)} 指向對手`);
+
+    // 💨 蒸汽滑行兵 (STP-0001): 進攻時充能+1
+    if (unit.card && (unit.card.id === "STP-0001" || unit.card.name?.includes("蒸汽滑行兵"))) {
+      logBattle("💨【蒸汽滑行兵】進攻充能：充能 +1！");
+      window.xlwChargeEnergy(1, true);
+    }
+
+    // 💨 蒸汽衝刺兵 (STP-0004): 進攻時若後排滑行至前排戰線，+3攻擊力且充能+1
+    if (unit.card && (unit.card.id === "STP-0004" || unit.card.name?.includes("蒸汽衝刺兵"))) {
+      if (unit._slidFromBackThisTurn) {
+        unit.atkModifier = (unit.atkModifier || 0) + 3;
+        logBattle("💨【蒸汽衝刺兵】後排衝刺加速！獲得 +3 攻擊力且充能 +1！");
+        window.xlwChargeEnergy(1, true);
+      }
+    }
+
+    // 💥 蒸汽火炮兵 (STP-0007): 若此卡在後排戰線，進攻時充能+1
+    if (zone.includes("back") && unit.card && (unit.card.id === "STP-0007" || unit.card.name?.includes("蒸汽火炮兵"))) {
+      logBattle("💥【蒸汽火炮兵】遠程重砲轟炸！充能 +1！");
+      window.xlwChargeEnergy(1, true);
+    }
+
+    // ⚓ 蒸汽魔盜團團長 索羅 (R-STP-0037 / SSR-STP-0037): 此單位進攻時，可耗能5，綁架前方第一個敵方單位(2)
+    if (unit.card && (unit.card.id === "R-STP-0037" || unit.card.id === "SSR-STP-0037" || unit.card.name?.includes("索羅"))) {
+      if (window.xlwGetSteamEnergy(true) >= 5 && targetDefender) {
+        const doKidnap = await showXLWConfirm("【索羅】魔盜綁架", `是否耗能 5 點綁架正前方敵方單位【${targetDefender.card.name}】2 回合？`);
+        if (doKidnap && window.xlwConsumeEnergy(5, true)) {
+          targetDefender.isKidnapped = 2;
+          logBattle(`⚓【索羅】蒸汽鉤爪奇襲！將前方敵方單位【${targetDefender.card.name}】綁架 2 回合！`);
+        }
+      }
+    }
+
+    // 🚢 航海道具 蒸汽船 (SR-STP-0034): 進攻時使前方1個★<=2的單位被破壞，若成功移動至正後方
+    if (unit.card && (unit.card.id === "SR-STP-0034" || unit.card.name?.includes("蒸汽船"))) {
+      if (targetDefender && (targetDefender.card.score || targetDefender.card.stars || 0) <= 2) {
+        logBattle(`🚢【蒸汽船】破浪撞擊！摧毀前方★<=2的敵方單位【${targetDefender.card.name}】！`);
+        await destroyUnit(targetZone, idx, "enemy", false);
+        if (!field.player_back[idx]) {
+          field.player_back[idx] = unit;
+          field[zone][idx] = null;
+          logBattle(`🚢【蒸汽船】滑行迴轉至正後方！`);
+        }
+      }
+    }
+
+    // 🛸 蒸汽魔道具 飛船 (R-STP-0038): 進攻時使1個蒸汽世界單位移動至左或右
+    if (unit.card && (unit.card.id === "R-STP-0038" || unit.card.name?.includes("飛船"))) {
+      const mySteam = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && u !== unit && window.xlwIsSteamCard(u.card)) mySteam.push({ zone: z, idx: i, name: u.card.name, unit: u });
+        });
+      }
+      if (mySteam.length > 0) {
+        const doShift = await showXLWConfirm("【飛船】戰術牽引", "進攻宣言：是否牽引場上 1 個友方蒸汽世界單位移動至其左右空格？");
+        if (doShift) {
+          const choices = mySteam.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+          const pick = await showXLWChoiceModal("選擇牽引單位", "請選擇要牽引移動的單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const target = mySteam[pick];
+            const emptyAdj = [];
+            if (target.idx > 0 && !field[target.zone][target.idx - 1]) emptyAdj.push({ zone: target.zone, idx: target.idx - 1, dir: "左邊" });
+            if (target.idx < 4 && !field[target.zone][target.idx + 1]) emptyAdj.push({ zone: target.zone, idx: target.idx + 1, dir: "右邊" });
+            if (emptyAdj.length > 0) {
+              const dirChoices = emptyAdj.map((s, i) => ({ text: `移動至${s.dir}`, value: i }));
+              const dirPick = await showXLWChoiceModal("選擇移動方向", "請選擇方向：", dirChoices);
+              if (dirPick !== null && dirPick !== undefined) {
+                const s = emptyAdj[dirPick];
+                field[s.zone][s.idx] = target.unit;
+                field[target.zone][target.idx] = null;
+                logBattle(`🛸【飛船】戰術牽引：將【${target.name}】移動至 ${s.dir}！`);
+                render();
+              }
+            }
+          }
+        }
+      }
+    }
 
     // 🤖 戰鬥支援機器人 (RBT-0050 / R-RBT-0050): 進攻時，從手牌發動機械合體並使其進攻
     if (typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(unit, zone, idx)) {
@@ -20253,6 +22259,56 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       }
     }
 
+    // 🐐 藍山羊 (GOT-0011): 此卡將山羊單位戰鬥破壞時，獎勵+3
+    if (attackerCard && (attackerCard.id === "GOT-0011" || attackerCard.name?.includes("藍山羊")) && defender && window.xlwIsGoatUnit(defender, defZone, defIdx)) {
+      if (successOwner === "player") {
+        playerBonusScore += 3;
+        logBattle("🐐【藍山羊】狩獵山羊！額外獲得 +3★ 獎勵！");
+      } else {
+        enemyBonusScore += 3;
+        logBattle("🐐 對手【藍山羊】額外獲得 +3★ 獎勵！");
+      }
+      renderScore();
+    }
+
+    // 🐐 旅人騎羊 (C-GOT-0008 / NY-GOT-0008): 此單位戰鬥成功時，召喚2個小旅人
+    if (attackerCard && (attackerCard.id?.includes("GOT-0008") || attackerCard.name?.includes("旅人騎羊"))) {
+      logBattle("🐐【旅人騎羊】戰鬥勝利！呼喚了 2 個小旅人！");
+      for (let k = 0; k < 2; k++) {
+        await window.xlwSummonLittleTraveler(successOwner === "player", { bypassFitTraveler: true });
+      }
+    }
+
+    // 🤡 小丑山羊 (GOT-0041): 戰鬥成功時未被破壞，可作為「山羊術」對你場上的單位使用
+    if (attackerCard && (attackerCard.id === "GOT-0041" || attackerCard.name?.includes("小丑山羊")) && !attackerShouldDie && successOwner === "player") {
+      const myUnits = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => { if (u && u !== attacker) myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u }); });
+      }
+      if (myUnits.length > 0) {
+        const doClown = await showXLWConfirm("【小丑山羊】雜耍變形", "戰鬥勝利！是否發動效果將場上 1 個友方單位變為小丑山羊？");
+        if (doClown) {
+          const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+          const pick = await showXLWChoiceModal("選擇變形目標", "選擇目標單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const target = myUnits[pick];
+            await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, attackerCard, true, true);
+          }
+        }
+      }
+    }
+
+    // ☄️ 宇宙山羊 隕石羊 (GOT-0047): 戰鬥成功時，召喚額外區「宇宙山羊 隕石碎片羊」
+    if (attackerCard && (attackerCard.id === "GOT-0047" || attackerCard.name?.includes("隕石羊"))) {
+      const extraList = successOwner === "player" ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+      const frag = extraList.find(c => c && (c.id === "GOT-0048" || c.name?.includes("隕石碎片羊")));
+      if (frag) {
+        extraList.splice(extraList.indexOf(frag), 1);
+        await window.xlwSpecialSummonUnit(frag, successOwner === "player");
+        logBattle(`☄️【宇宙山羊 隕石羊】戰鬥勝利！分裂召喚了【宇宙山羊 隕石碎片羊】！`);
+      }
+    }
+
     // 勇者公會戰鬥成功升級進化
     const curExtraDeck = successOwner === "player" ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
     // 1. 見習劍士 -> 大劍勇者 (BRV-0029)：攻擊力至少多3
@@ -20772,6 +22828,15 @@ function isUnitIndestructible(unit, zone, idx, isCombatDestruction = false) {
 
 function isUnitMagicImmune(unit, zone, idx) {
 
+  // 🐐 魔法銅像 (C-GOT-0004 / R-GOT-0004 / PROMO-GOT-0004): 阻擋。此單位不會被「山羊術」以外的魔法卡選為目標
+  if (unit.card && (unit.card.id === "C-GOT-0004" || unit.card.id === "R-GOT-0004" || unit.card.id === "PROMO-GOT-0004" || unit.card.name?.includes("魔法銅像") || unit.card.name?.includes("魔法銅像 (閃)") || unit.card.name?.includes("魔法銅像 (PROMO)"))) {
+    const isGoatSpell = spellCard && (spellCard.name?.includes("山羊術") || spellCard.name?.includes("魔王山羊術"));
+    if (!isGoatSpell) return true;
+  }
+  // 🐐 金山羊 (GOT-0005): 此卡不會被敵方魔法卡選為目標
+  if (unit.card && (unit.card.id === "GOT-0005" || unit.card.name?.includes("金山羊"))) {
+    return true;
+  }
   // 🤖 機械抗性判定
   if (unit.card && (unit.card.id === "RBT-0045" || unit.card.id === "SSR-RBT-0045" || unit.card.name?.includes("古代機神巨人"))) return true;
   // 抗性機器人 (RBT-0003): 你合體後的單位不會被敵方魔法卡選為目標
@@ -21467,6 +23532,9 @@ function hasOtherPigmentsInHand(side) {
 function getCardTributeCost(card) {
   if (!card) return 0;
   let baseCost = Number(card.tribute ?? card.cost ?? 0) || 0;
+  if (window.XLW_steamSupplyTributeDiscount && window.xlwIsSteamCard(card)) {
+    baseCost = Math.max(0, baseCost - window.XLW_steamSupplyTributeDiscount);
+  }
   if (window.XLW_orcTributeDiscount && (card.faction === "獸人" || card.deck === "獸人" || card.id?.includes("ORC") || card.id?.includes("0RC"))) {
     baseCost = Math.max(0, baseCost - window.XLW_orcTributeDiscount);
   }
@@ -23033,6 +25101,27 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     return;
   }
 
+  // 🤿 深海潛水員 (STP-0013 / SSR-STP-0013): 戰鬥時不會被破壞
+  if (isCombatDestruction && unit.card && (unit.card.id === "STP-0013" || unit.card.id === "SSR-STP-0013" || unit.card.name?.includes("深海潛水員"))) {
+    logBattle(`🤿【深海潛水員】深海重裝潛水服：在戰鬥中不會被破壞！`);
+    return;
+  }
+
+  // 🎩 蒸汽魔盜團 金帽 (SR-STP-0044): 一回合一次，強盜或機械被破壞時，可耗能3代替破壞
+  if (zone.startsWith("player_") && !window.XLW_goldCapUsedThisTurn) {
+    const isBanditOrMech = unit.card && (unit.card.race?.includes("強盜") || unit.card.name?.includes("魔盜") || (typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(unit, zone, idx)));
+    const hasGoldCap = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "SR-STP-0044" || u.card.name?.includes("金帽")) && !window.isUnitSilenced(u, z, i)));
+    if (isBanditOrMech && hasGoldCap && window.xlwGetSteamEnergy(true) >= 3) {
+      const doSave = await showXLWConfirm("【金帽】替身防護", `我方【${unit.card.name}】即將被破壞，是否發動【金帽】耗能 3 點代替破壞？`);
+      if (doSave && window.xlwConsumeEnergy(3, true)) {
+        window.XLW_goldCapUsedThisTurn = true;
+        logBattle(`🎩【金帽】拋出金帽防護罩！耗能 3 點代替了【${unit.card.name}】的破壞！`);
+        render();
+        return;
+      }
+    }
+  }
+
   // 🤖 保險箱 (RBT-0025): 此單位不會被戰鬥破壞
   if (isCombatDestruction && unit.card && (unit.card.id === "RBT-0025" || unit.card.name?.includes("保險箱") || (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0025" || d.card.name?.includes("保險箱")))))) {
     logBattle(`🛡️【保險箱】金庫級厚重裝甲：不會被戰鬥破壞！`);
@@ -23985,6 +26074,98 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
 
       if (window.xlwOnCardEntersGraveyard) {
         await window.xlwOnCardEntersGraveyard(unit.card, true, true);
+      }
+
+      // 👧 蒸汽女孩 梅恩 (R-STP-0012 / SSR-STP-0012): 每當你場上1個單位被破壞時充能+1，若為機械單位則充能+2
+      const isPlayerUnitDestroyed = owner === "player";
+      const mZones = isPlayerUnitDestroyed ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+      const hasMayne = mZones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "R-STP-0012" || u.card.id === "SSR-STP-0012" || u.card.name?.includes("蒸汽女孩")) && !window.isUnitSilenced(u, z, i)));
+      if (hasMayne) {
+        const isMech = typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(unit, zone, idx);
+        const chargeAmt = isMech ? 2 : 1;
+        logBattle(`👧【蒸汽女孩 梅恩】回收廢料！充能 +${chargeAmt}！`);
+        await window.xlwChargeEnergy(chargeAmt, isPlayerUnitDestroyed);
+      }
+
+      // 🐐 爛羊 (GOT-0029): 你場上的山羊單位被破壞後，使墓地的此卡被召喚至其原位置
+      if (isPlayerUnitDestroyed && window.xlwIsGoatUnit(unit, zone, idx)) {
+        const rottenIdx = graveyard.findIndex(c => c && (c.id === "GOT-0029" || c.name?.includes("爛羊")));
+        if (rottenIdx >= 0 && !field[zone][idx]) {
+          const rottenCard = graveyard.splice(rottenIdx, 1)[0];
+          field[zone][idx] = { card: structuredClone(rottenCard), tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: zone };
+          logBattle(`🐐【爛羊】百折不撓！山羊同伴倒下，爛羊從墓地爬出並召喚至原位置 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}！`);
+        }
+      }
+
+      // 🧭 航海道具 指南針 (R-STP-0032): 被破壞時，牌庫或墓地尋找1張場地卡加入手牌
+      if (unit.card && (unit.card.id === "R-STP-0032" || unit.card.name?.includes("指南針"))) {
+        const myDeck = isPlayerUnitDestroyed ? deck : (window.XLW_ENEMY?.deck || []);
+        const myGrave = isPlayerUnitDestroyed ? graveyard : (window.XLW_ENEMY?.grave || []);
+        const fieldCandidates = [...myDeck, ...myGrave].filter(c => c && (c.art_subtype === "場地" || c.magic_type === "場地" || c.name?.includes("場") || c.name?.includes("能源廠") || c.name?.includes("能源場")));
+        if (fieldCandidates.length > 0) {
+          if (isPlayerUnitDestroyed) {
+            const choices = fieldCandidates.map((c, i) => ({ text: c.name, value: i }));
+            const pick = await showXLWChoiceModal("【指南針】指引方向", "請選擇檢索加入手牌的場地卡：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = fieldCandidates[pick];
+              if (myDeck.includes(target)) myDeck.splice(myDeck.indexOf(target), 1);
+              else myGrave.splice(myGrave.indexOf(target), 1);
+              hand.push(target);
+              shuffle(deck);
+              logBattle(`🧭【指南針】破碎指引！檢索場地卡【${target.name}】加入手牌！`);
+            }
+          }
+        }
+      }
+
+      // 💣 航海道具 不定時水雷 (R-STP-0056): 被破壞時，使敵方場上1個★<=2的單位被破壞
+      if (unit.card && (unit.card.id === "R-STP-0056" || unit.card.name?.includes("不定時水雷"))) {
+        const oppPrefix = isPlayerUnitDestroyed ? "enemy_" : "player_";
+        const targets = [];
+        for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+          (field[oz] || []).forEach((u, i) => {
+            if (u && (u.card.score || u.card.stars || 0) <= 2 && !window.isUnitEffectImmune(u, oz, i)) {
+              targets.push({ zone: oz, idx: i, name: u.card.name });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          if (isPlayerUnitDestroyed) {
+            const choices = targets.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【不定時水雷】炸裂", "請選擇要一同炸毀的敵方單位 (★<=2)：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = targets[pick];
+              logBattle(`💥【不定時水雷】碎片迸裂！炸毀了敵方【${target.name}】！`);
+              await destroyUnit(target.zone, target.idx, "enemy", false);
+            }
+          } else {
+            const target = targets[0];
+            logBattle(`💥 對手【不定時水雷】炸毀了我方【${target.name}】！`);
+            await destroyUnit(target.zone, target.idx, "player", false);
+          }
+        }
+      }
+
+      // ☄️ 宇宙山羊 隕石羊 (GOT-0047): 被破壞時，額外區召喚「宇宙山羊 隕石碎片羊」
+      if (unit.card && (unit.card.id === "GOT-0047" || unit.card.name?.includes("隕石羊"))) {
+        const extraList = isPlayerUnitDestroyed ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+        const frag = extraList.find(c => c && (c.id === "GOT-0048" || c.name?.includes("隕石碎片羊")));
+        if (frag) {
+          extraList.splice(extraList.indexOf(frag), 1);
+          await window.xlwSpecialSummonUnit(frag, isPlayerUnitDestroyed);
+          logBattle(`☄️【宇宙山羊 隕石羊】碎裂！從額外區召喚【宇宙山羊 隕石碎片羊】登場！`);
+        }
+      }
+
+      // 🦨 臭臭山羊 (GOT-0007): 你場上的山羊單位被破壞時，可使手牌的此卡作為「山羊術」使用
+      if (isPlayerUnitDestroyed && window.xlwIsGoatUnit(unit, zone, idx)) {
+        const chouIdx = hand.findIndex(c => c && (c.id === "GOT-0007" || c.name?.includes("臭臭山羊")));
+        if (chouIdx >= 0) {
+          const doChou = await showXLWConfirm("【臭臭山羊】應激釋放", "山羊單位倒下！是否發動手牌中的【臭臭山羊】作為山羊術變形場上一個單位？");
+          if (doChou) {
+            await window.xlwInitiateGoatPolymorphFromHand(hand[chouIdx], chouIdx);
+          }
+        }
       }
 
       // 胖骷伯爵 (R-SKT-0046) 被破壞時召喚墓地星數合計為 2 的不死族
@@ -28376,6 +30557,86 @@ async function endPlayerTurnAndRunEnemy() {
     }
   }
 
+  // 💣 自爆山羊 (GOT-0016): 結束階段自爆，破壞正後方單位
+  for (let i = 0; i < 5; i++) {
+    const frontU = field.player_front[i];
+    if (frontU && (frontU.card.id === "GOT-0016" || frontU.card.name?.includes("自爆山羊"))) {
+      logBattle(`💣【自爆山羊】引信燃盡！自爆並摧毀正後方單位！`);
+      await destroyUnit("player_front", i, "player", false);
+      if (field.player_back[i]) {
+        await destroyUnit("player_back", i, "player", false);
+      }
+    }
+  }
+
+  // 🎀 羊妹蒂蒂 (GOT-0033): 結束階段若場上有4個或以上山羊單位，獎勵+2
+  const endGoatCount = window.xlwCountGoats("player");
+  const hasTiti = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "GOT-0033" || u.card.name?.includes("羊妹蒂蒂")) && !window.isUnitSilenced(u, z, i)));
+  if (hasTiti && endGoatCount >= 4) {
+    playerBonusScore += 2;
+    logBattle(`🎀【羊妹蒂蒂】羊群歡聚！場上山羊達 ${endGoatCount} 隻，獲得 +2★ 獎勵！`);
+    renderScore();
+  }
+
+  // 👵 阿姨山羊 (SR-GOT-0045): 你的結束階段時同名卡一回合限一次，使此卡視為「山羊術」對場上單位使用，若成功召喚兩個小旅人
+  const auntiePos = [];
+  for (const z of ["player_front", "player_back"]) {
+    (field[z] || []).forEach((u, i) => { if (u && (u.card.id === "SR-GOT-0045" || u.card.name?.includes("阿姨山羊")) && !window.isUnitSilenced(u, z, i)) auntiePos.push({ zone: z, idx: i, unit: u }); });
+  }
+  if (auntiePos.length > 0 && !window.XLW_auntieGoatUsedThisTurn) {
+    const doAuntie = await showXLWConfirm("【阿姨山羊】慈祥變形", "結束階段：是否發動【阿姨山羊】效果將場上 1 個友方單位變為阿姨山羊，並召喚 2 個小旅人？");
+    if (doAuntie) {
+      window.XLW_auntieGoatUsedThisTurn = true;
+      const myUnits = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => { if (u && u !== auntiePos[0].unit) myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u }); });
+      }
+      if (myUnits.length > 0) {
+        const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+        const pick = await showXLWChoiceModal("選擇變形單位", "請選擇變形目標：", choices);
+        if (pick !== null && pick !== undefined) {
+          const target = myUnits[pick];
+          await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, auntiePos[0].unit.card, true, true);
+          logBattle("👵【阿姨山羊】慈祥照料：喚來了 2 個小旅人！");
+          for (let k = 0; k < 2; k++) {
+            await window.xlwSummonLittleTraveler(true, { bypassFitTraveler: true });
+          }
+        }
+      }
+    }
+  }
+
+  // ⚡ 超載能源場 (C-STP-0025 / R-STP-0025): 結束階段時，充能+1
+  const hasOverloadField = currentFieldMagic && (currentFieldMagic.id === "C-STP-0025" || currentFieldMagic.id === "R-STP-0025" || currentFieldMagic.name?.includes("超載能源場"));
+  if (hasOverloadField && currentFieldMagic.isPlayerField) {
+    logBattle("⚡【超載能源場】磁能匯聚：回合結束充能 +1！");
+    await window.xlwChargeEnergy(1, true);
+  }
+
+  // 🤖 蒸汽機器人 (STP-0003): 結束階段時若有單位在此卡後方，充能+1
+  for (let i = 0; i < 5; i++) {
+    const u = field.player_front[i];
+    if (u && (u.card.id === "STP-0003" || u.card.name?.includes("蒸汽機器人")) && field.player_back[i]) {
+      logBattle(`🤖【蒸汽機器人】後衛就緒：充能 +1！`);
+      await window.xlwChargeEnergy(1, true);
+    }
+  }
+
+  // ⚓ 退休老水手 (R-STP-0035): 結束階段時若本回合發動充能且能量電池已達上限，獎勵+1
+  const hasOldSailor = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "R-STP-0035" || u.card.name?.includes("退休老水手")) && !window.isUnitSilenced(u, z, i)));
+  if (hasOldSailor && window.xlwGetSteamEnergy(true) >= window.xlwGetMaxSteamEnergy(true)) {
+    playerBonusScore += 1;
+    logBattle("⚓【退休老水手】悠哉品茶：能量滿載，獲得獎勵 +1★！");
+    renderScore();
+  }
+
+  // ⏳ 宇宙山羊 回溯羊 (GOT-0046): 翻回星星戰線牌
+  if (window.XLW_retroGoatPendingThisTurn) {
+    window.XLW_retroGoatPendingThisTurn = false;
+    logBattle("⏳【宇宙山羊 回溯羊】時空倒轉！翻開所有星星戰線牌！");
+    document.querySelectorAll(".lane-card, .star-lane-card").forEach(el => el.classList.remove("flipped"));
+  }
+
   // 🎪 馬戲團劇場 (CCS-0029): 結束階段若本回合曾輪轉，獎勵 +1★
   if (window.XLW_circusTheaterActive && (window.XLW_playerWheelSpinsThisTurn || 0) > 0) {
     playerBonusScore += 1;
@@ -29458,6 +31719,100 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
 // 執行手牌單位召喚處理邏輯
 window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if(xlwRequireSpellCompletion())return;
+  // 🐐 山羊術手牌變形判定
+  const isPolymorphGoatHandCard = (
+    card.id === "GOT-0002" || card.id === "C-GOT-0002" || card.id === "PROMO-GOT-0002" ||
+    card.id === "C-GOT-0006" || card.id === "R-GOT-0006" ||
+    card.id === "GOT-0012" || card.id === "C-GOT-0012" || card.id === "SSR-GOT-0012" || card.id === "VR-GOT-0012" ||
+    card.id === "GOT-0014" || card.id === "C-GOT-0014" ||
+    card.id === "GOT-0007" ||
+    card.id === "GOT-0016" ||
+    card.id === "GOT-0052" ||
+    (card.name && (card.name.includes("呆山羊") || card.name.includes("盜版山羊") || card.name.includes("寶寶山羊") || card.name.includes("盾牌山羊") || card.name.includes("臭臭山羊") || card.name.includes("自爆山羊") || card.name.includes("綠山羊")))
+  );
+  if (isPolymorphGoatHandCard) {
+    const playMode = await showXLWChoiceModal(
+      `【${card.name}】使用方式`,
+      `此卡可作為單位正常打出，或作為「山羊術」使用將場上 1 個單位變形為【${card.name}】：`,
+      [
+        { text: "⚔️ 正常召喚入場", value: "summon" },
+        { text: "🐐 作為「山羊術」變形場上單位", value: "polymorph" }
+      ]
+    );
+    if (playMode === "polymorph") {
+      await window.xlwInitiateGoatPolymorphFromHand(card, idx);
+      return;
+    }
+  }
+
+  // 🌌 黑洞羊 (GOT-0034 / SSR-GOT-0034): 召喚階段可改為放置在星星戰線1
+  if (phase === "召喚階段" && (card.id === "GOT-0034" || card.id === "SSR-GOT-0034" || card.name?.includes("黑洞羊"))) {
+    const doBlackHole = await showXLWConfirm("【黑洞羊】星星戰線躍遷模式", "你的召喚階段：是否將【黑洞羊】置於一號星星戰線牌？\n（啟動黑洞羊特殊勝利躍遷，主要階段開始時若場上山羊數量達標將向前移動，抵達五號戰線獲勝！）");
+    if (doBlackHole) {
+      hand.splice(idx, 1);
+      window.XLW_playerBlackHoleLane = 1;
+      normalSummonUsed = true;
+      logBattle("🌌【黑洞羊】成功部署於一號星星戰線！超時空奇點開啟！");
+      render();
+      return;
+    }
+  }
+
+  // ☀️ 太羊 (GOT-0036): 召喚階段可改為作為場地魔法卡打出
+  if (phase === "召喚階段" && (card.id === "GOT-0036" || card.name?.includes("太羊"))) {
+    const doField = await showXLWConfirm("【宇宙山羊 太羊】場地化", "你的召喚階段：是否將【宇宙山羊 太羊】作為場地魔法卡使用？");
+    if (doField) {
+      hand.splice(idx, 1);
+      currentFieldMagic = structuredClone(card);
+      currentFieldMagic.isPlayerField = true;
+      currentFieldMagic.art_subtype = "場地";
+      normalSummonUsed = true;
+      logBattle("☀️【宇宙山羊 太羊】化作耀眼的光環，展開為場地魔法卡！");
+      render();
+      return;
+    }
+  }
+
+  // 🏰 移動城堡 (R-STP-0050 / SSR-STP-0050): 召喚階段可改為耗能6打出
+  if (phase === "召喚階段" && (card.id === "R-STP-0050" || card.id === "SSR-STP-0050" || card.name?.includes("移動城堡"))) {
+    if (window.xlwGetSteamEnergy(true) >= 6) {
+      const doCastle = await showXLWConfirm("【移動城堡】耗能打出", "召喚階段：是否改為耗能 6 點，直接打出【移動城堡】？");
+      if (doCastle) {
+        if (window.xlwConsumeEnergy(6, true)) {
+          hand.splice(idx, 1);
+          const success = await window.xlwSpecialSummonUnit(card, true);
+          if (success) {
+            normalSummonUsed = true;
+            logBattle("🏰【移動城堡】蒸氣轟鳴！耗能 6 點直接打出成功！");
+            render();
+            return;
+          } else {
+            hand.splice(idx, 0, card);
+            window.xlwChargeEnergy(6, true);
+          }
+        }
+      }
+    }
+  }
+
+  // 🌈 彩虹山羊 (GOT-0026): 場上須有至少4個山羊單位
+  if (card.id === "GOT-0026" || card.name?.includes("彩虹山羊")) {
+    const goatCount = window.xlwCountGoats("player");
+    if (goatCount < 4) {
+      setStatus(`【彩虹山羊】需要我方場上至少有 4 個山羊單位（目前 ${goatCount} 個）！`);
+      return;
+    }
+  }
+
+  // 🎭 黑暗道具 恐怖假人 (R-STP-0027): 場上須有黑暗商人 皮皮
+  if (card.id === "R-STP-0027" || card.name?.includes("恐怖假人")) {
+    const hasPipi = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "SR-STP-0026" || u.card.id === "SSSR-STP-0026" || u.card.name?.includes("皮皮")) && !window.isUnitSilenced(u, z, i)));
+    if (!hasPipi) {
+      setStatus("【恐怖假人】需要我方場上有【黑暗商人 皮皮】才可打出！");
+      return;
+    }
+  }
+
   // 🛼 直排輪布偶裝熊熊 (R-CCS-0027): 主要階段展示上靶
   if (phase === "召喚階段" && (card.id === "R-CCS-0027" || card.name?.includes("直排輪布偶裝熊熊")) && !window.XLW_bearSuitUsedThisTurn) {
     const doSuit = await showXLWConfirm("【直排輪布偶裝熊熊】展示上靶", "是否展示手牌【直排輪布偶裝熊熊】並直接送上轉盤靶心？");
@@ -33360,6 +35715,211 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               }
             }
 
+            // ⚙️【指揮官 貝莉可可】(STP-0008 / R-STP-0008-泳裝): 耗能1使你場上1單位轉正
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "STP-0008" || obj.card.id?.includes("STP-0008") || obj.card.name?.includes("貝莉可可"))) {
+              const myTappedUnits = [];
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => { if (u && u.tapped) myTappedUnits.push({ zone: z, idx: i, name: u.card.name, unit: u }); });
+              }
+              if (myTappedUnits.length > 0 && window.xlwGetSteamEnergy(true) >= 1) {
+                const doUntap = await showXLWConfirm("【指揮官 貝莉可可】整隊指令", "是否耗能 1 點使我方場上 1 個橫置單位轉正？");
+                if (doUntap && window.xlwConsumeEnergy(1, true)) {
+                  const choices = myTappedUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇轉正單位", "請選擇轉正的單位：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const target = myTappedUnits[pick];
+                    target.unit.tapped = false;
+                    logBattle(`⚡【指揮官 貝莉可可】一聲令下！耗能 1 點轉正了【${target.name}】！`);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+
+            // 🎭【黑暗道具 恐怖假人】(R-STP-0027): 耗能X，破壞敵方1個★等同於X的單位
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "R-STP-0027" || obj.card.name?.includes("恐怖假人"))) {
+              if (window.XLW_horrificDummyUsedThisTurn) {
+                setStatus("恐怖假人 效果本回合已使用過！");
+                return;
+              }
+              const currentE = window.xlwGetSteamEnergy(true);
+              const oppUnits = [];
+              for (const z of ["enemy_front", "enemy_back"]) {
+                (field[z] || []).forEach((u, i) => {
+                  const stars = u ? (u.card.score || u.card.stars || 0) : -1;
+                  if (u && stars <= currentE && !window.isUnitEffectImmune(u, z, i)) {
+                    oppUnits.push({ zone: z, idx: i, name: u.card.name, stars, unit: u });
+                  }
+                });
+              }
+              if (oppUnits.length > 0) {
+                const doDummy = await showXLWConfirm("【恐怖假人】驚悚詛咒", "主要階段限一次：是否耗能 X 破壞敵方場上 1 個★為 X 的單位？");
+                if (doDummy) {
+                  const choices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.stars}★, 需耗能${u.stars})`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇破壞目標", "選擇目標敵方單位：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const target = oppUnits[pick];
+                    if (window.xlwConsumeEnergy(target.stars, true)) {
+                      window.XLW_horrificDummyUsedThisTurn = true;
+                      logBattle(`🎭【恐怖假人】詛咒降臨！消耗 ${target.stars} 能量，破壞了敵方【${target.name}】！`);
+                      await destroyUnit(target.zone, target.idx, "enemy", false);
+                      render();
+                      return;
+                    }
+                  }
+                }
+              }
+            }
+
+            // 🔧【維修員 寶妮】(SR-STP-0023 / SSR-STP-0023): 耗能2使墓地1機械單位回手牌
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id?.includes("STP-0023") || obj.card.name?.includes("寶妮"))) {
+              if (window.XLW_bonnieUsedThisTurn) {
+                setStatus("維修員 寶妮 效果本回合已使用過！");
+                return;
+              }
+              const mechGraves = graveyard.filter(c => c && (c.type === "unit" || !c.type) && (typeof window.xlwIsUnitMech === "function" ? window.xlwIsUnitMech({ card: c }) : c.faction === "機械軍團" || c.race === "機械" || c.id?.includes("RBT")));
+              if (mechGraves.length > 0 && window.xlwGetSteamEnergy(true) >= 2) {
+                const doBonnie = await showXLWConfirm("【維修員 寶妮】維修回收", "主要階段：是否耗能 2 點從墓地回收 1 個機械單位卡回手牌？");
+                if (doBonnie && window.xlwConsumeEnergy(2, true)) {
+                  window.XLW_bonnieUsedThisTurn = true;
+                  const choices = mechGraves.map((c, i) => ({ text: c.name, value: i }));
+                  const pick = await showXLWChoiceModal("選擇回收的機械", "選擇回收的單位卡：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const target = mechGraves[pick];
+                    graveyard.splice(graveyard.indexOf(target), 1);
+                    hand.push(target);
+                    logBattle(`🔧【維修員 寶妮】精巧扳手！耗能 2 點將【${target.name}】從墓地回收至手牌！`);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+
+            // 🛡️【蒸汽坦克】(R-STP-0040): 耗能3賦予貫穿及破甲直到敵方下個主要階段開始時
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "R-STP-0040" || obj.card.name?.includes("蒸汽坦克"))) {
+              if (window.XLW_tankUsedThisTurn) {
+                setStatus("蒸汽坦克 效果本回合已使用過！");
+                return;
+              }
+              if (window.xlwGetSteamEnergy(true) >= 3) {
+                const doTank = await showXLWConfirm("【蒸汽坦克】超載重砲", "主要階段限一次：是否耗能 3 點獲得【貫穿】與【破甲】直到敵方下個主要階段開始？");
+                if (doTank && window.xlwConsumeEnergy(3, true)) {
+                  window.XLW_tankUsedThisTurn = true;
+                  obj.piercing = true;
+                  obj.armorBreakUntilTurn = turn + 2;
+                  logBattle("🚜【蒸汽坦克】穿甲重裝彈填裝完畢！獲得【貫穿】與【破甲】！");
+                  render();
+                  return;
+                }
+              }
+            }
+
+            // 🎪【人偶師】(R-STP-0041): 耗能3召喚2個小旅人
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "R-STP-0041" || obj.card.name?.includes("人偶師"))) {
+              if (window.XLW_puppeteerUsedThisTurn) {
+                setStatus("人偶師 效果本回合已使用過！");
+                return;
+              }
+              if (window.xlwGetSteamEnergy(true) >= 3) {
+                const doPup = await showXLWConfirm("【人偶師】編織人偶", "主要階段限一次：是否耗能 3 點召喚 2 個小旅人？");
+                if (doPup && window.xlwConsumeEnergy(3, true)) {
+                  window.XLW_puppeteerUsedThisTurn = true;
+                  logBattle("🧵【人偶師】絲線飛舞！耗能 3 點召喚了 2 個小旅人！");
+                  for (let k = 0; k < 2; k++) {
+                    await window.xlwSummonLittleTraveler(true, { bypassFitTraveler: true });
+                  }
+                  render();
+                  return;
+                }
+              }
+            }
+
+            // 📦【補給員】(SR-STP-0042 / SR-STP-0042-泳裝): 召喚階段耗能2，手牌蒸汽世界單位祭品數-1
+            if (isMyTurn && phase === "召喚階段" && (obj.card.id?.includes("STP-0042") || obj.card.name?.includes("補給員"))) {
+              if (window.XLW_supplyOfficerUsedThisTurn) {
+                setStatus("補給員 效果本回合召喚階段已使用過！");
+                return;
+              }
+              if (window.xlwGetSteamEnergy(true) >= 2) {
+                const doSupply = await showXLWConfirm("【補給員】空投補給", "召喚階段限一次：是否耗能 2 點，使手牌蒸汽世界單位所需祭品數 -1 直到本階段結束？");
+                if (doSupply && window.xlwConsumeEnergy(2, true)) {
+                  window.XLW_supplyOfficerUsedThisTurn = true;
+                  window.XLW_steamSupplyTributeDiscount = (window.XLW_steamSupplyTributeDiscount || 0) + 1;
+                  logBattle("📦【補給員】補給箱落地！手牌所有蒸汽世界單位祭品需求 -1！");
+                  render();
+                  return;
+                }
+              }
+            }
+
+            // 🌟【皇家明星號】(SR-STP-0057): 耗能2召喚額外區「蒸汽廣告船」
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "SR-STP-0057" || obj.card.name?.includes("皇家明星號"))) {
+              if (window.XLW_royalStarUsedThisTurn) {
+                setStatus("皇家明星號 效果本回合已使用過！");
+                return;
+              }
+              const adBoat = playerExtraDeck.find(c => c && (c.id === "C-STP-0058" || c.name?.includes("蒸汽廣告船")));
+              if (adBoat && window.xlwGetSteamEnergy(true) >= 2) {
+                const doAd = await showXLWConfirm("【皇家明星號】廣告啟航", "主要階段限一次：是否耗能 2 點從額外區召喚【蒸汽廣告船】？");
+                if (doAd && window.xlwConsumeEnergy(2, true)) {
+                  window.XLW_royalStarUsedThisTurn = true;
+                  playerExtraDeck.splice(playerExtraDeck.indexOf(adBoat), 1);
+                  await window.xlwSpecialSummonUnit(adBoat, true);
+                  logBattle("🌟【皇家明星號】投射霓虹燈光！從額外區召喚【蒸汽廣告船】！");
+                  render();
+                  return;
+                }
+              }
+            }
+
+            // 🍑【複製山羊小桃】(SR-GOT-0031): 主要階段使此單位視為具有墓地1張山羊單位的效果
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "SR-GOT-0031" || obj.card.name?.includes("複製山羊小桃"))) {
+              const myGoatGraves = graveyard.filter(c => c && window.xlwIsGoatCard(c) && c.type === "unit");
+              if (myGoatGraves.length > 0) {
+                const doCopy = await showXLWConfirm("【複製山羊小桃】靈魂拓印", "是否選擇墓地 1 張山羊單位，使小桃獲得其效果？");
+                if (doCopy) {
+                  const choices = myGoatGraves.map((c, i) => ({ text: `${c.name} (${c.score || c.stars}★)`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇複製的山羊", "選擇複製的單位卡：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const target = myGoatGraves[pick];
+                    obj.card.effect_text = target.effect_text || target.text || "";
+                    logBattle(`🍑【複製山羊小桃】完美拓印！獲得了墓地【${target.name}】的卡片效果！`);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+
+            // ⚡【通電道具 狠活科技】(裝備者主動發動): 耗能2破壞敵方1單位
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && obj.equipments && obj.equipments.includes("通電道具 狠活科技")) {
+              if (window.XLW_henkUsedThisTurn) {
+                setStatus("狠活科技 效果本回合已使用過！");
+                return;
+              }
+              const oppUnits = [];
+              for (const z of ["enemy_front", "enemy_back"]) {
+                (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) oppUnits.push({ zone: z, idx: i, name: u.card.name }); });
+              }
+              if (oppUnits.length > 0 && window.xlwGetSteamEnergy(true) >= 2) {
+                const doHenk = await showXLWConfirm("【狠活科技】高壓電擊", "一回合一次：是否耗能 2 點電擊破壞敵方 1 個單位？");
+                if (doHenk && window.xlwConsumeEnergy(2, true)) {
+                  window.XLW_henkUsedThisTurn = true;
+                  const choices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇破壞目標", "選擇目標敵方單位：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const target = oppUnits[pick];
+                    logBattle(`⚡【狠活科技】高壓電擊爆裂！破壞了敵方【${target.name}】！`);
+                    await destroyUnit(target.zone, target.idx, "enemy", false);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+
             // (2) 禁忌改裝師 (SR-RBT-0026 / SSR-RBT-0026): 分開1個合體單位並重新合體
             if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "SR-RBT-0026" || obj.card.id === "SSR-RBT-0026" || obj.card.name?.includes("禁忌改裝師"))) {
               if (window.XLW_remodellerUsedThisTurn) {
@@ -34519,6 +37079,23 @@ function renderScore() {
       </div>
       <div class="score-board-turn-badge">TURN ${turn}</div>
     </div>
+
+    <!-- 🐐 山羊族 黑洞羊奇點狀態 -->
+    ${(window.XLW_playerBlackHoleLane || 0) > 0 ? `
+      <div style="background: linear-gradient(135deg, rgba(88,28,135,0.7), rgba(49,46,129,0.7)); border: 1px solid #a855f7; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #e9d5ff;">
+        <span>🌌 <b>黑洞羊躍遷</b></span>
+        <span style="font-weight: 900; color: #facc15;">星星戰線 ${window.XLW_playerBlackHoleLane}/5</span>
+      </div>
+    ` : ""}
+
+    <!-- ⚙️ 蒸氣世界 電池能量條 -->
+    ${(window.xlwGetSteamEnergy(true) > 0 || (currentFieldMagic && window.xlwIsSteamCard(currentFieldMagic))) ? `
+      <div style="background: linear-gradient(135deg, rgba(30,58,138,0.7), rgba(15,23,42,0.8)); border: 1px solid #38bdf8; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #bae6fd;">
+        <span>🔋 <b>蒸氣能量電池</b></span>
+        <span style="font-weight: 900; color: #38bdf8;">${window.xlwGetSteamEnergy(true)} / ${window.xlwGetMaxSteamEnergy(true)} ⚡</span>
+      </div>
+    ` : ""}
+
     <div class="score-badge-section">
       <div class="score-badge-card player ${playerLead ? "leading" : ""}">
         <div class="score-badge-top-row">
@@ -34756,7 +37333,10 @@ function renderStablePanel() {
       canSwitchToAttack = true;
     } else if (phase === "戰術佈陣") {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
-      canSwitchToAttack = !hasTacticalActed;
+      const canAnyoneAttack = ["player_front", "player_back"].some(z => 
+        (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
+      );
+      canSwitchToAttack = !hasTacticalActed || canAnyoneAttack;
     }
     attackBtn.disabled = isAiRunning || isEnding || isTributeOngoing || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
     attackBtn.classList.toggle("active", phase === "進攻宣言");
@@ -37509,6 +40089,27 @@ async function triggerSneakAttackSuccessEffects(card) {
   window.XLW_turnSneakCount = (window.XLW_turnSneakCount || 0) + 1;
   logBattle(`🥷 偷襲成功！本回合累計偷襲成功次數：${window.XLW_turnSneakCount} 次。`);
 
+  // 🐱🐐 喵山羊 (GOT-0015): 偷竊。此卡偷竊成功時，牌庫尋找1張山羊族牌加入手牌並重洗牌庫
+  if (card && (card.id === "GOT-0015" || card.name?.includes("喵山羊"))) {
+    const goatCandidates = deck.filter(c => c && window.xlwIsGoatCard(c));
+    if (goatCandidates.length > 0) {
+      const choices = goatCandidates.map((c, i) => ({ text: `【${c.name}】(${c.id || ''})`, value: c }));
+      const pick = await showXLWChoiceModal("【喵山羊】偷竊成功", "牌庫檢索：請選擇一張山羊族牌加入手牌：", choices);
+      if (pick && pick.value) {
+        const fIdx = deck.indexOf(pick.value);
+        if (fIdx >= 0) {
+          const added = deck.splice(fIdx, 1)[0];
+          hand.push(added);
+          shuffle(deck);
+          logBattle(`🐱🐐【喵山羊】偷竊成功！從牌庫檢索【${added.name}】加入手牌並洗牌！`);
+          render();
+        }
+      }
+    } else {
+      logBattle("🐱🐐【喵山羊】牌庫中無其他山羊族牌可供檢索。");
+    }
+  }
+
   // (a-彩虹) 彩虹幻象喵 (R-CAT-0030)
   if (card.id !== "R-CAT-0030" && !card.name?.includes("彩虹幻象喵")) {
     const rainbowIdx = hand.findIndex(c => c && (c.id === "R-CAT-0030" || c.name?.includes("彩虹幻象喵")));
@@ -37968,6 +40569,20 @@ async function triggerEnemySneakAttackSuccessEffects(card) {
   // 對手偷襲成功時也記錄回合偷襲次數
   window.XLW_turnSneakCount = (window.XLW_turnSneakCount || 0) + 1;
   logBattle(`🥷 對手 偷襲成功！本回合累計偷襲成功次數：${window.XLW_turnSneakCount} 次。`);
+
+  // 🐱🐐 對手 喵山羊 (GOT-0015): 牌庫檢索山羊卡
+  if (card && (card.id === "GOT-0015" || card.name?.includes("喵山羊"))) {
+    const oppD = window.XLW_ENEMY?.deck || [];
+    const oppH = window.XLW_ENEMY?.hand || [];
+    const gIdx = oppD.findIndex(c => c && window.xlwIsGoatCard(c));
+    if (gIdx >= 0) {
+      const added = oppD.splice(gIdx, 1)[0];
+      oppH.push(added);
+      shuffle(oppD);
+      logBattle(`🐱🐐【對手 喵山羊】偷竊成功！從牌庫檢索山羊卡【${added.name}】加入手牌！`);
+      render();
+    }
+  }
 
   // (a-彩虹) 彩虹幻象喵 (R-CAT-0030)
   if (card.id !== "R-CAT-0030" && !card.name?.includes("彩虹幻象喵")) {
@@ -40769,6 +43384,14 @@ function promptNextChainAction() {
         if (!isPlayerTurnForChain) return false;
         return true;
       }
+      // 🌑 黑暗道具 黑球 (R-STP-0030): 耗能4。無效化該魔法卡。若你場上有商人單位，則此卡耗能-2
+      if (name.includes("黑球") || cid === "R-STP-0030" || name.includes("黑暗道具 黑球")) {
+        const hasMerchant = ["player_front", "player_back"].some(z => 
+          (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
+        );
+        const reqEnergy = hasMerchant ? 2 : 4;
+        return window.xlwGetSteamEnergy("player") >= reqEnergy;
+      }
       return name.includes("魔法反制") || cid.includes("NMG-0020") ||
              name.includes("終極無效化") || cid.includes("NMG-0026") ||
              name.includes("法術解析") || cid.includes("NMG-0039") ||
@@ -40802,6 +43425,16 @@ function promptNextChainAction() {
           actionsDiv.innerHTML = "";
           statusText.textContent = `🔥 正在連鎖施放 ${c.name}...`;
           
+          // 🌑 黑暗道具 黑球 能量扣除
+          if (c.id === "R-STP-0030" || c.name?.includes("黑球")) {
+            const hasMerchant = ["player_front", "player_back"].some(z => 
+              (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
+            );
+            const reqEnergy = hasMerchant ? 2 : 4;
+            window.xlwConsumeEnergy("player", reqEnergy);
+            logBattle(`🌑【黑暗道具 黑球】消耗 ${reqEnergy} 點蒸氣能量（商人折抵後），發動連鎖反制！`);
+          }
+
           // Remove from hand immediately
           const hIdx = hand.indexOf(c);
           if (hIdx !== -1) {
@@ -40960,6 +43593,8 @@ function resolveLocalSpellChain() {
                                    (counteringCard.name && counteringCard.name.includes("\u7d42\u6975\u7121\u6548\u5316")) || 
                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u89e3\u6790")) || 
                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u4fdd\u8b77")) ||
+                                   (counteringCard.name && counteringCard.name.includes("黑球")) ||
+                                   (counteringCard.id === "R-STP-0030") ||
                                    (counteringCard.id === "VRT-0011-EFFECT");
                                    
         if (isTargetUnit && isCounterMagicOnly) {
