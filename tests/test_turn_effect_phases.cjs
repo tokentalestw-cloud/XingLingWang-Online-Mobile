@@ -70,6 +70,19 @@ module.exports = (async () => {
     }
     tests++;
   }
+  // The God Eye replacement uses the normal draw list without a second draw.
+  for (const accept of [false, true]) {
+    const g = fixture();
+    g.isMultiplayer = false;
+    g.showXLWConfirm = async () => accept;
+    g.field.player_front[0] = { card: { id: 'R-RBT-0060' }, devourCards: [{}] };
+    g.deck.push(...['search', 'spare', 'normal', 'top'].map(id => ({ id, name: id })));
+    vm.runInContext(source.slice(drawStart, drawEnd), g);
+    await g.performPlayerTurnStartDraw();
+    assert.equal(g.deck.length, 2);
+    assert.deepEqual(g.hand.map(card => card.id).sort(), accept ? ['search', 'top'] : ['normal', 'top']);
+    tests++;
+  }
   for (const commander of ['absent', 'active', 'silenced']) {
     const g = fixture(); g.isMultiplayer = false;
     g.field.player_front[0] = { card: { id: 'SLIDER', name: '滑行單位', keywords: ['滑行'] }, tapped: true };
