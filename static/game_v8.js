@@ -38166,16 +38166,20 @@ function setupWebSocketEvents() {
     if (window.XLW_wsHeartbeatInterval) {
       clearInterval(window.XLW_wsHeartbeatInterval);
     }
+    window.XLW_wsLastPingAt = 0;
     window.XLW_wsHeartbeatInterval = setInterval(() => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         if (window.XLW_sync?.lastPong && Date.now() - window.XLW_sync.lastPong > 45000) {
           ws.close();
           return;
         }
-        ws.send(JSON.stringify({ action: "ping" }));
-        window.XLW_sync?.resend();
+        if (!window.XLW_wsLastPingAt || Date.now() - window.XLW_wsLastPingAt >= 15000) {
+          window.XLW_wsLastPingAt = Date.now();
+          ws.send(JSON.stringify({ action: "ping" }));
+        }
+        window.XLW_sync?.resend(false);
       }
-    }, 15000);
+    }, 3000);
   };
   
   ws.onerror = (err) => {
@@ -40064,12 +40068,14 @@ function setupWebSocketEvents() {
   connection.onclose = event => {
     if (ws !== connection) return;
     window.XLW_sync.ready = false;
+    window.XLW_sync.wireReady = false;
     onClose(event);
   };
   const onError = connection.onerror;
   connection.onerror = event => {
     if (ws !== connection) return;
     window.XLW_sync.ready = false;
+    window.XLW_sync.wireReady = false;
     onError(event);
   };
 }

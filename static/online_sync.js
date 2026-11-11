@@ -17,6 +17,8 @@
       this.failed = false;
       this.processing = 0;
       this.ready = false;
+      this.wireReady = false;
+      this.lastAttempt = new Map();
       this.pending = new Map();
       this.encodedPending = new Map();
       this.lastOutbox = null;
@@ -29,7 +31,7 @@
     }
     metadata() { return { epoch: this.epoch, cursor: this.cursor }; }
     restore(meta) {
-      if (!meta || typeof meta.epoch !== 'string' || !Number.isSafeInteger(meta.cursor)) return;
+      if (!meta || typeof meta.epoch !== 'string' || (!Number.isSafeInteger(meta.cursor) || meta.cursor < 0)) return;
       this.epoch = meta.epoch;
       this.cursor = meta.cursor;
     }
@@ -56,7 +58,16 @@
       if (this.socket?.readyState === 1) {
         const encoded = message.message_id && this.pending.get(message.message_id) === message
           ? this.encodedPending.get(message.message_id) : null;
-        this.originalSend.call(this.socket, encoded || JSON.stringify(message));
+        try {
+          this.originalSend.call(this.socket, encoded || JSON.stringify(message));
+          if (message.message_id && this.pending.has(message.message_id)) this.lastAttempt.set(message.message_id, Date.now());
+        } catch (_) {
+          // A socket can fail between readyState and send. Keep the durable
+          // outbox intact and let the normal reconnect handshake retry it.
+          this.ready = false;
+          this.wireReady = false;
+          try { this.socket.close(); } catch (_) {}
+        }
       }
     }
     queueBackup(message) {
@@ -102,17 +113,25 @@
         catch (error) { this.stop(error); throw error; }
         finally { this.sendingAction = null; }
       }
-      if (this.ready || this.socket?.readyState === 1) this.raw(message);
+      if (this.ready || this.wireReady) this.raw(message);
     }
-    resend() {
-      if (this.failed) return;
-      if (!this.ready && this.socket?.readyState !== 1) return;
-      for (const message of this.pending.values()) this.raw(message);
+    resend(force = true) {
+      if (this.failed || (!this.ready && !this.wireReady)) return;
+      // Do not queue repeated snapshots behind data the network is still uploading.
+      if (this.socket?.bufferedAmount > 65536) return;
+      for (const message of this.pending.values()) {
+        if (!force && Date.now() - (this.lastAttempt.get(message.message_id) || 0) < 3000) continue;
+        this.raw(message);
+        if (this.socket?.bufferedAmount > 65536) break;
+      }
     }
     attach(socket) {
       this.socket = socket;
       this.originalSend = socket.send;
       this.ready = false;
+      this.wireReady = false;
+      this.lastAttempt.clear();
+      this.lastPong = Date.now();
       socket.send = value => this.send(JSON.parse(value));
       // Preserve the snapshot at the send boundary, including during retries.
       socket.sendObject = message => this.send(
@@ -139,6 +158,7 @@
           const sent = this.pending.get(data.message_id);
           if (sent && ["end_turn","mulligan_confirm"].includes(sent.action)) global.XLWInputDiagnostics?.mark("wire:ack",{action:sent.action});
           this.pending.delete(data.message_id);
+          this.lastAttempt.delete(data.message_id);
           this.persistOutbox();
           return;
         }
@@ -148,19 +168,29 @@
           return;
         }
         if (data.type === 'resume_complete') {
+          if (this.epoch && data.epoch !== this.epoch) {
+            this.stop(new Error('對局紀錄已重建，請重新開局。'));
+            return;
+          }
+          // The server has completed replay and now accepts operations. Retry
+          // persisted replies here: an active handler may be waiting for them,
+          // so putting this retry behind tail would deadlock that handler.
+          this.wireReady = true;
+          this.resend();
+          if (!this.wireReady) return;
           this.tail = this.tail.then(() => {
-            if (socket !== this.socket || this.failed) return;
+            if (socket !== this.socket || this.failed || !this.wireReady) return;
             this.epoch = data.epoch;
             this.ready = true;
             this.lastPong = Date.now();
             this.checkpoint();
-            this.resend();
             global.dispatchEvent?.(new Event('xlw-sync-ready'));
           }).catch(error => this.stop(error));
           return;
         }
         if (data.type === 'restore_client_backup') {
           this.tail = this.tail.then(async () => {
+            if (socket !== this.socket || this.failed) return;
             await this.process(data);
             this.restore(data.state?.sync_metadata);
           }).catch(error => this.stop(error));
@@ -202,6 +232,7 @@
       this.latestBackup = null;
       this.failed = true;
       this.ready = false;
+      this.wireReady = false;
       this.fail(error.message || String(error));
     }
   }

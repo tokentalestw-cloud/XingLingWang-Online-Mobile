@@ -296,6 +296,24 @@ class ConnectionManager:
                         return True
         return False
 
+    DELIVERY_SEND_TIMEOUT = 3.0
+
+    async def _send_delivery_message(self, room, role, socket, message):
+        try:
+            await asyncio.wait_for(socket.send_json(message), timeout=self.DELIVERY_SEND_TIMEOUT)
+            return True
+        except Exception as error:
+            # The operation is already journaled. A stuck writer must not hold
+            # the room forever; reconnect will replay the same operation once.
+            print(f"Delivery send failed for {role}: {type(error).__name__}")
+            if room.get(role, (None, None))[1] is socket:
+                room["ready"][role] = False
+            try:
+                await asyncio.wait_for(socket.close(code=1013), timeout=0.5)
+            except Exception:
+                pass
+            return False
+
     async def broadcast_to_other(self, room_id: str, sender_id: str, message: dict, websocket=None):
         if room_id not in self.rooms:
             return
@@ -328,13 +346,16 @@ class ConnectionManager:
                 epoch, cursor = message.get("epoch"), message.get("cursor", 0)
                 backup = r["client_backups"].get(sender_role)
                 if epoch is None and backup and (backup.get("sync_metadata") or {}).get("epoch") == delivery.epoch:
-                    await active_ws.send_json({"type": "restore_client_backup", "state": backup})
+                    if not await self._send_delivery_message(r, sender_role, active_ws, {"type": "restore_client_backup", "state": backup}):
+                        return
                     epoch = backup["sync_metadata"]["epoch"]
                     cursor = backup["sync_metadata"]["cursor"]
                 try:
                     for event in delivery.replay(sender_role, epoch, cursor):
-                        await active_ws.send_json(event)
-                    await active_ws.send_json({"type": "resume_complete", "epoch": delivery.epoch})
+                        if not await self._send_delivery_message(r, sender_role, active_ws, event):
+                            return
+                    if not await self._send_delivery_message(r, sender_role, active_ws, {"type": "resume_complete", "epoch": delivery.epoch}):
+                        return
                     r["ready"][sender_role] = True
                 except ValueError as error:
                     await active_ws.send_json({"type": "sync_error", "message": str(error)})
@@ -350,7 +371,7 @@ class ConnectionManager:
                         await active_ws.send_json({"type": "sync_error", "message": "操作缺少確認編號，請重新整理。"})
                         return
                     if delivery.duplicate(sender_role, message_id):
-                        await active_ws.send_json({"type": "delivery_ack", "message_id": message_id})
+                        await self._send_delivery_message(r, sender_role, active_ws, {"type": "delivery_ack", "message_id": message_id})
                         return
             if action in ("turn_order_pick", "turn_order_choice"):
                 await self._handle_turn_order(r, sender_role, message, active_ws)
@@ -398,17 +419,17 @@ class ConnectionManager:
             
             # Commit to the replay journal before acknowledging the sender.
             flipped_message = delivery.append(other_role, self.flip_message_coordinates(message))
+            sends = []
             if message_id:
                 delivery.remember(sender_role, message_id)
-                try:
-                    await active_ws.send_json({"type": "delivery_ack", "message_id": message_id})
-                except Exception:
-                    pass  # The recipient must still receive an accepted operation if its sender disconnects.
+                sends.append(self._send_delivery_message(r, sender_role, active_ws,
+                             {"type": "delivery_ack", "message_id": message_id}))
             if target_ws is not None and r["ready"].get(other_role, True):
-                try:
-                    await target_ws.send_json(flipped_message)
-                except Exception as e:
-                    print(f"Error broadcasting message to target player (retained for replay): {e}")
+                sends.append(self._send_delivery_message(r, other_role, target_ws, flipped_message))
+            # A slow sender ACK must not delay delivery to the other player.
+            # Keep the room lock until both bounded writes finish, preserving order.
+            if sends:
+                await asyncio.gather(*sends)
             if action == "leave_room":
                 self.rooms.pop(room_id, None)
 
