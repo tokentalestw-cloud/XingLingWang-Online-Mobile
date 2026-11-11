@@ -70,15 +70,6 @@
   <meta name="theme-color" content="#161020">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <script src="/static/mobile_viewport.js?v=20261031-turn-order-v11a"></script>
-  <script>
-    // 首次繪製前就決定是否以 CSS 旋轉成橫向，避免開啟時先閃直向畫面再跳轉
-    (function () {
-      var touch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-      if (touch && window.innerHeight > window.innerWidth) {
-        document.documentElement.classList.add('xlw-force-landscape');
-      }
-    })();
-  </script>
   <style>
     /* 避免首頁載入時棋盤畫面一閃而過 (Prevent initial board flash on load) */
     #xlwWelcomeOverlay {
@@ -86,11 +77,53 @@
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
+      width: 100% !important;
+      height: 100% !important;
       background: radial-gradient(circle at 50% 50%, #170d2a 0%, #070509 100%) !important;
       z-index: 150000 !important;
     }
+    /* The welcome screen fills the rotated body's axes, not the physical viewport. */
+    #xlwWelcomeOverlay {
+      box-sizing: border-box;
+      align-items: flex-start !important;
+      overflow: hidden auto !important;
+      overscroll-behavior: contain;
+      container: xlw-welcome / size;
+      padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+               max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+    html.xlw-force-landscape #xlwWelcomeOverlay {
+      padding: max(10px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+               max(10px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-top));
+    }
+    #xlwWelcomeOverlay .welcome-container {
+      margin: auto;
+      flex: 0 0 auto;
+      max-width: 100%;
+      transform: none !important;
+    }
+    #xlwWelcomeOverlay .welcome-menu {
+      max-width: min(440px, calc(100cqw - 8px)) !important;
+    }
+    @container xlw-welcome (max-height: 400px) {
+      #xlwWelcomeOverlay .welcome-container { gap: 6px !important; }
+      #xlwWelcomeOverlay .welcome-title-eng { font-size: 18px !important; }
+      #xlwWelcomeOverlay .welcome-title-chn { font-size: 28px !important; }
+      #xlwWelcomeOverlay .mascot-container { height: 36px; margin: 0; }
+      #xlwWelcomeOverlay .bouncing-mascot { width: 38px; height: 38px; }
+      #xlwWelcomeOverlay .welcome-menu { gap: 6px 10px !important; }
+      #xlwWelcomeOverlay .menu-btn { padding: 6px 10px !important; font-size: 15px !important; }
+      #xlwWelcomeOverlay .welcome-footer { margin-top: 2px; }
+    }
+    @container xlw-welcome (max-height: 320px) {
+      #xlwReconnectNoticeBanner { margin-bottom: 0 !important; padding: 5px 10px !important; }
+      #xlwWelcomeOverlay .mascot-container { height: 28px; }
+      #xlwWelcomeOverlay .bouncing-mascot { width: 30px; height: 30px; }
+    }
+    body:not(.xlw-game-started):not(.xlw-direct-room) :is(#stableActionPanel, #phaseDisplayPanelHard) {
+      display: none !important;
+    }
+
     .game-shell, header.topbar, #stableActionPanel, #xlwEnemyInfoPanel {
       opacity: 0;
       pointer-events: none;
