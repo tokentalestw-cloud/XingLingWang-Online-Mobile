@@ -6,6 +6,7 @@
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261103-v21">
   <link rel="stylesheet" href="/static/royal_hud.css?v=20261104-annie-v1">
+  <link rel="stylesheet" href="/static/circus_wheel.css?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -607,6 +608,15 @@
 
         <!-- 我方功能區域 (左側) -->
         <div id="playerField" class="zone side green">我方場地</div>
+        <aside id="xlwCircusWheel" aria-label="馬戲團轉盤" hidden>
+          <div class="circus-wheel-rim">
+            <canvas width="320" height="320" role="img" aria-label="尚未上靶"></canvas>
+            <span class="circus-wheel-hub" aria-hidden="true"></span>
+            <span class="circus-wheel-pointer" aria-hidden="true"></span>
+          </div>
+          <span class="circus-wheel-count">尚未上靶</span>
+          <span class="circus-wheel-result" aria-live="polite"></span>
+        </aside>
         <div id="playerForest" class="zone side green" onclick="triggerLittleTraveler(event)">
           <div class="forest-3d-wrap">
             <div class="forest-3d-trees">
@@ -1009,7 +1019,8 @@
   <script src="/static/battle_flow.js?v=20261101-inputcheck-v10"></script>
   <script src="/static/touch_actions.js?v=20261101-inputcheck-v10"></script>
   <script src="/static/duel_consistency.js?v=20261103-duel-v2"></script>
-  <script src="/static/game_v8.js?v=20261111-sync-v1" charset="utf-8"></script>
+  <script src="/static/circus_wheel.js?v=1" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261111-circus-wheel-v1" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

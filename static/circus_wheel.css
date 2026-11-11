@@ -1,0 +1,59 @@
+#xlwCircusWheel {
+  position: absolute;
+  width: 172px;
+  z-index: 13;
+  text-align: center;
+  color: #ffe4a4;
+  font: 700 19px/1.25 system-ui, sans-serif;
+  pointer-events: auto;
+}
+#xlwCircusWheel[hidden] { display: none !important; }
+.circus-wheel-rim {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  box-sizing: border-box;
+  margin: 10px auto 5px;
+  padding: 6px;
+  border: 2px solid #f3ce84;
+  border-radius: 50%;
+  background: conic-gradient(#f4cf82, #644524, #efc478, #54381c, #f4cf82);
+  box-shadow: 0 4px 9px #05030b, 0 0 0 2px #684623, 0 0 15px #b25d454a;
+}
+.circus-wheel-rim canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #151121;
+}
+.circus-wheel-pointer {
+  position: absolute;
+  z-index: 2;
+  top: -9px;
+  left: calc(50% - 12px);
+  width: 24px;
+  height: 28px;
+  background: linear-gradient(120deg, #fff0ac 30%, #cf8e2e 65%, #704114);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.circus-wheel-hub {
+  position: absolute;
+  inset: 43%;
+  border: 2px solid #ffdd9a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #fff1bf, #b67b34 52%, #5f351d);
+  box-shadow: 0 2px 5px #09050c;
+}
+.circus-wheel-count, .circus-wheel-result {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 4px #000;
+}
+.circus-wheel-result {
+  color: #fff3d2;
+  font-size: 17px;
+  min-height: 22px;
+}

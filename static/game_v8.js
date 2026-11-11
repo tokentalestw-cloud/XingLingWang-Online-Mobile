@@ -252,6 +252,7 @@ function xlwSpellActionPending(){
   return xlwPendingRequiredSpellTarget() || Boolean(window.XLW_castSpellBusy || window.XLW_pendingSpellResolve || (window.spellChainStack||[]).length);
 }
 function xlwRequireSpellCompletion(){
+  if (window.XLWCircusWheel?.spinning) { setStatus("輪轉中，請等待開盤。"); return true; }
   if(!xlwSpellActionPending())return false;
   setStatus(xlwPendingRequiredSpellTarget()?'請先點選一個合法單位，完成【'+window.XLW_tempEquipSpellCard.name+'】的效果，才能結束發動或進行其他操作。':'魔法連鎖尚在處理，請先完成反制及效果選擇。');return true;
 }
@@ -4820,6 +4821,12 @@ window.xlwIsCircusCard = function(c) {
          (c.name && (c.name.includes("馬戲團") || c.name.includes("小丑") || c.name.includes("表演") || c.name.includes("飛熊") || c.name.includes("巨熊") || c.name.includes("猴子") || c.name.includes("喵草")));
 };
 
+function renderCircusWheel() {
+  const active = document.body.classList.contains("xlw-game-started");
+  const selected = normDeckName($("deckSelect")?.value) === "馬戲團";
+  window.XLWCircusWheel?.render(active && selected, window.XLW_playerRouletteWheel);
+}
+
 // 上靶 (Put Card onto Wheel)
 window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromIdx = null) {
   if (!card) return false;
@@ -4830,6 +4837,7 @@ window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromI
   }
   
   wheel.push(structuredClone(card));
+  if (isPlayer) renderCircusWheel();
   logBattle(`🎯【${card.name}】上靶！${isPlayer ? "我方" : "對手"}目前轉盤累積 ${wheel.length} 張卡牌。`);
 
   // 1. 表演人偶 (CCS-0006 / R-CCS-0006): 上靶時召喚 1 個小旅人
@@ -4890,9 +4898,15 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     if (isPlayer) window.XLW_playerWheelSpinsThisTurn = (window.XLW_playerWheelSpinsThisTurn || 0) + 1;
     else window.XLW_enemyWheelSpinsThisTurn = (window.XLW_enemyWheelSpinsThisTurn || 0) + 1;
 
-    // 隨機抽取 1 張開盤
+    // Each copy occupies one slice. The index drives both the pointer and the effect.
     const pickIdx = Math.floor(Math.random() * wheel.length);
+    const snapshot = isPlayer && window.XLWCircusWheel ? wheel.slice() : null;
     const revealed = wheel.splice(pickIdx, 1)[0];
+    if (snapshot) {
+      const completed = await window.XLWCircusWheel.reveal(snapshot, pickIdx);
+      if (completed === false || wheel !== window.XLW_playerRouletteWheel) break;
+      renderCircusWheel();
+    }
     let revealedAtk = Number(revealed.attack || 0);
 
     // 押注的觀眾 (CCS-0014) 加成
@@ -7362,6 +7376,8 @@ window.xlwCaptureFactionState = function() {
     playerBlackHoleLane: window.XLW_playerBlackHoleLane || 0,
     enemyBlackHoleLane: window.XLW_enemyBlackHoleLane || 0,
     banishedTimeGoats: structuredClone(window.XLW_banishedTimeGoats || []),
+    playerWheel: window.XLW_playerRouletteWheel,
+    enemyWheel: window.XLW_enemyRouletteWheel,
     auntieGoatUsedThisTurn: Boolean(window.XLW_auntieGoatUsedThisTurn)
   };
 };
@@ -7375,9 +7391,19 @@ window.xlwRestoreFactionState = function(state, peer = false) {
     }
   }
   if (Array.isArray(state.banishedTimeGoats)) window.XLW_banishedTimeGoats = state.banishedTimeGoats.map(item => ({ ...structuredClone(item), isPlayer: peer ? !item.isPlayer : item.isPlayer }));
-  if (!peer) window.XLW_auntieGoatUsedThisTurn = Boolean(state.auntieGoatUsedThisTurn);
+  if (peer) {
+    if (Array.isArray(state.playerWheel)) window.XLW_enemyRouletteWheel = structuredClone(state.playerWheel);
+  } else {
+    if (Array.isArray(state.playerWheel)) window.XLW_playerRouletteWheel = structuredClone(state.playerWheel);
+    if (Array.isArray(state.enemyWheel)) window.XLW_enemyRouletteWheel = structuredClone(state.enemyWheel);
+    window.XLW_auntieGoatUsedThisTurn = Boolean(state.auntieGoatUsedThisTurn);
+  }
 };
 window.xlwResetFactionState = function() {
+  window.XLW_playerRouletteWheel = [];
+  window.XLW_enemyRouletteWheel = [];
+  window.XLW_playerWheelSpinsThisTurn = window.XLW_enemyWheelSpinsThisTurn = 0;
+  window.XLWCircusWheel?.reset();
   window.XLW_playerSteamEnergy = window.XLW_enemySteamEnergy = 0;
   window.XLW_playerBlackHoleLane = window.XLW_enemyBlackHoleLane = 0;
   window.XLW_banishedTimeGoats = [];
@@ -31309,6 +31335,7 @@ window.xlwClearGameOverUI = function() {
 };
 
 function render() {
+  if (window.XLWCircusWheel) renderCircusWheel();
   // 新局（非結束狀態）時自動清除上一局殘留的結局按鈕/面板
   if (!isGameOverFlag && (document.getElementById("reopenResultBtn") || document.querySelector("#xlwResultPanel.show"))) {
     window.xlwClearGameOverUI();
@@ -38083,8 +38110,9 @@ function adjustBoardScale() {
     if (!origin) return;
     const matrix = new DOMMatrixReadOnly(getComputedStyle(board).transform);
     const currentScale = Math.hypot(matrix.a, matrix.b) || 1;
+    window.XLWCircusWheel?.position($("playerForest"));
     const pieces = [...board.children]
-      .filter(e => e.matches(".row, .zone, .board-playmat, .battle-line-strip"))
+      .filter(e => e.matches(".row, .zone, .board-playmat, .battle-line-strip, #xlwCircusWheel:not([hidden])"))
       .map(logicalRect).filter(Boolean);
     if (!pieces.length) return;
     // Reserve the bevel, shadows and badges around the fixed geometry as well.
@@ -47885,6 +47913,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
   }
   window.XLW_isPuzzleMode = false;
   document.body.classList.remove("xlw-game-started", "xlw-direct-room");
+  window.XLWCircusWheel?.reset();
   window.XLWTurnOrder?.hide();
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();
   const pModal = document.getElementById("xlwPuzzleModal"); if (pModal) pModal.remove();
