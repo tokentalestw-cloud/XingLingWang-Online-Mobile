@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261103-v21">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261104-annie-v1">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261112-dialogs-v1">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -886,48 +886,33 @@
     <div id="hand" class="hand"></div>
   </section>
   
-  <!-- 戰對統計與歷史紀錄彈窗 -->
-  <div id="multiplayerLobby" class="score-panel" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: center; justify-content: center; z-index: 10000; background: rgba(0,0,0,0.8);">
-    <div class="score-box" style="position: relative; width: 440px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-sizing: border-box; padding: 12px 18px; border: 2px solid #ffd76a; border-radius: 12px; background: rgba(15, 11, 11, 0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.95); font-family: sans-serif;">
-      <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 6px; align-items: center;">
-        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="topbar-pill-btn" style="padding: 2px 8px !important; font-size: 11px;">首頁</button>
-        <button onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();" class="close" style="background: transparent; border: none; color: #ff5c5c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;">×</button>
-      </div>
-      <h2 style="color: #ffd76a; text-align: center; margin-top: 4px; margin-bottom: 10px; font-size: 18px; font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Outfit', 'Roboto', system-ui, sans-serif; letter-spacing: 0.5px;">ONLINE MULTIPLAYER</h2>
-      
-      <div class="lobby-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;">
-        <!-- 創建房間 -->
-        <div class="lobby-action-card" style="padding: 10px 14px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center;">
-          <h3 style="color: #ffd76a; margin-top: 0; margin-bottom: 6px; font-size: 14px;">創立新的對戰房間</h3>
-          <button onclick="createOnlineRoom()" style="background: linear-gradient(135deg, #d4af37, #ffd76a); border: none; color: #070505; font-weight: bold; padding: 6px 18px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">創立房間</button>
-        </div>
-        
-        <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 11px; margin: -2px 0;">— 或 —</div>
-        
-        <!-- 加入房間 -->
-        <div class="lobby-action-card" style="padding: 10px 14px; border: 1px solid rgba(255,215,106,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-          <h3 style="color: #ffd76a; margin: 0; font-size: 14px;">加入好友的房間</h3>
-          <div style="display: flex; gap: 6px; width: 100%; max-width: 260px;">
-            <input type="text" id="lobbyRoomIdInput" placeholder="請輸入 4 位房號" maxlength="6" style="flex: 1; padding: 6px 8px; border: 1px solid #ffd76a; border-radius: 6px; background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 13px; font-weight: bold; outline: none;">
-            <button onclick="joinOnlineRoom()" style="background: rgba(255, 215, 106, 0.08); border: 1px solid #ffd76a; color: #ffd76a; font-weight: bold; padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: all 0.3s; white-space: nowrap;">加入對局</button>
+  <!-- 雙人對決房間 -->
+  <div id="multiplayerLobby" role="dialog" aria-modal="true" aria-labelledby="xlwLobbyTitle" style="display: none !important;">
+    <section class="xlw-order-panel xlw-lobby-panel">
+      <header class="xlw-lobby-heading">
+        <h2 id="xlwLobbyTitle">雙人對決</h2>
+        <button type="button" class="xlw-dialog-secondary" onclick="hideMultiplayerLobby(); if(window.xlwLeaveOnlineRoom) window.xlwLeaveOnlineRoom(false); else if(window.xlwReturnToTitle) window.xlwReturnToTitle();">返回首頁</button>
+      </header>
+      <div id="lobbyActions" class="xlw-lobby-actions">
+        <section class="xlw-lobby-action">
+          <h3>建立新房間</h3>
+          <button type="button" class="xlw-order-choice" onclick="createOnlineRoom()">建立房間</button>
+        </section>
+        <form class="xlw-lobby-action" onsubmit="event.preventDefault(); joinOnlineRoom();">
+          <label for="lobbyRoomIdInput">加入好友房間</label>
+          <div class="xlw-lobby-join">
+            <input type="text" id="lobbyRoomIdInput" inputmode="numeric" placeholder="輸入房號" maxlength="6" autocomplete="off">
+            <button type="submit" class="xlw-order-choice">加入對局</button>
           </div>
-        </div>
+        </form>
       </div>
-      
-      <!-- 動態連線狀態提示 -->
-      <div id="lobbyStatusArea" style="display: none; text-align: center; padding: 8px 10px; border-top: 1px solid rgba(255,215,106,0.1); margin-top: 8px;">
-        <div id="lobbyStatusSpinner" class="spinner" style="border: 3px solid rgba(255,215,106,0.1); border-radius: 50%; border-top: 3px solid #ffd76a; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto 6px;"></div>
-        <p id="lobbyStatusText" style="color: #ffd76a; font-size: 12px; font-weight: bold; margin: 0;"></p>
+      <div id="lobbyStatusArea" class="xlw-lobby-status" style="display: none;">
+        <p id="lobbyStatusText" role="status"></p>
+        <button id="lobbyCopyRoomBtn" type="button" class="xlw-dialog-secondary" hidden>複製房號</button>
       </div>
-    </div>
+    </section>
   </div>
-  
-  <style>
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+
 
   <script>
     function showMultiplayerLobby() {
@@ -935,6 +920,8 @@
       if (lobby) lobby.style.setProperty("display", "flex", "important");
       const statusArea = document.getElementById('lobbyStatusArea');
       if (statusArea) statusArea.style.display = 'none';
+      document.getElementById('lobbyActions').hidden = false;
+      document.getElementById('lobbyCopyRoomBtn').hidden = true;
 
       // 若有先前連線房號，自動填入輸入框方便房客重連
       try {
@@ -962,32 +949,37 @@
         localStorage.setItem("XLW_PLAYER_ID_" + roomId, playerId);
       }
       
-      const statusArea = document.getElementById('lobbyStatusArea');
-      const statusText = document.getElementById('lobbyStatusText');
-      if (statusArea) statusArea.style.display = 'block';
-      if (statusText) {
-        statusText.innerHTML = `
-          <div style="font-size: 15px; color: #ffe600; margin-bottom: 4px;">👑 房間建立成功！房號：<span style="font-weight: 900; font-size: 20px; color: #ffffff; letter-spacing: 2px;">${roomId}</span></div>
-          <div style="font-size: 12px; color: #ffd76a;">正在等待對手輸入房號加入房間...</div>
-          <div style="margin-top: 6px;">
-            <button type="button" onclick="navigator.clipboard.writeText('${roomId}'); alert('房號已複製：${roomId}');" class="topbar-pill-btn" style="padding: 3px 10px !important; font-size: 12px;">📋 複製房號</button>
-          </div>
-        `;
-      }
-      
-      const actions = document.querySelectorAll('.lobby-action-card');
-      actions.forEach(a => a.style.display = 'none');
-      
+      const roomNumber = document.createElement('strong');
+      roomNumber.textContent = roomId;
+      showLobbyStatus('房號 ', roomNumber, '。等待好友加入。');
+      document.getElementById('lobbyActions').hidden = true;
+      const copy = document.getElementById('lobbyCopyRoomBtn');
+      copy.hidden = false;
+      copy.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(String(roomId));
+          showLobbyStatus('已複製房號 ', roomNumber, '。等待好友加入。');
+        } catch {
+          showLobbyStatus('請手動分享房號 ', roomNumber, '。等待好友加入。');
+        }
+      };
+
       if (typeof window.xlwStartOnlineHost === 'function') {
         window.xlwStartOnlineHost(roomId, playerId);
       }
     }
     
+    function showLobbyStatus(...content) {
+      document.getElementById('lobbyStatusArea').style.display = 'block';
+      document.getElementById('lobbyStatusText').replaceChildren(...content);
+    }
+
     function joinOnlineRoom() {
       const input = document.getElementById('lobbyRoomIdInput');
       const roomId = input.value.trim();
       if (!roomId) {
-        alert("請輸入有效的房號！");
+        showLobbyStatus('請輸入房號。');
+        input.focus();
         return;
       }
       
@@ -996,13 +988,8 @@
         playerId = 'guest_' + Math.floor(Math.random() * 10000);
         localStorage.setItem("XLW_PLAYER_ID_" + roomId, playerId);
       }
-      const statusArea = document.getElementById('lobbyStatusArea');
-      const statusText = document.getElementById('lobbyStatusText');
-      if (statusArea) statusArea.style.display = 'block';
-      if (statusText) {
-        statusText.innerHTML = `<div style="color: #ffd76a; font-size: 13px; font-weight: bold;">正在連接房號為 ${roomId} 的對戰房間，請稍候...</div>`;
-      }
-      
+      showLobbyStatus(`正在連接房號 ${roomId}…`);
+
       if (typeof window.xlwStartOnlineGuest === 'function') {
         window.xlwStartOnlineGuest(roomId, playerId);
       }
@@ -1036,9 +1023,9 @@
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
-  <div id="xlwPreBattleDeckSelectOverlay" class="xlw-prebattle-overlay" style="display: none !important;">
+  <div id="xlwPreBattleDeckSelectOverlay" class="xlw-prebattle-overlay" role="dialog" aria-modal="true" aria-labelledby="xlwPreBattleTitle" style="display: none !important;">
     <div class="prebattle-container">
-      <h2 class="prebattle-title">⚔️ 選擇出戰陣容</h2>
+      <h2 id="xlwPreBattleTitle" class="prebattle-title">⚔️ 選擇出戰陣容</h2>
       
       <!-- 我方陣營與牌組選擇 -->
       <div class="prebattle-field-group">
