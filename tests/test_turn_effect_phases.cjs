@@ -54,6 +54,30 @@ module.exports = (async () => {
     assert.equal((side ? g.playerExtraDeck : g.enemyExtraDeck)[0], portal.card);
     tests++;
   }
+  for (const side of [true, false]) {
+    const g = fixture();
+    const theater = { id: 'CCS-0029' };
+    const wheelKey = side ? 'XLW_playerRouletteWheel' : 'XLW_enemyRouletteWheel';
+    g[wheelKey] = [{}, {}];
+    g.xlwGetFactionFieldCard = player => player === side ? theater : null;
+    let calls = 0;
+    g.xlwSpinWheel = async (player, times, card) => {
+      assert.equal(player, side);
+      assert.equal(times, 1);
+      assert.equal(card, theater);
+      calls++;
+    };
+    await g.xlwResolveTurnStartEffects(side);
+    assert.equal(calls, 0);
+    g[wheelKey].push({});
+    await g.xlwResolveTurnStartEffects(side);
+    await g.xlwResolveTurnStartEffects(side);
+    assert.equal(calls, 1);
+    g.turn += 2;
+    await g.xlwResolveTurnStartEffects(side);
+    assert.equal(calls, 2);
+    tests++;
+  }
   const drawStart = source.indexOf('async function performPlayerTurnStartDraw()');
   const drawEnd = source.indexOf('// 全局玩家點選牌組抽牌處理函式', drawStart);
   for (const online of [false, true]) {

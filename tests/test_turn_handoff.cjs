@@ -18,6 +18,7 @@ for(const role of ['player1','player2']){
  vm.runInContext('window=globalThis; XLW_ENEMY={}; XLW_DEFENSE_RULE={playerNeedsDefense:false,enemyNeedsDefense:false}; xlwEnterActiveOnlineBoardUI=()=>{}; xlwShowPhaseBanner=()=>{};',c);
  vm.runInContext(fs.readFileSync(path.join(root,'static/battle_flow.js'),'utf8'),c);
  vm.runInContext(source.slice(source.indexOf('// Faction state uses'),source.indexOf('// 🐐 山羊族 (Goat Clan / GOT) 核心引擎')),c);
+ vm.runInContext(source.slice(source.indexOf('function xlwHasInnateWheelEntry('),source.indexOf('function xlwAddWheelEntry(')),c);
  vm.runInContext(source.slice(start,end)+'\nconst gameMessageHandler=ws.onmessage;',c);vm.runInContext(source.slice(drawStart,drawEnd),c);
  const board=empty();board.player_front[1]={card:{id:'attack',name:'attack'},attacking:true,tapped:true,target:{zone:'enemy_front',idx:1}};
  board.enemy_front[1]={card:{id:'defend',name:'defend'}};

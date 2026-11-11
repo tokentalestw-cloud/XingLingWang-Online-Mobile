@@ -119,6 +119,7 @@ module.exports = (async () => {
   const game = vm.createContext(globals);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../static/battle_flow.js'), 'utf8'), game);
   vm.runInContext(gameSource.slice(gameSource.indexOf('// Faction state uses'),gameSource.indexOf('// 🐐 山羊族 (Goat Clan / GOT) 核心引擎')), game);
+  vm.runInContext(gameSource.slice(gameSource.indexOf('function xlwHasInnateWheelEntry('), gameSource.indexOf('function xlwAddWheelEntry(')), game);
   vm.runInContext(handler, game);
   const remoteField = structuredClone(fields);
   remoteField.enemy_front[0] = { card: { id: 'goat', creator: 'player' },

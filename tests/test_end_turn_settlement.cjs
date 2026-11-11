@@ -98,7 +98,7 @@ module.exports = (async () => {
     }
   }
   const circus = fixture();
-  circus.g.XLW_circusTheaterActive = true;
+  circus.g.xlwGetFactionFieldCard = side => side ? { id: 'CCS-0029' } : null;
   circus.g.XLW_playerWheelSpinsThisTurn = 1;
   await circus.g.endPlayerTurnAndRunEnemy();
   assert.equal(circus.g.playerBonusScore, 1);

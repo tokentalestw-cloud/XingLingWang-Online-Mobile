@@ -48,8 +48,8 @@ let allCards = [];
 let decks = {};
 let deck = [];
 let hand = [];
-let graveyard = [];
-let enemyGraveyard = [];
+let graveyard = xlwGravePile([], true);
+let enemyGraveyard = xlwGravePile([], false);
 let playerExileZone = [];
 let enemyExileZone = [];
 let playerExtraDeck = [];
@@ -65,12 +65,12 @@ let field = {
 window.field = field;
 Object.defineProperty(window, "graveyard", {
   get: () => graveyard,
-  set: (val) => { graveyard = val; },
+  set: (val) => { graveyard = xlwGravePile(val, true); },
   configurable: true
 });
 Object.defineProperty(window, "enemyGraveyard", {
   get: () => enemyGraveyard,
-  set: (val) => { enemyGraveyard = val; },
+  set: (val) => { enemyGraveyard = xlwGravePile(val, false); },
   configurable: true
 });
 Object.defineProperty(window, "hand", {
@@ -131,7 +131,7 @@ let isGameOverFlag = false;
 window.XLW_ENEMY = {
   deck: [],
   hand: [],
-  grave: [],
+  grave: xlwGravePile([], false),
   deckName: "妖怪村莊",
   running: false
 };
@@ -1333,8 +1333,8 @@ function newGameMultiplayer() {
 
   deck = [];
   hand = [];
-  graveyard = [];
-  enemyGraveyard = [];
+  graveyard = xlwGravePile([], true);
+  enemyGraveyard = xlwGravePile([], false);
   playerExileZone = [];
   enemyExileZone = [];
   playerExtraDeck = [];
@@ -1537,8 +1537,8 @@ function initGameEmptyState() {
   
   deck = [];
   hand = [];
-  graveyard = [];
-  enemyGraveyard = [];
+  graveyard = xlwGravePile([], true);
+  enemyGraveyard = xlwGravePile([], false);
   playerExileZone = [];
   enemyExileZone = [];
   playerExtraDeck = [];
@@ -1557,7 +1557,7 @@ function initGameEmptyState() {
   window.XLW_ENEMY = {
     deck: [],
     hand: [],
-    grave: [],
+    grave: xlwGravePile([], false),
     deckName: ""
   };
   enemyGraveyard = window.XLW_ENEMY.grave;
@@ -1633,8 +1633,8 @@ function newGame() {
 
   deck = [];
   hand = [];
-  graveyard = [];
-  enemyGraveyard = [];
+  graveyard = xlwGravePile([], true);
+  enemyGraveyard = xlwGravePile([], false);
   playerExileZone = [];
   enemyExileZone = [];
   playerExtraDeck = [];
@@ -3316,7 +3316,7 @@ window.xlwCheckGraveyardTax = async function(isPlayerAction) {
     return true;
   } else {
     const discarded = handList.splice(0, 1)[0];
-    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
     window.XLW_ENEMY.grave.push(discarded);
     enemyGraveyard = window.XLW_ENEMY.grave;
     logBattle(`💀 因【守墓神】效果，對手丟棄了手牌【${discarded.name}】！`);
@@ -4807,6 +4807,57 @@ window.xlwIsCircusCard = function(c) {
          (c.name && (c.name.includes("馬戲團") || c.name.includes("小丑") || c.name.includes("表演") || c.name.includes("飛熊") || c.name.includes("巨熊") || c.name.includes("猴子") || c.name.includes("喵草")));
 };
 
+function xlwHasInnateWheelEntry(card) {
+  if (!card || card.type !== "unit") return false;
+  const text = String(card.effect_text || "").trim();
+  return /(?:^|[。；;！!\n])\s*上靶(?=[。；;，,！!\s]|$)/.test(text) ||
+    /(?:^|[。；;！!\n])\s*此(?:卡|單位)上靶時/.test(text);
+}
+
+function xlwGravePile(pile, isPlayer) {
+  if (Object.hasOwn(pile, "push")) return pile;
+  Object.defineProperty(pile, "push", {
+    configurable: true,
+    value(...cards) {
+      for (const card of cards) {
+        if (xlwHasInnateWheelEntry(card)) {
+          const entry = xlwAddWheelEntry(card, isPlayer);
+          if (entry && (isPlayer || !isMultiplayer)) xlwQueueWheelEntryEffect(entry, isPlayer);
+        } else {
+          Array.prototype.push.call(this, card);
+        }
+      }
+      return this.length;
+    }
+  });
+  return pile;
+}
+
+function xlwAddWheelEntry(card, isPlayer) {
+  const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
+  if (wheel.includes(card) || (card._xlwInstanceId && wheel.some(item => item._xlwInstanceId === card._xlwInstanceId))) return null;
+  wheel.push(card);
+  logBattle(`🎯【${card.name}】上靶！${isPlayer ? "我方" : "對手"}目前轉盤累積 ${wheel.length} 張卡牌。`);
+  if (isPlayer && window.XLWCircusWheel) renderCircusWheel();
+  return card;
+}
+
+function xlwQueueWheelEntryEffect(card, isPlayer) {
+  const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
+  const previous = window.XLW_wheelEntryQueue || Promise.resolve();
+  window.XLW_wheelEntryQueue = previous.then(async () => {
+    // Let the action remove the card from its original zone before resolving its trigger.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const current = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
+    if (wheel !== current) return;
+    await xlwResolveWheelEntryEffect(card, isPlayer);
+    if (isMultiplayer) sendFullGameStateToOpponent();
+  }).catch(error => {
+    window.XLW_reportError?.(String(error), "circus wheel entry", 0, 0, error.stack);
+    console.error(error);
+  });
+}
+
 function renderCircusWheel() {
   const active = document.body.classList.contains("xlw-game-started");
   const selected = normDeckName($("deckSelect")?.value) === "馬戲團";
@@ -4816,16 +4867,18 @@ function renderCircusWheel() {
 // 上靶 (Put Card onto Wheel)
 window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromIdx = null) {
   if (!card) return false;
-  const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
-  
   if (fromZone && fromIdx !== null && fromIdx !== undefined && field[fromZone]) {
     field[fromZone][fromIdx] = null;
   }
   
-  wheel.push(structuredClone(card));
-  if (isPlayer) renderCircusWheel();
-  logBattle(`🎯【${card.name}】上靶！${isPlayer ? "我方" : "對手"}目前轉盤累積 ${wheel.length} 張卡牌。`);
+  const entry = xlwAddWheelEntry(card, isPlayer);
+  if (!entry) return false;
+  await xlwResolveWheelEntryEffect(entry, isPlayer);
+  return true;
+};
 
+async function xlwResolveWheelEntryEffect(card, isPlayer) {
+  const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
   // 1. 表演人偶 (CCS-0006 / R-CCS-0006): 上靶時召喚 1 個小旅人
   if (card.id === "CCS-0006" || card.id === "R-CCS-0006" || card.name?.includes("表演人偶")) {
     logBattle(`🎪【表演人偶】上靶效果發動：為${isPlayer ? "我方" : "對手"}召喚 1 個小旅人！`);
@@ -4866,8 +4919,7 @@ window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromI
   }
 
   render();
-  return true;
-};
+}
 
 // 輪轉 (Spin Wheel) 與 開盤 (Reveal)
 window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
@@ -5089,11 +5141,9 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     }
 
     if (!stayOutOfGrave) {
-      if (isPlayer) {
-        graveyard.push(revealed);
-      } else {
-        (window.XLW_ENEMY?.grave || []).push(revealed);
-      }
+      // The revealed card goes directly to grave; the innate 上靶 rule must not catch it again.
+      const pile = isPlayer ? graveyard : (window.XLW_ENEMY.grave ||= xlwGravePile([], false));
+      Array.prototype.push.call(pile, revealed);
       cardsSentToGraveThisSpinSession.push(revealed);
     }
 
@@ -7349,7 +7399,7 @@ window.xlwSetFactionFieldCard = function(card, isPlayer = true) {
   const previous = window.xlwGetFactionFieldCard(isPlayer);
   if (previous) {
     if (isPlayer) graveyard.push(previous);
-    else { window.XLW_ENEMY.grave ||= []; window.XLW_ENEMY.grave.push(previous); enemyGraveyard = window.XLW_ENEMY.grave; }
+    else { window.XLW_ENEMY.grave ||= xlwGravePile([], false); window.XLW_ENEMY.grave.push(previous); enemyGraveyard = window.XLW_ENEMY.grave; }
   }
   el.dataset.card = JSON.stringify({ ...structuredClone(card), art_subtype: "場地" });
   return true;
@@ -7362,6 +7412,9 @@ window.xlwCaptureFactionState = function() {
     enemyBlackHoleLane: window.XLW_enemyBlackHoleLane || 0,
     banishedTimeGoats: structuredClone(window.XLW_banishedTimeGoats || []),
     playerWheel: window.XLW_playerRouletteWheel,
+    enemyWheelBase: window.XLW_peerWheelBase,
+    playerTheaterTurn: window.XLW_playerTheaterTurn,
+    playerWheelSpins: window.XLW_playerWheelSpinsThisTurn,
     enemyWheel: window.XLW_enemyRouletteWheel,
     auntieGoatUsedThisTurn: Boolean(window.XLW_auntieGoatUsedThisTurn)
   };
@@ -7377,10 +7430,23 @@ window.xlwRestoreFactionState = function(state, peer = false) {
   }
   if (Array.isArray(state.banishedTimeGoats)) window.XLW_banishedTimeGoats = state.banishedTimeGoats.map(item => ({ ...structuredClone(item), isPlayer: peer ? !item.isPlayer : item.isPlayer }));
   if (peer) {
-    if (Array.isArray(state.playerWheel)) window.XLW_enemyRouletteWheel = structuredClone(state.playerWheel);
+    if (Array.isArray(state.enemyWheelBase) && Array.isArray(state.enemyWheel) && window.XLWDuelConsistency) {
+      const current = window.XLW_playerRouletteWheel || [];
+      const merged = window.XLWDuelConsistency.mergeOwned(current, state.enemyWheelBase, state.enemyWheel, "wheel");
+      const added = merged.filter(card => !current.includes(card));
+      current.splice(0, current.length, ...merged);
+      for (const card of added) xlwQueueWheelEntryEffect(card, true);
+    }
+    if (Array.isArray(state.playerWheel)) {
+      window.XLW_peerWheelBase = structuredClone(state.playerWheel);
+      window.XLW_enemyRouletteWheel = structuredClone(state.playerWheel);
+    }
   } else {
     if (Array.isArray(state.playerWheel)) window.XLW_playerRouletteWheel = structuredClone(state.playerWheel);
     if (Array.isArray(state.enemyWheel)) window.XLW_enemyRouletteWheel = structuredClone(state.enemyWheel);
+    window.XLW_peerWheelBase = state.enemyWheelBase || null;
+    window.XLW_playerTheaterTurn = state.playerTheaterTurn ?? null;
+    window.XLW_playerWheelSpinsThisTurn = state.playerWheelSpins || 0;
     window.XLW_auntieGoatUsedThisTurn = Boolean(state.auntieGoatUsedThisTurn);
   }
 };
@@ -7388,6 +7454,9 @@ window.xlwResetFactionState = function() {
   window.XLW_playerRouletteWheel = [];
   window.XLW_enemyRouletteWheel = [];
   window.XLW_playerWheelSpinsThisTurn = window.XLW_enemyWheelSpinsThisTurn = 0;
+  window.XLW_playerTheaterTurn = window.XLW_enemyTheaterTurn = null;
+  window.XLW_peerWheelBase = null;
+  window.XLW_wheelEntryQueue = null;
   window.XLWCircusWheel?.reset();
   window.XLW_playerSteamEnergy = window.XLW_enemySteamEnergy = 0;
   window.XLW_playerBlackHoleLane = window.XLW_enemyBlackHoleLane = 0;
@@ -7472,8 +7541,8 @@ window.xlwTransformUnitToGoat = async function(unit, zone, idx, goatCard, isPlay
   if (targetOwner === "player") {
     graveyard.push(unit.card);
   } else {
-    if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: [] };
-    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+    if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: xlwGravePile([], false) };
+    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
     window.XLW_ENEMY.grave.push(unit.card);
     enemyGraveyard = window.XLW_ENEMY.grave;
   }
@@ -8060,7 +8129,7 @@ function xlwAcceptSpellOwnerCollections(collections){
   if(!collections||!Array.isArray(collections.hand)||!Array.isArray(collections.deck))return false;
   const previous=window.XLW_peerCollectionBase,merge=(current,key)=>window.XLWDuelConsistency?window.XLWDuelConsistency.mergeCollection(current||[],previous?.[key],collections[key]):collections[key];
   window.XLW_ENEMY.hand=merge(window.XLW_ENEMY.hand,'hand');window.XLW_ENEMY.deck=merge(window.XLW_ENEMY.deck,'deck');
-  if(Array.isArray(collections.graveyard)){enemyGraveyard=merge(enemyGraveyard,'graveyard');window.XLW_ENEMY.grave=enemyGraveyard;}
+  if(Array.isArray(collections.graveyard)){enemyGraveyard=xlwGravePile(merge(enemyGraveyard,'graveyard'), false);window.XLW_ENEMY.grave=enemyGraveyard;}
   if(Array.isArray(collections.exile))enemyExileZone=merge(enemyExileZone,'exile');
   if(Array.isArray(collections.extra))enemyExtraDeck=merge(enemyExtraDeck,'extra');
   window.XLW_peerCollectionBase=window.XLWDuelConsistency?.clone(collections);return true;
@@ -12072,7 +12141,7 @@ async function castSpell(handIndex) {
       render();
     } else if (card.id === "CCS-0029" || card.name?.includes("馬戲團劇場")) {
       // 🎪 馬戲團劇場: 留在場上提供每回合輪轉與獎勵
-      window.XLW_circusTheaterActive = true;
+      window.xlwSetFactionFieldCard(card, true);
       logBattle("🎪 發動魔法卡【馬戲團劇場】：搭起馬戲團大帳篷！主要階段開始轉盤>=3時將自動輪轉！");
       render();
     } else if (card.id === "R-CCS-0011" || card.name?.includes("胡亂演出")) {
@@ -14569,7 +14638,7 @@ async function confirmTribute() {
             if (dIdx >= 0) deckList.splice(dIdx, 1);
             if (isP) graveyard.push(chosen);
             else {
-              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
               window.XLW_ENEMY.grave.push(chosen);
               enemyGraveyard = window.XLW_ENEMY.grave;
             }
@@ -25907,8 +25976,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         if (owner === "player") {
           graveyard.push(chip.card);
         } else {
-          if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: [] };
-          if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+          if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: xlwGravePile([], false) };
+          if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
           window.XLW_ENEMY.grave.push(chip.card);
           enemyGraveyard = window.XLW_ENEMY.grave;
         }
@@ -26165,8 +26234,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
           if (owner === "player") {
             graveyard.push(c);
           } else {
-            if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: [] };
-            if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+            if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: xlwGravePile([], false) };
+            if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
             window.XLW_ENEMY.grave.push(c);
           }
         });
@@ -27065,8 +27134,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
             graveyard.push(d.card);
             logBattle(`🍬 吞食合體卡牌【${d.card.name}】隨主體進入墓地。`);
           } else {
-            if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: [] };
-            if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+            if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: xlwGravePile([], false) };
+            if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
             window.XLW_ENEMY.grave.push(d.card);
             logBattle(`🍬 對手吞食合體卡牌【${d.card.name}】隨主體進入墓地。`);
           }
@@ -28211,7 +28280,7 @@ function xlwInitEnemyDeck(deckName = "妖怪村莊") {
   });
   shuffle(window.XLW_ENEMY.deck);
   window.XLW_ENEMY.hand = [];
-  window.XLW_ENEMY.grave = [];
+  window.XLW_ENEMY.grave = xlwGravePile([], false);
   window.XLW_ENEMY.deckName = selectedDeck;
   window.XLW_ENEMY.running = false;
   enemyGraveyard = window.XLW_ENEMY.grave;
@@ -28357,7 +28426,7 @@ async function aiCastSpell(spellCard, effectCallback) {
   await effectCallback();
   // 送入對手墓地（若未被除外且非場地魔法）
   if (spellCard && !enemyExileZone.includes(spellCard) && spellCard.art_subtype !== "場地" && spellCard.magic_type !== "場地") {
-    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
     if (!window.XLW_ENEMY.grave.includes(spellCard)) {
       window.XLW_ENEMY.grave.push(spellCard);
       enemyGraveyard = window.XLW_ENEMY.grave;
@@ -29015,7 +29084,7 @@ async function aiPlayMagicCardsSummonPhase() {
       const peeked = [];
       for (let k = 0; k < count; k++) peeked.push(window.XLW_ENEMY.deck.pop());
       logBattle(`✨ 對手 AI 發動【死亡馬車】：檢視牌庫頂 ${count} 張牌！`);
-      if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+      if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
       const remaining = [];
       for (const c of peeked) {
         if (c && window.xlwIsUndeadCard(c)) {
@@ -29842,7 +29911,7 @@ async function runEnemyTurn() {
               const chosen = unitsInDeck[0];
               const dIdx = eDeck.indexOf(chosen);
               if (dIdx >= 0) eDeck.splice(dIdx, 1);
-              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
               window.XLW_ENEMY.grave.push(chosen);
               enemyGraveyard = window.XLW_ENEMY.grave;
               shuffle(eDeck);
@@ -30815,12 +30884,7 @@ async function endPlayerTurnAndRunEnemy() {
     document.querySelectorAll(".lane-card, .star-lane-card").forEach(el => el.classList.remove("flipped"));
   }
 
-  // 🎪 馬戲團劇場 (CCS-0029): 結束階段若本回合曾輪轉，獎勵 +1★
-  if (window.XLW_circusTheaterActive && (window.XLW_playerWheelSpinsThisTurn || 0) > 0) {
-    playerBonusScore += 1;
-    renderScore();
-    logBattle("🎪【馬戲團劇場】精彩落幕：本回合進行了輪轉大秀，獲得獎勵 +1★！");
-  }
+
 
   // 🤝 交易的小旅人 (R-SPT-0054): 敵方結束階段時，若其前排有小旅人，你抽1張牌
   const hasTradeInOppFront = (field["enemy_front"] || []).some((u, i) => u && window.xlwIsLittleTraveler(u, "enemy_front", i));
@@ -38388,9 +38452,9 @@ function setupWebSocketEvents() {
         enemyBonusScore = s.playerBonusScore;
         
         if (Array.isArray(s.enemyGraveyard)) {
-          graveyard = window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(graveyard,s.enemyCollectionBase?.graveyard,s.enemyGraveyard,"graveyard") : s.enemyGraveyard;
+          graveyard = xlwGravePile(window.XLWDuelConsistency ? window.XLWDuelConsistency.mergeOwned(graveyard,s.enemyCollectionBase?.graveyard,s.enemyGraveyard,"graveyard") : s.enemyGraveyard, true);
         }
-        window.XLW_ENEMY.grave = Array.isArray(s.graveyard) ? s.graveyard : [];
+        window.XLW_ENEMY.grave = xlwGravePile(Array.isArray(s.graveyard) ? s.graveyard : [], false);
         enemyGraveyard = window.XLW_ENEMY.grave;
         
         if (Array.isArray(s.enemyExileZone)) {
@@ -39102,7 +39166,7 @@ function setupWebSocketEvents() {
       const targetZone = data.zone;
       const targetIdx = data.idx;
       
-      window.XLW_ENEMY.grave = (window.XLW_ENEMY.grave || []).filter(c => c && c.id !== data.geminiCard.id);
+      window.XLW_ENEMY.grave = xlwGravePile((window.XLW_ENEMY.grave || []).filter(c => c && c.id !== data.geminiCard.id), false);
       enemyGraveyard = window.XLW_ENEMY.grave;
       
       field[targetZone][targetIdx] = {
@@ -44146,7 +44210,7 @@ function startMultiplayerGameActual() {
 
   window.XLW_ENEMY.deck = new Array(26).fill(null);
   window.XLW_ENEMY.hand = new Array(4).fill(null);
-  window.XLW_ENEMY.grave = [];
+  window.XLW_ENEMY.grave = xlwGravePile([], false);
   enemyGraveyard = window.XLW_ENEMY.grave;
   
   const deckSelect = $("deckSelect");
@@ -44735,8 +44799,8 @@ window.xlwApplySavedStateObject = function(s) {
     field = s.field || field;
     hand = Array.isArray(s.hand) ? s.hand : hand;
     deck = Array.isArray(s.deck) ? s.deck : deck;
-    graveyard = Array.isArray(s.graveyard) ? s.graveyard : graveyard;
-    enemyGraveyard = Array.isArray(s.enemyGraveyard) ? s.enemyGraveyard : (s.enemy_grave || enemyGraveyard);
+    graveyard = xlwGravePile(Array.isArray(s.graveyard) ? s.graveyard : graveyard, true);
+    enemyGraveyard = xlwGravePile(Array.isArray(s.enemyGraveyard) ? s.enemyGraveyard : (s.enemy_grave || enemyGraveyard), false);
     playerExileZone = Array.isArray(s.playerExileZone) ? s.playerExileZone : playerExileZone;
     enemyExileZone = Array.isArray(s.enemyExileZone) ? s.enemyExileZone : enemyExileZone;
     playerExtraDeck = Array.isArray(s.playerExtraDeck) ? s.playerExtraDeck : playerExtraDeck;
@@ -45996,7 +46060,7 @@ window.xlwCheckPlagueKingDrawTrigger = async function(isPlayerTurn) {
   if (isPlayerTurn) {
     if (deck.length === 0 && window.XLW_ENEMY?.deck && window.XLW_ENEMY.deck.length > 0) {
       const milled = window.XLW_ENEMY.deck.pop();
-      if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+      if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
       window.XLW_ENEMY.grave.push(milled);
       enemyGraveyard = window.XLW_ENEMY.grave;
       logBattle(`👑【瘟疫之王】效果發動：我方牌庫已空，捨棄對手牌庫頂的【${milled.name}】送入墓地！`);
@@ -46185,6 +46249,14 @@ window.xlwHandleUnitTappedTriggers = async function(tappedUnit, zone, idx) {
 
 // 主要階段與結束階段效果檢測
 window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
+  const theater = window.xlwGetFactionFieldCard(isPlayerSide);
+  const wheel = isPlayerSide ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
+  const theaterTurn = isPlayerSide ? "XLW_playerTheaterTurn" : "XLW_enemyTheaterTurn";
+  if (theater?.id === "CCS-0029" && wheel?.length >= 3 && window[theaterTurn] !== turn) {
+    window[theaterTurn] = turn;
+    logBattle("🎪【馬戲團劇場】主要階段開始，輪轉 1 次！");
+    await window.xlwSpinWheel(isPlayerSide, 1, theater);
+  }
   const prefix = isPlayerSide ? "player_" : "enemy_";
 
   // 🎨 藝術品：魁儡操縱師 (C-ART-0066)
@@ -46433,7 +46505,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
             }
             if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
               const c = window.XLW_ENEMY.deck.pop();
-              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
               window.XLW_ENEMY.grave.push(c);
               enemyGraveyard = window.XLW_ENEMY.grave;
               logBattle(`💀 對手牌庫頂【${c.name}】被送入墓地！`);
@@ -46442,7 +46514,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
           } else {
             if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
               const c = window.XLW_ENEMY.deck.pop();
-              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = [];
+              if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
               window.XLW_ENEMY.grave.push(c);
               enemyGraveyard = window.XLW_ENEMY.grave;
               logBattle(`💀 對手牌庫頂【${c.name}】被送入墓地！`);
@@ -47182,6 +47254,19 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
 };
 
 window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
+  let settledWheelEntries;
+  while (window.XLW_wheelEntryQueue && window.XLW_wheelEntryQueue !== settledWheelEntries) {
+    settledWheelEntries = window.XLW_wheelEntryQueue;
+    await settledWheelEntries;
+  }
+  const theater = window.xlwGetFactionFieldCard(isPlayerSide);
+  const spins = isPlayerSide ? window.XLW_playerWheelSpinsThisTurn : window.XLW_enemyWheelSpinsThisTurn;
+  if (theater?.id === "CCS-0029" && spins > 0) {
+    if (isPlayerSide) playerBonusScore += 1;
+    else enemyBonusScore += 1;
+    logBattle("🎪【馬戲團劇場】本回合曾輪轉，獎勵 +1★！");
+    renderScore();
+  }
   const sidePrefix = isPlayerSide ? "player_" : "enemy_";
   const graveList = isPlayerSide ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
 
@@ -49571,8 +49656,8 @@ window.xlwStartPuzzleStage = function(stageNum) {
   // 2. 我方手牌與牌庫初始化 (牌庫留存卡牌，確保不觸發牌庫抽空倒數邏輯)
   hand = [structuredClone(jumperOrc), structuredClone(hammerSpell)];
   deck = [structuredClone(assaultOrc), structuredClone(backstabOrc), structuredClone(shieldOrc)];
-  graveyard = [];
-  enemyGraveyard = [];
+  graveyard = xlwGravePile([], true);
+  enemyGraveyard = xlwGravePile([], false);
   playerExileZone = [];
   enemyExileZone = [];
   playerExtraDeck = [];
@@ -49618,7 +49703,7 @@ window.xlwStartPuzzleStage = function(stageNum) {
   window.XLW_ENEMY = {
     deck: [structuredClone(armorOrnament), structuredClone(screamingMan)],
     hand: [],
-    grave: [],
+    grave: xlwGravePile([], false),
     deckName: "藝術品",
     running: false
   };

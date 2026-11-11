@@ -57,3 +57,66 @@
   font-size: 17px;
   min-height: 22px;
 }
+
+.circus-wheel-rim { display: block; cursor: zoom-in; }
+.circus-wheel-rim:focus-visible, .circus-wheel-close:focus-visible {
+  outline: 3px solid #fff0ac;
+  outline-offset: 4px;
+}
+#xlwCircusWheelViewer[hidden] { display: none; }
+#xlwCircusWheelViewer {
+  position: fixed;
+  inset: 0;
+  z-index: 300000;
+  background: #080711dc;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+.circus-wheel-viewer-content {
+  width: min(880px, 96%);
+  max-height: 94%;
+  overflow: auto;
+  color: #fff3d2;
+  background: #191322;
+  border: 1px solid #af8145;
+  border-radius: 14px;
+  padding: 12px;
+}
+.circus-wheel-viewer-content header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.circus-wheel-viewer-content h2 { margin: 0; font-size: 19px; }
+.circus-wheel-close { min-height: 40px; padding: 4px 14px; }
+.circus-wheel-viewer-body {
+  display: grid;
+  grid-template-columns: minmax(105px, 26%) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.circus-wheel-viewer-body canvas {
+  width: 100%;
+  border: 3px solid #dfb762;
+  border-radius: 50%;
+}
+.circus-wheel-card-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+.circus-wheel-card-list li { text-align: center; min-width: 0; }
+.circus-wheel-card-list img {
+  display: block;
+  width: 100%;
+  max-width: 156px;
+  height: auto;
+  margin: 0 auto 4px;
+  border-radius: 6px;
+}
