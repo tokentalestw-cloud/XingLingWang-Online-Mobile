@@ -215,19 +215,18 @@ body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #
   #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) {
   --button-edge: #746549;
   --button-depth: #141b28;
-  --button-top: #2b394b;
-  --button-bottom: #142032;
+  --button-top: #465570;
+  --button-bottom: #243247;
   min-height: 43px !important; height: auto !important; padding: 10px !important;
   position: relative !important; isolation: isolate;
   border: 1px solid var(--button-edge) !important;
   border-top-color: #c3c9ca82 !important; border-bottom-width: 1px !important;
-  border-radius: 5px !important;
-  background: linear-gradient(110deg, #ffffff0a, transparent 45%),
-    linear-gradient(180deg, var(--button-top), var(--button-bottom)) !important;
-  color: #eee9da !important; font-size: 13px !important; font-weight: 600 !important;
+  border-radius: 11px !important;
+  background: linear-gradient(180deg, var(--button-top), var(--button-bottom) 88%) !important;
+  color: #eee9da !important; font-size: 13px !important; font-weight: 750 !important;
   text-shadow: 0 2px 2px #000b !important;
-  box-shadow: inset 0 1px 0 #fff5dd29, inset 0 -2px 3px #0005,
-    0 3px 0 var(--button-depth), 0 4px 0 #030711, 0 8px 12px #0006 !important;
+  box-shadow: inset 0 2px #ffffff59, inset 0 -3px #0003,
+    0 4px 0 var(--button-depth), 0 5px 0 #080d17, 0 7px 9px #0007 !important;
   transform: none !important; filter: none !important; animation: none !important;
   opacity: 1 !important; gap: 3px !important; overflow: hidden !important;
   transition: transform 120ms ease, filter 140ms ease, box-shadow 120ms ease, border-color 140ms ease !important;
@@ -235,7 +234,7 @@ body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #
 body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
   #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel)::after {
   content: '' !important; position: absolute !important; inset: 3px !important;
-  border: 1px solid #bba67224 !important; border-radius: 2px !important;
+  border: 1px solid #ffffff21 !important; border-radius: 7px !important;
   background: none !important; pointer-events: none !important;
   transform: none !important; animation: none !important; opacity: 1 !important;
 }
@@ -243,25 +242,25 @@ body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAtt
   min-height: 72px !important; padding: 10px 4px !important; gap: 7px !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionTactical {
-  --button-top: #234b59; --button-bottom: #112c3c;
+  --button-top: #347f8b; --button-bottom: #174655;
   --button-depth: #081a24; --button-edge: #65949a;
   color: #def0ee !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionAttack {
-  --button-top: #623d48; --button-bottom: #301d2b;
+  --button-top: #ab5550; --button-bottom: #602934;
   --button-depth: #1d0f19; --button-edge: #b17f87;
   color: #f0dfe0 !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionConfirm {
-  --button-top: #4d425d; --button-bottom: #261f39;
+  --button-top: #776294; --button-bottom: #443654;
   --button-depth: #161222; --button-edge: #9685a6;
   flex-direction: row !important; gap: 8px !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionCancel, .secondary) {
-  --button-top: #273343; --button-bottom: #131f2c; --button-edge: #536171;
+  --button-top: #48556b; --button-bottom: #273343; --button-edge: #536171;
   flex-direction: row !important; gap: 8px !important; color: #b5c1cf !important;
 }
-body.xlw-royal-ui #stableActionPanel .btn-text { font-size: 13px !important; font-weight: 600 !important; }
+body.xlw-royal-ui #stableActionPanel .btn-text { font-size: 13px !important; font-weight: 750 !important; }
 body.xlw-royal-ui #stableActionPanel .btn-icon {
   margin: 0 !important; width: 22px; height: 22px; font-size: 0 !important;
   background: currentColor; mask: var(--xlw-star-sigil) center / contain no-repeat;
@@ -275,13 +274,13 @@ body.xlw-royal-ui #stableActionPanel #stableActionCancel .btn-icon {
     linear-gradient(-45deg, transparent 45%, currentColor 46% 54%, transparent 55%);
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary) {
-  --button-top: #405b6a; --button-bottom: #152938;
+  --button-top: #ffe4a2; --button-bottom: #c88136;
   --button-edge: #d2ba7b; --button-depth: #51452b;
   min-height: 76px !important; padding: 13px 10px 13px 48px !important;
-  color: #fff0c9 !important; border-radius: 6px !important;
-  text-shadow: 0 2px 2px #000 !important;
-  box-shadow: inset 0 1px 0 #fff3cc65, inset 0 -3px 6px #0006,
-    0 4px 0 #5c4c2c, 0 5px 0 #1b1712, 0 10px 18px #0009, 0 0 22px #6acbda12 !important;
+  color: #23170e !important;
+  text-shadow: 0 1px #fff6cf80 !important;
+  box-shadow: inset 0 2px #fff5d5ad, inset 0 -3px #763e2160,
+    0 4px 0 #734623, 0 5px 0 #29190f, 0 8px 11px #0008 !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary)::before {
   content: '' !important; position: absolute !important;
@@ -293,11 +292,11 @@ body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulligan
   transform: none !important; animation: none !important; pointer-events: none !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm) .btn-main-text {
-  font-size: 17px !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: 1px !important;
+  font-size: 17px !important; font-weight: 750 !important; line-height: 1.3 !important; letter-spacing: 1px !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionEnd .btn-sub-turn {
   font: 500 9px/1.4 'Outfit', sans-serif !important;
-  letter-spacing: 3px !important; color: #bfd3d9 !important; text-shadow: none !important;
+  letter-spacing: 3px !important; color: inherit !important; text-shadow: none !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
   #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel):hover:not(:disabled) {
@@ -385,9 +384,9 @@ body.xlw-royal-ui #xlwFixedTopRightActionBar :is(button, #scoreBtn, #xlwSfxToggl
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 32px !important; min-height: 32px !important; padding: 5px 11px !important;
   border: 1px solid #7481964d !important; border-bottom: 2px solid #080d17 !important;
-  border-radius: 3px !important; background: linear-gradient(#2c394a, #172333) !important;
-  color: #cdd6e1 !important; font-size: 11px !important; font-weight: 500 !important;
-  box-shadow: inset 0 1px 0 #ffffff12, 0 1px 2px #0006 !important; text-shadow: 0 1px 1px #000 !important;
+  border-radius: 8px !important; background: linear-gradient(#485c71, #253649) !important;
+  color: #f5f1e8 !important; font-size: 11px !important; font-weight: 700 !important;
+  box-shadow: inset 0 2px #ffffff38, inset 0 -2px #0003, 0 2px 0 #080d17, 0 4px 5px #0007 !important; text-shadow: 0 1px 1px #000 !important;
 }
 body.xlw-royal-ui #xlwFixedTopRightActionBar button::before {
   content: ''; width: 12px; height: 12px; flex: 0 0 12px;
@@ -1145,9 +1144,10 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
   padding: 8px 14px !important;
   border: 1px solid #baa16a !important;
   border-radius: 9px !important;
-  background: linear-gradient(#355568, #152b3b) !important;
-  color: #fff0c9 !important;
-  box-shadow: inset 0 1px #fff3, 0 4px 8px #0005 !important;
+  background: linear-gradient(#ffe4a2, #c88136) !important;
+  color: #23170e !important;
+  text-shadow: 0 1px #fff6cf80 !important;
+  box-shadow: inset 0 2px #fff5d5ad, inset 0 -3px #763e2160, 0 3px 0 #734623, 0 5px 7px #0007 !important;
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -1159,7 +1159,9 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
     .xlw-mulligan-nav-btn, body.xlw-royal-ui #xlwConfirmNo) {
   border-color: #718493 !important;
   background: linear-gradient(#2b394b, #152131) !important;
-  color: #dce8ef !important;
+  color: #f0f5fa !important;
+  text-shadow: 0 1px 2px #000 !important;
+  box-shadow: inset 0 2px #ffffff38, inset 0 -2px #0004, 0 3px 0 #080d17, 0 5px 7px #0007 !important;
 }
 
 :is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
@@ -1253,3 +1255,18 @@ body.xlw-royal-ui .prebattle-container { width: min(460px, calc(100 * var(--xvw,
   box-shadow: inset 0 1px #fff1cb99, 0 0 6px #d9934e63;
 }
 .steam-battery-cell:nth-child(6) { border-style: dashed; }
+
+/* Compress the bevel on press without changing the button box. */
+body.xlw-royal-ui #xlwFixedTopRightActionBar button:active:not(:disabled),
+:is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
+    .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, body.xlw-royal-ui #prebattleConfirmBtn,
+    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn):active:not(:disabled) {
+  transform: translateY(2px) !important;
+  box-shadow: inset 0 2px 5px #0006, 0 1px 0 #101520 !important;
+}
+:is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
+    .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, body.xlw-royal-ui #prebattleConfirmBtn,
+    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn):disabled {
+  filter: saturate(.25) brightness(.75) !important;
+  cursor: not-allowed;
+}
