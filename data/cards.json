@@ -2247,28 +2247,6 @@
     "trigger_condition": ""
   },
   {
-    "id": "C-GOT-0001",
-    "name": "魔法山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "5",
-    "score": 5,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使你墓地1張卡名帶有「山羊術」的卡牌回手牌。",
-    "image": "/static/card_images/c_got_0001.jpeg",
-    "original_file": "山羊族/0023_67GOT0001_魔法山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
     "id": "C-GOT-0002",
     "name": "呆山羊",
     "deck": "山羊族",
@@ -2282,7 +2260,7 @@
     "effect_text": "你的主要階段，可使你手牌的此卡被視為「山羊術」使用，仍視為打出單位。",
     "image": "/static/card_images/c_got_0002.jpeg",
     "original_file": "山羊族/0022_68GOT0002_呆山羊.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -2298,137 +2276,13 @@
     "attack": "5",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "",
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。",
     "image": "/static/card_images/c_got_0003.jpeg",
     "original_file": "山羊族/0021_69GOT0003_黑山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "C-GOT-0004",
-    "name": "魔法銅像",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": 5,
-    "tribute": 1,
-    "keywords": [
-      "阻擋"
-    ],
-    "effect_text": "阻擋。此單位不會被「山羊術」以外的魔法卡選為目標。",
-    "image": "/static/card_images/c_got_0004.jpeg",
-    "original_file": "山羊族/0020_70GOT0004_山羊銅像.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "建築"
-  },
-  {
-    "id": "C-GOT-0006",
-    "name": "盜版山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "3",
-    "score": -2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可使你手牌的此卡被視為「山羊術」使用，仍視為打出單位。",
-    "image": "/static/card_images/c_got_0006.jpeg",
-    "original_file": "山羊族/0019_71GOT0006_盜版山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "C-GOT-0008",
-    "name": "旅人騎羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "此單位戰鬥成功時，召喚2個小旅人。",
-    "image": "/static/card_images/c_got_0008.jpeg",
-    "original_file": "山羊族/0018_72GOT0008_旅人騎羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊族"
-  },
-  {
-    "id": "C-GOT-0012",
-    "name": "寶寶山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "-3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可使你手牌的此卡被視為「山羊術」使用，仍視為打出單位。",
-    "image": "/static/card_images/c_got_0012.jpeg",
-    "original_file": "山羊族/0017_73GOT0012_寶寶山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "C-GOT-0013",
-    "name": "羊商人",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "3",
-    "score": 4,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：抽2張牌或使你墓地1張山羊族單位卡回手牌。",
-    "image": "/static/card_images/c_got_0013.jpeg",
-    "original_file": "山羊族/0016_74GOT0013_羊商人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型"
-  },
-  {
-    "id": "C-GOT-0014",
-    "name": "盾牌山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": -5,
-    "tribute": 1,
-    "keywords": [
-      "阻擋"
-    ],
-    "effect_text": "阻擋。你的主要階段，可使你手牌的此卡被視為「山羊術」使用，仍視為打出單位。",
-    "image": "/static/card_images/c_got_0014.jpeg",
-    "original_file": "山羊族/0015_75GOT0014_盾牌山羊.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -2444,11 +2298,13 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獎勵"
+    ],
     "effect_text": "你使場上的單位被變為山羊時，獎勵+1。",
     "image": "/static/card_images/c_got_0018.jpeg",
     "original_file": "山羊族/0014_76GOT0018_山羊學院.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 4,
     "usable_phases": [
       "Main Phase"
@@ -2463,14 +2319,16 @@
     "type": "magic",
     "faction": "山羊族",
     "race": "山羊族",
-    "attack": "5",
+    "attack": "0",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "貫穿"
+    ],
     "effect_text": "使場上1單位變為此卡（此卡在場時視為單位）。",
     "image": "/static/card_images/c_got_0019.jpeg",
     "original_file": "山羊族/0013_77GOT0019_魔王山羊術.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
       "Main Phase"
@@ -2488,7 +2346,9 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "獻祭"
+    ],
     "effect_text": "使你本回合將你手牌的山羊族單位卡視為「山羊術」使用時不視為打出單位，若需要祭品仍需獻祭。",
     "image": "/static/card_images/c_got_0020.jpeg",
     "original_file": "山羊族/0012_78GOT0020_無限山羊.jpg",
@@ -2498,27 +2358,8 @@
       "Main Phase"
     ],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "消耗"
-  },
-  {
-    "id": "C-GOT-0022",
-    "name": "幽靈山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "3",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你使敵方場上的單位被變為山羊時，可使你墓地的此卡被額外打出。",
-    "image": "/static/card_images/c_got_0022.jpeg",
-    "original_file": "山羊族/0011_79GOT0022_幽靈山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
   },
   {
     "id": "C-GOT-0023",
@@ -2538,6 +2379,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "山羊"
   },
   {
@@ -2554,27 +2396,7 @@
     "effect_text": "此卡可打出或召喚至後排戰線。若你在戰術階段選擇佈陣，則此單位亦可進攻。",
     "image": "/static/card_images/c_got_0025.jpeg",
     "original_file": "山羊族/0009_81GOT0025_飛天山羊.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "C-GOT-0060",
-    "name": "細胞山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "X",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "X=你場上「細胞山羊」的數量。",
-    "image": "/static/card_images/got_0056.jpeg",
-    "original_file": "山羊族/0004_86GOT0056_細胞山羊_額外牌3.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -3026,20 +2848,21 @@
   },
   {
     "id": "C-STP-0014",
-    "name": "蒸汽能量方塊 (C版)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽能量方塊",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，耗能，獎勵"
     ],
     "effect_text": "立即：耗能X獎勵+X。",
     "image": "/static/card_images/c_stp_0014.jpeg",
     "original_file": "蒸汽世界/0008_61STP0014_蒸汽能量方塊.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -3047,59 +2870,66 @@
   },
   {
     "id": "C-STP-0025",
-    "name": "超載能源場 (C版)",
-    "faction": "蒸汽世界",
+    "name": "超載能源場",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能"
+    ],
     "effect_text": "你的充能能量上限改為6。你的結束階段時，充能+1。",
     "image": "/static/card_images/c_stp_0025.jpeg",
     "original_file": "蒸汽世界/0007_62STP0025_超載能源場.jpg",
     "deck_eligible": false,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "場地"
   },
   {
     "id": "C-STP-0058",
     "name": "蒸汽廣告船",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，飛行"
     ],
-    "effect_text": "滑行。",
+    "effect_text": "滑行。飛行。",
     "image": "/static/card_images/c_stp_0058.jpeg",
     "original_file": "蒸汽世界/0005_64STP0058_蒸汽廣告船.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 3,
     "art_subtype": "道具/機械"
   },
   {
     "id": "C-STP-0060",
-    "name": "蒸汽魔盜團 毒氣兵",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團 毒氣凱",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 1,
     "tribute": 0,
     "keywords": [
       "滑行",
       "立即",
-      "毒",
+      "耗能，劇毒",
       "貫穿"
     ],
     "effect_text": "滑行。立即：可耗能2，若成功使此單位被賦予毒及貫穿直到下個主要階段開始時。",
@@ -3109,7 +2939,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "C-VLG-0056",
@@ -6021,320 +5851,6 @@
     "image": "/static/card_images/ewd_0057.jpeg"
   },
   {
-    "id": "GOT-0002",
-    "name": "呆山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "1",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
-    "image": "/static/card_images/got_0002.jpeg",
-    "original_file": "山羊族/0027_GOT0002_呆山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0003",
-    "name": "黑山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "5",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "",
-    "image": "/static/card_images/got_0003.jpeg",
-    "original_file": "山羊族/0029_GOT0003_黑山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0005",
-    "name": "金山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "8",
-    "score": 8,
-    "tribute": 4,
-    "keywords": [],
-    "effect_text": "此卡不會被敵方魔法卡選為目標。",
-    "image": "/static/card_images/got_0005.jpeg",
-    "original_file": "山羊族/0032_GOT0005_金山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0007",
-    "name": "臭臭山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "1",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。此卡左右的單位-2攻擊力。",
-    "image": "/static/card_images/got_0007.jpeg",
-    "original_file": "山羊族/0034_GOT0007_臭臭山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0008",
-    "name": "旅人騎羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "此單位戰鬥成功時，召喚2個小旅人。",
-    "image": "/static/card_images/got_0008.jpeg",
-    "original_file": "山羊族/0035_GOT-0008.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊族"
-  },
-  {
-    "id": "GOT-0009",
-    "name": "閃電山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 3,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使敵方1個山羊單位被破壞。",
-    "image": "/static/card_images/got_0009.jpeg",
-    "original_file": "山羊族/0037_GOT0009改_閃電山羊_R閃.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0010",
-    "name": "鋼鐵山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 4,
-    "tribute": 1,
-    "keywords": [
-      "機械合體"
-    ],
-    "effect_text": "機械合體。",
-    "image": "/static/card_images/got_0010.jpeg",
-    "original_file": "山羊族/0038_GOT0010改_鋼鐵山羊_R閃.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊/機械"
-  },
-  {
-    "id": "GOT-0011",
-    "name": "藍山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "此卡將山羊單位戰鬥破壞時，獎勵+3。",
-    "image": "/static/card_images/got_0011.jpeg",
-    "original_file": "山羊族/0039_GOT0011_藍山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0012",
-    "name": "寶寶山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "-3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
-    "image": "/static/card_images/got_0012.jpeg",
-    "original_file": "山羊族/0040_GOT-0012.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0013",
-    "name": "羊商人",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "3",
-    "score": 4,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：抽2張牌或使你墓地1張山羊族單位回手牌。",
-    "image": "/static/card_images/got_0013.jpeg",
-    "original_file": "山羊族/0043_GOT0013改_羊商人_R閃.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型"
-  },
-  {
-    "id": "GOT-0014",
-    "name": "盾牌山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": -5,
-    "tribute": 1,
-    "keywords": [
-      "阻擋"
-    ],
-    "effect_text": "阻擋。你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
-    "image": "/static/card_images/got_0014.jpeg",
-    "original_file": "山羊族/0045_GOT0014_盾牌_R閃.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0015",
-    "name": "喵山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "4",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "偷竊"
-    ],
-    "effect_text": "偷竊。此卡偷竊成功時，牌庫尋找1張山羊族牌加入手牌並重洗牌庫。",
-    "image": "/static/card_images/got_0015.jpeg",
-    "original_file": "山羊族/0046_GOT0015_喵山羊_R閃.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0016",
-    "name": "自爆山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。該回合結束時，使此卡與此卡後方的單位被破壞。",
-    "image": "/static/card_images/got_0016.jpeg",
-    "original_file": "山羊族/0047_GOT0016改_自爆山羊_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
-    "id": "GOT-0017",
-    "name": "山羊炸彈",
-    "deck": "山羊族",
-    "type": "magic",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "使敵方至多3個山羊單位遭到破壞（不得在倒數階段使用）。",
-    "image": "/static/card_images/got_0017.jpeg",
-    "original_file": "山羊族/0048_GOT0017_山羊炸彈_R普.jpg",
-    "deck_eligible": true,
-    "mana": 4,
-    "usable_phases": [
-      "Main Phase"
-    ],
-    "trigger_condition": "",
-    "art_subtype": "消耗"
-  },
-  {
-    "id": "GOT-0018",
-    "name": "山羊學院",
-    "deck": "山羊族",
-    "type": "magic",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "當你成功打出「山羊術」時，獎勵+1。",
-    "image": "/static/card_images/got_0018.jpeg",
-    "original_file": "山羊族/0049_GOT0018_山羊學院_R普.jpg",
-    "deck_eligible": true,
-    "mana": 4,
-    "usable_phases": [
-      "Main Phase"
-    ],
-    "trigger_condition": "",
-    "art_subtype": "場地"
-  },
-  {
     "id": "GOT-0019",
     "name": "魔王山羊術",
     "deck": "山羊族",
@@ -6942,26 +6458,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
-  },
-  {
-    "id": "GOT-0056",
-    "name": "細胞山羊",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "X",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "X=你場上「細胞山羊」的數量。",
-    "image": "/static/card_images/got_0056.jpeg",
-    "original_file": "山羊族/0004_86GOT0056_細胞山羊_額外牌3.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
   },
   {
     "id": "MMS-0016-2",
@@ -7888,28 +7384,6 @@
     "usable_phases": [],
     "trigger_condition": "立即",
     "art_subtype": "不死族"
-  },
-  {
-    "id": "NY-STP-0010",
-    "name": "維修阿莫德 (新年版)",
-    "faction": "蒸汽世界",
-    "deck": "蒸汽世界",
-    "type": "unit",
-    "attack": "1",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [
-      "掩護",
-      "立即"
-    ],
-    "effect_text": "掩護。立即：使你墓地1蒸汽世界牌回手牌。",
-    "image": "/static/card_images/ny_stp_0010.jpeg",
-    "original_file": "蒸汽世界/0023_NY-STP-0010.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": "人型"
   },
   {
     "id": "ORC-0002",
@@ -14385,7 +13859,7 @@
   },
   {
     "id": "R-GOT-0001",
-    "name": "魔法山羊 (閃)",
+    "name": "魔法山羊",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -14396,10 +13870,52 @@
     "keywords": [
       "立即"
     ],
-    "effect_text": "立即：使你墓地1張「山羊術」回手牌。",
+    "effect_text": "立即：使你墓地1張卡名帶有「山羊術」的卡牌回手牌。",
     "image": "/static/card_images/r_got_0001.jpeg",
-    "original_file": "山羊族/0024_GOT0001_魔法山羊_R閃.jpg",
-    "deck_eligible": false,
+    "original_file": "山羊族/0023_67GOT0001_魔法山羊.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0002",
+    "name": "呆山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "1",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
+    "image": "/static/card_images/r_got_0002.jpeg",
+    "original_file": "山羊族/0027_GOT0002_呆山羊_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0003",
+    "name": "黑山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "5",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "貫穿"
+    ],
+    "effect_text": "貫穿。",
+    "image": "/static/card_images/r_got_0003.jpeg",
+    "original_file": "山羊族/0029_GOT0003_黑山羊_R普.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -14407,29 +13923,48 @@
   },
   {
     "id": "R-GOT-0004",
-    "name": "魔法銅像 (閃)",
+    "name": "魔法銅像",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
     "race": "山羊族",
-    "attack": "0",
+    "attack": "盾",
     "score": 5,
     "tribute": 1,
     "keywords": [
       "阻擋"
     ],
-    "effect_text": "阻擋。此卡不會被「山羊術」以外的魔法卡選為目標。",
+    "effect_text": "阻擋。此單位不會被「山羊術」以外的魔法卡選為目標。",
     "image": "/static/card_images/r_got_0004.jpeg",
-    "original_file": "山羊族/0030_GOT0004改_山羊銅像_R閃.jpg",
-    "deck_eligible": false,
+    "original_file": "山羊族/0020_70GOT0004_山羊銅像.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "R-GOT-0005",
+    "name": "金山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "8",
+    "score": 8,
+    "tribute": 4,
+    "keywords": [],
+    "effect_text": "此卡不會被敵方魔法卡選為目標。",
+    "image": "/static/card_images/r_got_0005.jpeg",
+    "original_file": "山羊族/0032_GOT0005_金山羊_R普.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "建築"
+    "art_subtype": "山羊"
   },
   {
     "id": "R-GOT-0006",
-    "name": "盜版山羊 (閃)",
+    "name": "盜版山羊",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -14438,18 +13973,318 @@
     "score": -2,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
+    "effect_text": "你的主要階段，可使你手牌的此卡被視為「山羊術」使用，仍視為打出單位。",
     "image": "/static/card_images/r_got_0006.jpeg",
-    "original_file": "山羊族/0033_GOT0006_盜版山羊_R閃.jpg",
-    "deck_eligible": false,
+    "original_file": "山羊族/0019_71GOT0006_盜版山羊.jpg",
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "山羊"
   },
   {
-    "id": "R-GOT-0053",
-    "name": "細胞山羊研究員 (泳裝)",
+    "id": "R-GOT-0007",
+    "name": "臭臭山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "1",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。此卡左右的單位-2攻擊力。",
+    "image": "/static/card_images/r_got_0007.jpeg",
+    "original_file": "山羊族/0034_GOT0007_臭臭山羊_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0008",
+    "name": "旅人騎羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "4",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "此單位戰鬥成功時，召喚2個小旅人。",
+    "image": "/static/card_images/r_got_0008.jpeg",
+    "original_file": "山羊族/0035_GOT-0008.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": ""
+  },
+  {
+    "id": "R-GOT-0009",
+    "name": "閃電山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "4",
+    "score": 3,
+    "tribute": 1,
+    "keywords": [
+      "立即，山羊"
+    ],
+    "effect_text": "立即：使敵方1個山羊單位被破壞。",
+    "image": "/static/card_images/r_got_0009.jpeg",
+    "original_file": "山羊族/0037_GOT0009改_閃電山羊_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0010",
+    "name": "鋼鐵山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "4",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "機械合體，貫穿"
+    ],
+    "effect_text": "機械合體。貫穿。",
+    "image": "/static/card_images/r_got_0010.jpeg",
+    "original_file": "山羊族/0038_GOT0010改_鋼鐵山羊_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊，機械"
+  },
+  {
+    "id": "R-GOT-0011",
+    "name": "藍山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "4",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "山羊，獎勵"
+    ],
+    "effect_text": "此卡將山羊單位戰鬥破壞時，獎勵+3。",
+    "image": "/static/card_images/r_got_0011.jpeg",
+    "original_file": "山羊族/0039_GOT0011_藍山羊_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0012",
+    "name": "寶寶山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "-3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
+    "image": "/static/card_images/r_got_0012.jpeg",
+    "original_file": "山羊族/0040_GOT-0012.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0012-VR",
+    "name": "寶寶山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "-3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
+    "image": "/static/card_images/r_got_0012_vr.jpeg",
+    "original_file": "山羊族/0041_VR-GOT-0012-1.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3,
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0013",
+    "name": "羊商人",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "3",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "立即，山羊族"
+    ],
+    "effect_text": "立即：抽2張牌或使你墓地1張山羊族單位回手牌。",
+    "image": "/static/card_images/r_got_0013.jpeg",
+    "original_file": "山羊族/0043_GOT0013改_羊商人_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-GOT-0014",
+    "name": "盾牌山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "盾",
+    "score": -5,
+    "tribute": 1,
+    "keywords": [
+      "阻擋"
+    ],
+    "effect_text": "阻擋。你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
+    "image": "/static/card_images/r_got_0014.jpeg",
+    "original_file": "山羊族/0045_GOT0014_盾牌_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0015",
+    "name": "喵山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "4",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "偷襲"
+    ],
+    "effect_text": "偷竊。此卡偷襲成功時，牌庫尋找1張山羊族牌加入手牌並重洗牌庫。",
+    "image": "/static/card_images/r_got_0015.jpeg",
+    "original_file": "山羊族/0046_GOT0015_喵山羊_R閃.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0016",
+    "name": "自爆山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。該回合結束時，使此卡與此卡後方的單位被破壞。",
+    "image": "/static/card_images/r_got_0016.jpeg",
+    "original_file": "山羊族/0047_GOT0016改_自爆山羊_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0017",
+    "name": "山羊炸彈",
+    "deck": "山羊族",
+    "type": "magic",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "0",
+    "score": 0,
+    "tribute": 0,
+    "keywords": [
+      "山羊"
+    ],
+    "effect_text": "使敵方至多3個山羊單位遭到破壞（不得在倒數階段使用）。",
+    "image": "/static/card_images/r_got_0017.jpeg",
+    "original_file": "山羊族/0048_GOT0017_山羊炸彈_R普.jpg",
+    "deck_eligible": true,
+    "mana": 4,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "消耗"
+  },
+  {
+    "id": "R-GOT-0018",
+    "name": "山羊學院",
+    "deck": "山羊族",
+    "type": "magic",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "0",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "獎勵"
+    ],
+    "effect_text": "你使場上的單位被變為山羊時，獎勵+1。",
+    "image": "/static/card_images/r_got_0018.jpeg",
+    "original_file": "山羊族/0049_GOT0018_山羊學院_R普.jpg",
+    "deck_eligible": true,
+    "mana": 4,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "場地"
+  },
+  {
+    "id": "R-GOT-0025",
+    "name": "飛天山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "3",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "此卡可打出或召喚至後排戰線。若你在戰術階段選擇佈陣，則此單位亦可進攻。",
+    "image": "/static/card_images/r_got_0025.jpeg",
+    "original_file": "山羊族/0057_14泳裝GOT0025_飛天山羊_史黛拉.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0053-泳裝",
+    "name": "細胞山羊研究員  羚玲",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -14457,15 +14292,59 @@
     "attack": "4",
     "score": 4,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "山羊"
+    ],
     "effect_text": "你的回合限一次，你使場上的單位被變為山羊時，可使你額外區1張「細胞山羊」被召喚。",
-    "image": "/static/card_images/r_got_0053.jpeg",
+    "image": "/static/card_images/r_got_0053_泳裝.jpeg",
     "original_file": "山羊族/0001_泳裝10_GOT0053_細胞山羊研究員-複製.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
+  },
+  {
+    "id": "R-GOT-0056",
+    "name": "細胞山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "X",
+    "score": "X",
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "X=你場上「細胞山羊」的數量。",
+    "image": "/static/card_images/r_got_0056.jpeg",
+    "original_file": "山羊族/0004_86GOT0056_細胞山羊_額外牌3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3,
+    "art_subtype": "山羊"
+  },
+  {
+    "id": "R-GOT-0060",
+    "name": "細胞山羊",
+    "deck": "山羊族",
+    "type": "unit",
+    "faction": "山羊族",
+    "race": "山羊族",
+    "attack": "X",
+    "score": "X",
+    "tribute": 0,
+    "keywords": [],
+    "effect_text": "X=你場上「細胞山羊」的數量。",
+    "image": "/static/card_images/r_got_0060.jpeg",
+    "original_file": "山羊族/0004_86GOT0056_細胞山羊_額外牌3.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "extra_deck_limit": 3,
+    "art_subtype": "山羊"
   },
   {
     "id": "R-MMS-0043",
@@ -19562,18 +19441,21 @@
   },
   {
     "id": "R-STP-0008-泳裝",
-    "name": "指揮官 貝莉可可 (泳裝)",
-    "faction": "蒸汽世界",
+    "name": "指揮官 貝莉可可",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "你的主要階段，可耗能1使你場上1單位轉正。",
     "image": "/static/card_images/r_stp_0008_泳裝.jpeg",
     "original_file": "蒸汽世界/0001_泳裝09_STP0008_貝莉可可.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -19582,16 +19464,17 @@
   {
     "id": "R-STP-0010",
     "name": "維修阿莫德",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "1",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "掩護，立即，蒸氣世界"
     ],
-    "effect_text": "立即：使你墓地1蒸汽世界牌回手牌。",
+    "effect_text": "掩護。立即：使你墓地1蒸汽世界牌回手牌。",
     "image": "/static/card_images/r_stp_0010.jpeg",
     "original_file": "蒸汽世界/0022_STP0010改_阿莫德_R閃.jpg",
     "deck_eligible": true,
@@ -19601,15 +19484,41 @@
     "art_subtype": "人型"
   },
   {
-    "id": "R-STP-0012",
-    "name": "蒸汽女孩 梅恩",
-    "faction": "蒸汽世界",
+    "id": "R-STP-0010-新年",
+    "name": "維修阿莫德",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
+    "attack": "1",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "掩護",
+      "立即，蒸氣世界"
+    ],
+    "effect_text": "掩護。立即：使你墓地1蒸汽世界牌回手牌。",
+    "image": "/static/card_images/r_stp_0010_新年.jpeg",
+    "original_file": "蒸汽世界/0023_NY-STP-0010.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "立即",
+    "art_subtype": "人型"
+  },
+  {
+    "id": "R-STP-0012",
+    "name": "蒸汽女孩 梅恩",
+    "deck": "蒸汽世界",
+    "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能，機械"
+    ],
     "effect_text": "每當你場上1個單位被破壞時充能+1，若該單位為機械單位則充能+2。",
     "image": "/static/card_images/r_stp_0012.jpeg",
     "original_file": "蒸汽世界/0027_STP0012改_蒸氣女孩_R閃.jpg",
@@ -19620,19 +19529,42 @@
     "art_subtype": "人型"
   },
   {
-    "id": "R-STP-0014",
+    "id": "R-STP-0014-VR",
     "name": "蒸汽能量方塊",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，耗能，獎勵"
     ],
     "effect_text": "立即：耗能X獎勵+X。",
-    "image": "/static/card_images/r_stp_0014.jpeg",
+    "image": "/static/card_images/r_stp_0014_vr.jpeg",
+    "original_file": "蒸汽世界/0032_VR-STP-0014-1.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "立即",
+    "art_subtype": "機械"
+  },
+  {
+    "id": "R-STP-0014-特殊",
+    "name": "蒸汽能量方塊",
+    "deck": "蒸汽世界",
+    "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
+    "attack": "2",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "立即，耗能，獎勵"
+    ],
+    "effect_text": "立即：耗能X獎勵+X。",
+    "image": "/static/card_images/r_stp_0014_特殊.jpeg",
     "original_file": "蒸汽世界/0031_STP0014_方塊_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
@@ -19643,14 +19575,15 @@
   {
     "id": "R-STP-0015",
     "name": "金屬盾牌",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "阻擋",
+      "耗能，蒸氣世界，阻擋",
       "掩護"
     ],
     "effect_text": "耗能1。使你1蒸汽世界單位被賦予阻擋及掩護。",
@@ -19659,22 +19592,23 @@
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "永久"
   },
   {
     "id": "R-STP-0016",
     "name": "蒸汽槍",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "耗能，蒸氣世界，遠程攻擊"
     ],
     "effect_text": "耗能1。使你1蒸汽世界單位被賦予+1攻擊力及遠程攻擊。",
     "image": "/static/card_images/r_stp_0016.jpeg",
@@ -19682,45 +19616,45 @@
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "永久"
   },
   {
     "id": "R-STP-0016-泳裝",
-    "name": "蒸汽槍 李青 (泳裝)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽槍",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
-    "score": 0,
+    "score": 1,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "耗能，蒸氣世界，遠程攻擊"
     ],
     "effect_text": "耗能1。使你1蒸汽世界單位被賦予+1攻擊力及遠程攻擊。",
     "image": "/static/card_images/r_stp_0016_泳裝.jpeg",
     "original_file": "蒸汽世界/0035_13泳裝STP0016_蒸氣槍_李青.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 1,
-    "usable_phases": [
-      "主要階段"
-    ],
+    "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "永久"
   },
   {
     "id": "R-STP-0021",
     "name": "鳥人 艾菲",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "掩護"
+      "掩護，充能"
     ],
     "effect_text": "掩護。當敵方玩家將單位打在此卡正前方時，充能+2。",
     "image": "/static/card_images/r_stp_0021.jpeg",
@@ -19734,14 +19668,15 @@
   {
     "id": "R-STP-0022",
     "name": "小烏鴉",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，橫放，充能"
     ],
     "effect_text": "立即：使1單位橫放，充能+1。",
     "image": "/static/card_images/r_stp_0022.jpeg",
@@ -19755,34 +19690,38 @@
   {
     "id": "R-STP-0025",
     "name": "超載能源場",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
-    "score": 0,
+    "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能"
+    ],
     "effect_text": "你的充能能量上限改為6。你的結束階段時，充能+1。",
     "image": "/static/card_images/r_stp_0025.jpeg",
     "original_file": "蒸汽世界/0044_STP0025_超載場_R普.jpg",
     "deck_eligible": true,
     "mana": 2,
-    "usable_phases": [
-      "主要階段"
-    ],
+    "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "場地"
   },
   {
     "id": "R-STP-0027",
     "name": "黑暗道具 恐怖假人",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "你的主要階段，若你場上有「黑暗商人 皮皮」才可從手牌打出此卡。你的主要階段限一次，可耗能X，若成功使敵方場上1個★等同於X的單位被破壞。",
     "image": "/static/card_images/r_stp_0027.jpeg",
     "original_file": "蒸汽世界/0047_蒸汽STP0027.jpg",
@@ -19795,15 +19734,16 @@
   {
     "id": "R-STP-0028",
     "name": "黑暗道具 充能增幅器",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 1,
     "tribute": 0,
     "keywords": [
       "阻擋",
-      "掩護"
+      "掩護，充能，商人"
     ],
     "effect_text": "阻擋、掩護。你充能時，若你場上有商人單位，該充能額外+1。",
     "image": "/static/card_images/r_stp_0028.jpeg",
@@ -19817,49 +19757,58 @@
   {
     "id": "R-STP-0029",
     "name": "黑暗道具 解放器",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，商人"
+    ],
     "effect_text": "本回合你所有耗能牌的耗能-1，若你場上有商人單位，則改為-2（耗能最少為1）。",
     "image": "/static/card_images/r_stp_0029.jpeg",
     "original_file": "蒸汽世界/0049_蒸汽STP0029.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/消耗"
+    "art_subtype": "道具，消耗"
   },
   {
     "id": "R-STP-0030",
     "name": "黑暗道具 黑球",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，商人"
+    ],
     "effect_text": "耗能4。無效化該魔法卡。若你場上有商人單位，則此卡耗能-2。",
     "image": "/static/card_images/r_stp_0030.jpeg",
     "original_file": "蒸汽世界/0050_蒸汽STP0030.jpg",
     "deck_eligible": true,
     "mana": 3,
-    "usable_phases": [],
+    "usable_phases": [
+      "Opponent Use Magic"
+    ],
     "trigger_condition": "敵方施放魔法卡時",
-    "art_subtype": "道具/消耗"
+    "art_subtype": "道具，消耗"
   },
   {
     "id": "R-STP-0032",
     "name": "航海道具 指南針",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 3,
     "tribute": 0,
@@ -19878,9 +19827,10 @@
   {
     "id": "R-STP-0033",
     "name": "航海道具 突刺人偶",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 2,
     "tribute": 0,
@@ -19897,13 +19847,16 @@
   {
     "id": "R-STP-0035",
     "name": "退休老水手",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能，獎勵"
+    ],
     "effect_text": "結束階段時，若你本回合發動充能且能量電池已達上限，獎勵+1。",
     "image": "/static/card_images/r_stp_0035.jpeg",
     "original_file": "蒸汽世界/0055_STP-0035.jpg",
@@ -19916,9 +19869,10 @@
   {
     "id": "R-STP-0036",
     "name": "航海道具 定時水雷",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
@@ -19932,20 +19886,21 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/機械"
+    "art_subtype": "道具，機械"
   },
   {
     "id": "R-STP-0037",
     "name": "蒸汽魔盜團團長 索羅",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "6",
     "score": 4,
     "tribute": 2,
     "keywords": [
       "滑行",
-      "綁架"
+      "，耗能，綁架"
     ],
     "effect_text": "滑行。此單位進攻時，可耗能5，若成功使此單位前方第一個敵方單位被綁架(2)。",
     "image": "/static/card_images/r_stp_0037.jpeg",
@@ -19954,19 +19909,20 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "R-STP-0038",
     "name": "蒸汽魔道具 飛船",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，蒸氣世界"
     ],
     "effect_text": "滑行。此單位進攻時，可使你場上1個蒸汽世界單位移動至此單位左或右。",
     "image": "/static/card_images/r_stp_0038.jpeg",
@@ -19975,18 +19931,21 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/機械"
+    "art_subtype": "道具，機械"
   },
   {
     "id": "R-STP-0039",
     "name": "蒸汽魔盜團指揮官 奧麗",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "充能"
+    ],
     "effect_text": "你的主要階段開始時，使你場上所有滑行單位被轉正，每轉正1個單位使你充能+1。",
     "image": "/static/card_images/r_stp_0039.jpeg",
     "original_file": "蒸汽世界/0060_STP-0039.jpg",
@@ -19994,21 +19953,20 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "R-STP-0040",
     "name": "蒸汽坦克",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 3,
     "tribute": 1,
     "keywords": [
-      "遠程攻擊",
-      "貫穿",
-      "破甲"
+      "遠程攻擊，耗能，貫穿，破甲"
     ],
     "effect_text": "遠程攻擊。你的主要階段限一次，可耗能3，若成功使此單位被賦予貫穿及破甲直到敵方下個主要階段開始時。",
     "image": "/static/card_images/r_stp_0040.jpeg",
@@ -20022,13 +19980,16 @@
   {
     "id": "R-STP-0041",
     "name": "蒸汽魔盜團 人偶師",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "你的主要階段限一次，可耗能3，若成功則使你召喚2個小旅人。",
     "image": "/static/card_images/r_stp_0041.jpeg",
     "original_file": "蒸汽世界/0062_STP-0041.jpg",
@@ -20036,63 +19997,67 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "R-STP-0043",
     "name": "老舊道具 蒸汽電池",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，蒸氣世界"
+    ],
     "effect_text": "耗能X。使你場上X個蒸汽世界單位被轉正。",
     "image": "/static/card_images/r_stp_0043.jpeg",
     "original_file": "蒸汽世界/0065_STP0043_過期電池.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/消耗"
+    "art_subtype": "道具，消耗"
   },
   {
     "id": "R-STP-0045",
     "name": "蒸汽魔盜團 通電寶",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "貫穿",
-      "滑行"
+      "貫穿，滑行，通電"
     ],
-    "effect_text": "貫穿、滑行。你場上的卡牌發動通電時，可使你手牌的此卡被額外打出。",
+    "effect_text": "貫穿。滑行。你場上的卡牌發動通電時，可使你手牌的此卡被額外打出。",
     "image": "/static/card_images/r_stp_0045.jpeg",
     "original_file": "蒸汽世界/0067_STP0045_通電寶.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "R-STP-0046",
     "name": "通電道具 電能方塊",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 2,
     "tribute": 0,
     "keywords": [
       "阻擋",
-      "通電"
+      "通電，獎勵"
     ],
     "effect_text": "阻擋。通電：使你獎勵+2。",
     "image": "/static/card_images/r_stp_0046.jpeg",
@@ -20101,19 +20066,20 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/機械"
+    "art_subtype": "道具，機械"
   },
   {
     "id": "R-STP-0047",
     "name": "通電道具 狠活科技",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "通電"
+      "蒸氣世界，通電，耗能"
     ],
     "effect_text": "使你場上1個蒸汽世界單位被賦予通電：一回合一次可耗能2，若成功則使敵方場上1個單位被破壞。",
     "image": "/static/card_images/r_stp_0047.jpeg",
@@ -20121,22 +20087,23 @@
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "道具，永久"
   },
   {
     "id": "R-STP-0048",
     "name": "通電道具 通電裝",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "通電"
+      "蒸氣世界，通電，充能"
     ],
     "effect_text": "使你場上1個蒸汽世界單位被賦予：通電：使你充能+2。",
     "image": "/static/card_images/r_stp_0048.jpeg",
@@ -20144,22 +20111,23 @@
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "道具，永久"
   },
   {
     "id": "R-STP-0049",
     "name": "通電道具 人偶百寶袋",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
     "keywords": [
-      "通電"
+      "蒸氣世界，通電"
     ],
     "effect_text": "使你場上1個蒸汽世界單位被賦予：通電：使你召喚1個小旅人。",
     "image": "/static/card_images/r_stp_0049.jpeg",
@@ -20167,22 +20135,23 @@
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "道具，永久"
   },
   {
     "id": "R-STP-0050",
     "name": "蒸汽魔盜團總部 移動城堡",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
-    "attack": "0",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
+    "attack": "盾",
     "score": 10,
     "tribute": 0,
     "keywords": [
-      "阻擋",
+      "耗能，阻擋",
       "通電"
     ],
     "effect_text": "阻擋。你的召喚階段，可改為耗能6，若成功則使你手牌的此卡被打出。你在戰術階段選擇佈陣時，召喚1個小旅人並使你的充能能量-2。通電：一回合限一次，可使你額外區1張「蒸汽砲塔」被召喚。",
@@ -20197,38 +20166,39 @@
   {
     "id": "R-STP-0051",
     "name": "蒸汽砲塔",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "6",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "消逝",
-      "遠程攻擊",
-      "通電"
+      "消逝，遠程攻擊，禁錮，橫放，通電"
     ],
-    "effect_text": "消逝、遠程攻擊。此卡以橫放狀態入場。通電：使此單位轉正。",
+    "effect_text": "消逝。遠程攻擊。禁錮。此卡以橫放狀態入場。通電：使此單位轉正。",
     "image": "/static/card_images/r_stp_0051.jpeg",
     "original_file": "蒸汽世界/0075_STP0051_蒸汽砲塔_額外牌2.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 2,
     "art_subtype": "機械"
   },
   {
     "id": "R-STP-0052",
     "name": "蒸汽充能塔",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "6",
     "score": 2,
     "tribute": 0,
     "keywords": [
       "無法進攻",
-      "通電"
+      "通電，充能"
     ],
     "effect_text": "無法進攻。通電：使你充能+2。",
     "image": "/static/card_images/r_stp_0052.jpeg",
@@ -20264,30 +20234,33 @@
   {
     "id": "R-STP-0054",
     "name": "解放能源廠",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能能量，耗能"
+    ],
     "effect_text": "你的主要階段，若你本回合已發動耗能至少4次，可使你手牌或墓地的「黑暗道具 解放器」升級為此卡加入手牌。主要階段：使你的充能能量上限改為4。使你的耗能牌耗能-2，最低耗能為0。",
     "image": "/static/card_images/r_stp_0054.jpeg",
     "original_file": "蒸汽世界/0078_STP0054_解放能源廠.jpg",
     "deck_eligible": false,
     "mana": 2,
-    "usable_phases": [
-      "主要階段"
-    ],
+    "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 1,
     "art_subtype": "場地"
   },
   {
     "id": "R-STP-0056",
     "name": "航海道具 不定時水雷",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "1",
     "score": 0,
     "tribute": 0,
@@ -20302,28 +20275,32 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/機械"
+    "extra_deck_limit": 3,
+    "art_subtype": "道具，機械"
   },
   {
     "id": "R-STP-0059",
     "name": "利息能量瓶",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，充能"
+    ],
     "effect_text": "耗能2。你的下個主要階段開始時，使你墓地的此卡回手牌，若成功則充能4。",
     "image": "/static/card_images/r_stp_0059.jpeg",
     "original_file": "蒸汽世界/0004_65STP0059_利息能量瓶.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/消耗"
+    "art_subtype": "道具，消耗"
   },
   {
     "id": "R-VLG-0001",
@@ -24838,7 +24815,7 @@
   },
   {
     "id": "SR-GOT-0022",
-    "name": "幽靈山羊 (閃)",
+    "name": "幽靈山羊",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -24847,9 +24824,9 @@
     "score": 1,
     "tribute": 0,
     "keywords": [],
-    "effect_text": "每當你成功將敵方單位變為山羊時，可從墓地額外打出此卡。",
+    "effect_text": "你使敵方場上的單位被變為山羊時，可使你墓地的此卡被額外打出。",
     "image": "/static/card_images/sr_got_0022.jpeg",
-    "original_file": "山羊族/0053_GOT0022_幽靈山羊_SR閃.jpg",
+    "original_file": "山羊族/0011_79GOT0022_幽靈山羊.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
@@ -24867,7 +24844,7 @@
     "score": 3,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，山羊族，獎勵"
     ],
     "effect_text": "立即：從你牌庫尋找1張山羊族場地卡展示並加入手牌，然後重洗牌庫。結束階段時，若本回合你場上的山羊族場地卡曾發動效果，獎勵+1。",
     "image": "/static/card_images/sr_got_0028.jpeg",
@@ -24880,7 +24857,7 @@
   },
   {
     "id": "SR-GOT-0031",
-    "name": "複製山羊小桃",
+    "name": "複製山羊 小桃",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -24888,7 +24865,9 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "山羊"
+    ],
     "effect_text": "你的主要階段開始時，使此單位視為具有你墓地1張山羊單位卡面敘述的效果直到你下回合防守階段結束時。",
     "image": "/static/card_images/sr_got_0031.jpeg",
     "original_file": "山羊族/0063_GOT-0031.jpg",
@@ -24896,7 +24875,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "山羊/虛擬"
+    "art_subtype": "山羊，虛擬"
   },
   {
     "id": "SR-GOT-0032",
@@ -24909,9 +24888,9 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，山羊"
     ],
-    "effect_text": "立即：使你墓地1張★為1或以下的山羊單位被召喚。",
+    "effect_text": "立即：使你墓地1張星星為1或以下的山羊單位被召喚。",
     "image": "/static/card_images/sr_got_0032.jpeg",
     "original_file": "山羊族/0064_GOT-0032.jpg",
     "deck_eligible": true,
@@ -24930,7 +24909,9 @@
     "attack": "2",
     "score": 2,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "山羊"
+    ],
     "effect_text": "使此單位前方第一個敵方單位被視為山羊。",
     "image": "/static/card_images/sr_got_0037.jpeg",
     "original_file": "山羊族/0070_GOT0037_宇宙山羊月亮羊.jpg",
@@ -24972,7 +24953,7 @@
     "tribute": 3,
     "keywords": [
       "貫穿",
-      "敵方魔法抗性"
+      "敵方魔法抗性，山羊"
     ],
     "effect_text": "貫穿。敵方魔法抗性。此卡的祭品須為山羊單位。你可擇敵方場上的山羊單位作為此卡的祭品。",
     "image": "/static/card_images/sr_got_0050.jpeg",
@@ -25893,13 +25874,16 @@
   {
     "id": "SR-STP-0023",
     "name": "維修員 寶妮",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "1",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，機械"
+    ],
     "effect_text": "你的主要階段，可耗能2使你墓地1機械單位回手牌。",
     "image": "/static/card_images/sr_stp_0023.jpeg",
     "original_file": "蒸汽世界/0042_STP0023_維修員_SR閃.jpg",
@@ -25912,14 +25896,15 @@
   {
     "id": "SR-STP-0024",
     "name": "末日號",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "7",
     "score": 7,
     "tribute": 3,
     "keywords": [
-      "立即"
+      "耗能，立即"
     ],
     "effect_text": "此卡的祭品可為耗能3。立即：使你前排戰線的所有其他單位被破壞。",
     "image": "/static/card_images/sr_stp_0024.jpeg",
@@ -25933,14 +25918,15 @@
   {
     "id": "SR-STP-0026",
     "name": "黑暗商人 皮皮",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，充能"
     ],
     "effect_text": "立即：充能+2。你的主要階段限一次，可從你牌庫尋找1張道具牌展示並加入手牌，然後將你1張手牌洗回牌庫。",
     "image": "/static/card_images/sr_stp_0026.jpeg",
@@ -25949,19 +25935,20 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
-    "art_subtype": "商人/人型"
+    "art_subtype": "商人，人型"
   },
   {
     "id": "SR-STP-0031",
     "name": "航海商人 佐希",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，耗能，道具，充能"
     ],
     "effect_text": "立即：你可耗能2，若成功查看你牌庫頂5張牌，選擇1道具卡展示並加入手牌，其餘以任意順序放回牌庫。你打出或召喚道具單位時，充能+1。",
     "image": "/static/card_images/sr_stp_0031.jpeg",
@@ -25970,39 +25957,43 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
-    "art_subtype": "商人/人型"
+    "art_subtype": "商人，人型"
   },
   {
     "id": "SR-STP-0034",
     "name": "航海道具 蒸汽船",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 6,
     "tribute": 2,
     "keywords": [
       "滑行"
     ],
-    "effect_text": "滑行。此單位進攻時，使此單位正前方1★為2或以下的單位被破壞，若成功則使此單位移動至正後方。",
+    "effect_text": "滑行。此單位進攻時，使此單位正前方1星星為2或以下的單位被破壞，若成功則使此單位移動至正後方。",
     "image": "/static/card_images/sr_stp_0034.jpeg",
     "original_file": "蒸汽世界/0054_STP-0034.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "道具/機械"
+    "art_subtype": "道具，機械"
   },
   {
     "id": "SR-STP-0042",
     "name": "蒸汽魔盜團 補給員",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，蒸氣世界"
+    ],
     "effect_text": "你的召喚階段限一次，可耗能2，若成功則使你手牌的蒸汽世界單位卡所需祭品數-1，直到本回合召喚階段結束時。",
     "image": "/static/card_images/sr_stp_0042.jpeg",
     "original_file": "蒸汽世界/0063_STP-0042.jpg",
@@ -26010,38 +26001,42 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "SR-STP-0042-泳裝",
-    "name": "蒸汽魔盜團 補給員 庫路路 (泳裝)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團 補給員",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，蒸氣世界"
+    ],
     "effect_text": "你的召喚階段限一次，可耗能2，若成功則使你手牌的蒸汽世界單位卡所需祭品數-1，直到本回合召喚階段結束時。",
     "image": "/static/card_images/sr_stp_0042_泳裝.jpeg",
     "original_file": "蒸汽世界/0064_12泳裝STP0042_蒸氣魔盜團補給員_庫路路.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "SR-STP-0044",
-    "name": "蒸汽魔盜團 金帽",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團 金屬帽",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，強盜，機械，耗能"
     ],
     "effect_text": "滑行。一回合一次，你場上的強盜或機械單位被破壞時，可耗能3，若成功代替破壞。",
     "image": "/static/card_images/sr_stp_0044.jpeg",
@@ -26050,18 +26045,21 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/機械"
+    "art_subtype": "強盜，機械"
   },
   {
     "id": "SR-STP-0055",
     "name": "回歸老水手",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能，獎勵"
+    ],
     "effect_text": "你的主要階段結束時，若你充能能量為0且本回合開始時充能能量已達上限，可使你場上的「退休老水手」升級為此卡。你充能X時，改為使你獎勵+X。",
     "image": "/static/card_images/sr_stp_0055.jpeg",
     "original_file": "蒸汽世界/0079_STP0055_回歸老水手.jpg",
@@ -26069,19 +26067,23 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 1,
     "art_subtype": "人型"
   },
   {
     "id": "SR-STP-0057",
     "name": "皇家明星號",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 5,
     "tribute": 2,
-    "keywords": [],
-    "effect_text": "你的主要階段限一次，可耗能2，若成功使你額外區1張「蒸汽廣告船」被召喚。",
+    "keywords": [
+      "飛行，耗能"
+    ],
+    "effect_text": "飛行。你的主要階段限一次，可耗能2，若成功使你額外區1張「蒸汽廣告船」被召喚。",
     "image": "/static/card_images/sr_stp_0057.jpeg",
     "original_file": "蒸汽世界/0006_63STP0057_皇家明星號.jpg",
     "deck_eligible": true,
@@ -27898,7 +27900,7 @@
   },
   {
     "id": "SSR-GOT-0012",
-    "name": "寶寶山羊 (插畫版)",
+    "name": "寶寶山羊",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -27910,7 +27912,7 @@
     "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
     "image": "/static/card_images/ssr_got_0012.jpeg",
     "original_file": "山羊族/0042_山羊族_寶寶山羊卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27918,7 +27920,7 @@
   },
   {
     "id": "SSR-GOT-0013",
-    "name": "羊商人 (插畫版)",
+    "name": "羊商人",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -27927,12 +27929,12 @@
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，山羊族"
     ],
     "effect_text": "立即：抽2張牌或使你墓地1張山羊族單位回手牌。",
     "image": "/static/card_images/ssr_got_0013.jpeg",
     "original_file": "山羊族/0044_SSR-GOT-0013.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27940,19 +27942,21 @@
   },
   {
     "id": "SSR-GOT-0034",
-    "name": "黑洞羊 (插畫版)",
+    "name": "黑洞羊",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
     "race": "山羊族",
     "attack": "0",
-    "score": 0,
+    "score": 1,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "山羊"
+    ],
     "effect_text": "你的召喚階段，可改為將你手牌的此卡置於一號星星戰線牌。你的主要階段開始後，若場上的山羊卡牌數量為此卡位於的星星戰線數字兩倍或以上，使此卡移動至下一張星星戰線牌。此卡移動至五號星星戰線牌時，你獲得勝利。",
     "image": "/static/card_images/ssr_got_0034.jpeg",
     "original_file": "山羊族/0067_山羊族_黑洞羊卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -27960,7 +27964,7 @@
   },
   {
     "id": "SSR-GOT-0043",
-    "name": "太空羊妹妹 (SSR插畫版)",
+    "name": "太空羊妹妹",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -27974,7 +27978,7 @@
     "effect_text": "立即：從你牌庫尋找「黑洞羊」或1張卡名帶有宇宙山羊的卡牌並加入手牌。",
     "image": "/static/card_images/ssr_got_0043.jpeg",
     "original_file": "山羊族/0077_11山羊族_太空羊妹妹.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -28976,10 +28980,11 @@
   },
   {
     "id": "SSR-STP-0005",
-    "name": "末日醫生 烏鴉 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "末日醫生 烏鴉",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 4,
     "tribute": 1,
@@ -28989,7 +28994,7 @@
     "effect_text": "立即：使敵方所有攻擊力3點或以下的單位橫放，且每橫放1單位使你充能+1。",
     "image": "/static/card_images/ssr_stp_0005.jpeg",
     "original_file": "蒸汽世界/0016_STP0005_烏鴉改_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
@@ -28997,21 +29002,21 @@
   },
   {
     "id": "SSR-STP-0006",
-    "name": "蒸汽半械人 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽半械人",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "貫穿",
-      "滑行"
+      "貫穿，滑行，耗能"
     ],
     "effect_text": "貫穿、滑行。此卡的祭品可為耗能2。",
     "image": "/static/card_images/ssr_stp_0006.jpeg",
     "original_file": "蒸汽世界/0018_SSR-STP-0006.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29019,18 +29024,21 @@
   },
   {
     "id": "SSR-STP-0012",
-    "name": "蒸汽女孩 梅恩 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽女孩 梅思",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能，機械"
+    ],
     "effect_text": "每當你場上1個單位被破壞時充能+1，若該單位為機械單位則充能+2。",
     "image": "/static/card_images/ssr_stp_0012.jpeg",
     "original_file": "蒸汽世界/0028_STP0012改_蒸氣女孩_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29038,10 +29046,11 @@
   },
   {
     "id": "SSR-STP-0013",
-    "name": "深海潛水員 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "深海潛水員",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "8",
     "score": 6,
     "tribute": 3,
@@ -29049,7 +29058,7 @@
     "effect_text": "此卡的祭品可耗能5，且此卡在戰鬥時不會被破壞。",
     "image": "/static/card_images/ssr_stp_0013.jpeg",
     "original_file": "蒸汽世界/0030_STP0013_深海潛水員_SSR.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29057,18 +29066,21 @@
   },
   {
     "id": "SSR-STP-0023",
-    "name": "維修員 寶妮 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "維修員 寶妮",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "1",
     "score": 1,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可耗能2，若成功使你墓地1張機械單位卡回手牌。",
+    "keywords": [
+      "耗能，機械"
+    ],
+    "effect_text": "你的主要階段，可耗能2使你墓地1機械單位回手牌。",
     "image": "/static/card_images/ssr_stp_0023.jpeg",
     "original_file": "蒸汽世界/0002_92維修員寶妮.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29076,65 +29088,67 @@
   },
   {
     "id": "SSR-STP-0037",
-    "name": "蒸汽魔盜團團長 索羅 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團團長 索羅",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "6",
     "score": 4,
     "tribute": 2,
     "keywords": [
       "滑行",
-      "綁架"
+      "，耗能，綁架"
     ],
     "effect_text": "滑行。此單位進攻時，可耗能5，若成功使此單位前方第一個敵方單位被綁架(2)。",
     "image": "/static/card_images/ssr_stp_0037.jpeg",
     "original_file": "蒸汽世界/0058_蒸汽世界_索羅卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "SSR-STP-0045",
-    "name": "蒸汽魔盜團 通電寶 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團 通電寶",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "貫穿",
-      "滑行"
+      "貫穿，滑行，通電"
     ],
-    "effect_text": "貫穿、滑行。你場上的卡牌發動通電時，可使你手牌的此卡被額外打出。",
+    "effect_text": "貫穿。滑行。你場上的卡牌發動通電時，可使你手牌的此卡被額外打出。",
     "image": "/static/card_images/ssr_stp_0045.jpeg",
     "original_file": "蒸汽世界/0068_10蒸汽世界_通電寶.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "強盜/人型"
+    "art_subtype": "強盜，人型"
   },
   {
     "id": "SSR-STP-0050",
-    "name": "蒸汽魔盜團總部 移動城堡 (SSR)",
-    "faction": "蒸汽世界",
+    "name": "蒸汽魔盜團總部 移動城堡",
     "deck": "蒸汽世界",
     "type": "unit",
-    "attack": "0",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
+    "attack": "盾",
     "score": 10,
     "tribute": 0,
     "keywords": [
-      "阻擋",
+      "耗能，阻擋",
       "通電"
     ],
     "effect_text": "阻擋。你的召喚階段，可改為耗能6，若成功則使你手牌的此卡被打出。你在戰術階段選擇佈陣時，召喚1個小旅人並使你的充能能量-2。通電：一回合限一次，可使你額外區1張「蒸汽砲塔」被召喚。",
     "image": "/static/card_images/ssr_stp_0050.jpeg",
     "original_file": "蒸汽世界/0074_蒸汽世界_蒸汽城堡_1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29830,7 +29844,7 @@
   },
   {
     "id": "SSSR-GOT-0053",
-    "name": "細胞山羊研究員 (PROMO)",
+    "name": "細胞山羊研究員 羚玲",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -29838,11 +29852,13 @@
     "attack": "4",
     "score": 4,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "山羊"
+    ],
     "effect_text": "你的回合限一次，你使場上的單位被變為山羊時，可使你額外區1張「細胞山羊」被召喚。",
     "image": "/static/card_images/sssr_got_0053.jpeg",
     "original_file": "山羊族/0002_店冠亞軍_細胞羊研究員RGB.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -29850,7 +29866,7 @@
   },
   {
     "id": "SSSR-GOT-0055",
-    "name": "羊女士碧琪 (PROMO)",
+    "name": "羊女士 碧琪",
     "deck": "山羊族",
     "type": "unit",
     "faction": "山羊族",
@@ -29859,10 +29875,10 @@
     "score": 3,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "你的回合限一次，當你成功施放「山羊術」時，抽1張牌。",
+    "effect_text": "你的回合限一次，你使場上的單位被變為山羊時，抽1張牌。",
     "image": "/static/card_images/sssr_got_0055.jpeg",
     "original_file": "山羊族/0003_店冠冠軍_羊女士RGB.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
@@ -31198,24 +31214,25 @@
   },
   {
     "id": "SSSR-STP-0026",
-    "name": "黑暗商人 皮皮 (SSSR)",
-    "faction": "蒸汽世界",
+    "name": "黑暗商人 皮皮",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，充能"
     ],
     "effect_text": "立即：充能+2。你的主要階段限一次，可從你牌庫尋找1張道具牌展示並加入手牌，然後將你1張手牌洗回牌庫。",
     "image": "/static/card_images/sssr_stp_0026.jpeg",
     "original_file": "蒸汽世界/0046_SSSR-STP-0026.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "立即",
-    "art_subtype": "商人/人型"
+    "art_subtype": "商人，人型"
   },
   {
     "id": "SSSR-VLG-0002",
@@ -31436,14 +31453,15 @@
   {
     "id": "STP-0001",
     "name": "蒸汽滑行兵",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，充能"
     ],
     "effect_text": "滑行。進攻時充能+1。",
     "image": "/static/card_images/stp_0001.jpeg",
@@ -31457,17 +31475,18 @@
   {
     "id": "STP-0002",
     "name": "蒸汽盾牌兵",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
-    "attack": "0",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
+    "attack": "盾",
     "score": 2,
     "tribute": 0,
     "keywords": [
       "阻擋",
       "掩護"
     ],
-    "effect_text": "掩護。",
+    "effect_text": "阻擋。掩護。",
     "image": "/static/card_images/stp_0002.jpeg",
     "original_file": "蒸汽世界/0012_STP0002_蒸氣盾牌兵.jpg",
     "deck_eligible": true,
@@ -31479,14 +31498,15 @@
   {
     "id": "STP-0003",
     "name": "蒸汽機器人",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "掩護"
+      "掩護，充能"
     ],
     "effect_text": "掩護。結束階段時若有單位在此卡後方，充能+1。",
     "image": "/static/card_images/stp_0003.jpeg",
@@ -31500,14 +31520,15 @@
   {
     "id": "STP-0004",
     "name": "蒸汽衝刺兵",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，充能"
     ],
     "effect_text": "滑行。進攻時若後排滑行至前排戰線，+3攻擊力且充能+1。",
     "image": "/static/card_images/stp_0004.jpeg",
@@ -31521,14 +31542,15 @@
   {
     "id": "STP-0005",
     "name": "末日醫生 烏鴉",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，橫放，充能"
     ],
     "effect_text": "立即：使敵方所有攻擊力3點或以下的單位橫放，且每橫放1單位使你充能+1。",
     "image": "/static/card_images/stp_0005.jpeg",
@@ -31542,15 +31564,15 @@
   {
     "id": "STP-0006",
     "name": "蒸汽半械人",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 5,
     "tribute": 1,
     "keywords": [
-      "貫穿",
-      "滑行"
+      "貫穿，滑行，耗能"
     ],
     "effect_text": "貫穿、滑行。此卡的祭品可為耗能2。",
     "image": "/static/card_images/stp_0006.jpeg",
@@ -31564,14 +31586,15 @@
   {
     "id": "STP-0007",
     "name": "蒸汽火炮兵",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "4",
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "遠程攻擊，充能"
     ],
     "effect_text": "遠程攻擊。若此卡在後排戰線，進攻時充能+1。",
     "image": "/static/card_images/stp_0007.jpeg",
@@ -31585,13 +31608,16 @@
   {
     "id": "STP-0008",
     "name": "指揮官 貝莉可可",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "5",
     "score": 6,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "你的主要階段，可耗能1使你場上1單位轉正。",
     "image": "/static/card_images/stp_0008.jpeg",
     "original_file": "蒸汽世界/0020_STP0008改_貝莉可可.jpg",
@@ -31604,13 +31630,16 @@
   {
     "id": "STP-0009",
     "name": "蒸汽旅客",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能"
+    ],
     "effect_text": "每當你召喚小旅人時，充能+1。",
     "image": "/static/card_images/stp_0009.jpeg",
     "original_file": "蒸汽世界/0021_STP0009_小兵.jpg",
@@ -31623,15 +31652,16 @@
   {
     "id": "STP-0011",
     "name": "水管工人",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "2",
     "score": 2,
     "tribute": 0,
     "keywords": [
       "滑行",
-      "立即"
+      "立即，充能"
     ],
     "effect_text": "滑行。立即：充能+1。",
     "image": "/static/card_images/stp_0011.jpeg",
@@ -31645,14 +31675,17 @@
   {
     "id": "STP-0013",
     "name": "深海潛水員",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "unit",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "8",
     "score": 6,
     "tribute": 3,
-    "keywords": [],
-    "effect_text": "此卡的祭品可耗能5，且此卡在戰鬥時不會被破壞。",
+    "keywords": [
+      "貫穿，耗能"
+    ],
+    "effect_text": "貫穿。此卡的祭品可為耗能5，且此卡在戰鬥時不會被破壞。",
     "image": "/static/card_images/stp_0013.jpeg",
     "original_file": "蒸汽世界/0029_STP0013_深海潛水員.jpg",
     "deck_eligible": true,
@@ -31664,20 +31697,23 @@
   {
     "id": "STP-0017",
     "name": "蒸汽大砲",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "耗能5。使敵方一條星星戰線上的所有單位被破壞。",
     "image": "/static/card_images/stp_0017.jpeg",
     "original_file": "蒸汽世界/0036_STP0017改_蒸氣大砲.jpg",
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -31685,20 +31721,23 @@
   {
     "id": "STP-0018",
     "name": "能量轉換",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "充能"
+    ],
     "effect_text": "使你場上1單位被破壞，充能X。X=該單位★數量。",
     "image": "/static/card_images/stp_0018.jpeg",
     "original_file": "蒸汽世界/0037_STP0018_能量轉換.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
     "art_subtype": "消耗"
@@ -31706,52 +31745,58 @@
   {
     "id": "STP-0019",
     "name": "裝備升級",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能，蒸氣世界"
+    ],
     "effect_text": "耗能3。使你1蒸汽世界單位被賦予+5攻擊力或+3★。",
     "image": "/static/card_images/stp_0019.jpeg",
     "original_file": "蒸汽世界/0038_STP0019_裝備升級.jpg",
     "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
-      "主要階段",
-      "防守階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "永久"
   },
   {
     "id": "STP-0020",
     "name": "滑板鞋",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
     "type": "magic",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "耗能"
+    ],
     "effect_text": "耗能2。使你1單位被賦予在戰術階段選擇佈陣時仍可進攻。",
     "image": "/static/card_images/stp_0020.jpeg",
     "original_file": "蒸汽世界/0039_STP0020_滑板鞋.jpg",
     "deck_eligible": true,
     "mana": 1,
     "usable_phases": [
-      "主要階段"
+      "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "道具/永久"
+    "art_subtype": "永久"
   },
   {
     "id": "STP-TOKEN001",
     "name": "充能能量+1",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
-    "type": "token",
+    "type": "",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -31763,14 +31808,16 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 1,
     "art_subtype": "衍生物"
   },
   {
     "id": "STP-TOKEN002",
     "name": "充能能量+2",
-    "faction": "蒸汽世界",
     "deck": "蒸汽世界",
-    "type": "token",
+    "type": "",
+    "faction": "蒸汽世界",
+    "race": "蒸汽世界",
     "attack": "0",
     "score": 0,
     "tribute": 0,
@@ -31782,6 +31829,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
+    "extra_deck_limit": 1,
     "art_subtype": "衍生物"
   },
   {
@@ -31827,26 +31875,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "人型"
-  },
-  {
-    "id": "SW-GOT-0025",
-    "name": "飛天山羊 史黛拉 (泳裝)",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "3",
-    "score": 1,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "此卡可打在後排戰線，且佈陣階段仍可進攻。",
-    "image": "/static/card_images/sw_got_0025.jpeg",
-    "original_file": "山羊族/0057_14泳裝GOT0025_飛天山羊_史黛拉.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
   },
   {
     "id": "SW-VLG-0012",
@@ -31913,26 +31941,6 @@
     "trigger_condition": "立即"
   },
   {
-    "id": "VR-GOT-0012",
-    "name": "寶寶山羊 (VR版)",
-    "deck": "山羊族",
-    "type": "unit",
-    "faction": "山羊族",
-    "race": "山羊族",
-    "attack": "-3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段，可將此卡視為「山羊術」打出，仍視為打出單位。",
-    "image": "/static/card_images/vr_got_0012.jpeg",
-    "original_file": "山羊族/0041_VR-GOT-0012-1.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "山羊"
-  },
-  {
     "id": "VR-SKT-0010-VR",
     "name": "火把骷髏小哀妮",
     "deck": "骷髏人",
@@ -31951,27 +31959,6 @@
     "usable_phases": [],
     "trigger_condition": "",
     "art_subtype": "不死族"
-  },
-  {
-    "id": "VR-STP-0014",
-    "name": "蒸汽能量方塊 (VR)",
-    "faction": "蒸汽世界",
-    "deck": "蒸汽世界",
-    "type": "unit",
-    "attack": "2",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：耗能X獎勵+X。",
-    "image": "/static/card_images/vr_stp_0014.jpeg",
-    "original_file": "蒸汽世界/0032_VR-STP-0014-1.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "立即",
-    "art_subtype": "機械"
   },
   {
     "id": "VRT-0001",

@@ -860,7 +860,7 @@ function isUnitConfined(zone, idx) {
   }
 
   // 迷路的尋寶小旅人 / 背後靈 等自帶禁錮單位
-  if (c.id === "C-NMS-0071" || c.name?.includes("迷路的尋寶小旅人") || c.id === "R-VLG-0046" || c.name?.includes("背後靈")) {
+  if (c.id === "C-NMS-0071" || c.name?.includes("迷路的尋寶小旅人") || c.id === "R-VLG-0046" || c.name?.includes("背後靈") || c.id === "R-STP-0051" || c.name?.includes("蒸汽砲塔")) {
     return true;
   }
 
@@ -1882,7 +1882,7 @@ async function performPlayerTurnStartDraw() {
   const hasAoli = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card?.id === "R-STP-0039" || u.card?.name?.includes("奧麗")) && !window.isUnitSilenced(u, z, i)));
   for (const z of ["player_front", "player_back"]) {
     (field[z] || []).forEach((u, i) => {
-      if (hasAoli && u && u.tapped && (u.equipments?.includes("滑行") || u.card.effect_text?.includes("滑行") || u.card.keywords?.includes("滑行") || u.card.name?.includes("滑行") || u.card.name?.includes("索羅") || u.card.name?.includes("毒氣兵") || u.card.name?.includes("蒸汽船"))) {
+      if (hasAoli && u && u.tapped && (u.equipments?.includes("滑行") || u.card.effect_text?.includes("滑行") || u.card.keywords?.includes("滑行") || u.card.name?.includes("滑行") || u.card.name?.includes("索羅") || u.card.name?.includes("毒氣兵") || u.card.name?.includes("毒氣凱") || u.card.name?.includes("蒸汽船"))) {
         slidingUnitsToUntap.push(u);
       }
     });
@@ -2475,7 +2475,7 @@ window.xlwUnitHasSneak = function(unit, zone) {
 
   const hasBaseSneak = window.xlwCardHasKeyword(card, "偷襲") ||
                        window.xlwCardHasKeyword(card, "偷竊") ||
-                       card.id === "GOT-0015" || card.name?.includes("喵山羊") ||
+                       card.id === "GOT-0015" || card.id === "R-GOT-0015" || card.name?.includes("喵山羊") ||
                        unit.sneak ||
                        (unit.equipments && unit.equipments.includes("你看不到我 (偷襲)"));
   if (hasBaseSneak) return true;
@@ -2555,7 +2555,7 @@ function xlwCanSummonToZone(zone, card) {
   if (zone !== "player_front" && zone !== "player_back" && zone !== "enemy_front" && zone !== "enemy_back") return false;
   
   if (zone === "player_back") {
-    if (card && (card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+    if (card && (card.id === "GOT-0025" || card.id === "R-GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
       // Allowed to summon directly to backline
     } else {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
@@ -2878,7 +2878,7 @@ window.hasFlying = function(unit) {
     if (idx >= 0 && window.isUnitSilenced(unit, unit.summonedZone, idx)) return false;
   }
   const c = unit.card || unit;
-  if (c && (c.id === "SR-VLG-0060" || c.id === "SSR-VLG-0060" || c.name?.includes("河神"))) return true;
+  if (c && (c.id === "SR-VLG-0060" || c.id === "SSR-VLG-0060" || c.name?.includes("河神") || c.id === "C-STP-0058" || c.id === "SR-STP-0057" || c.name?.includes("蒸汽廣告船") || c.name?.includes("皇家明星號"))) return true;
   
   // 飛機哥 (RBT-0062 / R-RBT-0062): 若合體後的單位包含此卡，則使該單位被賦予飛行
   if (unit.devourCards && unit.devourCards.some(d => d.card && (d.card.id === "RBT-0062" || d.card.id === "R-RBT-0062" || d.card.name?.includes("飛機哥")))) return true;
@@ -3064,6 +3064,7 @@ function checkUnitHasPiercing(unit, zone, lane) {
   const c = unit.card || unit;
   if (unit.piercing) return true;
   if (window.xlwCardHasKeyword(c, "貫穿")) return true;
+  if (c.id === "C-GOT-0003" || c.id === "R-GOT-0003" || c.id === "R-GOT-0010" || c.id === "STP-0013" || c.id === "SSR-STP-0013" || c.name?.includes("黑山羊") || c.name?.includes("深海潛水員")) return true;
   if (c.id === "VRT-0005" || c.name?.includes("不醉翁")) return true;
   if (unit.equipments && unit.equipments.some(e => e.includes("菜刀") || e.includes("迴旋飛斧") || e.includes("肌肉魔法"))) return true;
   
@@ -5619,7 +5620,7 @@ window.xlwIsCombinedUnit = function(unit) {
 window.xlwHasMechCombine = function(card) {
   if (!card) return false;
   if (card.id === "C-RBT-0012" || card.id === "RBT-0012" || card.id === "RBT-0015" || card.name?.includes("鋼鐵哥") || card.name?.includes("小砲")) return true;
-  if (card.id === "GOT-0010" || card.name?.includes("鋼鐵山羊")) return true;
+  if (card.id === "GOT-0010" || card.id === "R-GOT-0010" || card.name?.includes("鋼鐵山羊")) return true;
   if (card.keywords && card.keywords.includes("機械合體")) return true;
   if (card.effect_text && (card.effect_text.includes("機械合體") || card.effect_text.includes("可與敵方單位合體"))) return true;
   return false;
@@ -6165,14 +6166,14 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     if (hasVirtualGoat) baseAtk += 1;
   }
 
-  // 🧬 細胞山羊 (C-GOT-0060 / GOT-0056): X=你場上「細胞山羊」的數量
-  if (c.id === "C-GOT-0060" || c.id === "GOT-0056" || c.name?.includes("細胞山羊")) {
+  // 🧬 細胞山羊 (C-GOT-0060 / GOT-0056 / R-GOT-0056 / R-GOT-0060): X=你場上「細胞山羊」的數量
+  if (c.id === "C-GOT-0060" || c.id === "GOT-0056" || c.id === "R-GOT-0056" || c.id === "R-GOT-0060" || c.name?.includes("細胞山羊")) {
     let cellCount = 0;
     const isPlayerSide = zone && zone.startsWith("player_");
     const prefix = isPlayerSide ? "player_" : "enemy_";
     for (const z of [prefix + "front", prefix + "back"]) {
       (field[z] || []).forEach(u => {
-        if (u && (u.card.id === "C-GOT-0060" || u.card.id === "GOT-0056" || u.card.name?.includes("細胞山羊"))) cellCount++;
+        if (u && (u.card.id === "C-GOT-0060" || u.card.id === "GOT-0056" || u.card.id === "R-GOT-0056" || u.card.id === "R-GOT-0060" || u.card.name?.includes("細胞山羊"))) cellCount++;
       });
     }
     baseAtk = cellCount;
@@ -6180,10 +6181,10 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
 
   // 🦨 臭臭山羊 (GOT-0007): 此卡左右兩旁的單位-2攻擊力
   if (typeof field !== "undefined" && zone && lane !== undefined && lane !== null && field[zone]) {
-    if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card?.id === "GOT-0007" || field[zone][lane - 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane - 1], zone, lane - 1)) {
+    if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card?.id === "GOT-0007" || field[zone][lane - 1].card?.id === "R-GOT-0007" || field[zone][lane - 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane - 1], zone, lane - 1)) {
       baseAtk -= 2;
     }
-    if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card?.id === "GOT-0007" || field[zone][lane + 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane + 1], zone, lane + 1)) {
+    if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card?.id === "GOT-0007" || field[zone][lane + 1].card?.id === "R-GOT-0007" || field[zone][lane + 1].card?.name?.includes("臭臭山羊")) && !window.isUnitSilenced(field[zone][lane + 1], zone, lane + 1)) {
       baseAtk -= 2;
     }
   }
@@ -6207,6 +6208,19 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     if (field[oppPrefix + "front"] && !field[oppPrefix + "front"][lane] && field[oppPrefix + "back"] && field[oppPrefix + "back"][lane]) {
       baseAtk += 2;
     }
+  }
+
+  // 🧬 細胞山羊 (C-GOT-0060 / GOT-0056 / R-GOT-0056 / R-GOT-0060): X = 你場上「細胞山羊」的數量
+  if (c.id === "C-GOT-0060" || c.id === "GOT-0056" || c.id === "R-GOT-0056" || c.id === "R-GOT-0060" || c.name?.includes("細胞山羊")) {
+    let cellCount = 0;
+    const isPlayerSide = zone && zone.startsWith("player_");
+    const prefix = isPlayerSide ? "player_" : "enemy_";
+    for (const z of [prefix + "front", prefix + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && (u.card.id === "C-GOT-0060" || u.card.id === "GOT-0056" || u.card.id === "R-GOT-0056" || u.card.id === "R-GOT-0060" || u.card.name?.includes("細胞山羊"))) cellCount++;
+      });
+    }
+    return cellCount + Number(unit.bonusScore ?? 0);
   }
 
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
@@ -7593,7 +7607,7 @@ window.xlwTriggerGoatPolymorphReactions = async function(zone, idx, targetOwner,
 
   // 1. 山羊學院 (C-GOT-0018 / GOT-0018): 你使場上的單位被變為山羊時，獎勵+1
   const casterFieldZones = [casterPrefix + "front", casterPrefix + "back"];
-  const hasGoatAcademy = (currentFieldMagic && (currentFieldMagic.id === "C-GOT-0018" || currentFieldMagic.id === "GOT-0018" || currentFieldMagic.name?.includes("山羊學院")));
+  const hasGoatAcademy = (currentFieldMagic && (currentFieldMagic.id === "C-GOT-0018" || currentFieldMagic.id === "R-GOT-0018" || currentFieldMagic.id === "GOT-0018" || currentFieldMagic.name?.includes("山羊學院")));
   if (hasGoatAcademy) {
     if (isCasterPlayer) {
       playerBonusScore += 1;
@@ -7623,7 +7637,7 @@ window.xlwTriggerGoatPolymorphReactions = async function(zone, idx, targetOwner,
 
   // 3. 羊女士碧琪 (GOT-0055 / SSSR-GOT-0055): 你的回合限一次，你使場上的單位被變為山羊時，抽1張牌
   if (isCasterPlayer && !window.XLW_goatPeggyUsedThisTurn) {
-    const hasPeggy = casterFieldZones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "GOT-0055" || u.card.id === "SSSR-GOT-0055" || u.card.name?.includes("羊女士碧琪")) && !window.isUnitSilenced(u, z, i)));
+    const hasPeggy = casterFieldZones.some(z => (field[z] || []).some((u, i) => u && (u.card.id === "GOT-0055" || u.card.id === "SSSR-GOT-0055" || u.card.name?.includes("碧琪")) && !window.isUnitSilenced(u, z, i)));
     if (hasPeggy && deck.length > 0) {
       window.XLW_goatPeggyUsedThisTurn = true;
       const drawnCard = deck.pop();
@@ -8261,7 +8275,7 @@ async function castSpell(handIndex) {
   // 🐐 山羊族 (GOT) 魔法卡 (Goat Spells)
   // ==========================================
   // 1. 山羊炸彈 (GOT-0017): 使敵方至多3個山羊單位遭到破壞（不得在倒數階段使用）
-  } else if (card.id === "GOT-0017" || card.name === "山羊炸彈") {
+  } else if (card.id === "GOT-0017" || card.id === "R-GOT-0017" || card.name?.includes("山羊炸彈")) {
     if (countdownActive) {
       setStatus("【山羊炸彈】不得在倒數階段使用！");
       return;
@@ -8302,7 +8316,7 @@ async function castSpell(handIndex) {
     return;
 
   // 2. 山羊學院 (C-GOT-0018 / GOT-0018): 場地魔法，你使場上的單位被變為山羊時，獎勵+1
-  } else if (card.id === "C-GOT-0018" || card.id === "GOT-0018" || card.name?.includes("山羊學院")) {
+  } else if (card.id === "C-GOT-0018" || card.id === "R-GOT-0018" || card.id === "GOT-0018" || card.name?.includes("山羊學院")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
@@ -15009,7 +15023,7 @@ async function performSummonToSlot(zone, idx) {
       return;
     }
 
-    const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+    const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人") || card.id === "R-STP-0051" || card.name?.includes("蒸汽砲塔");
     field[zone][idx] = {
       card: structuredClone(card),
       tapped: isLyingOrc,
@@ -15234,7 +15248,7 @@ async function performSummonToSlot(zone, idx) {
       }
 
       // 2. 閃電山羊 (GOT-0009): 立即：使敵方1個山羊單位被破壞
-      if (card.id === "GOT-0009" || card.name?.includes("閃電山羊")) {
+      if (card.id === "GOT-0009" || card.id === "R-GOT-0009" || card.name?.includes("閃電山羊")) {
         const oppPrefix = isPlayer ? "enemy_" : "player_";
         const oppGoats = [];
         for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
@@ -15262,7 +15276,7 @@ async function performSummonToSlot(zone, idx) {
       }
 
       // 3. 羊商人 (GOT-0013 / C-GOT-0013 / SSR-GOT-0013): 抽2張牌或使墓地1張山羊單位回手牌
-      if (card.id === "GOT-0013" || card.id === "C-GOT-0013" || card.id === "SSR-GOT-0013" || card.name?.includes("羊商人")) {
+      if (card.id === "GOT-0013" || card.id === "R-GOT-0013" || card.id === "C-GOT-0013" || card.id === "SSR-GOT-0013" || card.name?.includes("羊商人")) {
         if (isPlayer) {
           const myGrave = graveyard.filter(c => c && window.xlwIsGoatCard(c) && c.type === "unit");
           const modeChoice = await showXLWChoiceModal("【羊商人】交易二選一", "請選擇羊商人的交易效果：", [
@@ -15712,7 +15726,7 @@ async function performSummonToSlot(zone, idx) {
       }
 
       // 9. 蒸汽魔盜團 毒氣兵 (C-STP-0060): 立即：可耗能2，若成功被賦予毒及貫穿直到下個主要階段開始時
-      if (card.id === "C-STP-0060" || card.name?.includes("毒氣兵")) {
+      if (card.id === "C-STP-0060" || card.name?.includes("毒氣兵") || card.name?.includes("毒氣凱")) {
         if (window.xlwGetSteamEnergy(isPlayer) >= 2) {
           let doPoison = true;
           if (isPlayer) doPoison = await showXLWConfirm("【蒸汽魔盜團 毒氣兵】毒氣超頻", "是否耗能 2 點使毒氣兵獲得【劇毒】與【貫穿】？");
@@ -19711,7 +19725,7 @@ async function changeActionPhase(targetPhase) {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
       if (hasTacticalActed) {
         const canAnyoneAttack = ["player_front", "player_back"].some(z => 
-          (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
+          (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "R-GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
         );
         if (!canAnyoneAttack) {
           setStatus("在戰術佈陣階段已召喚或移動過單位，且無【飛天山羊】或【滑板鞋】等特殊單位，無法改為執行進攻宣言。");
@@ -22490,7 +22504,7 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
 
     // 🐐 藍山羊 (GOT-0011): 此卡將山羊單位戰鬥破壞時，獎勵+3
-    if (attackerCard && (attackerCard.id === "GOT-0011" || attackerCard.name?.includes("藍山羊")) && defender && window.xlwIsGoatUnit(defender, defZone, defIdx)) {
+    if (attackerCard && (attackerCard.id === "GOT-0011" || attackerCard.id === "R-GOT-0011" || attackerCard.name?.includes("藍山羊")) && defender && window.xlwIsGoatUnit(defender, defZone, defIdx)) {
       if (successOwner === "player") {
         playerBonusScore += 3;
         logBattle("🐐【藍山羊】狩獵山羊！額外獲得 +3★ 獎勵！");
@@ -23066,7 +23080,7 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
     if (!isGoatSpell) return true;
   }
   // 🐐 金山羊 (GOT-0005): 此卡不會被敵方魔法卡選為目標
-  if (unit.card && (unit.card.id === "GOT-0005" || unit.card.name?.includes("金山羊"))) {
+  if (unit.card && (unit.card.id === "GOT-0005" || unit.card.id === "R-GOT-0005" || unit.card.name?.includes("金山羊"))) {
     return true;
   }
   // 🤖 機械抗性判定
@@ -25339,7 +25353,7 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
   // 🎩 蒸汽魔盜團 金帽 (SR-STP-0044): 一回合一次，強盜或機械被破壞時，可耗能3代替破壞
   if (zone.startsWith("player_") && !window.XLW_goldCapUsedThisTurn) {
     const isBanditOrMech = unit.card && (unit.card.race?.includes("強盜") || unit.card.name?.includes("魔盜") || (typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(unit, zone, idx)));
-    const hasGoldCap = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "SR-STP-0044" || u.card.name?.includes("金帽")) && !window.isUnitSilenced(u, z, i)));
+    const hasGoldCap = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card.id === "SR-STP-0044" || u.card.name?.includes("金屬帽") || u.card.name?.includes("金帽")) && !window.isUnitSilenced(u, z, i)));
     if (isBanditOrMech && hasGoldCap && window.xlwGetSteamEnergy(true) >= 3) {
       const doSave = await showXLWConfirm("【金帽】替身防護", `我方【${unit.card.name}】即將被破壞，是否發動【金帽】耗能 3 點代替破壞？`);
       if (doSave && window.xlwConsumeEnergy(3, true)) {
@@ -26394,7 +26408,7 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
 
       // 🦨 臭臭山羊 (GOT-0007): 你場上的山羊單位被破壞時，可使手牌的此卡作為「山羊術」使用
       if (isPlayerUnitDestroyed && window.xlwIsGoatUnit(unit, zone, idx)) {
-        const chouIdx = hand.findIndex(c => c && (c.id === "GOT-0007" || c.name?.includes("臭臭山羊")));
+        const chouIdx = hand.findIndex(c => c && (c.id === "GOT-0007" || c.id === "R-GOT-0007" || c.name?.includes("臭臭山羊")));
         if (chouIdx >= 0) {
           const doChou = await showXLWConfirm("【臭臭山羊】應激釋放", "山羊單位倒下！是否發動手牌中的【臭臭山羊】作為山羊術變形場上一個單位？");
           if (doChou) {
@@ -29997,7 +30011,7 @@ async function runEnemyTurn() {
 
       if (destZone && destIdx !== -1) {
         window.XLW_ENEMY.hand.splice(handIdx, 1);
-        const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+        const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人") || card.id === "R-STP-0051" || card.name?.includes("蒸汽砲塔");
         field[destZone][destIdx] = {
           card: card,
           tapped: isLyingOrc,
@@ -30291,7 +30305,7 @@ async function runEnemyTurn() {
 
           if (zeroTributeCandidate && zeroTributeHandIdx !== -1) {
             window.XLW_ENEMY.hand.splice(zeroTributeHandIdx, 1);
-            const isLyingOrc = zeroTributeCandidate.id === "R-ORC-0031" || zeroTributeCandidate.name?.includes("躺平獸人");
+            const isLyingOrc = zeroTributeCandidate.id === "R-ORC-0031" || zeroTributeCandidate.name?.includes("躺平獸人") || zeroTributeCandidate.id === "R-STP-0051" || zeroTributeCandidate.name?.includes("蒸汽砲塔");
             field[tacticalDestZone][tacticalDestIdx] = {
               card: zeroTributeCandidate,
               tapped: isLyingOrc,
@@ -30806,7 +30820,7 @@ async function endPlayerTurnAndRunEnemy() {
   // 💣 自爆山羊 (GOT-0016): 結束階段自爆，破壞正後方單位
   for (let i = 0; i < 5; i++) {
     const frontU = field.player_front[i];
-    if (frontU && (frontU.card.id === "GOT-0016" || frontU.card.name?.includes("自爆山羊"))) {
+    if (frontU && (frontU.card.id === "GOT-0016" || frontU.card.id === "R-GOT-0016" || frontU.card.name?.includes("自爆山羊"))) {
       logBattle(`💣【自爆山羊】引信燃盡！自爆並摧毀正後方單位！`);
       await destroyUnit("player_front", i, "player", false);
       if (field.player_back[i]) {
@@ -31964,12 +31978,12 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if(xlwRequireSpellCompletion())return;
   // 🐐 山羊術手牌變形判定
   const isPolymorphGoatHandCard = (
-    card.id === "GOT-0002" || card.id === "C-GOT-0002" || card.id === "PROMO-GOT-0002" ||
+    card.id === "GOT-0002" || card.id === "R-GOT-0002" || card.id === "C-GOT-0002" || card.id === "PROMO-GOT-0002" ||
     card.id === "C-GOT-0006" || card.id === "R-GOT-0006" ||
-    card.id === "GOT-0012" || card.id === "C-GOT-0012" || card.id === "SSR-GOT-0012" || card.id === "VR-GOT-0012" ||
-    card.id === "GOT-0014" || card.id === "C-GOT-0014" ||
-    card.id === "GOT-0007" ||
-    card.id === "GOT-0016" ||
+    card.id === "GOT-0012" || card.id === "R-GOT-0012" || card.id === "R-GOT-0012-VR" || card.id === "C-GOT-0012" || card.id === "SSR-GOT-0012" || card.id === "VR-GOT-0012" ||
+    card.id === "GOT-0014" || card.id === "R-GOT-0014" || card.id === "C-GOT-0014" ||
+    card.id === "GOT-0007" || card.id === "R-GOT-0007" ||
+    card.id === "GOT-0016" || card.id === "R-GOT-0016" ||
     card.id === "GOT-0052" ||
     (card.name && (card.name.includes("呆山羊") || card.name.includes("盜版山羊") || card.name.includes("寶寶山羊") || card.name.includes("盾牌山羊") || card.name.includes("臭臭山羊") || card.name.includes("自爆山羊") || card.name.includes("綠山羊")))
   );
@@ -36117,7 +36131,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
             }
 
             // 🍑【複製山羊小桃】(SR-GOT-0031): 主要階段使此單位視為具有墓地1張山羊單位的效果
-            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "SR-GOT-0031" || obj.card.name?.includes("複製山羊小桃"))) {
+            if (isMyTurn && (phase === "主要階段" || phase === "召喚階段") && (obj.card.id === "SR-GOT-0031" || obj.card.name?.includes("小桃") || obj.card.name?.includes("複製山羊"))) {
               const myGoatGraves = graveyard.filter(c => c && window.xlwIsGoatCard(c) && c.type === "unit");
               if (myGoatGraves.length > 0) {
                 const doCopy = await showXLWConfirm("【複製山羊小桃】靈魂拓印", "是否選擇墓地 1 張山羊單位，使小桃獲得其效果？");
@@ -37576,7 +37590,7 @@ function renderStablePanel() {
     } else if (phase === "戰術佈陣") {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
       const canAnyoneAttack = ["player_front", "player_back"].some(z => 
-        (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
+        (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "R-GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
       );
       canSwitchToAttack = !hasTacticalActed || canAnyoneAttack;
     }
@@ -38668,7 +38682,7 @@ function setupWebSocketEvents() {
         });
       }
 
-      const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人");
+      const isLyingOrc = card.id === "R-ORC-0031" || card.name?.includes("躺平獸人") || card.id === "R-STP-0051" || card.name?.includes("蒸汽砲塔");
       field[zone][idx] = {
         card: card,
         tapped: isLyingOrc,
@@ -40260,10 +40274,10 @@ function playTravelerSummonAnimation(fromForestId, toZone, toIdx) {
 window.xlwCheckGoatResearcherTrigger = async function() {
   if (isMyTurn) {
     const playerHasResearcher = ["player_front", "player_back"].some(zone =>
-      field[zone].some((u, i) => u && (u.card?.id === "R-GOT-0053" || u.card?.name?.includes("細胞山羊研究員")) && !window.isUnitSilenced(u, zone, i))
+      field[zone].some((u, i) => u && (u.card?.id === "R-GOT-0053" || u.card?.id === "SSSR-GOT-0053" || u.card?.id === "R-GOT-0053-泳裝" || u.card?.name?.includes("細胞山羊研究員") || u.card?.name?.includes("羚玲")) && !window.isUnitSilenced(u, zone, i))
     );
     if (playerHasResearcher && !window.XLW_goatResearcherTriggeredThisTurn) {
-      const tokenCard = playerExtraDeck.find(c => c && (c.id === "C-GOT-0060" || c.name === "細胞山羊"));
+      const tokenCard = playerExtraDeck.find(c => c && (c.id === "C-GOT-0060" || c.id === "R-GOT-0056" || c.id === "R-GOT-0060" || c.name === "細胞山羊" || c.name?.includes("細胞山羊")));
       if (tokenCard) {
         let targetSlot = null;
         for (const zone of ["player_front", "player_back"]) {
@@ -40303,10 +40317,10 @@ window.xlwCheckGoatResearcherTrigger = async function() {
     }
   } else {
     const enemyHasResearcher = ["enemy_front", "enemy_back"].some(zone =>
-      field[zone].some((u, i) => u && (u.card?.id === "R-GOT-0053" || u.card?.name?.includes("細胞山羊研究員")) && !window.isUnitSilenced(u, zone, i))
+      field[zone].some((u, i) => u && (u.card?.id === "R-GOT-0053" || u.card?.id === "SSSR-GOT-0053" || u.card?.id === "R-GOT-0053-泳裝" || u.card?.name?.includes("細胞山羊研究員") || u.card?.name?.includes("羚玲")) && !window.isUnitSilenced(u, zone, i))
     );
     if (enemyHasResearcher && !window.XLW_enemyGoatResearcherTriggeredThisTurn) {
-      const tokenCard = enemyExtraDeck.find(c => c && (c.id === "C-GOT-0060" || c.name === "細胞山羊"));
+      const tokenCard = enemyExtraDeck.find(c => c && (c.id === "C-GOT-0060" || c.id === "R-GOT-0056" || c.id === "R-GOT-0060" || c.name === "細胞山羊" || c.name?.includes("細胞山羊")));
       if (tokenCard) {
         let targetSlot = null;
         for (const zone of ["enemy_front", "enemy_back"]) {
@@ -40346,7 +40360,7 @@ async function triggerSneakAttackSuccessEffects(card) {
   logBattle(`🥷 偷襲成功！本回合累計偷襲成功次數：${window.XLW_turnSneakCount} 次。`);
 
   // 🐱🐐 喵山羊 (GOT-0015): 偷竊。此卡偷竊成功時，牌庫尋找1張山羊族牌加入手牌並重洗牌庫
-  if (card && (card.id === "GOT-0015" || card.name?.includes("喵山羊"))) {
+  if (card && (card.id === "GOT-0015" || card.id === "R-GOT-0015" || card.name?.includes("喵山羊"))) {
     const goatCandidates = deck.filter(c => c && window.xlwIsGoatCard(c));
     if (goatCandidates.length > 0) {
       const choices = goatCandidates.map((c, i) => ({ text: `【${c.name}】(${c.id || ''})`, value: c }));
@@ -40826,7 +40840,7 @@ async function triggerEnemySneakAttackSuccessEffects(card) {
   logBattle(`🥷 對手 偷襲成功！本回合累計偷襲成功次數：${window.XLW_turnSneakCount} 次。`);
 
   // 🐱🐐 對手 喵山羊 (GOT-0015): 牌庫檢索山羊卡
-  if (card && (card.id === "GOT-0015" || card.name?.includes("喵山羊"))) {
+  if (card && (card.id === "GOT-0015" || card.id === "R-GOT-0015" || card.name?.includes("喵山羊"))) {
     const oppD = window.XLW_ENEMY?.deck || [];
     const oppH = window.XLW_ENEMY?.hand || [];
     const gIdx = oppD.findIndex(c => c && window.xlwIsGoatCard(c));
