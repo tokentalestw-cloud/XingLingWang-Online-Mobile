@@ -4222,6 +4222,7 @@ async function promptAndSummonTraveler(side, count, sourceName = "效果") {
       } catch (e) {}
     }
     render();
+    if (await xlwResolveSummonCover(xlwCaptureSummonCover(chosenSlot.zone, chosenSlot.idx))) render();
   }
 
   if (isMultiplayer) {
@@ -14820,6 +14821,58 @@ async function confirmTribute() {
 }
 
 // 實行手牌召喚/小旅人召喚至格子上
+function xlwUnitHasCover(unit, zone, idx) {
+  if (!unit?.card || window.isUnitSilenced(unit, zone, idx)) return false;
+  const card = unit.card;
+  const hasMagiAura = card.id === "RBT-0010" || card.id === "SSR-RBT-0010" || card.name?.includes("機械師瑪琪");
+  const isCancer = card.id === "SSSR-NMS-0067" || card.name?.includes("盾甲騎士 巨蟹座");
+  if (unit.equipments?.some(equipment => (equipment?.name || equipment) === "金屬盾牌") ||
+      (isCancer && unit.tapped) ||
+      (!hasMagiAura && !isCancer && window.xlwCardHasKeyword(card, "掩護"))) return true;
+
+  if (!window.xlwIsUnitMech(unit, zone, idx)) return false;
+  const side = zone.startsWith("player_") ? "player" : "enemy";
+  return [side + "_front", side + "_back"].some(row => field[row].some((source, lane) => {
+    const aura = source?.card;
+    return aura && (aura.id === "RBT-0010" || aura.id === "SSR-RBT-0010" || aura.name?.includes("機械師瑪琪")) &&
+      !window.isUnitSilenced(source, row, lane);
+  }));
+}
+
+function xlwCaptureSummonCover(zone, idx) {
+  // Only a front-row cover unit has a slot directly behind it.
+  if (zone !== "player_front") return null;
+  const unit = field[zone][idx];
+  const choices = [idx - 1, idx + 1].filter(lane => lane >= 0 && lane < field.player_front.length)
+    .map(lane => ({lane, source: field.player_front[lane]}))
+    .filter(({lane, source}) => !field.player_back[lane] && xlwUnitHasCover(source, zone, lane));
+  return choices.length ? {idx, unit, choices} : null;
+}
+
+async function xlwResolveSummonCover(pending) {
+  if (!pending) return false;
+  const {idx, unit, choices} = pending;
+  const canMove = () => field.player_front[idx] === unit && !xlwIsUnitUnmovable(unit, "player_front", idx);
+  const canUse = ({lane, source}) => field.player_front[lane] === source &&
+    !field.player_back[lane] && xlwUnitHasCover(source, "player_front", lane);
+  if (!canMove()) return false;
+  const available = choices.filter(canUse);
+  if (!available.length) return false;
+
+  const pick = await showXLWChoiceModal("掩護", `是否將剛召喚的【${unitName(unit)}】移至掩護單位正後方？`, [
+    ...available.map(({lane, source}) => ({text: `移至【${unitName(source)}】正後方（第 ${lane + 1} 欄）`, value: `cover:${lane}`})),
+    {text: "不發動，留在原位", value: "cancel"}
+  ]);
+  const chosen = available.find(({lane}) => pick === `cover:${lane}`);
+  if (!chosen || !canMove() || !canUse(chosen)) return false;
+
+  field.player_front[idx] = null;
+  field.player_back[chosen.lane] = unit;
+  logBattle(`🛡️【掩護】${unitName(unit)} 移至【${unitName(chosen.source)}】正後方。`);
+  return true;
+}
+
+
 async function performSummonToSlot(zone, idx) {
   let isSpecialSummon = false;
   let specialCard = null;
@@ -14905,6 +14958,7 @@ async function performSummonToSlot(zone, idx) {
   }
 
   let card = null;
+  let pendingCover = null;
   try {
 
   if (isSpecialSummon) {
@@ -14918,6 +14972,7 @@ async function performSummonToSlot(zone, idx) {
         summonedTurn: turn,
         summonedZone: zone
       };
+      pendingCover = xlwCaptureSummonCover(zone, idx);
     }
     field[zone][idx].card.creator = zone.startsWith("player_") ? "player" : "enemy";
     // 🦅 鳥人 艾菲 (R-STP-0021): 敵方打在正前方時充能+2
@@ -14964,6 +15019,7 @@ async function performSummonToSlot(zone, idx) {
       summonedTurn: turn,
       summonedZone: zone
     };
+    pendingCover = xlwCaptureSummonCover(zone, idx);
     card = field[zone][idx].card;
     if (phase === "召喚階段" && !window.XLW_bypassTurnCheck) normalSummonUsed = true;
     if (phase === "戰術佈陣" && !window.XLW_bypassTurnCheck) tacticalSummonUsed = true;
@@ -15034,6 +15090,7 @@ async function performSummonToSlot(zone, idx) {
       equipments: [],
       devourCards: window.XLW_pendingDevourCards || []
     };
+    pendingCover = xlwCaptureSummonCover(zone, idx);
     window.XLW_pendingDevourCards = [];
     field[zone][idx].card.creator = "player";
     if (zone.startsWith("player_")) {
@@ -19447,6 +19504,9 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
     sendFullGameStateToOpponent(false);
   }
 
+  const coverMoved = await xlwResolveSummonCover(pendingCover);
+  if (coverMoved && isMultiplayer) sendFullGameStateToOpponent(false);
+
   if (window.XLW_summonPlacementResolve) {
       const resolve = window.XLW_summonPlacementResolve;
       window.XLW_summonPlacementResolve = null;
@@ -19991,26 +20051,19 @@ async function selectPlayerTarget(zone, idx) {
     return;
   }
 
-  // 前排優先攻擊限制 (遠程與飛行單位可以繞過前排直接攻擊後排，除非前排單位具備掩護；若前排是飛行單位，敵方非飛行單位亦可越過飛行單位攻擊後排)
+  // 前排優先攻擊限制 (遠程與飛行單位可以繞過前排直接攻擊後排；若前排是飛行單位，敵方非飛行單位亦可越過飛行單位攻擊後排)
   const hasRanged = (attacker.card && (
     (attacker.card.keywords && attacker.card.keywords.includes("遠程")) ||
     (attacker.card.effect_text && attacker.card.effect_text.includes("遠程")) ||
     window.xlwCardHasKeyword(attacker.card, "遠程")
   )) || window.hasFlying(attacker);
   const frontDefender = field.enemy_front[idx];
-  const frontHasCover = frontDefender && (
-    window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
-    frontDefender.card?.name?.includes("學會戰術的野人")
-  ) && !window.isUnitSilenced(frontDefender, "enemy_front", idx);
 
   // 飛行越過前排判定：若前排是飛行單位，敵方非飛行單位亦可越過前排直接攻擊後排
   const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
 
   if (frontDefender && zone === "enemy_back") {
-    if (frontHasCover) {
-      setStatus("敵方前排單位具有【掩護】效果，後排單位受到掩護無法被直接攻擊！");
-      return;
-    } else if (!hasRanged && !frontIsFlying) {
+    if (!hasRanged && !frontIsFlying) {
       setStatus("敵方同戰線前排仍有單位，必須優先攻擊前排！（除非是遠程或飛行單位，或前排為飛行單位）");
       return;
     }
@@ -20140,14 +20193,9 @@ async function xlwAutoDeclarePlayerAttacks() {
 
     const frontDefender = field.enemy_front[i];
     const backDefender = field.enemy_back[i];
-    const frontHasCover = frontDefender && (
-      window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
-      frontDefender.card?.id === "STP-0002" || frontDefender.card?.name?.includes("蒸汽盾牌兵") ||
-      frontDefender.card?.name?.includes("學會戰術的野人")
-    ) && !window.isUnitSilenced(frontDefender, "enemy_front", i);
 
-    const hasRanged = (window.xlwUnitHasRanged(playerAttacker, actualZone, i) || window.hasFlying(playerAttacker)) && !frontHasCover;
-    const isBoarKnight = playerAttacker.card && (playerAttacker.card.id === "R-NMS-0061" || playerAttacker.card.name?.includes("野豬騎士")) && !frontHasCover;
+    const hasRanged = (window.xlwUnitHasRanged(playerAttacker, actualZone, i) || window.hasFlying(playerAttacker));
+    const isBoarKnight = playerAttacker.card && (playerAttacker.card.id === "R-NMS-0061" || playerAttacker.card.name?.includes("野豬騎士"));
     const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
     const targetsBackFirst = (hasRanged || isBoarKnight || (frontIsFlying && !window.hasFlying(playerAttacker))) && backDefender;
 
@@ -20319,13 +20367,9 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
 
     const frontDefender = field.enemy_front[idx];
     const backDefender = field.enemy_back[idx];
-    const frontHasCover = frontDefender && (
-      window.xlwCardHasKeyword(frontDefender.card, "掩護") ||
-      frontDefender.card?.name?.includes("學會戰術的野人")
-    ) && !window.isUnitSilenced(frontDefender, "enemy_front", idx);
 
-    const hasRanged = (window.xlwUnitHasRanged(unit, zone, idx) || window.hasFlying(unit)) && !frontHasCover;
-    const isBoarKnight = unit.card && (unit.card.id === "R-NMS-0061" || unit.card.name?.includes("野豬騎士")) && !frontHasCover;
+    const hasRanged = (window.xlwUnitHasRanged(unit, zone, idx) || window.hasFlying(unit));
+    const isBoarKnight = unit.card && (unit.card.id === "R-NMS-0061" || unit.card.name?.includes("野豬騎士"));
     const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
     const targetsBackFirst = (hasRanged || isBoarKnight || (frontIsFlying && !window.hasFlying(unit))) && backDefender;
 
@@ -20954,11 +20998,6 @@ async function xlwResolvePlayerDefensePhase() {
 
         const frontUnit = field.player_front[lane];
         const backUnit = field.player_back[lane];
-        const frontHasCover = frontUnit && (
-          window.xlwCardHasKeyword(frontUnit.card, "掩護") ||
-          frontUnit.card?.name?.includes("學會戰術的野人") ||
-          (typeof window.xlwIsUnitMech === "function" && window.xlwIsUnitMech(frontUnit, "player_front", lane) && ["player_front", "player_back"].some(z => field[z]?.some(u => u && u.card && (u.card.id === "RBT-0010" || u.card.id === "SSR-RBT-0010" || u.card.name?.includes("機械師瑪琪")))))
-        ) && !window.isUnitSilenced(frontUnit, "player_front", lane);
         const hasRanged = window.xlwUnitHasRanged(attacker, attZone, lane) || window.hasFlying(attacker);
         const isBoarKnight = attacker.card && (attacker.card.id === "R-NMS-0061" || attacker.card.name?.includes("野豬騎士"));
 
@@ -20970,12 +21009,7 @@ async function xlwResolvePlayerDefensePhase() {
           const tZone = attacker.target.zone;
           const tIdx = attacker.target.idx;
           if (tZone === "player_back") {
-            if (frontHasCover) {
-              defZone = "player_front";
-              defIdx = lane;
-              defender = frontUnit;
-              logBattle(`✨ 我方前排【${frontUnit.card.name}】具有掩護，擋下了指向後排的進攻！`);
-            } else if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
+            if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
               defZone = "player_back";
               defIdx = tIdx;
               defender = field[tZone][tIdx];
@@ -21030,7 +21064,7 @@ async function xlwResolvePlayerDefensePhase() {
 
           if (!defender) {
             const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
-            const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
+            const targetsBackFirst = ((hasRanged || isBoarKnight) && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
             if (targetsBackFirst) {
               defender = backUnit;
               defZone = "player_back";
@@ -21315,10 +21349,6 @@ async function xlwResolveEnemyLaneSafe(lane) {
 
     const frontUnit = field.enemy_front[lane];
     const backUnit = field.enemy_back[lane];
-    const frontHasCover = frontUnit && (
-      window.xlwCardHasKeyword(frontUnit.card, "掩護") ||
-      frontUnit.card?.name?.includes("學會戰術的野人")
-    ) && !window.isUnitSilenced(frontUnit, "enemy_front", lane);
     const hasRanged = window.xlwUnitHasRanged(attacker, attZone, lane) || window.hasFlying(attacker);
     const isBoarKnight = attacker.card && (attacker.card.id === "R-NMS-0061" || attacker.card.name?.includes("野豬騎士"));
 
@@ -21330,12 +21360,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
       const tZone = attacker.target.zone;
       const tIdx = attacker.target.idx;
       if (tZone === "enemy_back") {
-        if (frontHasCover) {
-          defZone = "enemy_front";
-          defIdx = lane;
-          defender = frontUnit;
-          logBattle(`✨ 敵方前排【${frontUnit.card.name}】具有掩護，擋下了指向後排的進攻！`);
-        } else if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
+        if (hasRanged || isBoarKnight || !frontUnit || (frontUnit && window.hasFlying(frontUnit))) {
           defZone = "enemy_back";
           defIdx = tIdx;
           defender = field[tZone][tIdx];
@@ -21377,7 +21402,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
 
       if (!defender) {
         const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
-        const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
+        const targetsBackFirst = ((hasRanged || isBoarKnight) && backUnit) || (frontIsFlying && !window.hasFlying(attacker) && backUnit);
         if (targetsBackFirst) {
           defender = backUnit;
           defZone = "enemy_back";
@@ -30197,12 +30222,8 @@ async function runEnemyTurn() {
             const isBoarKnight = enemyAttacker.card && (enemyAttacker.card.id === "R-NMS-0061" || enemyAttacker.card.name?.includes("野豬騎士"));
             const frontUnit = field.player_front[i];
             const backUnit = field.player_back[i];
-            const frontHasCover = frontUnit && (
-              window.xlwCardHasKeyword(frontUnit.card, "掩護") ||
-              frontUnit.card?.name?.includes("學會戰術的野人")
-            ) && !window.isUnitSilenced(frontUnit, "player_front", i);
             const frontIsFlying = frontUnit && window.hasFlying(frontUnit);
-            const targetsBackFirst = ((hasRanged || isBoarKnight) && !frontHasCover) || (frontIsFlying && !window.hasFlying(enemyAttacker) && !frontHasCover);
+            const targetsBackFirst = ((hasRanged || isBoarKnight)) || (frontIsFlying && !window.hasFlying(enemyAttacker));
 
             let targetZone = null;
             if (targetsBackFirst) {
