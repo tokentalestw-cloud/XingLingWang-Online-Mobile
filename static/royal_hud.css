@@ -1195,3 +1195,61 @@ body.xlw-royal-ui .prebattle-container { width: min(460px, calc(100 * var(--xvw,
 @media (max-width: 480px) {
   .xlw-lobby-actions { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
 }
+
+#xlwSteamBattery {
+  position: absolute;
+  z-index: 13;
+  width: 172px;
+  box-sizing: border-box;
+  padding: 0 9px;
+  color: #ffdfac;
+  font: 700 16px/1.2 system-ui, sans-serif;
+  pointer-events: none;
+}
+#xlwSteamBattery[hidden], .steam-battery-cell[hidden] { display: none !important; }
+.steam-battery-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 7px;
+  white-space: nowrap;
+  text-shadow: 0 2px 4px #180b04;
+}
+.steam-battery-reading { color: #ffeecf; font-variant-numeric: tabular-nums; }
+.steam-battery-casing {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  gap: 4px;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 2px solid #ad7c4f;
+  border-radius: 10px;
+  background: linear-gradient(#503324, #25170f);
+  box-shadow: inset 0 1px #f9d09b66, inset 0 -3px #100806, 0 4px 9px #05030b;
+}
+.steam-battery-casing::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 11px -8px 11px auto;
+  width: 6px;
+  border: 1px solid #ad7c4f;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(#a9784c, #4f3020);
+}
+.steam-battery-cell {
+  flex: 1 1 0;
+  border: 1px solid #7b5138;
+  border-radius: 4px;
+  background: #21140e;
+  box-shadow: inset 0 2px 4px #0008;
+}
+.steam-battery-cell.is-filled {
+  border-color: #e7ad70;
+  background: linear-gradient(#e8b574, #b36d37 54%, #774426);
+  box-shadow: inset 0 1px #fff1cb99, 0 0 6px #d9934e63;
+}
+.steam-battery-cell:nth-child(6) { border-style: dashed; }

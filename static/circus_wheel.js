@@ -139,11 +139,6 @@
       if (!visible) dismiss(false);
       if (visible && !animation) setCards(next);
     },
-    position(forest) {
-      if (panel.hidden || !forest) return;
-      panel.style.left = `${forest.offsetLeft - panel.offsetWidth - 12}px`;
-      panel.style.top = `${forest.offsetTop + (forest.offsetHeight - panel.offsetHeight) / 2}px`;
-    },
     async reveal(snapshot, index) {
       if (panel.hidden || animation || !snapshot[index]) return;
       dismiss(false);

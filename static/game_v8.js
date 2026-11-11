@@ -31411,8 +31411,33 @@ window.xlwClearGameOverUI = function() {
   }
 };
 
+function renderSteamBattery() {
+  const battery = $("xlwSteamBattery");
+  if (!battery) return;
+  const deckName = $("deckSelect")?.value || window.XLW_selectedDeckName || "";
+  const visible = document.body.classList.contains("xlw-game-started") &&
+    normDeckName(deckName.replace("蒸氣世界", "蒸汽世界")) === "蒸汽世界";
+  battery.hidden = !visible;
+  if (!visible) return;
+
+  const meter = battery.querySelector('[role="meter"]');
+  const cap = window.xlwGetMaxSteamEnergy(true);
+  const energy = Math.max(0, Math.min(cap, window.xlwGetSteamEnergy(true)));
+  if (Number(meter.getAttribute("aria-valuenow")) === energy &&
+      Number(meter.getAttribute("aria-valuemax")) === cap) return;
+
+  meter.setAttribute("aria-valuenow", energy);
+  meter.setAttribute("aria-valuemax", cap);
+  battery.querySelector(".steam-battery-reading").textContent = `${energy} / ${cap}`;
+  Array.from(meter.children).forEach((cell, index) => {
+    cell.hidden = index >= cap;
+    cell.classList.toggle("is-filled", index < energy);
+  });
+}
+
 function render() {
   if (window.XLWCircusWheel) renderCircusWheel();
+  renderSteamBattery();
   // 新局（非結束狀態）時自動清除上一局殘留的結局按鈕/面板
   if (!isGameOverFlag && (document.getElementById("reopenResultBtn") || document.querySelector("#xlwResultPanel.show"))) {
     window.xlwClearGameOverUI();
@@ -37344,14 +37369,6 @@ function renderScore() {
       </div>
     ` : ""}
 
-    <!-- ⚙️ 蒸氣世界 電池能量條 -->
-    ${(window.xlwGetSteamEnergy(true) > 0 || window.xlwIsSteamCard(window.xlwGetFactionFieldCard(true))) ? `
-      <div style="background: linear-gradient(135deg, rgba(30,58,138,0.7), rgba(15,23,42,0.8)); border: 1px solid #38bdf8; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #bae6fd;">
-        <span>🔋 <b>蒸氣能量電池</b></span>
-        <span style="font-weight: 900; color: #38bdf8;">${window.xlwGetSteamEnergy(true)} / ${window.xlwGetMaxSteamEnergy(true)} ⚡</span>
-      </div>
-    ` : ""}
-
     <div class="score-badge-section">
       <div class="score-badge-card player ${playerLead ? "leading" : ""}">
         <div class="score-badge-top-row">
@@ -38188,9 +38205,14 @@ function adjustBoardScale() {
     if (!origin) return;
     const matrix = new DOMMatrixReadOnly(getComputedStyle(board).transform);
     const currentScale = Math.hypot(matrix.a, matrix.b) || 1;
-    window.XLWCircusWheel?.position($("playerForest"));
+    const forest = $("playerForest");
+    const factionWidgets = "#xlwCircusWheel:not([hidden]), #xlwSteamBattery:not([hidden])";
+    if (forest) board.querySelectorAll(factionWidgets).forEach(widget => {
+      widget.style.left = `${forest.offsetLeft - widget.offsetWidth - 12}px`;
+      widget.style.top = `${forest.offsetTop + (forest.offsetHeight - widget.offsetHeight) / 2}px`;
+    });
     const pieces = [...board.children]
-      .filter(e => e.matches(".row, .zone, .board-playmat, .battle-line-strip, #xlwCircusWheel:not([hidden])"))
+      .filter(e => e.matches(`.row, .zone, .board-playmat, .battle-line-strip, ${factionWidgets}`))
       .map(logicalRect).filter(Boolean);
     if (!pieces.length) return;
     // Reserve the bevel, shadows and badges around the fixed geometry as well.
@@ -48010,6 +48032,7 @@ window.xlwReturnToTitle = function(promptIfOnline = true) {
   }
   window.XLW_isPuzzleMode = false;
   document.body.classList.remove("xlw-game-started", "xlw-direct-room");
+  renderSteamBattery();
   window.XLWCircusWheel?.reset();
   window.XLWTurnOrder?.hide();
   const pBar = document.getElementById("xlwPuzzleStatusBar"); if (pBar) pBar.remove();

@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261103-v21">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261112-dialogs-v1">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261112-steam-battery-v1">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -617,6 +617,21 @@
           <span class="circus-wheel-count">尚未上靶</span>
           <span class="circus-wheel-result" aria-live="polite"></span>
         </aside>
+        <aside id="xlwSteamBattery" hidden>
+          <div class="steam-battery-heading" aria-hidden="true">
+            <span>蒸氣能量</span>
+            <span class="steam-battery-reading">0 / 5</span>
+          </div>
+          <div class="steam-battery-casing" role="meter" aria-label="蒸氣能量"
+               aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+            <span class="steam-battery-cell" aria-hidden="true"></span>
+            <span class="steam-battery-cell" aria-hidden="true"></span>
+            <span class="steam-battery-cell" aria-hidden="true"></span>
+            <span class="steam-battery-cell" aria-hidden="true"></span>
+            <span class="steam-battery-cell" aria-hidden="true"></span>
+            <span class="steam-battery-cell" aria-hidden="true" hidden></span>
+          </div>
+        </aside>
         <div id="playerForest" class="zone side green" onclick="triggerLittleTraveler(event)">
           <div class="forest-3d-wrap">
             <div class="forest-3d-trees">
@@ -1018,8 +1033,8 @@
       </div>
     </section>
   </div>
-  <script src="/static/circus_wheel.js?v=2" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261111-circus-rules-v2" charset="utf-8"></script>
+  <script src="/static/circus_wheel.js?v=3" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261112-steam-battery-v1" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
