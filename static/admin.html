@@ -436,6 +436,7 @@
       <div style="display: flex; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3);">
         <button id="tabUnprocessed" onclick="switchTab('unprocessed')" style="flex: 1; background: none; border: none; border-bottom: 2px solid var(--gold-accent); color: var(--gold-accent); padding: 10px 5px; font-size: 12px; font-weight: bold; cursor: pointer; outline: none; transition: all 0.2s;">待處理</button>
         <button id="tabProcessed" onclick="switchTab('processed')" style="flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 10px 5px; font-size: 12px; font-weight: bold; cursor: pointer; outline: none; transition: all 0.2s;">已入庫</button>
+        <button id="tabPlantReview" onclick="switchTab('plantReview')" style="flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 10px 5px; font-size: 12px; font-weight: bold; cursor: pointer; outline: none; transition: all 0.2s;">植物園待審核</button>
       </div>
       <div style="padding: 8px 12px; border-bottom: 1px solid rgba(255, 215, 106, 0.1);">
         <input type="text" id="sidebarSearch" placeholder="🔍 搜尋名稱、ID、或檔名..." oninput="filterPhotos(this.value)" style="padding: 6px 10px; font-size: 11px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 215, 106, 0.25); border-radius: 4px; color: #fff; width: 100%; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='var(--gold-accent)';" onblur="this.style.borderColor='rgba(255, 215, 106, 0.25)';">
@@ -482,6 +483,7 @@
           <option value="進化野人">進化野人</option>
           <option value="馬戲團">馬戲團</option>
           <option value="骷髏人">骷髏人</option>
+          <option value="植物園" hidden>植物園</option>
         </select>
       </div>
 
@@ -602,6 +604,7 @@
       <!-- 隱藏的原始檔路徑 -->
       <input type="hidden" id="cOriginalFile">
 
+      <p id="plantReviewNote" hidden></p>
       <!-- 提交按鈕 -->
       <button type="button" class="submit-btn" onclick="saveCard()">儲存卡片並載入下一張 (Ctrl + S)</button>
 
@@ -654,25 +657,82 @@
     let currentTab = "unprocessed";
     let searchFilter = "";
     let currentEditingCardId = null;
+    let plantDrafts = [];
+    let plantDraftRequest;
 
     // 切換分頁
     function switchTab(tab) {
       currentTab = tab;
-      const tUnprocessed = document.getElementById("tabUnprocessed");
-      const tProcessed = document.getElementById("tabProcessed");
-      
-      if (tab === "unprocessed") {
-        tUnprocessed.style.color = "var(--gold-accent)";
-        tUnprocessed.style.borderBottomColor = "var(--gold-accent)";
-        tProcessed.style.color = "var(--text-muted)";
-        tProcessed.style.borderBottomColor = "transparent";
-      } else {
-        tProcessed.style.color = "var(--gold-accent)";
-        tProcessed.style.borderBottomColor = "var(--gold-accent)";
-        tUnprocessed.style.color = "var(--text-muted)";
-        tUnprocessed.style.borderBottomColor = "transparent";
+      for (const [key, id] of Object.entries({
+        unprocessed: "tabUnprocessed", processed: "tabProcessed", plantReview: "tabPlantReview"
+      })) {
+        const button = document.getElementById(id);
+        const selected = key === tab;
+        button.style.color = selected ? "var(--gold-accent)" : "var(--text-muted)";
+        button.style.borderBottomColor = selected ? "var(--gold-accent)" : "transparent";
+        button.setAttribute("aria-pressed", selected);
       }
       renderPhotoList();
+      if (tab !== "plantReview" || plantDrafts.length) return;
+      plantDraftRequest ||= fetch("/static/plant_review.json")
+        .then(response => {
+          if (!response.ok) throw new Error(response.status);
+          return response.json();
+        })
+        .then(data => {
+          plantDrafts = data.cards;
+          if (currentTab === "plantReview") renderPhotoList();
+        })
+        .catch(() => {
+          plantDraftRequest = null;
+          if (currentTab === "plantReview") {
+            document.getElementById("unprocessedContainer").textContent = "植物園資料載入失敗，請再點一次分頁重試。";
+          }
+        });
+    }
+
+    function renderPlantDraftList(container) {
+      container.replaceChildren();
+      if (!plantDrafts.length) {
+        container.textContent = "載入植物園資料中…";
+        return;
+      }
+      for (const draft of plantDrafts) {
+        const label = `${draft.id} ${draft.name}${draft.variant ? "（特典）" : ""}`;
+        if (!label.toLowerCase().includes(searchFilter)) continue;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "photo-item" + (currentPhoto?.draft === draft ? " active" : "");
+        button.style.width = "100%";
+        button.textContent = label;
+        button.onclick = () => selectPhoto({ subdir: draft.faction, rel_path: draft.image.split("/").slice(1).join("/"), draft });
+        container.append(button);
+      }
+      if (!container.childElementCount) container.textContent = "沒有符合的植物園卡牌。";
+    }
+
+    function asEditorCard(draft) {
+      const attrs = draft.attributes;
+      const effect = draft.interpretation.join("\n");
+      const extraLimit = effect.match(/額外區上限 (\d+)/)?.[1];
+      const keywords = {
+        "PLT-0010": ["貫穿"], "PLT-0012": ["遠程攻擊"], "PLT-0015": ["敵方魔法抗性"],
+        "PLT-0016": ["敵方魔法抗性", "敵方效果抗性"],
+        "PLT-0017": ["破壞抗性", "敵方魔法抗性", "敵方效果抗性"],
+        "PLT-0018": ["消逝"], "PLT-0022": ["劇毒"], "PLT-0023": ["劇毒"], "PLT-0024": ["劇毒"],
+        "PLT-0025": ["劇毒"], "PLT-0033": ["劇毒"], "PLT-0034": ["飛行"], "PLT-0035": ["消逝"]
+      };
+      const isMagic = draft.kind.includes("魔法卡");
+      return {
+        id: draft.id, name: draft.name, deck: draft.faction, type: isMagic ? "magic" : "unit",
+        image: "/static/" + draft.image, attack: attrs["攻擊力"], score: attrs["分數"],
+        tribute: Number(attrs["祭品數量"]) || 0, mana: Number(attrs["法力值"]) || 0,
+        usable_phases: isMagic ? ["Main Phase"] : [],
+        art_subtype: attrs["魔法卡種類"] || attrs["特殊類別"] || "", keywords: keywords[draft.id] || [],
+        deck_eligible: !extraLimit, extra_deck_limit: extraLimit,
+        trigger_condition: effect.match(/我方主要階段，可讓[^。]+成長為此卡。/)?.[0] || "",
+        effect_text: effect
+      };
     }
 
     // 關鍵字過濾
@@ -705,6 +765,7 @@
     // 渲染照片清單
     function renderPhotoList() {
       const container = document.getElementById("unprocessedContainer");
+      if (currentTab === "plantReview") return renderPlantDraftList(container);
       let listToRender = currentTab === "unprocessed" ? unprocessedList : processedList;
 
       // 搜尋關鍵字過濾
@@ -829,7 +890,7 @@
       renderPhotoList();
 
       // 尋找是否已有這張卡牌的已入庫資料
-      const existing = databaseCards.find(c => (photo.id && c.id === photo.id) || (photo.rel_path && c.original_file === photo.rel_path));
+      const existing = photo.draft ? asEditorCard(photo.draft) : databaseCards.find(c => (photo.id && c.id === photo.id) || (photo.rel_path && c.original_file === photo.rel_path));
 
       // 載入預覽圖片
       const img = document.getElementById("cardPreview");
@@ -849,6 +910,17 @@
       const pane = document.getElementById("formPane");
       pane.style.pointerEvents = "auto";
       pane.style.opacity = "1";
+      pane.querySelectorAll("[data-plant-locked]").forEach(control => {
+        control.disabled = false;
+        control.removeAttribute("data-plant-locked");
+      });
+      document.getElementById("cExtraLimit").max = photo.draft ? 20 : 5;
+      document.getElementById("paneTitle").textContent = photo.draft ? "植物園卡牌資料 · 待審核" : "卡牌錄入表單";
+      const note = document.getElementById("plantReviewNote");
+      note.hidden = !photo.draft;
+      if (photo.draft) {
+        note.textContent = [photo.draft.edition, photo.draft.review_note, "審核資料僅供檢視。"].filter(Boolean).join("｜");
+      }
 
       // 重置並預填表單
       document.getElementById("cDeck").value = photo.subdir;
@@ -871,7 +943,7 @@
         } else {
           document.getElementById("cIsShield").checked = false;
           toggleShield(false);
-          document.getElementById("cAttack").value = existing.attack || "";
+          document.getElementById("cAttack").value = existing.attack ?? "";
         }
         document.getElementById("cTribute").value = existing.tribute || 0;
         document.getElementById("cScore").value = existing.score || 0;
@@ -892,7 +964,7 @@
         document.getElementById("cKeywords").value = (existing.keywords || []).join(", ");
         document.getElementById("cEffectText").value = existing.effect_text || "";
         
-        showToast(`📂 已載入《${existing.name}》的已入庫資料，可直接修改並儲存勘誤。`);
+        if (!photo.draft) showToast(`📂 已載入《${existing.name}》的已入庫資料，可直接修改並儲存勘誤。`);
       } else {
         currentEditingCardId = null;
         // 全新卡片：清空舊輸入並自動預測
@@ -921,7 +993,7 @@
         let prefix = getPrefixForSubdir(photo.subdir);
         
         // 尋找同前綴中最大的數字，給予自動加 1 的推薦
-        const同種族卡牌 = databaseCards.filter(c => c.id && c.id.startsWith(prefix));
+        const 同種族卡牌 = databaseCards.filter(c => c.id && c.id.startsWith(prefix));
         if (同種族卡牌.length > 0) {
           const nums =同種族卡牌.map(c => parseInt(c.id.replace(prefix, ""), 10)).filter(Number.isFinite);
           const maxNum = nums.length > 0 ? Math.max(...nums) : 0;
@@ -935,6 +1007,13 @@
         }
       }
 
+      if (photo.draft) {
+        pane.querySelectorAll("input:enabled, select:enabled, textarea:enabled, button:enabled").forEach(control => {
+          control.disabled = true;
+          control.setAttribute("data-plant-locked", "");
+        });
+        return;
+      }
       // 自動聚焦在卡片名稱輸入框上
       setTimeout(() => {
         document.getElementById("cName").focus();
@@ -957,7 +1036,7 @@
     function syncFaction(val) {
       let prefix = getPrefixForSubdir(val);
       
-      const同種族卡牌 = databaseCards.filter(c => c.id && c.id.startsWith(prefix));
+      const 同種族卡牌 = databaseCards.filter(c => c.id && c.id.startsWith(prefix));
       if (同種族卡牌.length > 0) {
         const nums = 同種族卡牌.map(c => parseInt(c.id.replace(prefix, ""), 10)).filter(Number.isFinite);
         const maxNum = Math.max(...nums);
@@ -1057,7 +1136,7 @@
 
     // 儲存卡牌
     async function saveCard() {
-      if (!currentPhoto) return;
+      if (!currentPhoto || currentPhoto.draft) return;
 
       const cId = document.getElementById("cId").value.trim();
       const cName = document.getElementById("cName").value.trim();
@@ -1196,6 +1275,7 @@
     });
 
     // 啟動加載
+    if (location.hash === "#plant-review") switchTab("plantReview");
     loadAdminData();
   </script>
 </body>
