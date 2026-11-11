@@ -25,7 +25,7 @@ function fixture() {
   };
   g.window = g;
   g.XLW_ENEMY = { hand: [], deck: [], grave: [] };
-  vm.createContext(g);
+  g.document ||= { getElementById: () => null }; vm.createContext(g);vm.runInContext(source.slice(source.indexOf("// Faction state uses"), source.indexOf("// ===== 6. 召喚與獻祭召喚系統 =====", source.indexOf("// Faction state uses"))),g);
   vm.runInContext(effectSource, g);
   return g;
 }
@@ -69,6 +69,15 @@ module.exports = (async () => {
       assert.equal(g.hand.length, 2);
     }
     tests++;
+  }
+  for (const commander of ['absent', 'active', 'silenced']) {
+    const g = fixture(); g.isMultiplayer = false;
+    g.field.player_front[0] = { card: { id: 'SLIDER', name: '滑行單位', keywords: ['滑行'] }, tapped: true };
+    if (commander !== 'absent') g.field.player_back[0] = { card: { id: 'R-STP-0039', name: '奧麗' }, silenced: commander === 'silenced' };
+    g.isUnitSilenced = u => Boolean(u.silenced);
+    vm.runInContext(source.slice(drawStart, drawEnd), g); await g.performPlayerTurnStartDraw();
+    assert.equal(g.field.player_front[0].tapped, commander !== 'active');
+    assert.equal(g.XLW_playerSteamEnergy, commander === 'active' ? 1 : 0); tests++;
   }
   console.log(`${tests} bidirectional turn-start crash and end-phase timing checks: PASS`);
 })();

@@ -1315,6 +1315,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.xlwResetFactionState();
   window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
@@ -1584,6 +1585,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.xlwResetFactionState();
   window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
@@ -1843,6 +1845,7 @@ async function performPlayerTurnStartDraw() {
   
   // 🐐 山羊族 & ⚙️ 蒸氣世界 回合重置
   window.XLW_infiniteGoatsActive = false;
+  window.XLW_auntieGoatUsedThisTurn = false;
   window.XLW_goatPeggyUsedThisTurn = false;
   window.XLW_goatResearcherTriggeredThisTurn = false;
   window.XLW_steamLiberatorActiveThisTurn = false;
@@ -1875,9 +1878,10 @@ async function performPlayerTurnStartDraw() {
 
   // 💨 蒸汽魔盜團指揮官 奧麗 (R-STP-0039): 主要階段開始時，使你場上所有滑行單位被轉正，每轉正1個單位充能+1
   const slidingUnitsToUntap = [];
+  const hasAoli = ["player_front", "player_back"].some(z => (field[z] || []).some((u, i) => u && (u.card?.id === "R-STP-0039" || u.card?.name?.includes("奧麗")) && !window.isUnitSilenced(u, z, i)));
   for (const z of ["player_front", "player_back"]) {
     (field[z] || []).forEach((u, i) => {
-      if (u && u.tapped && (u.card.keywords?.includes("滑行") || u.card.name?.includes("滑行") || u.card.name?.includes("索羅") || u.card.name?.includes("毒氣兵") || u.card.name?.includes("蒸汽船"))) {
+      if (hasAoli && u && u.tapped && (u.equipments?.includes("滑行") || u.card.effect_text?.includes("滑行") || u.card.keywords?.includes("滑行") || u.card.name?.includes("滑行") || u.card.name?.includes("索羅") || u.card.name?.includes("毒氣兵") || u.card.name?.includes("蒸汽船"))) {
         slidingUnitsToUntap.push(u);
       }
     });
@@ -7334,6 +7338,53 @@ function validPlayerAttackLine(zone, lane) {
 
 
 // ==========================================
+// Faction state uses the same field-card storage as rendering and online snapshots.
+window.xlwGetFactionFieldCard = function(isPlayer = true) {
+  const raw = document.getElementById(isPlayer ? "playerField" : "enemyField")?.dataset.card;
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+};
+window.xlwSetFactionFieldCard = function(card, isPlayer = true) {
+  const el = document.getElementById(isPlayer ? "playerField" : "enemyField");
+  if (!el || !card) return false;
+  const previous = window.xlwGetFactionFieldCard(isPlayer);
+  if (previous) {
+    if (isPlayer) graveyard.push(previous);
+    else { window.XLW_ENEMY.grave ||= []; window.XLW_ENEMY.grave.push(previous); enemyGraveyard = window.XLW_ENEMY.grave; }
+  }
+  el.dataset.card = JSON.stringify({ ...structuredClone(card), art_subtype: "場地" });
+  return true;
+};
+window.xlwCaptureFactionState = function() {
+  return {
+    playerEnergy: window.XLW_playerSteamEnergy || 0,
+    enemyEnergy: window.XLW_enemySteamEnergy || 0,
+    playerBlackHoleLane: window.XLW_playerBlackHoleLane || 0,
+    enemyBlackHoleLane: window.XLW_enemyBlackHoleLane || 0,
+    banishedTimeGoats: structuredClone(window.XLW_banishedTimeGoats || []),
+    auntieGoatUsedThisTurn: Boolean(window.XLW_auntieGoatUsedThisTurn)
+  };
+};
+window.xlwRestoreFactionState = function(state, peer = false) {
+  if (!state || typeof state !== "object") return;
+  for (const [suffix, key] of [["SteamEnergy", "Energy"], ["BlackHoleLane", "BlackHoleLane"]]) {
+    for (const side of ["player", "enemy"]) {
+      const source = peer ? (side === "player" ? "enemy" : "player") : side;
+      const value = state[source + key];
+      if (Number.isFinite(value) && value >= 0) window["XLW_" + side + suffix] = value;
+    }
+  }
+  if (Array.isArray(state.banishedTimeGoats)) window.XLW_banishedTimeGoats = state.banishedTimeGoats.map(item => ({ ...structuredClone(item), isPlayer: peer ? !item.isPlayer : item.isPlayer }));
+  if (!peer) window.XLW_auntieGoatUsedThisTurn = Boolean(state.auntieGoatUsedThisTurn);
+};
+window.xlwResetFactionState = function() {
+  window.XLW_playerSteamEnergy = window.XLW_enemySteamEnergy = 0;
+  window.XLW_playerBlackHoleLane = window.XLW_enemyBlackHoleLane = 0;
+  window.XLW_banishedTimeGoats = [];
+  window.XLW_auntieGoatUsedThisTurn = false;
+  window.XLW_electrifyChargeSources = null;
+};
+
 // 🐐 山羊族 (Goat Clan / GOT) 核心引擎
 // ==========================================
 window.XLW_GOAT_SYSTEM_IMPLEMENTED = true;
@@ -7456,12 +7507,13 @@ window.xlwTransformUnitToGoat = async function(unit, zone, idx, goatCard, isPlay
 
 // 觸發山羊變形被動連鎖反應
 window.xlwTriggerGoatPolymorphReactions = async function(zone, idx, targetOwner, byPlayer) {
+  const currentFieldMagic = window.xlwGetFactionFieldCard(byPlayer);
   const isCasterPlayer = byPlayer;
   const casterPrefix = isCasterPlayer ? "player_" : "enemy_";
 
   // 1. 山羊學院 (C-GOT-0018 / GOT-0018): 你使場上的單位被變為山羊時，獎勵+1
   const casterFieldZones = [casterPrefix + "front", casterPrefix + "back"];
-  const hasGoatAcademy = (currentFieldMagic && (currentFieldMagic.id === "C-GOT-0018" || currentFieldMagic.id === "GOT-0018" || currentFieldMagic.name?.includes("山羊學院")) && ((isCasterPlayer && currentFieldMagic.isPlayerField) || (!isCasterPlayer && !currentFieldMagic.isPlayerField)));
+  const hasGoatAcademy = (currentFieldMagic && (currentFieldMagic.id === "C-GOT-0018" || currentFieldMagic.id === "GOT-0018" || currentFieldMagic.name?.includes("山羊學院")));
   if (hasGoatAcademy) {
     if (isCasterPlayer) {
       playerBonusScore += 1;
@@ -7591,7 +7643,16 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
   }
 
   await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, card, target.isPlayer, true);
+  if (isMultiplayer) sendFullGameStateToOpponent();
   render();
+};
+
+window.xlwFinishBlackHoleVictory = function(isPlayer) {
+  if (isGameOverFlag) return;
+  triggerCallGameEnd(isPlayer ? "player" : "enemy", "黑洞羊抵達五號星星戰線");
+  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ action: "game_over", specialWinner: isPlayer ? "player" : "enemy" }));
+  }
 };
 
 // 黑洞羊 (GOT-0034 / SSR-GOT-0034) 檢查
@@ -7599,7 +7660,7 @@ window.xlwCheckBlackHoleGoatProgress = async function(isPlayer = true) {
   const lane = isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane;
   if (!lane || lane < 1 || lane >= 5) return;
 
-  const totalGoats = window.xlwCountGoats(isPlayer ? "player" : "enemy");
+  const totalGoats = window.xlwCountGoats("all");
   const reqGoats = lane * 2;
   if (totalGoats >= reqGoats) {
     if (isPlayer) {
@@ -7607,20 +7668,14 @@ window.xlwCheckBlackHoleGoatProgress = async function(isPlayer = true) {
       logBattle(`🌌【黑洞羊】星辰引力！場上山羊數量(${totalGoats})達標，黑洞羊躍遷至【星星戰線 ${window.XLW_playerBlackHoleLane}】！`);
       if (window.XLW_playerBlackHoleLane >= 5) {
         logBattle("💥【黑洞羊】奇點爆發！黑洞羊抵達星星戰線 5，引發超時空引力塌縮，我方獲得特殊勝利！");
-        if (typeof triggerGameEnd === "function") {
-          triggerGameEnd(true, "【黑洞羊】特殊勝利！");
-        } else if (typeof showGameResultModal === "function") {
-          showGameResultModal("我方獲勝！", "黑洞羊抵達星星戰線 5 引發超時空特殊勝利！");
-        }
+        window.xlwFinishBlackHoleVictory(true);
       }
     } else {
       window.XLW_enemyBlackHoleLane++;
       logBattle(`🌌 對手【黑洞羊】躍遷至【星星戰線 ${window.XLW_enemyBlackHoleLane}】！`);
       if (window.XLW_enemyBlackHoleLane >= 5) {
         logBattle("💥 對手【黑洞羊】抵達星星戰線 5，對手獲得特殊勝利！");
-        if (typeof triggerGameEnd === "function") {
-          triggerGameEnd(false, "對手黑洞羊特殊勝利！");
-        }
+        window.xlwFinishBlackHoleVictory(false);
       }
     }
     render();
@@ -7659,17 +7714,14 @@ window.xlwIsSteamCard = function(c) {
 
 // 取得蒸氣能量上限
 window.xlwGetMaxSteamEnergy = function(isPlayer = true) {
+  const currentFieldMagic = window.xlwGetFactionFieldCard(isPlayer);
   // 解放能源廠 (R-STP-0054): 你的充能能量上限改為4
   if (currentFieldMagic && (currentFieldMagic.id === "R-STP-0054" || currentFieldMagic.name?.includes("解放能源廠"))) {
-    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
-      return 4;
-    }
+    return 4;
   }
   // 超載能源場 (C-STP-0025 / R-STP-0025): 你的充能能量上限改為6
   if (currentFieldMagic && (currentFieldMagic.id === "C-STP-0025" || currentFieldMagic.id === "R-STP-0025" || currentFieldMagic.name?.includes("超載能源場"))) {
-    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
-      return 6;
-    }
+    return 6;
   }
   return 5;
 };
@@ -7681,7 +7733,7 @@ window.xlwGetSteamEnergy = function(isPlayer = true) {
 
 // 充能 (Charge Energy)
 window.xlwChargeEnergy = async function(amount, isPlayer = true, sourceUnit = null) {
-  if (amount <= 0) return 0;
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
   const sidePrefix = isPlayer ? "player_" : "enemy_";
   const zones = [sidePrefix + "front", sidePrefix + "back"];
 
@@ -7725,7 +7777,10 @@ window.xlwChargeEnergy = async function(amount, isPlayer = true, sourceUnit = nu
 
   // 觸發全場「通電」反應！
   if (actualAdded > 0 || finalAmount > 0) {
-    await window.xlwTriggerElectrify(isPlayer, sourceUnit);
+    const outerChain = window.XLW_electrifyChargeSources;
+    if (!outerChain) window.XLW_electrifyChargeSources = new WeakSet();
+    try { await window.xlwTriggerElectrify(isPlayer, sourceUnit); }
+    finally { if (!outerChain) window.XLW_electrifyChargeSources = null; }
   }
 
   return actualAdded;
@@ -7733,14 +7788,14 @@ window.xlwChargeEnergy = async function(amount, isPlayer = true, sourceUnit = nu
 
 // 消耗能量 (Consume Energy)
 window.xlwConsumeEnergy = function(cost, isPlayer = true) {
-  if (cost <= 0) return true;
+  const currentFieldMagic = window.xlwGetFactionFieldCard(isPlayer);
+  if (!Number.isFinite(cost) || cost < 0) return false;
+  if (cost === 0) return true;
   let finalCost = cost;
 
   // 解放能源廠 (R-STP-0054): 使你的耗能牌耗能-2，最低耗能為0
   if (currentFieldMagic && (currentFieldMagic.id === "R-STP-0054" || currentFieldMagic.name?.includes("解放能源廠"))) {
-    if ((isPlayer && currentFieldMagic.isPlayerField) || (!isPlayer && !currentFieldMagic.isPlayerField)) {
-      finalCost = Math.max(0, finalCost - 2);
-    }
+    finalCost = Math.max(0, finalCost - 2);
   }
 
   // 黑暗道具 解放器 (R-STP-0029): 本回合你所有耗能牌的耗能-1，若有商人改為-2 (最少為1)
@@ -7832,11 +7887,11 @@ window.xlwTriggerElectrify = async function(isPlayer = true, sourceUnit = null) 
         }
       }
 
-      // 3. 蒸汽充能塔 (R-STP-0052): 通電：使你充能+2 (每回合限一次)
-      if ((c.id === "R-STP-0052" || c.name?.includes("蒸汽充能塔")) && !u._electrifiedThisTurn) {
-        u._electrifiedThisTurn = true;
+      // 3. 蒸汽充能塔 (R-STP-0052): 每次充能連鎖中，同一來源不重入。
+      if ((c.id === "R-STP-0052" || c.name?.includes("蒸汽充能塔")) && !window.XLW_electrifyChargeSources.has(u)) {
+        window.XLW_electrifyChargeSources.add(u);
         logBattle(`⚡【蒸汽充能塔】通電共鳴！`);
-        setTimeout(() => { window.xlwChargeEnergy(2, isPlayer, u); }, 100);
+        await window.xlwChargeEnergy(2, isPlayer, u);
       }
 
       // 4. 蒸汽城堡守衛 (R-STP-0053): 通電：+2攻擊力直到下回合結束時
@@ -7878,9 +7933,10 @@ window.xlwTriggerElectrify = async function(isPlayer = true, sourceUnit = null) 
 
       // 6. 裝備卡通電判定
       if (u.equipments && u.equipments.length > 0) {
-        if (u.equipments.includes("通電道具 通電裝") || u.equipments.some(e => e.includes("通電裝"))) {
+        if ((u.equipments.includes("通電道具 通電裝") || u.equipments.some(e => e.includes("通電裝"))) && !window.XLW_electrifyChargeSources.has(u)) {
+          window.XLW_electrifyChargeSources.add(u);
           logBattle(`⚡【通電裝】通電效果：額外充能 +2！`);
-          setTimeout(() => { window.xlwChargeEnergy(2, isPlayer, u); }, 100);
+          await window.xlwChargeEnergy(2, isPlayer, u);
         }
         if (u.equipments.includes("通電道具 人偶百寶袋") || u.equipments.some(e => e.includes("人偶百寶袋"))) {
           logBattle(`⚡【人偶百寶袋】通電效果：召喚 1 個小旅人！`);
@@ -8170,9 +8226,7 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      currentFieldMagic = structuredClone(spellCard);
-      currentFieldMagic.isPlayerField = true;
-      currentFieldMagic.art_subtype = "場地";
+      window.xlwSetFactionFieldCard(spellCard, true);
       logBattle("🏫【山羊學院】展開！場地生效中：每當你使場上的單位變為山羊時，獎勵 +1★！");
       render();
     });
@@ -8229,9 +8283,7 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      currentFieldMagic = structuredClone(spellCard);
-      currentFieldMagic.isPlayerField = true;
-      currentFieldMagic.art_subtype = "場地";
+      window.xlwSetFactionFieldCard(spellCard, true);
       logBattle("⛲【彩虹羊噴泉】展開！");
       
       const goatHands = hand.filter(c => c && window.xlwIsGoatCard(c));
@@ -8377,9 +8429,7 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      currentFieldMagic = structuredClone(spellCard);
-      currentFieldMagic.isPlayerField = true;
-      currentFieldMagic.art_subtype = "場地";
+      window.xlwSetFactionFieldCard(spellCard, true);
       logBattle("⚡【超載能源場】展開！充能上限提升至 6，回合結束時將自動充能 +1！");
       render();
     });
@@ -8521,9 +8571,7 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      currentFieldMagic = structuredClone(spellCard);
-      currentFieldMagic.isPlayerField = true;
-      currentFieldMagic.art_subtype = "場地";
+      window.xlwSetFactionFieldCard(spellCard, true);
       logBattle("🏭【解放能源廠】展開！充能上限改為 4，所有耗能牌耗能 -2（最低 0）！");
       render();
     });
@@ -13703,26 +13751,24 @@ async function confirmTribute() {
           }
           if (myTargets.length > 0) {
             if (isPlayer) {
-              const doTrans = await showXLWConfirm("【火圈山羊】獻祭效果", "【火圈山羊】被獻祭！是否視為發動「山羊術」，將我方場上 1 個單位變身為山羊（3攻擊力/1★）？");
+              const doTrans = await showXLWConfirm("【火圈山羊】獻祭效果", "【火圈山羊】被獻祭！是否視為發動「山羊術」，將我方場上 1 個單位變身為火圈山羊（3攻擊力/2★）？");
               if (doTrans) {
                 const choices = myTargets.map((item, idx) => ({
                   text: `${item.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
                   value: idx
                 }));
                 const pick = await showXLWChoiceModal("【火圈山羊】選擇變身目標", "請選擇變身為山羊的目標：", choices);
-                if (pick && pick.value !== undefined) {
-                  const targetItem = myTargets[pick.value];
+                if (pick !== null && pick !== undefined) {
+                  const targetItem = myTargets[pick];
                   if (targetItem && field[targetItem.zone][targetItem.idx]) {
-                    window.xlwTransformUnitToGoat(targetItem.zone, targetItem.idx, 3, 1, "火圈山羊術");
-                    await window.xlwTriggerGoatPolymorphReactions(isPlayer ? "player" : "enemy");
+                    await window.xlwTransformUnitToGoat(targetItem.unit, targetItem.zone, targetItem.idx, unit.card, isPlayer, isPlayer);
                   }
                 }
               }
             } else {
               const targetItem = myTargets[0];
               if (targetItem && field[targetItem.zone][targetItem.idx]) {
-                window.xlwTransformUnitToGoat(targetItem.zone, targetItem.idx, 3, 1, "火圈山羊術");
-                await window.xlwTriggerGoatPolymorphReactions("enemy");
+                await window.xlwTransformUnitToGoat(targetItem.unit, targetItem.zone, targetItem.idx, unit.card, false, false);
               }
             }
           }
@@ -15277,12 +15323,14 @@ async function performSummonToSlot(zone, idx) {
 
       // 8. 宇宙山羊 夕羊 (GOT-0038): 立即：若場地為太羊，使黑洞羊前進到下一張戰線牌
       if (card.id === "GOT-0038" || card.name?.includes("夕羊")) {
+        const currentFieldMagic = window.xlwGetFactionFieldCard(isPlayer);
         const isSunGoat = currentFieldMagic && (currentFieldMagic.id === "GOT-0036" || currentFieldMagic.name?.includes("太羊"));
         if (isSunGoat) {
           const curLane = isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane;
-          if (curLane >= 1 && curLane < 4) {
+          if (curLane >= 1 && curLane < 5) {
             if (isPlayer) window.XLW_playerBlackHoleLane++;
             else window.XLW_enemyBlackHoleLane++;
+            if ((isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane) === 5) window.xlwFinishBlackHoleVictory(isPlayer);
             logBattle(`🌅【宇宙山羊 夕羊】夕陽照耀！場地太羊共鳴，黑洞羊躍遷至【星星戰線 ${isPlayer ? window.XLW_playerBlackHoleLane : window.XLW_enemyBlackHoleLane}】！`);
           }
         }
@@ -30711,8 +30759,9 @@ async function endPlayerTurnAndRunEnemy() {
   }
 
   // ⚡ 超載能源場 (C-STP-0025 / R-STP-0025): 結束階段時，充能+1
+  const currentFieldMagic = window.xlwGetFactionFieldCard(true);
   const hasOverloadField = currentFieldMagic && (currentFieldMagic.id === "C-STP-0025" || currentFieldMagic.id === "R-STP-0025" || currentFieldMagic.name?.includes("超載能源場"));
-  if (hasOverloadField && currentFieldMagic.isPlayerField) {
+  if (hasOverloadField) {
     logBattle("⚡【超載能源場】磁能匯聚：回合結束充能 +1！");
     await window.xlwChargeEnergy(1, true);
   }
@@ -31856,6 +31905,7 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
       hand.splice(idx, 1);
       window.XLW_playerBlackHoleLane = 1;
       normalSummonUsed = true;
+      if (isMultiplayer) sendFullGameStateToOpponent();
       logBattle("🌌【黑洞羊】成功部署於一號星星戰線！超時空奇點開啟！");
       render();
       return;
@@ -31867,10 +31917,9 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     const doField = await showXLWConfirm("【宇宙山羊 太羊】場地化", "你的召喚階段：是否將【宇宙山羊 太羊】作為場地魔法卡使用？");
     if (doField) {
       hand.splice(idx, 1);
-      currentFieldMagic = structuredClone(card);
-      currentFieldMagic.isPlayerField = true;
-      currentFieldMagic.art_subtype = "場地";
+      window.xlwSetFactionFieldCard(card, true);
       normalSummonUsed = true;
+      if (isMultiplayer) sendFullGameStateToOpponent();
       logBattle("☀️【宇宙山羊 太羊】化作耀眼的光環，展開為場地魔法卡！");
       render();
       return;
@@ -37193,7 +37242,7 @@ function renderScore() {
     ` : ""}
 
     <!-- ⚙️ 蒸氣世界 電池能量條 -->
-    ${(window.xlwGetSteamEnergy(true) > 0 || (currentFieldMagic && window.xlwIsSteamCard(currentFieldMagic))) ? `
+    ${(window.xlwGetSteamEnergy(true) > 0 || window.xlwIsSteamCard(window.xlwGetFactionFieldCard(true))) ? `
       <div style="background: linear-gradient(135deg, rgba(30,58,138,0.7), rgba(15,23,42,0.8)); border: 1px solid #38bdf8; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #bae6fd;">
         <span>🔋 <b>蒸氣能量電池</b></span>
         <span style="font-weight: 900; color: #38bdf8;">${window.xlwGetSteamEnergy(true)} / ${window.xlwGetMaxSteamEnergy(true)} ⚡</span>
@@ -38302,6 +38351,7 @@ function setupWebSocketEvents() {
           }
         }
         
+        window.xlwRestoreFactionState(s.factionState, true);
         playerBonusScore = s.enemyBonusScore;
         enemyBonusScore = s.playerBonusScore;
         
@@ -38440,6 +38490,10 @@ function setupWebSocketEvents() {
     } else if (data.action === "battle_log") {
       logBattle(String(data.message || ""));
     } else if (data.action === "game_over") {
+      if (data.specialWinner === "player" || data.specialWinner === "enemy") {
+        triggerCallGameEnd(data.specialWinner === "player" ? "enemy" : "player", "黑洞羊抵達五號星星戰線");
+        return;
+      }
       window.XLW_syncGameOverFromOpponent = true;
       executeGameOverCalculations(data.isCallGame || false);
       window.XLW_syncGameOverFromOpponent = false;
@@ -40199,8 +40253,8 @@ async function triggerSneakAttackSuccessEffects(card) {
     if (goatCandidates.length > 0) {
       const choices = goatCandidates.map((c, i) => ({ text: `【${c.name}】(${c.id || ''})`, value: c }));
       const pick = await showXLWChoiceModal("【喵山羊】偷竊成功", "牌庫檢索：請選擇一張山羊族牌加入手牌：", choices);
-      if (pick && pick.value) {
-        const fIdx = deck.indexOf(pick.value);
+      if (pick) {
+        const fIdx = deck.findIndex(c => c === pick || (pick._xlwInstanceId && c?._xlwInstanceId === pick._xlwInstanceId));
         if (fIdx >= 0) {
           const added = deck.splice(fIdx, 1)[0];
           hand.push(added);
@@ -42037,7 +42091,7 @@ function calculateUnitCount(isPlayer) {
   return count;
 }
 
-function triggerCallGameEnd(winner) {
+function triggerCallGameEnd(winner, specialReason = "") {
   const isCallGame = true;
   isGameOverFlag = true;
   countdownActive = false;
@@ -42076,18 +42130,20 @@ function triggerCallGameEnd(winner) {
     msg = "我方提早結束宣告達成，我方勝利！";
   }
 
+  if (specialReason) msg = `${specialReason}，${winner === "player" ? "我方勝利" : "對手勝利"}！`;
+
   if (result === "VICTORY") {
     try { if (window.xlwPlaySFX) window.xlwPlaySFX('victory'); } catch (e) {}
     if (typeof window.xlwShowPhaseBanner === 'function') {
       window.xlwShowPhaseBanner("🏆 戰鬥結束 — 獲得勝利！", "#ffd76a");
     }
-    setStatus("🎉 恭喜獲勝！提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
+    setStatus(specialReason ? `🎉 ${msg}` : "🎉 恭喜獲勝！提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
   } else {
     try { if (window.xlwPlaySFX) window.xlwPlaySFX('defeat'); } catch (e) {}
     if (typeof window.xlwShowPhaseBanner === 'function') {
       window.xlwShowPhaseBanner("💀 戰鬥結束 — 遺憾戰敗", "#ff4d4f");
     }
-    setStatus("💀 本局遺憾落敗。對手提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
+    setStatus(specialReason ? `💀 ${msg}` : "💀 本局遺憾落敗。對手提早結束宣告達成。點擊下方可檢視戰局或返回首頁。");
   }
   
   let panel = document.getElementById("xlwResultPanel");
@@ -43494,7 +43550,7 @@ function promptNextChainAction() {
           (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
         );
         const reqEnergy = hasMerchant ? 2 : 4;
-        return window.xlwGetSteamEnergy("player") >= reqEnergy;
+        return window.xlwGetSteamEnergy(true) >= reqEnergy;
       }
       return name.includes("魔法反制") || cid.includes("NMG-0020") ||
              name.includes("終極無效化") || cid.includes("NMG-0026") ||
@@ -43535,7 +43591,7 @@ function promptNextChainAction() {
               (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
             );
             const reqEnergy = hasMerchant ? 2 : 4;
-            window.xlwConsumeEnergy("player", reqEnergy);
+            if (!window.xlwConsumeEnergy(reqEnergy, true)) { decisionTaken = false; showSpellChainUI(spellChainStack); promptNextChainAction(); return; }
             logBattle(`🌑【黑暗道具 黑球】消耗 ${reqEnergy} 點蒸氣能量（商人折抵後），發動連鎖反制！`);
           }
 
@@ -44547,6 +44603,7 @@ function saveLocalGameState() {
       pendingInteraction: Boolean(window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
         ["summon", "spell_chain_start", "coin_toss_choice"].includes(window.XLW_sync?.sendingAction)),
       field: field,
+      factionState: window.xlwCaptureFactionState(),
       playerFieldCard: pfEl?.dataset.card ? JSON.parse(pfEl.dataset.card) : null,
       enemyFieldCard: efEl?.dataset.card ? JSON.parse(efEl.dataset.card) : null,
       hand: hand,
@@ -44658,6 +44715,7 @@ window.xlwApplySavedStateObject = function(s) {
     turn = typeof s.turn === 'number' ? s.turn : turn;
     phase = s.phase || phase;
     isMyTurn = typeof s.isMyTurn === 'boolean' ? s.isMyTurn : isMyTurn;
+    window.xlwRestoreFactionState(s.factionState);
     opponent_joined = typeof s.opponent_joined === 'boolean' ? s.opponent_joined : true;
     opponent_mulligan_done = typeof s.opponent_mulligan_done === 'boolean' ? s.opponent_mulligan_done : opponent_mulligan_done;
     
@@ -44891,6 +44949,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     includeTurnPhase: Boolean(includeTurnPhase || isMyTurn),
     mulliganDone: !mulliganActive,
     field: field,
+    factionState: window.xlwCaptureFactionState(),
     playerFieldCard: document.getElementById("playerField")?.dataset.card ? JSON.parse(document.getElementById("playerField").dataset.card) : null,
     enemyFieldCard: document.getElementById("enemyField")?.dataset.card ? JSON.parse(document.getElementById("enemyField").dataset.card) : null,
     playerBonusScore: playerBonusScore,

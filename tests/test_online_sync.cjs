@@ -118,6 +118,7 @@ module.exports = (async () => {
   };
   const game = vm.createContext(globals);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../static/battle_flow.js'), 'utf8'), game);
+  vm.runInContext(gameSource.slice(gameSource.indexOf('// Faction state uses'),gameSource.indexOf('// 🐐 山羊族 (Goat Clan / GOT) 核心引擎')), game);
   vm.runInContext(handler, game);
   const remoteField = structuredClone(fields);
   remoteField.enemy_front[0] = { card: { id: 'goat', creator: 'player' },
@@ -125,6 +126,7 @@ module.exports = (async () => {
     kidnappedCards: [{ id: 'captive', originalOwner: 'enemy' }] };
   const snapshot = {
     field: remoteField, enemyHand: [], enemyDeck: [], playerHand: [], playerDeck: [],
+    factionState: { playerEnergy: 4, enemyEnergy: 2, playerBlackHoleLane: 3, enemyBlackHoleLane: 1 },
     playerBonusScore: 3, enemyBonusScore: 7, XLW_coinTossFirstGo: false,
     includeTurnPhase: true, isMyTurn: true, phase: '戰術佈陣', turn: 4, mulliganDone: true,
   };
@@ -134,6 +136,8 @@ module.exports = (async () => {
   assert.equal(game.field.player_front[0].target.zone, 'enemy_back');
   assert.equal(game.field.player_front[0].kidnappedCards[0].originalOwner, 'player');
   assert.equal(game.window.XLW_coinTossFirstGo, true);
+  assert.equal(game.window.XLW_playerSteamEnergy, 2); assert.equal(game.window.XLW_enemySteamEnergy, 4);
+  assert.equal(game.window.XLW_playerBlackHoleLane, 1); assert.equal(game.window.XLW_enemyBlackHoleLane, 3);
   assert.equal(game.playerBonusScore, 7); assert.equal(game.enemyBonusScore, 3);
   assert.equal(game.isMyTurn, false); assert.equal(game.turn, 4);
   assert.equal(game.opponent_mulligan_done, true); tests++;
