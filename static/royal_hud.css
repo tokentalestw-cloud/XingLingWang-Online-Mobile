@@ -1,4 +1,4 @@
-/* Xinglingwang — Astral Forge. Final presentation layer; no game-state rules. */
+/* Xinglingwang celestial instrument finish. */
 :root {
   --xlw-ink: #080e19;
   --xlw-metal: #172237;
@@ -8,6 +8,12 @@
   --xlw-muted: #a7b4c7;
   --xlw-star-blue: #9bdce7;
   --xlw-enemy: #d89aa5;
+  --xlw-champagne-rim: #bfa379;
+  --xlw-champagne-light: #f5e3bd;
+  --xlw-champagne-dark: #654a30;
+  --xlw-enamel: linear-gradient(158deg, #263c53, #131f32 38%, #080f1e 79%);
+  --xlw-key-face: linear-gradient(168deg, #ffffff17, transparent 37%),
+    linear-gradient(180deg, #2e455e, #101b2e 89%);
   --xlw-rail: 272px;
   --xlw-safe-edge: 24px;
   --xlw-star-sigil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='white' d='m20 0 4.8 13.2L36 4l-9.2 11.2L40 20l-13.2 4.8L36 36l-11.2-9.2L20 40l-4.8-13.2L4 36l9.2-11.2L0 20l13.2-4.8L4 4l11.2 9.2z'/%3E%3C/svg%3E");
@@ -34,16 +40,16 @@ body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-particles { opacity: .55; }
 body.xlw-royal-ui :is(#scoreBadgeFixed, #stableActionPanel) {
   width: var(--xlw-rail) !important;
   padding: 17px !important;
-  border: 1px solid #9c8459 !important;
-  border-top-color: #e3cd9a !important;
-  border-bottom: 4px solid #423824 !important;
+  border: 1px solid var(--xlw-champagne-rim) !important;
+  border-top-color: var(--xlw-champagne-light) !important;
+  border-bottom: 4px solid var(--xlw-champagne-dark) !important;
   border-radius: 12px !important;
   background:
-    linear-gradient(115deg, #ffffff07, transparent 34%),
-    radial-gradient(ellipse at 50% 0, #8a79531b, transparent 65%),
-    linear-gradient(165deg, #1b2638, #0c1321 56%, #080e18) !important;
-  box-shadow: inset 0 1px 0 #fff5d82e, inset 0 0 0 4px #080e19,
-    inset 0 0 0 5px #c6ab6430, 0 3px 0 #060b12, 0 15px 35px #0008 !important;
+    radial-gradient(ellipse at 15% 0, #90bad329, transparent 54%),
+    var(--xlw-enamel) !important;
+  box-shadow: inset 0 0 0 1px #fff0cd7a, inset 0 0 0 3px #10141f,
+    inset 0 0 0 4px #ac8d5b74, inset 0 -5px 5px #01040baa,
+    0 3px 0 #060b12, 0 12px 22px #02050dd4 !important;
   backdrop-filter: none !important;
   transform: none !important;
   box-sizing: border-box !important;
@@ -54,7 +60,7 @@ body.xlw-royal-ui :is(#scoreBadgeFixed, #stableActionPanel)::after {
   content: '' !important;
   position: absolute !important;
   inset: 8px !important;
-  border: solid #c4a66560 !important;
+  border: solid #c4a66580 !important;
   border-width: 1px 0 0 !important;
   border-radius: 4px !important;
   background: none !important;
@@ -110,16 +116,16 @@ body.xlw-royal-ui #scoreBadgeFixed .score-badge-card {
   --score-light: var(--xlw-star-blue);
   position: relative;
   padding: 11px 12px !important;
-  background: linear-gradient(125deg, #1c3a4e90, #0b1726 75%) !important;
+  background: linear-gradient(148deg, #264b62, #112137 58%, #0a1425) !important;
   border: 1px solid #64899570 !important;
   border-left: 2px solid #8ac8d5 !important;
   border-bottom: 3px solid #040a12 !important;
   border-radius: 5px !important;
-  box-shadow: inset 0 1px 0 #d3f7ff18, 0 2px 4px #0006 !important;
+  box-shadow: inset 0 1px #d3f7ff53, inset 0 -2px #0809147a, 0 3px 5px #0009 !important;
 }
 body.xlw-royal-ui #scoreBadgeFixed .score-badge-card.enemy {
   --score-light: var(--xlw-enemy);
-  background: linear-gradient(125deg, #46263390, #1a1420 75%) !important;
+  background: linear-gradient(148deg, #553042, #251b2d 58%, #14101d) !important;
   border-color: #a16d7b60 !important;
   border-left: 2px solid #c18294 !important;
   border-bottom-color: #0d060d !important;
@@ -213,20 +219,20 @@ body.xlw-royal-ui #stableActionPanel .stable-action-choice-tip {
 body.xlw-royal-ui #stableActionPanel .stable-action-row { gap: 9px !important; }
 body.xlw-royal-ui #stableActionPanel :is(.stable-action-btn, #stableActionEnd, #stableActionMulliganConfirm,
   #stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) {
-  --button-edge: #746549;
-  --button-depth: #141b28;
-  --button-top: #465570;
-  --button-bottom: #243247;
+  --button-edge: #9f8866;
+  --button-depth: #221a17;
+  --button-top: #354860;
+  --button-bottom: #131f32;
   min-height: 43px !important; height: auto !important; padding: 10px !important;
   position: relative !important; isolation: isolate;
   border: 1px solid var(--button-edge) !important;
-  border-top-color: #c3c9ca82 !important; border-bottom-width: 1px !important;
+  border-top-color: var(--xlw-champagne-light) !important; border-bottom-width: 1px !important;
   border-radius: 11px !important;
-  background: linear-gradient(180deg, var(--button-top), var(--button-bottom) 88%) !important;
+  background: linear-gradient(168deg, #ffffff17, transparent 37%), linear-gradient(180deg, var(--button-top), var(--button-bottom) 89%) !important;
   color: #eee9da !important; font-size: 13px !important; font-weight: 750 !important;
   text-shadow: 0 2px 2px #000b !important;
-  box-shadow: inset 0 2px #ffffff59, inset 0 -3px #0003,
-    0 4px 0 var(--button-depth), 0 5px 0 #080d17, 0 7px 9px #0007 !important;
+  box-shadow: inset 0 1px #fff6df85, inset 0 0 0 2px #a98b6060, inset 0 -3px #050a12ac,
+    0 4px 0 var(--button-depth), 0 5px 0 #050810, 0 7px 9px #000a !important;
   transform: none !important; filter: none !important; animation: none !important;
   opacity: 1 !important; gap: 3px !important; overflow: hidden !important;
   transition: transform 120ms ease, filter 140ms ease, box-shadow 120ms ease, border-color 140ms ease !important;
@@ -242,22 +248,22 @@ body.xlw-royal-ui #stableActionPanel :is(#stableActionTactical, #stableActionAtt
   min-height: 72px !important; padding: 10px 4px !important; gap: 7px !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionTactical {
-  --button-top: #347f8b; --button-bottom: #174655;
+  --button-top: #315a70; --button-bottom: #13273c;
   --button-depth: #081a24; --button-edge: #65949a;
   color: #def0ee !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionAttack {
-  --button-top: #ab5550; --button-bottom: #602934;
+  --button-top: #623e57; --button-bottom: #2c1d33;
   --button-depth: #1d0f19; --button-edge: #b17f87;
   color: #f0dfe0 !important;
 }
 body.xlw-royal-ui #stableActionPanel #stableActionConfirm {
-  --button-top: #776294; --button-bottom: #443654;
+  --button-top: #46445e; --button-bottom: #20263c;
   --button-depth: #161222; --button-edge: #9685a6;
   flex-direction: row !important; gap: 8px !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionCancel, .secondary) {
-  --button-top: #48556b; --button-bottom: #273343; --button-edge: #536171;
+  --button-top: #384658; --button-bottom: #172131; --button-edge: #536171;
   flex-direction: row !important; gap: 8px !important; color: #b5c1cf !important;
 }
 body.xlw-royal-ui #stableActionPanel .btn-text { font-size: 13px !important; font-weight: 750 !important; }
@@ -274,18 +280,18 @@ body.xlw-royal-ui #stableActionPanel #stableActionCancel .btn-icon {
     linear-gradient(-45deg, transparent 45%, currentColor 46% 54%, transparent 55%);
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary) {
-  --button-top: #ffe4a2; --button-bottom: #c88136;
+  --button-top: #2a707c; --button-bottom: #0a313d;
   --button-edge: #d2ba7b; --button-depth: #51452b;
   min-height: 76px !important; padding: 13px 10px 13px 48px !important;
-  color: #23170e !important;
-  text-shadow: 0 1px #fff6cf80 !important;
-  box-shadow: inset 0 2px #fff5d5ad, inset 0 -3px #763e2160,
-    0 4px 0 #734623, 0 5px 0 #29190f, 0 8px 11px #0008 !important;
+  color: #f0faf7 !important;
+  text-shadow: 0 2px 2px #031017 !important;
+  box-shadow: inset 0 1px #fff5d5ad, inset 0 0 0 2px #d8b98090, inset 0 -4px #061b22cc,
+    0 4px 0 #56402b, 0 5px 0 #150e0d, 0 8px 11px #000a !important;
 }
 body.xlw-royal-ui #stableActionPanel :is(#stableActionEnd, #stableActionMulliganConfirm, .primary)::before {
   content: '' !important; position: absolute !important;
   width: 27px !important; height: 34px !important; top: calc(50% - 17px) !important; left: 16px !important;
-  background: linear-gradient(140deg, #fff7ce 0%, #edcf87 29%, #a6e8ec 30%, #6abfc8 52%, #315f78 53%, #142c41 100%) !important;
+  background: conic-gradient(from 16deg at 52% 42%, #d6fbff 0deg 54deg, #50afcb 55deg 112deg, #195174 113deg 177deg, #3d8eb5 178deg 230deg, #84dfed 231deg 287deg, #e3fcff 288deg) !important;
   clip-path: polygon(50% 0, 91% 24%, 83% 78%, 50% 100%, 17% 78%, 9% 24%);
   border: 0 !important; border-radius: 0 !important;
   box-shadow: none !important; filter: none !important; opacity: 1 !important;
@@ -338,9 +344,8 @@ body.xlw-royal-ui #phaseDisplayPanelHard {
   gap: 5px !important; padding: 12px 30px !important; box-sizing: border-box !important;
   border: 1px solid #b19a615e !important; border-top-color: #d5bd83 !important;
   border-bottom: 3px solid #383422 !important; border-radius: 5px 5px 13px 13px !important;
-  background: radial-gradient(ellipse at 50% -80%, #5f798c77, transparent 75%),
-    linear-gradient(180deg, #1b293b, #0b1321) !important;
-  box-shadow: inset 0 1px 0 #fff0c429, inset 0 0 0 3px #0a1321, 0 9px 22px #0007 !important;
+  background: radial-gradient(ellipse at 15% 0, #577e9a53, transparent 69%), var(--xlw-enamel) !important;
+  box-shadow: inset 0 1px #fff0c47a, inset 0 0 0 2px #0a1321, inset 0 0 0 3px #ab895f64, 0 7px 14px #0009 !important;
   backdrop-filter: none !important; overflow: visible !important;
 }
 body.xlw-royal-ui #phaseDisplayPanelHard::before,
@@ -384,7 +389,7 @@ body.xlw-royal-ui #xlwFixedTopRightActionBar :is(button, #scoreBtn, #xlwSfxToggl
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 32px !important; min-height: 32px !important; padding: 5px 11px !important;
   border: 1px solid #7481964d !important; border-bottom: 2px solid #080d17 !important;
-  border-radius: 8px !important; background: linear-gradient(#485c71, #253649) !important;
+  border-radius: 8px !important; background: var(--xlw-key-face) !important;
   color: #f5f1e8 !important; font-size: 11px !important; font-weight: 700 !important;
   box-shadow: inset 0 2px #ffffff38, inset 0 -2px #0003, 0 2px 0 #080d17, 0 4px 5px #0007 !important; text-shadow: 0 1px 1px #000 !important;
 }
@@ -811,7 +816,7 @@ body.xlw-royal-ui #boardWrap .board-playmat {
   border: 2px solid var(--mat-rim) !important;
   border-top-color: var(--mat-light) !important;
   border-bottom-color: var(--mat-wall) !important;
-  outline: 1px dashed var(--mat-stitch) !important; outline-offset: -6px !important;
+  outline: 1px solid var(--mat-stitch) !important; outline-offset: -6px !important;
   box-shadow: 0 2px 0 var(--mat-wall), 0 5px 0 #141b29, 0 7px 0 #050a13,
     0 12px 12px #02060db3, 0 22px 26px #02060d66,
     inset 0 2px 2px #fff4d659, inset 0 -4px 5px #020610a6 !important;
@@ -906,10 +911,9 @@ html body.xlw-royal-ui #xlwEnemyFloatingHand .floating-enemy-card-back:first-chi
 /* Quiet celestial observatory: ink blue, teal below, plum above, engraved gold orbits. */
 body.xlw-royal-ui #xlwStarlightAtmosphere {
   background:
-    radial-gradient(ellipse at 20% 76%, #26667552, transparent 49%),
-    radial-gradient(ellipse at 80% 15%, #66354e47, transparent 48%),
-    radial-gradient(ellipse at 50% 44%, #1b30484d, transparent 60%),
-    linear-gradient(145deg, #111e32, #0b1425 58%, #0b1020) !important;
+    radial-gradient(ellipse at 18% 77%, #1d40512e, transparent 52%),
+    radial-gradient(ellipse at 81% 11%, #2e345a30, transparent 47%),
+    linear-gradient(145deg, #131f33, #0b1425 58%, #080d19) !important;
 }
 body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-glow-ambient {
   background: radial-gradient(ellipse at 12% 82%, #79d8e21a, transparent 35%),
@@ -918,7 +922,7 @@ body.xlw-royal-ui #xlwStarlightAtmosphere .starlight-glow-ambient {
 }
 body.xlw-royal-ui #xlwStarlightAtmosphere .arena-celestial-map {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  color: #d2bb88; opacity: .17; pointer-events: none;
+  color: #d2bb88; opacity: .23; pointer-events: none;
 }
 body.xlw-royal-ui #xlwStarlightAtmosphere::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -953,7 +957,7 @@ body.xlw-royal-ui #boardWrap :is(.row, .zone, .slot, .board-playmat, .battle-lin
 
 /* v7 / 2: keep the original playmat illustration and its geometry; quiet the surface. */
 body.xlw-royal-ui #boardWrap .board-playmat::before {
-  background: linear-gradient(180deg, #07122066 0%, #07122088 62%, #071220c9 100%) !important;
+  background: linear-gradient(145deg, #f8e2ad10, #101b3022 40%, #07122078 100%) !important;
   box-shadow: inset 0 0 0 7px #07101c33, inset 0 0 0 8px #fff0cf24 !important;
 }
 /* v7 / 4: feedback uses existing legality classes and validated attack declarations. */
@@ -1144,10 +1148,10 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
   padding: 8px 14px !important;
   border: 1px solid #baa16a !important;
   border-radius: 9px !important;
-  background: linear-gradient(#ffe4a2, #c88136) !important;
-  color: #23170e !important;
-  text-shadow: 0 1px #fff6cf80 !important;
-  box-shadow: inset 0 2px #fff5d5ad, inset 0 -3px #763e2160, 0 3px 0 #734623, 0 5px 7px #0007 !important;
+  background: linear-gradient(#2a6776, #123242) !important;
+  color: #f0faf7 !important;
+  text-shadow: 0 1px 2px #041218 !important;
+  box-shadow: inset 0 1px #fff5d5a0, inset 0 -3px #061b227d, 0 3px 0 #54402c, 0 5px 7px #0008 !important;
   font: inherit;
   font-size: 14px;
   font-weight: 600;
