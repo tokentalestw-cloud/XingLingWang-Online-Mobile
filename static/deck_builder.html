@@ -845,7 +845,6 @@
       <span style="font-size: 16px; color: #ffffff; letter-spacing: 0.5px;">牌組構築器</span>
     </h1>
     <div class="header-actions">
-      <a href="/static/plant_review.html" class="top-nav-btn">植物園卡牌審閱</a>
       <a href="/static/admin.html" class="top-nav-btn" style="border-color: #ffd76a;">卡牌資料編輯器</a>
       <a href="/" class="top-nav-btn" style="border-color: #ffd76a; color: #ffd76a; font-weight: bold;">🏠 返回首頁</a>
     </div>
@@ -1672,7 +1671,7 @@
       const ALL_FACTIONS = [
         "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
         "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-        "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+        "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人", "植物園"
       ];
       for (const fac of ALL_FACTIONS) {
         if (v.includes(fac.substring(0, 2))) {
@@ -1714,7 +1713,8 @@
         "蒸汽世界": ["STP"],
         "進化野人": ["EWD"],
         "馬戲團": ["CCS"],
-        "骷髏人": ["SKT"]
+        "骷髏人": ["SKT"],
+        "植物園": ["PLT"]
       };
 
       const currentPrefixes = FACTION_PREFIXES[deckName] || [];

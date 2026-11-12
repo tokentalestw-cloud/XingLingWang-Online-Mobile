@@ -955,7 +955,8 @@ def save_deck(data: DeckSaveSchema):
                 "蒸汽世界": ["STP"],
                 "進化野人": ["EWD"],
                 "馬戲團": ["CCS"],
-                "骷髏人": ["SKT"]
+                "骷髏人": ["SKT"],
+                "植物園": ["PLT"]
             }
             deck_faction = None
             for fac in faction_prefixes.keys():
@@ -1187,7 +1188,7 @@ def reorder_decks(data: DeckReorderSchema):
 DEFAULT_FACTIONS = [
     "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
     "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人", "植物園"
 ]
 
 
