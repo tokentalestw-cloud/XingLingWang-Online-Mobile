@@ -1062,7 +1062,7 @@ function populateAiFactionsDropdown(factionOrder = []) {
   const factions = (Array.isArray(factionOrder) && factionOrder.length > 0) ? factionOrder : [
     "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
     "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人"
+    "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人", "植物園"
   ];
 
   let optionsHtml = '<option value="隨機">🎲 隨機種族</option>';

@@ -482,6 +482,7 @@
           <option value="進化野人">進化野人</option>
           <option value="馬戲團">馬戲團</option>
           <option value="骷髏人">骷髏人</option>
+          <option value="植物園">植物園</option>
         </select>
       </div>
 
@@ -635,7 +636,8 @@
         "蒸汽世界": "STP-",
         "進化野人": "EWD-",
         "馬戲團": "CCS-",
-        "骷髏人": "SKT-"
+        "骷髏人": "SKT-",
+        "植物園": "PLT-"
       };
       return mapping[subdir] || "NEU-";
     }
@@ -648,7 +650,7 @@
       "喵喵賊": true, "妖怪村莊": true, "藝術品": true, "中立單位": true, "獸人": true, "虛擬世界": true,
       "勇者公會": true, "妖精": true, "山羊族": true, "機械軍團": true, "歡樂島": true, "特殊旅人": true,
       "甜點王國": true, "發電獸": true, "碳碳族": true, "蒸汽世界": true,
-      "進化野人": true, "馬戲團": true, "骷髏人": true
+      "進化野人": true, "馬戲團": true, "骷髏人": true, "植物園": true
     };
     let isZoomed = false;
     let currentTab = "unprocessed";
@@ -927,11 +929,11 @@
           const maxNum = nums.length > 0 ? Math.max(...nums) : 0;
           const nextNum = maxNum + 1;
           // 保持與既有卡牌格式長度對齊
-          const suffixLength = (prefix === "ART-" || prefix === "NEU-") ? 4 : 3;
+          const suffixLength = (prefix === "ART-" || prefix === "NEU-" || prefix === "PLT-") ? 4 : 3;
           const suffix = String(nextNum).padStart(suffixLength, "0");
           document.getElementById("cId").value = prefix + suffix;
         } else {
-          document.getElementById("cId").value = prefix + ((prefix === "ART-" || prefix === "NEU-") ? "0001" : "001");
+          document.getElementById("cId").value = prefix + ((prefix === "ART-" || prefix === "NEU-" || prefix === "PLT-") ? "0001" : "001");
         }
       }
 
@@ -961,11 +963,11 @@
       if (同種族卡牌.length > 0) {
         const nums = 同種族卡牌.map(c => parseInt(c.id.replace(prefix, ""), 10)).filter(Number.isFinite);
         const maxNum = Math.max(...nums);
-        const suffixLength = (prefix === "ART-" || prefix === "NEU-") ? 4 : 3;
+        const suffixLength = (prefix === "ART-" || prefix === "NEU-" || prefix === "PLT-") ? 4 : 3;
         const suffix = String(maxNum + 1).padStart(suffixLength, "0");
         document.getElementById("cId").value = prefix + suffix;
       } else {
-        document.getElementById("cId").value = prefix + ((prefix === "ART-" || prefix === "NEU-") ? "0001" : "001");
+        document.getElementById("cId").value = prefix + ((prefix === "ART-" || prefix === "NEU-" || prefix === "PLT-") ? "0001" : "001");
       }
     }
 
