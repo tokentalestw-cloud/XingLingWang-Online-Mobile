@@ -37,3 +37,27 @@ for (const [w, h, left, right, top, bottom] of cases) {
   assert(Math.abs((fitted.top+fitted.bottom)-(top+bottom)) < epsilon);
 }
 console.log('PASS: 8 battlefield fitting cases, bounds, uniform scale and maximum size');
+
+const raw = {left: 0, right: 600, top: 0, bottom: 400};
+const initial = {x: 300, y: 110, scale: 1};
+const magnify = (obstacles, width = 1280, height = 590) =>
+  context.xlwEnlargeBoardFit(initial, raw, [raw], obstacles, width, height);
+const near = (a, b) => assert(Math.abs(a-b) < 0.01);
+const enlarged = magnify([]);
+near(enlarged.scale, 1.1);
+near(enlarged.x + 300 * enlarged.scale, initial.x + 300);
+near(enlarged.y + 400 * enlarged.scale, initial.y + 400);
+
+const leftRail = {left: 0, top: 0, right: 289, bottom: 540};
+const limited = magnify([leftRail]);
+assert(limited.scale > 1 && limited.scale < 1.1);
+assert(limited.x >= leftRail.right + 4);
+near(limited.y + 400 * limited.scale, initial.y + 400);
+
+const topHand = {left: 400, right: 800, top: 10, bottom: 96};
+const topLimited = magnify([topHand]);
+assert(topLimited.scale > 1 && topLimited.scale < 1.1);
+assert(topLimited.y >= topHand.bottom + 4);
+near(topLimited.x + 300 * topLimited.scale, initial.x + 300);
+assert.equal(magnify([{left: 0, top: 0, right: 298, bottom: 540}]), initial);
+console.log('PASS: 1.1x full scale, pinned center and bottom, HUD-safe fallback');

@@ -40209,6 +40209,40 @@ function xlwFitBoardAroundToolbar(bounds, space, toolbar, gap) {
   return candidates.sort((a, b) => b.scale - a.scale)[0] || fit;
 }
 
+// Keep the hand-side edge and horizontal center pinned while enlarging the board.
+function xlwEnlargeBoardFit(fit, bounds, pieces, obstacles, width, height) {
+  const center = (bounds.left + bounds.right) / 2;
+  const bottom = bounds.bottom;
+  const target = 1.1;
+  const fitAt = ratio => {
+    const scale = fit.scale * ratio;
+    const delta = scale - fit.scale;
+    return {scale, x: fit.x - center * delta, y: fit.y - bottom * delta};
+  };
+  const clearsHud = candidate => pieces.every(piece => {
+    const left = candidate.x + piece.left * candidate.scale;
+    const right = candidate.x + piece.right * candidate.scale;
+    const top = candidate.y + piece.top * candidate.scale;
+    const bottom = candidate.y + piece.bottom * candidate.scale;
+    const clearance = 4;
+    if (left < clearance || top < clearance || right > width - clearance || bottom > height - clearance) return false;
+    return obstacles.every(hud => right <= hud.left - clearance || left >= hud.right + clearance ||
+      bottom <= hud.top - clearance || top >= hud.bottom + clearance);
+  });
+  const full = fitAt(target);
+  if (clearsHud(full)) return full;
+  if (!clearsHud(fit)) return fit;
+
+  let lower = 1;
+  let upper = target;
+  for (let step = 0; step < 12; step++) {
+    const middle = (lower + upper) / 2;
+    if (clearsHud(fitAt(middle))) lower = middle;
+    else upper = middle;
+  }
+  return fitAt(lower);
+}
+
 let xlwBoardFitFrame = 0;
 let xlwBoardHudObserver = null;
 function adjustBoardScale() {
@@ -40273,12 +40307,21 @@ function adjustBoardScale() {
       bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
     };
     if (space.right <= space.left || space.bottom <= space.top) return;
-    const fit = xlwFitBoardAroundToolbar(bounds, space, toolbar, gap);
+    const baseFit = xlwFitBoardAroundToolbar(bounds, space, toolbar, gap);
+    const fieldPieces = pieces.map(piece => ({
+      left: (piece.left - origin.left) / currentScale,
+      right: (piece.right - origin.left) / currentScale,
+      top: (piece.top - origin.top) / currentScale,
+      bottom: (piece.bottom - origin.top) / currentScale
+    }));
+    const obstacles = [score, commands, phasePanel, toolbar, enemyHand].filter(Boolean);
+    const anchorBounds = {...bounds, bottom: Math.max(...fieldPieces.map(piece => piece.bottom))};
+    const fit = xlwEnlargeBoardFit(baseFit, anchorBounds, fieldPieces, obstacles, width, height);
     // Align the visual fans to lane 3, including layouts with asymmetric side zones.
-    // Measure before applying the new board transform, then project into the new fit.
+    // Keep each hand at its baseline position while the field expands around its center.
     const laneCenter = selector => {
       const lane = logicalRect(board.querySelector(selector));
-      return lane ? fit.x + (((lane.left + lane.right) / 2 - origin.left) / currentScale) * fit.scale
+      return lane ? baseFit.x + (((lane.left + lane.right) / 2 - origin.left) / currentScale) * baseFit.scale
         : (space.left + space.right) / 2;
     };
     const playerHandCenter = laneCenter(".player-back .slot:nth-child(3)");
