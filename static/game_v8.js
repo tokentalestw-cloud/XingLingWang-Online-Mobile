@@ -1824,6 +1824,9 @@ function showRevealedCardModal(card, ownerName) {
 
 // 智慧的般若/憤怒的般若：我方回合開始抽牌異步處理
 async function performPlayerTurnStartDraw() {
+  if (typeof window.xlwResolveExpansionTurnStart === "function") {
+    try { await window.xlwResolveExpansionTurnStart(true); } catch(e) { console.error("Error in xlwResolveExpansionTurnStart:", e); }
+  }
   if(isMultiplayer){if(window.XLW_playerTurnDrawnAt===turn){window.XLW_playerNeedsToDraw=false;return;}window.XLW_playerTurnDrawnAt=turn;}
 
   // 草叢喵 墓地回牌組效果
@@ -2780,6 +2783,13 @@ window.XLW_isShieldUnit = function(unit, zone, idx) {
 
   const c = unit.card || unit;
 
+  // 羞羞草 (SR-PLT-0032): 若此單位左右邊皆有單位，則使此單位被賦予阻擋
+  if (c.id === "SR-PLT-0032" || c.name?.includes("羞羞草")) {
+    if (z && i !== undefined && i > 0 && i < 4 && field[z] && field[z][i - 1] && field[z][i + 1]) {
+      return true;
+    }
+  }
+
   // 盾甲騎士 巨蟹座 (SSSR-NMS-0067) 橫放時被賦予阻擋
   if (c.id === "SSSR-NMS-0067" || c.name?.includes("巨蟹座")) {
     return !!unit.tapped;
@@ -2878,6 +2888,17 @@ window.hasFlying = function(unit) {
     if (idx >= 0 && window.isUnitSilenced(unit, unit.summonedZone, idx)) return false;
   }
   const c = unit.card || unit;
+  // 喵空纜車 (SR-FMS-0039): 若左右皆有單位則獲得飛行
+  if (c && (c.id === "SR-FMS-0039" || c.name?.includes("喵空纜車"))) {
+    const z = unit.summonedZone;
+    if (z && field[z]) {
+      const idx = field[z].indexOf(unit);
+      if (idx > 0 && idx < 4 && field[z][idx - 1] && field[z][idx + 1]) {
+        return true;
+      }
+    }
+  }
+
   if (c && (c.id === "SR-VLG-0060" || c.id === "SSR-VLG-0060" || c.name?.includes("河神") || c.id === "C-STP-0058" || c.id === "SR-STP-0057" || c.name?.includes("蒸汽廣告船") || c.name?.includes("皇家明星號"))) return true;
   
   // 飛機哥 (RBT-0062 / R-RBT-0062): 若合體後的單位包含此卡，則使該單位被賦予飛行
@@ -4840,6 +4861,11 @@ function xlwAddWheelEntry(card, isPlayer) {
   if (wheel.includes(card) || (card._xlwInstanceId && wheel.some(item => item._xlwInstanceId === card._xlwInstanceId))) return null;
   wheel.push(card);
   logBattle(`🎯【${card.name}】上靶！${isPlayer ? "我方" : "對手"}目前轉盤累積 ${wheel.length} 張卡牌。`);
+  if (card.id === "R-CCS-0036" || card.name?.includes("大鼻靶")) {
+    if (isPlayer) playerBonusScore += 3; else enemyBonusScore += 3;
+    logBattle(`🎯【大鼻靶】上靶得分：獲得獎勵 +3★！`);
+    renderScore();
+  }
   if (isPlayer && window.XLWCircusWheel) renderCircusWheel();
   return card;
 }
@@ -5045,6 +5071,39 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     }
 
     // 結算開盤卡牌自身的「開盤：」效果
+    if (revealed.id === "C-CCS-0039" || revealed.name?.includes("火箭猴")) {
+      const oppP = isPlayer ? "enemy_" : "player_";
+      logBattle(`🚀【火箭猴】開盤點火！火箭呼嘯轟炸！`);
+      if (isPlayer) {
+        const lanePick = await showXLWChoiceModal("【火箭猴】選擇轟炸戰線", "選擇轟炸的星星戰線（將破壞該線上所有免祭品單位）：", [
+          { text: "戰線 1", value: 0 }, { text: "戰線 2", value: 1 }, { text: "戰線 3", value: 2 },
+          { text: "戰線 4", value: 3 }, { text: "戰線 5", value: 4 }
+        ]);
+        if (lanePick !== null && lanePick !== undefined) {
+          for (const oz of [oppP + "front", oppP + "back"]) {
+            const tgt = field[oz]?.[lanePick];
+            if (tgt && (!tgt.card.tribute || tgt.card.tribute === 0) && !window.isUnitEffectImmune(tgt, oz, lanePick)) {
+              await destroyUnit(oz, lanePick, "enemy", false);
+            }
+          }
+        }
+      } else {
+        const targetCol = Math.floor(Math.random() * 5);
+        for (const oz of [oppP + "front", oppP + "back"]) {
+          const tgt = field[oz]?.[targetCol];
+          if (tgt && (!tgt.card.tribute || tgt.card.tribute === 0) && !window.isUnitEffectImmune(tgt, oz, targetCol)) {
+            await destroyUnit(oz, targetCol, "player", false);
+          }
+        }
+      }
+    }
+
+    if (revealed.id === "R-CCS-0041" || revealed.name?.includes("幸運觀眾")) {
+      logBattle(`🎟️【幸運觀眾】開盤驚喜登場！獎勵 +1★！`);
+      if (isPlayer) playerBonusScore += 1; else enemyBonusScore += 1;
+      renderScore();
+      await window.xlwSpecialSummonUnit(revealed, isPlayer);
+    }
     let stayOutOfGrave = false;
 
     // 喵草 (CCS-0003 / R-CCS-0003): 開盤特殊召喚
@@ -5769,6 +5828,59 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
 
   // 4. 觸發「此卡合體時」個別卡牌效果
   const combinedCards = [sourceCard, targetCard];
+  const isMechaCombine = combinedCards.some(c => c.name?.includes("機甲") || c.art_subtype?.includes("機甲") || (c.subtypes && c.subtypes.includes("機甲")) || c.id?.includes("0066") || c.id?.includes("0067") || c.id?.includes("0068") || c.id?.includes("0069"));
+
+  if (combinedCards.some(c => c.id === "C-RBT-0066" || c.name?.includes("星兔機甲號-X"))) {
+    const oppPrefix = isPlayer ? "enemy_" : "player_";
+    const oppStandUnits = [];
+    for (const z of [oppPrefix + "front", oppPrefix + "back"]) {
+      (field[z] || []).forEach((u, i) => { if (u && !u.tapped && !window.isUnitEffectImmune(u, z, i)) oppStandUnits.push(u); });
+    }
+    const tapLimit = isMechaCombine ? 3 : 1;
+    for (let k = 0; k < tapLimit && oppStandUnits.length > 0; k++) {
+      const uToTap = oppStandUnits.shift();
+      uToTap.tapped = true;
+      logBattle(`🧲【星兔機甲號-X】${isMechaCombine ? '機甲' : '機械'}合體干擾：使敵方【${uToTap.card.name}】橫置！`);
+    }
+  }
+
+  if (isMechaCombine && combinedCards.some(c => c.id === "C-RBT-0067" || c.name?.includes("星兔坦克號-TK1"))) {
+    const oppFront = isPlayer ? "enemy_front" : "player_front";
+    if (field[oppFront] && field[oppFront][targetIdx]) {
+      logBattle(`🚜【星兔坦克號-TK1】機甲合體重裝衝撞：向後推擠正前方的【${field[oppFront][targetIdx].card.name}】！`);
+      if (typeof xlwPushUnit === "function") {
+        await xlwPushUnit(oppFront, targetIdx, "back", { offBoardAction: "graveyard", sourceName: "星兔坦克號-TK1" });
+      }
+    }
+  }
+
+  if (combinedCards.some(c => c.id === "C-RBT-0068" || c.name?.includes("星兔女士號-W"))) {
+    targetUnit.atkModifier = (targetUnit.atkModifier || 0) + 2;
+    logBattle(`💃【星兔女士號-W】合體武裝：攻擊力 +2！`);
+    if (isMechaCombine) {
+      targetUnit.armorBreak = true;
+      targetUnit.flying = true;
+      logBattle(`💃【星兔女士號-W】機甲飛翼展開：賦予【破甲】與【飛行】！`);
+    }
+  }
+
+  if (isMechaCombine && combinedCards.some(c => c.id === "SR-RBT-0069" || c.name?.includes("星兔浪人號-S"))) {
+    const oppPrefix = isPlayer ? "enemy_" : "player_";
+    const oppTargets = [];
+    for (const z of [oppPrefix + "front", oppPrefix + "back"]) {
+      (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) oppTargets.push({ zone: z, idx: i, name: u.card.name }); });
+    }
+    if (oppTargets.length > 0) {
+      let chosen = oppTargets[0];
+      if (isPlayer) {
+        const choices = oppTargets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+        const pick = await showXLWChoiceModal("【星兔浪人號-S】機甲拔刀破壞", "請選擇破壞的敵方單位：", choices);
+        if (pick !== null && pick !== undefined) chosen = oppTargets[pick];
+      }
+      logBattle(`⚔️【星兔浪人號-S】機甲合體一閃：斬滅了敵方【${chosen.name}】！`);
+      await destroyUnit(chosen.zone, chosen.idx, isPlayer ? "enemy" : "player", false);
+    }
+  }
 
   // 4.1 推幣機 (RBT-0065): 此卡合體時，獎勵+1
   if (combinedCards.some(c => c.id === "RBT-0065" || c.name?.includes("推幣機"))) {
@@ -6995,11 +7107,80 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
+    // 🐐 灌溉山羊 (R-GOT-0058): 使你場上的山羊單位攻擊力+X。X=該單位的灌溉值
+  if (zone && (window.xlwIsGoatUnit ? window.xlwIsGoatUnit(unit, zone, lane) : (c.race?.includes("山羊") || c.name?.includes("山羊")))) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const hasIrrGoat = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "R-GOT-0058" || u.card.name?.includes("灌溉山羊")) && !window.isUnitSilenced(u)));
+    if (hasIrrGoat) {
+      baseAtk += (unit.irrigation || 0);
+    }
+  }
+
+  // ⚡ 地球超壞蛋 (SR-ELE-0027): 使你場上的電廠單位+3攻擊力
+  if (zone && window.xlwIsUnitPowerPlant && window.xlwIsUnitPowerPlant(unit)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const hasVillain = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-ELE-0027" || u.card.name?.includes("地球超壞蛋")) && !window.isUnitSilenced(u)));
+    if (hasVillain) {
+      baseAtk += 3;
+    }
+  }
+
+  // 🧚 樹根妖精 (C-EVL-0058): 使此單位前後左右的你的妖精單位+2攻擊力
+  if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined" && window.xlwIsUnitFairy && window.xlwIsUnitFairy(unit)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const isFront = zone.includes("front");
+    const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
+    let hasAdjacentRootFairy = false;
+    if (field[zone]) {
+      if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card.id === "C-EVL-0058" || field[zone][lane - 1].card.name?.includes("樹根妖精"))) hasAdjacentRootFairy = true;
+      if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card.id === "C-EVL-0058" || field[zone][lane + 1].card.name?.includes("樹根妖精"))) hasAdjacentRootFairy = true;
+    }
+    if (field[otherRowZone] && field[otherRowZone][lane] && (field[otherRowZone][lane].card.id === "C-EVL-0058" || field[otherRowZone][lane].card.name?.includes("樹根妖精"))) {
+      hasAdjacentRootFairy = true;
+    }
+    if (hasAdjacentRootFairy) {
+      baseAtk += 2;
+    }
+  }
+
+  // 🥖 旅人法棍 (C-SPT-0061) 加成
+  if (unit.baguetteBonus) {
+    baseAtk += unit.baguetteBonus;
+  }
+
   return baseAtk + rainbowBonus;
 }
 
 // 單位星數分數 (加入加成)
 function getUnitStars(unit, zone, lane) {
+  if (!unit) return 0;
+  const c = unit.card || unit;
+
+  // 🌿 學會自我灌溉的野人 (C-EWD-0063): X = 此單位的灌溉值
+  if (c.id === "C-EWD-0063" || c.name?.includes("學會自我灌溉的野人")) {
+    return (unit.irrigation || 0) + Number(unit.bonusScore ?? 0);
+  }
+
+  // ⚙️ 共存主義博士 皮斯 (C-STP-0066): X = 機械及人型加總 - 數量差距
+  if (c.id === "C-STP-0066" || c.name?.includes("共存主義博士 皮斯") || c.name?.includes("皮斯")) {
+    const isPlayer = zone && zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    let mechCount = 0, humanCount = 0;
+    if (typeof field !== "undefined" && field) {
+      for (const z of [sideP + "front", sideP + "back"]) {
+        (field[z] || []).forEach(u => {
+          if (!u) return;
+          if (window.xlwIsUnitMech && window.xlwIsUnitMech(u)) mechCount++;
+          if (window.xlwIsUnitHuman && window.xlwIsUnitHuman(u)) humanCount++;
+        });
+      }
+    }
+    const xVal = (mechCount + humanCount) - Math.abs(mechCount - humanCount);
+    return Math.max(0, xVal) + Number(unit.bonusScore ?? 0);
+  }
   if (!unit) return 0;
   if ((!zone || lane === undefined || lane === -1) && typeof field !== "undefined" && field) {
     for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
@@ -7338,7 +7519,117 @@ function getUnitStars(unit, zone, lane) {
     }
   }
 
-  return baseStars;
+  // 🌸 花皇 (SSR-PLT-0021): 使你場上的植物單位+X★ X=該單位的灌溉值
+  if (zone && window.xlwIsUnitPlant && window.xlwIsUnitPlant(unit, zone, lane)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const hasFlowerEmperor = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SSR-PLT-0021" || u.card.name?.includes("花皇")) && !window.isUnitSilenced(u)));
+    if (hasFlowerEmperor) {
+      baseStars += (unit.irrigation || 0);
+    }
+  }
+
+  // 👑 教皇野人 (SR-EWD-0059): 若你場上的單位皆為野人單位,則使你場上的單位+2⭐
+  if (zone && typeof field !== "undefined" && field) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    let totalMyUnits = 0, allBarbarians = true, hasPope = false;
+    for (const z of [sideP + "front", sideP + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (!u) return;
+        totalMyUnits++;
+        if (!window.xlwIsUnitBarbarian || !window.xlwIsUnitBarbarian(u)) allBarbarians = false;
+        if (u.card.id === "SR-EWD-0059" || u.card.name?.includes("教皇野人")) hasPope = true;
+      });
+    }
+    if (hasPope && totalMyUnits > 0 && allBarbarians) {
+      baseStars += 2;
+    }
+  }
+
+  // ⚡ 地球超壞蛋 (SR-ELE-0027): 使你場上的電廠單位-1⭐
+  if (zone && window.xlwIsUnitPowerPlant && window.xlwIsUnitPowerPlant(unit)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const hasVillain = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-ELE-0027" || u.card.name?.includes("地球超壞蛋")) && !window.isUnitSilenced(u)));
+    if (hasVillain) {
+      baseStars -= 1;
+    }
+  }
+
+  // 🧚 樹根妖精 (C-EVL-0058): 使此單位前後左右的你的妖精單位+2⭐
+  if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined" && window.xlwIsUnitFairy && window.xlwIsUnitFairy(unit)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const isFront = zone.includes("front");
+    const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
+    let hasAdjacentRoot = false;
+    if (field[zone]) {
+      if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card.id === "C-EVL-0058" || field[zone][lane - 1].card.name?.includes("樹根妖精"))) hasAdjacentRoot = true;
+      if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card.id === "C-EVL-0058" || field[zone][lane + 1].card.name?.includes("樹根妖精"))) hasAdjacentRoot = true;
+    }
+    if (field[otherRowZone] && field[otherRowZone][lane] && (field[otherRowZone][lane].card.id === "C-EVL-0058" || field[otherRowZone][lane].card.name?.includes("樹根妖精"))) {
+      hasAdjacentRoot = true;
+    }
+    if (hasAdjacentRoot) {
+      baseStars += 2;
+    }
+  }
+
+  // 🖤 黑妖精厭世者 (C-EVL-0060): 此單位前後左右的每個你的妖精單位使此單位-2⭐
+  if (c.id === "C-EVL-0060" || c.name?.includes("黑妖精厭世者")) {
+    if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined") {
+      const isPlayer = zone.startsWith("player_");
+      const sideP = isPlayer ? "player_" : "enemy_";
+      const isFront = zone.includes("front");
+      const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
+      let adjFairies = 0;
+      if (field[zone]) {
+        if (lane > 0 && field[zone][lane - 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane - 1])) adjFairies++;
+        if (lane < 4 && field[zone][lane + 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane + 1])) adjFairies++;
+      }
+      if (field[otherRowZone] && field[otherRowZone][lane] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[otherRowZone][lane])) {
+        adjFairies++;
+      }
+      baseStars -= (2 * adjFairies);
+    }
+  }
+
+  // 👙 風流妖精 (泳裝) (R-EVL-0011-泳裝): 此單位前後左右每個你的妖精單位使此單位+1⭐
+  if (c.id === "R-EVL-0011-泳裝" || c.name?.includes("風流妖精 (泳裝)")) {
+    if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined") {
+      const isPlayer = zone.startsWith("player_");
+      const sideP = isPlayer ? "player_" : "enemy_";
+      const isFront = zone.includes("front");
+      const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
+      let adjFairies = 0;
+      if (field[zone]) {
+        if (lane > 0 && field[zone][lane - 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane - 1])) adjFairies++;
+        if (lane < 4 && field[zone][lane + 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane + 1])) adjFairies++;
+      }
+      if (field[otherRowZone] && field[otherRowZone][lane] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[otherRowZone][lane])) {
+        adjFairies++;
+      }
+      baseStars += (1 * adjFairies);
+    }
+  }
+
+  // 🌲 魔化森林妖精 (R-EVL-0059): 使橫放的此單位-3⭐
+  if ((c.id === "R-EVL-0059" || c.name?.includes("魔化森林妖精")) && unit.tapped) {
+    baseStars -= 3;
+  }
+
+  // 🎼 妖精前線指揮家 (SR-EVL-0062): 使你場上的阻擋單位被賦予掩護及+1⭐
+  if (zone && typeof window.XLW_isShieldUnit === "function" && window.XLW_isShieldUnit(unit)) {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const hasConductor = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-EVL-0062" || u.card.name?.includes("妖精前線指揮家")) && !window.isUnitSilenced(u)));
+    if (hasConductor) {
+      baseStars += 1;
+    }
+  }
+
+  return Math.max(0, baseStars);
 }
 
 function unitName(unit) {
@@ -8077,6 +8368,751 @@ window.xlwTriggerElectrify = async function(isPlayer = true, sourceUnit = null) 
   render();
 };
 
+
+// ==========================================
+// ===== 🌿 植物園 (Botanical Garden) & 全種族擴充卡牌系統 =====
+// ==========================================
+window.XLW_PLANT_SYSTEM_IMPLEMENTED = true;
+
+// 1. 單位類型判定輔助
+window.xlwIsUnitPlant = function(uOrCard, zone, idx) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  if (c.faction === "植物園" || c.deck === "植物園" || c.race === "植物" || c.race?.includes("植物")) return true;
+  if (c.art_subtype && c.art_subtype.includes("植物")) return true;
+  if (c.subtypes && c.subtypes.includes("植物")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("植物"))) return true;
+  if (c.id && c.id.includes("PLT")) return true;
+  const n = c.name || "";
+  return n.includes("仙人掌") || n.includes("種子") || n.includes("花") || n.includes("蕨") || n.includes("木") || n.includes("草") || n.includes("樹") || n.includes("稻草人") || n.includes("阿姨") || n.includes("施肥者") || n.includes("樵夫") || n.includes("水槍小童");
+};
+
+window.xlwIsUnitSeed = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  const n = c.name || "";
+  if (n.includes("種子") || n.includes("花苞子")) return true;
+  if (c.art_subtype && c.art_subtype.includes("種子")) return true;
+  if (c.subtypes && c.subtypes.includes("種子")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("種子"))) return true;
+  return false;
+};
+
+window.xlwIsUnitFern = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  const n = c.name || "";
+  if (n.includes("蕨")) return true;
+  if (c.art_subtype && c.art_subtype.includes("蕨")) return true;
+  if (c.subtypes && c.subtypes.includes("蕨")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("蕨"))) return true;
+  return false;
+};
+
+window.xlwIsUnitSucculent = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  const n = c.name || "";
+  if (n.includes("仙人掌") || n.includes("多肉")) return true;
+  if (c.art_subtype && c.art_subtype.includes("多肉")) return true;
+  if (c.subtypes && c.subtypes.includes("多肉")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("多肉"))) return true;
+  return false;
+};
+
+window.xlwIsUnitTree = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  const n = c.name || "";
+  if (n.includes("木") || n.includes("樹")) return true;
+  if (c.art_subtype && (c.art_subtype.includes("大樹") || c.art_subtype.includes("樹"))) return true;
+  return false;
+};
+
+window.xlwIsUnitBarbarian = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  if (c.faction === "進化野人" || c.deck === "進化野人" || c.id?.includes("EWD")) return true;
+  const n = c.name || "";
+  if (n.includes("野人")) return true;
+  if (c.art_subtype && c.art_subtype.includes("野人")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("野人"))) return true;
+  return false;
+};
+
+window.xlwIsUnitHuman = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  if (c.art_subtype && (c.art_subtype.includes("人型") || c.art_subtype.includes("人形"))) return true;
+  if (c.subtypes && (c.subtypes.includes("人型") || c.subtypes.includes("人形"))) return true;
+  if (c.race && (c.race.includes("人型") || c.race.includes("人形"))) return true;
+  const n = c.name || "";
+  if (n.includes("科學家") || n.includes("約翰") || n.includes("農夫") || n.includes("少女") || n.includes("法務員") || n.includes("指揮家") || n.includes("暴民") || n.includes("小童") || n.includes("觀眾") || n.includes("主持人") || n.includes("仕女") || n.includes("菁英")) return true;
+  return false;
+};
+
+window.xlwIsUnitPowerPlant = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  if (c.art_subtype && c.art_subtype.includes("電廠")) return true;
+  if (c.subtypes && c.subtypes.includes("電廠")) return true;
+  if (c.keywords && c.keywords.some(k => typeof k === "string" && k.includes("電廠"))) return true;
+  const n = c.name || "";
+  return n.includes("電廠") || n.includes("發電獸") || n.includes("火山發電獸") || n.includes("森林發電獸");
+};
+
+window.xlwIsUnitFairy = function(uOrCard) {
+  if (!uOrCard) return false;
+  const c = uOrCard.card || uOrCard;
+  if (c.faction === "妖精" || c.deck === "妖精" || c.race === "妖精" || c.id?.includes("EVL")) return true;
+  const n = c.name || "";
+  return n.includes("妖精");
+};
+
+// 2. 灌溉核心輔助
+window.xlwIrrigateUnit = function(unit, amount, zone, idx, sourceName = "效果") {
+  if (!unit) return;
+  unit.irrigation = Math.max(0, (unit.irrigation || 0) + amount);
+  logBattle(`💧【${unit.card?.name || "單位"}】被灌溉 ${amount > 0 ? "+" + amount : amount}（目前灌溉值: ${unit.irrigation}）！ [來源: ${sourceName}]`);
+  if (typeof render === "function") render();
+};
+
+window.xlwSpendIrrigation = function(unit, amount) {
+  if (!unit || (unit.irrigation || 0) < amount) return false;
+  unit.irrigation -= amount;
+  logBattle(`💧【${unit.card?.name || "單位"}】消耗了 ${amount} 點灌溉值（剩餘: ${unit.irrigation}）。`);
+  if (typeof render === "function") render();
+  return true;
+};
+
+// 3. 獲取場上卡牌列表輔助
+window.xlwGetPlantUnitsOnField = function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const list = [];
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && window.xlwIsUnitPlant(u, z, i)) list.push({ zone: z, idx: i, unit: u });
+    });
+  }
+  return list;
+};
+
+window.xlwGetSeedUnitsOnField = function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const list = [];
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && window.xlwIsUnitSeed(u)) list.push({ zone: z, idx: i, unit: u });
+    });
+  }
+  return list;
+};
+
+window.xlwGetFernUnitsOnField = function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const list = [];
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && window.xlwIsUnitFern(u)) list.push({ zone: z, idx: i, unit: u });
+    });
+  }
+  return list;
+};
+
+window.xlwGetSucculentUnitsOnField = function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const list = [];
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && window.xlwIsUnitSucculent(u)) list.push({ zone: z, idx: i, unit: u });
+    });
+  }
+  return list;
+};
+
+// 4. 額外區召喚與成長
+window.xlwSummonPlantFromExtraDeck = async function(cardNameOrId, isPlayer = true, targetZone = null, targetIdx = null) {
+  const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+  let cIdx = extraList.findIndex(c => c && (c.id === cardNameOrId || c.name === cardNameOrId || c.name?.includes(cardNameOrId) || c.id?.includes(cardNameOrId)));
+  let cardToSummon = null;
+  if (cIdx === -1) {
+    const sample = (typeof allCards !== "undefined" ? allCards : []).find(c => c && (c.id === cardNameOrId || c.name === cardNameOrId || c.name?.includes(cardNameOrId)));
+    if (!sample) return null;
+    cardToSummon = structuredClone(sample);
+  } else {
+    cardToSummon = extraList.splice(cIdx, 1)[0];
+  }
+
+  let destSlot = null;
+  if (targetZone && targetIdx !== null && targetIdx !== undefined && !field[targetZone][targetIdx]) {
+    destSlot = { zone: targetZone, idx: targetIdx };
+  } else {
+    const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+    if (emptySlots.length === 0) {
+      logBattle(`場上已無空格，無法召喚【${cardToSummon.name}】！`);
+      if (cIdx >= 0) extraList.push(cardToSummon);
+      return null;
+    }
+    const front = emptySlots.filter(s => s.zone.includes("front"));
+    destSlot = front.length > 0 ? front[0] : emptySlots[0];
+  }
+
+  field[destSlot.zone][destSlot.idx] = {
+    card: structuredClone(cardToSummon),
+    tapped: false,
+    attacking: false,
+    target: null,
+    summonedTurn: turn,
+    summonedZone: destSlot.zone,
+    irrigation: 0,
+    equipments: []
+  };
+
+  logBattle(`🌱 從額外區特殊召喚【${cardToSummon.name}】至 ${destSlot.zone.includes("front") ? "前排" : "後排"}${destSlot.idx + 1}！`);
+  if (typeof renderExtraDecks === "function") renderExtraDecks();
+  if (typeof render === "function") render();
+  return { unit: field[destSlot.zone][destSlot.idx], slot: destSlot };
+};
+
+// 單位成長核心
+window.xlwExecutePlantGrowth = async function(boardUnit, targetExtraCard, zone, idx, isPlayer = true) {
+  const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+  const exIdx = extraList.indexOf(targetExtraCard);
+  if (exIdx >= 0) extraList.splice(exIdx, 1);
+
+  const oldName = boardUnit.card.name;
+  const oldIrrigation = boardUnit.irrigation || 0;
+
+  boardUnit.card = structuredClone(targetExtraCard);
+  boardUnit.irrigation = oldIrrigation;
+  logBattle(`🌳【${oldName}】成功成長為【${targetExtraCard.name}】（灌溉值: ${boardUnit.irrigation}）！`);
+
+  if (targetExtraCard.id === "C-PLT-0018" || targetExtraCard.name?.includes("花苞子")) {
+    if (isPlayer) playerBonusScore += 1; else enemyBonusScore += 1;
+    logBattle(`🌸【花苞子】成長效果：獎勵 +1★！`);
+    renderScore();
+  }
+
+  if (typeof triggerUpgradeBonus === "function") triggerUpgradeBonus(isPlayer);
+  if (typeof renderExtraDecks === "function") renderExtraDecks();
+  if (typeof render === "function") render();
+};
+
+// 檢查某單位可成長的額外區卡牌
+window.xlwGetEligibleGrowthCards = function(unit, isPlayer = true) {
+  if (!unit || !unit.card) return [];
+  const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+  const eligible = [];
+  const uIrr = unit.irrigation || 0;
+  const uName = unit.card.name || "";
+  const isSeed = window.xlwIsUnitSeed(unit);
+
+  extraList.forEach(c => {
+    if (!c) return;
+    const cid = c.id || "";
+    const cname = c.name || "";
+
+    // ASSR-PLT-0030 荷葉精靈: 種子, 灌溉 >= 4
+    if ((cid === "ASSR-PLT-0030" || cname.includes("荷葉精靈")) && isSeed && uIrr >= 4) eligible.push(c);
+
+    // C-PLT-0015 林中木: 林小木, 灌溉 >= 3
+    if ((cid === "C-PLT-0015" || cname.includes("林中木")) && uName.includes("林小木") && uIrr >= 3) eligible.push(c);
+
+    // C-PLT-0016 林大木: 林中木, 灌溉 >= 3
+    if ((cid === "C-PLT-0016" || cname.includes("林大木")) && uName.includes("林中木") && uIrr >= 3) eligible.push(c);
+
+    // C-PLT-0017 林花老木: 林大木, 灌溉 >= 3
+    if ((cid === "C-PLT-0017" || cname.includes("林花老木")) && uName.includes("林大木") && uIrr >= 3) eligible.push(c);
+
+    // C-PLT-0018 花苞子: 魔法種子, 灌溉 >= 2
+    if ((cid === "C-PLT-0018" || cname.includes("花苞子")) && uName.includes("魔法種子") && uIrr >= 2) eligible.push(c);
+
+    // C-PLT-0033 聖誕紅姬: 種子, 灌溉 >= 5
+    if ((cid === "C-PLT-0033" || cname.includes("聖誕紅姬")) && isSeed && uIrr >= 5) eligible.push(c);
+
+    // R-PLT-0014 林小木: 種子, 灌溉 >= 3
+    if ((cid === "R-PLT-0014" || cname.includes("林小木")) && isSeed && uIrr >= 3) eligible.push(c);
+
+    // R-PLT-0022 迷你仙人掌: 種子, 灌溉 >= 2
+    if ((cid === "R-PLT-0022" || cname.includes("迷你仙人掌")) && isSeed && uIrr >= 2) eligible.push(c);
+
+    // R-PLT-0026 小蕨士: 種子, 灌溉 >= 2
+    if ((cid === "R-PLT-0026" || cname.includes("小蕨士")) && isSeed && uIrr >= 2) eligible.push(c);
+
+    // R-PLT-0031 豬籠草: 種子, 灌溉 >= 3
+    if ((cid === "R-PLT-0031" || cname.includes("豬籠草")) && isSeed && uIrr >= 3) eligible.push(c);
+
+    // SR-PLT-0024 球狀仙人掌: 迷你仙人掌, 灌溉 >= 3
+    if ((cid === "SR-PLT-0024" || cname.includes("球狀仙人掌")) && uName.includes("迷你仙人掌") && uIrr >= 3) eligible.push(c);
+
+    // SR-PLT-0032 羞羞草: 種子, 灌溉 >= 5
+    if ((cid === "SR-PLT-0032" || cname.includes("羞羞草")) && isSeed && uIrr >= 5) eligible.push(c);
+  });
+
+  return eligible;
+};
+
+// 5. 擴充卡牌主要階段開始時效果結算
+window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+
+  // A. C-PLT-0004 自動灑水器: 主要階段開始時，可使前排所有種子單位被灌溉1
+  const hasSprinkler = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "C-PLT-0004" || u.card.name?.includes("自動灑水器")));
+  if (hasSprinkler) {
+    (field[side + "front"] || []).forEach((u, i) => {
+      if (u && window.xlwIsUnitSeed(u)) {
+        window.xlwIrrigateUnit(u, 1, side + "front", i, "自動灑水器");
+      }
+    });
+  }
+
+  // B. R-PLT-0003 播種小童: 主要階段開始時限一次，可使額外區1張「魔法種子」被召喚
+  for (const z of [side + "front", side + "back"]) {
+    const boys = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0003" || u.card.name?.includes("播種小童")));
+    for (const b of boys) {
+      if (isPlayer) {
+        const doSummon = await showXLWConfirm("【播種小童】播種", "主要階段開始！是否從額外區召喚 1 張【魔法種子】？");
+        if (doSummon) await window.xlwSummonPlantFromExtraDeck("魔法種子", true);
+      } else {
+        await window.xlwSummonPlantFromExtraDeck("魔法種子", false);
+      }
+      break; // 限一次
+    }
+  }
+
+  // C. R-PLT-0026 小蕨士: 主要階段開始時限一次，可使此單位灌溉-1，若成功則使額外區1張「魔法種子」被召喚
+  for (const z of [side + "front", side + "back"]) {
+    const ferns = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0026" || u.card.name?.includes("小蕨士")) && (u.irrigation || 0) >= 1);
+    for (const fern of ferns) {
+      if (isPlayer) {
+        const doSpend = await showXLWConfirm("【小蕨士】繁衍種子", `【${fern.card.name}】灌溉值為 ${fern.irrigation}，是否消耗 1 點灌溉值從額外區召喚 1 張【魔法種子】？`);
+        if (doSpend && window.xlwSpendIrrigation(fern, 1)) {
+          await window.xlwSummonPlantFromExtraDeck("魔法種子", true);
+        }
+      } else {
+        if (window.xlwSpendIrrigation(fern, 1)) {
+          await window.xlwSummonPlantFromExtraDeck("魔法種子", false);
+        }
+      }
+      break;
+    }
+  }
+
+  // D. R-PLT-0027 宮廷蕨仕女: 主要階段開始時限一次，可使墓地1張「小蕨士」被召喚
+  for (const z of [side + "front", side + "back"]) {
+    const ladies = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0027" || u.card.name?.includes("宮廷蕨仕女")));
+    for (const lady of ladies) {
+      const gList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
+      const fernInGraveIdx = gList.findIndex(c => c && (c.id === "R-PLT-0026" || c.name?.includes("小蕨士")));
+      if (fernInGraveIdx >= 0) {
+        let doSum = isPlayer ? await showXLWConfirm("【宮廷蕨仕女】召喚小蕨士", "主要階段開始！墓地中有【小蕨士】，是否將其召喚至戰場？") : true;
+        if (doSum) {
+          const cardF = gList.splice(fernInGraveIdx, 1)[0];
+          await window.xlwSpecialSummonUnit(cardF, isPlayer);
+          logBattle(`✨【宮廷蕨仕女】效果：從墓地特殊召喚【小蕨士】登場！`);
+        }
+      }
+      break;
+    }
+  }
+
+  // E. C-EVL-0061 妖精法務員: 主要階段開始時限一次，可使此單位被橫放，若成功則使墓地1張魔法卡回手牌
+  for (const z of [side + "front", side + "back"]) {
+    const lawyers = (field[z] || []).filter(u => u && (u.card.id === "C-EVL-0061" || u.card.name?.includes("妖精法務員")) && !u.tapped);
+    for (const law of lawyers) {
+      const gList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
+      const spellsInGrave = gList.filter(c => c && (c.type === "magic" || c.type === "魔法"));
+      if (spellsInGrave.length > 0) {
+        if (isPlayer) {
+          const doTap = await showXLWConfirm("【妖精法務員】法律回收", "主要階段開始！是否橫置【妖精法務員】，從墓地回收 1 張魔法卡至手牌？");
+          if (doTap) {
+            law.tapped = true;
+            const choices = spellsInGrave.map((s, idx) => ({ text: s.name, value: idx }));
+            const pick = await showXLWChoiceModal("【妖精法務員】選擇魔法卡", "請選擇回收的魔法卡：", choices);
+            if (pick !== null && pick !== undefined) {
+              const targetSpell = spellsInGrave[pick];
+              gList.splice(gList.indexOf(targetSpell), 1);
+              hand.push(targetSpell);
+              logBattle(`⚖️【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入手牌！`);
+            }
+          }
+        } else {
+          law.tapped = true;
+          const targetSpell = spellsInGrave[0];
+          gList.splice(gList.indexOf(targetSpell), 1);
+          (window.XLW_ENEMY?.hand || []).push(targetSpell);
+          logBattle(`⚖️ 對手【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入對手手牌！`);
+        }
+      }
+      break;
+    }
+  }
+
+  // F. C-CRB-0027 滅碳器: 主要階段開始時限一次，可使你場上1個碳單位被破壞，若成功則從額外區尋找1張「白碳子」洗回牌庫
+  for (const z of [side + "front", side + "back"]) {
+    const ext = (field[z] || []).filter(u => u && (u.card.id === "C-CRB-0027" || u.card.name?.includes("滅碳器")));
+    for (const ex of ext) {
+      const carbonUnits = [];
+      for (const cz of [side + "front", side + "back"]) {
+        (field[cz] || []).forEach((u, i) => {
+          if (u && (u.card.faction === "碳碳族" || u.card.deck === "碳碳族" || u.card.id?.includes("CRB") || u.card.name?.includes("碳") || u.card.art_subtype?.includes("碳"))) {
+            carbonUnits.push({ zone: cz, idx: i, name: u.card.name });
+          }
+        });
+      }
+      if (carbonUnits.length > 0) {
+        if (isPlayer) {
+          const doKill = await showXLWConfirm("【滅碳器】減碳回收", "主要階段開始！是否破壞場上 1 個碳單位，將額外區的【白碳子】洗回牌庫？");
+          if (doKill) {
+            const choices = carbonUnits.map((c, i) => ({ text: `${c.name} (${c.zone.includes("front") ? "前排" : "後排"}${c.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【滅碳器】選擇要破壞的碳單位", "請選擇碳單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const targetC = carbonUnits[pick];
+              await destroyUnit(targetC.zone, targetC.idx, "player", false);
+              const extraList = playerExtraDeck;
+              const wIdx = extraList.findIndex(c => c && (c.id === "SSR-CRB-0028" || c.name?.includes("白碳子")));
+              if (wIdx >= 0) {
+                const wc = extraList.splice(wIdx, 1)[0];
+                deck.push(wc);
+                shuffle(deck);
+                logBattle(`💨【滅碳器】效果：破壞了【${targetC.name}】，從額外區將【白碳子】洗回牌庫！`);
+              }
+            }
+          }
+        }
+      }
+      break;
+    }
+  }
+
+  // G. R-ELE-0029 森林發電獸: 主要階段開始時限一次，使此單位被灌溉X。X=場上的「森林發電獸」數量
+  const forestBeasts = [];
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && (u.card.id === "R-ELE-0029" || u.card.name?.includes("森林發電獸"))) {
+        forestBeasts.push({ zone: z, idx: i, unit: u });
+      }
+    });
+  }
+  if (forestBeasts.length > 0) {
+    const xAmt = forestBeasts.length;
+    forestBeasts.forEach(fb => {
+      window.xlwIrrigateUnit(fb.unit, xAmt, fb.zone, fb.idx, "森林發電獸");
+    });
+  }
+
+  // H. SR-CCS-0040 節目主持人: 主要階段開始時限一次，使額外區1張「幸運觀眾」上靶 或 從額外區尋找1張「表演邀請函」加入手牌
+  for (const z of [side + "front", side + "back"]) {
+    const hosts = (field[z] || []).filter(u => u && (u.card.id === "SR-CCS-0040" || u.card.name?.includes("節目主持人")));
+    for (const h of hosts) {
+      if (isPlayer) {
+        const choicePick = await showXLWChoiceModal("【節目主持人】開場籌備", "主要階段開始！請選擇一項執行：", [
+          { text: "🎯 將額外區 1 張【幸運觀眾】上靶", value: "target" },
+          { text: "✉️ 從額外區尋找 1 張【表演邀請函】加入手牌", value: "invite" },
+          { text: "⏭️ 放棄發動", value: "skip" }
+        ]);
+        if (choicePick === "target") {
+          const exIdx = playerExtraDeck.findIndex(c => c && (c.id === "R-CCS-0041" || c.name?.includes("幸運觀眾")));
+          if (exIdx >= 0) {
+            const cardObj = playerExtraDeck.splice(exIdx, 1)[0];
+            await window.xlwPutCardOnWheel(cardObj, true);
+            logBattle(`🎤【節目主持人】效果：從額外區將【幸運觀眾】安排上靶！`);
+          } else {
+            setStatus("額外區中已無【幸運觀眾】！");
+          }
+        } else if (choicePick === "invite") {
+          const exIdx = playerExtraDeck.findIndex(c => c && (c.id === "R-CCS-0042" || c.name?.includes("表演邀請函")));
+          if (exIdx >= 0) {
+            const cardObj = playerExtraDeck.splice(exIdx, 1)[0];
+            hand.push(cardObj);
+            logBattle(`🎤【節目主持人】效果：從額外區將【表演邀請函】加入手牌！`);
+          } else {
+            setStatus("額外區中已無【表演邀請函】！");
+          }
+        }
+      } else {
+        const exIdx = (window.XLW_enemyExtraDeck || enemyExtraDeck || []).findIndex(c => c && (c.id === "R-CCS-0041" || c.name?.includes("幸運觀眾")));
+        if (exIdx >= 0) {
+          const cardObj = (window.XLW_enemyExtraDeck || enemyExtraDeck).splice(exIdx, 1)[0];
+          await window.xlwPutCardOnWheel(cardObj, false);
+          logBattle(`🎤 對手【節目主持人】效果：將【幸運觀眾】安排上靶！`);
+        }
+      }
+      break;
+    }
+  }
+
+  // I. R-EWD-0062 野人獨旅洞穴: 在下個主要階段開始時使此卡下方所有的單位卡被召喚
+  if (window.XLW_caveShelteredUnits && window.XLW_caveShelteredUnits.length > 0) {
+    const toSummon = [...window.XLW_caveShelteredUnits];
+    window.XLW_caveShelteredUnits = [];
+    for (const unitCard of toSummon) {
+      await window.xlwSpecialSummonUnit(unitCard, isPlayer);
+      logBattle(`🏕️【野人獨旅洞穴】效果：獨旅結束，野人【${unitCard.name}】走出洞穴回到戰場！`);
+    }
+  }
+
+  if (typeof render === "function") render();
+};
+
+// 6. 擴充卡牌結束階段效果結算
+window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
+  const side = isPlayer ? "player_" : "enemy_";
+
+  // A. R-PLT-0008 / SSSR-PLT-0008 花園阿姨: 使場上2個植物單位被灌溉1 或 使額外區1張「魔法種子」被召喚
+  for (const z of [side + "front", side + "back"]) {
+    const aunts = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0008" || u.card.id === "SSSR-PLT-0008" || u.card.name?.includes("花園阿姨")));
+    for (const aunt of aunts) {
+      if (isPlayer) {
+        const opt = await showXLWChoiceModal("【花園阿姨】結束澆灌", "結束階段！請選擇花園阿姨的效果：", [
+          { text: "💧 使場上至多 2 個植物單位被灌溉 1", value: "irrigate" },
+          { text: "🌱 從額外區召喚 1 張【魔法種子】", value: "seed" }
+        ]);
+        if (opt === "irrigate") {
+          const plants = window.xlwGetPlantUnitsOnField(true);
+          if (plants.length > 0) {
+            const choices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1}, 灌溉: ${p.unit.irrigation || 0})`, value: i }));
+            const p1 = await showXLWChoiceModal("選擇第 1 個灌溉的植物", "選擇植物：", choices);
+            if (p1 !== null && p1 !== undefined) {
+              window.xlwIrrigateUnit(plants[p1].unit, 1, plants[p1].zone, plants[p1].idx, "花園阿姨");
+              if (plants.length > 1) {
+                const rem = choices.filter(c => c.value !== p1);
+                const p2 = await showXLWChoiceModal("選擇第 2 個灌溉的植物", "選擇植物（可略過）：", [{ text: "✅ 略過", value: -1 }, ...rem]);
+                if (p2 !== null && p2 !== undefined && p2 !== -1) {
+                  window.xlwIrrigateUnit(plants[p2].unit, 1, plants[p2].zone, plants[p2].idx, "花園阿姨");
+                }
+              }
+            }
+          }
+        } else if (opt === "seed") {
+          await window.xlwSummonPlantFromExtraDeck("魔法種子", true);
+        }
+      } else {
+        const plants = window.xlwGetPlantUnitsOnField(false);
+        if (plants.length >= 2) {
+          window.xlwIrrigateUnit(plants[0].unit, 1, plants[0].zone, plants[0].idx, "花園阿姨");
+          window.xlwIrrigateUnit(plants[1].unit, 1, plants[1].zone, plants[1].idx, "花園阿姨");
+        } else {
+          await window.xlwSummonPlantFromExtraDeck("魔法種子", false);
+        }
+      }
+    }
+  }
+
+  // B. R-PLT-0034 蒲公英: 結束階段時，可使額外區1張「魔法種子」被召喚
+  for (const z of [side + "front", side + "back"]) {
+    const dandelions = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0034" || u.card.name?.includes("蒲公英")));
+    for (const d of dandelions) {
+      if (isPlayer) {
+        const doSum = await showXLWConfirm("【蒲公英】隨風播種", "結束階段！是否從額外區召喚 1 張【魔法種子】？");
+        if (doSum) await window.xlwSummonPlantFromExtraDeck("魔法種子", true);
+      } else {
+        await window.xlwSummonPlantFromExtraDeck("魔法種子", false);
+      }
+    }
+  }
+
+  // C. SR-PLT-0032 羞羞草: 你的結束階段時, 若此單位沒有阻擋, 則可使你場上所有植物單位被灌溉1
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && (u.card.id === "SR-PLT-0032" || u.card.name?.includes("羞羞草"))) {
+        // 檢查左右是否有單位（若皆有則有阻擋，否則無阻擋）
+        const leftOccupied = i > 0 && field[z][i - 1] !== null;
+        const rightOccupied = i < 4 && field[z][i + 1] !== null;
+        const hasShield = leftOccupied && rightOccupied;
+        if (!hasShield) {
+          const allPlants = window.xlwGetPlantUnitsOnField(isPlayer);
+          allPlants.forEach(p => {
+            window.xlwIrrigateUnit(p.unit, 1, p.zone, p.idx, "羞羞草");
+          });
+          logBattle(`🌿【羞羞草】無阻擋觸發：使場上所有植物單位被灌溉 1！`);
+        }
+      }
+    });
+  }
+
+  // D. C-EWD-0063 學會自我灌溉的野人: 結束階段時, 使此單位被灌溉1
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && (u.card.id === "C-EWD-0063" || u.card.name?.includes("學會自我灌溉的野人"))) {
+        window.xlwIrrigateUnit(u, 1, z, i, "學會自我灌溉的野人");
+      }
+    });
+  }
+
+  if (typeof render === "function") render();
+};
+
+// 7. 擴充卡牌被破壞後續觸發結算
+window.xlwResolveExpansionPostDestruction = async function(destroyedUnit, zone, idx, owner, isCombat) {
+  if (!destroyedUnit || !destroyedUnit.card) return;
+  const card = destroyedUnit.card;
+  const isPlayerUnit = zone.startsWith("player_");
+  const side = isPlayerUnit ? "player_" : "enemy_";
+
+  // A. C-PLT-0010 樵夫: 你場上的植物單位被破壞時，使此單位被轉正
+  if (window.xlwIsUnitPlant(card)) {
+    for (const z of [side + "front", side + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && u !== destroyedUnit && (u.card.id === "C-PLT-0010" || u.card.name?.includes("樵夫")) && u.tapped) {
+          u.tapped = false;
+          logBattle(`🪓【樵夫】感應到植物倒下，精神一振自動轉正！`);
+        }
+      });
+    }
+  }
+
+  // B. C-PLT-0023 胖胖仙人掌: 此單位被破壞時，使你額外區至多2張「迷你仙人掌」被召喚
+  if (card.id === "C-PLT-0023" || card.name?.includes("胖胖仙人掌")) {
+    logBattle(`🌵【胖胖仙人掌】被破壞：分裂召喚至多 2 張【迷你仙人掌】！`);
+    await window.xlwSummonPlantFromExtraDeck("迷你仙人掌", isPlayerUnit);
+    await window.xlwSummonPlantFromExtraDeck("迷你仙人掌", isPlayerUnit);
+  }
+
+  // C. SR-PLT-0024 球狀仙人掌: 此單位被破壞時，可使你額外區或墓地1張「迷你仙人掌」被召喚
+  if (card.id === "SR-PLT-0024" || card.name?.includes("球狀仙人掌")) {
+    logBattle(`🌵【球狀仙人掌】被破壞：召喚 1 張【迷你仙人掌】！`);
+    const gList = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
+    const gIdx = gList.findIndex(c => c && (c.id === "R-PLT-0022" || c.name?.includes("迷你仙人掌")));
+    if (gIdx >= 0) {
+      const mc = gList.splice(gIdx, 1)[0];
+      await window.xlwSpecialSummonUnit(mc, isPlayerUnit);
+    } else {
+      await window.xlwSummonPlantFromExtraDeck("迷你仙人掌", isPlayerUnit);
+    }
+  }
+
+  // D. SSR-PLT-0025 爆爆仙人掌: 你場上的其他多肉單位被破壞時，獎勵+2
+  if (window.xlwIsUnitSucculent(card) && card.id !== "SSR-PLT-0025" && !card.name?.includes("爆爆仙人掌")) {
+    const hasBoom = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "SSR-PLT-0025" || u.card.name?.includes("爆爆仙人掌")));
+    if (hasBoom) {
+      if (isPlayerUnit) playerBonusScore += 2; else enemyBonusScore += 2;
+      logBattle(`💥【爆爆仙人掌】感應到多肉爆炸：獲得獎勵 +2★！`);
+      renderScore();
+    }
+  }
+
+  // E. C-EVL-0063 靈魂守護水晶: 你場上的妖精單位因破壞而進入墓地後，可使此卡進入墓地，若成功則使該單位卡被召喚
+  if (window.xlwIsUnitFairy(card)) {
+    for (const z of [side + "front", side + "back"]) {
+      const crystalIdx = (field[z] || []).findIndex(u => u && (u.card.id === "C-EVL-0063" || u.card.name?.includes("靈魂守護水晶")));
+      if (crystalIdx >= 0) {
+        if (isPlayerUnit) {
+          const doResurrect = await showXLWConfirm("【靈魂守護水晶】靈魂復甦", `妖精【${card.name}】被破壞！是否將靈魂守護水晶送入墓地，使【${card.name}】復活召喚？`);
+          if (doResurrect) {
+            const crystalUnit = field[z][crystalIdx];
+            field[z][crystalIdx] = null;
+            graveyard.push(crystalUnit.card);
+            const deadIdx = graveyard.indexOf(card);
+            if (deadIdx >= 0) graveyard.splice(deadIdx, 1);
+            await window.xlwSpecialSummonUnit(card, true);
+            logBattle(`💎【靈魂守護水晶】碎裂獻祭：成功復活妖精【${card.name}】！`);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // F. R-ELE-0028 火山發電獸: 此單位被破壞時，使敵方場上X個單位被破壞。X=場上的「火山發電獸」數量。超載
+  if (card.id === "R-ELE-0028" || card.name?.includes("火山發電獸")) {
+    const oppPrefix = isPlayerUnit ? "enemy_" : "player_";
+    const myVolcanoCount = (field[side + "front"] || []).concat(field[side + "back"] || []).filter(u => u && (u.card.id === "R-ELE-0028" || u.card.name?.includes("火山發電獸"))).length + 1;
+    logBattle(`🌋【火山發電獸】自爆熔岩爆發！破壞敵方至多 ${myVolcanoCount} 個單位！`);
+    const oppTargets = [];
+    for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+      (field[oz] || []).forEach((u, i) => {
+        if (u && !window.isUnitEffectImmune(u, oz, i)) oppTargets.push({ zone: oz, idx: i, name: u.card.name });
+      });
+    }
+    for (let k = 0; k < myVolcanoCount && oppTargets.length > 0; k++) {
+      let chosen = oppTargets[0];
+      if (isPlayerUnit) {
+        const choices = oppTargets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+        const pick = await showXLWChoiceModal("【火山發電獸】選擇破壞目標", `請選擇第 ${k + 1} 個被熔岩吞噬的敵方單位：`, choices);
+        if (pick !== null && pick !== undefined) chosen = oppTargets[pick];
+      }
+      oppTargets.splice(oppTargets.indexOf(chosen), 1);
+      await destroyUnit(chosen.zone, chosen.idx, isPlayerUnit ? "enemy" : "player", false);
+    }
+  }
+
+  // G. R-ELE-0029 森林發電獸: 此單位被破壞時，此單位每有2點灌溉值便使你獎勵+1。超載
+  if (card.id === "R-ELE-0029" || card.name?.includes("森林發電獸")) {
+    const irrBonus = Math.floor((destroyedUnit.irrigation || 0) / 2);
+    if (irrBonus > 0) {
+      if (isPlayerUnit) playerBonusScore += irrBonus; else enemyBonusScore += irrBonus;
+      logBattle(`🌲【森林發電獸】灌溉能源釋放（${destroyedUnit.irrigation || 0} 點灌溉）：獲得獎勵 +${irrBonus}★！`);
+      renderScore();
+    }
+  }
+
+  // H. R-ELE-0030 北極兔: 你場上的電廠單位被破壞時，獎勵+2
+  if (window.xlwIsUnitPowerPlant(card)) {
+    const hasRabbit = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "R-ELE-0030" || u.card.name?.includes("北極兔")));
+    if (hasRabbit) {
+      if (isPlayerUnit) playerBonusScore += 2; else enemyBonusScore += 2;
+      logBattle(`🐇【北極兔】感應電廠爆毀：獲得獎勵 +2★！`);
+      renderScore();
+    }
+  }
+
+  // I. SSR-CRB-0028 白碳子: 此單位被破壞時，可使此單位被洗回牌庫
+  if (card.id === "SSR-CRB-0028" || card.name?.includes("白碳子")) {
+    const myG = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
+    const gIdx = myG.indexOf(card);
+    if (gIdx >= 0) myG.splice(gIdx, 1);
+    const myD = isPlayerUnit ? deck : (window.XLW_ENEMY?.deck || []);
+    myD.push(card);
+    if (isPlayerUnit) shuffle(deck);
+    logBattle(`✨【白碳子】純淨碳循環：被破壞時飛散並洗回牌庫！`);
+  }
+
+  // J. SSR-STP-0062 機械飛升 約翰: 你場上的人型單位被破壞時，充能+2
+  if (window.xlwIsUnitHuman(card)) {
+    const hasAscendedJohn = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "SSR-STP-0062" || u.card.name?.includes("機械飛升 約翰")));
+    if (hasAscendedJohn) {
+      await window.xlwChargeEnergy(2, isPlayerUnit);
+      logBattle(`⚙️【機械飛升 約翰】人體轉化核心：人型倒下，充能 +2！`);
+    }
+  }
+
+  // K. R-STP-0064 反人類機械暴民: 你場上的人型單位被破壞後，若場上有「機械飛升 約翰」，特召額外區此卡
+  if (window.xlwIsUnitHuman(card)) {
+    const hasAscendedJohn = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "SSR-STP-0062" || u.card.name?.includes("機械飛升 約翰")));
+    if (hasAscendedJohn) {
+      const extraList = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+      const mobIdx = extraList.findIndex(c => c && (c.id === "R-STP-0064" || c.name?.includes("反人類機械暴民")));
+      if (mobIdx >= 0) {
+        let doSum = isPlayerUnit ? await showXLWConfirm("【反人類機械暴民】暴動響應", "人型單位被破壞！是否響應機械飛升約翰，特殊召喚【反人類機械暴民】登場？") : true;
+        if (doSum) {
+          const mobCard = extraList.splice(mobIdx, 1)[0];
+          await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit);
+          logBattle(`🤖【反人類機械暴民】憤怒覺醒：從額外區特殊召喚至戰場！`);
+        }
+      }
+    }
+  }
+
+  // L. R-STP-0065 反機械人類暴民: 你場上的機械單位被破壞後，若場上有「瘋狂質能轉換科學家」，特召額外區此卡
+  if (window.xlwIsUnitMech(card)) {
+    const hasScientist = (field[side + "front"] || []).concat(field[side + "back"] || []).some(u => u && (u.card.id === "C-STP-0063" || u.card.name?.includes("瘋狂質能轉換科學家")));
+    if (hasScientist) {
+      const extraList = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+      const mobIdx = extraList.findIndex(c => c && (c.id === "R-STP-0065" || c.name?.includes("反機械人類暴民")));
+      if (mobIdx >= 0) {
+        let doSum = isPlayerUnit ? await showXLWConfirm("【反機械人類暴民】暴徒響應", "機械單位被破壞！是否響應瘋狂科學家，特殊召喚【反機械人類暴民】登場？") : true;
+        if (doSum) {
+          const mobCard = extraList.splice(mobIdx, 1)[0];
+          await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit);
+          logBattle(`👥【反機械人類暴民】湧上街頭：從額外區特殊召喚至戰場！`);
+        }
+      }
+    }
+  }
+};
+
+
 // ===== 6. 召喚與獻祭召喚系統 =====
 function clearModes(keepTributeWaiting = false) {
   if(xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
@@ -8203,6 +9239,10 @@ window.castSpellChain = castSpellChain;
 
 // 魔法卡點擊發動
 async function castSpell(handIndex) {
+  if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
+    setStatus("【磁場干擾】本回合受到磁場搗亂機影響，無法使用魔法卡！");
+    return;
+  }
   if(window.XLW_castSpellBusy || spellChainStack.length)return;
   window.XLW_castSpellBusy=true;
   window.XLWDuelConsistency?.identify(hand);
@@ -8275,6 +9315,235 @@ async function castSpell(handIndex) {
   // ==========================================
   // 🐐 山羊族 (GOT) 魔法卡 (Goat Spells)
   // ==========================================
+  // 🌿 C-PLT-0004 自動灑水器
+  } else if (card.id === "C-PLT-0004" || card.name?.includes("自動灑水器")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      logBattle(`🚿 發動場地魔法【自動灑水器】！在你的主要階段開始時將持續灌溉前排種子！`);
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🌿 C-PLT-0005 溫室種子
+  } else if (card.id === "C-PLT-0005" || card.name?.includes("溫室種子")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      logBattle(`🌱 發動魔法【溫室種子】！`);
+      const sRes = await window.xlwSummonPlantFromExtraDeck("魔法種子", true);
+      if (sRes && sRes.unit) {
+        window.xlwIrrigateUnit(sRes.unit, 2, sRes.slot.zone, sRes.slot.idx, "溫室種子");
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🌿 C-PLT-0007 鐵鏟
+  } else if (card.id === "C-PLT-0007" || card.name?.includes("鐵鏟")) {
+    const plants = window.xlwGetPlantUnitsOnField(true);
+    if (plants.length === 0) {
+      setStatus("場上沒有植物單位可供除外！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${getUnitStars(p.unit, p.zone, p.idx)}★, 灌溉: ${p.unit.irrigation || 0})`, value: i }));
+      const pick = await showXLWChoiceModal("【鐵鏟】除外移植", "請選擇要除外移植的植物單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const targetP = plants[pick];
+        const starsX = getUnitStars(targetP.unit, targetP.zone, targetP.idx);
+        const oldIrr = targetP.unit.irrigation || 0;
+        exileCard(targetP.unit.card, "player");
+        field[targetP.zone][targetP.idx] = null;
+        playerBonusScore += starsX;
+        logBattle(`⛏️【鐵鏟】除外移植了【${targetP.unit.card.name}】，獲得獎勵 +${starsX}★！`);
+        renderScore();
+        const newSeed = await window.xlwSummonPlantFromExtraDeck("魔法種子", true, targetP.zone, targetP.idx);
+        if (newSeed && newSeed.unit && oldIrr > 0) {
+          window.xlwIrrigateUnit(newSeed.unit, oldIrr, targetP.zone, targetP.idx, "鐵鏟繼承");
+        }
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🧭 C-SPT-0060 緊急徵招
+  } else if (card.id === "C-SPT-0060" || card.name?.includes("緊急徵招")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const destSide = await showXLWChoiceModal("【緊急徵招】選擇陣營", "請選擇將小旅人召喚至哪一方場上：", [
+        { text: "🛡️ 我方場上", value: "player" },
+        { text: "⚔️ 敵方場上", value: "enemy" }
+      ]);
+      if (destSide) {
+        logBattle(`🎒 發動【緊急徵招】：召喚 1 個小旅人至${destSide === 'player' ? '我方' : '敵方'}場上！`);
+        await (window.promptAndSummonTraveler || promptAndSummonTraveler)(destSide, 1, "緊急徵招");
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🧭 C-SPT-0061 旅人法棍
+  } else if (card.id === "C-SPT-0061" || card.name?.includes("旅人法棍")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      drawCard("player");
+      logBattle(`🥖 發動【旅人法棍】：抽 1 張牌！`);
+      const travelers = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && window.xlwIsLittleTraveler && window.xlwIsLittleTraveler(u, z, i)) travelers.push({ unit: u, zone: z, idx: i });
+        });
+      }
+      if (travelers.length > 0) {
+        const choices = travelers.map((t, i) => ({ text: `小旅人 (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: i }));
+        const pick = await showXLWChoiceModal("選擇強化的小旅人", "使 1 個小旅人獲得 +1 攻擊力：", choices);
+        if (pick !== null && pick !== undefined) {
+          const targetT = travelers[pick].unit;
+          targetT.baguetteBonus = (targetT.baguetteBonus || 0) + 1;
+          logBattle(`🥖 法棍投餵！小旅人攻擊力 +1（目前攻擊力: ${getUnitAtk(targetT, travelers[pick].zone, travelers[pick].idx)}）！`);
+        }
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🍺 C-VRT-0065 渣釀酒
+  } else if (card.id === "C-VRT-0065" || card.name?.includes("渣釀酒")) {
+    const myUnits = [];
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => { if (u) myUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
+    }
+    if (myUnits.length === 0) {
+      setStatus("場上沒有我方單位可供賦予！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = myUnits.map((u, i) => ({ text: u.name, value: i }));
+      const pick = await showXLWChoiceModal("【渣釀酒】微醺賦予", "選擇賦予【酒客】特殊類型的單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const targetU = myUnits[pick].unit;
+        targetU.isDrinker = true;
+        targetU.card.subtypes = targetU.card.subtypes || [];
+        if (!targetU.card.subtypes.includes("酒客")) targetU.card.subtypes.push("酒客");
+        logBattle(`🍺【渣釀酒】入口醇厚：使【${targetU.card.name}】獲得【酒客】特殊類型！`);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🍺 R-VRT-0067 精釀啤酒
+  } else if (card.id === "R-VRT-0067" || card.name?.includes("精釀啤酒")) {
+    const oppUnits = [];
+    for (const z of ["enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) oppUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
+    }
+    if (oppUnits.length === 0) {
+      setStatus("敵方場上沒有可指定的單位！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+      const pick = await showXLWChoiceModal("【精釀啤酒】醉意酩酊", "選擇被灌醉的敵方單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const targetU = oppUnits[pick].unit;
+        targetU.confined = true;
+        targetU.decay = true;
+        targetU.craftBeerTaunt = true;
+        logBattle(`🍻【精釀啤酒】極致微醺：使敵方【${targetU.card.name}】被賦予【禁錮】、【衰退】與攻擊重定向！`);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🍨 R-FMS-0038 奇妙的配方
+  } else if (card.id === "R-FMS-0038" || card.name?.includes("奇妙的配方")) {
+    const allUnits = [];
+    for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) allUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
+    }
+    if (allUnits.length === 0) {
+      setStatus("場上沒有單位可供指定！");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = allUnits.map((u, i) => ({ text: `${u.name} (${u.zone.startsWith("player_") ? "我方" : "敵方"})`, value: i }));
+      const pick = await showXLWChoiceModal("【奇妙的配方】衰退賦予", "選擇被賦予衰退的單位：", choices);
+      if (pick !== null && pick !== undefined) {
+        const targetU = allUnits[pick].unit;
+        targetU.decay = true;
+        logBattle(`🧪【奇妙的配方】：使【${targetU.card.name}】被賦予【衰退】！`);
+        if (deck.length > 0) {
+          const topCard = deck[deck.length - 1];
+          logBattle(`🔮【奇妙的配方】窺探未來：展示牌庫頂卡牌【${topCard.name}】！`);
+        }
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 🎪 R-CCS-0042 表演邀請函
+  } else if (card.id === "R-CCS-0042" || card.name?.includes("表演邀請函")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = [
+        { text: "🎯 選擇場上 1 個單位上靶", value: "field" },
+        { text: "🪦 選擇墓地 1 張單位卡上靶", value: "grave" }
+      ];
+      const mode = await showXLWChoiceModal("【表演邀請函】上靶目標", "請選擇上靶來源：", choices);
+      if (mode === "field") {
+        const myUnits = [];
+        for (const z of ["player_front", "player_back"]) {
+          (field[z] || []).forEach((u, i) => { if (u) myUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
+        }
+        if (myUnits.length > 0) {
+          const uChoices = myUnits.map((u, i) => ({ text: u.name, value: i }));
+          const pick = await showXLWChoiceModal("選擇上靶單位", "請選擇：", uChoices);
+          if (pick !== null && pick !== undefined) {
+            const targetU = myUnits[pick];
+            const clonedCard = structuredClone(targetU.unit.card);
+            field[targetU.zone][targetU.idx] = null;
+            await window.xlwPutCardOnWheel(clonedCard, true);
+            logBattle(`🎪【表演邀請函】：將場上的【${clonedCard.name}】安排上靶！`);
+          }
+        }
+      } else if (mode === "grave") {
+        const unitCards = graveyard.filter(c => c && (c.type === "unit" || c.attack !== undefined));
+        if (unitCards.length > 0) {
+          const gChoices = unitCards.map((c, i) => ({ text: c.name, value: i }));
+          const pick = await showXLWChoiceModal("選擇墓地卡牌上靶", "請選擇：", gChoices);
+          if (pick !== null && pick !== undefined) {
+            const targetC = unitCards[pick];
+            graveyard.splice(graveyard.indexOf(targetC), 1);
+            await window.xlwPutCardOnWheel(targetC, true);
+            logBattle(`🎪【表演邀請函】：將墓地中的【${targetC.name}】安排上靶！`);
+          }
+        }
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
   // 1. 山羊炸彈 (GOT-0017): 使敵方至多3個山羊單位遭到破壞（不得在倒數階段使用）
   } else if (card.id === "GOT-0017" || card.id === "R-GOT-0017" || card.name?.includes("山羊炸彈")) {
     if (countdownActive) {
@@ -15281,6 +16550,179 @@ async function performSummonToSlot(zone, idx) {
       // ==========================================
       // 🐐 山羊族 立即效果 (Goat Immediate Effects)
       // ==========================================
+      // 🌿 植物園與擴充卡牌立即召喚效果
+      if (card.id === "C-PLT-0001" || card.name?.includes("小農夫")) {
+        logBattle(`🌾【小農夫】立即效果：召喚至多 2 張【魔法種子】！`);
+        await window.xlwSummonPlantFromExtraDeck("魔法種子", isPlayer);
+        await window.xlwSummonPlantFromExtraDeck("魔法種子", isPlayer);
+      }
+
+      if (card.id === "C-PLT-0009" || card.name?.includes("施肥者")) {
+        logBattle(`🧪【施肥者】立即效果：使場上植物單位被加總灌溉 5！`);
+        const plants = window.xlwGetPlantUnitsOnField(isPlayer);
+        if (plants.length > 0) {
+          if (isPlayer) {
+            const choices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("【施肥者】灌溉", "選擇灌溉 5 點的植物單位：", choices);
+            if (pick !== null && pick !== undefined) window.xlwIrrigateUnit(plants[pick].unit, 5, plants[pick].zone, plants[pick].idx, "施肥者");
+          } else {
+            window.xlwIrrigateUnit(plants[0].unit, 5, plants[0].zone, plants[0].idx, "施肥者");
+          }
+        }
+      }
+
+      if (card.id === "C-PLT-0019" || card.name?.includes("花仙女")) {
+        const buds = (field[sidePrefix + "front"] || []).concat(field[sidePrefix + "back"] || []).filter(u => u && (u.card.id === "C-PLT-0018" || u.card.name?.includes("花苞子")));
+        const xAmt = buds.length;
+        if (isPlayer) playerBonusScore += xAmt; else enemyBonusScore += xAmt;
+        logBattle(`🧚【花仙女】立即效果：花苞子共有 ${xAmt} 個，獎勵 +${xAmt}★！`);
+        renderScore();
+      }
+
+      if (card.id === "SR-PLT-0011" || card.id === "SSSR-PLT-0011" || card.name?.includes("種子繁殖員")) {
+        const seeds = window.xlwGetSeedUnitsOnField(isPlayer);
+        const xAmt = seeds.length;
+        logBattle(`🌱【種子繁殖員】立即效果：場上有 ${xAmt} 個種子，額外召喚 ${xAmt} 張【魔法種子】！`);
+        for (let k = 0; k < xAmt; k++) {
+          await window.xlwSummonPlantFromExtraDeck("魔法種子", isPlayer);
+        }
+      }
+
+      if (card.id === "SR-PLT-0029" || card.name?.includes("皇家侯蕨")) {
+        logBattle(`👑【皇家侯蕨】立即效果：召喚 1 張【小蕨士】！`);
+        await window.xlwSummonPlantFromExtraDeck("小蕨士", isPlayer);
+        for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && (u.card.id === "R-PLT-0026" || u.card.name?.includes("小蕨士"))) {
+              const oppFront = isPlayer ? "enemy_front" : "player_front";
+              if (field[oppFront] && field[oppFront][i]) {
+                field[oppFront][i].confined = true;
+                logBattle(`⛓️【皇家侯蕨】侯爵威嚴：使【小蕨士】正前方的【${field[oppFront][i].card.name}】受到禁錮！`);
+              }
+            }
+          });
+        }
+      }
+
+      if (card.id === "C-ELE-0026" || card.name?.includes("能源轉換獸")) {
+        const powerPlants = [];
+        for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card !== card && window.xlwIsUnitPowerPlant && window.xlwIsUnitPowerPlant(u)) {
+              powerPlants.push({ zone: z, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (powerPlants.length > 0) {
+          let chosen = powerPlants[0];
+          if (isPlayer) {
+            const choices = powerPlants.map((p, i) => ({ text: `${p.name} (${getUnitStars(p.unit, p.zone, p.idx)}★)`, value: i }));
+            const pick = await showXLWChoiceModal("【能源轉換獸】破壞電廠轉換", "選擇要破壞的電廠單位：", choices);
+            if (pick !== null && pick !== undefined) chosen = powerPlants[pick];
+          }
+          const stars = getUnitStars(chosen.unit, chosen.zone, chosen.idx);
+          await destroyUnit(chosen.zone, chosen.idx, isPlayer ? "player" : "enemy", false);
+          if (stars < 0) {
+            const bonusGain = Math.abs(stars);
+            if (isPlayer) playerBonusScore += bonusGain; else enemyBonusScore += bonusGain;
+            logBattle(`🔋【能源轉換獸】超載轉換：破壞負星電廠【${chosen.name}】（${stars}★），獲得獎勵 +${bonusGain}★！`);
+            renderScore();
+          }
+        }
+      }
+
+      if (card.id === "SR-GOT-0057" || card.name?.includes("雷霆山羊")) {
+        if (!countdownActive) {
+          countdownActive = true;
+          window.countdownActive = true;
+          countdownRemaining = 5;
+          window.countdownRemaining = 5;
+          logBattle(`⚡【雷霆山羊】立即效果：天雷震盪！遊戲進入生死倒數第 5 回合！`);
+          renderScore();
+        }
+      }
+
+      if (card.id === "C-STP-0063" || card.name?.includes("瘋狂質能轉換科學家")) {
+        const mechs = [];
+        for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card !== card && window.xlwIsUnitMech && window.xlwIsUnitMech(u)) {
+              mechs.push({ zone: z, idx: i, name: u.card.name });
+            }
+          });
+        }
+        if (mechs.length > 0) {
+          let doDestroy = isPlayer ? await showXLWConfirm("【瘋狂科學家】質能轉化", "立即效果：是否破壞場上 1 個機械單位並獲得充能 +3？") : true;
+          if (doDestroy) {
+            let chosen = mechs[0];
+            if (isPlayer && mechs.length > 1) {
+              const choices = mechs.map((m, idx) => ({ text: m.name, value: idx }));
+              const pick = await showXLWChoiceModal("選擇破壞的機械", "請選擇：", choices);
+              if (pick !== null && pick !== undefined) chosen = mechs[pick];
+            }
+            await destroyUnit(chosen.zone, chosen.idx, isPlayer ? "player" : "enemy", false);
+            await window.xlwChargeEnergy(3, isPlayer);
+            logBattle(`👨‍🔬【瘋狂科學家】質能解構：破壞了【${chosen.name}】，獲得充能 +3！`);
+          }
+        }
+      }
+
+      if (card.id === "C-VRT-0066" || card.name?.includes("啤酒酒商")) {
+        const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
+        const draftIdx = myHand.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+        if (draftIdx >= 0) {
+          const draftCard = myHand[draftIdx];
+          const mugSample = (typeof allCards !== "undefined" ? allCards : []).find(c => c && (c.id === "C-VRT-0021" || c.name?.includes("一札啤酒"))) || { name: "一札啤酒", id: "C-VRT-0021", type: "magic" };
+          myHand[draftIdx] = structuredClone(mugSample);
+          logBattle(`🍺【啤酒酒商】立即效果：將手牌中的【渣釀酒】升級為【一札啤酒】！`);
+          render();
+        }
+      }
+
+      if (card.id === "SR-VRT-0064" || card.name?.includes("釀酒酒客")) {
+        const exList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+        const dIdx = exList.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+        if (dIdx >= 0) {
+          const dc = exList.splice(dIdx, 1)[0];
+          (isPlayer ? hand : window.XLW_ENEMY?.hand).push(dc);
+          logBattle(`🍻【釀酒酒客】立即效果：從額外區尋找 1 張【渣釀酒】加入手牌！`);
+          renderExtraDecks();
+          render();
+        }
+      }
+
+      if (card.id === "SSR-CRB-0028" || card.name?.includes("白碳子")) {
+        if (isPlayer) playerBonusScore += 2; else enemyBonusScore += 2;
+        logBattle(`✨【白碳子】淨化登場：獎勵 +2★！`);
+        renderScore();
+      }
+
+      if (card.id === "C-CRB-0029" || card.name?.includes("旅人卡丁車")) {
+        const currentU = field[zone]?.[idx];
+        if (currentU) {
+          currentU.rideCount = (currentU.rideCount || 0) + 1;
+          logBattle(`🏎️【旅人卡丁車】召喚出庫：搭乘數 +1（當前: ${currentU.rideCount}）！`);
+        }
+      }
+
+      if (card.id === "R-CRB-0026" || card.name?.includes("旅人坦克")) {
+        const currentU = field[zone]?.[idx];
+        if (currentU) {
+          currentU.rideCount = Math.min(6, (currentU.rideCount || 0) + 1);
+          logBattle(`🛡️【旅人坦克】鐵甲推進：搭乘數 +1（當前: ${currentU.rideCount}/6）！`);
+        }
+      }
+
+      if (card.id === "R-RBT-0006-改" || card.name?.includes("磁場搗亂機 (改)")) {
+        if (isPlayer) {
+          window.XLW_enemyMagicBannedUntilTurn = turn + 2;
+          logBattle(`🧲【磁場搗亂機 (改)】強磁干擾：對手下個回合不得使用魔法卡！`);
+        } else {
+          window.XLW_playerMagicBannedUntilTurn = turn + 2;
+          logBattle(`🧲 對手【磁場搗亂機 (改)】強磁干擾：我方下個回合不得使用魔法卡！`);
+        }
+      }
+
       // 1. 魔法山羊 (GOT-0001 / C-GOT-0001 / R-GOT-0001): 使墓地1張帶有「山羊術」的卡牌回手牌
       if (card.id === "GOT-0001" || card.id === "C-GOT-0001" || card.id === "R-GOT-0001" || card.name?.includes("魔法山羊")) {
         const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
@@ -20410,6 +21852,22 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
         return;
       }
     }
+    // 🌾 林區稻草人 (C-PLT-0002): 使你場上的種子單位被賦予無法被進攻
+    if (targetDefender && window.xlwIsUnitSeed && window.xlwIsUnitSeed(targetDefender)) {
+      const oppSideP = targetZone.startsWith("player_") ? "player_" : "enemy_";
+      const hasScarecrow = ["front", "back"].some(r => (field[oppSideP + r] || []).some(u => u && (u.card.id === "C-PLT-0002" || u.card.name?.includes("林區稻草人")) && !window.isUnitSilenced(u)));
+      if (hasScarecrow) {
+        setStatus("【稻草人守護】受到「林區稻草人」保護，種子單位無法被進攻！");
+        return;
+      }
+    }
+
+    // 🛑 無法進攻判定 (和平巨星 約翰 / 旅人坦克)
+    if (unit.card && (unit.card.id === "SSR-STP-0061" || unit.card.id === "R-CRB-0026" || unit.card.keywords?.includes("無法進攻") || unit.card.name?.includes("和平巨星 約翰") || unit.card.name?.includes("旅人坦克"))) {
+      setStatus("【無法進攻】此單位無法進行攻擊宣告！");
+      return;
+    }
+
     if (targetDefender && isUnitAttackProtected(targetZone, idx)) {
       setStatus("【進攻失敗】敵方單位受到 牆壁上的香蕉 保護，無法被進攻！");
       return;
@@ -22345,6 +23803,115 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   window.XLWBattleFlow?.settle(attacker,attZone,attIdx,turn);
   render();
 
+  const attUnit = attacker;
+  const defUnit = defender;
+  const attSide = defenderOwner === "player" ? "enemy" : "player";
+
+  // 🌿 R-PLT-0031 豬籠草: 使此單位進攻戰鬥破壞的單位由破壞改為被綁架
+  if (defenderShouldDie && !attackerShouldDie) {
+    if (attUnit && attUnit.card && (attUnit.card.id === "R-PLT-0031" || attUnit.card.name?.includes("豬籠草"))) {
+      defenderShouldDie = false;
+      defenderKidnapped = true;
+      if (typeof kidnapCard === "function") {
+        await kidnapCard(defZone, defIdx, attZone, attIdx);
+        logBattle(`🌿【豬籠草】進攻獲勝：吞噬並綁架了【${defUnit.card.name}】！`);
+      }
+    }
+  }
+
+  if (defenderShouldDie && !attackerShouldDie) {
+    // 🌿 C-PLT-0012 水槍小童: 進攻戰鬥成功時，使你場上1個植物單位被灌溉X。X=進攻目標★
+    if (attUnit.card && (attUnit.card.id === "C-PLT-0012" || attUnit.card.name?.includes("水槍小童"))) {
+      const defStars = getUnitStars(defUnit, defZone, defIdx);
+      const isPlayerAtt = attSide === "player";
+      const plants = window.xlwGetPlantUnitsOnField ? window.xlwGetPlantUnitsOnField(isPlayerAtt) : [];
+      if (plants.length > 0) {
+        if (isPlayerAtt) {
+          const choices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+          const pick = await showXLWChoiceModal("【水槍小童】滋潤", `進攻成功（目標為 ${defStars}★）！選擇獲得 ${defStars} 點灌溉的植物：`, choices);
+          if (pick !== null && pick !== undefined) window.xlwIrrigateUnit(plants[pick].unit, defStars, plants[pick].zone, plants[pick].idx, "水槍小童");
+        } else {
+          window.xlwIrrigateUnit(plants[0].unit, defStars, plants[0].zone, plants[0].idx, "水槍小童");
+        }
+      }
+    }
+
+    // 🐐 R-GOT-0008-PG 旅人騎羊 (PG): 此單位戰鬥成功時，召喚2個小旅人
+    if (attUnit.card && (attUnit.card.id === "R-GOT-0008-PG" || attUnit.card.name?.includes("旅人騎羊 (PG)"))) {
+      logBattle(`🐐【旅人騎羊 (PG)】戰鬥成功：召喚 2 個小旅人！`);
+      const isPlayerAtt = attSide === "player";
+      const prefix = isPlayerAtt ? "player_" : "enemy_";
+      let summonedCount = 0;
+      for (const z of [prefix + "front", prefix + "back"]) {
+        for (let i = 0; i < 5; i++) {
+          if (!field[z][i] && summonedCount < 2) {
+            field[z][i] = {
+              card: structuredClone(LITTLE_TRAVELER),
+              tapped: false,
+              attacking: false,
+              target: null,
+              summonedTurn: turn,
+              summonedZone: z
+            };
+            summonedCount++;
+          }
+        }
+      }
+      render();
+    }
+
+    // 🌿 C-PLT-0028 狂暴子蕨: 戰鬥成功時，使敵方場上1個被禁錮的單位被破壞
+    if (attUnit.card && (attUnit.card.id === "C-PLT-0028" || attUnit.card.name?.includes("狂暴子蕨"))) {
+      const oppSideP = attSide === "player" ? "enemy_" : "player_";
+      const confinedEnemies = [];
+      for (const z of [oppSideP + "front", oppSideP + "back"]) {
+        (field[z] || []).forEach((u, i) => { if (u && u.confined) confinedEnemies.push({ zone: z, idx: i, name: u.card.name }); });
+      }
+      if (confinedEnemies.length > 0) {
+        let chosen = confinedEnemies[0];
+        if (attSide === "player" && confinedEnemies.length > 1) {
+          const choices = confinedEnemies.map((c, idx) => ({ text: `${c.name} (${c.zone.includes("front") ? "前排" : "後排"}${c.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【狂暴子蕨】粉碎禁錮", "請選擇破壞的禁錮單位：", choices);
+          if (pick !== null && pick !== undefined) chosen = confinedEnemies[pick];
+        }
+        logBattle(`🌿【狂暴子蕨】戰鬥成功：狂暴粉碎了被禁錮的【${chosen.name}】！`);
+        await destroyUnit(chosen.zone, chosen.idx, attSide === "player" ? "enemy" : "player", false);
+      }
+    }
+
+    // 🎪 C-CCS-0038 表演小象: 戰鬥成功時，可輪轉2次
+    if (attUnit.card && (attUnit.card.id === "C-CCS-0038" || attUnit.card.name?.includes("表演小象"))) {
+      logBattle(`🐘【表演小象】戰鬥成功精彩謝幕：發動輪轉 2 次！`);
+      if (typeof window.xlwSpinWheel === "function") {
+        await window.xlwSpinWheel(attSide === "player", 2);
+      }
+    }
+
+    // 🤖 SR-RBT-0069 星兔浪人號-S: 戰鬥成功時，可使此單位被分開
+    if (attUnit.card && (attUnit.card.id === "SR-RBT-0069" || attUnit.card.name?.includes("星兔浪人號-S")) && attUnit.devourCards && attUnit.devourCards.length > 0) {
+      if (attSide === "player") {
+        const doSeparate = await showXLWConfirm("【星兔浪人號-S】拔刀分離", "戰鬥成功！是否將合體的機甲單位分開至戰場空格？");
+        if (doSeparate) {
+          const emptySlots = window.xlwGetEmptyPlayerSlots ? window.xlwGetEmptyPlayerSlots() : [];
+          if (emptySlots.length > 0) {
+            const separatedCard = attUnit.devourCards.pop().card;
+            const dest = emptySlots[0];
+            field[dest.zone][dest.idx] = {
+              card: separatedCard,
+              tapped: false,
+              attacking: false,
+              target: null,
+              summonedTurn: turn,
+              summonedZone: dest.zone
+            };
+            logBattle(`⚔️【星兔浪人號-S】合體卡【${separatedCard.name}】分離出擊至 ${dest.zone.includes("front") ? "前排" : "後排"}${dest.idx + 1}！`);
+            render();
+          }
+        }
+      }
+    }
+  }
+
   if (attackerShouldDie) {
     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat, true));
   }
@@ -22856,6 +24423,75 @@ function isLastCard(c) {
 }
 
 function canSummonCard(card, isPlayer, options = {}) {
+  if (!card) return false;
+
+  // 🌸 花皇 (SSR-PLT-0021): 獻祭打出此卡前,你的獎勵須至少為5
+  if (card.id === "SSR-PLT-0021" || card.name?.includes("花皇")) {
+    const currentBonus = isPlayer ? playerBonusScore : enemyBonusScore;
+    if (currentBonus < 5) {
+      if (!options.silent) setStatus("【花皇】獻祭打出此卡前，你的獎勵須至少為 5！");
+      return false;
+    }
+  }
+
+  // 🌸 花公主 (C-PLT-0020): 此卡的祭品須為「花苞子」
+  if (card.id === "C-PLT-0020" || card.name?.includes("花公主")) {
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const budCount = ((field[sideP + "front"] || []).concat(field[sideP + "back"] || [])).filter(u => u && (u.card.id === "C-PLT-0018" || u.card.name?.includes("花苞子"))).length;
+    if (budCount < 2) {
+      if (!options.silent) setStatus("【花公主】此卡的祭品須為 2 個「花苞子」！");
+      return false;
+    }
+  }
+
+  // 🌵 爆爆仙人掌 (SSR-PLT-0025): 此卡的祭品須為多肉單位
+  if (card.id === "SSR-PLT-0025" || card.name?.includes("爆爆仙人掌")) {
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const succulentCount = ((field[sideP + "front"] || []).concat(field[sideP + "back"] || [])).filter(u => u && window.xlwIsUnitSucculent && window.xlwIsUnitSucculent(u)).length;
+    if (succulentCount < 1) {
+      if (!options.silent) setStatus("【爆爆仙人掌】此卡的祭品須為「多肉」單位！");
+      return false;
+    }
+  }
+
+  // ☮️ 和平巨星 約翰 (SSR-STP-0061): 打出此卡前,你場上的機械單位及人型單位數量須相同且皆超過2
+  if (card.id === "SSR-STP-0061" || card.name?.includes("和平巨星 約翰")) {
+    const sideP = isPlayer ? "player_" : "enemy_";
+    let mechC = 0, humanC = 0;
+    if (typeof field !== "undefined" && field) {
+      for (const z of [sideP + "front", sideP + "back"]) {
+        (field[z] || []).forEach(u => {
+          if (!u) return;
+          if (window.xlwIsUnitMech && window.xlwIsUnitMech(u)) mechC++;
+          if (window.xlwIsUnitHuman && window.xlwIsUnitHuman(u)) humanC++;
+        });
+      }
+    }
+    if (mechC <= 2 || humanC <= 2 || mechC !== humanC) {
+      if (!options.silent) setStatus("【和平巨星 約翰】打出此卡前，場上機械單位及人型單位數量須相同且皆超過 2！");
+      return false;
+    }
+  }
+
+  // 🐇 北極兔 (R-ELE-0030): 你的主要階段,若你場上⭐為負的電廠單位數量至少為4,則可使你手牌的此卡被打出
+  if (card.id === "R-ELE-0030" || card.name?.includes("北極兔")) {
+    const sideP = isPlayer ? "player_" : "enemy_";
+    let negPowerPlants = 0;
+    if (typeof field !== "undefined" && field) {
+      for (const z of [sideP + "front", sideP + "back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && window.xlwIsUnitPowerPlant && window.xlwIsUnitPowerPlant(u)) {
+            const stars = getUnitStars(u, z, i);
+            if (stars < 0) negPowerPlants++;
+          }
+        });
+      }
+    }
+    if (negPowerPlants < 4) {
+      if (!options.silent) setStatus("【北極兔】場上⭐為負的電廠單位數量須至少為 4 才能打出！");
+      return false;
+    }
+  }
   const report=message=>{if(!options.silent)setStatus(message);};
   // SR-FMS-0036 麻祖 限制
   if (card.id === "SR-FMS-0036" || card.name?.includes("麻祖")) {
@@ -23096,6 +24732,33 @@ function isUnitIndestructible(unit, zone, idx, isCombatDestruction = false) {
 }
 
 function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
+  if (!unit) return false;
+  const c = unit.card || unit;
+
+  // 🌿 植物園 大樹系列魔法抗性
+  if (c.id === "C-PLT-0015" || c.id === "C-PLT-0016" || c.id === "C-PLT-0017" || c.name?.includes("林中木") || c.name?.includes("林大木") || c.name?.includes("林花老木")) {
+    return true;
+  }
+
+  // 🤖 王牌星兔駕駛員-TO (R-RBT-0070): 綁架此卡的機械單位被賦予敵方魔法抗性
+  if (unit.kidnappedCards && unit.kidnappedCards.some(k => k.id === "R-RBT-0070" || k.name?.includes("王牌星兔駕駛員"))) {
+    return true;
+  }
+
+  // 🏢 中星城菁英 (R-NMS-0075 / SSSR-NMS-0075): 魔法抗性，使正前方單位被賦予魔法抗性
+  if (c.id === "R-NMS-0075" || c.id === "SSSR-NMS-0075" || c.name?.includes("中星城菁英")) {
+    return true;
+  }
+  if (zone && idx !== undefined && idx >= 0 && typeof field !== "undefined") {
+    const sideP = zone.startsWith("player_") ? "player_" : "enemy_";
+    const isFront = zone.includes("front");
+    if (isFront) {
+      const backUnit = field[sideP + "back"]?.[idx];
+      if (backUnit && (backUnit.card.id === "R-NMS-0075" || backUnit.card.id === "SSSR-NMS-0075" || backUnit.card.name?.includes("中星城菁英"))) {
+        return true;
+      }
+    }
+  }
   if (!unit?.card) return false;
   const c = unit.card;
 
@@ -23293,6 +24956,43 @@ function hasPigmentArtistOnField(side) {
 }
 
 function isUnitEffectImmune(unit, zone, idx) {
+  if (!unit) return false;
+  const c = unit.card || unit;
+
+  // 🌿 林大木、林花老木 效果抗性
+  if (c.id === "C-PLT-0016" || c.id === "C-PLT-0017" || c.name?.includes("林大木") || c.name?.includes("林花老木")) {
+    return true;
+  }
+
+  // 🕊️ 八手觀音旅人 (SSR-SPT-0062): 若你場上有小旅人,則使此單位被賦予敵方效果抗性
+  if (c.id === "SSR-SPT-0062" || c.name?.includes("八手觀音旅人")) {
+    const isPlayer = zone && zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    let hasTraveler = false;
+    if (typeof field !== "undefined" && field) {
+      for (const z of [sideP + "front", sideP + "back"]) {
+        if ((field[z] || []).some((u, ti) => u && window.xlwIsLittleTraveler && window.xlwIsLittleTraveler(u, z, ti))) {
+          hasTraveler = true; break;
+        }
+      }
+    }
+    if (hasTraveler) return true;
+  }
+
+  // ⚙️ 和平巨星 約翰 & 機械飛升 約翰: 敵方效果抗性
+  if (c.id === "SSR-STP-0061" || c.id === "SSR-STP-0062" || c.name?.includes("和平巨星 約翰") || c.name?.includes("機械飛升 約翰")) {
+    return true;
+  }
+
+  // 🤖 星兔坦克號-TK1 合體後效果抗性
+  if (unit.isCombined && (c.id === "C-RBT-0067" || c.name?.includes("星兔坦克號-TK1") || (unit.devourCards && unit.devourCards.some(d => d.card?.id === "C-RBT-0067" || d.card?.name?.includes("星兔坦克號-TK1"))))) {
+    return true;
+  }
+
+  // 🤖 王牌星兔駕駛員-TO (R-RBT-0070): 綁架此卡的機械單位被賦予敵方效果抗性
+  if (unit.kidnappedCards && unit.kidnappedCards.some(k => k.id === "R-RBT-0070" || k.name?.includes("王牌星兔駕駛員"))) {
+    return true;
+  }
   if (!unit || !unit.card) return false;
 
   let z = zone;
@@ -25358,6 +27058,43 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
 async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = false) {
   const unit = field[zone]?.[idx];
   if (!unit) return;
+
+  // 🪓 雙斧野人 (C-EWD-0061): 防守階段限一次,此單位被破壞時,可使該次破壞無效化
+  if (typeof phase !== "undefined" && phase === "防守階段" && (unit.card.id === "C-EWD-0061" || unit.card.name?.includes("雙斧野人")) && !unit.twinAxeNegatedThisTurn) {
+    unit.twinAxeNegatedThisTurn = true;
+    logBattle(`🪓【雙斧野人】效果發動：防守階段使此次破壞無效化！`);
+    return;
+  }
+
+  // ☮️ 和平巨星 約翰 (SSR-STP-0061): 你場上的機械單位被破壞時,可改為使你場上1個其他人型單位被破壞
+  if (zone.startsWith("player_") && window.xlwIsUnitMech && window.xlwIsUnitMech(unit)) {
+    const hasJohn = ["player_front", "player_back"].some(z => (field[z] || []).some(u => u && (u.card.id === "SSR-STP-0061" || u.card.name?.includes("和平巨星 約翰")) && !window.isUnitSilenced(u)));
+    if (hasJohn) {
+      const otherHumans = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && u !== unit && u.card.id !== "SSR-STP-0061" && !u.card.name?.includes("和平巨星 約翰") && window.xlwIsUnitHuman && window.xlwIsUnitHuman(u)) {
+            otherHumans.push({ zone: z, idx: i, name: u.card.name });
+          }
+        });
+      }
+      if (otherHumans.length > 0) {
+        const doRedirect = await showXLWConfirm("【和平巨星 約翰】替身轉移", `機械單位【${unit.card.name}】即將被破壞，是否改為破壞場上的另 1 個人型單位？`);
+        if (doRedirect) {
+          const choices = otherHumans.map((h, i) => ({ text: `${h.name} (${h.zone.includes("front") ? "前排" : "後排"}${h.idx + 1})`, value: i }));
+          const pick = await showXLWChoiceModal("【和平巨星 約翰】選擇替身人型", "請選擇代替破壞的人型單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const chosenH = otherHumans[pick];
+            logBattle(`☮️【和平巨星 約翰】轉移破壞：改為使人型單位【${chosenH.name}】替身被破壞！`);
+            await destroyUnit(chosenH.zone, chosenH.idx, "player", false);
+            return;
+          }
+        }
+      }
+    }
+  }
+  const unit = field[zone]?.[idx];
+  if (!unit) return;
   const activeDestructions = window.XLW_activeDestructions ||= new WeakSet();
   if (activeDestructions.has(unit)) return;
   activeDestructions.add(unit);
@@ -25620,6 +27357,9 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
   const destructionEffectTimes = hasGuardTreasure ? 2 : 1;
 
   for (let det = 0; det < destructionEffectTimes; det++) {
+    if (typeof window.xlwResolveExpansionPostDestruction === "function") {
+      try { await window.xlwResolveExpansionPostDestruction(unit, zone, idx, owner, isCombatDestruction); } catch(e) { console.error("Error in xlwResolveExpansionPostDestruction:", e); }
+    }
     // 金幣大魔 (BRV-0042) 戰鬥被破壞給敵方 +4 獎勵
     if (isCombatDestruction && unit.card && (unit.card.id === "BRV-0042" || unit.card.id === "R-BRV-0042" || unit.card.id === "SSR-BRV-0042" || unit.card.name?.includes("金幣大魔")) && !window.isUnitSilenced(unit, zone, idx)) {
       const isPlayer = zone.startsWith("player_");
@@ -30521,7 +32261,10 @@ async function endPlayerTurnAndRunEnemy() {
       return;
     }
 
-  phase = "結束階段"; // 結束階段
+  phase = "結束階段";
+  if (typeof window.xlwResolveExpansionTurnEnd === "function") {
+    try { await window.xlwResolveExpansionTurnEnd(true); } catch(e) { console.error("Error in xlwResolveExpansionTurnEnd:", e); }
+  } // 結束階段
   xlwCleanExpiredTempEquips(turn);
   render();
 
@@ -32657,7 +34400,258 @@ function renderField() {
           cardEl.style.border = "2px solid #ef4444";
         }
 
-        // 始皇帝技能橫置目標高亮
+        // 🌿 植物園與擴充卡牌主動技能與成長對話
+          if (zone.startsWith("player_") && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "Main Phase") && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive) {
+            const growthCards = window.xlwGetEligibleGrowthCards ? window.xlwGetEligibleGrowthCards(obj, true) : [];
+            if (growthCards.length > 0) {
+              const gChoices = [
+                ...growthCards.map((c, i) => ({ text: `🌱 成長為【${c.name}】(${c.attack || 0}攻/${c.score || 0}★)`, value: i })),
+                { text: "ℹ️ 檢視資訊 / 暫不成長", value: -1 }
+              ];
+              const gPick = await showXLWChoiceModal(`【${obj.card.name}】植物成長`, `此單位符合成長條件（目前灌溉值: ${obj.irrigation || 0}）！是否使其成長為額外區卡牌？`, gChoices);
+              if (gPick !== null && gPick !== undefined && gPick >= 0) {
+                const targetCard = growthCards[gPick];
+                await window.xlwExecutePlantGrowth(obj, targetCard, zone, idx, true);
+                return;
+              }
+            }
+
+            if ((obj.card.id === "ASSR-PLT-0030" || obj.card.name?.includes("荷葉精靈")) && !obj.lotusElfUsedThisTurn) {
+              const plants = window.xlwGetPlantUnitsOnField(true);
+              const xAmt = plants.length;
+              const doIrr = await showXLWConfirm("【荷葉精靈】主要技能", `主要階段限一次！場上有 ${xAmt} 個植物單位，是否使場上植物單位獲得加總 ${xAmt} 點灌溉？`);
+              if (doIrr) {
+                obj.lotusElfUsedThisTurn = true;
+                if (plants.length === 1) {
+                  window.xlwIrrigateUnit(plants[0].unit, xAmt, plants[0].zone, plants[0].idx, "荷葉精靈");
+                } else {
+                  const choices = [
+                    { text: `💧 全部給予其中 1 個植物 (+${xAmt})`, value: "single" },
+                    { text: `💧 平均分配給所有植物`, value: "split" }
+                  ];
+                  const pickMode = await showXLWChoiceModal("【荷葉精靈】分配灌溉", "請選擇灌溉分配方式：", choices);
+                  if (pickMode === "single") {
+                    const pChoices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+                    const pPick = await showXLWChoiceModal("選擇獲得灌溉的植物", "請選擇：", pChoices);
+                    if (pPick !== null && pPick !== undefined) {
+                      window.xlwIrrigateUnit(plants[pPick].unit, xAmt, plants[pPick].zone, plants[pPick].idx, "荷葉精靈");
+                    }
+                  } else if (pickMode === "split") {
+                    plants.forEach(p => window.xlwIrrigateUnit(p.unit, 1, p.zone, p.idx, "荷葉精靈"));
+                  }
+                }
+                return;
+              }
+            }
+
+            if ((obj.card.id === "C-PLT-0020" || obj.card.name?.includes("花公主")) && !obj.flowerPrincessUsedThisTurn) {
+              const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => s.unit.card.name?.includes("魔法種子"));
+              if (seeds.length > 0) {
+                const doGrow = await showXLWConfirm("【花公主】百花盛開", `場上有 ${seeds.length} 個【魔法種子】！是否發動花公主效果，使至多 2 個成長為【花苞子】？`);
+                if (doGrow) {
+                  obj.flowerPrincessUsedThisTurn = true;
+                  for (let k = 0; k < 2 && seeds.length > 0; k++) {
+                    const targetSeed = seeds.shift();
+                    const extraList = playerExtraDeck;
+                    const bIdx = extraList.findIndex(c => c && (c.id === "C-PLT-0018" || c.name?.includes("花苞子")));
+                    const budCard = bIdx >= 0 ? extraList.splice(bIdx, 1)[0] : { name: "花苞子", id: "C-PLT-0018", attack: 0, score: 1, type: "unit" };
+                    targetSeed.unit.card = structuredClone(budCard);
+                    playerBonusScore += 1;
+                    logBattle(`🌸【花公主】效果：使【魔法種子】成長為【花苞子】，獎勵 +1★！`);
+                  }
+                  renderScore();
+                  render();
+                  return;
+                }
+              }
+            }
+
+            if ((obj.card.id === "C-PLT-0028" || obj.card.name?.includes("狂暴子蕨")) && !obj.furiousFernUsedThisTurn && obj.tapped && (obj.irrigation || 0) >= 3) {
+              const doUntap = await showXLWConfirm("【狂暴子蕨】狂暴轉正", `此單位處於橫置狀態且灌溉值為 ${obj.irrigation}，是否消耗 3 點灌溉值使其轉正？`);
+              if (doUntap && window.xlwSpendIrrigation(obj, 3)) {
+                obj.furiousFernUsedThisTurn = true;
+                obj.tapped = false;
+                logBattle(`🌿【狂暴子蕨】吸收灌溉狂暴轉正！`);
+                render();
+                return;
+              }
+            }
+
+            if ((obj.card.id === "R-PLT-0027" || obj.card.name?.includes("宮廷蕨仕女")) && !obj.fernLadyUsedThisTurn) {
+              const ferns = window.xlwGetFernUnitsOnField(true);
+              const doIrr = await showXLWConfirm("【宮廷蕨仕女】蕨類滋養", `主要階段限一次！是否使場上所有蕨類單位（共 ${ferns.length} 個）被灌溉 1？`);
+              if (doIrr) {
+                obj.fernLadyUsedThisTurn = true;
+                ferns.forEach(f => window.xlwIrrigateUnit(f.unit, 1, f.zone, f.idx, "宮廷蕨仕女"));
+                return;
+              }
+            }
+
+            if ((obj.card.id === "R-PLT-0031" || obj.card.name?.includes("豬籠草")) && (obj.irrigation || 0) >= 2 && obj.kidnappedCards && obj.kidnappedCards.length > 0) {
+              const doDigest = await showXLWConfirm("【豬籠草】消化吸收", `豬籠草灌溉值為 ${obj.irrigation} 且肚子裡有 ${obj.kidnappedCards.length} 張被綁架卡！是否消耗 2 點灌溉值將其除外並轉正？`);
+              if (doDigest && window.xlwSpendIrrigation(obj, 2)) {
+                const digested = obj.kidnappedCards.pop();
+                logBattle(`🍃【豬籠草】消化了【${digested.name}】並將其除外，豬籠草精神大振轉正！`);
+                obj.tapped = false;
+                render();
+                return;
+              }
+            }
+
+            if ((obj.card.id === "SSR-PLT-0013" || obj.card.name?.includes("澆花少女")) && !obj.flowerGirlUsedThisTurn) {
+              const plants = window.xlwGetPlantUnitsOnField(true);
+              if (plants.length > 0) {
+                const doWater = await showXLWConfirm("【澆花少女】主要技能", `主要階段限一次！是否使場上植物單位被灌溉加總 3 點？`);
+                if (doWater) {
+                  obj.flowerGirlUsedThisTurn = true;
+                  const choices = plants.map((p, i) => ({ text: `${p.unit.card.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+                  const pPick = await showXLWChoiceModal("選擇澆花目標", "請選擇要獲得 3 點灌溉的植物：", choices);
+                  if (pPick !== null && pPick !== undefined) {
+                    window.xlwIrrigateUnit(plants[pPick].unit, 3, plants[pPick].zone, plants[pPick].idx, "澆花少女");
+                  }
+                  return;
+                }
+              }
+            }
+
+            if ((obj.card.id === "SSR-PLT-0025" || obj.card.name?.includes("爆爆仙人掌")) && !obj.boomCactusUsedThisTurn) {
+              const succulents = window.xlwGetSucculentUnitsOnField(true);
+              if (succulents.length > 0) {
+                const doExplode = await showXLWConfirm("【爆爆仙人掌】引爆多肉", "主要階段限一次！是否選擇場上 1 個多肉單位引爆破壞？");
+                if (doExplode) {
+                  obj.boomCactusUsedThisTurn = true;
+                  const choices = succulents.map((s, i) => ({ text: `${s.unit.card.name} (${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1})`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇要引爆的多肉單位", "請選擇：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const targetS = succulents[pick];
+                    logBattle(`💥【爆爆仙人掌】引爆了【${targetS.unit.card.name}】！`);
+                    await destroyUnit(targetS.zone, targetS.idx, "player", false);
+                  }
+                  return;
+                }
+              }
+            }
+
+            if ((obj.card.id === "C-CRB-0029" || obj.card.name?.includes("旅人卡丁車")) && (obj.rideCount || 0) >= 1) {
+              const emptySlots = window.xlwGetEmptyPlayerSlots();
+              if (emptySlots.length > 0) {
+                const doMove = await showXLWConfirm("【旅人卡丁車】下車漂移", `卡丁車搭乘數為 ${obj.rideCount}！是否下車 1，將卡丁車移動至場上任意空格？`);
+                if (doMove) {
+                  obj.rideCount -= 1;
+                  const choices = emptySlots.map((s, i) => ({ text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇移動目的空格", "請選擇空格：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const dest = emptySlots[pick];
+                    field[dest.zone][dest.idx] = obj;
+                    field[zone][idx] = null;
+                    obj.summonedZone = dest.zone;
+                    logBattle(`🏎️【旅人卡丁車】下車並漂亮甩尾移動至 ${dest.zone.includes("front") ? "前排" : "後排"}${dest.idx + 1}！`);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+
+            if ((obj.card.id === "SSR-SPT-0062" || obj.card.name?.includes("八手觀音旅人")) && !obj.eightHandsUsedThisTurn) {
+              const myUnits = [];
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => { if (u) myUnits.push({ zone: z, idx: i, name: u.card.name }); });
+              }
+              const oppUnits = [];
+              for (const z of ["enemy_front", "enemy_back"]) {
+                (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) oppUnits.push({ zone: z, idx: i, name: u.card.name }); });
+              }
+              if (myUnits.length > 0 && oppUnits.length > 0) {
+                const doGuanYin = await showXLWConfirm("【八手觀音旅人】八手法印", "主要階段限一次！是否破壞我方 1 個單位，若成功則破壞敵方 1 個單位？");
+                if (doGuanYin) {
+                  obj.eightHandsUsedThisTurn = true;
+                  const myChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+                  const mPick = await showXLWChoiceModal("選擇破壞的我方單位", "請選擇：", myChoices);
+                  if (mPick !== null && mPick !== undefined) {
+                    const myTarget = myUnits[mPick];
+                    await destroyUnit(myTarget.zone, myTarget.idx, "player", false);
+                    const oppChoices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+                    const oPick = await showXLWChoiceModal("選擇破壞的敵方單位", "請選擇：", oppChoices);
+                    if (oPick !== null && oPick !== undefined) {
+                      const oppTarget = oppUnits[oPick];
+                      logBattle(`🖐️【八手觀音旅人】佛掌破滅：破壞我方【${myTarget.name}】與敵方【${oppTarget.name}】！`);
+                      await destroyUnit(oppTarget.zone, oppTarget.idx, "enemy", false);
+                    }
+                    return;
+                  }
+                }
+              }
+            }
+
+            if ((obj.card.id === "SSR-STP-0061" || obj.card.name?.includes("和平巨星 約翰")) && !obj.peaceJohnUsedThisTurn) {
+              let mechC = 0, humanC = 0;
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach(u => {
+                  if (!u) return;
+                  if (window.xlwIsUnitMech && window.xlwIsUnitMech(u)) mechC++;
+                  if (window.xlwIsUnitHuman && window.xlwIsUnitHuman(u)) humanC++;
+                });
+              }
+              const pairs = Math.min(mechC, humanC);
+              const doPeace = await showXLWConfirm("【和平巨星 約翰】共存充能", `主要階段限一次！場上有 ${mechC} 機械與 ${humanC} 人型（共 ${pairs} 組）！是否發動效果獲得獎勵 +${pairs}★ 及充能 +${pairs}？`);
+              if (doPeace) {
+                obj.peaceJohnUsedThisTurn = true;
+                playerBonusScore += pairs;
+                renderScore();
+                await window.xlwChargeEnergy(pairs, true);
+                logBattle(`☮️【和平巨星 約翰】和平演說：獲得獎勵 +${pairs}★ 及充能 +${pairs}！`);
+                return;
+              }
+            }
+
+            if ((obj.card.id === "SSR-STP-0062" || obj.card.name?.includes("機械飛升 約翰")) && !obj.ascendedJohnUsedThisTurn) {
+              const currentE = window.xlwGetSteamEnergy ? window.xlwGetSteamEnergy(true) : 0;
+              if (currentE >= 3) {
+                const doLaser = await showXLWConfirm("【機械飛升 約翰】質能湮滅砲", `主要階段限一次！當前能量為 ${currentE}，是否消耗 3 點蒸氣能量，破壞此單位正前方整條戰線上的所有單位？`);
+                if (doLaser && window.xlwConsumeEnergy(3, true)) {
+                  obj.ascendedJohnUsedThisTurn = true;
+                  logBattle(`⚡【機械飛升 約翰】質能湮滅砲發射！消耗 3 點能量轟炸同欄戰線！`);
+                  for (const tz of ["player_front", "enemy_front", "enemy_back"]) {
+                    if (field[tz] && field[tz][idx] && !window.isUnitEffectImmune(field[tz][idx], tz, idx)) {
+                      await destroyUnit(tz, idx, tz.startsWith("player_") ? "player" : "enemy", false);
+                    }
+                  }
+                  return;
+                }
+              }
+            }
+
+            if ((obj.card.id === "R-EWD-0062" || obj.card.name?.includes("野人獨旅洞穴")) && !obj.caveUsedThisTurn) {
+              const tappedBarbarians = [];
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => {
+                  if (u && u !== obj && u.tapped && window.xlwIsUnitBarbarian && window.xlwIsUnitBarbarian(u)) {
+                    tappedBarbarians.push({ zone: z, idx: i, unit: u });
+                  }
+                });
+              }
+              if (tappedBarbarians.length > 0) {
+                const doShelter = await showXLWConfirm("【野人獨旅洞穴】獨旅庇護", `主要階段限一次！場上有 ${tappedBarbarians.length} 個橫放野人，是否將其置於洞穴下方庇護，下回合開始時回歸？`);
+                if (doShelter) {
+                  obj.caveUsedThisTurn = true;
+                  const choices = tappedBarbarians.map((b, i) => ({ text: `${b.unit.card.name} (${b.zone.includes("front") ? "前排" : "後排"}${b.idx + 1})`, value: i }));
+                  const pick = await showXLWChoiceModal("選擇進洞獨旅的野人", "請選擇：", choices);
+                  if (pick !== null && pick !== undefined) {
+                    const targetB = tappedBarbarians[pick];
+                    window.XLW_caveShelteredUnits = window.XLW_caveShelteredUnits || [];
+                    window.XLW_caveShelteredUnits.push(targetB.unit.card);
+                    field[targetB.zone][targetB.idx] = null;
+                    logBattle(`🏕️【野人獨旅洞穴】野人【${targetB.unit.card.name}】進入洞穴開始獨旅！`);
+                    render();
+                    return;
+                  }
+                }
+              }
+            }
+          }
+
+          // 始皇帝技能橫置目標高亮
         if (window.XLW_emperorTapSelecting) {
           if (!obj.tapped) {
             cardEl.style.border = "3px solid #ffcc00";
@@ -32670,6 +34664,24 @@ function renderField() {
         }
 
         // 星數增強顯示
+        // 💧 灌溉值徽章顯示
+        if (obj.irrigation && obj.irrigation > 0) {
+          const badge = document.createElement("div");
+          badge.className = "xlw-irrigation-badge";
+          badge.innerHTML = `💧 ${obj.irrigation}`;
+          badge.style.cssText = "position: absolute; top: -6px; left: 6px; background: rgba(14, 165, 233, 0.95); color: #fff; font-weight: 900; font-size: 13px; padding: 1px 6px; border-radius: 10px; border: 1px solid #bae6fd; box-shadow: 0 0 6px rgba(14,165,233,0.8); z-index: 25; pointer-events: none;";
+          slot.appendChild(badge);
+        }
+
+        // 🚗 搭乘數徽章顯示
+        if (obj.rideCount && obj.rideCount > 0) {
+          const badge = document.createElement("div");
+          badge.className = "xlw-ride-badge";
+          badge.innerHTML = `🚗 ${obj.rideCount}`;
+          badge.style.cssText = "position: absolute; top: -6px; right: 6px; background: rgba(245, 158, 11, 0.95); color: #fff; font-weight: 900; font-size: 13px; padding: 1px 6px; border-radius: 10px; border: 1px solid #fef3c7; box-shadow: 0 0 6px rgba(245,158,11,0.8); z-index: 25; pointer-events: none;";
+          slot.appendChild(badge);
+        }
+
         if (obj.bonusScore) {
           const badge = document.createElement("div");
           badge.className = "bonus-score-badge";
@@ -44409,6 +46421,206 @@ function showExtraDeckDetailModal(title, extraList, owner) {
           return;
         }
         
+        // 🌱 植物園成長與擴充卡牌額外召喚/升級
+        const eligiblePlants = window.xlwGetPlantUnitsOnField(true);
+        const cardId = card.id || "";
+        const cardName = card.name || "";
+
+        if (cardId === "ASSR-PLT-0030" || cardName.includes("荷葉精靈")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 4);
+          if (seeds.length > 0) {
+            overlay.remove();
+            const choices = seeds.map((s, i) => ({ text: `${s.unit.card.name} (灌溉值: ${s.unit.irrigation})`, value: i }));
+            const pick = await showXLWChoiceModal("【荷葉精靈】成長", "選擇要成長為【荷葉精靈】的種子單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              await window.xlwExecutePlantGrowth(seeds[pick].unit, card, seeds[pick].zone, seeds[pick].idx, true);
+              return;
+            }
+          } else {
+            setStatus("場上沒有灌溉值至少為 4 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "C-PLT-0015" || cardName.includes("林中木")) {
+          const woods = eligiblePlants.filter(p => p.unit.card.name?.includes("林小木") && (p.unit.irrigation || 0) >= 3);
+          if (woods.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(woods[0].unit, card, woods[0].zone, woods[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「林小木」可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "C-PLT-0016" || cardName.includes("林大木")) {
+          const woods = eligiblePlants.filter(p => p.unit.card.name?.includes("林中木") && (p.unit.irrigation || 0) >= 3);
+          if (woods.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(woods[0].unit, card, woods[0].zone, woods[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「林中木」可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "C-PLT-0017" || cardName.includes("林花老木")) {
+          const woods = eligiblePlants.filter(p => p.unit.card.name?.includes("林大木") && (p.unit.irrigation || 0) >= 3);
+          if (woods.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(woods[0].unit, card, woods[0].zone, woods[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「林大木」可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "C-PLT-0018" || cardName.includes("花苞子")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => s.unit.card.name?.includes("魔法種子") && (s.unit.irrigation || 0) >= 2);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 2 的「魔法種子」可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "C-PLT-0033" || cardName.includes("聖誕紅姬")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 5);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 5 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "R-PLT-0014" || cardName.includes("林小木")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 3);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "R-PLT-0022" || cardName.includes("迷你仙人掌")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 2);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 2 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "R-PLT-0026" || cardName.includes("小蕨士")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 2);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 2 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "R-PLT-0031" || cardName.includes("豬籠草")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 3);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "SR-PLT-0024" || cardName.includes("球狀仙人掌")) {
+          const cacti = eligiblePlants.filter(p => p.unit.card.name?.includes("迷你仙人掌") && (p.unit.irrigation || 0) >= 3);
+          if (cacti.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(cacti[0].unit, card, cacti[0].zone, cacti[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 3 的「迷你仙人掌」可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "SR-PLT-0032" || cardName.includes("羞羞草")) {
+          const seeds = window.xlwGetSeedUnitsOnField(true).filter(s => (s.unit.irrigation || 0) >= 5);
+          if (seeds.length > 0) {
+            overlay.remove();
+            await window.xlwExecutePlantGrowth(seeds[0].unit, card, seeds[0].zone, seeds[0].idx, true);
+            return;
+          } else {
+            setStatus("場上沒有灌溉值至少為 5 的「種子」單位可成長！");
+            return;
+          }
+        }
+
+        if (cardId === "SSR-STP-0062" || cardName.includes("機械飛升 約翰")) {
+          let hasJohn = null;
+          let mechCount = 0;
+          let otherHumans = 0;
+          for (const z of ["player_front", "player_back"]) {
+            (field[z] || []).forEach((u, i) => {
+              if (!u) return;
+              if (u.card.id === "SSR-STP-0061" || u.card.name?.includes("和平巨星 約翰")) hasJohn = { unit: u, zone: z, idx: i };
+              if (window.xlwIsUnitMech && window.xlwIsUnitMech(u)) mechCount++;
+              if (window.xlwIsUnitHuman && window.xlwIsUnitHuman(u) && u.card.id !== "SSR-STP-0061" && !u.card.name?.includes("和平巨星 約翰")) otherHumans++;
+            });
+          }
+          if (hasJohn && mechCount > 3 && otherHumans === 0) {
+            overlay.remove();
+            playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+            hasJohn.unit.card = structuredClone(card);
+            logBattle(`🚀【和平巨星 約翰】完成機械飛升，升級進化為【機械飛升 約翰】！`);
+            renderExtraDecks();
+            render();
+            return;
+          } else {
+            setStatus("【機械飛升 約翰】場上須有「和平巨星 約翰」、機械數量超過 3 且無其他人型單位！");
+            return;
+          }
+        }
+
+        if (cardId === "R-VRT-0067" || cardName.includes("精釀啤酒")) {
+          const draftIdx = hand.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+          const beerIdx = hand.findIndex(c => c && (c.id === "C-VRT-0021" || c.name?.includes("一札啤酒")));
+          if (draftIdx >= 0 && beerIdx >= 0) {
+            overlay.remove();
+            const higher = Math.max(draftIdx, beerIdx);
+            const lower = Math.min(draftIdx, beerIdx);
+            hand.splice(higher, 1);
+            hand.splice(lower, 1);
+            playerExtraDeck.splice(playerExtraDeck.indexOf(card), 1);
+            hand.push(card);
+            logBattle(`🍻 釀造升級：將手牌中的【渣釀酒】與【一札啤酒】升級合成出【精釀啤酒】！`);
+            renderExtraDecks();
+            render();
+            return;
+          } else {
+            setStatus("【精釀啤酒】升級合成需要手牌同時擁有 1 張「渣釀酒」與 1 張「一札啤酒」！");
+            return;
+          }
+        }
+
         // 融合成憤怒的般若
         const hannyaSlots = [];
         for (const zone of ["player_front", "player_back"]) {
