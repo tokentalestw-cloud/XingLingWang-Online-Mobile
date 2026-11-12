@@ -114,7 +114,9 @@ module.exports = (async () => {
       ws: { send: raw => messages.push(JSON.parse(raw)) }, sendFullGameStateToOpponent() {}
     };
     c.window = c;
-    vm.runInNewContext(source.slice(sendStart, sendEnd), c);
+    c.pendingCover = null;
+    c.xlwResolveSummonCover = async () => false;
+    await vm.runInNewContext("(async () => {" + source.slice(sendStart, sendEnd) + "})()", c);
     assert.equal(messages[0].fromHand, !special);
     tests++;
   }

@@ -76,7 +76,7 @@ with tempfile.TemporaryFile() as log:
             try:
                 with urllib.request.urlopen(base, timeout=1) as response:
                     html = response.read().decode('utf8')
-                    assert '20261031-sync-v2' in html
+                    assert '/static/online_sync.js' in html
                 break
             except OSError:
                 time.sleep(.25)
