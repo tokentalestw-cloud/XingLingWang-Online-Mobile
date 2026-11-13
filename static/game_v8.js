@@ -3340,13 +3340,16 @@ window.xlwCheckGraveyardTax = async function(isPlayerAction) {
     const choices = handList.map((c, i) => ({ text: c.name, value: i }));
     const picked = await showXLWChoiceModal("守墓神 代價", "請選擇要丟棄的 1 張手牌：", choices);
     const discardIdx = (picked !== null && picked !== undefined) ? picked : 0;
+    if (!xlwIsPileCard(handList[discardIdx])) return false;
     const discarded = handList.splice(discardIdx, 1)[0];
     graveyard.push(discarded);
     logBattle(`💀 因【守墓神】效果，我方丟棄了手牌【${discarded.name}】！`);
     render();
     return true;
   } else {
-    const discarded = handList.splice(0, 1)[0];
+    const firstKnown = handList.findIndex(xlwIsPileCard);
+    if (firstKnown < 0) return false;
+    const discarded = handList.splice(firstKnown, 1)[0];
     if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
     window.XLW_ENEMY.grave.push(discarded);
     enemyGraveyard = window.XLW_ENEMY.grave;
@@ -4846,12 +4849,34 @@ function xlwHasInnateWheelEntry(card) {
     /(?:^|[。；;！!\n])\s*此(?:卡|單位)上靶時/.test(text);
 }
 
+// Public piles contain real cards only. Hidden hand/deck placeholders stay intact.
+function xlwIsPileCard(card) {
+  return card !== null && typeof card === "object" &&
+    (typeof card.id === "string" && card.id.length > 0 ||
+     typeof card.name === "string" && card.name.length > 0);
+}
+
+function xlwCleanPublicPile(pile) {
+  if (!Array.isArray(pile)) return [];
+  let next = 0;
+  for (let i = 0; i < pile.length; i++) {
+    const card = pile[i];
+    if (!xlwIsPileCard(card)) continue;
+    if (next !== i) pile[next] = card;
+    next++;
+  }
+  if (next !== pile.length) pile.length = next;
+  return pile;
+}
+
 function xlwGravePile(pile, isPlayer) {
+  pile = xlwCleanPublicPile(pile);
   if (Object.hasOwn(pile, "push")) return pile;
   Object.defineProperty(pile, "push", {
     configurable: true,
     value(...cards) {
       for (const card of cards) {
+        if (!xlwIsPileCard(card)) continue;
         if (xlwHasInnateWheelEntry(card)) {
           const entry = xlwAddWheelEntry(card, isPlayer);
           if (entry && (isPlayer || !isMultiplayer)) xlwQueueWheelEntryEffect(entry, isPlayer);
@@ -17807,6 +17832,7 @@ async function executeTributeEffects(selectedTributes) {
                   break;
                 }
                 const discarded = hand[chosenIdx];
+                if (!xlwIsPileCard(discarded)) break;
                 hand.splice(chosenIdx, 1);
                 graveyard.push(discarded);
                 logBattle(`藍大鬼棒子 效果：手牌 ${discarded.name} 被棄置。`);
@@ -17820,6 +17846,7 @@ async function executeTributeEffects(selectedTributes) {
               const discardNum = Math.min(window.XLW_ENEMY.hand.length, Math.floor(Math.random() * 2));
               for (let i = 0; i < discardNum; i++) {
                 const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+                if (!xlwIsPileCard(window.XLW_ENEMY.hand[idx])) break;
                 const discarded = window.XLW_ENEMY.hand.splice(idx, 1)[0];
                 window.XLW_ENEMY.grave.push(discarded);
                 logBattle(`對手藍大鬼棒子 效果：棄置其手牌 ${discarded.name}。`);
@@ -19430,7 +19457,7 @@ async function performSummonToSlot(zone, idx) {
 
       // 5. 夾娃娃機 (RBT-0016): 立即：展示牌庫頂1張牌，若是機械單位則召喚並與此卡合體，否則放回牌庫頂
       if (card.id === "RBT-0016" || card.name?.includes("夾娃娃機")) {
-        if (deck.length > 0) {
+        if (xlwIsPileCard(deck[deck.length - 1])) {
           const topCard = deck.pop();
           logBattle(`🧸【夾娃娃機】爪子落下！夾到了牌庫頂的【${topCard.name}】！`);
           const isMechUnit = topCard.type === "unit" && (topCard.deck === "機械軍團" || topCard.faction === "機械軍團" || topCard.race === "機械" || (topCard.id && topCard.id.includes("RBT")));
@@ -30832,8 +30859,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
   if (unit.card && (unit.card.id === "R-CND-0062" || unit.card.name?.includes("焦糖烤布蕾")) && !shouldExile) {
     const isPlayer = owner === "player";
     const deckList = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
-    if (deckList.length > 0) {
-      const topCard = deckList[deckList.length - 1];
+    const topCard = deckList[deckList.length - 1];
+    if (xlwIsPileCard(topCard)) {
       logBattle(`🍮【焦糖烤布蕾】被破壞：展示牌庫頂卡牌【${topCard.name}】！`);
       if (isDessertCard(topCard) && (topCard.type === "unit" || topCard.attack !== undefined)) {
         let doSummon = false;
@@ -45172,6 +45199,7 @@ async function triggerSneakAttackSuccessEffects(card) {
     } else {
       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
         const idx = Math.floor(Math.random() * window.XLW_ENEMY.hand.length);
+        if (!xlwIsPileCard(window.XLW_ENEMY.hand[idx])) return;
         const discarded = window.XLW_ENEMY.hand.splice(idx, 1)[0];
         enemyGraveyard.push(discarded);
         logBattle(`🥷 變裝喵 效果：對手被強制隨機捨棄了手牌中的 ${discarded.name}！`);
@@ -46283,7 +46311,7 @@ async function showAquariusModal(oppHand, myHand) {
 }
 
 function exileCard(card, owner) {
-  if (!card) return;
+  if (!xlwIsPileCard(card)) return;
   if (owner === "player") {
     playerExileZone.push(card);
     window.XLW_playerExiledCardsThisTurn = (window.XLW_playerExiledCardsThisTurn || 0) + 1;
@@ -46296,6 +46324,7 @@ function exileCard(card, owner) {
 }
 
 function renderGraveyard(zoneId, graveList, label) {
+  graveList = xlwCleanPublicPile(graveList);
   const zone = $(zoneId);
   if (!zone) return;
 
@@ -46389,6 +46418,7 @@ function renderGraveyard(zoneId, graveList, label) {
 
 
 function showGraveyardDetailModal(title, graveList) {
+  graveList = xlwCleanPublicPile(graveList);
   const overlay = document.createElement("div");
   overlay.className = "xlw-graveyard-detail-overlay";
   overlay.style.cssText = `
@@ -48500,6 +48530,8 @@ function resolveLocalSpellChain() {
 // ===== 🌌 額外牌庫與召喚機制 (Extra Deck & Fusion Summons) =====
 
 function renderExtraDecks() {
+  playerExtraDeck = xlwCleanPublicPile(playerExtraDeck);
+  enemyExtraDeck = xlwCleanPublicPile(enemyExtraDeck);
   window.XLW_playerExtraDeck = playerExtraDeck;
   window.XLW_enemyExtraDeck = enemyExtraDeck;
   const pExtraEl = $("playerExtraDeck");
@@ -48722,6 +48754,7 @@ function startMultiplayerGameActual() {
 // ===== 🌌 額外牌庫內容展開顯示 Modal =====
 
 function showExtraDeckDetailModal(title, extraList, owner) {
+  extraList = xlwCleanPublicPile(extraList);
   const overlay = document.createElement("div");
   overlay.className = "xlw-graveyard-detail-overlay";
   overlay.style.cssText = `
