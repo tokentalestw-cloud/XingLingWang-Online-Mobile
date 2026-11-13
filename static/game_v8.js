@@ -2887,8 +2887,6 @@ window.isUnitSilenced = function(unit, zone, idx) {
 window.hasFlying = function(unit) {
   if (!unit) return false;
 
-  // 🕊️ 星兔英雄號-H (SR-RBT-0071), 蜘蛛魔盜團偷天 (SR-ART-0068), 風之精靈托比 (R-NMS-0090)
-  if (c && (c.id === "SR-RBT-0071" || c.id === "SR-ART-0068" || c.id === "R-NMS-0090" || c.name?.includes("星兔英雄號-H") || c.name?.includes("偷天") || c.name?.includes("托比"))) return true;
   if (unit.hasFlyingBuff) return true;
 
   if (unit.summonedZone && field[unit.summonedZone]) {
@@ -2896,6 +2894,8 @@ window.hasFlying = function(unit) {
     if (idx >= 0 && window.isUnitSilenced(unit, unit.summonedZone, idx)) return false;
   }
   const c = unit.card || unit;
+  // 🕊️ 星兔英雄號-H (SR-RBT-0071), 蜘蛛魔盜團偷天 (SR-ART-0068), 風之精靈托比 (R-NMS-0090)
+  if (c && (c.id === "SR-RBT-0071" || c.id === "SR-ART-0068" || c.id === "R-NMS-0090" || c.name?.includes("星兔英雄號-H") || c.name?.includes("偷天") || c.name?.includes("托比"))) return true;
   // 喵空纜車 (SR-FMS-0039): 若左右皆有單位則獲得飛行
   if (c && (c.id === "SR-FMS-0039" || c.name?.includes("喵空纜車"))) {
     const z = unit.summonedZone;
@@ -8779,28 +8779,36 @@ window.xlwGetSucculentUnitsOnField = function(isPlayer = true) {
 // 4. 額外區召喚與成長
 window.xlwSummonPlantFromExtraDeck = async function(cardNameOrId, isPlayer = true, targetZone = null, targetIdx = null) {
   const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-  let cIdx = extraList.findIndex(c => c && (c.id === cardNameOrId || c.name === cardNameOrId || c.name?.includes(cardNameOrId) || c.id?.includes(cardNameOrId)));
-  let cardToSummon = null;
-  if (cIdx === -1) {
-    const sample = (typeof allCards !== "undefined" ? allCards : []).find(c => c && (c.id === cardNameOrId || c.name === cardNameOrId || c.name?.includes(cardNameOrId)));
-    if (!sample) return null;
-    cardToSummon = structuredClone(sample);
-  } else {
-    cardToSummon = extraList.splice(cIdx, 1)[0];
-  }
+  const matches = c => c && (c.id === cardNameOrId || c.name === cardNameOrId ||
+    c.name?.includes(cardNameOrId) || c.id?.includes(cardNameOrId));
+  const extraCard = extraList.find(matches);
+  const cardToSummon = extraCard ||
+    (typeof allCards !== "undefined" ? allCards : []).find(matches);
+  if (!cardToSummon) return null;
+  const isSeed = window.xlwIsUnitSeed(cardToSummon);
+  if (isSeed && !extraCard) return null;
 
-  let destSlot = null;
-  if (targetZone && targetIdx !== null && targetIdx !== undefined && !field[targetZone][targetIdx]) {
-    destSlot = { zone: targetZone, idx: targetIdx };
+  const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+  let destSlot;
+  if (targetZone != null) {
+    destSlot = emptySlots.find(slot => slot.zone === targetZone && slot.idx === targetIdx);
+  } else if (isSeed && isPlayer && emptySlots.length > 1) {
+    const choice = await showXLWChoiceModal("額外區種子召喚", "點選我方前排或後排的任一空格。", emptySlots.map(({zone, idx}) => ({
+      text: `${zone === "player_front" ? "前排" : "後排"}${idx + 1}`,
+      value: `${zone}:${idx}`
+    })));
+    destSlot = emptySlots.find(({zone, idx}) => choice === `${zone}:${idx}`);
   } else {
-    const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
-    if (emptySlots.length === 0) {
-      logBattle(`場上已無空格，無法召喚【${cardToSummon.name}】！`);
-      if (cIdx >= 0) extraList.push(cardToSummon);
-      return null;
-    }
-    const front = emptySlots.filter(s => s.zone.includes("front"));
-    destSlot = front.length > 0 ? front[0] : emptySlots[0];
+    destSlot = emptySlots.find(slot => slot.zone.endsWith("_front")) || emptySlots[0];
+  }
+  if (!destSlot || field[destSlot.zone][destSlot.idx]) return null;
+
+  if (extraCard) {
+    const currentExtra = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    if (currentExtra !== extraList) return null;
+    const index = extraList.indexOf(extraCard);
+    if (index < 0) return null;
+    extraList.splice(index, 1);
   }
 
   field[destSlot.zone][destSlot.idx] = {
