@@ -3642,7 +3642,6 @@ function xlwIsFieldMagic(card) {
 async function xlwResolveAries(isPlayer) {
   const ownDeck = isPlayer ? deck : window.XLW_ENEMY.deck;
   const ownGrave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || enemyGraveyard);
-  const ownHand = isPlayer ? hand : window.XLW_ENEMY.hand;
   const options = [ownGrave, ownDeck].flatMap(list => list
     .filter(card => card?.name?.trim() === "山羊術" || /^(?:[A-Z]+-)?NMG-0012(?:-\d+)?$/.test(card?.id || ""))
     .map(card => ({card, list})));
@@ -3653,10 +3652,12 @@ async function xlwResolveAries(isPlayer) {
   const chosen = pick == null ? null : options[pick];
   if (!chosen) return;
   if (chosen.list === ownGrave && !await window.xlwCheckGraveyardTax(isPlayer)) return;
-  const index = chosen.list.indexOf(chosen.card);
-  if (index < 0) return;
-  ownHand.push(...chosen.list.splice(index, 1));
-  shuffle(ownDeck);
+  const currentSource = chosen.list === ownGrave
+    ? (isPlayer ? graveyard : (window.XLW_ENEMY.grave || enemyGraveyard))
+    : (isPlayer ? deck : window.XLW_ENEMY.deck);
+  const moved = window.XLWDuelConsistency.moveKnownCard(currentSource, isPlayer ? hand : window.XLW_ENEMY.hand, chosen.card);
+  if (!moved) return;
+  shuffle(isPlayer ? deck : window.XLW_ENEMY.deck);
   logBattle(`✨【牡羊座】從${chosen.list === ownGrave ? "墓地" : "牌庫"}取回【${chosen.card.name}】。`);
   render();
 }
@@ -4299,16 +4300,14 @@ async function promptAndSummonTraveler(side, count, sourceName = "效果") {
 window.promptAndSummonTraveler = promptAndSummonTraveler;
 window.xlwRetrieveMagicFromGrave = async function(isPlayer, maxMana = 1) {
   const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
-  const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
   const eligible = myGrave.filter(c => c && (c.type === "magic" || c.type === "魔法") && Number(c.tribute || c.mana || 0) <= maxMana);
   if (eligible.length > 0) {
     if (isPlayer) {
       const choices = eligible.map((c, i) => ({ text: `${c.name} (${c.tribute || c.mana || 0}★)`, value: i }));
       const chosen = await showXLWChoiceModal("【捲髮魔】效果發動", "選擇一張魔法卡加入手牌：", choices);
       if (chosen !== null && chosen !== undefined) {
-        const card = eligible[chosen];
-        myGrave.splice(myGrave.indexOf(card), 1);
-        myHand.push(card);
+        const card = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, eligible[chosen]);
+        if (!card) return;
         logBattle(`✨ 捲髮魔 效果：將墓地中的魔法卡【${card.name}】回收至手牌！`);
         render();
         if (isMultiplayer) {
@@ -4316,9 +4315,8 @@ window.xlwRetrieveMagicFromGrave = async function(isPlayer, maxMana = 1) {
         }
       }
     } else {
-      const card = eligible[0];
-      myGrave.splice(myGrave.indexOf(card), 1);
-      myHand.push(card);
+      const card = window.XLWDuelConsistency.moveKnownCard(myGrave, window.XLW_ENEMY?.hand, eligible[0]);
+      if (!card) return;
       logBattle(`✨ 對手 捲髮魔 效果：將對手墓地中的魔法卡【${card.name}】回收至手牌！`);
       render();
     }

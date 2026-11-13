@@ -47,6 +47,31 @@ module.exports=(async()=>{
  {const g=context();vm.runInContext(section('function xlwSpellOwnerCollections()','// 魔法反制與連鎖連線輔助函式'),g);const keep=card('another','NEU-0025');assert.equal(g.xlwAcceptSpellOwnerCollections({hand:[keep],deck:[card('latest-top')],graveyard:[],exile:[],extra:[]}),true);assert.equal(g.XLW_ENEMY.hand.length,1);assert.equal(g.XLW_ENEMY.deck[0]._xlwInstanceId,'latest-top');tests++;}
  // Selection remains valid if a network snapshot replaced graveyard objects while choosing.
  for(const owner of ['player','enemy']){const g=context(),snow={...card('snow','R-VLG-0012'),name:'雪女',faction:'妖怪村莊'};g.graveyard=[snow];g.enemyGraveyard=[{...snow}];g.XLW_ENEMY.grave=g.enemyGraveyard;g.showXLWChoiceModal=async()=>{g.graveyard=structuredClone(g.graveyard);return 0;};g.ws.send=raw=>{const msg=JSON.parse(raw);queueMicrotask(()=>g.XLW_samuraiRecoveryWaiters.get(msg.requestId)(msg.cards[0]));};vm.runInContext(section('async function xlwRecoverSamuraiCard(','async function resolveUnitCombat('),g);await g.xlwRecoverSamuraiCard(owner);assert.equal((owner==='player'?g.hand:g.XLW_ENEMY.hand)[0].name,'雪女');assert.equal((owner==='player'?g.graveyard:g.enemyGraveyard).length,0);tests++;}
+ // Grave selection survives a replacement snapshot and never removes an unrelated card.
+ for (const effect of ['aries', 'magic']) {
+   for (const remains of [true, false]) {
+     const g = context();
+     const spell = {...card('spell','NMG-0012'), name:'山羊術', type:'magic'};
+     const other = card('other');
+     g.graveyard = [spell, other];
+     g.showXLWChoiceModal = async () => {
+       g.graveyard = remains ? [structuredClone(spell), other] : [other];
+       return 0;
+     };
+     g.xlwCheckGraveyardTax = async () => true;
+     g.shuffle = () => {};
+     if (effect === 'aries') {
+       vm.runInContext(section('async function xlwResolveAries(', 'window.xlwTriggerSktImmediateEffects ='), g);
+       await g.xlwResolveAries(true);
+     } else {
+       vm.runInContext(section('window.xlwRetrieveMagicFromGrave =', 'window.xlwApplySageBuff ='), g);
+       await g.xlwRetrieveMagicFromGrave(true);
+     }
+     assert.deepEqual(g.graveyard.map(c => c._xlwInstanceId), ['other']);
+     assert.deepEqual(g.hand.map(c => c._xlwInstanceId), remains ? ['spell'] : []);
+     tests++;
+   }
+ }
  // An authoritative-looking old draw flag cannot pay a second two-card draw cost.
  {const g=context();g.deck=[card('1'),card('2'),card('3'),card('4')];g.xlwCheckBananaMarquisMovement=async()=>{};g.xlwResolveTurnStartEffects=async()=>{};g.sendFullGameStateToOpponent=()=>{};vm.runInContext(section('async function performPlayerTurnStartDraw()','window.XLW_playerNeedsToDraw = false;'),g);await g.performPlayerTurnStartDraw();await g.performPlayerTurnStartDraw();assert.equal(g.deck.length,2);assert.equal(g.hand.length,2);g.turn++;await g.performPlayerTurnStartDraw();assert.equal(g.hand.length,4);tests++;}
  console.log(`${tests} bidirectional spell, card identity, stale collection, Bomber, Banana and Samurai regressions: PASS`);
