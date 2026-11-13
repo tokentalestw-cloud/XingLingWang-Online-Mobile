@@ -8196,7 +8196,7 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
       setStatus(`發動【${card.name}】需要 ${reqTrib} 個祭品，我方場上祭品不足！`);
       return;
     }
-    const tribChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+    const tribChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
     const pPick = await showXLWChoiceModal(`【${card.name}】獻祭`, `發動此山羊術需要 1 個祭品，請選擇獻祭單位：`, tribChoices);
     if (pPick === null || pPick === undefined) return;
     const sacrificed = myUnits[pPick];
@@ -8221,14 +8221,18 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
 
   const choices = allFieldUnits.map((item, cIdx) => ({
     text: `${item.isPlayer ? "我方" : "對手"}【${item.name}】(${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
-    value: cIdx
+    value: cIdx, boardTarget: {zone: item.zone, idx: item.idx}
   }));
 
-  const pick = await showXLWChoiceModal(`【${card.name}】選擇變形目標`, `請選擇要變形為【${card.name}】的單位：`, choices);
+  const pick = await showXLWChoiceModal(`【${card.name}】選擇變形目標`, `請選擇要變形為【${card.name}】的單位：`, choices, {boardOnly: true});
   if (pick === null || pick === undefined) return;
 
   const target = allFieldUnits[pick];
-  hand.splice(handIdx, 1);
+  const sourceIndex = hand.indexOf(card);
+  if (!target || sourceIndex < 0 || field[target.zone]?.[target.idx] !== target.unit ||
+      window.isUnitEffectImmune(target.unit, target.zone, target.idx) ||
+      window.isUnitMagicImmune(target.unit, target.zone, target.idx, card)) return;
+  hand.splice(sourceIndex, 1);
 
   // 若非「無限山羊」生效中，消耗本回合正常召喚次數
   if (!window.XLW_infiniteGoatsActive) {
@@ -11808,10 +11812,12 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      const choices = allFieldUnits.map((u, i) => ({ text: `${u.isPlayer ? "我方" : "對手"}【${u.name}】(${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
-      const pick = await showXLWChoiceModal("【魔王山羊術】選擇變形目標", "請選擇要變為【魔王山羊術】(5攻3星) 的單位：", choices);
-      if (pick !== null && pick !== undefined) {
-        const target = allFieldUnits[pick];
+      const choices = allFieldUnits.map((u, i) => ({ text: `${u.isPlayer ? "我方" : "對手"}【${u.name}】(${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
+      const pick = await showXLWChoiceModal("【魔王山羊術】選擇變形目標", "請選擇要變為【魔王山羊術】(5攻3星) 的單位：", choices, {boardOnly: true});
+      const target = pick == null ? null : allFieldUnits[pick];
+      if (target && field[target.zone]?.[target.idx] === target.unit &&
+          !window.isUnitEffectImmune(target.unit, target.zone, target.idx) &&
+          !window.isUnitMagicImmune(target.unit, target.zone, target.idx, spellCard)) {
         const demonGoatUnit = structuredClone(spellCard);
         demonGoatUnit.type = "unit";
         demonGoatUnit.attack = 5;
@@ -21797,7 +21803,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           });
         }
         if (myUndeads.length > 0) {
-          const choices = myUndeads.map((u, i) => ({ text: u.unit.card.name, value: i }));
+          const choices = myUndeads.map((u, i) => ({ text: u.unit.card.name, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
           const chosenIdx = await showXLWChoiceModal("大骨灰 效果", "選擇我方一個要破壞的亡靈單位：", choices);
           if (chosenIdx !== null && chosenIdx !== undefined) {
             const selectedMy = myUndeads[chosenIdx];
@@ -21811,7 +21817,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
               });
             }
             if (oppUnits.length > 0) {
-              const choices2 = oppUnits.map((u, i) => ({ text: u.unit.card.name, value: i }));
+              const choices2 = oppUnits.map((u, i) => ({ text: u.unit.card.name, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
               const chosenIdx2 = await showXLWChoiceModal("大骨灰 效果", "選擇對手一個星級 <= 2 的單位破壞：", choices2);
               if (chosenIdx2 !== null && chosenIdx2 !== undefined) {
                 const selectedOpp = oppUnits[chosenIdx2];
@@ -21840,7 +21846,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           });
         }
         if (myUndeads.length > 0) {
-          const choices = myUndeads.map((u, i) => ({ text: u.unit.card.name, value: i }));
+          const choices = myUndeads.map((u, i) => ({ text: u.unit.card.name, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
           const chosenIdx = await showXLWChoiceModal("究極老骨灰 效果", "選擇我方一個要破壞的亡靈單位：", choices);
           if (chosenIdx !== null && chosenIdx !== undefined) {
             const selectedMy = myUndeads[chosenIdx];
@@ -45866,6 +45872,23 @@ function showXLWConfirm(title, message, confirmText = "要", cancelText = "不�
   });
 }
 
+function xlwChoiceCardImage(option) {
+  if (option.image || option.card?.image) return option.image || option.card.image;
+  const text = (option.text || "").trim();
+  // Only match a complete card name or an explicit card label, not prose describing an effect.
+  const names = [text, text.replace(/^\[[^\]]+\]\s*/, "").split(/\s*[（(]/)[0],
+    text.match(/^(?:(?:我方|敵方|對手)\s*)?【([^】]+)】(?:\s*[（(].*)?$/)?.[1]];
+  const cards = typeof allCards === "undefined" ? [] : allCards;
+  const instances = [typeof hand === "undefined" ? [] : hand,
+    typeof graveyard === "undefined" ? [] : graveyard,
+    typeof playerExtraDeck === "undefined" ? [] : playerExtraDeck];
+  for (const list of [...instances, cards]) {
+    const matches = list.filter(card => card?.image && names.includes(card.name));
+    if (matches.length && matches.every(card => card.image === matches[0].image)) return matches[0].image;
+  }
+  return null;
+}
+
 function showXLWChoiceModal(title, message, options, config = {}) {
   return new Promise((resolve) => {
     // 1. Check if the options map to battlefield elements (lanes, slots, or units)
@@ -45873,6 +45896,10 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       const text = (opt.text || "").trim();
       const val = opt.value !== undefined && opt.value !== null ? String(opt.value) : "";
       
+      if (opt.boardTarget) {
+        const {zone, idx} = opt.boardTarget;
+        return {type: "unit", zone, idx, opt, label: "✦"};
+      }
       // Cancel / Skip options
       if (/取消|不發動|跳過|放棄|結束|不要召喚/.test(text) || val === "cancel") {
         return { type: "cancel", opt };
@@ -45918,7 +45945,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         let isEnemy = /敵方|對手/.test(text) || /敵方|對手/.test(title + message);
         if (isSummon && !(/敵方|對手/.test(text))) {
           isEnemy = false;
-        } else if (/我方/.test(text) || /我方/.test(title + message)) {
+        } else if (/我方/.test(text) || (!isEnemy && /我方/.test(title + message))) {
           isEnemy = false;
         }
         const zone = (isEnemy ? "enemy_" : "player_") + (isFront ? "front" : "back");
@@ -45974,10 +46001,13 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         const isCancel = target && target.type === "cancel";
         if (isCancel) {
           pillsHtml += `<button class="xlw-direct-prompt-cancel-btn" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text || "取消"}</button>`;
-        } else {
+        } else if (!config.boardOnly) {
           pillsHtml += `<button class="xlw-direct-prompt-pill" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text}</button>`;
         }
       });
+      if (config.boardOnly && !targetMaps.some(({target}) => target?.type === "cancel")) {
+        pillsHtml += `<button class="xlw-direct-prompt-cancel-btn" aria-label="取消">✕</button>`;
+      }
       pillsHtml += `</div>`;
 
       promptBar.innerHTML = promptTitleHtml + promptMsgHtml + pillsHtml;
@@ -46103,6 +46133,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       animation: xlwPopupScale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     `;
 
+    const images = options.map(xlwChoiceCardImage);
     let buttonsHTML = "";
     options.forEach((opt, idx) => {
       const isEnd = opt.value === "end_effects";
@@ -46111,7 +46142,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         : "background: rgba(205, 170, 82, 0.15); color: #ffd76a; border: 1.5px solid var(--gold-accent);";
       buttonsHTML += `
         <button class="xlw-choice-btn" data-opt-idx="${idx}" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
-          ${config.iconChoices ? "" : opt.text}
+          ${config.iconChoices || images[idx] ? "" : opt.text}
         </button>
       `;
     });
@@ -46152,18 +46183,20 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       box.querySelector('.xlw-choice-btn[data-value="0"]')?.focus();
     }
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
-      if (config.iconChoices) {
-        const option = options[Number(btn.dataset.optIdx)];
+      const optionIndex = Number(btn.dataset.optIdx);
+      const image = images[optionIndex];
+      if (config.iconChoices || image) {
+        const option = options[optionIndex];
         btn.setAttribute("aria-label", option.text);
         btn.title = option.text;
         const icon = document.createElement("span");
         icon.textContent = option.icon;
         icon.setAttribute("aria-hidden", "true");
         icon.style.fontSize = "23px";
-        btn.appendChild(icon);
-        if (option.image) {
+        if (option.icon) btn.appendChild(icon);
+        if (image) {
           const preview = document.createElement("img");
-          preview.src = option.image;
+          preview.src = image;
           preview.alt = "";
           preview.style.cssText = "height:64px;width:auto;vertical-align:middle;margin-left:8px";
           btn.appendChild(preview);
@@ -50549,7 +50582,7 @@ window.xlwOnUnitUpgraded = async function(isPlayer, unit, newCard) {
     const potionCards = extraList.filter(c => c && window.isPotionCard(c));
     if (potionCards.length > 0) {
       if (isPlayer) {
-        const choices = potionCards.map((c, idx) => ({ text: `${c.name} (${c.mana ?? c.cost ?? 0}★)`, value: idx }));
+        const choices = potionCards.map((c, idx) => ({ text: `${c.name} (${c.mana ?? c.cost ?? 0}★)`, value: idx, card: c }));
         choices.push({ text: "不選取", value: -1 });
         const pick1 = await showXLWChoiceModal("【藥水NPC】選擇藥水牌 (第 1 張)", "場上單位升級！可從額外區選取最多 2 張藥水牌加入手牌：", choices);
         if (pick1 !== null && pick1 !== undefined && pick1 !== -1) {
@@ -50559,7 +50592,7 @@ window.xlwOnUnitUpgraded = async function(isPlayer, unit, newCard) {
           logBattle(`✨ 藥水NPC 效果：從額外區將藥水牌【${chosen1.name}】加入手牌！`);
           
           if (potionCards.length > 0) {
-            const choices2 = potionCards.map((c, idx) => ({ text: `${c.name} (${c.mana ?? c.cost ?? 0}★)`, value: idx }));
+            const choices2 = potionCards.map((c, idx) => ({ text: `${c.name} (${c.mana ?? c.cost ?? 0}★)`, value: idx, card: c }));
             choices2.push({ text: "結束選取", value: -1 });
             const pick2 = await showXLWChoiceModal("【藥水NPC】選擇藥水牌 (第 2 張)", "請選擇第 2 張藥水牌加入手牌：", choices2);
             if (pick2 !== null && pick2 !== undefined && pick2 !== -1) {
