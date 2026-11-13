@@ -3529,7 +3529,7 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
   }
 
   // 快樂墓園 (SKT-0019)
-  const happyGraveActive = isPlayer ? window.XLW_happyGraveyardActive_player : window.XLW_happyGraveyardActive_enemy;
+  const happyGraveActive = xlwIsHappyGraveyard(window.xlwGetFactionFieldCard?.(isPlayer));
   if (happyGraveActive && (card.type === "unit" || card.type === "單位")) {
     let doExile = isPlayer ? await showXLWConfirm("【快樂墓園】效果觸發", `【${card.name}】即將進入墓地，是否改為除外該單位並獲得 +1★ 獎勵？`) : true;
     if (doExile) {
@@ -3630,6 +3630,37 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
   }
 };
 
+function xlwIsHappyGraveyard(card) {
+  return Boolean(card && (card.id?.includes("SKT-0019") || card.name === "快樂墓園"));
+}
+
+function xlwIsFieldMagic(card) {
+  return Boolean(card && ["magic", "魔法", "魔法卡", "法術"].includes(card.type) &&
+    [card.art_subtype, card.magic_type].some(type => /(?:^|[\s（(、/，,])場地(?:$|魔法|[\s）)、/，,])/.test(type || "")));
+}
+
+async function xlwResolveAries(isPlayer) {
+  const ownDeck = isPlayer ? deck : window.XLW_ENEMY.deck;
+  const ownGrave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || enemyGraveyard);
+  const ownHand = isPlayer ? hand : window.XLW_ENEMY.hand;
+  const options = [ownGrave, ownDeck].flatMap(list => list
+    .filter(card => card?.name?.trim() === "山羊術" || /^(?:[A-Z]+-)?NMG-0012(?:-\d+)?$/.test(card?.id || ""))
+    .map(card => ({card, list})));
+  if (!options.length) return;
+  const pick = isPlayer ? await showXLWChoiceModal("馴羊使者 牡羊座", "選擇一張山羊術加入手牌。", options.map(({card, list}, value) => ({
+    text: `${card.name}（${list === ownGrave ? "墓地" : "牌庫"}）`, value
+  }))) : 0;
+  const chosen = pick == null ? null : options[pick];
+  if (!chosen) return;
+  if (chosen.list === ownGrave && !await window.xlwCheckGraveyardTax(isPlayer)) return;
+  const index = chosen.list.indexOf(chosen.card);
+  if (index < 0) return;
+  ownHand.push(...chosen.list.splice(index, 1));
+  shuffle(ownDeck);
+  logBattle(`✨【牡羊座】從${chosen.list === ownGrave ? "墓地" : "牌庫"}取回【${chosen.card.name}】。`);
+  render();
+}
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -3719,16 +3750,17 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
 
   // 3. 造墓者小布 (NY-SKT-0015 / R-SKT-0015 / SSR-SKT-0015): 立即：從你牌庫尋找1場地卡展示並加入手牌，然後重洗牌庫。
   if (cid.includes("SKT-0015") || name.includes("造墓者小布")) {
-    const fieldOrMagic = myDeck.filter(c => c && (c.type === "magic" || c.type === "魔法" || c.type === "法術" || c.name?.includes("墓園") || c.name?.includes("場地")));
+    const fieldOrMagic = myDeck.filter(xlwIsFieldMagic);
     if (fieldOrMagic.length > 0) {
       let chosen = fieldOrMagic[0];
       if (isPlayer) {
         const choices = fieldOrMagic.map((c, i) => ({ text: c.name, value: i }));
-        const picked = await showXLWChoiceModal("造墓者小布 檢索", "請選擇加入手牌的魔法/場地卡：", choices);
-        if (picked !== null && picked !== undefined) chosen = fieldOrMagic[picked];
+        const picked = await showXLWChoiceModal("造墓者小布 檢索", "請選擇加入手牌的場地魔法卡：", choices);
+        chosen = picked == null ? null : fieldOrMagic[picked];
       }
       const dIdx = myDeck.indexOf(chosen);
-      if (dIdx >= 0) myDeck.splice(dIdx, 1);
+      if (dIdx < 0) return;
+      myDeck.splice(dIdx, 1);
       myHand.push(chosen);
       shuffle(myDeck);
       logBattle(`✨【造墓者小布】立即效果：從牌庫將【${chosen.name}】加入手牌！`);
@@ -3844,21 +3876,24 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
       if (isPlayer) {
         const choices = myUndeadUnits.map((u, i) => ({ text: `[${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1}] ${u.unit.card.name}`, value: i }));
         const picked = await showXLWChoiceModal("墓地運輸者 凱拉", "選擇我方 1 個不死族單位破壞：", choices);
-        if (picked !== null && picked !== undefined) chosenDestroy = myUndeadUnits[picked];
+        chosenDestroy = picked == null ? null : myUndeadUnits[picked];
       }
-      await destroyUnit(chosenDestroy.zone, chosenDestroy.idx, isPlayer ? "player" : "enemy", false);
+      if (!chosenDestroy || field[chosenDestroy.zone]?.[chosenDestroy.idx] !== chosenDestroy.unit) return;
+      const destroyed = await destroyUnit(chosenDestroy.zone, chosenDestroy.idx, isPlayer ? "player" : "enemy", false);
+      if (!destroyed || field[zone]?.[idx] !== unit) return;
       const graveUnits = myGrave.filter(c => c && (c.type === "unit" || c.type === "單位"));
       if (graveUnits.length > 0 && unit) {
         let chosenKidnap = graveUnits[0];
         if (isPlayer) {
           const kChoices = graveUnits.map((c, i) => ({ text: c.name, value: i }));
           const kPicked = await showXLWChoiceModal("墓地運輸者 凱拉 綁架", "選擇墓地 1 個單位卡綁架至凱拉下方：", kChoices);
-          if (kPicked !== null && kPicked !== undefined) chosenKidnap = graveUnits[kPicked];
+          chosenKidnap = kPicked == null ? null : graveUnits[kPicked];
         }
         const gIdx = myGrave.indexOf(chosenKidnap);
-        if (gIdx >= 0) myGrave.splice(gIdx, 1);
+        if (gIdx < 0 || field[zone]?.[idx] !== unit) return;
+        myGrave.splice(gIdx, 1);
         unit.kidnappedCards = unit.kidnappedCards || [];
-        chosenKidnap.originalOwner = isPlayer ? "player" : "enemy";
+        chosenKidnap.originalOwner = chosenKidnap.creator || (isPlayer ? "player" : "enemy");
         unit.kidnappedCards.push(chosenKidnap);
         logBattle(`✨【墓地運輸者 凱拉】效果：破壞了不死族，並綁架了墓地的【${chosenKidnap.name}】！`);
         render();
@@ -3869,41 +3904,39 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   // 10. 瘟疫教主 (R-SKT-0054): 立即：使你手牌、場上和牌庫頂加總至多3張牌進入墓地。
   if (cid.includes("SKT-0054") || name.includes("瘟疫教主")) {
     if (isPlayer) {
-      const choices = [];
-      myHand.forEach((c, i) => choices.push({ type: "hand", idx: i, text: `[手牌] ${c.name}` }));
-      for (const z of ["player_front", "player_back"]) {
-        field[z]?.forEach((u, i) => {
-          if (u && u !== unit && u.card) choices.push({ type: "field", zone: z, idx: i, text: `[場上] ${u.card.name}` });
-        });
-      }
-      if (myDeck.length > 0) choices.push({ type: "deck", text: `[牌庫頂] ${myDeck[0].name}` });
-
-      let sentCount = 0;
-      while (sentCount < 3 && choices.length > 0) {
-        const modalChoices = [{ text: "結束選擇", value: -1 }, ...choices.map((c, i) => ({ text: c.text, value: i }))];
-        const picked = await showXLWChoiceModal(`瘟疫教主 送墓 (${sentCount}/3)`, "選擇 1 張卡牌送入墓地：", modalChoices);
-        if (picked === null || picked === undefined || picked === -1) break;
-        const target = choices.splice(picked, 1)[0];
-        if (target.type === "hand") {
-          const c = myHand.splice(target.idx, 1)[0];
-          graveyard.push(c);
-          logBattle(`✨【瘟疫教主】效果：將手牌【${c.name}】送入墓地！`);
-          await window.xlwOnCardEntersGraveyard(c, true, false);
-        } else if (target.type === "field") {
-          await destroyUnit(target.zone, target.idx, "player", false);
-        } else if (target.type === "deck") {
-          const c = myDeck.shift();
-          graveyard.push(c);
-          logBattle(`✨【瘟疫教主】效果：將牌庫頂【${c.name}】送入墓地！`);
-          await window.xlwOnCardEntersGraveyard(c, true, false);
+      const icons = { hand: "🃏", field: "⚔️", deck: "▤" };
+      for (let sent = 0; sent < 3; sent++) {
+        const choices = [];
+        myHand.forEach(c => { if (c) choices.push({type: "hand", card: c, text: `手牌：${c.name}`}); });
+        for (const z of ["player_front", "player_back"]) {
+          field[z].forEach((u, idx) => {
+            if (u?.card && u !== unit) choices.push({type: "field", zone: z, idx, unit: u, card: u.card, text: `場上：${u.card.name}`});
+          });
         }
-        sentCount++;
+        if (myDeck[myDeck.length - 1]) choices.push({type: "deck", text: "牌庫頂"});
+        if (!choices.length) break;
+        const picked = await showXLWChoiceModal(`瘟疫教主送墓（${sent}/3）`, "選擇要送墓的卡片，或點牌堆圖示送墓牌庫頂。", [
+          ...choices.map((choice, value) => ({text: choice.text, value, icon: icons[choice.type], image: choice.card?.image})),
+          {text: "結束選擇", value: -1, icon: "✓"}
+        ], {iconChoices: true});
+        const target = picked == null ? null : choices[picked];
+        if (!target) break;
+        if (target.type === "field") {
+          if (field[target.zone]?.[target.idx] === target.unit) await destroyUnit(target.zone, target.idx, "player", false);
+        } else {
+          const index = target.type === "deck" ? myDeck.length - 1 : myHand.indexOf(target.card);
+          if (index < 0) continue;
+          const [card] = (target.type === "deck" ? myDeck : myHand).splice(index, 1);
+          if (!card) continue;
+          graveyard.push(card);
+          await window.xlwOnCardEntersGraveyard(card, true, false);
+        }
         render();
       }
     } else {
       const mill = Math.min(3, myDeck.length);
       for (let m = 0; m < mill; m++) {
-        const c = myDeck.shift();
+        const c = myDeck.pop();
         myGrave.push(c);
         await window.xlwOnCardEntersGraveyard(c, false, false);
       }
@@ -13714,9 +13747,8 @@ async function castSpell(handIndex) {
   }
   // 3. SKT-0019 快樂墓園
   else if (card.id === "SKT-0019" || card.name?.includes("快樂墓園")) {
-    window.XLW_happyGraveyardActive_player = true;
+    window.xlwSetFactionFieldCard(card, true);
     logBattle("✨【快樂墓園】發動：我方單位進入墓地前可改為除外該單位，每次使用此效果除外 1 體使我方得分 +1★！");
-    graveyard.push(card);
     render();
   }
   // 4. SKT-0020 死亡馬車
@@ -22685,50 +22717,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           logBattle("弒神刺客 天蠍座 效果：對手場上沒有任何神族單位，效果無效。");
         }
       } else if (card.id === "SSSR-NMS-0030" || card.id === "SSSR-NMS-0030-2" || card.name?.includes("馴羊使者") || card.name?.includes("牡羊座")) {
-        const sheepCards = [];
-        deck.forEach((c, i) => {
-          if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
-            sheepCards.push({ source: "deck", card: c, originalIndex: i });
-          }
-        });
-        graveyard.forEach((c, i) => {
-          if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
-            sheepCards.push({ source: "grave", card: c, originalIndex: i });
-          }
-        });
-
-        if (sheepCards.length > 0) {
-          setTimeout(async () => {
-            const choices = sheepCards.map((item, idx) => ({
-              text: `${item.card.name} (${item.source === "deck" ? "我方牌庫" : "我方墓地"})`,
-              value: idx
-            }));
-            const chosenIdxVal = await showXLWChoiceModal("馴羊使者 牡羊座 效果", "選擇一張 山羊術 加入手牌：", choices);
-            if (chosenIdxVal !== null && chosenIdxVal !== undefined) {
-              const chosen = sheepCards[chosenIdxVal];
-              if (chosen.source === "deck") {
-                const dIdx = deck.indexOf(chosen.card);
-                if (dIdx >= 0) deck.splice(dIdx, 1);
-                shuffle(deck);
-                logBattle(`✨ 馴羊使者 牡羊座 效果：從我方牌庫將【${chosen.card.name}】加入手牌！`);
-              } else {
-                const gIdx = graveyard.indexOf(chosen.card);
-                if (gIdx >= 0) graveyard.splice(gIdx, 1);
-                logBattle(`✨ 馴羊使者 牡羊座 效果：從我方墓地將【${chosen.card.name}】回收至手牌！`);
-              }
-              hand.push(chosen.card);
-              if (isMultiplayer) {
-                ws.send(JSON.stringify({
-                  action: "add_to_hand_sync",
-                  card: chosen.card
-                }));
-              }
-              render();
-            }
-          }, 500);
-        } else {
-          logBattle("馴羊使者 牡羊座 效果：我方牌庫與墓地中無任何山羊術卡牌。");
-        }
+        await xlwResolveAries(true);
       }
       else if (card.id === "SSSR-NMS-0055" || card.name?.includes("庫洛姆") || card.name?.includes("鈴鐺幫談判者")) {
         let kidnappedOptions = [];
@@ -28740,35 +28729,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     }
   }
   else if (card.id === "SSSR-NMS-0030" || card.id === "SSSR-NMS-0030-2" || card.name?.includes("馴羊使者") || card.name?.includes("牡羊座")) {
-    const sheepCards = [];
-    window.XLW_ENEMY.deck.forEach(c => {
-      if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
-        sheepCards.push({ source: "deck", card: c });
-      }
-    });
-    window.XLW_ENEMY.grave.forEach(c => {
-      if (c && (c.id === "NMG-0037" || c.id === "R-NMG-0037" || c.name?.includes("山羊術"))) {
-        sheepCards.push({ source: "grave", card: c });
-      }
-    });
-
-    if (sheepCards.length > 0) {
-      const graveSheep = sheepCards.filter(s => s.source === "grave");
-      const chosen = graveSheep.length > 0 ? graveSheep[0] : sheepCards[0];
-      if (chosen.source === "deck") {
-        const dIdx = window.XLW_ENEMY.deck.indexOf(chosen.card);
-        if (dIdx >= 0) window.XLW_ENEMY.deck.splice(dIdx, 1);
-        shuffle(window.XLW_ENEMY.deck);
-        logBattle(`✨ 對手 馴羊使者 牡羊座 效果：從其牌庫將【${chosen.card.name}】加入手牌！`);
-      } else {
-        const gIdx = window.XLW_ENEMY.grave.indexOf(chosen.card);
-        if (gIdx >= 0) window.XLW_ENEMY.grave.splice(gIdx, 1);
-        logBattle(`✨ 對手 馴羊使者 牡羊座 效果：從其墓地將【${chosen.card.name}】回收至手牌！`);
-      }
-      window.XLW_ENEMY.hand.push(chosen.card);
-    } else {
-      logBattle("對手 馴羊使者 牡羊座 效果：對手牌庫與墓地中無任何山羊術卡牌。");
-    }
+    await xlwResolveAries(false);
   }
   else if (card.id === "SSSR-NMS-0055" || card.name?.includes("庫洛姆") || card.name?.includes("鈴鐺幫談判者")) {
     let kidnappedOptions = [];
@@ -31148,6 +31109,7 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
       }
     }
   }
+  return true;
   } finally {
     activeDestructions.delete(unit);
   }
@@ -33027,11 +32989,11 @@ async function aiPlayMagicCardsSummonPhase() {
 
   // AI 快樂墓園 (SKT-0019)
   const happyIdx = hand.findIndex(c => c && (c.id === "SKT-0019" || c.name?.includes("快樂墓園")));
-  if (happyIdx >= 0 && !window.XLW_happyGraveyardActive_enemy) {
+  if (happyIdx >= 0 && !xlwIsHappyGraveyard(window.xlwGetFactionFieldCard(false))) {
     const spellCard = hand.splice(happyIdx, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "enemy");
     await aiCastSpell(spellCard, async () => {
-      window.XLW_happyGraveyardActive_enemy = true;
+      window.xlwSetFactionFieldCard(spellCard, false);
       logBattle("✨ 對手發動【快樂墓園】：對手單位進入墓地前可改為除外，每次除外 1 體使對手得分 +1★！");
       render();
       await sleep(650);
@@ -40925,6 +40887,20 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
           targetSlotNode = stackEl;
         }
 
+        const captives = (obj.kidnappedCards || []).filter(xlwIsPileCard);
+        if (captives.length) {
+          const strip = document.createElement("div");
+          strip.className = "xlw-captive-scores";
+          strip.style.cssText = "position:absolute;z-index:12;bottom:1px;right:-4px;display:flex;flex-direction:column;gap:2px;pointer-events:none";
+          for (const captive of captives) {
+            const score = document.createElement("span");
+            score.textContent = `★${captive.score ?? captive.stars ?? 0}`;
+            score.setAttribute("aria-label", `綁架分數 ${captive.score ?? captive.stars ?? 0}`);
+            score.style.cssText = "display:block;min-width:26px;padding:0 4px;line-height:17px;text-align:center;background:linear-gradient(#594756,#201b2a);border:1px solid #c9a971;border-radius:4px;color:#ffdea2;font:bold 13px/17px system-ui;box-shadow:0 1px 3px #000";
+            strip.appendChild(score);
+          }
+          slot.appendChild(strip);
+        }
         slot.appendChild(targetSlotNode);
 
         // 渲染已裝備之魔法卡（置於單位卡下方，堆疊並僅露出最上方裝備效果字樣）
@@ -45971,7 +45947,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
 
     // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
-    if (boardTargets.length > 0 && boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length) {
+    if (!config.iconChoices && boardTargets.length > 0 && boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length) {
       let settled = false;
       const attachedSlotCleanups = [];
 
@@ -46127,7 +46103,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         : "background: rgba(205, 170, 82, 0.15); color: #ffd76a; border: 1.5px solid var(--gold-accent);";
       buttonsHTML += `
         <button class="xlw-choice-btn" data-opt-idx="${idx}" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
-          ${opt.text}
+          ${config.iconChoices ? "" : opt.text}
         </button>
       `;
     });
@@ -46168,6 +46144,23 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       box.querySelector('.xlw-choice-btn[data-value="0"]')?.focus();
     }
     box.querySelectorAll(".xlw-choice-btn").forEach(btn => {
+      if (config.iconChoices) {
+        const option = options[Number(btn.dataset.optIdx)];
+        btn.setAttribute("aria-label", option.text);
+        btn.title = option.text;
+        const icon = document.createElement("span");
+        icon.textContent = option.icon;
+        icon.setAttribute("aria-hidden", "true");
+        icon.style.fontSize = "23px";
+        btn.appendChild(icon);
+        if (option.image) {
+          const preview = document.createElement("img");
+          preview.src = option.image;
+          preview.alt = "";
+          preview.style.cssText = "height:64px;width:auto;vertical-align:middle;margin-left:8px";
+          btn.appendChild(preview);
+        }
+      }
       const handleChoose = () => {
         const idx = parseInt(btn.dataset.optIdx, 10);
         cleanup(options[idx] ? options[idx].value : btn.dataset.value);
