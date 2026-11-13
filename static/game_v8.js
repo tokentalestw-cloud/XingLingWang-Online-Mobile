@@ -3759,12 +3759,11 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
         const picked = await showXLWChoiceModal("造墓者小布 檢索", "請選擇加入手牌的場地魔法卡：", choices);
         chosen = picked == null ? null : fieldOrMagic[picked];
       }
-      const dIdx = myDeck.indexOf(chosen);
-      if (dIdx < 0) return;
-      myDeck.splice(dIdx, 1);
-      myHand.push(chosen);
-      shuffle(myDeck);
-      logBattle(`✨【造墓者小布】立即效果：從牌庫將【${chosen.name}】加入手牌！`);
+      const currentDeck = isPlayer ? deck : window.XLW_ENEMY?.deck;
+      const moved = window.XLWDuelConsistency.moveKnownCard(currentDeck, isPlayer ? hand : window.XLW_ENEMY?.hand, chosen);
+      if (!moved) return;
+      shuffle(currentDeck);
+      logBattle(`✨【造墓者小布】立即效果：從牌庫將【${moved.name}】加入手牌！`);
       render();
     }
   }
@@ -9301,9 +9300,8 @@ window.xlwCheckCandyAdvisorSwallow = async function(isPlayer) {
       const choices = candyCards.map((c, i) => ({ text: c.name, value: i }));
       const pick = await showXLWChoiceModal("【甜點參謀】甜食回收", "吞食合體發動！請選擇回收手牌的甜點王國單位：", choices);
       if (pick !== null && pick !== undefined) {
-        const chosen = candyCards[pick];
-        graveD.splice(graveD.indexOf(chosen), 1);
-        hand.push(chosen);
+        const chosen = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, candyCards[pick]);
+        if (!chosen) return;
         logBattle(`🍰📋【甜點參謀】軍糧補給：將墓地中的【${chosen.name}】回收至手牌！`);
         if (typeof render === "function") render();
       }
@@ -10490,18 +10488,14 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
             const choices = spellsInGrave.map((s, idx) => ({ text: s.name, value: idx }));
             const pick = await showXLWChoiceModal("【妖精法務員】選擇魔法卡", "請選擇回收的魔法卡：", choices);
             if (pick !== null && pick !== undefined) {
-              const targetSpell = spellsInGrave[pick];
-              gList.splice(gList.indexOf(targetSpell), 1);
-              hand.push(targetSpell);
-              logBattle(`⚖️【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入手牌！`);
+              const targetSpell = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, spellsInGrave[pick]);
+              if (targetSpell) logBattle(`⚖️【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入手牌！`);
             }
           }
         } else {
           law.tapped = true;
-          const targetSpell = spellsInGrave[0];
-          gList.splice(gList.indexOf(targetSpell), 1);
-          (window.XLW_ENEMY?.hand || []).push(targetSpell);
-          logBattle(`⚖️ 對手【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入對手手牌！`);
+          const targetSpell = window.XLWDuelConsistency.moveKnownCard(gList, window.XLW_ENEMY?.hand, spellsInGrave[0]);
+          if (targetSpell) logBattle(`⚖️ 對手【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入對手手牌！`);
         }
       }
       break;
@@ -18933,16 +18927,12 @@ async function performSummonToSlot(zone, idx) {
             const choices = goatSpells.map((c, i) => ({ text: c.name, value: i }));
             const pick = await showXLWChoiceModal("【魔法山羊】回收山羊術", "請選擇回收至手牌的山羊術卡牌：", choices);
             if (pick !== null && pick !== undefined) {
-              const target = goatSpells[pick];
-              myGrave.splice(myGrave.indexOf(target), 1);
-              hand.push(target);
-              logBattle(`✨【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
+              const target = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, goatSpells[pick]);
+              if (target) logBattle(`✨【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
             }
           } else {
-            const target = goatSpells[0];
-            myGrave.splice(myGrave.indexOf(target), 1);
-            (window.XLW_ENEMY?.hand || []).push(target);
-            logBattle(`✨ 對手【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
+            const target = window.XLWDuelConsistency.moveKnownCard(myGrave, window.XLW_ENEMY?.hand, goatSpells[0]);
+            if (target) logBattle(`✨ 對手【魔法山羊】立即效果：將墓地中的【${target.name}】回收至手牌！`);
           }
         }
       }

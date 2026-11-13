@@ -72,6 +72,41 @@ module.exports=(async()=>{
      tests++;
    }
  }
+ // A stale card choice cannot transfer another card from the live pile.
+ for (const effect of ['candy', 'goat', 'lawyer', 'field']) {
+   for (const stillPresent of [true, false]) {
+     const g = context();
+     const selected = {...card('chosen','CND-0001'), faction:'甜點王國', type:'magic', name:'山羊術', magic_type:'場地'};
+     const other = {...card('other'), type:'magic', name:'法術保護'};
+     const pile = effect === 'field' ? 'deck' : 'graveyard';
+     g[pile] = [selected, other];
+     g.field.player_front[0] = {card:{id: effect === 'candy' ? 'SR-CND-0069' : 'C-EVL-0061'}};
+     g.showXLWConfirm = async () => true;
+     g.showXLWChoiceModal = async (_title, _message, choices) => {
+       if (effect === 'field') assert.equal(choices.length, 1);
+       g[pile] = stillPresent ? [structuredClone(selected), other] : [other];
+       return 0;
+     };
+     g.shuffle = () => {};
+     if (effect === 'candy') {
+       vm.runInContext(section('window.xlwCheckCandyAdvisorSwallow =', '// 15. SR-EWD-0065'), g);
+       await g.xlwCheckCandyAdvisorSwallow(true);
+     } else if (effect === 'goat') {
+       vm.runInContext('async function run(card, isPlayer) {' + section('// 1. 魔法山羊 (GOT-0001', '// 2. ',) + '}', g);
+       await g.run({id:'GOT-0001'}, true);
+     } else if (effect === 'lawyer') {
+       vm.runInContext('async function run(isPlayer, side) {' + section('// E. C-EVL-0061', '// F. C-CRB-0027') + '}', g);
+       await g.run(true, 'player_');
+     } else {
+       vm.runInContext(section('function xlwIsFieldMagic(', 'async function xlwResolveAries('), g);
+       vm.runInContext('async function run(cid, isPlayer, myDeck, name) {' + section('// 3. 造墓者小布', '// 4. 除屍雞') + '}', g);
+       await g.run('R-SKT-0015', true, g.deck, '造墓者小布');
+     }
+     assert.deepEqual(g[pile].map(c => c._xlwInstanceId), ['other']);
+     assert.deepEqual(g.hand.map(c => c._xlwInstanceId), stillPresent ? ['chosen'] : []);
+     tests++;
+   }
+ }
  // An authoritative-looking old draw flag cannot pay a second two-card draw cost.
  {const g=context();g.deck=[card('1'),card('2'),card('3'),card('4')];g.xlwCheckBananaMarquisMovement=async()=>{};g.xlwResolveTurnStartEffects=async()=>{};g.sendFullGameStateToOpponent=()=>{};vm.runInContext(section('async function performPlayerTurnStartDraw()','window.XLW_playerNeedsToDraw = false;'),g);await g.performPlayerTurnStartDraw();await g.performPlayerTurnStartDraw();assert.equal(g.deck.length,2);assert.equal(g.hand.length,2);g.turn++;await g.performPlayerTurnStartDraw();assert.equal(g.hand.length,4);tests++;}
  console.log(`${tests} bidirectional spell, card identity, stale collection, Bomber, Banana and Samurai regressions: PASS`);
