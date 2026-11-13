@@ -14,6 +14,15 @@ for(const role of ['player1','player2']){
  // Same object in a preset deck represents two physical copies.
  const shared={id:'copy',name:'copy'};const cards=[shared,shared];m.identify(cards);assert.notEqual(cards[0]._xlwInstanceId,cards[1]._xlwInstanceId);tests++;
  const copies=[a,b];m.removeCard(copies,{...a});assert.equal(copies[0]._xlwInstanceId,'b');tests++;
+ const from=[a,b], to=[];
+ assert.equal(m.moveKnownCard(from,to,{...a})._xlwInstanceId,'a');
+ assert.equal(m.moveKnownCard(from,to,{...a}),null);
+ assert.equal(from[0]._xlwInstanceId,'b');
+ assert.equal(to.length,1);
+ from.push({...a});
+ assert.equal(m.moveKnownCard(from,to,{...a}),null);
+ assert.equal(from.length,1);
+ assert.equal(to.length,1);tests++;
 }
 module.exports=(async()=>{
  for(const role of ['player1','player2']){

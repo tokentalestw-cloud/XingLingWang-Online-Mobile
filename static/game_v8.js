@@ -25386,12 +25386,8 @@ async function xlwRecoverSamuraiCard(owner){
   }else selected=candidates[0];
   if(!selected)return;
   const current=local?graveyard:enemyGraveyard;
-  let index=current.indexOf(selected);
-  if(index<0&&selected._xlwInstanceId)index=current.findIndex(c=>c?._xlwInstanceId===selected._xlwInstanceId);
-  if(index<0)index=current.findIndex(c=>c&&c.id===selected.id&&c.name===selected.name);
-  if(index<0)return;
-  const recovered=current.splice(index,1)[0];
-  (local?hand:window.XLW_ENEMY.hand).push(recovered);
+  const recovered=window.XLWDuelConsistency.moveKnownCard(current,local?hand:window.XLW_ENEMY.hand,selected);
+  if(!recovered)return;
   logBattle('武士繪 效果：'+(local?'我方':'對手')+'回收墓地中的 '+recovered.name+' 至手牌。');
   render();
 }
