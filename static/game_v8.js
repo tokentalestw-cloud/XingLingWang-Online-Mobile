@@ -8197,7 +8197,7 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
       return;
     }
     const tribChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
-    const pPick = await showXLWChoiceModal(`【${card.name}】獻祭`, `發動此山羊術需要 1 個祭品，請選擇獻祭單位：`, tribChoices);
+    const pPick = await showXLWChoiceModal(`【${card.name}】獻祭`, `發動此山羊術需要 1 個祭品，請選擇獻祭單位：`, tribChoices, {boardOnly: true});
     if (pPick === null || pPick === undefined) return;
     const sacrificed = myUnits[pPick];
     logBattle(`🔥 獻祭了我方【${sacrificed.name}】作為【${card.name}】的施法代價！`);
@@ -8243,6 +8243,7 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
   await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, card, target.isPlayer, true);
   if (isMultiplayer) sendFullGameStateToOpponent();
   render();
+  return true;
 };
 
 window.xlwFinishBlackHoleVictory = function(isPlayer) {
@@ -17220,9 +17221,9 @@ async function executeTributeEffects(selectedTributes) {
               if (doTrans) {
                 const choices = myTargets.map((item, idx) => ({
                   text: `${item.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
-                  value: idx
+                  value: idx, boardTarget: {zone: item.zone, idx: item.idx}
                 }));
-                const pick = await showXLWChoiceModal("【火圈山羊】選擇變身目標", "請選擇變身為山羊的目標：", choices);
+                const pick = await showXLWChoiceModal("【火圈山羊】選擇變身目標", "請選擇變身為山羊的目標：", choices, {boardOnly: true});
                 if (pick !== null && pick !== undefined) {
                   const targetItem = myTargets[pick];
                   if (targetItem && field[targetItem.zone][targetItem.idx]) {
@@ -26284,8 +26285,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       if (myUnits.length > 0) {
         const doClown = await showXLWConfirm("【小丑山羊】雜耍變形", "戰鬥勝利！是否發動效果將場上 1 個友方單位變為小丑山羊？");
         if (doClown) {
-          const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
-          const pick = await showXLWChoiceModal("選擇變形目標", "選擇目標單位：", choices);
+          const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
+          const pick = await showXLWChoiceModal("選擇變形目標", "選擇目標單位：", choices, {boardOnly: true});
           if (pick !== null && pick !== undefined) {
             const target = myUnits[pick];
             await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, attackerCard, true, true);
@@ -34777,8 +34778,8 @@ async function endPlayerTurnAndRunEnemy() {
         (field[z] || []).forEach((u, i) => { if (u && u !== auntiePos[0].unit) myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u }); });
       }
       if (myUnits.length > 0) {
-        const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
-        const pick = await showXLWChoiceModal("選擇變形單位", "請選擇變形目標：", choices);
+        const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
+        const pick = await showXLWChoiceModal("選擇變形單位", "請選擇變形目標：", choices, {boardOnly: true});
         if (pick !== null && pick !== undefined) {
           const target = myUnits[pick];
           await window.xlwTransformUnitToGoat(target.unit, target.zone, target.idx, auntiePos[0].unit.card, true, true);
@@ -36419,16 +36420,20 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
     }
 
     // 🐐 魔羊道教主 坦丁 (SR-GOT-0059): 主要階段限一次手牌山羊單位視為「山羊術」使用
-    if ((obj.card.id === "SR-GOT-0059" || obj.card.name?.includes("坦丁")) && !obj.danteUsedThisTurn) {
+    if ((obj.card.id === "SR-GOT-0059" || obj.card.name?.includes("坦丁")) && obj.danteUsedThisTurn !== turn) {
       const freeGoatsInHand = (hand || []).filter(c => c && c.type === "unit" && (parseInt(c.tribute) || 0) === 0 && (c.faction === "山羊族" || c.deck === "山羊族" || c.id?.includes("GOT")));
       if (freeGoatsInHand.length > 0) {
         const doGoat = await showXLWConfirm("【魔羊道教主 坦丁】魔羊道法", "主要階段限一次：是否將手牌 1 張免祭品山羊卡視為【山羊術】發動？");
         if (doGoat) {
-          obj.danteUsedThisTurn = true;
-          if (typeof window.xlwInitiateGoatPolymorphFromHand === "function") {
-            await window.xlwInitiateGoatPolymorphFromHand(true);
-            return true;
+          const selected = await showXLWChoiceModal("【坦丁】選擇山羊卡", "選擇要視為山羊術使用的手牌。", freeGoatsInHand.map((card, value) => ({
+            text: card.name, card, value
+          })));
+          const goat = selected == null ? null : freeGoatsInHand[selected];
+          if (!goat || !hand.includes(goat) || field[zone]?.[idx] !== obj) return true;
+          if (await window.xlwInitiateGoatPolymorphFromHand(goat, hand.indexOf(goat))) {
+            obj.danteUsedThisTurn = turn;
           }
+          return true;
         }
       }
     }
@@ -46092,6 +46097,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
 
       return;
     }
+
+    if (config.boardOnly) { resolve(null); return; }
 
     // 2. FALLBACK: Standard Modal Overlay
     const overlay = document.createElement("div");
