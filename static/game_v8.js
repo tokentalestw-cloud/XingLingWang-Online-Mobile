@@ -258,7 +258,7 @@ function xlwRequireSpellCompletion(){
 }
 
 window.xlwClearAllPendingResolvers = function(force = false) {
-  if(force){window.XLW_tempEquipSpellActive=false;window.XLW_tempEquipSpellCard=null;}
+  if(force){window.XLW_tempEquipSpellActive=false;window.XLW_tempEquipSpellCard=null;window.XLW_directBoardPrompt?._xlwCancel?.();}
   if(!force && xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
   if (window.XLW_pendingSummonCounterResolve) {
     console.log("[WS-Safety] Resolving stuck summon counter check");
@@ -23355,8 +23355,23 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
 }
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
+function xlwIsFlyingGoat(unit) {
+  return Boolean(unit?.card && (/(?:^|-)GOT-0025(?:-|$)/.test(unit.card.id) || unit.card.name?.includes("飛天山羊")));
+}
+
+function xlwCanAttackAfterTactical(unit, zone, idx) {
+  return Boolean(unit && !window.isUnitSilenced(unit, zone, idx) &&
+    (unit.canAttackAfterTactical || xlwIsFlyingGoat(unit)));
+}
+
+function xlwCanDeclareAfterTactical() {
+  return ["player_front", "player_back"].some(zone =>
+    field[zone].some((unit, idx) => unit && !unit.tapped && xlwCanAttackAfterTactical(unit, zone, idx)));
+}
+
 async function changeActionPhase(targetPhase) {
   if(xlwRequireSpellCompletion())return;
+  if (window.XLW_directBoardPrompt) return;
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
   if (selectedHandForTribute !== null || tributeWaitingPosition) {
     setStatus("⚠️ 正在進行獻祭召喚中，請先完成放置或點選「取消」！");
@@ -23374,7 +23389,7 @@ async function changeActionPhase(targetPhase) {
     setStatus("第一回合或生死倒數最後一回合不能進行戰術佈陣或進攻宣言。");
     return;
   }
-  if (phase !== "召喚階段" && phase !== "戰術佈陣" && phase !== "進攻宣言") return;
+  if (phase === targetPhase || (phase !== "召喚階段" && phase !== "戰術佈陣" && phase !== "進攻宣言")) return;
 
   // 強制打出單位規則：召喚階段不可直接跳過
   if (phase === "召喚階段" && (targetPhase === "戰術佈陣" || targetPhase === "進攻宣言")) {
@@ -23386,9 +23401,7 @@ async function changeActionPhase(targetPhase) {
     if (phase === "戰術佈陣") {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
       if (hasTacticalActed) {
-        const canAnyoneAttack = ["player_front", "player_back"].some(z => 
-          (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "R-GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
-        );
+        const canAnyoneAttack = xlwCanDeclareAfterTactical();
         if (!canAnyoneAttack) {
           setStatus("在戰術佈陣階段已召喚或移動過單位，且無【飛天山羊】或【滑板鞋】等特殊單位，無法改為執行進攻宣言。");
           return;
@@ -23437,7 +23450,11 @@ async function changeActionPhase(targetPhase) {
     }
   } else if (phase === "進攻宣言") {
     setStatus("\u9032\u5165\u300c\u9032\u653b\u5ba3\u8a00\u300d\uff1a\u7cfb\u7d71\u6b63\u5728\u70ba\u6211\u65b9\u55ae\u4f4d\u81ea\u52d5\u5ba3\u544a\u9032\u653b\uff08\u8207\u5c0d\u624b\u9032\u653b\u6a21\u5f0f\u4e00\u81f4\uff09\u002e\u002e\u002e");
-    await xlwAutoDeclarePlayerAttacks();
+    if (tacticalSummonUsed || window.XLW_tacticalMoveUsed) {
+      setStatus("請點選要進攻的飛天山羊，或其他可在佈陣後進攻的單位。");
+    } else {
+      await xlwAutoDeclarePlayerAttacks();
+    }
   }
   if (isMultiplayer) {
     sendFullGameStateToOpponent();
@@ -23784,7 +23801,8 @@ async function xlwAutoDeclarePlayerAttacks() {
     if (window.XLW_isShieldUnit(playerAttacker)) continue;
 
     const actualZone = field.player_front[i] === playerAttacker ? "player_front" : "player_back";
-    if (window.xlwIsAttackBlockedByClea(actualZone, i)) continue;
+    if (window.xlwIsAttackBlockedByClea(actualZone, i) ||
+        window.xlwUnitHasRanged(playerAttacker, actualZone, i) || xlwIsFlyingGoat(playerAttacker)) continue;
     // 禁錮狀態的單位可以進攻
     /*
     if (isUnitConfined(actualZone, i)) {
@@ -23866,11 +23884,31 @@ async function xlwAutoDeclarePlayerAttacks() {
   }
 
   window.XLW_DEFENSE_RULE.enemyNeedsDefense = playerAttackCount > 0;
-  setStatus(`\u6211\u65b9\u5df2\u81ea\u52d5\u5ba3\u544a\u9032\u653b\u0020${playerAttackCount}\u0020\u500b\u55ae\u4f4d\uff01\u5c07\u5728\u5c0d\u624b\u56de\u5408\u7684\u300c\u9632\u5b88\u968e\u6bb5\u300d\u4f9d\u5e8f\u5c0d\u6c7a\u7d50\u7b97\u3002`);
+  setStatus(`已自動宣告 ${playerAttackCount} 個單位進攻。可點選遠程單位選擇前後排，也可手動宣告飛天山羊進攻。`);
   render();
 }
 
+function xlwAttackTargetBlock(unit, zone, idx, targetZone) {
+  const target = field[targetZone][idx];
+  if (!target) return "該位置沒有敵方單位。";
+  if (window.hasFlying(target) && !window.hasFlying(unit) && !window.xlwUnitHasRanged(unit, zone, idx)) {
+    return "【飛行保護】只有飛行或遠程單位可以進攻飛行單位。";
+  }
+  if (window.XLW_isShieldUnit(target) && !hasArmorBreak(unit, zone, idx)) {
+    return "【阻擋】目標是盾牌單位，具有破甲效果的單位才可進攻。";
+  }
+  if (window.xlwIsUnitSeed?.(target) && ["enemy_front", "enemy_back"].some(row =>
+    field[row].some((guard, i) =>
+      (guard?.card?.id === "C-PLT-0002" || guard?.card?.name?.includes("林區稻草人")) &&
+      !window.isUnitSilenced(guard, row, i)))) {
+    return "【稻草人守護】受到「林區稻草人」保護，種子單位無法被進攻。";
+  }
+  if (isUnitAttackProtected(targetZone, idx)) return "【進攻失敗】敵方單位受到牆壁上的香蕉保護。";
+  return "";
+}
+
 async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
+  if (window.XLW_directBoardPrompt) return;
   window.xlwPlaySFX?.('select');
   const unit = field[zone][idx];
   if (unit && !unit.attacking && window.XLW_playerCannotAttackThisTurn) {
@@ -23887,6 +23925,17 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     }
   }
   if (!unit) return;
+
+  if (!unit.attacking) {
+    if ((tacticalSummonUsed || window.XLW_tacticalMoveUsed) && !xlwCanAttackAfterTactical(unit, zone, idx)) {
+      setStatus("已執行戰術佈陣，此單位沒有佈陣後進攻的效果。");
+      return;
+    }
+    if (window.xlwIsAttackBlockedByClea(zone, idx)) {
+      setStatus("該單位受到【魔王女參謀 克蕾】壓制，無法宣告進攻。");
+      return;
+    }
+  }
 
   // Slide (滑行) keyword mechanics
   if (!unit.attacking && !hasSlid && !unit.tapped) {
@@ -23967,71 +24016,44 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
       return;
     }
 
-    const frontDefender = field.enemy_front[idx];
-    const backDefender = field.enemy_back[idx];
-
-    const hasRanged = (window.xlwUnitHasRanged(unit, zone, idx) || window.hasFlying(unit));
-    const isBoarKnight = unit.card && (unit.card.id === "R-NMS-0061" || unit.card.name?.includes("野豬騎士"));
-    const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
-    const targetsBackFirst = (hasRanged || isBoarKnight || (frontIsFlying && !window.hasFlying(unit))) && backDefender;
-
-    let targetZone = null;
-    if (targetsBackFirst) {
-      targetZone = "enemy_back";
-    } else if (frontDefender) {
-      if (window.hasFlying(frontDefender) && !window.hasFlying(unit)) {
-        targetZone = backDefender ? "enemy_back" : null;
-      } else {
-        targetZone = "enemy_front";
-      }
-    } else if (backDefender) {
-      targetZone = "enemy_back";
-    }
-
-    if (!targetZone) {
-      if (frontDefender && window.hasFlying(frontDefender) && !window.hasFlying(unit)) {
-        setStatus("【飛行保護】敵方前排為飛行單位，我方非飛行單位無法進攻；且敵方後排無單位！");
-      } else {
-        setStatus("敵方同星星戰線前後排皆無單位，無法進行進攻。");
-      }
-      return;
-    }
-
-    const targetDefender = field[targetZone][idx];
-    if (window.hasFlying(targetDefender) && !window.hasFlying(unit)) {
-      setStatus("【飛行保護】非飛行單位無法進攻飛行單位！（若該飛行單位後排有單位，可直接攻擊其後排單位）");
-      return;
-    }
-    if (targetDefender && window.XLW_isShieldUnit(targetDefender)) {
-      if (hasArmorBreak(unit, zone, idx)) {
-        // 具有破甲效果的單位可以對盾牌單位進攻！
-      } else if (window.hasFlying(unit) && !window.hasFlying(targetDefender)) {
-        // Flying bypasses shield unit
-      } else {
-        setStatus("敵方目標為阻擋/盾牌單位，受其阻擋無法進行攻擊宣告。（具有破甲效果的單位可進攻）");
-        return;
-      }
-    }
-    // 🌾 林區稻草人 (C-PLT-0002): 使你場上的種子單位被賦予無法被進攻
-    if (targetDefender && window.xlwIsUnitSeed && window.xlwIsUnitSeed(targetDefender)) {
-      const oppSideP = targetZone.startsWith("player_") ? "player_" : "enemy_";
-      const hasScarecrow = ["front", "back"].some(r => (field[oppSideP + r] || []).some(u => u && (u.card.id === "C-PLT-0002" || u.card.name?.includes("林區稻草人")) && !window.isUnitSilenced(u)));
-      if (hasScarecrow) {
-        setStatus("【稻草人守護】受到「林區稻草人」保護，種子單位無法被進攻！");
-        return;
-      }
-    }
-
-    // 🛑 無法進攻判定 (和平巨星 約翰 / 旅人坦克)
-    if (unit.card && (unit.card.id === "SSR-STP-0061" || unit.card.id === "R-CRB-0026" || unit.card.keywords?.includes("無法進攻") || unit.card.name?.includes("和平巨星 約翰") || unit.card.name?.includes("旅人坦克"))) {
+    // 保留各卡牌的進攻限制，再依遠程效果開放同戰線的合法目標。
+    if (c.id === "SSR-STP-0061" || c.id === "R-CRB-0026" || c.name?.includes("和平巨星 約翰") || c.name?.includes("旅人坦克")) {
       setStatus("【無法進攻】此單位無法進行攻擊宣告！");
       return;
     }
 
-    if (targetDefender && isUnitAttackProtected(targetZone, idx)) {
-      setStatus("【進攻失敗】敵方單位受到 牆壁上的香蕉 保護，無法被進攻！");
+    const ranged = window.xlwUnitHasRanged(unit, zone, idx);
+    const flying = window.hasFlying(unit);
+    const front = field.enemy_front[idx];
+    const back = field.enemy_back[idx];
+    let targetZone;
+    if (ranged) {
+      const choices = ["enemy_front", "enemy_back"].filter(row => !xlwAttackTargetBlock(unit, zone, idx, row))
+        .map(row => ({
+          text: `${row === "enemy_front" ? "前排" : "後排"}${idx + 1}`,
+          value: row, boardTarget: {zone: row, idx}
+        }));
+      if (choices.length === 0) {
+        setStatus("同戰線沒有可進攻的敵方單位。");
+        return;
+      }
+      targetZone = await showXLWChoiceModal(`【${unitName(unit)}】遠程攻擊`, "請點選同戰線要進攻的前排或後排單位。", choices, {boardOnly: true});
+      if (!targetZone || field[zone][idx] !== unit || unit.tapped || phase !== "進攻宣言") return;
+    } else {
+      const isBoarKnight = c.id === "R-NMS-0061" || c.name?.includes("野豬騎士");
+      if (back && (flying || isBoarKnight || !front || window.hasFlying(front))) targetZone = "enemy_back";
+      else if (front) targetZone = "enemy_front";
+      else {
+        setStatus("敵方同戰線沒有可進攻的單位。");
+        return;
+      }
+    }
+    const blocked = xlwAttackTargetBlock(unit, zone, idx, targetZone);
+    if (blocked) {
+      setStatus(blocked);
       return;
     }
+    const targetDefender = field[targetZone][idx];
 
     unit.attacking = true;
     unit.target = { zone: targetZone, idx: idx };
@@ -24725,7 +24747,7 @@ async function xlwResolvePlayerDefensePhase() {
         }
 
         // 飛行保護二次檢查：若選取的防守目標為飛行且進攻單位非飛行
-        if (defender && window.hasFlying(defender) && !window.hasFlying(attacker)) {
+        if (defender && window.hasFlying(defender) && !hasRanged) {
           if (defZone === "player_front" && backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
             defender = backUnit;
             defZone = "player_back";
@@ -25063,7 +25085,7 @@ async function xlwResolveEnemyLaneSafe(lane) {
     }
 
     // 飛行保護二次檢查：若選取的防守目標為飛行且進攻單位非飛行
-    if (defender && window.hasFlying(defender) && !window.hasFlying(attacker)) {
+    if (defender && window.hasFlying(defender) && !hasRanged) {
       if (defZone === "enemy_front" && backUnit && (!window.hasFlying(backUnit) || window.hasFlying(attacker))) {
         defender = backUnit;
         defZone = "enemy_back";
@@ -25372,6 +25394,92 @@ async function xlwRecoverSamuraiCard(owner){
   (local?hand:window.XLW_ENEMY.hand).push(recovered);
   logBattle('武士繪 效果：'+(local?'我方':'對手')+'回收墓地中的 '+recovered.name+' 至手牌。');
   render();
+}
+
+async function xlwSummonGoatTravelers(zone, idx) {
+  const own = zone.startsWith("player_");
+  const prefix = own ? "player_" : "enemy_";
+  const slots = () => {
+    const empty = ["front", "back"].map(row => field[prefix + row].flatMap((unit, i) =>
+      unit ? [] : [{zone: prefix + row, idx: i}]));
+    return empty[0].length ? empty[0] : empty[1];
+  };
+  const opponent = own ? "enemy_" : "player_";
+  const blocked = ["front", "back"].some(row => field[opponent + row].some((unit, i) =>
+    (unit?.card?.id === "R-SPT-0003" || unit?.card?.name?.includes("憤怒旅人")) &&
+    !window.isUnitSilenced(unit, opponent + row, i)));
+  const onlineDefense = isMultiplayer && window.XLW_DEFENSE_RULE.resolving;
+  const inbound = window.XLW_goatTravelerPlacements ||= new Map();
+  const key = `${room_id}:${turn}:${zone}:${idx}`;
+  let positions = [];
+  if (onlineDefense && !own) {
+    setStatus("等待對手選擇【旅人騎羊】的小旅人召喚位置。");
+    if (!inbound.has(key)) {
+      positions = await new Promise(resolve => {
+        const timer = setTimeout(() => resolve([]), 30000);
+        inbound.set(key, value => {
+          clearTimeout(timer);
+          resolve(value);
+        });
+      });
+    } else {
+      positions = inbound.get(key);
+    }
+    inbound.delete(key);
+  }
+
+  const placed = [];
+  for (let i = 0; i < 2 && !blocked; i++) {
+    const free = slots();
+    if (!free.length) break;
+    let slot = free[0];
+    if (onlineDefense && !own) {
+      slot = free.find(s => s.zone === positions[i]?.zone && s.idx === positions[i]?.idx);
+      if (!slot) break;
+    } else if (own) {
+      const choices = free.map(s => ({
+        text: `${s.zone.endsWith("front") ? "前排" : "後排"}${s.idx + 1}`,
+        value: s, boardTarget: {...s, summon: true}
+      }));
+      const picked = await showXLWChoiceModal("旅人騎羊", `請點選第 ${i + 1} 個小旅人的召喚空格。`, choices, {boardOnly: true, required: true});
+      if (!picked) break;
+      slot = slots().find(s => s.zone === picked.zone && s.idx === picked.idx);
+      if (!slot) { i--; continue; }
+    }
+    const card = structuredClone(LITTLE_TRAVELER);
+    card.creator = own ? "player" : "enemy";
+    field[slot.zone][slot.idx] = {
+      card, tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: slot.zone, equipments: []
+    };
+    if (own) {
+      window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
+    } else {
+      window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
+    }
+    const cover = own && xlwCaptureSummonCover(slot.zone, slot.idx);
+    const summoned = field[slot.zone][slot.idx];
+    placed.push({...slot});
+    render();
+    playTravelerSummonAnimation(own ? "#playerForest" : "#enemyForest", slot.zone, slot.idx);
+    if (cover && await xlwResolveSummonCover(cover)) {
+      const backIdx = field.player_back.indexOf(summoned);
+      summoned.summonedZone = "player_back";
+      placed[i].moveToBackIdx = backIdx;
+      render();
+    } else if (onlineDefense && !own && Number.isInteger(positions[i].moveToBackIdx)) {
+      const backIdx = positions[i].moveToBackIdx;
+      if (backIdx >= 0 && backIdx < field.enemy_back.length && !field.enemy_back[backIdx]) {
+        field.enemy_back[backIdx] = summoned;
+        field[slot.zone][slot.idx] = null;
+        summoned.summonedZone = "enemy_back";
+        render();
+      }
+    }
+  }
+  if (onlineDefense && own) {
+    ws.send(JSON.stringify({action: "goat_traveler_placement", turn, zone, idx, positions: placed}));
+  }
+  if (placed.length) logBattle(`【旅人騎羊】戰鬥成功，召喚了 ${placed.length} 個小旅人。`);
 }
 
 async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner) {
@@ -25996,30 +26104,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       }
     }
 
-    // 🐐 R-GOT-0008-PG 旅人騎羊 (PG): 此單位戰鬥成功時，召喚2個小旅人
-    if (attUnit.card && (attUnit.card.id === "R-GOT-0008-PG" || attUnit.card.name?.includes("旅人騎羊 (PG)"))) {
-      logBattle(`🐐【旅人騎羊 (PG)】戰鬥成功：召喚 2 個小旅人！`);
-      const isPlayerAtt = attSide === "player";
-      const prefix = isPlayerAtt ? "player_" : "enemy_";
-      let summonedCount = 0;
-      for (const z of [prefix + "front", prefix + "back"]) {
-        for (let i = 0; i < 5; i++) {
-          if (!field[z][i] && summonedCount < 2) {
-            field[z][i] = {
-              card: structuredClone(LITTLE_TRAVELER),
-              tapped: false,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: z
-            };
-            summonedCount++;
-          }
-        }
-      }
-      render();
-    }
-
     // 🌿 C-PLT-0028 狂暴子蕨: 戰鬥成功時，使敵方場上1個被禁錮的單位被破壞
     if (attUnit.card && (attUnit.card.id === "C-PLT-0028" || attUnit.card.name?.includes("狂暴子蕨"))) {
       const oppSideP = attSide === "player" ? "enemy_" : "player_";
@@ -26268,14 +26352,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       renderScore();
     }
 
-    // 🐐 旅人騎羊 (C-GOT-0008 / NY-GOT-0008): 此單位戰鬥成功時，召喚2個小旅人
-    if (attackerCard && (attackerCard.id?.includes("GOT-0008") || attackerCard.name?.includes("旅人騎羊"))) {
-      logBattle("🐐【旅人騎羊】戰鬥勝利！呼喚了 2 個小旅人！");
-      for (let k = 0; k < 2; k++) {
-        await window.xlwSummonLittleTraveler(successOwner === "player", { bypassFitTraveler: true });
-      }
-    }
-
     // 🤡 小丑山羊 (GOT-0041): 戰鬥成功時未被破壞，可作為「山羊術」對你場上的單位使用
     if (attackerCard && (attackerCard.id === "GOT-0041" || attackerCard.name?.includes("小丑山羊")) && !attackerShouldDie && successOwner === "player") {
       const myUnits = [];
@@ -26406,6 +26482,14 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   if (defenderSuccess) {
     const successOwner = defenderOwner;
     await applyCombatSuccessReward(defender, attacker, successOwner, false);
+  }
+
+  const winner = attackerSuccess ? attacker : defenderSuccess ? defender : null;
+  const winnerZone = attackerSuccess ? attZone : defZone;
+  const winnerIdx = attackerSuccess ? attIdx : defIdx;
+  if (winner?.card && (/(?:^|-)GOT-0008(?:-|$)/.test(winner.card.id) || winner.card.name?.includes("旅人騎羊")) &&
+      !window.isUnitSilenced(winner, winnerZone, winnerIdx)) {
+    await xlwSummonGoatTravelers(winnerZone, winnerIdx);
   }
 
   // 6. 偷襲 (Sneak Attack) 效果應用：成功進攻並存活後，將此卡收回手牌
@@ -34313,6 +34397,10 @@ async function runEnemyTurn() {
 // 結束我方回合，接管對手回合與我方新回合開始
 async function endPlayerTurnAndRunEnemy() {
   if(xlwRequireSpellCompletion())return;
+  if (window.XLW_directBoardPrompt) {
+    setStatus("請先完成場上的選擇。");
+    return;
+  }
   window.XLWInputDiagnostics?.mark("endTurn:entry",{ending:!!window.XLW_isPlayerTurnEnding,myTurn:isMyTurn,phase});
   if (window.XLW_isPlayerTurnEnding) return;
   if (window.XLW_lanternPlacementActive) {
@@ -35489,6 +35577,7 @@ function render() {
   renderStablePanel();
   renderHand();
   renderField();
+  window.XLW_directBoardPrompt?._xlwRefreshHighlights?.();
   renderBattleLine();
   renderScore();
   renderEnemyPanel();
@@ -42034,9 +42123,7 @@ function renderStablePanel() {
       canSwitchToAttack = true;
     } else if (phase === "戰術佈陣") {
       const hasTacticalActed = tacticalSummonUsed || window.XLW_tacticalMoveUsed;
-      const canAnyoneAttack = ["player_front", "player_back"].some(z => 
-        (field[z] || []).some(u => u && (u.canAttackAfterTactical || (u.card && (u.card.id === "GOT-0025" || u.card.id === "R-GOT-0025" || u.card.id === "C-GOT-0025" || u.card.id === "SW-GOT-0025" || u.card.name?.includes("飛天山羊")))))
-      );
+      const canAnyoneAttack = xlwCanDeclareAfterTactical();
       canSwitchToAttack = !hasTacticalActed || canAnyoneAttack;
     }
     attackBtn.disabled = isAiRunning || isEnding || isTributeOngoing || !canSwitchToAttack || turn === 1 || (countdownActive && countdownRemaining === 1);
@@ -44144,6 +44231,14 @@ function setupWebSocketEvents() {
         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
         render();
       }
+    } else if (data.action === "goat_traveler_placement") {
+      if (!["enemy_front", "enemy_back"].includes(data.zone) || !Number.isInteger(data.idx) || !Array.isArray(data.positions)) return;
+      const placements = window.XLW_goatTravelerPlacements ||= new Map();
+      const key = `${room_id}:${data.turn}:${data.zone}:${data.idx}`;
+      const positions = data.positions.slice(0, 2);
+      const resolve = placements.get(key);
+      if (typeof resolve === "function") resolve(positions);
+      else placements.set(key, positions);
     } else if (data.action === "sneak_recall") {
       const key = `${data.attZone}:${data.attIdx}`;
       window.XLW_opponentSneakRecall[key] = data.recall;
@@ -44619,6 +44714,7 @@ function setupWebSocketEvents() {
       key: syncKey, storage: sessionStorage,
       canBypass: (action, data) => Boolean(
         window.XLWBattleFlow?.canBypass(action, data) ||
+        (action === "goat_traveler_placement" && window.XLW_DEFENSE_RULE.resolving) ||
         (action === 'samurai_recover_result' && window.XLW_samuraiRecoveryWaiters?.has(data.requestId)) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
         (["aquarius_hand_reveal", "aquarius_request_reveal"].includes(action)) ||
@@ -45902,8 +45998,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       const val = opt.value !== undefined && opt.value !== null ? String(opt.value) : "";
       
       if (opt.boardTarget) {
-        const {zone, idx} = opt.boardTarget;
-        return {type: "unit", zone, idx, opt, label: "✦"};
+        const {zone, idx, summon} = opt.boardTarget;
+        return {type: summon ? "summon" : "unit", zone, idx, opt, label: "✦"};
       }
       // Cancel / Skip options
       if (/取消|不發動|跳過|放棄|結束|不要召喚/.test(text) || val === "cancel") {
@@ -45990,6 +46086,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     if (!config.iconChoices && boardTargets.length > 0 && boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length) {
       let settled = false;
       const attachedSlotCleanups = [];
+      const refreshHighlights = [];
 
       // Create floating prompt banner
       const promptBar = document.createElement("div");
@@ -46010,22 +46107,25 @@ function showXLWChoiceModal(title, message, options, config = {}) {
           pillsHtml += `<button class="xlw-direct-prompt-pill" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text}</button>`;
         }
       });
-      if (config.boardOnly && !targetMaps.some(({target}) => target?.type === "cancel")) {
+      if (config.boardOnly && !config.required && !targetMaps.some(({target}) => target?.type === "cancel")) {
         pillsHtml += `<button class="xlw-direct-prompt-cancel-btn" aria-label="取消">✕</button>`;
       }
       pillsHtml += `</div>`;
 
       promptBar.innerHTML = promptTitleHtml + promptMsgHtml + pillsHtml;
       document.body.appendChild(promptBar);
+      window.XLW_directBoardPrompt = promptBar;
 
       const cleanup = (val) => {
         if (settled) return;
         settled = true;
+        if (window.XLW_directBoardPrompt === promptBar) window.XLW_directBoardPrompt = null;
         try { promptBar.remove(); } catch (e) {}
         attachedSlotCleanups.forEach(fn => fn());
         resolve(val);
       };
       promptBar._xlwCancel = () => cleanup(null);
+      promptBar._xlwRefreshHighlights = () => refreshHighlights.forEach(refresh => refresh());
 
       // Hook up pills & cancel inside prompt bar
       promptBar.querySelectorAll(".xlw-direct-prompt-pill").forEach(pill => {
@@ -46068,12 +46168,16 @@ function showXLWChoiceModal(title, message, options, config = {}) {
           const targetClass = target.type === "summon" 
             ? "slot-type-summon" 
             : (target.type === "lane" ? "slot-type-lane" : "slot-type-unit");
-          slotEl.classList.add("xlw-direct-board-target", targetClass);
 
           const badge = document.createElement("div");
           badge.className = `xlw-direct-target-badge ${target.type === "summon" ? "badge-summon" : (target.type === "lane" ? "badge-lane" : "")}`;
           badge.textContent = target.label || (target.type === "summon" ? "✨ 召喚" : "🎯 點選");
-          slotEl.appendChild(badge);
+          const refresh = () => {
+            slotEl.classList.add("xlw-direct-board-target", targetClass);
+            if (badge.parentNode !== slotEl) slotEl.appendChild(badge);
+          };
+          refreshHighlights.push(refresh);
+          refresh();
 
           const onSlotClick = (e) => {
             e.stopPropagation();
