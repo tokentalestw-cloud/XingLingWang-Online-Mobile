@@ -1964,3 +1964,107 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
 .xlw-game-started #boardWrap .xlw-arena-floor :is(.xlw-frame-orbits, .xlw-altar-ornaments) {
   display: none;
 }
+
+/* Shared matte instrument finish for the duel HUD. */
+html body.xlw-royal-ui.xlw-game-started {
+  --duel-plaque: #18232c;
+  --duel-copper: #897763;
+  --duel-ivory: #eee8da;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard {
+  background: var(--duel-plaque) !important;
+  border: 1px solid var(--duel-copper) !important;
+  box-shadow: 0 3px 7px #050a126b !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard::before,
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard::after { display: none !important; }
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-hard-title {
+  font-size: 0 !important;
+  justify-content: center;
+  gap: 0 !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard #phaseTextHard {
+  color: var(--duel-ivory) !important;
+  text-shadow: none !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-turn-owner {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: clamp(9px, .85vw, 13px);
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-turn-owner::before {
+  box-shadow: none;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel .stable-action-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel :is(#stableActionTactical, #stableActionAttack, #stableActionEnd:not(.deck-draw-pulse)) {
+  border: 1px solid var(--duel-copper) !important;
+  border-radius: 9px !important;
+  color: var(--duel-ivory) !important;
+  background: var(--duel-plaque) !important;
+  box-shadow: inset 0 1px #fff1, 0 3px 6px #070b11a0 !important;
+  text-shadow: none !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel :is(#stableActionTactical, #stableActionAttack) {
+  width: 100% !important;
+  min-height: 36px !important;
+  font-weight: 600 !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel :is(#stableActionTactical, #stableActionAttack).active:not(:disabled),
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel #stableActionEnd:not(.deck-draw-pulse, :disabled) {
+  background: #29474b !important;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card:is(.enemy, .player),
+html body.xlw-royal-ui.xlw-game-started #xlwFixedTopRightActionBar button {
+  background: var(--duel-plaque) !important;
+  border: 1px solid var(--duel-copper) !important;
+  box-shadow: inset 0 1px #fff1, 0 3px 7px #070b116e !important;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.enemy { border-left-color: #ba8e87 !important; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.player { border-left-color: #80a8ac !important; }
+.xlw-game-started #xlwStarlightAtmosphere::after {
+  background:
+    radial-gradient(ellipse at 6% 78%, #0d192a9c, transparent 24%),
+    radial-gradient(ellipse at 93% 4%, #0d192a91, transparent 25%) !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell:not(.line-has-attacker, [data-observatory-impact], .xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell)::before {
+  border-color: var(--altar-star, #9e8965);
+}
+
+html body.xlw-royal-ui #hand:not([data-mulligan]) { overflow: visible !important; }
+html body.xlw-royal-ui #hand[data-dense] {
+  gap: clamp(2px, calc((var(--xlw-ui-width, 100vw) - 850px) / 80), 9px) !important;
+  padding-block: 7px !important;
+}
+html body.xlw-royal-ui #hand[data-dense] > .card { margin-left: 0 !important; }
+html body.xlw-royal-ui #hand:not([data-mulligan]) .card:focus-visible {
+  outline: 2px solid #b6edf3;
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  html body.xlw-royal-ui #hand:not([data-mulligan]) .card:is(:hover, :focus-visible) {
+    translate: 0 -12px;
+    z-index: 6900 !important;
+  }
+  html body.xlw-royal-ui #hand:not([data-mulligan]) .card:is(:hover, :focus-visible) .mini-meta-name {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+}
+.xlw-hand-quick-name {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(220px, 28vw);
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #eee8da;
+  background: #121e2a;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}

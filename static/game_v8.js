@@ -37202,6 +37202,11 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   document.body.appendChild(menu);
 
   // 計算選單居中顯示在手牌正上方
+  const menuLabel = document.createElement("span");
+  menuLabel.className = "xlw-hand-quick-name";
+  menuLabel.textContent = card.name;
+  menu.prepend(menuLabel);
+
   const menuWidth = canPlay ? 150 : 88;
   const menuHeight = 38;
   let left = rect.left + (rect.width / 2) - (menuWidth / 2);
@@ -37636,6 +37641,7 @@ function renderHand() {
   const container = $("hand");
   if (!container) return;
   container.toggleAttribute("data-mulligan", mulliganActive);
+  container.toggleAttribute("data-dense", !mulliganActive && hand.length >= 7);
   document.body.classList.toggle("xlw-mulligan-active", mulliganActive);
   container.innerHTML = "";
 
@@ -37644,6 +37650,10 @@ function renderHand() {
     cardEl.className = "card";
     cardEl.setAttribute("draggable", window.matchMedia("(pointer: coarse)").matches ? "false" : "true");
     cardEl.dataset.handIndex = idx;
+    if (!mulliganActive) {
+      cardEl.tabIndex = 0;
+      cardEl.setAttribute("aria-label", card.name);
+    }
     
     if (selectedHandForSummon === idx || selectedHandForTribute === idx) {
       cardEl.classList.add("selected-hand-summon");
@@ -37695,9 +37705,11 @@ function renderHand() {
     const N = hand.length;
     const mid = (N - 1) / 2;
     const diff = idx - mid;
-    const rot = diff * 5; // 每張牌旋轉 5 度
-    const ty = Math.abs(diff) * 3; // 兩側牌向下微調 3px 呈圓弧
-    const tx = diff * -4; // 微調間距使扇形收納緊湊
+    const dense = N >= 7;
+    const rotationStep = dense ? Math.min(2.7, (N >= 10 ? 6 : 8) / mid) : 5;
+    const rot = diff * rotationStep;
+    const ty = Math.abs(diff) * (dense ? .4 : 3);
+    const tx = dense ? 0 : diff * -4;
     if (!mulliganActive) cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
 
     // 手牌點擊事件 (區分換牌、魔法、一般召喚與獻祭)
