@@ -48278,8 +48278,6 @@ function showGraveyardDetailModal(title, graveList) {
             setStatus("我方場上沒有可供獻祭的單位！");
             return;
           }
-          const taxOk = await window.xlwCheckGraveyardTax(true);
-          if (!taxOk) return;
           const confirm = await showXLWConfirm("大骷 效果發動", "是否獻祭場上1個單位，改為從墓地打出【大骷】作為本回合的通常召喚？");
           if (confirm) {
             const choices = playerUnits.map((u, i) => ({
@@ -48289,12 +48287,14 @@ function showGraveyardDetailModal(title, graveList) {
             const chosenIdx = await showXLWChoiceModal("選擇獻祭單位", "請選擇要獻祭的場上單位：", choices);
             if (chosenIdx !== null && chosenIdx !== undefined) {
               const sac = playerUnits[chosenIdx];
-              await window.xlwPlayerTributeUnit(sac.unit, sac.zone, sac.idx);
-              normalSummonUsed = true;
-              const idx = graveyard.indexOf(card);
-              if (idx >= 0) graveyard.splice(idx, 1);
+              if (!sac) return;
               overlay.remove();
-              await window.xlwSpecialSummonUnit(card, true);
+              const success = await window.xlwSpecialSummonUnit(card, true, {
+                sourcePile: () => graveyard,
+                tribute: sac,
+                beforePlacement: () => window.xlwCheckGraveyardTax(true)
+              });
+              if (!success) return;
               logBattle("💀【大骷】效果：獻祭場上單位，改為從墓地進行通常召喚打出至場上！");
               render();
             }
@@ -52422,6 +52422,14 @@ window.xlwOnUnitUpgraded = async function(isPlayer, unit, newCard) {
 
 window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+  const tribute = options.tribute;
+  const validTribute = () => isMyTurn && phase === "召喚階段" && !normalSummonUsed &&
+    field[tribute.zone][tribute.idx] === tribute.unit &&
+    !xlwIsUnitUnsacrificable(tribute.unit, tribute.zone, tribute.idx);
+  if (tribute) {
+    if (!validTribute()) return false;
+    emptySlots.push({zone: tribute.zone, idx: tribute.idx});
+  }
   if (emptySlots.length === 0) {
     logBattle(`場上無空位，無法召喚【${card.name}】！`);
     return false;
@@ -52452,9 +52460,17 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
     slot = candidateSlots[Math.floor(Math.random() * candidateSlots.length)];
   }
 
-  if (slot && options.beforePlacement) {
-    if (field[slot.zone][slot.idx] || !options.sourcePile?.().includes(card) ||
+  const placementAvailable = () => slot && (!field[slot.zone][slot.idx] ||
+    (tribute && slot.zone === tribute.zone && slot.idx === tribute.idx && validTribute()));
+  if (options.beforePlacement) {
+    if (!placementAvailable() || !options.sourcePile?.().includes(card) ||
         !await options.beforePlacement()) return false;
+  }
+  if (tribute) {
+    if (!placementAvailable() || !validTribute() || !options.sourcePile().includes(card)) return false;
+    normalSummonUsed = true;
+    await window.xlwPlayerTributeUnit(tribute.unit, tribute.zone, tribute.idx);
+    if (field[tribute.zone][tribute.idx] === tribute.unit) field[tribute.zone][tribute.idx] = null;
   }
 
   if (slot && !field[slot.zone][slot.idx]) {
