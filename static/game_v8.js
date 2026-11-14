@@ -21388,13 +21388,13 @@ async function performSummonToSlot(zone, idx) {
             const choices = dessertUnits.map((c, i) => ({ text: `${c.name} (攻:${c.attack || 0}/星:${c.score || c.stars || 0})`, value: i }));
             const chosenIdx = await showXLWChoiceModal("【被咬的夾心餅乾】立即效果", "請選擇洗回牌庫的甜點王國單位：", choices);
             if (chosenIdx !== null && chosenIdx !== undefined) {
-              const targetCard = dessertUnits[chosenIdx];
-              graveyard.splice(graveyard.indexOf(targetCard), 1);
-              deck.push(targetCard);
-              shuffle(deck);
-              logBattle(`✨【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
-              if (isMultiplayer) sendFullGameStateToOpponent();
-              render();
+              const targetCard = window.XLWDuelConsistency.moveKnownCard(graveyard, deck, dessertUnits[chosenIdx]);
+              if (targetCard) {
+                shuffle(deck);
+                logBattle(`✨【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
+                if (isMultiplayer) sendFullGameStateToOpponent();
+                render();
+              }
             }
           } else {
             logBattle("【被咬的夾心餅乾】立即效果：我方墓地中沒有甜點王國單位。");
@@ -21527,9 +21527,8 @@ async function performSummonToSlot(zone, idx) {
                 const choices = magicCards.map((c, i) => ({ text: c.name, value: i }));
                 const chosenIdx = await showXLWChoiceModal("選擇回手牌的魔法卡", "請選擇一張魔法卡：", choices);
                 if (chosenIdx !== null && chosenIdx !== undefined) {
-                  const chosenCard = magicCards[chosenIdx];
-                  graveyard.splice(graveyard.indexOf(chosenCard), 1);
-                  hand.push(chosenCard);
+                  const chosenCard = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, magicCards[chosenIdx]);
+                  if (!chosenCard) return;
                   logBattle("✨ 智慧野人 效果：將魔法卡【" + chosenCard.name + "】回收至手牌！");
                   if (isMultiplayer) sendFullGameStateToOpponent();
                   render();
@@ -37602,20 +37601,18 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     ];
     const choice = await showXLWChoiceModal("【最後的早餐】效果選擇", "請選擇要執行的操作：", choices);
     if (choice === "activate") {
+      const breakfast = window.XLWDuelConsistency.takeKnownCard(hand, card);
+      if (!breakfast) return;
       logBattle(`✨ 我方展示了手牌中的【最後的早餐】！`);
       draw(1);
-      const idxInHand = hand.indexOf(card);
-      if (idxInHand >= 0) {
-        hand.splice(idxInHand, 1);
-      }
-      deck.push(card);
+      deck.push(breakfast);
       shuffle(deck);
       logBattle(`✨ 最後的早餐 效果：已將此卡洗回牌庫，並完成重洗！`);
       
       if (isMultiplayer) {
         ws.send(JSON.stringify({
           action: "breakfast_reveal_sync",
-          card: card
+          card: breakfast
         }));
         sendFullGameStateToOpponent();
       }
