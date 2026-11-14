@@ -1366,40 +1366,14 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
   z-index: 0;
   pointer-events: none;
   left: calc(199px + (5 * var(--cw) + 4 * var(--gap)) / 2);
-  top: 124px;
-  width: 1200px;
-  height: 820px;
+  top: 121px;
+  width: 1230px;
+  height: 846px;
   transform: translateX(-50%);
-  --arena-cut: polygon(9% 0, 91% 0, 100% 13%, 100% 86%, 92% 100%, 8% 100%, 0 86%, 0 13%);
+  background: url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 19px 17px #02050cbd);
 }
 .xlw-game-started .xlw-arena-floor { display: block; }
-.xlw-arena-floor::before,
-.xlw-arena-floor::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  clip-path: var(--arena-cut);
-}
-.xlw-arena-floor::before {
-  inset: 0 0 -45px;
-  background:
-    linear-gradient(130deg, #0009, transparent 19% 79%, #000a),
-    repeating-linear-gradient(90deg, transparent 0 88px, #050b13 89px 92px, #f0b76b55 93px 96px),
-    linear-gradient(#1c2330 86%, #9e7950 93%, #393b41 94%, #121822 98%, #896342 99%);
-}
-.xlw-arena-floor::after {
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 6% 70%, #3c9dac7a, transparent 30%),
-    radial-gradient(ellipse at 91% 16%, #94536770, transparent 33%),
-    repeating-linear-gradient(112deg, #e7c6920b 0 1px, transparent 2px 18px),
-    conic-gradient(from 30deg, #2e343f, #8c6b45, #3c3f44, #d4a970, #2e343f);
-  box-shadow: inset 0 0 0 14px #352c28, inset 0 0 0 20px #bc9565,
-    inset 0 0 0 27px #101823, inset 0 0 0 42px #171e2c, inset 0 0 60px 52px #0c1421;
-}
-.xlw-arena-floor {
-  filter: drop-shadow(0 28px 21px #03070dc9);
-}
 html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-line-strip::before {
   content: "";
   position: absolute;
@@ -1416,20 +1390,46 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:not(.has-card) {
   text-shadow: 0 1px 3px #03070e, 0 0 5px #03070e;
 }
 
-.xlw-constellation-art {
+.xlw-stellar-background {
   display: none;
   position: absolute;
   inset: 0;
   pointer-events: none;
+  background:
+    radial-gradient(circle at 21px 14px, #d9ebffae .65px, transparent 1.45px) 0 0 / 107px 73px,
+    radial-gradient(circle at 5px 41px, #dcceaa95 .55px, transparent 1.3px) 15px 29px / 83px 97px,
+    radial-gradient(circle at 44px 19px, #b7dafa88 1px, transparent 1.7px) 33px 7px / 157px 121px,
+    radial-gradient(circle at 10px 38px, #cfdafa70 .5px, transparent 1.1px) 37px 23px / 61px 79px,
+    radial-gradient(ellipse at 27% 40%, #3f385971, transparent 48%),
+    radial-gradient(ellipse at 72% 64%, #18405261, transparent 55%);
 }
-.xlw-game-started .xlw-constellation-art { display: block; }
-.xlw-constellation-art .xlw-constellation {
+.xlw-game-started .xlw-stellar-background { display: block; }
+.xlw-stellar-background svg {
   position: absolute;
-  display: block;
   top: 48%;
-  width: min(20%, calc(47 * var(--xvh, 1vh)), 340px);
-  height: auto;
+  left: 10.5%;
+  width: min(13%, 156px);
+  overflow: visible;
+  color: #a0e7ff;
   transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 5px currentColor);
 }
-.xlw-constellation.dragon { left: 12.5%; }
-.xlw-constellation.phoenix { left: 87.5%; }
+.xlw-stellar-background svg + svg { left: 89.5%; color: #e7ccff; }
+.xlw-stellar-background path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: .75;
+}
+.xlw-stellar-background circle {
+  fill: #fff9e8;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+@media (max-width: 1100px), (pointer: coarse) {
+  html body.xlw-royal-ui.xlw-game-started {
+    --arena-command: clamp(112px, 14vw, 156px);
+  }
+}

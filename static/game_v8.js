@@ -42860,13 +42860,13 @@ function xlwFitOpenArena(bounds, space, obstacles, gap, laneCenter, screenCenter
     const boardHeight = bounds.bottom - bounds.top;
     const scale = Math.min((screenCenter - left) / leftExtent, (right - screenCenter) / rightExtent,
       (bottom - top) / boardHeight);
-    const fit = {scale, x: screenCenter - laneCenter * scale, y: bottom - bounds.bottom * scale};
+    const fit = {scale, x: screenCenter - laneCenter * scale, y: top - bounds.top * scale};
     if (best && fit.scale < best.scale - 1e-7) continue;
     const l = fit.x + bounds.left * fit.scale, r = fit.x + bounds.right * fit.scale;
     const t = fit.y + bounds.top * fit.scale, b = fit.y + bounds.bottom * fit.scale;
     if (obstacles.some(o => r > o.left - gap + 1e-7 && l < o.right + gap - 1e-7 &&
        b > o.top - gap + 1e-7 && t < o.bottom + gap - 1e-7)) continue;
-    const offset = Math.abs(l + r - space.left - space.right) + Math.abs(b - space.bottom) / 4;
+    const offset = Math.abs(l + r - space.left - space.right) + Math.abs(t - space.top) / 4;
     if (!best || fit.scale > best.scale + 1e-7 || offset < bestOffset) {
       best = fit;
       bestOffset = offset;
@@ -42970,14 +42970,15 @@ function adjustBoardScale() {
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
     // Allow the rear mat to tuck just under the decorative edge of the opponent fan.
+    const opponentFanOverlap = openArena ? 15 : 0;
     const enemyHandObstacle = openArena && enemyHand
-      ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap - 5)}
+      ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap - opponentFanOverlap)}
       : enemyHand;
     const hand = logicalRect(document.querySelector(".hand-panel"));
     const space = {
       left: openArena ? gap : Math.max(gap, score ? score.right + gap : gap),
       right: openArena ? width - gap : Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
-      top: Math.max(gap, enemyHand ? enemyHand.bottom - (openArena ? 5 : 0) : gap),
+      top: Math.max(gap, enemyHand ? enemyHand.bottom - opponentFanOverlap : gap),
       // A shallow overlap matches the reference fan without moving any field zones.
       bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
     };
