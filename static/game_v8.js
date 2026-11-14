@@ -4961,12 +4961,15 @@ function renderCircusWheel() {
 // 上靶 (Put Card onto Wheel)
 window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromIdx = null) {
   if (!card) return false;
-  if (fromZone && fromIdx !== null && fromIdx !== undefined && field[fromZone]) {
-    field[fromZone][fromIdx] = null;
+  const fromField = fromZone != null;
+  if (fromField) {
+    const live = field[fromZone]?.[fromIdx]?.card;
+    if (!live || (live !== card && (!card._xlwInstanceId || live._xlwInstanceId !== card._xlwInstanceId))) return false;
+    card = live;
   }
-  
   const entry = xlwAddWheelEntry(card, isPlayer);
   if (!entry) return false;
+  if (fromField) field[fromZone][fromIdx] = null;
   await xlwResolveWheelEntryEffect(entry, isPlayer);
   return true;
 };
@@ -5042,8 +5045,10 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     const snapshot = isPlayer && window.XLWCircusWheel ? wheel.slice() : null;
     const revealed = wheel.splice(pickIdx, 1)[0];
     if (snapshot) {
-      const completed = await window.XLWCircusWheel.reveal(snapshot, pickIdx);
-      if (completed === false || wheel !== window.XLW_playerRouletteWheel) break;
+      await window.XLWCircusWheel.reveal(snapshot, pickIdx);
+      // The visual can be canceled independently. Only abandon the result if
+      // the underlying match has replaced its wheel.
+      if (wheel !== window.XLW_playerRouletteWheel) break;
       renderCircusWheel();
     }
     let revealedAtk = Number(revealed.attack || 0);

@@ -100,5 +100,28 @@ module.exports = (async () => {
       assert.equal(spin.playerBonusScore, reward + Number(id === "R-CCS-0041"));
     }
   }
+  const canceled = {id: "OTHER", name: "動畫中止"};
+  spin.XLW_playerRouletteWheel = [canceled];
+  spin.XLWCircusWheel = {reveal: async () => false};
+  spin.renderCircusWheel = () => {};
+  await spin.xlwSpinWheel(true);
+  assert.equal(graveyard.at(-1), canceled);
+  const cleared = {id: "OTHER", name: "已離開的對局"};
+  spin.XLW_playerRouletteWheel = [cleared];
+  spin.XLWCircusWheel.reveal = async () => {
+    spin.XLW_playerRouletteWheel = [];
+    return false;
+  };
+  await spin.xlwSpinWheel(true);
+  assert.equal(graveyard.includes(cleared), false);
+
+  spin.XLWCircusWheel = null;
+  vm.runInNewContext(section("window.xlwPutCardOnWheel =", "async function xlwMovePileCardToWheel("), spin);
+  spin.field.player_front[0] = {card: other};
+  assert.equal(await spin.xlwPutCardOnWheel(selected, true, "player_front", 0), false);
+  assert.equal(spin.field.player_front[0].card, other);
+  spin.XLW_playerRouletteWheel = [other];
+  assert.equal(await spin.xlwPutCardOnWheel(other, true, "player_front", 0), false);
+  assert.equal(spin.field.player_front[0].card, other);
   console.log("Circus regressions: transfers, once-per-turn draw and exclusive summon or grave after reveal");
 })();
