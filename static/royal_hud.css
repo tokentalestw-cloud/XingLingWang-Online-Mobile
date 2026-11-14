@@ -1822,3 +1822,93 @@ html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-hard-title
 html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard #phaseTextHard {
   font-size: clamp(13px, 1.7vw, 22px) !important;
 }
+
+/* Opening hand and matte altar finish. */
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card) {
+  background: radial-gradient(ellipse at 28% 16%, #26374c, #142132 88%);
+  border-width: 1px;
+  box-shadow: inset 0 1px #c7d9ee12, 0 2px 3px #04091080;
+}
+.xlw-game-started #boardWrap :is(.enemy-back, .enemy-front) { --altar-trim: #786660; }
+.xlw-game-started #boardWrap :is(.player-back, .player-front) { --altar-trim: #526d79; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::before { content: none; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::after {
+  background: #d1e5fa;
+  opacity: .10;
+}
+html body.xlw-royal-ui.xlw-game-started .xlw-stellar-background svg { opacity: .25; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-bonus-badge { opacity: .82; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-gem-val {
+  font-size: clamp(25px, 3.3vw, 46px) !important;
+}
+html body.xlw-royal-ui.xlw-mulligan-active #phaseDisplayPanelHard { visibility: hidden !important; }
+html body.xlw-royal-ui.xlw-game-started.xlw-mulligan-active #stableActionPanel {
+  bottom: 28% !important;
+  padding: clamp(7px, 1.05vw, 15px) !important;
+  background: linear-gradient(145deg, #18283aed, #0d1929f5) !important;
+  border: 1px solid #43576b !important;
+  border-radius: 12px !important;
+  box-shadow: 0 7px 18px #05091075 !important;
+}
+.xlw-mulligan-intro { padding: 2px 2px 7px; color: #f3f7fb; }
+.xlw-mulligan-intro h2 { margin: 0 0 6px; font-size: clamp(15px, 1.7vw, 25px); }
+.xlw-mulligan-intro p { margin: 0; padding-top: 6px; border-top: 1px solid #a2b4c64a; color: #aebdcb; font-size: clamp(10px, 1vw, 14px); }
+html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel #stableActionMulliganConfirm {
+  background: linear-gradient(#205160, #102f3c) !important;
+  border: 1px solid #66949e !important;
+  padding: 6px !important;
+  color: #fff !important;
+  min-height: 44px !important;
+  box-shadow: inset 0 1px #bbdce32b, 0 3px #091823 !important;
+}
+html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel #stableActionMulliganConfirm::before { display: none !important; }
+html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary {
+  background: #142130 !important;
+  border: 1px solid #657582 !important;
+  color: #bdc8d1 !important;
+  box-shadow: none !important;
+}
+html body.xlw-royal-ui #hand[data-mulligan] { gap: clamp(4px, .65vw, 10px) !important; }
+html body.xlw-royal-ui #hand[data-mulligan] > .card {
+  margin-left: 0 !important;
+  transform: rotate(var(--mulligan-tilt, 0deg)) !important;
+  filter: none !important;
+}
+#hand[data-mulligan] > .card:nth-child(1) { --mulligan-tilt: -4deg; }
+#hand[data-mulligan] > .card:nth-child(2) { --mulligan-tilt: -1.5deg; }
+#hand[data-mulligan] > .card:nth-child(3) { --mulligan-tilt: 1.5deg; }
+#hand[data-mulligan] > .card:nth-child(4) { --mulligan-tilt: 4deg; }
+html body.xlw-royal-ui #hand[data-mulligan] > .card.mulligan-selected {
+  border-color: #bbf1f9 !important;
+  box-shadow: 0 0 0 1px #83cee6, 0 0 9px #79dfff82 !important;
+}
+html body.xlw-royal-ui #hand[data-mulligan] .mulligan-status-badge {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  inset: 3px 3px auto auto;
+  padding: 0;
+  transform: none;
+  border: 1px solid #c4d4db;
+  border-radius: 50%;
+  background: #111d2e;
+  color: #e7fcff;
+  box-shadow: 0 1px 3px #02090f;
+  line-height: 1;
+}
+html body.xlw-royal-ui #hand[data-mulligan] .mulligan-selected .mulligan-status-badge { background: #266273; }
+html body.xlw-royal-ui #hand[data-mulligan] .mulligan-card-inspect-btn { left: 3px; right: auto; }
+@media (max-width: 1000px), (pointer: coarse) {
+  html body.xlw-royal-ui #hand[data-mulligan] > .card { --mulligan-tilt: 0deg; }
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap :is(#enemyField, #enemyForest, #playerGrave, #playerDeck, #playerRace) {
+  left: calc(159px + var(--altar-grid-width) + 16px) !important;
+  right: auto !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap :is(#playerExile, #playerExtraDeck) {
+  left: calc(159px + var(--altar-grid-width) + var(--cw) + 30px) !important;
+  right: auto !important;
+}
+html body.xlw-royal-ui.xlw-mulligan-active :is(#xlwActionFeedback, .hand-title) { display: none !important; }
+html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary { border-bottom-width: 1px !important; }

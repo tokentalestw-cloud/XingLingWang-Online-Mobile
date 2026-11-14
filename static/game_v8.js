@@ -37635,6 +37635,8 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
 function renderHand() {
   const container = $("hand");
   if (!container) return;
+  container.toggleAttribute("data-mulligan", mulliganActive);
+  document.body.classList.toggle("xlw-mulligan-active", mulliganActive);
   container.innerHTML = "";
 
   hand.forEach((card, idx) => {
@@ -37660,13 +37662,13 @@ function renderHand() {
     // Mulligan 換牌高亮與即時卡牌放大預覽按鈕 (確保於 innerHTML 之後加入，避免被覆蓋)
     if (mulliganActive) {
       cardEl.classList.add("mulligan-card");
-      if (selectedMulliganIndexes.has(idx)) {
-        cardEl.classList.add("mulligan-selected");
-        const statusBadge = document.createElement("div");
-        statusBadge.className = "mulligan-status-badge";
-        statusBadge.innerHTML = "🔄 預定替換";
-        cardEl.appendChild(statusBadge);
-      }
+      const replace = selectedMulliganIndexes.has(idx);
+      cardEl.classList.toggle("mulligan-selected", replace);
+      const mark = document.createElement("span");
+      mark.className = "mulligan-status-badge";
+      mark.textContent = replace ? "✓" : "";
+      mark.setAttribute("aria-hidden", "true");
+      cardEl.appendChild(mark);
       const inspectBtn = document.createElement("div");
       inspectBtn.className = "mulligan-card-inspect-btn";
       inspectBtn.title = "點擊查看卡牌詳情";
@@ -37696,7 +37698,7 @@ function renderHand() {
     const rot = diff * 5; // 每張牌旋轉 5 度
     const ty = Math.abs(diff) * 3; // 兩側牌向下微調 3px 呈圓弧
     const tx = diff * -4; // 微調間距使扇形收納緊湊
-    cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
+    if (!mulliganActive) cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
 
     // 手牌點擊事件 (區分換牌、魔法、一般召喚與獻祭)
     cardEl.onclick = async (e) => {
@@ -43407,17 +43409,19 @@ function renderStablePanel() {
   if (mulliganActive) {
     if (isMultiplayer) {
       setContent(`
+        <div class="xlw-mulligan-intro"><h2>起手換牌</h2><p>選擇要換掉的手牌</p></div>
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
-          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
+          <span class="btn-main-text">確認換牌</span>
         </button>
       `);
     } else {
       setContent(`
+        <div class="xlw-mulligan-intro"><h2>起手換牌</h2><p>選擇要換掉的手牌</p></div>
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
-          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
+          <span class="btn-main-text">確認換牌</span>
         </button>
         <button class="stable-action-btn secondary" onclick="event.stopPropagation(); newGame()">
-          <span class="btn-main-text">重置新局</span><span class="btn-sub-turn">RESET</span>
+          <span class="btn-main-text">重置新局</span>
         </button>
       `);
     }
