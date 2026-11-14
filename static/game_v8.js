@@ -36512,7 +36512,7 @@ function renderHand() {
     cardEl.setAttribute("draggable", window.matchMedia("(pointer: coarse)").matches ? "false" : "true");
     cardEl.dataset.handIndex = idx;
     
-    if (selectedHandForSummon === idx) {
+    if (selectedHandForSummon === idx || selectedHandForTribute === idx) {
       cardEl.classList.add("selected-hand-summon");
     }
 
