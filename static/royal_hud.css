@@ -2036,7 +2036,7 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell:not(.line-has-at
 html body.xlw-royal-ui #hand:not([data-mulligan]) { overflow: visible !important; }
 html body.xlw-royal-ui #hand[data-dense] {
   gap: clamp(2px, calc((var(--xlw-ui-width, 100vw) - 850px) / 80), 9px) !important;
-  padding-block: 7px !important;
+  padding-block: 11px 3px !important;
 }
 html body.xlw-royal-ui #hand[data-dense] > .card { margin-left: 0 !important; }
 html body.xlw-royal-ui #hand:not([data-mulligan]) .card:focus-visible {
