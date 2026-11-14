@@ -3448,25 +3448,11 @@ window.xlwCheckGraveyardTax = async function(isPlayerAction) {
 };
 
 window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
-  const allowed = await window.xlwCheckGraveyardTax(isPlayer);
-  if (!allowed) return false;
-
-  const graveList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
-  let card = null;
-  let idx = -1;
-  if (typeof cardOrIdx === "number") {
-    idx = cardOrIdx;
-    card = graveList[idx];
-  } else {
-    card = cardOrIdx;
-    idx = graveList.indexOf(card);
-    if (idx < 0) {
-      idx = graveList.findIndex(c => c && (c.id === card.id || c.name === card.name));
-    }
-  }
-
-  if (idx < 0 || !card) return false;
-  graveList.splice(idx, 1);
+  const getGrave = () => isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+  const selected = typeof cardOrIdx === "number" ? getGrave()[cardOrIdx] : cardOrIdx;
+  if (!xlwIsPileCard(selected) || !await window.xlwCheckGraveyardTax(isPlayer)) return false;
+  const card = window.XLWDuelConsistency.takeKnownCard(getGrave(), selected);
+  if (!card) return false;
   exileCard(card, isPlayer ? "player" : "enemy");
   render();
 
@@ -34798,9 +34784,9 @@ async function runEnemyTurn() {
   // 💀 盜墓賊 (C-SKT-0055)：對手 AI 若墓地有盜墓賊且本回合未除外，主動除外以避免結束階段給我方獎勵 +2★
   const aiGraveList = window.XLW_ENEMY?.grave || enemyGraveyard || [];
   const aiGraveRobber = aiGraveList.find(c => c && (c.id?.includes("SKT-0055") || c.name?.includes("盜墓賊")));
-  if (aiGraveRobber && !window.XLW_graveRobberExiledThisTurn) {
+  if (aiGraveRobber && !window.XLW_graveRobberExiledThisTurn &&
+      await window.xlwExileCardFromGraveyard(aiGraveRobber, false)) {
     window.XLW_graveRobberExiledThisTurn = true;
-    window.xlwExileCardFromGraveyard("enemy", aiGraveRobber);
     logBattle("✨ 對手【盜墓賊】效果：從墓地主動除外【盜墓賊】，避免結束階段給我方獎勵 +2★！");
   }
 
@@ -35363,10 +35349,11 @@ async function runEnemyTurn() {
 
       if (s0021Idx >= 0 && otherUndead.length > 0) {
         const exileCard = otherUndead[0];
-        window.xlwExileCardFromGraveyard("enemy", exileCard);
-        const realIdx = aiGrave.indexOf(aiGrave[s0021Idx]);
-        graveSummonCandidate = aiGrave.splice(realIdx, 1)[0];
-        logBattle(`💀 對手【中骷】效果：除外墓地【${exileCard.name}】，改為從墓地進行通常召喚！`);
+        const middleSkeleton = aiGrave[s0021Idx];
+        if (await window.xlwExileCardFromGraveyard(exileCard, false)) {
+          graveSummonCandidate = window.XLWDuelConsistency.takeKnownCard(aiGrave, middleSkeleton);
+          if (graveSummonCandidate) logBattle(`💀 對手【中骷】效果：除外墓地【${exileCard.name}】，改為從墓地進行通常召喚！`);
+        }
       } else if (s0001Idx >= 0) {
         graveSummonCandidate = aiGrave.splice(s0001Idx, 1)[0];
         logBattle(`💀 對手【小骷】效果：改為從墓地進行通常召喚！`);
@@ -48363,9 +48350,8 @@ function showGraveyardDetailModal(title, graveList) {
             return;
           }
           const confirm = await showXLWConfirm("盜墓賊 效果發動", "同名卡一回合限一次，是否將墓地中的【盜墓賊】除外，以避免結束階段使敵方獎勵 +2★？");
-          if (confirm) {
+          if (confirm && await window.xlwExileCardFromGraveyard(card, true)) {
             window.XLW_graveRobberExiledThisTurn = true;
-            window.xlwExileCardFromGraveyard("player", card);
             logBattle("✨【盜墓賊】效果：從墓地主動除外【盜墓賊】！");
             render();
             overlay.remove();
