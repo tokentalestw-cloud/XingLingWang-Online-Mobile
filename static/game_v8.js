@@ -12045,10 +12045,8 @@ async function castSpell(handIndex) {
           const choices = graveUnits.map((c, idx) => ({ text: `${c.name} (${c.score || 0}★)`, value: idx }));
           const pick = await showXLWChoiceModal("【重生術】回歸牌頂", "請選擇 1 個回牌庫頂的墓地單位：", choices);
           if (pick !== null && pick !== undefined) {
-            const chosenCard = graveUnits[pick];
-            graveyard.splice(graveyard.indexOf(chosenCard), 1);
-            deck.push(chosenCard);
-            logBattle(`✨【重生術】生生不息：將墓地中的【${chosenCard.name}】放回牌庫頂！`);
+            const chosenCard = window.XLWDuelConsistency.moveKnownCard(graveyard, deck, graveUnits[pick]);
+            if (chosenCard) logBattle(`✨【重生術】生生不息：將墓地中的【${chosenCard.name}】放回牌庫頂！`);
           }
         }
         graveyard.push(spellCard);
@@ -14987,10 +14985,8 @@ async function castSpell(handIndex) {
       const choices = eligible.map((c, i) => ({ text: c.name, value: i }));
       const chosenIdx = await showXLWChoiceModal("課金 效果", "選擇一張虛擬世界牌加入手牌：", choices);
       if (chosenIdx !== null && chosenIdx !== undefined) {
-        const chosenCard = eligible[chosenIdx];
-        deck.splice(deck.indexOf(chosenCard), 1);
-        hand.push(chosenCard);
-        logBattle(`✨ 課金 效果：從牌組將【${chosenCard.name}】加入手牌！`);
+        const chosenCard = window.XLWDuelConsistency.moveKnownCard(deck, hand, eligible[chosenIdx]);
+        if (chosenCard) logBattle(`✨ 課金 效果：從牌組將【${chosenCard.name}】加入手牌！`);
       }
     } else {
       logBattle("課金 效果：牌組中無虛擬世界牌。");
@@ -15983,11 +15979,9 @@ async function castSpell(handIndex) {
       const chosenIdx = await showXLWChoiceModal("【捕喵網】搜尋效果", "請選擇一張喵喵賊單位卡加入手牌：", choices);
       let finalIdx = chosenIdx;
       if (finalIdx === null || finalIdx === undefined) finalIdx = 0;
-      const chosenCard = eligible[finalIdx];
-      deck.splice(deck.indexOf(chosenCard), 1);
-      hand.push(chosenCard);
+      const chosenCard = window.XLWDuelConsistency.moveKnownCard(deck, hand, eligible[finalIdx]);
       shuffle(deck);
-      logBattle(`✨ 捕喵網 效果：搜尋牌庫，將【${chosenCard.name}】加入手牌，並重洗牌庫！`);
+      if (chosenCard) logBattle(`✨ 捕喵網 效果：搜尋牌庫，將【${chosenCard.name}】加入手牌，並重洗牌庫！`);
     } else {
       shuffle(deck);
       logBattle("✨ 捕喵網 效果：牌庫中無任何喵喵賊單位卡，僅重洗牌庫！");
@@ -20239,10 +20233,8 @@ async function performSummonToSlot(zone, idx) {
             const choices = myGrave.map((c, i) => ({ text: c.name, value: i }));
             const pick = await showXLWChoiceModal("選擇回收的山羊", "選擇回收至手牌的山羊單位：", choices);
             if (pick !== null && pick !== undefined) {
-              const target = myGrave[pick];
-              graveyard.splice(graveyard.indexOf(target), 1);
-              hand.push(target);
-              logBattle(`✨【羊商人】效果：將墓地中的山羊【${target.name}】回收至手牌！`);
+              const target = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, myGrave[pick]);
+              if (target) logBattle(`✨【羊商人】效果：將墓地中的山羊【${target.name}】回收至手牌！`);
             }
           } else {
             for (let k = 0; k < 2; k++) {
@@ -20525,10 +20517,8 @@ async function performSummonToSlot(zone, idx) {
             const choices = steamCards.map((c, i) => ({ text: `${c.name} (${c.type === "unit" ? "單位" : "魔法"})`, value: i }));
             const pick = await showXLWChoiceModal("【維修阿莫德】回收零件", "請選擇回收至手牌的蒸汽世界卡牌：", choices);
             if (pick !== null && pick !== undefined) {
-              const target = steamCards[pick];
-              graveyard.splice(graveyard.indexOf(target), 1);
-              hand.push(target);
-              logBattle(`🔧【維修阿莫德】效果：從墓地回收了【${target.name}】！`);
+              const target = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, steamCards[pick]);
+              if (target) logBattle(`🔧【維修阿莫德】效果：從墓地回收了【${target.name}】！`);
             }
           } else {
             const target = steamCards[0];
@@ -36271,9 +36261,7 @@ async function endPlayerTurnAndRunEnemy() {
     const beerCard = playerExtraDeck.find(c => c && (c.id === "R-VRT-0058" || c.name === "一札啤酒" || c.name?.includes("一札啤酒")));
     if (beerCard) {
       const confirmRetrieve = await showXLWConfirm("一札啤酒回收效果", "是否發動【一札啤酒】效果，將額外區的【一札啤酒】加入手牌？");
-      if (confirmRetrieve) {
-        playerExtraDeck.splice(playerExtraDeck.indexOf(beerCard), 1);
-        hand.push(beerCard);
+      if (confirmRetrieve && window.XLWDuelConsistency.moveKnownCard(playerExtraDeck, hand, beerCard)) {
         logBattle("✨ 一札啤酒 效果：將額外區的【一札啤酒】加入手牌！");
         if (isMultiplayer) {
           sendFullGameStateToOpponent();
