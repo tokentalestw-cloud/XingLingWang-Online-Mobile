@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261114-red-trophy-v1">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-mulligan-layout">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-orbital-frame">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -344,6 +344,16 @@
     <div class="board-wrap">
       <section id="boardWrap" class="board">
         <div class="xlw-arena-floor" aria-hidden="true">
+          <svg class="xlw-frame-orbits" viewBox="0 0 1230 846" preserveAspectRatio="none" focusable="false">
+            <g class="xlw-frame-orbit-cool">
+              <path d="M44 670 Q-76 587 -163 683 T-280 682 M37 451 Q-60 425 -109 482 T-228 510"/>
+              <circle cx="44" cy="670" r="5"/><circle cx="-109" cy="482" r="3"/>
+            </g>
+            <g class="xlw-frame-orbit-warm">
+              <path d="M1184 174 Q1310 93 1376 185 T1500 205 M1190 395 Q1280 332 1321 397 T1459 445"/>
+              <circle cx="1184" cy="174" r="5"/><circle cx="1321" cy="397" r="3"/>
+            </g>
+          </svg>
           <svg class="xlw-altar-ornaments" viewBox="0 0 1230 846" aria-hidden="true" focusable="false">
             <g class="xlw-altar-frost">
               <path stroke-width="2.6" d="M26 730Q45 775 92 802T188 815M44 762l32 3 12-16m-9 37 32 3 16-18m-19 31 31-1 16-15"/>

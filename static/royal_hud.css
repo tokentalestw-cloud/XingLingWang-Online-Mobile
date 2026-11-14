@@ -1367,10 +1367,10 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
   pointer-events: none;
   left: calc(199px + (5 * var(--cw) + 4 * var(--gap)) / 2);
   top: 121px;
-  width: 1400px;
+  width: 1460px;
   height: 846px;
   transform: translateX(-50%);
-  background: url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat;
+  background: url("/static/custom_bg/orbital-arena-frame.webp") center / 100% 100% no-repeat;
   filter: drop-shadow(0 19px 17px #02050cbd);
 }
 .xlw-game-started .xlw-arena-floor { display: block; }
@@ -1437,7 +1437,7 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:not(.has-card) {
 /* Recess the printed surfaces into the observatory's shared stone bed. */
 html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
   background:
-    url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat,
+    url("/static/custom_bg/orbital-arena-frame.webp") center / 100% 100% no-repeat,
     radial-gradient(ellipse at 52% 44%, #1d344c, #090e1b 78%) center / 91% 84% no-repeat;
   filter: saturate(.60) brightness(.80) drop-shadow(0 24px 19px #02050ce0);
 }
@@ -1799,9 +1799,9 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:is(.xlw-hand-front-lega
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
   background:
-    url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat,
+    url("/static/custom_bg/orbital-arena-frame.webp") center / 100% 100% no-repeat,
     radial-gradient(ellipse, #25374c, #0a1323 83%) center / 90% 91% no-repeat;
-  filter: saturate(.75) drop-shadow(0 24px 19px #02050ce0);
+  filter: drop-shadow(0 17px 17px #020817bb);
 }
 html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card:is(.enemy, .player) {
   border: 1px solid #b59a71 !important;
@@ -1912,3 +1912,22 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap :is(#playerExile, #playerExtr
 }
 html body.xlw-royal-ui.xlw-mulligan-active :is(#xlwActionFeedback, .hand-title) { display: none !important; }
 html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary { border-bottom-width: 1px !important; }
+
+/* Carry the engraved star trails out past the frame into the surrounding sky. */
+.xlw-frame-orbits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.xlw-frame-orbits path {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: none;
+  opacity: .38;
+}
+.xlw-frame-orbits circle { fill: currentColor; }
+.xlw-frame-orbit-cool { color: #a7dbf3; }
+.xlw-frame-orbit-warm { color: #ccc2f8; }
