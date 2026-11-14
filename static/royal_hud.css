@@ -1766,11 +1766,13 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::be
 /* Reference layout: widen the stone grid toward the side wells and close the center gap. */
 html body.xlw-royal-ui.xlw-game-started #boardWrap {
   --altar-slot-width: calc(var(--cw) + 16px);
-  --altar-grid-width: calc(5 * var(--altar-slot-width) + 4 * var(--gap));
+  --altar-column-gap: calc(var(--gap) + 6px);
+  --altar-grid-width: calc(5 * var(--altar-slot-width) + 4 * var(--altar-column-gap));
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap :is(.row, .battle-line-strip) {
   left: 159px !important;
   width: var(--altar-grid-width) !important;
+  column-gap: var(--altar-column-gap) !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap .enemy-front { top: 324px !important; }
