@@ -61,3 +61,13 @@ assert(topLimited.y >= topHand.bottom + 4);
 near(topLimited.x + 300 * topLimited.scale, initial.x + 300);
 assert.equal(magnify([{left: 0, top: 0, right: 298, bottom: 540}]), initial);
 console.log('PASS: 1.1x full scale, pinned center and bottom, HUD-safe fallback');
+
+const asymmetric = {left: -300, right: 560, top: 0, bottom: 680};
+const mobile = {left: 8, right: 836, top: 34, bottom: 335};
+const command = {left: 690, right: 834, top: 200, bottom: 380};
+const centered = context.xlwFitOpenArena(asymmetric, mobile, [command], 8, 180, 422);
+assert(centered.scale > 0);
+near(centered.x + 180 * centered.scale, 422);
+assert(centered.x + asymmetric.left * centered.scale >= mobile.left);
+assert(centered.x + asymmetric.right * centered.scale <= command.left - 8);
+console.log('PASS: lane three stays centered with asymmetric zones and right-hand controls');

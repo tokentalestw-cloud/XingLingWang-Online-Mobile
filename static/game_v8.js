@@ -42841,7 +42841,10 @@ function xlwFitBoardAroundToolbar(bounds, space, toolbar, gap) {
 }
 
 // Fit the complete battlefield in a clear rectangle between the corner controls.
-function xlwFitOpenArena(bounds, space, obstacles, gap) {
+function xlwFitOpenArena(bounds, space, obstacles, gap, laneCenter, screenCenter) {
+  // Match the center of lane three to the screen, even when faction widgets widen one side.
+  const leftExtent = laneCenter - bounds.left;
+  const rightExtent = bounds.right - laneCenter;
   const lefts = [space.left], rights = [space.right];
   const tops = [space.top], bottoms = [space.bottom];
   for (const rect of obstacles) {
@@ -42853,8 +42856,11 @@ function xlwFitOpenArena(bounds, space, obstacles, gap) {
   let best = null;
   let bestOffset = Infinity;
   for (const left of lefts) for (const right of rights) for (const top of tops) for (const bottom of bottoms) {
-    if (right <= left || bottom <= top) continue;
-    const fit = xlwFitBoardRect(bounds, {left, right, top, bottom});
+    if (left >= screenCenter || right <= screenCenter || bottom <= top) continue;
+    const boardHeight = bounds.bottom - bounds.top;
+    const scale = Math.min((screenCenter - left) / leftExtent, (right - screenCenter) / rightExtent,
+      (bottom - top) / boardHeight);
+    const fit = {scale, x: screenCenter - laneCenter * scale, y: bottom - bounds.bottom * scale};
     if (best && fit.scale < best.scale - 1e-7) continue;
     const l = fit.x + bounds.left * fit.scale, r = fit.x + bounds.right * fit.scale;
     const t = fit.y + bounds.top * fit.scale, b = fit.y + bounds.bottom * fit.scale;
@@ -42981,7 +42987,10 @@ function adjustBoardScale() {
     }));
     const obstacles = [...scores, commands, phasePanel, toolbar, enemyHand].filter(Boolean);
     const anchorBounds = {...bounds, bottom: Math.max(...fieldPieces.map(piece => piece.bottom))};
-    const fit = (openArena && xlwFitOpenArena(bounds, space, obstacles, gap))
+    const laneThree = logicalRect(board.querySelector(".player-back .slot:nth-child(3)"));
+    const fieldCenter = laneThree ? ((laneThree.left + laneThree.right) / 2 - origin.left) / currentScale
+      : (bounds.left + bounds.right) / 2;
+    const fit = (openArena && xlwFitOpenArena(bounds, space, obstacles, gap, fieldCenter, width / 2))
       || xlwEnlargeBoardFit(baseFit, anchorBounds, fieldPieces, obstacles, width, height);
     // Align the visual fans to lane 3, including layouts with asymmetric side zones.
     // Keep each hand at its baseline position while the field expands around its center.

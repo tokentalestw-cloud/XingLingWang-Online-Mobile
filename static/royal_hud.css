@@ -1365,24 +1365,12 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  left: calc(50% - 1.5 * (var(--cw) + var(--gap)) - 32px);
-  top: 119px;
-  width: 1240px;
-  height: 840px;
-  box-sizing: border-box;
+  left: calc(199px + (5 * var(--cw) + 4 * var(--gap)) / 2);
+  top: 124px;
+  width: 1200px;
+  height: 820px;
   transform: translateX(-50%);
-  border: 2px solid #b39965;
-  border-radius: 36% / 9%;
-  background:
-    radial-gradient(circle at 9% 25%, #e3ac8270 0 2px, transparent 3px 12px, #a782544a 13px 14px, transparent 15px),
-    radial-gradient(circle at 91% 75%, #a3e3e58c 0 2px, transparent 3px 12px, #82b3b360 13px 14px, transparent 15px),
-    repeating-linear-gradient(100deg, #d0b68609 0 1px, transparent 1px 44px),
-    radial-gradient(ellipse at 50% 6%, #9f707940, transparent 51%),
-    radial-gradient(ellipse at 50% 94%, #5eb7c648, transparent 54%),
-    linear-gradient(160deg, #263345, #141f30 63%, #213e47);
-  box-shadow: inset 0 0 0 7px #1a2431, inset 0 0 0 9px #8e7851,
-    inset 0 0 45px #090d17, 0 6px 0 #746043, 0 15px 0 #2b303b,
-    0 27px 0 #131b29, 0 40px 45px #03070eaa;
+  --arena-cut: polygon(9% 0, 91% 0, 100% 13%, 100% 86%, 92% 100%, 8% 100%, 0 86%, 0 13%);
 }
 .xlw-game-started .xlw-arena-floor { display: block; }
 .xlw-arena-floor::before,
@@ -1390,21 +1378,27 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
   content: "";
   position: absolute;
   pointer-events: none;
+  clip-path: var(--arena-cut);
 }
 .xlw-arena-floor::before {
-  inset: 23px 30px;
-  border-radius: inherit;
+  inset: 0 0 -45px;
   background:
-    repeating-conic-gradient(from 0deg at center, #f4d18a48 0deg 1deg, transparent 1deg 15deg),
-    transparent;
-  -webkit-mask-image: radial-gradient(ellipse at center, transparent 61%, #000 62% 68%, transparent 69%);
-  mask-image: radial-gradient(ellipse at center, transparent 61%, #000 62% 68%, transparent 69%);
+    linear-gradient(130deg, #0009, transparent 19% 79%, #000a),
+    repeating-linear-gradient(90deg, transparent 0 88px, #050b13 89px 92px, #f0b76b55 93px 96px),
+    linear-gradient(#1c2330 86%, #9e7950 93%, #393b41 94%, #121822 98%, #896342 99%);
 }
 .xlw-arena-floor::after {
-  inset: 42px 57px;
-  border: 2px solid #e5c58445;
-  border-radius: 49% / 25%;
-  box-shadow: 0 1px #060c16, inset 0 1px #060c16;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 6% 70%, #3c9dac7a, transparent 30%),
+    radial-gradient(ellipse at 91% 16%, #94536770, transparent 33%),
+    repeating-linear-gradient(112deg, #e7c6920b 0 1px, transparent 2px 18px),
+    conic-gradient(from 30deg, #2e343f, #8c6b45, #3c3f44, #d4a970, #2e343f);
+  box-shadow: inset 0 0 0 14px #352c28, inset 0 0 0 20px #bc9565,
+    inset 0 0 0 27px #101823, inset 0 0 0 42px #171e2c, inset 0 0 60px 52px #0c1421;
+}
+.xlw-arena-floor {
+  filter: drop-shadow(0 28px 21px #03070dc9);
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-line-strip::before {
   content: "";
