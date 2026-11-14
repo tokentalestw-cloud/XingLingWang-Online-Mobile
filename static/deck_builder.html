@@ -2113,6 +2113,8 @@
     const logoutButton = document.getElementById("deckLogout");
     const accountStatus = document.getElementById("deckAccountStatus");
     function showDeckAccount(account) {
+      const canEdit = Boolean(account.local || account.name);
+      document.getElementById("deckAccountPanel").style.display = account.local ? "none" : "";
       activeDeckAccount = account.name || "";
       loginForm.hidden = Boolean(account.name);
       loginForm.style.display = account.name ? "none" : "flex";
@@ -2121,8 +2123,8 @@
       accountStatus.textContent = account.name ? `${account.name} 的雲端牌組` :
         account.enabled ? "登入後即可建立個人牌組。" : "雲端牌組尚未接上資料庫。";
       for (const section of document.querySelectorAll("body > section:not(#deckAccountPanel), body > main")) {
-        section.inert = !account.name;
-        section.style.visibility = account.name ? "" : "hidden";
+        section.inert = !canEdit;
+        section.style.visibility = canEdit ? "" : "hidden";
       }
       loginForm.querySelector("button").disabled = !account.enabled;
     }
@@ -2192,7 +2194,7 @@
       try {
         const result = await fetch("/api/deck-account").then(readDeckResponse);
         showDeckAccount(result);
-        if (result.name) await loadDeckBuilderData();
+        if (result.local || result.name) await loadDeckBuilderData();
       } catch (error) {
         accountStatus.textContent = error.message;
       }

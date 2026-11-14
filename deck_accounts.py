@@ -1,5 +1,9 @@
 """Private deck storage and sessions, backed by PostgreSQL in production."""
 from contextlib import contextmanager
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from threading import RLock
+from urllib.parse import urlsplit
 import hashlib
 import json
 import os
@@ -13,6 +17,24 @@ router = APIRouter(prefix="/api/deck-account")
 USERS = ("SF", "HY", "Alex", "Jason")
 COOKIE = "xlw_deck_session"
 SESSION_SECONDS = 30 * 86400
+
+
+LOCAL_OWNER = "@local"
+LOCAL_DECKS = Path(__file__).resolve().parent / "data" / "decks.json"
+local_lock = RLock()
+
+
+def local_editor(request):
+    loopback = {"localhost", "127.0.0.1", "::1"}
+    if os.environ.get("RENDER") or not request.client or request.client.host not in loopback:
+        return False
+    if not request.headers.get("host") or request.url.hostname not in loopback:
+        return False
+    if request.method != "GET":
+        origin = request.headers.get("origin")
+        if origin and urlsplit(origin).netloc != request.headers["host"]:
+            return False
+    return True
 
 
 def database_url(*, direct=False):
@@ -71,6 +93,8 @@ def account(request):
 
 
 def require_account(request):
+    if local_editor(request):
+        return LOCAL_OWNER
     name = account(request)
     if not name:
         raise HTTPException(401, "請先登入個人牌組帳戶。")
@@ -86,6 +110,8 @@ class Login(BaseModel):
 
 @router.get("")
 def status(request: Request):
+    if local_editor(request):
+        return {"enabled": False, "name": None, "local": True}
     return {"enabled": bool(database_url()), "name": account(request)}
 
 
@@ -186,6 +212,20 @@ def logout(request: Request, response: Response):
 
 @contextmanager
 def deck_store(name, *, write=False):
+    if name == LOCAL_OWNER:
+        with local_lock:
+            decks = json.loads(LOCAL_DECKS.read_text(encoding="utf-8")) if LOCAL_DECKS.exists() else {}
+            yield decks
+            if write:
+                with NamedTemporaryFile(mode="w", encoding="utf-8", dir=LOCAL_DECKS.parent,
+                                        delete=False) as file:
+                    temporary = Path(file.name)
+                try:
+                    temporary.write_text(json.dumps(decks, ensure_ascii=False, indent=2), encoding="utf-8")
+                    temporary.replace(LOCAL_DECKS)
+                finally:
+                    temporary.unlink(missing_ok=True)
+        return
     with connection() as db:
         init(db)
         sql = "SELECT decks FROM xlw_deck_users WHERE name=%s"

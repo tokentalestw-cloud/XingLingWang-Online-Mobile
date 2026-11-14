@@ -615,6 +615,9 @@ def get_cards():
 
 @app.get("/api/decks")
 def get_decks(request: Request, personal: bool = False):
+    if deck_accounts.local_editor(request):
+        with deck_accounts.deck_store(deck_accounts.LOCAL_OWNER) as decks:
+            return decks
     decks_file = BASE / "data" / "decks.json"
     defaults = json.loads(decks_file.read_text(encoding="utf-8")) if decks_file.exists() else {}
     owner = deck_accounts.require_account(request) if personal else deck_accounts.account(request)
