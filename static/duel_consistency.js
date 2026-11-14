@@ -21,24 +21,27 @@
   let serial=0;
   function identify(list){const seen=new Set();for(let i=0;i<list.length;i++){let c=list[i];if(!c||typeof c!=='object')continue;if(!c._xlwInstanceId||seen.has(c._xlwInstanceId)){c={...c,_xlwInstanceId:global.crypto?.randomUUID?.()||('card-'+Date.now().toString(36)+'-'+(++serial)+'-'+Math.random().toString(36).slice(2))};list[i]=c;}seen.add(c._xlwInstanceId);}return list;}
   function removeCard(list,card){if(!Array.isArray(list)||!card||card.id==='VRT-0011-EFFECT')return null;let i=list.indexOf(card);if(i<0&&card._xlwInstanceId)i=list.findIndex(c=>c?._xlwInstanceId===card._xlwInstanceId);if(i<0&&!card._xlwInstanceId)i=list.findIndex(c=>c&&(c.id===card.id||c.name===card.name));if(i<0)i=list.findIndex(c=>c===null);return i<0?null:list.splice(i,1)[0];}
-  function moveKnownCard(source, destination, selected) {
-    if (!selected || source === destination || !Array.isArray(source) || !Array.isArray(destination)) return null;
+  function takeKnownCard(source, selected) {
+    if (!selected || !Array.isArray(source)) return null;
     let index = source.indexOf(selected);
     if (index < 0) {
       index = source.findIndex(card => card && (selected._xlwInstanceId
         ? card._xlwInstanceId === selected._xlwInstanceId
         : card.id === selected.id && card.name === selected.name));
     }
-    if (index < 0) return null;
-    const card = source[index];
+    return index < 0 ? null : source.splice(index, 1)[0];
+  }
+  function moveKnownCard(source, destination, selected) {
+    if (source === destination || !Array.isArray(destination)) return null;
+    const card = takeKnownCard(source, selected);
+    if (!card) return null;
     const alreadyMoved = destination.includes(card) || (card._xlwInstanceId &&
       destination.some(item => item?._xlwInstanceId === card._xlwInstanceId));
-    source.splice(index, 1);
     if (alreadyMoved) return null;
     destination.push(card);
     return card;
   }
   let ledger=new Set();
   function mergeOwned(current,base,incoming,channel){if(ledger.size>4096)ledger=new Set();return mergeCollection(current,base,incoming,ledger,channel);}
-  global.XLWDuelConsistency={clone,key,identify,mergeCollection,mergeOwned,removeCard,moveKnownCard,reset(){ledger.clear();}};
+  global.XLWDuelConsistency={clone,key,identify,mergeCollection,mergeOwned,removeCard,takeKnownCard,moveKnownCard,reset(){ledger.clear();}};
 })(typeof window==='undefined'?globalThis:window);

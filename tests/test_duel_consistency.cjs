@@ -107,6 +107,36 @@ module.exports=(async()=>{
      tests++;
    }
  }
+ // Undead revival commits the grave removal only after a legal destination is chosen.
+ for (const scenario of ['full', 'cancel', 'occupied', 'removed', 'replaced', 'enemy']) {
+   const g = context();
+   const undead = {...card('undead'), art_subtype:'亡靈'};
+   const other = card('other');
+   const isPlayer = scenario !== 'enemy';
+   const row = isPlayer ? 'player_front' : 'enemy_front';
+   const occupied = {card: other};
+   g.graveyard = [undead, other];
+   if (!isPlayer) g.XLW_ENEMY.grave = [undead, other];
+   g.xlwGetEmptyPlayerSlots = () => scenario === 'full' ? [] : [{zone: row, idx: 0}];
+   g.xlwGetEmptyEnemySlots = () => [{zone: row, idx: 0}];
+   g.xlwTriggerUndeadHospital = () => {};
+   g.performSummonToSlot = g.triggerAiSummonEffects = async () => {};
+   g.showXLWChoiceModal = async title => {
+     if (title === '特殊召喚亡靈單位') return 0;
+     if (scenario === 'occupied') g.field[row][0] = occupied;
+     if (scenario === 'removed') g.graveyard = [other];
+     if (scenario === 'replaced') g.graveyard = [structuredClone(undead), other];
+     return scenario === 'cancel' ? null : 0;
+   };
+   vm.runInContext(section('window.xlwSpecialSummonUnit =', 'window.xlwIsImmediateEffectBlocked ='), g);
+   vm.runInContext(section('window.xlwSummonUndeadFromGraveyard =', '// 瘟疫之王 (SKT-0016) 抽牌階段後檢測'), g);
+   const success = await g.xlwSummonUndeadFromGraveyard(isPlayer);
+   assert.equal(success, ['replaced', 'enemy'].includes(scenario));
+   assert.equal(g.field[row][0]?.card._xlwInstanceId, success ? 'undead' : scenario === 'occupied' ? 'other' : undefined);
+   const remaining = isPlayer ? g.graveyard : g.XLW_ENEMY.grave;
+   assert.deepEqual(remaining.map(c => c._xlwInstanceId), success || scenario === 'removed' ? ['other'] : ['undead', 'other']);
+   tests++;
+ }
  // An authoritative-looking old draw flag cannot pay a second two-card draw cost.
  {const g=context();g.deck=[card('1'),card('2'),card('3'),card('4')];g.xlwCheckBananaMarquisMovement=async()=>{};g.xlwResolveTurnStartEffects=async()=>{};g.sendFullGameStateToOpponent=()=>{};vm.runInContext(section('async function performPlayerTurnStartDraw()','window.XLW_playerNeedsToDraw = false;'),g);await g.performPlayerTurnStartDraw();await g.performPlayerTurnStartDraw();assert.equal(g.deck.length,2);assert.equal(g.hand.length,2);g.turn++;await g.performPlayerTurnStartDraw();assert.equal(g.hand.length,4);tests++;}
  console.log(`${tests} bidirectional spell, card identity, stale collection, Bomber, Banana and Samurai regressions: PASS`);

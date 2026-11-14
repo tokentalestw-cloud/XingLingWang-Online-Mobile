@@ -13823,10 +13823,8 @@ async function castSpell(handIndex) {
         const cardChoices = undeadGrave.map((c, i) => ({ text: c.name, value: i }));
         const chosenIdx = await showXLWChoiceModal("選擇回手牌的卡片", "選擇墓地中的亡靈單位回手牌：", cardChoices);
         if (chosenIdx !== null && chosenIdx !== undefined) {
-          const chosenCard = undeadGrave[chosenIdx];
-          graveyard.splice(graveyard.indexOf(chosenCard), 1);
-          hand.push(chosenCard);
-          logBattle(`✨ 急診室 效果：將墓地中的【${chosenCard.name}】送回手牌。`);
+          const chosenCard = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, undeadGrave[chosenIdx]);
+          if (chosenCard) logBattle(`✨ 急診室 效果：將墓地中的【${chosenCard.name}】送回手牌。`);
         }
       } else if (option === 1) {
         const success = await window.xlwExecuteSoulReturn(7, true);
@@ -32744,9 +32742,8 @@ async function aiPlayMagicCardsSummonPhase() {
             if (!best) return c;
             return (c.score || 0) > (best.score || 0) ? c : best;
           }, null);
-          grave.splice(grave.indexOf(chosenCard), 1);
-          window.XLW_ENEMY.hand.push(chosenCard);
-          logBattle(`✨ 對手 AI 從手牌發動了【急診室】！將其墓地中的【${chosenCard.name}】送回手牌。`);
+          const moved = window.XLWDuelConsistency.moveKnownCard(window.XLW_ENEMY.grave, window.XLW_ENEMY.hand, chosenCard);
+          if (moved) logBattle(`✨ 對手 AI 從手牌發動了【急診室】！將其墓地中的【${moved.name}】送回手牌。`);
         }
         render();
         await sleep(800);
@@ -50764,7 +50761,11 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
     slot = candidateSlots[Math.floor(Math.random() * candidateSlots.length)];
   }
 
-  if (slot) {
+  if (slot && !field[slot.zone][slot.idx]) {
+    if (options.sourcePile) {
+      card = window.XLWDuelConsistency.takeKnownCard(options.sourcePile(), card);
+      if (!card) return false;
+    }
     field[slot.zone][slot.idx] = {
       card: structuredClone(card),
       tapped: false,
@@ -50879,18 +50880,10 @@ window.xlwSummonUndeadFromGraveyard = async function(isPlayer) {
     }, null);
   }
 
-  if (chosenCard) {
-    grave.splice(grave.indexOf(chosenCard), 1);
-    if (isPlayer) {
-      logBattle(`✨ 效果：從墓地特召【${chosenCard.name}】！`);
-    } else {
-      enemyGraveyard = window.XLW_ENEMY.grave;
-      logBattle(`✨ 對手效果：從墓地特召【${chosenCard.name}】！`);
-    }
-    const success = await window.xlwSpecialSummonUnit(chosenCard, isPlayer);
-    return success;
-  }
-  return false;
+  if (!chosenCard) return false;
+  return window.xlwSpecialSummonUnit(chosenCard, isPlayer, {
+    sourcePile: () => isPlayer ? graveyard : window.XLW_ENEMY.grave
+  });
 };
 
 // 瘟疫之王 (SKT-0016) 抽牌階段後檢測
