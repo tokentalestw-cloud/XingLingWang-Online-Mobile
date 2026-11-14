@@ -52037,7 +52037,7 @@ window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
   });
 
   if (isPlayer) {
-    returnedToHand.forEach(c => {
+    for (const c of returnedToHand) {
       hand.push(c);
       if (c.id === "R-VRT-0050" || c.name?.includes("幽靈骨灰妹妹")) {
         playerBonusScore += 2;
@@ -52075,39 +52075,7 @@ window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
           }
         }
       }
-
-      // 🥣👻 R-VRT-0068 不敢喝孟婆湯的亡靈: 此卡因還魂回手牌時，可使場上1個攻擊力及星星皆為1的單位變為此卡
-      if (c.id === "R-VRT-0068" || c.name?.includes("不敢喝孟婆湯的亡靈") || c.name?.includes("孟婆湯")) {
-        const validUnits = [];
-        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-          (field[z] || []).forEach((u, uIdx) => {
-            if (u && u.card) {
-              const atk = typeof getUnitAtk === "function" ? getUnitAtk(u, z, uIdx) : (parseInt(u.card.attack) || 0);
-              const stars = typeof getUnitStars === "function" ? getUnitStars(u, z, uIdx) : (parseInt(u.card.score) || 0);
-              if (atk === 1 && stars === 1) {
-                validUnits.push({ zone: z, idx: uIdx, unit: u, name: u.card.name });
-              }
-            }
-          });
-        }
-        if (validUnits.length > 0) {
-          const doTransform = await showXLWConfirm("【不敢喝孟婆湯的亡靈】孟婆湯執念", "此卡因還魂回到手牌！是否使場上 1 個攻擊力及星星皆為 1 的單位變身為【不敢喝孟婆湯的亡靈】？");
-          if (doTransform) {
-            const choices = validUnits.map((item, idx) => ({
-              text: `${item.name} (${item.zone.startsWith("player") ? "我方" : "敵方"}${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
-              value: idx
-            }));
-            const pick = await showXLWChoiceModal("選擇變身目標", "請選擇變身的 1/1 單位：", choices);
-            if (pick !== null && pick !== undefined) {
-              const target = validUnits[pick];
-              target.unit.card = structuredClone(c);
-              logBattle(`🥣👻【不敢喝孟婆湯的亡靈】執念附身：使【${target.name}】變成了【不敢喝孟婆湯的亡靈】！`);
-              render();
-            }
-          }
-        }
-      }
-    });
+    }
     renderScore();
   } else {
     returnedToHand.forEach(c => {
