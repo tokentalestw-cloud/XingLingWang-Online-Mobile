@@ -1933,3 +1933,18 @@ html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary { borde
 .xlw-frame-orbits circle { fill: currentColor; }
 .xlw-frame-orbit-cool { color: #a7dbf3; }
 .xlw-frame-orbit-warm { color: #ccc2f8; }
+
+/* The rock amphitheater is a scene layer below the live duel controls. */
+html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere {
+  background: #091321 url("/static/custom_bg/observatory-rock-ring.webp") center / 100% 100% no-repeat !important;
+}
+html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere :is(.xlw-stellar-background, .arena-celestial-map, .starlight-glow-ambient) {
+  display: none;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
+  background: none;
+  filter: none;
+}
+.xlw-game-started #boardWrap .xlw-arena-floor :is(.xlw-frame-orbits, .xlw-altar-ornaments) {
+  display: none;
+}
