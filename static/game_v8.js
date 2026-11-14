@@ -3423,11 +3423,13 @@ window.xlwCheckGraveyardTax = async function(isPlayerAction) {
       logBattle("🚫 我方放棄丟棄手牌，墓地效果無效化！");
       return false;
     }
-    const choices = handList.map((c, i) => ({ text: c.name, value: i }));
+    const knownCards = handList.filter(xlwIsPileCard);
+    if (!knownCards.length) return false;
+    const choices = knownCards.map((c, i) => ({ text: c.name, value: i }));
     const picked = await showXLWChoiceModal("守墓神 代價", "請選擇要丟棄的 1 張手牌：", choices);
-    const discardIdx = (picked !== null && picked !== undefined) ? picked : 0;
-    if (!xlwIsPileCard(handList[discardIdx])) return false;
-    const discarded = handList.splice(discardIdx, 1)[0];
+    if (picked == null) return false;
+    const discarded = window.XLWDuelConsistency.takeKnownCard(handList, knownCards[picked]);
+    if (!discarded) return false;
     graveyard.push(discarded);
     logBattle(`💀 因【守墓神】效果，我方丟棄了手牌【${discarded.name}】！`);
     render();
@@ -3472,11 +3474,10 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
 
   // 1. 南瓜骷 (R-SKT-0031): 你墓地的此卡被除外時，使此卡被召喚。
   if (card.id === "R-SKT-0031" || card.name?.includes("南瓜骷")) {
-    logBattle(`✨【南瓜骷】效果發動：從除外區特殊召喚上場！`);
     const exileList = isPlayer ? playerExileZone : enemyExileZone;
-    const eIdx = exileList.indexOf(card);
-    if (eIdx >= 0) exileList.splice(eIdx, 1);
-    await window.xlwSpecialSummonUnit(card, isPlayer);
+    if (await window.xlwSpecialSummonUnit(card, isPlayer, {sourcePile: () => exileList})) {
+      logBattle("✨【南瓜骷】效果發動：從除外區特殊召喚上場！");
+    }
   }
 
   // 2. 惡靈幫女騎士 小月 (R-SKT-0034 / SSR-SKT-0034): 同名卡一回合限一次，你墓地的此卡被除外時可改為使其被召喚，並使你獎勵+1。
@@ -48247,17 +48248,25 @@ function showGraveyardDetailModal(title, graveList) {
             setStatus("場上無空格，無法召喚小骷！");
             return;
           }
-          const taxOk = await window.xlwCheckGraveyardTax(true);
-          if (!taxOk) return;
           const confirm = await showXLWConfirm("小骷 效果發動", "是否改為從墓地打出【小骷】作為本回合的通常召喚？");
           if (confirm) {
-            normalSummonUsed = true;
-            const idx = graveyard.indexOf(card);
-            if (idx >= 0) graveyard.splice(idx, 1);
             overlay.remove();
-            await window.xlwSpecialSummonUnit(card, true);
-            logBattle("💀【小骷】效果：在召喚階段改為從墓地進行通常召喚打出至場上！");
-            render();
+            const success = await window.xlwSpecialSummonUnit(card, true, {
+              sourcePile: () => graveyard,
+              beforePlacement: async () => {
+                if (!isMyTurn || phase !== "召喚階段" || normalSummonUsed) return false;
+                return window.xlwCheckGraveyardTax(true);
+              },
+              payCost: () => {
+                if (!isMyTurn || phase !== "召喚階段" || normalSummonUsed) return false;
+                normalSummonUsed = true;
+                return true;
+              }
+            });
+            if (success) {
+              logBattle("💀【小骷】效果：在召喚階段改為從墓地進行通常召喚打出至場上！");
+              render();
+            }
           }
           return;
         }
@@ -52455,6 +52464,11 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
     }
   } else {
     slot = candidateSlots[Math.floor(Math.random() * candidateSlots.length)];
+  }
+
+  if (slot && options.beforePlacement) {
+    if (field[slot.zone][slot.idx] || !options.sourcePile?.().includes(card) ||
+        !await options.beforePlacement()) return false;
   }
 
   if (slot && !field[slot.zone][slot.idx]) {
