@@ -82,5 +82,23 @@ module.exports = (async () => {
   await spin.xlwSpinWheel(true);
   assert.equal(spin.XLW_playerRouletteWheel.length, 0);
   assert.equal(graveyard.at(-1), innate);
-  console.log("3 circus regressions: summon, once-per-turn draw and direct grave after reveal");
+  spin.renderScore = () => {};
+  spin.playerBonusScore = 0;
+  for (const [id, name] of [["R-CCS-0041", "幸運觀眾"], ["CCS-0003", "喵草"]]) {
+    for (const success of [true, false]) {
+      const revealed = {id, name, attack: 1};
+      spin.XLW_playerRouletteWheel = [revealed];
+      spin.xlwSpecialSummonUnit = async card => {
+        assert.equal(card, revealed);
+        return success;
+      };
+      const graveCount = graveyard.length;
+      const reward = spin.playerBonusScore;
+      await spin.xlwSpinWheel(true);
+      assert.equal(graveyard.length, graveCount + Number(!success));
+      if (!success) assert.equal(graveyard.at(-1), revealed);
+      assert.equal(spin.playerBonusScore, reward + Number(id === "R-CCS-0041"));
+    }
+  }
+  console.log("Circus regressions: transfers, once-per-turn draw and exclusive summon or grave after reveal");
 })();

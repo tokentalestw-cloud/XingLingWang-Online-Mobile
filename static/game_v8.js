@@ -5110,12 +5110,9 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
           if (eligibleInHand.length > 0) {
             const hChoices = eligibleInHand.map((c, idx) => ({ text: `${c.name} (ATK: ${c.attack})`, value: idx }));
             const hPick = await showXLWChoiceModal("【馬戲團飛刀猴子】投擲登場", `開盤攻擊力為 ${revealedAtk}，可特殊召喚手牌符合條件的馬戲團單位：`, hChoices);
-            if (hPick !== null && hPick !== undefined) {
+            const summonedCard = hPick == null ? null : eligibleInHand[hPick];
+            if (summonedCard && await window.xlwSpecialSummonUnit(summonedCard, true, {sourcePile: () => hand})) {
               window.XLW_knifeMonkeyUsedThisTurn = true;
-              const summonedCard = eligibleInHand[hPick];
-              hand.splice(hand.indexOf(summonedCard), 1);
-              await window.xlwSpecialSummonUnit(summonedCard, true);
-              logBattle(`🐒【馬戲團飛刀猴子】效果：飛刀掩護！特殊召喚【${summonedCard.name}】登場！`);
             }
           }
         }
@@ -5131,12 +5128,9 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
           if (eligibleInGrave.length > 0) {
             const gChoices = eligibleInGrave.map((c, idx) => ({ text: `${c.name} (ATK: ${c.attack})`, value: idx }));
             const gPick = await showXLWChoiceModal("【鐵桶猴子】雜耍復活", `開盤攻擊力為 ${revealedAtk}，可從墓地特殊召喚符合條件的馬戲團單位：`, gChoices);
-            if (gPick !== null && gPick !== undefined) {
+            const revivedCard = gPick == null ? null : eligibleInGrave[gPick];
+            if (revivedCard && await window.xlwSpecialSummonUnit(revivedCard, true, {sourcePile: () => graveyard})) {
               window.XLW_bucketMonkeyUsedThisTurn = true;
-              const revivedCard = eligibleInGrave[gPick];
-              graveyard.splice(graveyard.indexOf(revivedCard), 1);
-              await window.xlwSpecialSummonUnit(revivedCard, true);
-              logBattle(`🪣【鐵桶猴子】效果：從鐵桶中變出了【${revivedCard.name}】特殊召喚！`);
             }
           }
         }
@@ -5171,19 +5165,18 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
       }
     }
 
+    let stayOutOfGrave = false;
     if (revealed.id === "R-CCS-0041" || revealed.name?.includes("幸運觀眾")) {
       logBattle(`🎟️【幸運觀眾】開盤驚喜登場！獎勵 +1★！`);
       if (isPlayer) playerBonusScore += 1; else enemyBonusScore += 1;
       renderScore();
-      await window.xlwSpecialSummonUnit(revealed, isPlayer);
+      stayOutOfGrave = await window.xlwSpecialSummonUnit(revealed, isPlayer);
     }
-    let stayOutOfGrave = false;
 
     // 喵草 (CCS-0003 / R-CCS-0003): 開盤特殊召喚
     if (revealed.id === "CCS-0003" || revealed.id === "R-CCS-0003" || revealed.name?.includes("喵草")) {
-      await window.xlwSpecialSummonUnit(revealed, isPlayer);
-      logBattle(`🌿【喵草】開盤效果：從轉盤飛躍特殊召喚至戰場！`);
-      stayOutOfGrave = true;
+      stayOutOfGrave = await window.xlwSpecialSummonUnit(revealed, isPlayer);
+      if (stayOutOfGrave) logBattle("【喵草】開盤效果：從轉盤特殊召喚至戰場。");
     }
     // 表演人偶 (CCS-0006 / R-CCS-0006): 開盤召喚 2 個小旅人
     else if (revealed.id === "CCS-0006" || revealed.id === "R-CCS-0006" || revealed.name?.includes("表演人偶")) {
@@ -5292,15 +5285,14 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
       (field[pz] || []).some((u, i) => u && u.card && (u.card.id === "R-CCS-0028" || u.card.id === "SSR-CCS-0028" || u.card.name?.includes("打鼓猴子")) && !window.isUnitSilenced(u, pz, i))
     );
     if (hasDrumMonkey) {
-      window.XLW_drumMonkeyUsedThisTurn = true;
       const choices = cardsSentToGraveThisSpinSession.map((c, i) => ({ text: c.name, value: i }));
       const pick = await showXLWChoiceModal("【打鼓猴子】鼓聲返場", "輪轉演出結束！是否發動打鼓猴子，使 1 張開盤卡牌重新上靶？", choices);
       if (pick !== null && pick !== undefined) {
         const chosenCard = cardsSentToGraveThisSpinSession[pick];
-        const gIdx = graveyard.indexOf(chosenCard);
-        if (gIdx >= 0) graveyard.splice(gIdx, 1);
-        await window.xlwPutCardOnWheel(chosenCard, true);
-        logBattle(`🥁【打鼓猴子】咚咚鏘！將開盤的【${chosenCard.name}】重新放回轉盤！`);
+        if (await xlwMovePileCardToWheel(graveyard, chosenCard, true)) {
+          window.XLW_drumMonkeyUsedThisTurn = true;
+          logBattle(`【打鼓猴子】將開盤的【${chosenCard.name}】重新放回轉盤。`);
+        }
       }
     }
   }
