@@ -1972,7 +1972,29 @@ async function performPlayerTurnStartDraw() {
     }
     logBattle(`✨【鬆餅博士】效果發動：抽 3 張選 2 張加入手牌，將【${returnedCard.name}】放回牌庫頂！`);
   } else if (!usedGodEye) {
-    for (let i = 0; i < 2; i++) {
+    // 🥋 SR-SPT-0068 旗袍旅人 寧: 你抽牌前，可召喚至多X個小旅人，若成功少抽等量張牌
+    const ningUnit = ["player_front", "player_back"].flatMap(z => field[z] || []).find(u => u && (u.card?.id === "SR-SPT-0068" || u.card?.name?.includes("旗袍旅人") || u.card?.name?.includes("寧")) && !window.isUnitSilenced?.(u));
+    let ningSubstituted = 0;
+    if (ningUnit && deck.length > 0) {
+      const emptySlots = window.xlwGetEmptyPlayerSlots ? window.xlwGetEmptyPlayerSlots() : [];
+      const maxCanSummon = Math.min(2, deck.length, emptySlots.length);
+      if (maxCanSummon > 0) {
+        const doNing = await showXLWConfirm("【旗袍旅人 寧】旅人召喚", `抽牌前：場上有【旗袍旅人 寧】！是否召喚至多 ${maxCanSummon} 個小旅人，少抽等量張牌？`);
+        if (doNing) {
+          for (let k = 0; k < maxCanSummon; k++) {
+            const success = await window.xlwSpecialSummonUnit(LITTLE_TRAVELER, true);
+            if (success) {
+              ningSubstituted++;
+              logBattle("🥋✨【旗袍旅人 寧】呼喚旅人：召喚 1 個小旅人進場，少抽 1 張牌！");
+            } else {
+              break;
+            }
+          }
+        }
+      }
+    }
+    const drawCount = Math.max(0, 2 - ningSubstituted);
+    for (let i = 0; i < drawCount; i++) {
       if (deck.length > 0) {
         drawn.push(deck.pop());
       }
@@ -7263,6 +7285,30 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
+  // 🖤 黑妖精女王親衛隊 (C-EVL-0066): X=你場上單位因效果而減少的★總數
+  if (c.id === "C-EVL-0066" || c.name?.includes("黑妖精女王親衛隊")) {
+    if (zone && typeof field !== "undefined") {
+      const isP = zone.startsWith("player_");
+      const checkZones = isP ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+      let totalReducedStars = 0;
+      for (const r of checkZones) {
+        (field[r] || []).forEach((u, ui) => {
+          if (u) {
+            const orig = parseInt(u.card.score) || 0;
+            const current = typeof getUnitStars === "function" ? getUnitStars(u, r, ui) : orig;
+            if (orig > current) {
+              totalReducedStars += (orig - current);
+            }
+            if (u.reducedStars) {
+              totalReducedStars += u.reducedStars;
+            }
+          }
+        });
+      }
+      baseAtk = totalReducedStars;
+    }
+  }
+
   // 📣 紅星盃賽場觀眾 (SSSR-NMS-0092): 使你持有的「紅星獎盃」所在戰線的你的單位+1攻擊力
   if (zone && lane !== undefined && lane >= 0 && lane < 5 && typeof field !== "undefined") {
     const isPlayer = zone.startsWith("player_");
@@ -8539,7 +8585,8 @@ window.xlwTriggerElectrify = async function(isPlayer = true, sourceUnit = null) 
             }
           } else if (pick === "push") {
             logBattle("⚙️💨【蒸汽天才小妹妮洛可】通電高壓推擠！破圖單位將被除外！");
-            xlwPushUnit("enemy_front", i, "back", { offBoardAction: "exile", sourceName: "蒸汽天才小妹妮洛可" });
+            const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
+            await xlwPushUnit(oppFrontZone, i, "back", { offBoardAction: "exile", sourceName: "蒸汽天才小妹妮洛可" });
             if (typeof render === "function") render();
           }
         }
@@ -9086,6 +9133,25 @@ async function xlwResolveTrophyAttack(attacker, zone, lane) {
 // 第七彈 PG2 與點數兌換卡 專屬機制與精確卡號支援模組
 // ============================================================================
 
+// 0. SSR-FMS-0041 西門紅城派師姐: 展藝時正面敵方單位推擠破圖入墓
+window.xlwCheckSisterRevealPush = async function(isPlayerRevealer = true) {
+  const side = isPlayerRevealer ? "player_" : "enemy_";
+  const oppSide = isPlayerRevealer ? "enemy_" : "player_";
+  for (const z of [side + "front", side + "back"]) {
+    for (let col = 0; col < 5; col++) {
+      const sister = field[z]?.[col];
+      if (sister && (sister.card?.id === "SSR-FMS-0041" || sister.card?.name?.includes("西門紅城派師姐")) && !window.isUnitSilenced?.(sister, z, col)) {
+        const oppUnit = field[oppSide + "front"]?.[col];
+        if (oppUnit) {
+          logBattle(`🥋💥【西門紅城派師姐】展藝推擠：正前方【${oppUnit.card.name}】被強力向後推擠！`);
+          await xlwPushUnit(oppSide + "front", col, "back", { offBoardAction: "graveyard", sourceName: "西門紅城派師姐" });
+          if (typeof render === "function") render();
+        }
+      }
+    }
+  }
+};
+
 // 1. ASSR-EVL-0065 武鬥家妖精 露娜芮: 敵方防守用魔法時移動並轉正
 window.xlwCheckLunaDefenseReaction = async function(isPlayerEnemy = false) {
   const side = isPlayerEnemy ? "enemy_" : "player_";
@@ -9267,13 +9333,13 @@ window.xlwCheckDragonTigerDefense = async function(isPlayerTurn, isFriendlyDefen
 };
 
 // 6. C-RBT-0074 電風扇: 機械合體時正前方後推破圖回手牌
-window.xlwCheckElectricFanPush = function(unit, zone, idx) {
+window.xlwCheckElectricFanPush = async function(unit, zone, idx) {
   if (!unit || !unit.card) return;
   const c = unit.card;
   if (c.id === "C-RBT-0074" || c.name?.includes("電風扇")) {
     const oppSide = zone.startsWith("player_") ? "enemy_front" : "player_front";
     logBattle("🌬️【電風扇】風暴旋轉：機械合體引發強風推擠！");
-    xlwPushUnit(oppSide, idx, "back", { offBoardAction: "hand", sourceName: "電風扇" });
+    await xlwPushUnit(oppSide, idx, "back", { offBoardAction: "hand", sourceName: "電風扇" });
     if (typeof render === "function") render();
   }
 };
@@ -9609,8 +9675,9 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
 
   // E. SSR-VLG-0064 黑寡婦媚絲菈
   for (const z of [side + "front"]) {
-    (field[z] || []).forEach(async (u, col) => {
-      if (u && (u.card.id === "SSR-VLG-0064" || u.card.name?.includes("黑寡婦媚絲菈"))) {
+    for (let col = 0; col < 5; col++) {
+      const u = field[z]?.[col];
+      if (u && (u.card.id === "SSR-VLG-0064" || u.card.name?.includes("黑寡婦媚絲菈") || u.card.name?.includes("媚絲菈"))) {
         const targetFront = field[oppSide + "front"]?.[col];
         const targetBack = field[oppSide + "back"]?.[col];
         const oppUnit = targetFront || targetBack;
@@ -9619,14 +9686,18 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
           if (isPlayer) {
             const doKidnap = await showXLWConfirm("【黑寡婦媚絲菈】蛛絲纏繞", `前方敵方【${oppUnit.card.name}】處於受困狀態！是否綁架該單位 (綁架 3 回合)？`);
             if (doKidnap) {
-              kidnapCard(oppZone, col, z, col);
+              await kidnapCard(oppZone, col, z, col);
               logBattle(`🕸️【黑寡婦媚絲菈】吐絲捕食：將敵方【${oppUnit.card.name}】強力綁架！`);
               if (typeof render === "function") render();
             }
+          } else {
+            await kidnapCard(oppZone, col, z, col);
+            logBattle(`🕸️ 對手【黑寡婦媚絲菈】吐絲捕食：將我方【${oppUnit.card.name}】強力綁架！`);
+            if (typeof render === "function") render();
           }
         }
       }
-    });
+    }
   }
 
   // F. C-VLG-0065 靈異驅魔師
@@ -9700,7 +9771,8 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
 
   // I. C-ORC-0073 獸人獵犬
   for (const z of [side + "front"]) {
-    (field[z] || []).forEach(async (u, col) => {
+    for (let col = 0; col < 5; col++) {
+      const u = field[z]?.[col];
       if (u && (u.card.id === "C-ORC-0073" || u.card.name?.includes("獸人獵犬"))) {
         const frontOpp = field[oppSide + "front"]?.[col];
         if (frontOpp && !frontOpp.isConfined) {
@@ -9719,7 +9791,7 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
           }
         }
       }
-    });
+    }
   }
 
   // J. SSR-ELE-0032 雷神索爾娜
@@ -36683,7 +36755,7 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
           const choices = orcs.map((o, i) => ({ text: `${o.name} (${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: i }));
           const pick = await showXLWChoiceModal("選擇登車獸人", "請選擇載入戰車的獸人：", choices);
           if (pick !== null && pick !== undefined) {
-            kidnapCard(orcs[pick].zone, orcs[pick].idx, zone, idx);
+            await kidnapCard(orcs[pick].zone, orcs[pick].idx, zone, idx);
             logBattle(`🦏【犀牛戰車】全速裝載：將【${orcs[pick].name}】載入戰車！`);
             render();
             return true;
@@ -36839,10 +36911,18 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
         obj.beastUsedThisTurn = true;
         draw(2);
         if ((hand || []).length > 0) {
-          const toReturn = hand.splice(0, Math.min(2, hand.length));
-          deck.push(...toReturn);
+          const numToReturn = Math.min(2, hand.length);
+          const returned = [];
+          for (let rCount = 0; rCount < numToReturn; rCount++) {
+            const choices = hand.map((c, hIdx) => ({ text: `${c.name} (${c.type === "unit" ? (c.score || 0) + "★" : "魔法"})`, value: hIdx }));
+            const pick = await showXLWChoiceModal("【紅森林年獸】洗回手牌", `請選擇第 ${rCount + 1}/${numToReturn} 張洗回牌庫的手牌：`, choices);
+            const targetIdx = (pick !== null && pick !== undefined) ? pick : 0;
+            const removed = hand.splice(targetIdx, 1)[0];
+            returned.push(removed);
+          }
+          deck.push(...returned);
           shuffle(deck);
-          logBattle(`👹【紅森林年獸】狂喜咆哮：抽 2 張牌並將 ${toReturn.length} 張手牌洗回牌庫！`);
+          logBattle(`👹【紅森林年獸】狂喜咆哮：抽 2 張牌並將 ${returned.length} 張自選手牌洗回牌庫！`);
         }
         render();
         return true;
@@ -50721,6 +50801,31 @@ window.xlwFindSoulReturnSubset = function(targetValue, candidates) {
 };
 
 window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
+  // 💉 SSR-VRT-0074 亡靈法醫: 一回合限一次，你還魂前可使該次還魂所需的亡魂數+1或-1
+  const medic = (isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"])
+    .flatMap(z => field[z] || []).find(u => u && (u.card?.id === "SSR-VRT-0074" || u.card?.name?.includes("亡靈法醫")) && !u.medicUsedThisTurn && !window.isUnitSilenced?.(u));
+  if (medic) {
+    if (isPlayer) {
+      const choices = [
+        { text: `維持所需亡魂數 (${targetValue})`, value: 0 },
+        { text: `所需亡魂數 -1 (改為 ${Math.max(1, targetValue - 1)})`, value: -1 },
+        { text: `所需亡魂數 +1 (改為 ${targetValue + 1})`, value: 1 }
+      ];
+      const pick = await showXLWChoiceModal("【亡靈法醫】微調亡魂", `場上有【亡靈法醫】！是否調整此次還魂所需之亡魂數？`, choices);
+      if (pick === -1 || pick === 1) {
+        medic.medicUsedThisTurn = true;
+        targetValue = Math.max(1, targetValue + pick);
+        logBattle(`💉【亡靈法醫】解剖精算：將此次還魂所需亡魂數調整為 ${targetValue}！`);
+      }
+    } else {
+      if (targetValue > 1) {
+        medic.medicUsedThisTurn = true;
+        targetValue = targetValue - 1;
+        logBattle(`💉 對手【亡靈法醫】發動效果：將此次還魂所需亡魂數 -1（改為 ${targetValue}）！`);
+      }
+    }
+  }
+
   const grave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
   const candidates = grave.filter(c => c && c.type === "unit" && c.art_subtype && c.art_subtype.includes("亡靈"));
 
