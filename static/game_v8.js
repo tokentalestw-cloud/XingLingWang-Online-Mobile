@@ -42971,8 +42971,9 @@ function adjustBoardScale() {
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
     // Allow the rear mat to tuck just under the decorative edge of the opponent fan.
     const opponentFanOverlap = openArena ? 50 : 0;
+    const enemyFanBoundary = enemyHand ? enemyHand.bottom - opponentFanOverlap : 0;
     const enemyHandObstacle = openArena && enemyHand
-      ? {...enemyHand, bottom: Math.max(0, enemyHand.bottom - gap - opponentFanOverlap)}
+      ? (enemyFanBoundary > 4 ? {...enemyHand, bottom: enemyFanBoundary - gap} : null)
       : enemyHand;
     const hand = logicalRect(document.querySelector(".hand-panel"));
     const space = {
