@@ -3468,24 +3468,24 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
 
   // 2. 惡靈幫女騎士 小月 (R-SKT-0034 / SSR-SKT-0034): 同名卡一回合限一次，你墓地的此卡被除外時可改為使其被召喚，並使你獎勵+1。
   if (card.id?.includes("SKT-0034") || card.name?.includes("小月")) {
-    const lastTurn = isPlayer ? window.XLW_moonKnightTurn_player : window.XLW_moonKnightTurn_enemy;
-    if (lastTurn !== turn) {
-      if (isPlayer) window.XLW_moonKnightTurn_player = turn;
-      else window.XLW_moonKnightTurn_enemy = turn;
-
-      let activate = true;
-      if (isPlayer) {
-        activate = await showXLWConfirm("惡靈幫女騎士 小月 效果發動", "【惡靈幫女騎士 小月】被除外，是否改為將其特殊召喚上場並獲得 +1★ 獎勵？");
-      }
+    const usedKey = isPlayer ? "XLW_moonKnightTurn_player" : "XLW_moonKnightTurn_enemy";
+    if (window[usedKey] !== turn) {
+      const activate = !isPlayer || await showXLWConfirm("惡靈幫女騎士 小月 效果發動", "【惡靈幫女騎士 小月】被除外，是否改為將其特殊召喚上場並獲得 +1★ 獎勵？");
       if (activate) {
-        const exileList = isPlayer ? playerExileZone : enemyExileZone;
-        const eIdx = exileList.indexOf(card);
-        if (eIdx >= 0) exileList.splice(eIdx, 1);
-        if (isPlayer) playerBonusScore += 1;
-        else enemyBonusScore += 1;
-        renderScore();
-        logBattle(`✨【惡靈幫女騎士 小月】效果發動：改為特殊召喚上場，並使獎勵 +1★！`);
-        await window.xlwSpecialSummonUnit(card, isPlayer);
+        const success = await window.xlwSpecialSummonUnit(card, isPlayer, {
+          sourcePile: () => isPlayer ? playerExileZone : enemyExileZone,
+          payCost: () => {
+            if (window[usedKey] === turn) return false;
+            window[usedKey] = turn;
+            if (isPlayer) playerBonusScore += 1;
+            else enemyBonusScore += 1;
+            return true;
+          }
+        });
+        if (success) {
+          renderScore();
+          logBattle("✨【惡靈幫女騎士 小月】效果發動：改為特殊召喚上場，並使獎勵 +1★！");
+        }
       }
     }
   }
@@ -20544,8 +20544,7 @@ async function performSummonToSlot(zone, idx) {
             numChoices.push({ text: "不消耗", value: 0 });
             const pickVal = await showXLWChoiceModal("【蒸汽能量方塊】能量變現", "請選擇要轉換為分數的能量數量：", numChoices);
             const chosenCost = pickVal !== null && pickVal !== undefined ? Number(pickVal) : 0;
-            if (chosenCost > 0) {
-              window.xlwConsumeEnergy(chosenCost, true);
+            if (chosenCost > 0 && window.xlwConsumeEnergy(chosenCost, true)) {
               playerBonusScore += chosenCost;
               logBattle(`💎【蒸汽能量方塊】能量超頻！消耗 ${chosenCost} 點能量，獲得 +${chosenCost}★ 獎勵！`);
               renderScore();
@@ -30646,14 +30645,18 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
   if (window.XLW_repairShopActive && zone.startsWith("player_") && unit.devourCards && unit.devourCards.length > 0) {
     const doRepair = await showXLWConfirm("【緊急維修廠】代替破壞", `【${unit.card.name}】即將被破壞，是否棄掉其中 1 張合體卡代替破壞？`);
     if (doRepair) {
-      const choices = unit.devourCards.map((d, i) => ({ text: d.card.name, value: i }));
+      const candidates = [...unit.devourCards];
+      const choices = candidates.map((d, i) => ({ text: d.card.name, value: i }));
       const pick = await showXLWChoiceModal("選擇替補破壞的合體卡", "選擇棄掉的合體卡：", choices);
-      const chosenIdx = pick !== null && pick !== undefined ? pick : 0;
-      const dumped = unit.devourCards.splice(chosenIdx, 1)[0];
-      graveyard.push(dumped.card);
-      logBattle(`🏭【緊急維修廠】緊急維修：棄掉合體卡【${dumped.card.name}】代替了本次破壞！`);
-      render();
-      return; // 成功代替破壞
+      const chosen = pick == null ? null : candidates[pick];
+      const index = chosen ? unit.devourCards.indexOf(chosen) : -1;
+      if (index >= 0) {
+        const [dumped] = unit.devourCards.splice(index, 1);
+        graveyard.push(dumped.card);
+        logBattle(`🏭【緊急維修廠】緊急維修：棄掉合體卡【${dumped.card.name}】代替了本次破壞！`);
+        render();
+        return;
+      }
     }
   }
 
