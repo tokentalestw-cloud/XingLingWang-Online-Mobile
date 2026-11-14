@@ -613,20 +613,34 @@ def get_cards():
         return []
     return json.loads(cards_file.read_text(encoding="utf-8"))
 
+# Race-specific Little Traveler tokens are generated on the board.
+TRAVELER_TOKEN_IDS = {
+    "TOKEN-CND-001", "TOKEN-RBT-001", "TOKEN-SKT-001",
+    "TOKEN-SPT-001", "TOKEN-SPT-002", "TOKEN-STP-001",
+}
+
+
+def without_traveler_tokens(decks):
+    return {
+        name: [card_id for card_id in cards if card_id not in TRAVELER_TOKEN_IDS]
+        for name, cards in decks.items()
+    }
+
+
 @app.get("/api/decks")
 def get_decks(request: Request, personal: bool = False):
     if deck_accounts.local_editor(request):
         with deck_accounts.deck_store(deck_accounts.LOCAL_OWNER) as decks:
-            return decks
+            return without_traveler_tokens(decks)
     decks_file = BASE / "data" / "decks.json"
     defaults = json.loads(decks_file.read_text(encoding="utf-8")) if decks_file.exists() else {}
     owner = deck_accounts.require_account(request) if personal else deck_accounts.account(request)
     if not owner:
-        return defaults
+        return without_traveler_tokens(defaults)
     with deck_accounts.deck_store(owner) as decks:
         if personal:
-            return {"中立單位": defaults.get("中立單位", []), **decks}
-        return {**defaults, **decks}
+            return without_traveler_tokens({"中立單位": defaults.get("中立單位", []), **decks})
+        return without_traveler_tokens({**defaults, **decks})
 
 
 class ClientErrorLog(BaseModel):
@@ -923,6 +937,8 @@ def validate_personal_name(name):
 @app.post("/api/decks/save")
 def save_deck(data: DeckSaveSchema, request: Request):
     owner = deck_accounts.require_account(request)
+    if TRAVELER_TOKEN_IDS.intersection([*data.card_ids, *(data.extra_card_ids or [])]):
+        raise HTTPException(400, "小旅人 Token 只能在對戰中召喚。")
     validate_personal_name(data.deck_name)
     if len(data.card_ids) > 20 or len(data.extra_card_ids or []) > 100:
         raise HTTPException(400, "牌組張數超過上限。")

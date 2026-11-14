@@ -1207,7 +1207,11 @@
           fetch("/api/factions?v=" + Date.now()).then(r => r.json()).catch(() => [])
         ]);
 
-        allCards = cardsData;
+        const travelerTokens = new Set([
+          "TOKEN-CND-001", "TOKEN-RBT-001", "TOKEN-SKT-001",
+          "TOKEN-SPT-001", "TOKEN-SPT-002", "TOKEN-STP-001"
+        ]);
+        allCards = cardsData.filter(card => !travelerTokens.has(card.id));
         currentDecks = decksData;
         if (Array.isArray(factionsData) && factionsData.length > 0) {
           currentFactions = factionsData;
