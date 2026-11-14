@@ -44283,6 +44283,25 @@ function adjustBoardScale() {
       const measured = context.measureText(label.textContent.trim()).width;
       label.style.setProperty("--xlw-fit-font", Math.min(max, max * available / Math.max(1, measured)).toFixed(2) + "px");
     });
+    const guide = $("xlwAltarPlacementGuide");
+    if (guide) {
+      const selected = openArena && logicalRect(document.querySelector("#hand .selected-hand-summon"));
+      const paths = [];
+      if (selected) {
+        const x = (selected.left + selected.right) / 2;
+        const y = selected.top + 5;
+        for (const slot of board.querySelectorAll(".slot.xlw-hand-front-legal, .slot.slot-type-summon")) {
+          const target = logicalRect(slot);
+          if (!target) continue;
+          const endX = fit.x + ((target.left + target.right) / 2 - origin.left) / currentScale * fit.scale;
+          const endY = fit.y + (target.top - origin.top) / currentScale * fit.scale;
+          const bend = (y - endY) * .42;
+          paths.push(`M${x} ${y} C${x} ${y-bend} ${endX} ${endY+bend} ${endX} ${endY}`);
+        }
+      }
+      guide.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      guide.firstElementChild.setAttribute("d", paths.join(" "));
+    }
     window.XLWBFeedback?.paintTargetsAndRoutes();
     if (!xlwBoardHudObserver && typeof ResizeObserver !== "undefined") {
       xlwBoardHudObserver = new ResizeObserver(adjustBoardScale);
