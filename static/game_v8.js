@@ -17065,6 +17065,51 @@ window.xlwTriggerSubsituteNinja = async function(defZone, defIdx) {
   }
 };
 
+async function xlwResolveHorrorPriestTribute(unit, zone, idx, isPlayer) {
+  const prefix = isPlayer ? "player_" : "enemy_";
+  const rows = [prefix + "front", prefix + "back"];
+  const isPriest = card => card?.id === "R-VLG-0043" || card?.name?.includes("恐怖祭司");
+  const isYokai = card => card?.faction === "妖怪村莊" || card?.id?.includes("VLG");
+  const hasPriest = () => rows.some(row => field[row].some((u, i) =>
+    u !== unit && isPriest(u?.card) && !window.isUnitSilenced(u, row, i)));
+  // The caller still owns the sacrifice slot and clears it after this effect.
+  const emptySlot = () => {
+    for (const row of rows) {
+      const index = field[row].findIndex((u, i) => !u && (row !== zone || i !== idx));
+      if (index >= 0) return {row, index};
+    }
+    return null;
+  };
+  const currentGrave = () => isPlayer ? graveyard : window.XLW_ENEMY.grave;
+  if (isPriest(unit.card) || !isYokai(unit.card) || !hasPriest() || !emptySlot()) return false;
+  const cost = getCardTributeCost(unit.card);
+  const candidates = currentGrave()?.filter(c => c?.type === "unit" && isYokai(c) && getCardTributeCost(c) === cost) || [];
+  if (!candidates.length) return false;
+
+  let selected;
+  if (isPlayer) {
+    const confirmed = await showXLWConfirm("恐怖祭司 效果發動", `是否將被獻祭的【${unit.card.name}】改為除外，並從墓地復活同祭品數的妖怪村莊單位？`);
+    if (!confirmed) return false;
+    const pick = await showXLWChoiceModal("恐怖祭司 復活選擇", "選擇復活的單位：",
+      candidates.map((c, value) => ({text: c.name, value, card: c})));
+    selected = pick == null ? null : candidates[pick];
+  } else {
+    selected = candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  const slot = emptySlot();
+  if (!selected || !slot || !hasPriest()) return false;
+  const revived = window.XLWDuelConsistency.takeKnownCard(currentGrave(), selected);
+  if (!revived) return false;
+  exileCard(unit.card, isPlayer ? "player" : "enemy");
+  field[slot.row][slot.index] = {
+    card: revived, tapped: false, attacking: false, target: null,
+    summonedTurn: turn, summonedZone: slot.row
+  };
+  logBattle(`✨ 恐怖祭司 效果：${isPlayer ? "我方" : "對手"}特殊召喚了墓地中的【${revived.name}】！`);
+  return true;
+}
+
 window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
   if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unit, zone, idx)) {
     logBattle(`🛡️ 【${unit.card.name}】完全不能被獻祭！`);
@@ -17085,44 +17130,7 @@ window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
       }
     }
 
-    const hasPriest = ["player_front", "player_back"].some(z => field[z].some((u, i) => u && u.card && (u.card.id === "R-VLG-0043" || u.card.name.includes("恐怖祭司")) && !window.isUnitSilenced(u, z, i)));
-    let exiled = false;
-    if (hasPriest && (unit.card.id !== "R-VLG-0043" && !unit.card.name.includes("恐怖祭司")) && (unit.card.faction === "妖怪村莊" || unit.card.id?.includes("VLG"))) {
-      const targetCost = getCardTributeCost(unit.card);
-      const eligibleGrave = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")) && getCardTributeCost(c) === targetCost);
-      if (eligibleGrave.length > 0) {
-        const usePriest = await showXLWConfirm("恐怖祭司 效果發動", `是否將被獻祭的【${unit.card.name}】改為除外，並從墓地復活 1 個祭品數為 ${targetCost} 的妖怪村莊單位？`);
-        if (usePriest) {
-          exileCard(unit.card, "player");
-          exiled = true;
-          const choices = eligibleGrave.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
-          const chosenGraveIdx = await showXLWChoiceModal("恐怖祭司 復活選擇", "選擇復活的單位：", choices);
-          if (chosenGraveIdx !== null && chosenGraveIdx !== undefined) {
-            const resurrectedCard = eligibleGrave[chosenGraveIdx];
-            graveyard.splice(graveyard.indexOf(resurrectedCard), 1);
-            const emptySlots = [];
-            for (const z of ["player_front", "player_back"]) {
-              field[z].forEach((slotUnit, slotIdx) => {
-                if (!slotUnit) emptySlots.push({ zone: z, idx: slotIdx });
-              });
-            }
-            if (emptySlots.length > 0) {
-              const chosenSlot = emptySlots[0];
-              field[chosenSlot.zone][chosenSlot.idx] = {
-                card: resurrectedCard,
-                tapped: false,
-                attacking: false,
-                target: null,
-                summonedTurn: turn,
-                summonedZone: chosenSlot.zone
-              };
-              logBattle(`✨ 恐怖祭司 效果：特殊召喚了墓地中的【${resurrectedCard.name}】！`);
-            }
-          }
-        }
-      }
-    }
-    if (!exiled) {
+    if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, true)) {
       graveyard.push(unit.card);
     }
   }
@@ -17143,47 +17151,14 @@ window.xlwEnemyTributeUnit = async function(unit, zone, idx) {
         const choices = yokaiInGrave.map((c, i) => ({ text: c.name, value: i }));
         const chosenIdxVal = await showXLWChoiceModal("事故物件 效果發動", "選擇回到我方手牌的妖怪村莊卡牌：", choices);
         if (chosenIdxVal !== null && chosenIdxVal !== undefined) {
-          const chosen = yokaiInGrave[chosenIdxVal];
-          graveyard.splice(graveyard.indexOf(chosen), 1);
-          hand.push(chosen);
-          logBattle(`✨ 事故物件 效果：我方將墓地中的【${chosen.name}】回收至手牌！`);
+          const chosen = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, yokaiInGrave[chosenIdxVal]);
+          if (chosen) logBattle(`✨ 事故物件 效果：我方將墓地中的【${chosen.name}】回收至手牌！`);
         }
       }
     }
 
-    const oppGrave = window.XLW_ENEMY.grave || [];
-    const hasPriest = ["enemy_front", "enemy_back"].some(z => field[z].some((u, i) => u && u.card && (u.card.id === "R-VLG-0043" || u.card.name.includes("恐怖祭司")) && !window.isUnitSilenced(u, z, i)));
-    let exiled = false;
-    if (hasPriest && (unit.card.id !== "R-VLG-0043" && !unit.card.name.includes("恐怖祭司")) && (unit.card.faction === "妖怪村莊" || unit.card.id?.includes("VLG"))) {
-      const targetCost = getCardTributeCost(unit.card);
-      const eligibleGrave = oppGrave.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")) && getCardTributeCost(c) === targetCost);
-      if (eligibleGrave.length > 0) {
-        exileCard(unit.card, "enemy");
-        exiled = true;
-        const resurrectedCard = eligibleGrave[Math.floor(Math.random() * eligibleGrave.length)];
-        oppGrave.splice(oppGrave.indexOf(resurrectedCard), 1);
-        const emptySlots = [];
-        for (const z of ["enemy_front", "enemy_back"]) {
-          field[z].forEach((slotUnit, slotIdx) => {
-            if (!slotUnit) emptySlots.push({ zone: z, idx: slotIdx });
-          });
-        }
-        if (emptySlots.length > 0) {
-          const chosenSlot = emptySlots[0];
-          field[chosenSlot.zone][chosenSlot.idx] = {
-            card: resurrectedCard,
-            tapped: false,
-            attacking: false,
-            target: null,
-            summonedTurn: turn,
-            summonedZone: chosenSlot.zone
-          };
-          logBattle(`✨ 對手 恐怖祭司 效果：特殊召喚了墓地中的【${resurrectedCard.name}】！`);
-        }
-      }
-    }
-    if (!exiled) {
-      oppGrave.push(unit.card);
+    if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, false)) {
+      (window.XLW_ENEMY.grave ||= []).push(unit.card);
     }
   }
 };

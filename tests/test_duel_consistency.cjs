@@ -137,6 +137,44 @@ module.exports=(async()=>{
    assert.deepEqual(remaining.map(c => c._xlwInstanceId), success || scenario === 'removed' ? ['other'] : ['undead', 'other']);
    tests++;
  }
+ // Horror Priest leaves the sacrifice in the normal grave path unless revival can commit.
+ for (const scenario of ['full', 'cancel', 'removed', 'occupied', 'replaced', 'enemy']) {
+   const g = context();
+   const local = scenario !== 'enemy';
+   const prefix = local ? 'player_' : 'enemy_';
+   const tribute = {card:{...card('tribute','R-VLG-0010'), tribute:1}};
+   const candidate = {...card('revive','R-VLG-0012'), tribute:1};
+   const other = card('other');
+   const exiled = [];
+   g.field[prefix+'front'][0] = tribute;
+   g.field[prefix+'front'][1] = {card:card('priest','R-VLG-0043')};
+   if (scenario === 'full') {
+     for (const row of ['front','back']) g.field[prefix+row] = g.field[prefix+row].map(u => u || {card:other});
+   }
+   g.graveyard = local ? [candidate, other] : [];
+   g.XLW_ENEMY.grave = local ? [] : [candidate, other];
+   g.getCardTributeCost = c => c.tribute || 0;
+   g.exileCard = c => exiled.push(c);
+   g.showXLWConfirm = async () => true;
+   g.showXLWChoiceModal = async () => {
+     if (scenario === 'removed') g.graveyard = [other];
+     if (scenario === 'replaced') g.graveyard = [structuredClone(candidate), other];
+     if (scenario === 'occupied') {
+       for (const row of ['front','back']) g.field[prefix+row] = g.field[prefix+row].map(u => u || {card:other});
+     }
+     return scenario === 'cancel' ? null : 0;
+   };
+   vm.runInContext(section('async function xlwResolveHorrorPriestTribute(', 'async function executeTributeEffects('), g);
+   await (local ? g.xlwPlayerTributeUnit : g.xlwEnemyTributeUnit)(tribute,prefix+'front',0);
+   const success = ['replaced','enemy'].includes(scenario);
+   const pile = local ? g.graveyard : g.XLW_ENEMY.grave;
+   assert.deepEqual(exiled, success ? [tribute.card] : []);
+   assert.ok(pile.includes(other));
+   assert.equal(pile.includes(tribute.card), !success);
+   assert.equal(pile.some(c=>c._xlwInstanceId==='revive'), !success && scenario !== 'removed');
+   assert.equal(g.field[prefix+'front'][2]?.card._xlwInstanceId === 'revive', success);
+   tests++;
+ }
  // An authoritative-looking old draw flag cannot pay a second two-card draw cost.
  {const g=context();g.deck=[card('1'),card('2'),card('3'),card('4')];g.xlwCheckBananaMarquisMovement=async()=>{};g.xlwResolveTurnStartEffects=async()=>{};g.sendFullGameStateToOpponent=()=>{};vm.runInContext(section('async function performPlayerTurnStartDraw()','window.XLW_playerNeedsToDraw = false;'),g);await g.performPlayerTurnStartDraw();await g.performPlayerTurnStartDraw();assert.equal(g.deck.length,2);assert.equal(g.hand.length,2);g.turn++;await g.performPlayerTurnStartDraw();assert.equal(g.hand.length,4);tests++;}
  console.log(`${tests} bidirectional spell, card identity, stale collection, Bomber, Banana and Samurai regressions: PASS`);
