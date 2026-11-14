@@ -9174,7 +9174,19 @@ body #phaseDisplayPanelHard #phaseTextHard,
     box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
   }
 }
-
-
-
-
+/* Original Red Star Trophy artwork, isolated from the printed layout. */
+.battle-cell.xlw-trophy-lane { position: relative; overflow: visible; }
+.battle-cell.xlw-direct-board-target { outline: 2px solid #ffda84; cursor: pointer; }
+.xlw-trophy-marker {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+  padding: 0; border: 1px solid #dc9663; border-radius: inherit;
+  background: linear-gradient(#51222b, #231720); color: #fff5db;
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer;
+}
+.xlw-trophy-art {
+  height: 94%; aspect-ratio: .89; flex-shrink: 0;
+  background: url('/static/card_images/sr_nmg_0042.jpeg') 49% 22% / 266% 320% no-repeat;
+  clip-path: polygon(27% 24%, 20% 0, 44% 13%, 52% 0, 60% 12%, 80% 1%, 76% 24%, 90% 21%, 99% 30%, 100% 39%, 88% 59%, 92% 63%, 86% 69%, 68% 67%, 60% 74%, 61% 80%, 82% 89%, 79% 100%, 21% 100%, 17% 89%, 37% 81%, 40% 75%, 32% 67%, 13% 69%, 8% 64%, 12% 59%, 0 39%, 1% 30%, 10% 21%);
+}
+.xlw-trophy-stats { font-size: clamp(8px, .8vw, 13px); font-weight: bold; white-space: nowrap; }

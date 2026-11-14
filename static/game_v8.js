@@ -1321,6 +1321,7 @@ function newGameMultiplayer() {
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.xlwStarLineTrophies = Array(5).fill(null);
   window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   window.XLW_isPuzzleMode = false;
@@ -1591,6 +1592,7 @@ function newGame() {
   window.xlwClearAllPendingResolvers?.(true);
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.xlwStarLineTrophies = Array(5).fill(null);
   window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   const lp = $("xlwLeftCardPanel"); if (lp) lp.style.setProperty("display", "none", "important");
@@ -6813,7 +6815,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
   // ORC-0002 背刺獸人
   if ((c.id === "ORC-0002" || c.name?.includes("背刺獸人")) && unit.attacking && unit.target) {
-    const defUnit = field[unit.target.zone][unit.target.idx];
+    const defUnit = field[unit.target.zone]?.[unit.target.idx];
     if (defUnit && defUnit.tapped) {
       baseAtk += 3;
     }
@@ -7917,6 +7919,7 @@ window.xlwSetFactionFieldCard = function(card, isPlayer = true) {
 };
 window.xlwCaptureFactionState = function() {
   return {
+    trophies: window.xlwStarLineTrophies,
     playerEnergy: window.XLW_playerSteamEnergy || 0,
     enemyEnergy: window.XLW_enemySteamEnergy || 0,
     playerBlackHoleLane: window.XLW_playerBlackHoleLane || 0,
@@ -7932,6 +7935,7 @@ window.xlwCaptureFactionState = function() {
 };
 window.xlwRestoreFactionState = function(state, peer = false) {
   if (!state || typeof state !== "object") return;
+  if (Array.isArray(state.trophies)) xlwRestoreTrophies(state.trophies, peer);
   for (const [suffix, key] of [["SteamEnergy", "Energy"], ["BlackHoleLane", "BlackHoleLane"]]) {
     for (const side of ["player", "enemy"]) {
       const source = peer ? (side === "player" ? "enemy" : "player") : side;
@@ -8986,7 +8990,56 @@ window.xlwGetTotalStarsReducedByEffects = function(isPlayer = true) {
   return Math.max(0, totalReduced);
 };
 
-window.xlwStarLineTrophy = null;
+const TROPHY_ATTACK = 6;
+const TROPHY_IRRIGATION = 15;
+const TROPHY_ZONE = "star_trophy";
+window.xlwStarLineTrophies = Array(5).fill(null);
+
+window.xlwTrophyAt = function(lane) {
+  const trophy = window.xlwStarLineTrophies[lane];
+  return trophy?.irrigation > 0 ? trophy : null;
+};
+
+function xlwRestoreTrophies(incoming, peer) {
+  window.xlwStarLineTrophies = Array.from({length: 5}, (_, lane) => {
+    const current = window.xlwStarLineTrophies[lane];
+    const next = incoming[lane];
+    if (!peer) return next ? structuredClone(next) : null;
+    if (!next) return current;
+    if (next.id === current?.id && current.irrigation <= next.irrigation) return current;
+    if (current && next.id !== current.id && next.placedTurn < current.placedTurn) return current;
+    return {...structuredClone(next), owner: next.owner === "player" ? "enemy" : "player"};
+  });
+}
+
+async function xlwResolveTrophyAttack(attacker, zone, lane) {
+  const trophy = window.xlwTrophyAt(lane);
+  const attack = Number(getUnitAtk(attacker, zone, lane)) || 0;
+  window.XLWBattleFlow?.settle(attacker, zone, lane, turn);
+  if (!trophy || trophy.id !== attacker.trophyTargetId) {
+    logBattle("紅星獎盃已離場，這次進攻結束。");
+    render();
+    return;
+  }
+  const isPlayer = zone.startsWith("player_");
+  await showCombatNumberAnimation(zone, lane, TROPHY_ZONE, lane, attack, TROPHY_ATTACK);
+  const damage = Math.max(0, attack);
+  trophy.irrigation = Math.max(0, trophy.irrigation - damage);
+  logBattle(`【紅星獎盃】灌溉 -${damage}，剩餘 ${trophy.irrigation}。`);
+  if (!trophy.irrigation) {
+    const pile = trophy.owner === "player" ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard);
+    pile.push(trophy.card);
+    if (isPlayer) playerBonusScore += 15;
+    else enemyBonusScore += 15;
+    logBattle(`【紅星獎盃】被破壞，${isPlayer ? "我方" : "對手"}獎勵 +15★！`);
+  }
+  if (attack < TROPHY_ATTACK && !window.xlwUnitHasRanged(attacker, zone, lane)) {
+    await destroyUnit(zone, lane, isPlayer ? "player" : "enemy", false, true);
+  } else {
+    await window.xlwHandleUnitTappedTriggers(attacker, zone, lane);
+  }
+  render();
+}
 
 // 主要階段開始時效果 (PG2 & 點數兌換卡)
 
@@ -11083,11 +11136,20 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      const choices = [0, 1, 2, 3, 4].map(col => ({ text: `星星戰線 ${col + 1}`, value: col }));
-      const pick = await showXLWChoiceModal("【紅星獎盃】放置位置", "請選擇獎盃樹立的星星戰線：", choices);
-      const chosenLane = (pick !== null && pick !== undefined) ? pick : 2;
-      window.xlwStarLineTrophy = { lane: chosenLane, irrigation: 15, card: spellCard };
-      logBattle(`🏆【紅星獎盃】立於星星戰線 ${chosenLane + 1}！灌溉值 15，雙方皆可進攻奪取 +15★ 榮譽大獎！`);
+      const choices = [0, 1, 2, 3, 4].filter(lane => !window.xlwTrophyAt(lane)).map(lane => ({
+        text: `星星戰線 ${lane + 1}`, value: lane, boardTarget: {zone: TROPHY_ZONE, idx: lane}
+      }));
+      if (!choices.length) { graveyard.push(spellCard); return; }
+      const lane = await showXLWChoiceModal("【紅星獎盃】放置位置", "請點選要放置獎盃的星星戰線。", choices, {boardOnly: true, required: true});
+      if (!choices.some(choice => choice.value === lane) || window.xlwTrophyAt(lane)) {
+        graveyard.push(spellCard);
+        return;
+      }
+      window.xlwStarLineTrophies[lane] = {
+        id: spellCard._xlwInstanceId || crypto.randomUUID(), owner: "player", placedTurn: turn,
+        irrigation: TROPHY_IRRIGATION, card: spellCard
+      };
+      logBattle(`【紅星獎盃】放置在星星戰線 ${lane + 1}，攻擊力 6，灌溉值 15。`);
       render();
     });
 
@@ -23758,7 +23820,7 @@ async function xlwAutoDeclarePlayerAttacks() {
   let playerAttackCount = 0;
   for (let i = 0; i < 5; i++) {
     const playerAttacker = field.player_front[i] || field.player_back[i];
-    if (!playerAttacker || playerAttacker.tapped) continue;
+    if (!playerAttacker || playerAttacker.tapped || window.xlwTrophyAt?.(i)) continue;
     if (window.XLW_isShieldUnit(playerAttacker)) continue;
 
     const actualZone = field.player_front[i] === playerAttacker ? "player_front" : "player_back";
@@ -23987,37 +24049,38 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     const flying = window.hasFlying(unit);
     const front = field.enemy_front[idx];
     const back = field.enemy_back[idx];
-    let targetZone;
-    if (ranged) {
-      const choices = ["enemy_front", "enemy_back"].filter(row => !xlwAttackTargetBlock(unit, zone, idx, row))
+    const trophy = window.xlwTrophyAt?.(idx);
+    const isBoarKnight = c.id === "R-NMS-0061" || c.name?.includes("野豬騎士");
+    const defaultRow = back && (flying || isBoarKnight || !front || window.hasFlying(front))
+      ? "enemy_back" : front ? "enemy_front" : null;
+    let targetZone = defaultRow;
+    if (ranged || trophy) {
+      const rows = ranged ? ["enemy_front", "enemy_back"] : [defaultRow].filter(Boolean);
+      const choices = rows.filter(row => !xlwAttackTargetBlock(unit, zone, idx, row))
         .map(row => ({
           text: `${row === "enemy_front" ? "前排" : "後排"}${idx + 1}`,
           value: row, boardTarget: {zone: row, idx}
         }));
-      if (choices.length === 0) {
+      if (trophy) choices.push({text: "紅星獎盃", value: TROPHY_ZONE, boardTarget: {zone: TROPHY_ZONE, idx}});
+      if (!choices.length) {
         setStatus("同戰線沒有可進攻的敵方單位。");
         return;
       }
-      targetZone = await showXLWChoiceModal(`【${unitName(unit)}】遠程攻擊`, "請點選同戰線要進攻的前排或後排單位。", choices, {boardOnly: true});
+      targetZone = await showXLWChoiceModal("選擇進攻目標", "請點選同戰線的進攻目標。", choices, {boardOnly: true});
       if (!targetZone || field[zone][idx] !== unit || unit.tapped || phase !== "進攻宣言") return;
+    }
+    const targetsTrophy = trophy && targetZone === TROPHY_ZONE;
+    if (targetsTrophy) {
+      if (window.xlwTrophyAt(idx)?.id !== trophy.id) return;
     } else {
-      const isBoarKnight = c.id === "R-NMS-0061" || c.name?.includes("野豬騎士");
-      if (back && (flying || isBoarKnight || !front || window.hasFlying(front))) targetZone = "enemy_back";
-      else if (front) targetZone = "enemy_front";
-      else {
-        setStatus("敵方同戰線沒有可進攻的單位。");
-        return;
-      }
+      const blocked = targetZone ? xlwAttackTargetBlock(unit, zone, idx, targetZone) : "敵方同戰線沒有可進攻的單位。";
+      if (blocked) { setStatus(blocked); return; }
     }
-    const blocked = xlwAttackTargetBlock(unit, zone, idx, targetZone);
-    if (blocked) {
-      setStatus(blocked);
-      return;
-    }
-    const targetDefender = field[targetZone][idx];
+    const targetDefender = field[targetZone]?.[idx];
 
     unit.attacking = true;
-    unit.target = { zone: targetZone, idx: idx };
+    unit.target = { zone: targetZone, idx };
+    unit.trophyTargetId = targetsTrophy ? trophy.id : null;
     unit.tapped = true;
     await xlwOnPlayerUnitTapped(zone, idx);
     window.XLW_DEFENSE_RULE.enemyNeedsDefense = true;
@@ -24124,7 +24187,8 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
         attZone: zone,
         attIdx: idx,
         targetZone: targetZone,
-        targetIdx: idx
+        targetIdx: idx,
+        trophyTargetId: unit.trophyTargetId
       }));
     }
 
@@ -24161,6 +24225,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
             tapped: true,
             attacking: true,
             target: { zone: targetZone, idx: idx },
+            trophyTargetId: unit.trophyTargetId,
             summonedTurn: turn,
             summonedZone: zone
           };
@@ -24593,6 +24658,10 @@ async function xlwResolvePlayerDefensePhase() {
         }
 
         // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+        if (attacker.target?.zone === TROPHY_ZONE) {
+          await xlwResolveTrophyAttack(attacker, attZone, lane);
+          continue;
+        }
         let defZone = "";
         let defender = null;
         let defIdx = lane;
@@ -24944,6 +25013,10 @@ async function xlwResolveEnemyLaneSafe(lane) {
     }
 
     // 規則九第4條：進攻單位將以其前方第一個敵方單位為進攻目標，並將其視為防守單位
+    if (attacker.target?.zone === TROPHY_ZONE) {
+      await xlwResolveTrophyAttack(attacker, attZone, lane);
+      continue;
+    }
     let defZone = "";
     let defender = null;
     let defIdx = lane;
@@ -25284,7 +25357,9 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
   window.xlwPlaySFX?.(atkPower > defPower ? 'attack' : 'shield');
   return new Promise((resolve) => {
     const attEl = document.querySelector(`[data-zone="${attZone}"][data-index="${attIdx}"]`);
-    const defEl = document.querySelector(`[data-zone="${defZone}"][data-index="${defIdx}"]`);
+    const defEl = defZone === TROPHY_ZONE
+      ? document.querySelector(`.battle-cell[data-index="${defIdx}"]`)
+      : document.querySelector(`[data-zone="${defZone}"][data-index="${defIdx}"]`);
     
     if (!attEl || !defEl) {
       resolve();
@@ -32407,7 +32482,8 @@ async function aiCastSpell(spellCard, effectCallback) {
   await window.xlwOnMagicCardCast(false, spellCard);
   await effectCallback();
   // 送入對手墓地（若未被除外且非場地魔法）
-  if (spellCard && !enemyExileZone.includes(spellCard) && spellCard.art_subtype !== "場地" && spellCard.magic_type !== "場地") {
+  if (spellCard && !window.xlwStarLineTrophies.some(trophy => trophy?.card === spellCard && trophy.irrigation > 0) &&
+      !enemyExileZone.includes(spellCard) && spellCard.art_subtype !== "場地" && spellCard.magic_type !== "場地") {
     if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
     if (!window.XLW_ENEMY.grave.includes(spellCard)) {
       window.XLW_ENEMY.grave.push(spellCard);
@@ -32431,6 +32507,27 @@ async function aiPlayMagicCardsSummonPhase() {
   }
   
   let hand = window.XLW_ENEMY.hand;
+
+  const trophyLanes = [0, 1, 2, 3, 4].filter(lane => !window.xlwTrophyAt(lane));
+  const trophyIdx = hand.findIndex(card => card?.id === "SR-NMG-0042");
+  if (trophyIdx >= 0 && trophyLanes.length) {
+    const spell = hand.splice(trophyIdx, 1)[0];
+    const lane = trophyLanes.find(i => {
+      const zone = field.enemy_front[i] ? "enemy_front" : "enemy_back";
+      const unit = field[zone][i];
+      return unit && getUnitAtk(unit, zone, i) >= TROPHY_ATTACK;
+    });
+    const chosenLane = lane ?? trophyLanes[0];
+    await xlwShowSpellActivationOverlay(spell, "enemy");
+    await aiCastSpell(spell, async () => {
+      window.xlwStarLineTrophies[chosenLane] = {
+        id: spell._xlwInstanceId || crypto.randomUUID(), owner: "enemy", placedTurn: turn,
+        irrigation: TROPHY_IRRIGATION, card: spell
+      };
+      logBattle(`對手將【紅星獎盃】放置在星星戰線 ${chosenLane + 1}。`);
+      render();
+    });
+  }
   
   // AI 大三元 (SR-FMS-0016)
   const tripleIdx = hand.findIndex(c => c && (c.id === "SR-FMS-0016" || c.name?.includes("大三元")));
@@ -34182,8 +34279,18 @@ async function runEnemyTurn() {
               }
             }
 
+            const trophy = window.xlwTrophyAt(i);
+            const attack = getUnitAtk(enemyAttacker, enemyAttackerZone, i);
+            if (trophy && attack > 0 && (attack >= TROPHY_ATTACK || window.xlwUnitHasRanged(enemyAttacker, enemyAttackerZone, i) || attack >= trophy.irrigation)) {
+              enemyAttacker.attacking = true;
+              enemyAttacker.target = {zone: TROPHY_ZONE, idx: i};
+              enemyAttacker.trophyTargetId = trophy.id;
+              opponentAttackCount++;
+              logBattle(`對手宣告進攻星星戰線 ${i + 1} 的紅星獎盃。`);
+              continue;
+            }
             if (!targetZone) continue;
-            
+
             const targetDefender = field[targetZone][i];
             if (targetDefender && window.hasFlying(targetDefender) && !window.hasFlying(enemyAttacker)) {
               continue;
@@ -41679,6 +41786,18 @@ function renderBattleLine() {
   document.querySelectorAll(".battle-cell").forEach((cell, i) => {
     cell.textContent = `★${i + 1}`;
     cell.className = "battle-cell";
+    const trophy = window.xlwTrophyAt(i);
+    if (trophy) {
+      cell.classList.add("xlw-trophy-lane");
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "xlw-trophy-marker";
+      marker.setAttribute("aria-label", `紅星獎盃，攻擊力 6，灌溉值 ${trophy.irrigation}`);
+      marker.innerHTML = `<span class="xlw-trophy-art" aria-hidden="true"></span><span class="xlw-trophy-stats">⚔ 6 · 💧 ${trophy.irrigation}</span>`;
+      marker.onclick = () => showModal(trophy.card);
+      cell.appendChild(marker);
+      return;
+    }
 
     if (countdownActive && !window.XLW_isPuzzleMode && !window.XLW_callGameDeclared) {
       if (i >= countdownRemaining) {
@@ -43772,14 +43891,18 @@ function setupWebSocketEvents() {
       const targetZone = data.targetZone;
       const targetIdx = data.targetIdx;
       const attacker = field[attZone][attIdx];
-      if (attacker && !isUnitAttackProtected(targetZone,targetIdx)) {
+      const trophyTarget = targetZone === TROPHY_ZONE && targetIdx === attIdx && window.xlwTrophyAt(targetIdx)?.id === data.trophyTargetId && data.trophyTargetId;
+      if (attacker && (trophyTarget || (field[targetZone] && !isUnitAttackProtected(targetZone,targetIdx)))) {
         window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
         attacker.target = { zone: targetZone, idx: targetIdx };
         attacker.tapped = true;
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true; // 我方防守階段標記
-        const defender = field[targetZone][targetIdx];
-        if (defender) {
+        attacker.trophyTargetId = trophyTarget || null;
+        const defender = field[targetZone]?.[targetIdx];
+        if (trophyTarget) {
+          logBattle(`對手宣告進攻星星戰線 ${targetIdx + 1} 的紅星獎盃。`);
+        } else if (defender) {
           logBattle(`\u5c0d\u624b\u767c\u8d77\u5ba3\u544a\u9032\u653b\uff1a\u661f\u661f\u6230\u7dda${attIdx + 1}\uff0c\u5c0d\u624b\u0020${unitName(attacker)}\u0020\u6307\u5411\u6211\u65b9\u0020${unitName(defender)}`);
         } else {
           logBattle(`\u5c0d\u624b\u767c\u8d77\u7a7a\u6b04\u4f4d\u5ba3\u544a\u9032\u653b\uff1a\u661f\u661f\u6230\u7dda${attIdx + 1}\uff0c\u5c0d\u624b\u0020${unitName(attacker)}`);
@@ -46116,7 +46239,9 @@ function showXLWChoiceModal(title, message, options, config = {}) {
             if (el) slotElements.push(el);
           });
         } else {
-          const el = document.querySelector(`.slot[data-zone="${target.zone}"][data-index="${target.idx}"]`);
+          const el = target.zone === TROPHY_ZONE
+            ? document.querySelector(`.battle-cell[data-index="${target.idx}"]`)
+            : document.querySelector(`.slot[data-zone="${target.zone}"][data-index="${target.idx}"]`);
           if (el) slotElements.push(el);
         }
 
@@ -53121,6 +53246,7 @@ window.XLW_Tutorial = {
     
     this.active = true;
     window.XLWAudio?.resetBattle();
+    window.xlwStarLineTrophies = Array(5).fill(null);
     window.XLWBattleFlow?.reset();
     window.XLWSpecialSummon?.cancel();
     window.XLW_isPuzzleMode = false;
@@ -53128,6 +53254,7 @@ window.XLW_Tutorial = {
     document.getElementById("xlwPuzzleStatusBar")?.remove();
     window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.xlwStarLineTrophies = Array(5).fill(null);
   window.XLWBattleFlow?.reset();
     this.currentStep = 0;
 
@@ -54268,6 +54395,7 @@ window.xlwStartPuzzleMode = function() {
 window.xlwStartPuzzleStage = function(stageNum) {
   window.XLWBFeedback?.resetScores();
   window.XLWAudio?.resetBattle();
+  window.xlwStarLineTrophies = Array(5).fill(null);
   window.XLWBattleFlow?.reset();
   window.XLWSpecialSummon?.cancel();
   window.XLW_currentPuzzleStage = stageNum;
