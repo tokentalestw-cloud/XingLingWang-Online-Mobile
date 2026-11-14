@@ -7250,6 +7250,28 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
+  // 📣 紅星盃賽場觀眾 (SSSR-NMS-0092): 使你持有的「紅星獎盃」所在戰線的你的單位+1攻擊力
+  if (zone && lane !== undefined && lane >= 0 && lane < 5 && typeof field !== "undefined") {
+    const isPlayer = zone.startsWith("player_");
+    const sideP = isPlayer ? "player_" : "enemy_";
+    const trophy = window.xlwTrophyAt ? window.xlwTrophyAt(lane) : null;
+    if (trophy && trophy.irrigation > 0 && trophy.owner === (isPlayer ? "player" : "enemy")) {
+      let audienceCount = 0;
+      for (const r of ["front", "back"]) {
+        (field[sideP + r] || []).forEach((u, uIdx) => {
+          if (u && (u.card?.id === "SSSR-NMS-0092" || u.card?.name?.includes("紅星盃賽場觀眾") || u.card?.name?.includes("紅星杯賽場觀眾") || (u.card?.name?.includes("觀眾") && u.card?.name?.includes("紅星")))) {
+            if (!window.isUnitSilenced || !window.isUnitSilenced(u, sideP + r, uIdx)) {
+              audienceCount++;
+            }
+          }
+        });
+      }
+      if (audienceCount > 0) {
+        baseAtk += audienceCount * 1;
+      }
+    }
+  }
+
   // 🥋 功夫旅人小龍 (C-SPT-0066): 使此單位+X攻擊力。X=你場上「加油的小旅人」數量的兩倍
   if (c.id === "C-SPT-0066" || c.name?.includes("功夫旅人小龍")) {
     if (zone && typeof field !== "undefined") {
@@ -9830,6 +9852,40 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
         }
       }
       break;
+    }
+  }
+
+  // P. 📣 SSSR-NMS-0092 紅星盃賽場觀眾: 你的主要階段開始時，若星星戰線上有你持有的「紅星獎盃」，則可使你額外區的此卡被召喚
+  const hasOwnedTrophy = [0, 1, 2, 3, 4].some(lane => {
+    const trophy = window.xlwTrophyAt ? window.xlwTrophyAt(lane) : null;
+    return trophy && trophy.irrigation > 0 && trophy.owner === (isPlayer ? "player" : "enemy");
+  });
+  if (hasOwnedTrophy) {
+    const extraDeckList = isPlayer ? (window.XLW_playerExtraDeck || playerExtraDeck || []) : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    let audienceCard = extraDeckList.find(c => c && (c.id === "SSSR-NMS-0092" || c.name?.includes("紅星盃賽場觀眾") || c.name?.includes("紅星杯賽場觀眾") || (c.name?.includes("觀眾") && c.name?.includes("紅星"))));
+    while (audienceCard) {
+      const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+      if (!emptySlots || emptySlots.length === 0) break;
+      if (isPlayer) {
+        const doSummon = await showXLWConfirm("【紅星盃賽場觀眾】召喚", "星星戰線上有你持有的「紅星獎盃」，是否從額外區召喚【紅星盃賽場觀眾】？");
+        if (!doSummon) break;
+        const success = await window.xlwSpecialSummonUnit(audienceCard, true, { sourcePile: () => extraDeckList });
+        if (success) {
+          logBattle("📣【紅星盃賽場觀眾】熱烈歡呼！從額外區被召喚進場！");
+          if (typeof render === "function") render();
+        } else {
+          break;
+        }
+      } else {
+        const success = await window.xlwSpecialSummonUnit(audienceCard, false, { sourcePile: () => extraDeckList });
+        if (success) {
+          logBattle("📣 對手【紅星盃賽場觀眾】發動效果：自額外區被召喚進場！");
+          if (typeof render === "function") render();
+        } else {
+          break;
+        }
+      }
+      audienceCard = extraDeckList.find(c => c && (c.id === "SSSR-NMS-0092" || c.name?.includes("紅星盃賽場觀眾") || c.name?.includes("紅星杯賽場觀眾") || (c.name?.includes("觀眾") && c.name?.includes("紅星"))));
     }
   }
 };

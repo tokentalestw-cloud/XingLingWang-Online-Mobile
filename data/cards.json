@@ -36252,6 +36252,33 @@
     "art_subtype": "中立單位"
   },
   {
+    "id": "SSSR-NMS-0092",
+    "name": "紅星盃賽場觀眾",
+    "deck": "中立",
+    "type": "unit",
+    "faction": "中立",
+    "race": "中立",
+    "attack": "1",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "星星戰線",
+      "紅星獎盃"
+    ],
+    "effect_text": "你的主要階段開始時，若星星戰線上有你持有的「紅星獎盃」，則可使你額外區的此卡被召喚。使你持有的「紅星獎盃」所在戰線的你的單位+1攻擊力",
+    "image": "/static/card_images/sssr_nms_0092.jpeg",
+    "original_file": "中立單位/NMS0092_11月例賽_紅星盃鬥技場觀眾.jpg",
+    "deck_eligible": false,
+    "mana": 0,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "你的主要階段開始時，若星星戰線上有你持有的「紅星獎盃」，則可使你額外區的此卡被召喚",
+    "extra_deck_limit": 3,
+    "art_subtype": "人型",
+    "rarity": "SSSR"
+  },
+  {
     "id": "SSSR-NMS-0097",
     "name": "中星城法巫隊",
     "deck": "中立",
