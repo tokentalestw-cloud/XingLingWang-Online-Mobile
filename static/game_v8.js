@@ -260,6 +260,9 @@ function xlwRequireSpellCompletion(){
 window.xlwClearAllPendingResolvers = function(force = false) {
   if(force){window.XLW_tempEquipSpellActive=false;window.XLW_tempEquipSpellCard=null;window.XLW_directBoardPrompt?._xlwCancel?.();}
   if(!force && xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
+  if (force) {
+    for (const finish of window.XLW_samuraiRecoveryWaiters?.values() || []) finish(null);
+  }
   if (window.XLW_pendingSummonCounterResolve) {
     console.log("[WS-Safety] Resolving stuck summon counter check");
     const r = window.XLW_pendingSummonCounterResolve;
@@ -23841,18 +23844,20 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
             
             if (chosenFieldIdx !== null && chosenFieldIdx !== undefined) {
               const chosenField = otherOrcs[chosenFieldIdx];
+              if (!chosenField) return;
               const graveChoices = orcsInGrave.map((c, idx) => ({ text: `${c.name} (墓地)`, value: idx }));
               const chosenGraveIdx = await showXLWChoiceModal("獸人奶奶 效果：請選擇墓地一個獸人單位回手", "選擇墓地獸人：", graveChoices);
               
               if (chosenGraveIdx !== null && chosenGraveIdx !== undefined) {
-                const chosenGrave = orcsInGrave[chosenGraveIdx];
-                await cleanUnitLeavingField(field[chosenField.zone][chosenField.idx], chosenField.zone);
+                const fieldUnit = field[chosenField.zone]?.[chosenField.idx];
+                if (!fieldUnit || fieldUnit.card !== chosenField.card) return;
+                const chosenGrave = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, orcsInGrave[chosenGraveIdx]);
+                if (!chosenGrave) return;
+                const cleanup = cleanUnitLeavingField(fieldUnit, chosenField.zone);
                 field[chosenField.zone][chosenField.idx] = null;
-                hand.push(chosenField.card);
-                const gIdx = graveyard.indexOf(chosenGrave);
-                if (gIdx >= 0) graveyard.splice(gIdx, 1);
-                hand.push(chosenGrave);
+                hand.push(fieldUnit.card);
                 playerBonusScore += 3;
+                await cleanup;
                 logBattle(`✨ 獸人奶奶 效果：將場上 ${chosenField.card.name} 與墓地 ${chosenGrave.name} 收回手牌，我方額外獲得 +3★ 獎勵！`);
                 if (isMultiplayer) sendFullGameStateToOpponent(false);
                 render();
@@ -26611,8 +26616,21 @@ async function xlwRecoverSamuraiCard(owner){
   if(!local&&isMultiplayer){
     const requestId='samurai:'+turn+':'+Date.now()+':'+Math.random().toString(36).slice(2);
     window.XLW_samuraiRecoveryWaiters=window.XLW_samuraiRecoveryWaiters||new Map();
-    selected=await new Promise(resolve=>{window.XLW_samuraiRecoveryWaiters.set(requestId,resolve);ws.send(JSON.stringify({action:'samurai_recover_request',requestId,cards:candidates}));});
-    window.XLW_samuraiRecoveryWaiters.delete(requestId);
+    const waiters = window.XLW_samuraiRecoveryWaiters;
+    selected = await new Promise(resolve => {
+      const finish = card => {
+        clearTimeout(timer);
+        waiters.delete(requestId);
+        resolve(card);
+      };
+      const timer = setTimeout(() => finish(null), 30000);
+      waiters.set(requestId, finish);
+      try {
+        ws.send(JSON.stringify({action: "samurai_recover_request", requestId, cards: candidates}));
+      } catch {
+        finish(null);
+      }
+    });
   }else if(local){
     const choices=candidates.map((c,i)=>({text:c.name+' ('+c.id+')',value:i}));choices.push({text:'不發動，繼續對戰',value:'cancel'});
     const choice=await showXLWChoiceModal('武士繪 戰鬥成功效果','選擇一張墓地中的妖怪村莊單位回收至手牌：',choices);
@@ -42331,11 +42349,16 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                 const chosenIdx = await showXLWChoiceModal("選擇回手的獸人單位", "選擇單位：", choices);
                 if (chosenIdx !== null && chosenIdx !== undefined) {
                   const chosenOrc = otherOrcs[chosenIdx];
+                  const fieldUnit = chosenOrc && field[chosenOrc.zone]?.[chosenOrc.idx];
+                  if (!fieldUnit || fieldUnit.card !== chosenOrc.card || field[zone]?.[idx] !== obj ||
+                      window.XLW_grandpaUsedTurn === turn) return;
+                  const cleanup = cleanUnitLeavingField(fieldUnit, chosenOrc.zone);
                   field[chosenOrc.zone][chosenOrc.idx] = null;
-                  hand.push(chosenOrc.card);
+                  hand.push(fieldUnit.card);
                   obj.atkModifier = (obj.atkModifier || 0) + 2;
                   obj.grandpaBuffExpiresTurn = turn + 2;
                   window.XLW_grandpaUsedTurn = turn;
+                  await cleanup;
                   logBattle(`✨ 獸人爺爺 效果：使場上 ${chosenOrc.card.name} 回手，獸人爺爺獲得 +2 攻擊力直到下個回合結束！`);
                   render();
                 }
