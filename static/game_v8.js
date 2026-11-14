@@ -13809,9 +13809,12 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      const hIdx = hand.indexOf(chosenHandCard);
-      if (hIdx >= 0) hand.splice(hIdx, 1);
-      deck.push(chosenHandCard);
+      const exchanged = window.XLWDuelConsistency.moveKnownCard(hand, deck, chosenHandCard);
+      if (!exchanged) {
+        graveyard.push(spellCard);
+        render();
+        return;
+      }
       shuffle(deck);
       const foundIdx = deck.findIndex(c => c && isDessertCard(c) && (c.type === "unit" || c.attack !== undefined) && (Number(c.score ?? c.stars ?? 0) || 0) === targetStars);
       if (foundIdx >= 0) {
@@ -18993,13 +18996,10 @@ async function executeTributeEffects(selectedTributes) {
             const yokaiInGrave = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
             if (yokaiInGrave.length > 0) {
               const choices = yokaiInGrave.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
-              const chosenIdx = await showXLWChoiceModal("紅小鬼棒子 效果發動", "選擇回到手牌 the 妖怪村莊單位：", choices);
+              const chosenIdx = await showXLWChoiceModal("紅小鬼棒子 效果發動", "選擇要回收到手牌的妖怪村莊單位：", choices);
               if (chosenIdx !== null && chosenIdx !== undefined) {
-                const targetCard = yokaiInGrave[chosenIdx];
-                const gIdx = graveyard.indexOf(targetCard);
-                if (gIdx >= 0) {
-                  graveyard.splice(gIdx, 1);
-                  hand.push(targetCard);
+                const targetCard = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, yokaiInGrave[chosenIdx]);
+                if (targetCard) {
                   logBattle(`紅小鬼棒子 效果：將墓地中的 ${targetCard.name} 回收到手牌。`);
                 }
               }
@@ -21415,7 +21415,6 @@ async function performSummonToSlot(zone, idx) {
         const isPlayer = zone.startsWith("player_");
         const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
         const graveList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
-        const checkZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
 
         let summonedCount = 0;
         for (let step = 0; step < 2; step++) {
@@ -21426,14 +21425,17 @@ async function performSummonToSlot(zone, idx) {
 
           let residentCard = null;
           let fromWhere = "";
+          let sourcePile;
           const exIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
           if (exIdx >= 0) {
-            residentCard = extraList.splice(exIdx, 1)[0];
+            sourcePile = extraList;
+            residentCard = sourcePile[exIdx];
             fromWhere = "額外區";
           } else {
             const grIdx = graveList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")));
             if (grIdx >= 0) {
-              residentCard = graveList.splice(grIdx, 1)[0];
+              sourcePile = graveList;
+              residentCard = sourcePile[grIdx];
               fromWhere = "墓地";
             }
           }
@@ -21457,15 +21459,15 @@ async function performSummonToSlot(zone, idx) {
               if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
                 targetSlot = validSlots[chosenIdx];
               } else {
-                if (fromWhere === "額外區") extraList.push(residentCard);
-                else graveList.push(residentCard);
                 break;
               }
             } else {
               targetSlot = validSlots[0];
             }
 
-            if (targetSlot) {
+            if (!targetSlot || field[targetSlot.zone]?.[targetSlot.idx] !== null) break;
+            residentCard = window.XLWDuelConsistency.takeKnownCard(sourcePile, residentCard);
+            if (residentCard) {
               field[targetSlot.zone][targetSlot.idx] = {
                 card: residentCard,
                 tapped: false,
@@ -21478,13 +21480,15 @@ async function performSummonToSlot(zone, idx) {
               summonedCount++;
               logBattle(`🍬【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
               render();
+            } else {
+              break;
             }
           } else {
             break;
           }
         }
         if (summonedCount === 0) {
-          logBattle(`🍬【糖果女孩】立即效果：額外區及墓地無【糖果居民】可供召喚。`);
+          logBattle(`🍬【糖果女孩】立即效果：未特殊召喚【糖果居民】。`);
         }
         if (typeof renderExtraDecks === "function") renderExtraDecks();
         if (isMultiplayer) sendFullGameStateToOpponent();
@@ -41795,6 +41799,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                   window.XLW_emperorTapResolve = resolve;
                 });
                 
+                if (!selectedTappedUnit) return;
                 // 2. 點選召喚格子階段
                 window.XLW_emperorSlotSelecting = true;
                 window.XLW_emperorAllowedSlots = allowedSlots;
@@ -41805,6 +41810,9 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                   window.XLW_emperorSlotResolve = resolve;
                 });
                 
+                if (!chosenSlot || field[zone]?.[idx] !== obj || obj.emperorEffectUsedTurn === turn ||
+                    field[selectedTappedUnit.zone]?.[selectedTappedUnit.idx] !== selectedTappedUnit.unit ||
+                    selectedTappedUnit.unit.tapped || field[chosenSlot.zone]?.[chosenSlot.idx] !== null) return;
                 const targetZone = chosenSlot.zone;
                 const targetIdx = chosenSlot.idx;
                 
@@ -41813,6 +41821,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                   await xlwOnPlayerUnitTapped(selectedTappedUnit.zone, selectedTappedUnit.idx);
                 }
                 
+                if (field[targetZone]?.[targetIdx] !== null) return;
                 let terracottaCard = playerExtraDeck.find(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
                 if (terracottaCard) {
                   playerExtraDeck.splice(playerExtraDeck.indexOf(terracottaCard), 1);
@@ -42283,10 +42292,9 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                 const choices = equipInGrave.map((c, idx) => ({ text: `${c.name} (墓地)`, value: idx }));
                 const chosenIdx = await showXLWChoiceModal("選擇回收的裝備卡", "選擇裝備卡：", choices);
                 if (chosenIdx !== null && chosenIdx !== undefined) {
-                  const chosenCard = equipInGrave[chosenIdx];
-                  const gIdx = graveyard.indexOf(chosenCard);
-                  if (gIdx >= 0) graveyard.splice(gIdx, 1);
-                  hand.push(chosenCard);
+                  if (playerBonusScore < 2 || window.XLW_weaponMerchantUsedTurn === turn) return;
+                  const chosenCard = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, equipInGrave[chosenIdx]);
+                  if (!chosenCard) return;
                   playerBonusScore -= 2;
                   window.XLW_weaponMerchantUsedTurn = turn;
                   logBattle(`✨ 獸人武器商 效果：消費 2★ 獎勵，將墓地的裝備卡 ${chosenCard.name} 回收至手牌！`);
@@ -48193,11 +48201,9 @@ function showGraveyardDetailModal(title, graveList) {
       if (phase === "召喚階段" && graveList === graveyard && playerBonusScore > 0) {
         if (card.id === "R-ORC-0038" || card.name?.includes("初心獸人")) {
           const confirm = await showXLWConfirm("初心獸人 效果發動", "是否消耗 1 點我方額外獎勵，將墓地中的【初心獸人】回收至手牌？");
-          if (confirm) {
+          if (confirm && phase === "召喚階段" && playerBonusScore > 0 &&
+              window.XLWDuelConsistency.moveKnownCard(graveyard, hand, card)) {
             playerBonusScore -= 1;
-            const idx = graveyard.indexOf(card);
-            if (idx >= 0) graveyard.splice(idx, 1);
-            hand.push(card);
             logBattle("✨ 初心獸人 效果：消耗 1 點獎勵分，將墓地中的【初心獸人】回收至手牌！");
             render();
             overlay.remove();
