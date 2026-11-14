@@ -1274,3 +1274,78 @@ body.xlw-royal-ui #xlwFixedTopRightActionBar button:active:not(:disabled),
   filter: saturate(.25) brightness(.75) !important;
   cursor: not-allowed;
 }
+
+/* Open arena HUD. The board and printed playmats keep their shared geometry. */
+html body.xlw-royal-ui.xlw-game-started {
+  --arena-edge: max(12px, env(safe-area-inset-right), env(safe-area-inset-left));
+  --arena-score: clamp(100px, 12vw, 155px);
+  --arena-command: clamp(132px, 15vw, 190px);
+  --arena-bottom: max(12px, env(safe-area-inset-bottom));
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed {
+  inset: auto !important; width: 0 !important; height: 0 !important; min-width: 0 !important;
+  border: 0 !important; padding: 0 !important; background: none !important;
+  box-shadow: none !important; transform: none !important; overflow: visible !important;
+  pointer-events: none;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed::before,
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed::after,
+html body.xlw-royal-ui.xlw-game-started .score-board-header-left { display: none !important; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed :is(.score-board-header, .score-badge-section) { display: contents !important; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed :is(.score-badge-card, .score-board-turn-badge, .xlw-arena-score-note) {
+  position: fixed !important; margin: 0 !important; pointer-events: auto;
+  box-sizing: border-box;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed :is(.score-badge-card.player, .score-badge-card.enemy) {
+  width: var(--arena-score) !important; padding: 5px 8px !important; gap: 2px !important;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.player {
+  bottom: var(--arena-bottom); left: var(--arena-edge);
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.enemy {
+  top: 58px; right: var(--arena-edge);
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-board-turn-badge {
+  left: var(--arena-edge); top: 12px;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-gem-val { font-size: clamp(20px, 2.6vw, 34px) !important; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-bonus-badge { min-width: 0 !important; padding: 2px 4px !important; }
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.puzzle-goal-badge {
+  width: 155px; left: var(--arena-edge); top: 46px;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .call-game-warning-badge {
+  width: 156px; left: var(--arena-edge); bottom: calc(var(--arena-bottom) + 86px);
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .xlw-arena-score-note {
+  width: 128px; left: var(--arena-edge); top: 132px;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard {
+  inset: auto var(--arena-edge) 53% auto !important;
+  width: var(--arena-command) !important; min-height: 0 !important;
+  padding: 6px 8px !important; border-radius: 24px !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-hard-help { display: none !important; }
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel {
+  inset: auto var(--arena-edge) var(--arena-bottom) auto !important;
+  width: var(--arena-command) !important; min-width: 0 !important; height: auto !important;
+  transform: none !important; gap: 5px !important; padding: 0 !important;
+  background: none !important; border: 0 !important; box-shadow: none !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel::before,
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel::after,
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel .stable-action-choice-tip,
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel #stableActionCancel:disabled { display: none !important; }
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel .stable-action-choice-group {
+  border: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel :is(#stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) {
+  min-height: 34px !important; padding: 3px !important; gap: 2px !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel :is(#stableActionTactical, #stableActionAttack, #stableActionConfirm, #stableActionCancel) .btn-icon {
+  width: 13px !important; height: 13px !important;
+}
+html body.xlw-royal-ui.xlw-game-started #stableActionPanel:not([data-tribute]) #stableActionConfirm:disabled { display:none !important; }
+@media (max-height: 450px), (max-width: 500px) and (orientation: portrait) {
+  html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.enemy { top: 42px; }
+  html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard { bottom: 51% !important; }
+}

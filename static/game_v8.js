@@ -42030,7 +42030,7 @@ function renderScore() {
 
     <!-- 🐐 山羊族 黑洞羊奇點狀態 -->
     ${(window.XLW_playerBlackHoleLane || 0) > 0 ? `
-      <div style="background: linear-gradient(135deg, rgba(88,28,135,0.7), rgba(49,46,129,0.7)); border: 1px solid #a855f7; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #e9d5ff;">
+      <div class="xlw-arena-score-note" style="background: linear-gradient(135deg, rgba(88,28,135,0.7), rgba(49,46,129,0.7)); border: 1px solid #a855f7; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #e9d5ff;">
         <span>🌌 <b>黑洞羊躍遷</b></span>
         <span style="font-weight: 900; color: #facc15;">星星戰線 ${window.XLW_playerBlackHoleLane}/5</span>
       </div>
@@ -42083,6 +42083,7 @@ function renderScore() {
     </div>
   `;
 
+  adjustBoardScale();
   const topResetBtn = $("xlwPuzzleResetTopbarBtn");
   if (topResetBtn) {
     topResetBtn.style.setProperty("display", window.XLW_isPuzzleMode ? "inline-flex" : "none", "important");
@@ -42128,6 +42129,7 @@ function renderStablePanel() {
     return div;
   })();
 
+  panel.toggleAttribute("data-tribute", selectedHandForTribute !== null || Boolean(tributeWaitingPosition));
   panel.style.touchAction = "manipulation";
   window.XLWTouchActions?.bind(panel);
   const setContent = markup => window.XLWBattleFlow.renderPanel(panel, markup);
@@ -42838,6 +42840,35 @@ function xlwFitBoardAroundToolbar(bounds, space, toolbar, gap) {
   return candidates.sort((a, b) => b.scale - a.scale)[0] || fit;
 }
 
+// Fit the complete battlefield in a clear rectangle between the corner controls.
+function xlwFitOpenArena(bounds, space, obstacles, gap) {
+  const lefts = [space.left], rights = [space.right];
+  const tops = [space.top], bottoms = [space.bottom];
+  for (const rect of obstacles) {
+    if (rect.right + gap > space.left && rect.right + gap < space.right) lefts.push(rect.right + gap);
+    if (rect.left - gap > space.left && rect.left - gap < space.right) rights.push(rect.left - gap);
+    if (rect.bottom + gap > space.top && rect.bottom + gap < space.bottom) tops.push(rect.bottom + gap);
+    if (rect.top - gap > space.top && rect.top - gap < space.bottom) bottoms.push(rect.top - gap);
+  }
+  let best = null;
+  let bestOffset = Infinity;
+  for (const left of lefts) for (const right of rights) for (const top of tops) for (const bottom of bottoms) {
+    if (right <= left || bottom <= top) continue;
+    const fit = xlwFitBoardRect(bounds, {left, right, top, bottom});
+    if (best && fit.scale < best.scale - 1e-7) continue;
+    const l = fit.x + bounds.left * fit.scale, r = fit.x + bounds.right * fit.scale;
+    const t = fit.y + bounds.top * fit.scale, b = fit.y + bounds.bottom * fit.scale;
+    if (obstacles.some(o => r > o.left - gap + 1e-7 && l < o.right + gap - 1e-7 &&
+       b > o.top - gap + 1e-7 && t < o.bottom + gap - 1e-7)) continue;
+    const offset = Math.abs(l + r - space.left - space.right) + Math.abs(b - space.bottom) / 4;
+    if (!best || fit.scale > best.scale + 1e-7 || offset < bestOffset) {
+      best = fit;
+      bestOffset = offset;
+    }
+  }
+  return best;
+}
+
 // Keep the hand-side edge and horizontal center pinned while enlarging the board.
 function xlwEnlargeBoardFit(fit, bounds, pieces, obstacles, width, height) {
   const center = (bounds.left + bounds.right) / 2;
@@ -42922,15 +42953,20 @@ function adjustBoardScale() {
       bottom: (Math.max(...pieces.map(r => r.bottom)) - origin.top) / currentScale + 16
     };
     const gap = compact ? 8 : 12;
-    const score = logicalRect($("scoreBadgeFixed"));
+    const openArena = document.body.classList.contains("xlw-game-started");
+    const scoreNodes = openArena
+      ? [...document.querySelectorAll("#scoreBadgeFixed .score-board-turn-badge, #scoreBadgeFixed .score-badge-card, #scoreBadgeFixed .xlw-arena-score-note")]
+      : [$("scoreBadgeFixed")];
+    const scores = scoreNodes.map(logicalRect).filter(Boolean);
+    const score = scores[0];
     const commands = logicalRect($("stableActionPanel"));
     const phasePanel = logicalRect($("phaseDisplayPanelHard"));
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
     const hand = logicalRect(document.querySelector(".hand-panel"));
     const space = {
-      left: Math.max(gap, score ? score.right + gap : gap),
-      right: Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
+      left: openArena ? gap : Math.max(gap, score ? score.right + gap : gap),
+      right: openArena ? width - gap : Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
       top: Math.max(gap, enemyHand ? enemyHand.bottom : gap),
       // A shallow overlap matches the reference fan without moving any field zones.
       bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
@@ -42943,14 +42979,15 @@ function adjustBoardScale() {
       top: (piece.top - origin.top) / currentScale,
       bottom: (piece.bottom - origin.top) / currentScale
     }));
-    const obstacles = [score, commands, phasePanel, toolbar, enemyHand].filter(Boolean);
+    const obstacles = [...scores, commands, phasePanel, toolbar, enemyHand].filter(Boolean);
     const anchorBounds = {...bounds, bottom: Math.max(...fieldPieces.map(piece => piece.bottom))};
-    const fit = xlwEnlargeBoardFit(baseFit, anchorBounds, fieldPieces, obstacles, width, height);
+    const fit = (openArena && xlwFitOpenArena(bounds, space, obstacles, gap))
+      || xlwEnlargeBoardFit(baseFit, anchorBounds, fieldPieces, obstacles, width, height);
     // Align the visual fans to lane 3, including layouts with asymmetric side zones.
     // Keep each hand at its baseline position while the field expands around its center.
     const laneCenter = selector => {
       const lane = logicalRect(board.querySelector(selector));
-      return lane ? baseFit.x + (((lane.left + lane.right) / 2 - origin.left) / currentScale) * baseFit.scale
+      return lane ? fit.x + (((lane.left + lane.right) / 2 - origin.left) / currentScale) * fit.scale
         : (space.left + space.right) / 2;
     };
     const playerHandCenter = laneCenter(".player-back .slot:nth-child(3)");
