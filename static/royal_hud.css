@@ -1415,3 +1415,13 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:not(.has-card) {
   background-color: #14213126;
   text-shadow: 0 1px 3px #03070e, 0 0 5px #03070e;
 }
+
+#xlwArenaTerrain {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.xlw-game-started #xlwArenaTerrain { display: block; }
