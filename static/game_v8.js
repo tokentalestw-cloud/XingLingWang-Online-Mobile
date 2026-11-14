@@ -5211,15 +5211,23 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     }
     // 布丁魔術師 (R-CCS-0009 / SSR-CCS-0009): 開盤使敵方 1 個非小旅人變為小旅人
     else if (revealed.id === "R-CCS-0009" || revealed.id === "SSR-CCS-0009" || revealed.name?.includes("布丁魔術師")) {
-      const oppPrefix = isPlayer ? "enemy_" : "player_";
-      const oppNonTravelers = [];
-      for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
-        (field[oz] || []).forEach((u, i) => { if (u && !window.xlwIsLittleTraveler(u, oz, i)) oppNonTravelers.push({ zone: oz, idx: i, unit: u }); });
-      }
-      if (oppNonTravelers.length > 0) {
-        const target = oppNonTravelers[0];
-        target.unit.card = { id: "TOKEN_TRAVELER", name: "小旅人", type: "unit", attack: "1", score: 1, tribute: 0, deck: "特殊旅人", faction: "特殊旅人" };
-        logBattle(`🍮【布丁魔術師】開盤魔術：將敵方【${target.unit.card.name}】變身為【小旅人】！`);
+      const prefix = isPlayer ? "enemy_" : "player_";
+      const eligible = (unit, zone, idx) => unit && !window.xlwIsLittleTraveler(unit, zone, idx) &&
+        !window.isUnitEffectImmune?.(unit, zone, idx);
+      const targets = ["front", "back"].flatMap(row => {
+        const zone = prefix + row;
+        return (field[zone] || []).flatMap((unit, idx) => eligible(unit, zone, idx) ? [{zone, idx, unit}] : []);
+      });
+      if (targets.length) {
+        const pick = isPlayer ? await showXLWChoiceModal("布丁魔術師", "點選要變成小旅人的敵方單位。",
+          targets.map(({zone, idx, unit}, value) => ({text: unit.card.name, value, boardTarget: {zone, idx}})),
+          {boardOnly: true}) : 0;
+        const target = pick == null ? null : targets[pick];
+        if (target && field[target.zone][target.idx] === target.unit && eligible(target.unit, target.zone, target.idx)) {
+          const original = target.unit.card;
+          target.unit.card = {...structuredClone(LITTLE_TRAVELER), _xlwInstanceId: original._xlwInstanceId, creator: original.creator};
+          logBattle(`【布丁魔術師】將【${original.name}】變成小旅人。`);
+        }
       }
     }
     // 狐狸魔術師 (CCS-0018 / SSR-CCS-0018): 墓地回收 1 張法力為 X 的馬戲團魔法卡
