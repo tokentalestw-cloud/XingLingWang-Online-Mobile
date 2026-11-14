@@ -18083,20 +18083,13 @@ window.xlwReturnUnitToHand = async function(zone, idx) {
   }
 };
 
-window.xlwAddGraveyardCardToHand = function(card, isPlayer) {
-  const grave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
-  const gIdx = grave.indexOf(card);
-  if (gIdx >= 0) {
-    grave.splice(gIdx, 1);
-  }
-  if (isPlayer) {
-    hand.push(card);
-  } else {
-    if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-    window.XLW_ENEMY.hand.push(card);
-  }
-  
-  if (card && (card.id === "R-ORC-0049" || card.name?.includes("獸人弟弟"))) {
+window.xlwAddGraveyardCardToHand = function(selected, isPlayer) {
+  const grave = isPlayer ? graveyard : window.XLW_ENEMY.grave;
+  const destination = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
+  const card = window.XLWDuelConsistency.moveKnownCard(grave, destination, selected);
+  if (!card) return null;
+
+  if (card.id === "R-ORC-0049" || card.name?.includes("獸人弟弟")) {
     if (isPlayer) {
       playerBonusScore += 2;
       logBattle("✨ 獸人弟弟 墓地回手效果：我方額外獎勵 +2★！");
@@ -18107,6 +18100,7 @@ window.xlwAddGraveyardCardToHand = function(card, isPlayer) {
     renderScore();
   }
   render();
+  return card;
 };
 
 window.xlwTriggerOrcUntapSynergy = function(isPlayer) {
@@ -22981,10 +22975,8 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           const choices = eligible.map((c, i) => ({ text: c.name, value: i }));
           const chosenIdx = await showXLWChoiceModal("迷你骨灰 效果", "選擇一張手牌中無需祭品的亡靈單位送入墓地：", choices);
           if (chosenIdx !== null && chosenIdx !== undefined) {
-            const chosenCard = eligible[chosenIdx];
-            hand.splice(hand.indexOf(chosenCard), 1);
-            graveyard.push(chosenCard);
-            logBattle(`✨ 迷你骨灰 效果：將手牌中的【${chosenCard.name}】送入墓地。`);
+            const chosenCard = window.XLWDuelConsistency.moveKnownCard(hand, graveyard, eligible[chosenIdx]);
+            if (chosenCard) logBattle(`✨ 迷你骨灰 效果：將手牌中的【${chosenCard.name}】送入墓地。`);
           }
         } else {
           logBattle("迷你骨灰 效果：手牌中無無需祭品的亡靈單位。");
@@ -40112,8 +40104,10 @@ function renderField() {
               const confirmCheck = await showXLWConfirm("【甜點推網紅】效果發動", "主要階段限一次，是否查看你牌庫底 1 張牌？");
               if (confirmCheck) {
                 const bottomCard = myDeck[0];
+                if (!bottomCard || field[zone]?.[idx] !== obj || obj.influencerUsedTurn === turn) return;
                 obj.influencerUsedTurn = turn;
                 const putOnTop = await showXLWConfirm("【甜點推網紅】查看牌庫底", `牌庫底卡牌為：【${bottomCard.name}】\n是否將其移到牌庫頂？`);
+                if (myDeck[0] !== bottomCard) return;
                 if (putOnTop) {
                   const cardMoved = myDeck.shift();
                   myDeck.push(cardMoved);
@@ -49090,9 +49084,8 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
           const orcChoices = orcsInGrave.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
           const chosenOrcIdx = await showXLWChoiceModal("選擇墓地獸人", "請選擇一個獸人回收至手牌：", orcChoices);
           if (chosenOrcIdx !== null && chosenOrcIdx !== undefined) {
-            const targetOrc = orcsInGrave[chosenOrcIdx];
-            window.xlwAddGraveyardCardToHand(targetOrc, true);
-            logBattle(`✨ 死靈法師獸人 莫亞 效果：將墓地中的【${targetOrc.name}】回收至手牌。`);
+            const targetOrc = window.xlwAddGraveyardCardToHand(orcsInGrave[chosenOrcIdx], true);
+            if (targetOrc) logBattle(`✨ 死靈法師獸人 莫亞 效果：將墓地中的【${targetOrc.name}】回收至手牌。`);
           } else {
             baseReward += 2;
             hasRewardEffect = true;
@@ -49106,9 +49099,9 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
           baseReward += 2;
           hasRewardEffect = true;
         } else {
-          const targetOrc = orcsInGrave[Math.floor(Math.random() * orcsInGrave.length)];
-          window.xlwAddGraveyardCardToHand(targetOrc, false);
-          logBattle(`✨ 對手 死靈法師獸人 莫亞 效果：將墓地中的【${targetOrc.name}】回收至對手手牌。`);
+          const selected = orcsInGrave[Math.floor(Math.random() * orcsInGrave.length)];
+          const targetOrc = window.xlwAddGraveyardCardToHand(selected, false);
+          if (targetOrc) logBattle(`✨ 對手 死靈法師獸人 莫亞 效果：將墓地中的【${targetOrc.name}】回收至對手手牌。`);
         }
       }
     } else {
@@ -52888,11 +52881,12 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
       const u = field[z]?.[i];
       if (u && u.card && (u.card.id === "R-ORC-0066" || u.card.name?.includes("傭兵獸人")) && !window.isUnitSilenced(u, z, i)) {
         const doRecall = isPlayerSide ? await showXLWConfirm("【傭兵獸人】效果發動", "主要階段開始時限一次，是否將【傭兵獸人】收回手牌？") : true;
-        if (doRecall) {
-          const recCard = structuredClone(u.card);
+        if (doRecall && field[z]?.[i] === u) {
+          const cleanup = cleanUnitLeavingField(u, z);
           field[z][i] = null;
-          if (isPlayerSide) hand.push(recCard);
-          else (window.XLW_ENEMY?.hand || []).push(recCard);
+          const destination = isPlayerSide ? hand : (window.XLW_ENEMY.hand ||= []);
+          destination.push(u.card);
+          await cleanup;
           logBattle(`✨【傭兵獸人】主要階段效果發動：安全收回手牌！`);
           render();
         }
