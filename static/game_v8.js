@@ -1761,6 +1761,8 @@ function newGame() {
   // 重置標記
   turn = 0;
   window.XLW_playerTurnDrawnAt=undefined;
+  window.XLW_playerAudienceTurn = undefined;
+  window.XLW_enemyAudienceTurn = undefined;
   window.XLW_peerCollectionBase=undefined;
   window.XLWDuelConsistency?.reset();
   window.XLW_playerNeedsToDraw = false;
@@ -1887,10 +1889,10 @@ function showRevealedCardModal(card, ownerName) {
 
 // 智慧的般若/憤怒的般若：我方回合開始抽牌異步處理
 async function performPlayerTurnStartDraw() {
+  if(isMultiplayer){if(window.XLW_playerTurnDrawnAt===turn){window.XLW_playerNeedsToDraw=false;return;}window.XLW_playerTurnDrawnAt=turn;}
   if (typeof window.xlwResolveExpansionTurnStart === "function") {
     try { await window.xlwResolveExpansionTurnStart(true); } catch(e) { console.error("Error in xlwResolveExpansionTurnStart:", e); }
   }
-  if(isMultiplayer){if(window.XLW_playerTurnDrawnAt===turn){window.XLW_playerNeedsToDraw=false;return;}window.XLW_playerTurnDrawnAt=turn;}
 
   // 草叢喵 墓地回牌組效果
   const catIndex = graveyard.findIndex(c => c && (c.id === "R-CAT-0027" || c.name.includes("草叢喵")));
@@ -7342,18 +7344,22 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
 
   // 糖果拳 (CND-0020) 臨時攻擊力加成
-  if (unit.candyPunchExpiresTurn && turn >= unit.candyPunchExpiresTurn) {
+  if ((unit.tempCandyPunchExpireTurn ?? unit.candyPunchExpiresTurn) < turn ||
+      ((unit.tempCandyPunchExpireTurn ?? unit.candyPunchExpiresTurn) === turn && phase === "結束階段")) {
     delete unit.tempCandyPunchBuff;
     delete unit.candyPunchExpiresTurn;
+    delete unit.tempCandyPunchExpireTurn;
   }
   if (unit.tempCandyPunchBuff) {
     baseAtk += unit.tempCandyPunchBuff;
   }
 
   // 價值拳 臨時攻擊力加成
-  if (unit.valuePunchExpiresTurn && turn >= unit.valuePunchExpiresTurn) {
+  if ((unit.tempValuePunchExpireTurn ?? unit.valuePunchExpiresTurn) < turn ||
+      ((unit.tempValuePunchExpireTurn ?? unit.valuePunchExpiresTurn) === turn && phase !== "防守階段" && phase !== "抽牌階段")) {
     delete unit.tempValuePunchBuff;
     delete unit.valuePunchExpiresTurn;
+    delete unit.tempValuePunchExpireTurn;
   }
   if (unit.tempValuePunchBuff) {
     baseAtk += unit.tempValuePunchBuff;
@@ -7659,8 +7665,9 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     if (hasAngel2) baseAtk += 4;
   }
 
-  // 臨時攻擊力加成 (爪剪、枴杖糖寶劍、氣功等)
+  // 臨時攻擊力加成 (爪剪、氣功等)
   if (unit.tempAtkBonus) baseAtk += unit.tempAtkBonus;
+  if (unit.candySwordBonusTurn === turn && phase !== "結束階段") baseAtk += unit.candySwordBonus || 0;
 
   return baseAtk + rainbowBonus;
 }
@@ -12456,8 +12463,11 @@ async function castSpell(handIndex) {
       if (candies.length > 0) {
         const choices = candies.map((c, i) => ({ text: `${c.name} (${c.zone.includes("front") ? "前排" : "後排"}${c.idx + 1})`, value: i }));
         const pick = await showXLWChoiceModal("選擇糖劍加成目標", "請選擇 +3 攻擊力的甜點單位：", choices);
-        if (pick !== null && pick !== undefined) {
-          candies[pick].unit.tempAtkBonus = (candies[pick].unit.tempAtkBonus || 0) + 3;
+        const target = candies[pick];
+        if (target && field[target.zone]?.[target.idx] === target.unit) {
+          const unit = target.unit;
+          unit.candySwordBonus = (unit.candySwordBonusTurn === turn ? unit.candySwordBonus || 0 : 0) + 3;
+          unit.candySwordBonusTurn = turn;
           logBattle(`🍭🗡️【枴杖糖寶劍】甜心利刃：【${candies[pick].name}】攻擊力 +3 直到回合結束！`);
         }
       }
@@ -51261,6 +51271,8 @@ function saveLocalGameState() {
       enemy_deckName: window.XLW_ENEMY && window.XLW_ENEMY.deckName ? window.XLW_ENEMY.deckName : "",
       gameInProgress: window.XLW_gameInProgress || false,
       XLW_playerTurnDrawnAt: window.XLW_playerTurnDrawnAt,
+      XLW_playerAudienceTurn: window.XLW_playerAudienceTurn,
+      XLW_enemyAudienceTurn: window.XLW_enemyAudienceTurn,
       XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
       XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
       turnOrder: window.XLWTurnOrder?.snapshot() || null,
@@ -51348,6 +51360,8 @@ window.xlwApplySavedStateObject = function(s) {
     
     window.XLW_gameInProgress = typeof s.gameInProgress === 'boolean' ? s.gameInProgress : true;
     window.XLW_playerTurnDrawnAt=s.XLW_playerTurnDrawnAt;
+    window.XLW_playerAudienceTurn = s.XLW_playerAudienceTurn;
+    window.XLW_enemyAudienceTurn = s.XLW_enemyAudienceTurn;
     window.XLW_playerNeedsToDraw = Boolean(s.XLW_playerNeedsToDraw);
     window.XLW_enemyNeedsToDraw = Boolean(s.XLW_enemyNeedsToDraw);
     if (typeof s.XLW_coinTossFirstGo === "boolean") window.XLW_coinTossFirstGo = s.XLW_coinTossFirstGo;

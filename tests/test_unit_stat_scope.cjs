@@ -36,6 +36,20 @@ module.exports = (async () => {
     assert.equal(g.getUnitAtk(u, zone, 2), 5);
     assert.equal(g.getUnitAtk(u), 5);
     tests += 2;
+    Object.assign(u, {
+      tempValuePunchBuff: 4, tempValuePunchExpireTurn: g.turn + 1,
+      tempCandyPunchBuff: 3, tempCandyPunchExpireTurn: g.turn + 1,
+      candySwordBonus: 3, candySwordBonusTurn: g.turn
+    });
+    g.phase = '防守階段';
+    assert.equal(g.getUnitAtk(u, zone, 2), 15);
+    g.turn++;
+    assert.equal(g.getUnitAtk(u, zone, 2), 12);
+    g.phase = '召喚階段';
+    assert.equal(g.getUnitAtk(u, zone, 2), 8);
+    g.phase = '結束階段';
+    assert.equal(g.getUnitAtk(u, zone, 2), 5);
+    tests += 4;
     u = unit('SR-SPT-0023', '火焰旅人');
     u.attacking = true;
     g.field[zone][2] = u;
