@@ -1439,7 +1439,7 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
   background:
     url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat,
     radial-gradient(ellipse at 52% 44%, #1d344c, #090e1b 78%) center / 91% 84% no-repeat;
-  filter: saturate(.78) brightness(.88) drop-shadow(0 24px 19px #02050ce0);
+  filter: saturate(.60) brightness(.80) drop-shadow(0 24px 19px #02050ce0);
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat {
   border-color: #10131c !important;
@@ -1493,4 +1493,131 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
 .xlw-stellar-background path { opacity: .54; }
 @media (prefers-reduced-motion: reduce) {
   html body.xlw-royal-ui.xlw-game-started .battle-cell { transition: none !important; }
+}
+
+
+/* The star-ring altar keeps the playable grid and its hit areas in place. */
+html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat {
+  background-image: radial-gradient(ellipse at 50% 32%, #243247, #0c1424 92%) !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat::before {
+  background: linear-gradient(90deg, #11203312, #101a2c 18% 82%, #11203312),
+    var(--altar-art) center / cover no-repeat !important;
+  opacity: .38;
+}
+.xlw-game-started #boardWrap :is(.enemy-back, .enemy-front) { --altar-trim: #a68065; }
+.xlw-game-started #boardWrap :is(.player-back, .player-front) { --altar-trim: #6093a4; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot {
+  border-color: var(--altar-trim);
+  background-image:
+    radial-gradient(ellipse, #999ec004 30%, #070e1d87),
+    repeating-linear-gradient(126deg, #9ca9bd07 0 1px, transparent 1px 8px),
+    linear-gradient(145deg, #29384b, #161f2e);
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card) {
+  font-size: 16px !important;
+  color: #bac5d4 !important;
+}
+.xlw-game-started #boardWrap .slot:not(.has-card)::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid var(--altar-trim);
+  border-radius: 6px;
+  opacity: .32;
+  pointer-events: none;
+}
+.xlw-game-started #boardWrap .slot:not(.has-card):is(.xlw-hand-front-legal, .xlw-direct-board-target)::before {
+  opacity: .9;
+  border-color: #b5f4ff;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .slot.xlw-hand-front-legal {
+  border-color: #9ae8ff !important;
+  box-shadow: inset 0 0 17px #57d6ec82, 0 0 16px #69ddff9e !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-line-strip::before {
+  inset: 50% 0 auto;
+  height: 7px;
+  transform: translateY(-50%);
+  background: linear-gradient(#c3a782, #4a3e38 50%, #151c28);
+  border: 0;
+  box-shadow: 0 2px 4px #03070b;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell:not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell) {
+  --altar-star: #d5b685;
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell:not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 50% auto auto 50%;
+  width: 59px;
+  height: 51px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid var(--altar-star);
+  background: radial-gradient(ellipse at 50% 26%, #344258, #090f1a 76%);
+  box-shadow: inset 0 2px #ffe4b24a, 0 3px 6px #02050b;
+  pointer-events: none;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell.line-has-attacker,
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell[data-observatory-impact] {
+  --altar-star: #93edff;
+  filter: drop-shadow(0 0 8px #72dbffc0);
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-cell[data-observatory-impact] {
+  --altar-star: #ffe0a1;
+  filter: drop-shadow(0 0 9px #ffc878);
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.enemy {
+  right: auto;
+  left: var(--arena-edge);
+  top: 19%;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card.player {
+  bottom: 17%;
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-gem-val {
+  font-size: clamp(23px, 3vw, 41px) !important;
+}
+html body.xlw-royal-ui.xlw-game-started .xlw-stellar-background svg { opacity: .45; }
+
+html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(1):is(.xlw-hand-front-legal, .xlw-defense-target, .xlw-route-target, .xlw-direct-board-target))
+  .battle-cell:nth-child(1):not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell, [data-observatory-impact]) {
+  --altar-star: #a6eeff;
+  color: #e9fbff !important;
+  filter: drop-shadow(0 0 8px #78deffac);
+}
+
+html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(2):is(.xlw-hand-front-legal, .xlw-defense-target, .xlw-route-target, .xlw-direct-board-target))
+  .battle-cell:nth-child(2):not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell, [data-observatory-impact]) {
+  --altar-star: #a6eeff;
+  color: #e9fbff !important;
+  filter: drop-shadow(0 0 8px #78deffac);
+}
+
+html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(3):is(.xlw-hand-front-legal, .xlw-defense-target, .xlw-route-target, .xlw-direct-board-target))
+  .battle-cell:nth-child(3):not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell, [data-observatory-impact]) {
+  --altar-star: #a6eeff;
+  color: #e9fbff !important;
+  filter: drop-shadow(0 0 8px #78deffac);
+}
+
+html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(4):is(.xlw-hand-front-legal, .xlw-defense-target, .xlw-route-target, .xlw-direct-board-target))
+  .battle-cell:nth-child(4):not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell, [data-observatory-impact]) {
+  --altar-star: #a6eeff;
+  color: #e9fbff !important;
+  filter: drop-shadow(0 0 8px #78deffac);
+}
+
+html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(5):is(.xlw-hand-front-legal, .xlw-defense-target, .xlw-route-target, .xlw-direct-board-target))
+  .battle-cell:nth-child(5):not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell, [data-observatory-impact]) {
+  --altar-star: #a6eeff;
+  color: #e9fbff !important;
+  filter: drop-shadow(0 0 8px #78deffac);
 }
