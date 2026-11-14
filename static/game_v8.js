@@ -3498,11 +3498,9 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
     }
     if (activate) {
       const exileList = isPlayer ? playerExileZone : enemyExileZone;
-      const eIdx = exileList.indexOf(card);
-      if (eIdx >= 0) exileList.splice(eIdx, 1);
-      
-      const deckList = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
-      deckList.push(card);
+      const deckList = isPlayer ? deck : window.XLW_ENEMY.deck;
+      const returned = window.XLWDuelConsistency.moveKnownCard(exileList, deckList, card);
+      if (!returned) return true;
       shuffle(deckList);
       logBattle(`✨【惡靈幫騎士】效果：改為洗回牌庫！`);
 
@@ -3514,10 +3512,8 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
           const picked = await showXLWChoiceModal("惡靈幫騎士 檢索不死族", "請選擇送入墓地的不死族單位：", choices);
           if (picked !== null && picked !== undefined) chosen = undeadInDeck[picked];
         }
-        const dIdx = deckList.indexOf(chosen);
-        if (dIdx >= 0) deckList.splice(dIdx, 1);
-        graveList.push(chosen);
-        logBattle(`✨【惡靈幫騎士】效果：從牌庫將【${chosen.name}】送入墓地！`);
+        const moved = window.XLWDuelConsistency.moveKnownCard(deckList, graveList, chosen);
+        if (moved) logBattle(`✨【惡靈幫騎士】效果：從牌庫將【${moved.name}】送入墓地！`);
         render();
       }
     }
@@ -3534,14 +3530,15 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
         const picked = await showXLWChoiceModal("地雷骷 效果發動", "選擇敵方墓地 1 個單位將其除外：", choices);
         if (picked !== null && picked !== undefined) target = oppUnits[picked];
       }
-      const ogIdx = oppGrave.indexOf(target);
-      if (ogIdx >= 0) oppGrave.splice(ogIdx, 1);
-      exileCard(target, isPlayer ? "enemy" : "player");
-      if (isPlayer) playerBonusScore += 1;
-      else enemyBonusScore += 1;
-      renderScore();
-      logBattle(`💣【地雷骷】效果發動：除外敵方墓地的【${target.name}】，獲得 +1★ 獎勵！`);
-      render();
+      const exiled = window.XLWDuelConsistency.takeKnownCard(oppGrave, target);
+      if (exiled) {
+        exileCard(exiled, isPlayer ? "enemy" : "player");
+        if (isPlayer) playerBonusScore += 1;
+        else enemyBonusScore += 1;
+        renderScore();
+        logBattle(`💣【地雷骷】效果發動：除外敵方墓地的【${exiled.name}】，獲得 +1★ 獎勵！`);
+        render();
+      }
     }
   }
 
@@ -20549,8 +20546,7 @@ async function performSummonToSlot(zone, idx) {
               logBattle(`💎【蒸汽能量方塊】能量超頻！消耗 ${chosenCost} 點能量，獲得 +${chosenCost}★ 獎勵！`);
               renderScore();
             }
-          } else {
-            window.xlwConsumeEnergy(currentEnergy, false);
+          } else if (window.xlwConsumeEnergy(currentEnergy, false)) {
             enemyBonusScore += currentEnergy;
             logBattle(`💎 對手【蒸汽能量方塊】消耗 ${currentEnergy} 點能量，獲得 +${currentEnergy}★ 獎勵！`);
             renderScore();
