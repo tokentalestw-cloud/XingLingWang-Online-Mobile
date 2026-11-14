@@ -31,9 +31,21 @@ module.exports = (async () => {
   vm.runInContext(section("function shuffle(arr)", "function draw(n)"), context);
   vm.runInContext("async function summon(card, zone) {" +
     section("// 🎪 馬戲團好夥伴 (R-CCS-0026", "// 🦀 討拍旅人 火野貝") + "}", context);
+  const identity = fs.readFileSync(path.join(__dirname, "../static/duel_consistency.js"), "utf8");
+  vm.runInContext(identity, context);
+  vm.runInContext(section("async function xlwMovePileCardToWheel(", "async function xlwResolveWheelEntryEffect("), context);
   await context.summon({ id: "R-CCS-0026" }, "player_front");
   assert.deepEqual(deck, [second, first]);
   assert.deepEqual(wheel, [eligible]);
+  const selected = {id: "CCS-0006", _xlwInstanceId: "chosen"};
+  const other = {id: "CCS-0006", _xlwInstanceId: "other"};
+  const live = [{...selected}, other];
+  assert.equal(await context.xlwMovePileCardToWheel(live, selected, true), undefined);
+  assert.deepEqual(live, [other]);
+  assert.equal(wheel.at(-1)._xlwInstanceId, "chosen");
+  assert.equal(await context.xlwMovePileCardToWheel(live, selected, true), false);
+  assert.deepEqual(live, [other]);
+  assert.equal(wheel.length, 2);
 
   const field = {
     player_front: [{ card: { id: "CCS-0032" } }, { card: { id: "CCS-0032" } }],

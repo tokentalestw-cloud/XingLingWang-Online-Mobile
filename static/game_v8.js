@@ -4971,6 +4971,13 @@ window.xlwPutCardOnWheel = async function(card, isPlayer, fromZone = null, fromI
   return true;
 };
 
+async function xlwMovePileCardToWheel(pile, selected, isPlayer, shuffleAfter = false) {
+  const card = window.XLWDuelConsistency.takeKnownCard(pile, selected);
+  if (!card) return false;
+  if (shuffleAfter) shuffle(pile);
+  return window.xlwPutCardOnWheel(card, isPlayer);
+}
+
 async function xlwResolveWheelEntryEffect(card, isPlayer) {
   const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
   // 1. 表演人偶 (CCS-0006 / R-CCS-0006): 上靶時召喚 1 個小旅人
@@ -11787,9 +11794,9 @@ async function castSpell(handIndex) {
           const pick = await showXLWChoiceModal("選擇墓地卡牌上靶", "請選擇：", gChoices);
           if (pick !== null && pick !== undefined) {
             const targetC = unitCards[pick];
-            graveyard.splice(graveyard.indexOf(targetC), 1);
-            await window.xlwPutCardOnWheel(targetC, true);
-            logBattle(`🎪【表演邀請函】：將墓地中的【${targetC.name}】安排上靶！`);
+            if (await xlwMovePileCardToWheel(graveyard, targetC, true)) {
+              logBattle(`🎪【表演邀請函】：將墓地中的【${targetC.name}】安排上靶！`);
+            }
           }
         }
       }
@@ -15675,8 +15682,7 @@ async function castSpell(handIndex) {
       if (crsGrave.length > 0) {
         const toWheel = crsGrave.slice(0, 2);
         for (const tc of toWheel) {
-          graveyard.splice(graveyard.indexOf(tc), 1);
-          await window.xlwPutCardOnWheel(tc, true);
+          await xlwMovePileCardToWheel(graveyard, tc, true);
         }
         logBattle(`🎪 發動魔法卡【表演還沒結束】：將墓地 ${toWheel.length} 張馬戲團單位重新送上轉盤！`);
       }
@@ -19867,13 +19873,11 @@ async function performSummonToSlot(zone, idx) {
             const pick = await showXLWChoiceModal("【特技表演者助手】助手協助", "選擇墓地 1 張無祭品馬戲團單位上靶：", choices);
             if (pick !== null && pick !== undefined) {
               const target = eligibleInGrave[pick];
-              grave.splice(grave.indexOf(target), 1);
-              await window.xlwPutCardOnWheel(target, true);
+              await xlwMovePileCardToWheel(graveyard, target, true);
             }
           } else {
             const target = eligibleInGrave[0];
-            grave.splice(grave.indexOf(target), 1);
-            await window.xlwPutCardOnWheel(target, false);
+            await xlwMovePileCardToWheel(grave, target, false);
           }
         }
       }
@@ -19924,14 +19928,11 @@ async function performSummonToSlot(zone, idx) {
             const pick = await showXLWChoiceModal("【馬戲團好夥伴】尋找夥伴", "從牌庫尋找 1 張無需祭品的馬戲團單位卡上靶：", choices);
             if (pick !== null && pick !== undefined) {
               const target = eligibleInDeck[pick];
-              myDeck.splice(myDeck.indexOf(target), 1);
-              shuffle(myDeck);
-              await window.xlwPutCardOnWheel(target, true);
+              await xlwMovePileCardToWheel(deck, target, true, true);
             }
           } else {
             const target = eligibleInDeck[0];
-            myDeck.splice(myDeck.indexOf(target), 1);
-            await window.xlwPutCardOnWheel(target, false);
+            await xlwMovePileCardToWheel(myDeck, target, false);
           }
         }
       }
@@ -29872,14 +29873,11 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         const pick = await showXLWChoiceModal("【馬戲團團長】遺願上靶", "團長倒下！請從牌庫挑選 1 張馬戲團單位送上轉盤：", choices);
         if (pick !== null && pick !== undefined) {
           const chosen = eligibleDeck[pick];
-          myDeck.splice(myDeck.indexOf(chosen), 1);
-          shuffle(myDeck);
-          await window.xlwPutCardOnWheel(chosen, true);
+          await xlwMovePileCardToWheel(deck, chosen, true, true);
         }
       } else {
         const chosen = eligibleDeck[0];
-        myDeck.splice(myDeck.indexOf(chosen), 1);
-        await window.xlwPutCardOnWheel(chosen, false);
+        await xlwMovePileCardToWheel(myDeck, chosen, false);
       }
     }
   }
@@ -38208,11 +38206,11 @@ function renderField() {
               const choices = circusInGrave.map((c, i) => ({ text: c.name, value: i }));
               const pick = await showXLWChoiceModal("【馬戲團團長】點名上靶", "請選擇墓地 1 張馬戲團單位卡上靶：", choices);
               if (pick !== null && pick !== undefined) {
-                window.XLW_ringmasterUsedThisTurn = true;
                 const chosen = circusInGrave[pick];
-                graveyard.splice(graveyard.indexOf(chosen), 1);
-                await window.xlwPutCardOnWheel(chosen, true);
-                logBattle(`🎩【馬戲團團長】點將：將墓地的【${chosen.name}】送上轉盤！`);
+                if (await xlwMovePileCardToWheel(graveyard, chosen, true)) {
+                  window.XLW_ringmasterUsedThisTurn = true;
+                  logBattle(`🎩【馬戲團團長】點將：將墓地的【${chosen.name}】送上轉盤！`);
+                }
                 render();
                 return;
               }
