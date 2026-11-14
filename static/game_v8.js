@@ -3661,6 +3661,36 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
     }
   }
 
+  // 💀 詛咒黑妖精 (R-EVL-0044): 進入墓地時使敵方場上1個單位被賦予-3攻擊力
+  if (card.id === "R-EVL-0044" || card.name?.includes("詛咒黑妖精")) {
+    const oppPrefix = isPlayer ? "enemy_" : "player_";
+    const targets = [];
+    for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+      (field[oz] || []).forEach((u, i) => {
+        if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
+          targets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
+        }
+      });
+    }
+    if (targets.length > 0) {
+      if (isPlayer) {
+        const choices = targets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: i }));
+        const pick = await showXLWChoiceModal("【詛咒黑妖精】臨終詛咒", "選擇敵方 1 個單位賦予 -3 攻擊力：", choices);
+        if (pick !== null && pick !== undefined) {
+          const t = targets[pick];
+          t.unit.curseAtkDebuff = (t.unit.curseAtkDebuff || 0) + 3;
+          logBattle(`💀🖤【詛咒黑妖精】怨咒降臨：敵方【${t.name}】被賦予 -3 攻擊力！`);
+          render();
+        }
+      } else {
+        const t = targets[0];
+        t.unit.curseAtkDebuff = (t.unit.curseAtkDebuff || 0) + 3;
+        logBattle(`💀🖤 對手【詛咒黑妖精】使我方【${t.name}】被賦予 -3 攻擊力！`);
+        render();
+      }
+    }
+  }
+
   // 快樂墓園 (SKT-0019)
   const happyGraveActive = xlwIsHappyGraveyard(window.xlwGetFactionFieldCard?.(isPlayer));
   if (happyGraveActive && (card.type === "unit" || card.type === "單位")) {
@@ -6493,6 +6523,82 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     baseAtk = Number.isFinite(baseAtk) ? baseAtk : 0;
   }
 
+  // 🍖 野人首領 (EWD-0013): 使你場上所有野人單位+1攻擊力
+  if (c && (c.faction === "進化野人" || c.deck === "進化野人" || c.id?.includes("EWD") || c.name?.includes("野人")) && zone) {
+    const isPlayerSide = zone.startsWith("player_");
+    const testZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+    const hasChief = testZones.some(tz =>
+      (field[tz] || []).some(u => u && u !== unit && u.card && (u.card.id === "EWD-0013" || u.card.name?.includes("野人首領")) && !window.isUnitSilenced(u))
+    );
+    if (hasChief) baseAtk += 1;
+  }
+
+  // 📯 號角妖精 (EVL-0004): 你後排戰線所有單位+2攻擊力
+  if (zone && zone.includes("back")) {
+    const isPlayerSide = zone.startsWith("player_");
+    const testZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+    const hasHorn = testZones.some(tz =>
+      (field[tz] || []).some(u => u && u.card && (u.card.id === "EVL-0004" || u.card.name?.includes("號角妖精")) && !window.isUnitSilenced(u))
+    );
+    if (hasHorn) baseAtk += 2;
+  }
+
+  // 🧚 小妖精靈 (EVL-0014): 遠程攻擊。X=你後排戰線妖精單位數量
+  if (c && (c.id === "EVL-0014" || c.name?.includes("小妖精靈"))) {
+    const isPlayerSide = zone ? zone.startsWith("player_") : true;
+    const backZone = isPlayerSide ? "player_back" : "enemy_back";
+    let backFairyCount = 0;
+    (field[backZone] || []).forEach(u => {
+      if (u && u.card && (u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.id?.includes("EVL"))) {
+        backFairyCount++;
+      }
+    });
+    baseAtk = backFairyCount;
+  }
+
+  // 🧑‍🏫 黑妖精主任朗德 (R-EVL-0027): X=敵方場上單位因為你的效果所減少的★總數（上限6）
+  if (c && (c.id === "R-EVL-0027" || c.name?.includes("黑妖精主任朗德") || c.name?.includes("朗德"))) {
+    const isPlayerSide = zone ? zone.startsWith("player_") : true;
+    const oppZones = isPlayerSide ? ["enemy_front", "enemy_back"] : ["player_front", "player_back"];
+    let reducedStars = 0;
+    oppZones.forEach(oz => {
+      (field[oz] || []).forEach(u => {
+        if (u) {
+          if (u.starPenalty) reducedStars += u.starPenalty;
+          if (u.decayScoreDebuff) reducedStars += u.decayScoreDebuff;
+        }
+      });
+    });
+    baseAtk = Math.min(6, reducedStars);
+  }
+
+  // 🐛 黑妖精蠶食者 (R-EVL-0031): 正前方敵方單位 -1 攻擊力
+  if (zone && lane !== undefined && lane !== -1) {
+    const isPlayerSide = zone.startsWith("player_");
+    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
+    const oppUnit = field[oppFront]?.[lane];
+    if (oppUnit && oppUnit.card && (oppUnit.card.id === "R-EVL-0031" || oppUnit.card.name?.includes("黑妖精蠶食者")) && !window.isUnitSilenced(oppUnit)) {
+      baseAtk -= 1;
+    }
+  }
+
+  // 🆘 求救的人質妖精 (EVL-0034): 正前方非阻擋單位 -X 攻擊力 (X = 原始攻擊力)
+  if (zone && lane !== undefined && lane !== -1) {
+    const isPlayerSide = zone.startsWith("player_");
+    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
+    const oppUnit = field[oppFront]?.[lane];
+    if (oppUnit && oppUnit.card && (oppUnit.card.id?.includes("EVL-0034") || oppUnit.card.name?.includes("人質妖精")) && !window.isUnitSilenced(oppUnit)) {
+      if (!window.checkUnitHasBlock?.(unit, zone, lane)) {
+        baseAtk = 0;
+      }
+    }
+  }
+
+  // 📣 野人兄弟幫聲援加成
+  if (unit.cheerAtk) {
+    baseAtk += unit.cheerAtk;
+  }
+
   // 💻 虛擬羊 (GOT-0030): 使你場上所有虛擬單位被賦予+1攻擊力
   if (typeof window.isVirtualUnit === "function" && window.isVirtualUnit(unit) && zone) {
     const isPlayerSide = zone.startsWith("player_");
@@ -7708,6 +7814,25 @@ function getUnitStars(unit, zone, lane) {
   // 🧚‍♀️ 小小黑妖精小咪 減星懲罰
   if (unit.starPenalty) {
     baseStars -= unit.starPenalty;
+  }
+
+  // 🧚‍♀️ 黑妖精布琳 (EVL-0005): 敵方後排戰線所有單位 -1★
+  if (zone && zone.includes("back")) {
+    const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
+    const hasBrin = [oppPrefix + "front", oppPrefix + "back"].some(z =>
+      (field[z] || []).some(u => u && u.card && (u.card.id === "EVL-0005" || u.card.name?.includes("黑妖精布琳")) && !window.isUnitSilenced(u))
+    );
+    if (hasBrin) baseStars -= 1;
+  }
+
+  // 🐛 黑妖精蠶食者 (R-EVL-0031): 正前方敵方單位 -1★
+  if (zone && lane !== undefined && lane !== -1) {
+    const isPlayerSide = zone.startsWith("player_");
+    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
+    const oppUnit = field[oppFront]?.[lane];
+    if (oppUnit && oppUnit.card && (oppUnit.card.id === "R-EVL-0031" || oppUnit.card.name?.includes("黑妖精蠶食者")) && !window.isUnitSilenced(oppUnit)) {
+      baseStars -= 1;
+    }
   }
 
   // 冰霜法師 水瓶座 (SSSR-NMS-0060) 減星效果
@@ -10346,6 +10471,38 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
     draw(1);
     logBattle("🗡️✨【妖精寶劍】進攻戰鬥成功：抽取 1 張牌！");
   }
+
+  // 🤖 新兵機器人 (EVL-0008): 戰鬥成功時抽1張牌
+  if (attacker && attacker.card && (attacker.card.id === "EVL-0008" || attacker.card.name?.includes("新兵機器人"))) {
+    if (successOwner === "player") {
+      draw(1);
+      logBattle("🤖✨【新兵機器人】戰鬥成功：抽取 1 張牌！");
+    } else {
+      window.XLW_ENEMY?.deck?.pop();
+      logBattle("🤖✨ 對手【新兵機器人】戰鬥成功：抽 1 張牌！");
+    }
+  }
+
+  // 🗑️ 學會刪除檔案的野人 (R-EWD-0030): 戰鬥成功時，除外敵方墓地1張★<=2的單位
+  if (attacker && attacker.card && (attacker.card.id === "R-EWD-0030" || attacker.card.name?.includes("學會刪除檔案的野人"))) {
+    const oppGrave = successOwner === "player" ? (window.XLW_ENEMY?.grave || enemyGraveyard || []) : graveyard;
+    const lowStarUnits = oppGrave.filter(c => c && (c.type === "unit" || c.type === "單位") && (parseInt(c.score ?? c.stars ?? 0) <= 2));
+    if (lowStarUnits.length > 0) {
+      if (successOwner === "player") {
+        const choices = lowStarUnits.map((c, i) => ({ text: `${c.name} (${c.score}★)`, value: i }));
+        const pick = await showXLWChoiceModal("【學會刪除檔案的野人】刪除檔案", "選擇除外敵方墓地 1 個 2★ 或以下單位：", choices);
+        if (pick !== null && pick !== undefined) {
+          const chosen = lowStarUnits[pick];
+          await window.xlwExileCardFromGraveyard(chosen, false);
+          logBattle(`🗑️💥【學會刪除檔案的野人】粉碎刪除：敵方墓地的【${chosen.name}】被永久除外！`);
+        }
+      } else {
+        const chosen = lowStarUnits[0];
+        await window.xlwExileCardFromGraveyard(chosen, true);
+        logBattle(`🗑️💥 對手【學會刪除檔案的野人】除外了我方墓地的【${chosen.name}】！`);
+      }
+    }
+  }
   // 🔥 野人慶典進攻成功獎勵+1
   if (attacker && attacker.hasCelebrationBonus) {
     if (successOwner === "player") playerBonusScore += 1; else enemyBonusScore += 1;
@@ -10525,6 +10682,71 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
 
 // 立即發動與入場結算 (PG2 & 點數兌換卡)
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
+  if (!card) return;
+  const cardId = card.id || "";
+  const cardName = card.name || "";
+  const side = isPlayer ? "player_" : "enemy_";
+  const oppSide = isPlayer ? "enemy_" : "player_";
+
+  // 🍖💰 好野人 (EWD-0023 / EWD-0023-ALT / EWD-0023-泳裝): 立即：獎勵+3
+  if (cardId.includes("EWD-0023") || cardName.includes("好野人")) {
+    if (isPlayer) {
+      playerBonusScore += 3;
+      logBattle("🍖💰【好野人】財大氣粗：我方獲得額外獎勵 +3★！");
+    } else {
+      enemyBonusScore += 3;
+      logBattle("🍖💰 對手【好野人】獲得額外獎勵 +3★！");
+    }
+    renderScore();
+  }
+
+  // 📣 野人兄弟幫聲援野人 (R-EWD-0037 / R-EWD-0037-泳裝): 立即全體野人+1攻擊力
+  if (cardId.includes("EWD-0037") || cardName.includes("野人兄弟幫聲援野人")) {
+    let count = 0;
+    for (const z of [side + "front", side + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+          u.cheerAtk = (u.cheerAtk || 0) + 1;
+          count++;
+        }
+      });
+    }
+    logBattle(`📣🍖【野人兄弟幫聲援野人】齊聲吶喊：我方 ${count} 個野人單位獲得 +1 攻擊力！`);
+    render();
+  }
+
+  // 📣🔥 野人兄弟幫大聲聲援野人 (R-EWD-0048): 立即全體野人+2攻擊力與進攻成功獎勵+1
+  if (cardId === "R-EWD-0048" || cardName.includes("大聲聲援野人")) {
+    let count = 0;
+    for (const z of [side + "front", side + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+          u.cheerAtk = (u.cheerAtk || 0) + 2;
+          u.hasCelebrationBonus = true;
+          count++;
+        }
+      });
+    }
+    logBattle(`📣🔥【野人兄弟幫大聲聲援野人】雷鳴咆哮：我方 ${count} 個野人單位獲得 +2 攻擊力與進攻成功 +1★ 獎勵！`);
+    render();
+  }
+
+  // 🧚‍♀️ 妖精女祭司芙蕾雅 (R-EVL-0047 / SSR-EVL-0047) 敵方前排召喚推擠反應
+  if (zone.includes("front")) {
+    const oppZones = [oppSide + "front", oppSide + "back"];
+    let freyaUnit = null;
+    for (const oz of oppZones) {
+      (field[oz] || []).forEach(u => {
+        if (u && u.card && (u.card.id?.includes("EVL-0047") || u.card.name?.includes("妖精女祭司芙蕾雅") || u.card.name?.includes("芙蕾雅")) && !window.isUnitSilenced(u)) {
+          freyaUnit = u;
+        }
+      });
+    }
+    if (freyaUnit) {
+      logBattle(`🧚‍♀️🌊【妖精女祭司芙蕾雅】神聖排斥：敵方前排登場單位被向後推擠！`);
+      await xlwPushUnit(zone, idx, "back", { offBoardAction: "hand", sourceName: "妖精女祭司芙蕾雅" });
+    }
+  }
   if (!card) return;
   const cardId = card.id || "";
   const cardName = card.name || "";
@@ -10865,6 +11087,39 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
 window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
   try { await window.xlwResolvePG2TurnStart(isPlayer); } catch(e) { console.error('PG2 TurnStart error:', e); }
+
+  // ⚡ 激動野人 (R-EWD-0032 / R-EWD-0047): 主要階段開始時轉正
+  for (const z of [side + "front", side + "back"]) {
+    (field[z] || []).forEach(u => {
+      if (u && u.tapped && u.card && (u.card.name?.includes("激動野人") || u.card.id === "R-EWD-0032" || u.card.id === "R-EWD-0047") && !window.isUnitSilenced(u)) {
+        u.tapped = false;
+        logBattle(`⚡🛹【${u.card.name}】亢奮昂揚：主要階段開始自動轉正！`);
+      }
+    });
+  }
+
+  // 🎈 氣球妖精 (R-EVL-0043): 主要階段開始時限一次，若場上有>=4★妖精單位，抽1張牌
+  const hasBigFairy = [side + "front", side + "back"].some(z =>
+    (field[z] || []).some((u, i) => u && (u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.id?.includes("EVL")) && getUnitStars(u, z, i) >= 4)
+  );
+  const hasBalloon = [side + "front", side + "back"].some(z =>
+    (field[z] || []).some(u => u && (u.card.id === "R-EVL-0043" || u.card.name?.includes("氣球妖精")) && !window.isUnitSilenced(u))
+  );
+  if (hasBigFairy && hasBalloon) {
+    if (isPlayer) {
+      draw(1);
+      logBattle("🎈✨【氣球妖精】微風輕揚：場上有高星妖精，主要階段開始抽取 1 張牌！");
+    } else {
+      window.XLW_ENEMY?.deck?.pop();
+      logBattle("🎈✨ 對手【氣球妖精】主要階段開始抽 1 張牌！");
+    }
+  }
+
+  // 重置各卡一回合限一次標記
+  if (isPlayer) {
+    window.XLW_sunMoonUsedThisTurn = false;
+    window.XLW_xiaoyuanUsedThisTurn = false;
+  }
 
 
   // A. C-PLT-0004 自動灑水器: 主要階段開始時，可使前排所有種子單位被灌溉1
@@ -11531,6 +11786,61 @@ async function castSpell(handIndex) {
     // ========================================
     // 妖精、野人與中立重要魔法卡專屬實裝
     // ========================================
+
+    // 💎 R-NMG-0037 皇家寶石: 使場上1個單位賦予敵方效果抗性 或 隨機除外1手牌奪回被綁架卡
+    } else if (card.id === "R-NMG-0037" || card.name?.includes("皇家寶石")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const choice = await showXLWChoiceModal("【皇家寶石】璀璨祈願", "請選擇寶石力量：", [
+          { text: "🛡️ 賦予我方 1 個單位【敵方效果抗性】", value: "shield" },
+          { text: "⛓️ 隨機除外 1 手牌，奪回被敵方綁架的我方卡牌回手", value: "rescue" }
+        ]);
+        if (choice === "shield") {
+          const myUnits = [];
+          for (const mz of ["player_front", "player_back"]) {
+            (field[mz] || []).forEach((u, i) => { if (u) myUnits.push({ zone: mz, idx: i, name: u.card.name }); });
+          }
+          if (myUnits.length > 0) {
+            const uChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
+            const uPick = await showXLWChoiceModal("選擇保護單位", "選擇獲得效果抗性的單位：", uChoices);
+            if (uPick !== null && uPick !== undefined) {
+              const t = myUnits[uPick];
+              field[t.zone][t.idx].effectImmune = true;
+              logBattle(`💎🛡️【皇家寶石】光輝庇護：賦予【${t.name}】敵方效果抗性！`);
+            }
+          }
+        } else if (choice === "rescue") {
+          if (hand.length > 0) {
+            const randIdx = Math.floor(Math.random() * hand.length);
+            const exiledCard = hand.splice(randIdx, 1)[0];
+            exileCard(exiledCard, "player");
+            logBattle(`💎🌀【皇家寶石】代價：隨機將手牌【${exiledCard.name}】除外！`);
+            // Find kidnapped card owned by player
+            let rescued = null;
+            for (const ez of ["enemy_front", "enemy_back"]) {
+              (field[ez] || []).forEach(eu => {
+                if (eu && eu.kidnappedCards && eu.kidnappedCards.length > 0 && !rescued) {
+                  const myKIdx = eu.kidnappedCards.findIndex(kc => kc.originalOwner === "player" || kc.owner === "player");
+                  if (myKIdx >= 0) {
+                    rescued = eu.kidnappedCards.splice(myKIdx, 1)[0];
+                  }
+                }
+              });
+            }
+            if (rescued) {
+              hand.push(rescued);
+              logBattle(`💎⛓️【皇家寶石】贖回人質：成功奪回被綁架的【${rescued.name}】回到手牌！`);
+            } else {
+              logBattle("💎 場上無敵方綁架的我方卡牌。");
+            }
+          } else {
+            setStatus("手牌不足以支付隨機除外代價！");
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
 
     // 1. R-NMG-0041 飛來一顆石頭: 若原始攻擊力及原始星星皆不超過1則破壞
     } else if (card.id === "R-NMG-0041" || card.name?.includes("飛來一顆石頭")) {
@@ -37487,6 +37797,51 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
             logBattle(`⛓️【黑妖精監獄長艾摩亞】黑牢關押：敵方【${target.name}】被束縛綁架 2 回合！`);
             render();
             return true;
+          }
+        }
+      }
+    }
+
+    // 👵🍰 黑暗甜點界 強迫餵食阿姨 (SSR-CND-0036): 主要階段限一次，將場上1個吞食合體單位置於敵方1個需祭品單位下方
+    if ((obj.card.id === "SSR-CND-0036" || obj.card.name?.includes("強迫餵食阿姨")) && !obj.feederUsedThisTurn) {
+      const myDevourUnits = [];
+      for (const mz of ["player_front", "player_back"]) {
+        (field[mz] || []).forEach((u, i) => {
+          if (u && u !== obj && (window.isDevourFusionUnit?.(u) || u.card?.keywords?.includes("吞食合體") || u.card?.effect_text?.includes("吞食合體"))) {
+            myDevourUnits.push({ zone: mz, idx: i, name: u.card.name, unit: u });
+          }
+        });
+      }
+      const enemyTributeUnits = [];
+      for (const ez of ["enemy_front", "enemy_back"]) {
+        (field[ez] || []).forEach((u, i) => {
+          if (u && (parseInt(u.card.tribute) || 0) > 0 && !window.isUnitEffectImmune?.(u, ez, i)) {
+            const curUnder = (u.devourCards || []).length;
+            if (curUnder < (parseInt(u.card.tribute) || 0)) {
+              enemyTributeUnits.push({ zone: ez, idx: i, name: u.card.name, unit: u });
+            }
+          }
+        });
+      }
+      if (myDevourUnits.length > 0 && enemyTributeUnits.length > 0) {
+        const doFeed = await showXLWConfirm("【強迫餵食阿姨】飽腹塞入", "主要階段限一次：是否將我方 1 個吞食合體單位強行塞入敵方需祭品單位下方？");
+        if (doFeed) {
+          obj.feederUsedThisTurn = true;
+          const dChoices = myDevourUnits.map((d, i) => ({ text: `${d.name} (${d.zone.includes("front") ? "前排" : "後排"}${d.idx + 1})`, value: i }));
+          const dPick = await showXLWChoiceModal("選擇吞食素材", "選擇要塞入的吞食單位：", dChoices);
+          if (dPick !== null && dPick !== undefined) {
+            const devourObj = myDevourUnits[dPick];
+            const eChoices = enemyTributeUnits.map((e, i) => ({ text: `${e.name} (${e.zone.includes("front") ? "前排" : "後排"}${e.idx + 1})`, value: i }));
+            const ePick = await showXLWChoiceModal("選擇被餵食敵方單位", "選擇塞入的敵方需祭品單位：", eChoices);
+            if (ePick !== null && ePick !== undefined) {
+              const enemyTarget = enemyTributeUnits[ePick];
+              field[devourObj.zone][devourObj.idx] = null;
+              enemyTarget.unit.devourCards = enemyTarget.unit.devourCards || [];
+              enemyTarget.unit.devourCards.push({ card: devourObj.unit.card, value: parseInt(devourObj.unit.card.attack) || 0, expose: "attack" });
+              logBattle(`👵🍰【強迫餵食阿姨】硬塞成功：將【${devourObj.name}】強行塞入敵方【${enemyTarget.name}】胃底合體！`);
+              render();
+              return true;
+            }
           }
         }
       }
