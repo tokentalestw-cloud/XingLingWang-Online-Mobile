@@ -2068,3 +2068,8 @@ html body.xlw-royal-ui #hand:not([data-mulligan]) .card:focus-visible {
   overflow-wrap: anywhere;
   pointer-events: none;
 }
+
+/* Keep printed header values visible when a unit card's artwork is cropped. */
+html body.xlw-royal-ui #boardWrap .row .slot .card > img:first-child {
+  object-position: center top;
+}
