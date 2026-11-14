@@ -1404,7 +1404,7 @@ function makeSlots() {
       div.className = "slot";
       div.dataset.zone = key.replace('_', '_'); // 統一為 player_front/player_back
       div.dataset.index = i;
-      div.innerHTML = `<span class="lane-badge">${i + 1}</span>`;
+      div.setAttribute("aria-label", `${label}${i + 1}`);
       row.appendChild(div);
     }
   }
@@ -37107,7 +37107,7 @@ function renderField() {
   for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     document.querySelectorAll(`[data-zone="${zone}"]`).forEach(slot => {
       const idx = Number(slot.dataset.index);
-      slot.innerHTML = `<span class="lane-badge">${idx + 1}</span>`;
+      slot.replaceChildren();
       slot.className = "slot";
       // 重置所有內聯樣式以抵禦 CSS 快取與特異性覆蓋
       slot.style.border = "";
@@ -41220,8 +41220,6 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
         }
       } else {
         // 空格狀態
-        const label = zone.includes("front") ? "前排" : "後排";
-        slot.append(label + (idx + 1));
 
         // 獻祭召喚位置亮綠邊 (前排優先)
         const tryingSummon = selectedHandForSummon !== null || tributeWaitingPosition;
@@ -42991,7 +42989,7 @@ function adjustBoardScale() {
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
     // Allow the rear mat to tuck just under the decorative edge of the opponent fan.
-    const opponentFanOverlap = openArena ? 50 : 0;
+    const opponentFanOverlap = openArena ? 75 : 0;
     const enemyFanBoundary = enemyHand ? enemyHand.bottom - opponentFanOverlap : 0;
     const enemyHandObstacle = openArena && enemyHand
       ? (enemyFanBoundary > 4 ? {...enemyHand, bottom: enemyFanBoundary - gap} : null)

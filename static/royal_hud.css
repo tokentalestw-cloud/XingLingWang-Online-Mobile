@@ -1367,7 +1367,7 @@ html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial
   pointer-events: none;
   left: calc(199px + (5 * var(--cw) + 4 * var(--gap)) / 2);
   top: 121px;
-  width: 1230px;
+  width: 1400px;
   height: 846px;
   transform: translateX(-50%);
   background: url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat;
@@ -1441,17 +1441,7 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
     radial-gradient(ellipse at 52% 44%, #1d344c, #090e1b 78%) center / 91% 84% no-repeat;
   filter: saturate(.60) brightness(.80) drop-shadow(0 24px 19px #02050ce0);
 }
-html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat {
-  border-color: #10131c !important;
-  outline: 0 !important;
-  box-shadow: 0 0 0 3px #0a1019, 0 0 0 7px #5e5c5b,
-    0 2px 0 10px #151b29, 0 8px 14px 10px #030711bd !important;
-}
-html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat::before {
-  background: linear-gradient(170deg, #0004, transparent 19% 82%, #0003) !important;
-  box-shadow: inset 0 4px 8px #000b, inset 0 -2px #daeaff53,
-    inset 3px 0 6px #0008, inset -3px 0 6px #0008 !important;
-}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat { visibility: hidden !important; }
 html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-line-strip::before {
   border-color: #807051;
   background: linear-gradient(#0c1421 0 13%, #2c3a4a 14%, #182334 34%, #0b121d 88%, #70604a 100%);
