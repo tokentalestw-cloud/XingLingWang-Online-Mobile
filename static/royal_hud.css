@@ -1763,3 +1763,62 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::be
   stroke-linecap: round;
   filter: drop-shadow(0 0 3px #4ad7ff);
 }
+/* Reference layout: widen the stone grid toward the side wells and close the center gap. */
+html body.xlw-royal-ui.xlw-game-started #boardWrap {
+  --altar-slot-width: calc(var(--cw) + 16px);
+  --altar-grid-width: calc(5 * var(--altar-slot-width) + 4 * var(--gap));
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap :is(.row, .battle-line-strip) {
+  left: 159px !important;
+  width: var(--altar-grid-width) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .enemy-front { top: 324px !important; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .player-front { top: 596px !important; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .player-back { top: 746px !important; }
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot {
+  width: var(--altar-slot-width);
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse at 28% 13%, #65788d45, transparent 65%),
+    repeating-linear-gradient(132deg, #b2c3cb06 0 1px, transparent 2px 6px),
+    linear-gradient(153deg, #354257, #202b3b 54%, #2b394d);
+  box-shadow: inset 0 0 0 3px #0b111d, inset 0 -6px 13px #080e19b3, 0 3px 5px #080c14;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::after {
+  inset: 32% 31%;
+  background: linear-gradient(145deg, #121d2c 30%, #748aa0 94%);
+  opacity: .88;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::before {
+  border-color: var(--altar-trim);
+  box-shadow: inset 0 0 0 1px #ded5bc4d, 0 0 0 2px #111a27;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:is(.xlw-hand-front-legal, .xlw-direct-board-target):not(.has-card)::before {
+  border-color: #c6f6ff;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
+  background:
+    url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat,
+    radial-gradient(ellipse, #25374c, #0a1323 83%) center / 90% 91% no-repeat;
+  filter: saturate(.75) drop-shadow(0 24px 19px #02050ce0);
+}
+html body.xlw-royal-ui.xlw-game-started #scoreBadgeFixed .score-badge-card:is(.enemy, .player) {
+  border: 1px solid #b59a71 !important;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px #191d29, inset 0 0 0 3px #b59a7159,
+    0 3px #211d20, 0 7px 12px #03060d99 !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard {
+  border: 1px solid var(--phase-light, #b49e7e) !important;
+  border-radius: 10px !important;
+  background: radial-gradient(ellipse at 50% -10%, #355067, #101b2a 80%) !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard .phase-hard-title {
+  display: grid;
+  justify-items: center;
+  gap: 4px !important;
+}
+html body.xlw-royal-ui.xlw-game-started #phaseDisplayPanelHard #phaseTextHard {
+  font-size: clamp(13px, 1.7vw, 22px) !important;
+}
