@@ -3888,14 +3888,11 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
       } else {
         toShuffle = undeadGrave.slice(0, Math.min(2, undeadGrave.length));
       }
-      for (const sc of toShuffle) {
-        const gIdx = myGrave.indexOf(sc);
-        if (gIdx >= 0) myGrave.splice(gIdx, 1);
-        myDeck.push(sc);
-      }
-      shuffle(myDeck);
-      if (toShuffle.length > 0) {
-        logBattle(`✨【瘟疫傳教士】效果：將墓地 ${toShuffle.length} 張不死族洗回牌庫！`);
+      const movedCount = toShuffle.filter(card =>
+        window.XLWDuelConsistency.moveKnownCard(myGrave, myDeck, card)).length;
+      if (movedCount > 0) {
+        shuffle(myDeck);
+        logBattle(`✨【瘟疫傳教士】效果：將墓地 ${movedCount} 張不死族洗回牌庫！`);
       }
     }
     const millCount = Math.min(2, myDeck.length);
@@ -3937,13 +3934,13 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
         const picked = await showXLWChoiceModal("除屍雞 檢索不死族", "請選擇送入墓地的不死族單位：", choices);
         if (picked !== null && picked !== undefined) chosen = undeadInDeck[picked];
       }
-      const dIdx = myDeck.indexOf(chosen);
-      if (dIdx >= 0) myDeck.splice(dIdx, 1);
-      myGrave.push(chosen);
-      shuffle(myDeck);
-      logBattle(`✨【除屍雞】立即效果：從牌庫將【${chosen.name}】送入墓地！`);
-      render();
-      await window.xlwOnCardEntersGraveyard(chosen, isPlayer, false);
+      const moved = window.XLWDuelConsistency.moveKnownCard(myDeck, myGrave, chosen);
+      if (moved) {
+        shuffle(myDeck);
+        logBattle(`✨【除屍雞】立即效果：從牌庫將【${moved.name}】送入墓地！`);
+        render();
+        await window.xlwOnCardEntersGraveyard(moved, isPlayer, false);
+      }
     }
   }
 
@@ -3979,12 +3976,12 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
         const picked = await showXLWChoiceModal("骷髏護士長 效果", "請選擇洗回牌庫的不死族單位：", choices);
         if (picked !== null && picked !== undefined) chosen = undeadGrave[picked];
       }
-      const gIdx = myGrave.indexOf(chosen);
-      if (gIdx >= 0) myGrave.splice(gIdx, 1);
-      myDeck.push(chosen);
-      shuffle(myDeck);
-      logBattle(`✨【骷髏護士長】效果：將墓地的【${chosen.name}】洗回牌庫！`);
-      render();
+      const moved = window.XLWDuelConsistency.moveKnownCard(myGrave, myDeck, chosen);
+      if (moved) {
+        shuffle(myDeck);
+        logBattle(`✨【骷髏護士長】效果：將墓地的【${moved.name}】洗回牌庫！`);
+        render();
+      }
     }
   }
 
@@ -3998,13 +3995,13 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
         const picked = await showXLWChoiceModal("墓園管理員 小凱希 綁架", "選擇墓地 1 個 2★ 或以下不死族綁架至其下方：", choices);
         if (picked !== null && picked !== undefined) chosen = eligible[picked];
       }
-      const gIdx = myGrave.indexOf(chosen);
-      if (gIdx >= 0) myGrave.splice(gIdx, 1);
-      unit.kidnappedCards = unit.kidnappedCards || [];
-      chosen.originalOwner = isPlayer ? "player" : "enemy";
-      unit.kidnappedCards.push(chosen);
-      logBattle(`✨【墓園管理員 小凱希】效果：將墓地的【${chosen.name}】綁架至其下方！`);
-      render();
+      const moved = field[zone]?.[idx] === unit && window.XLWDuelConsistency.takeKnownCard(myGrave, chosen);
+      if (moved) {
+        moved.originalOwner = isPlayer ? "player" : "enemy";
+        (unit.kidnappedCards ||= []).push(moved);
+        logBattle(`✨【墓園管理員 小凱希】效果：將墓地的【${moved.name}】綁架至其下方！`);
+        render();
+      }
     }
   }
 
@@ -4119,10 +4116,8 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
         const picked = await showXLWChoiceModal(`骷髏法師 古斯 特召 (${s+1}/${toSummonCount})`, "選擇墓地 1 個不死族單位召喚：", choices);
         if (picked !== null && picked !== undefined) chosen = remainingUndead[picked];
       }
-      const gIdx = myGrave.indexOf(chosen);
-      if (gIdx >= 0) myGrave.splice(gIdx, 1);
+      if (!chosen || !await window.xlwSpecialSummonUnit(chosen, isPlayer, {sourcePile: () => myGrave})) break;
       logBattle(`✨【骷髏法師 古斯】立即效果：從墓地特殊召喚【${chosen.name}】！`);
-      await window.xlwSpecialSummonUnit(chosen, isPlayer);
     }
     render();
   }
@@ -4246,11 +4241,12 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
           const picked = await showXLWChoiceModal(`棺材船 綁架 (${k+1}/${kidnapCount})`, "選擇墓地 1 個不死族綁架至棺材船：", choices);
           if (picked !== null && picked !== undefined) chosen = remaining[picked];
         }
-        const gIdx = myGrave.indexOf(chosen);
-        if (gIdx >= 0) myGrave.splice(gIdx, 1);
-        chosen.originalOwner = isPlayer ? "player" : "enemy";
-        unit.kidnappedCards.push(chosen);
-        logBattle(`✨【棺材船】效果：將墓地【${chosen.name}】裝載綁架至船上！`);
+        if (field[zone]?.[idx] !== unit) break;
+        const moved = window.XLWDuelConsistency.takeKnownCard(myGrave, chosen);
+        if (!moved) break;
+        moved.originalOwner = isPlayer ? "player" : "enemy";
+        unit.kidnappedCards.push(moved);
+        logBattle(`✨【棺材船】效果：將墓地【${moved.name}】裝載綁架至船上！`);
       }
       render();
     }
