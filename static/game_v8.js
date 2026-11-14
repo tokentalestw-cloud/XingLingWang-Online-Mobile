@@ -14584,6 +14584,10 @@ async function castSpell(handIndex) {
       if (frontEmpty.length > 0) allowedSlots.push(...frontEmpty);
       else allowedSlots.push(...backEmpty);
       
+      if (!allowedSlots.length) {
+        setStatus("場上已無空格，無法發動復活術。");
+        return;
+      }
       window.XLW_emperorSlotSelecting = true;
       window.XLW_emperorAllowedSlots = allowedSlots;
       setStatus("【復活術】請點選我方一個空格進行召喚（前排優先）");
@@ -14592,9 +14596,11 @@ async function castSpell(handIndex) {
       
       if (chosenSlot) {
         const { zone, idx } = chosenSlot;
-        graveyard.splice(graveyard.indexOf(chosenCard), 1);
+        if (field[zone]?.[idx]) return;
+        const revived = window.XLWDuelConsistency.takeKnownCard(graveyard, chosenCard);
+        if (!revived) return;
         field[zone][idx] = {
-          card: structuredClone(chosenCard),
+          card: structuredClone(revived),
           tapped: false,
           attacking: false,
           target: null,
@@ -19109,17 +19115,15 @@ async function performSummonToSlot(zone, idx) {
             const pick = await showXLWChoiceModal("【牧山羊犬】召喚小羊", "選擇從墓地特殊召喚的山羊單位：", choices);
             if (pick !== null && pick !== undefined) {
               const target = lowStarGoats[pick];
-              graveyard.splice(graveyard.indexOf(target), 1);
-              const slot = emptySlots[0];
-              field[slot.zone][slot.idx] = { card: target, tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: slot.zone };
-              logBattle(`🐕【牧山羊犬】汪汪呼喚！從墓地特殊召喚【${target.name}】至 ${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}！`);
+              if (target && await window.xlwSpecialSummonUnit(target, true, {sourcePile: () => graveyard})) {
+                logBattle(`🐕【牧山羊犬】從墓地特殊召喚了【${target.name}】！`);
+              }
             }
           } else {
             const target = lowStarGoats[0];
-            myGrave.splice(myGrave.indexOf(target), 1);
-            const slot = emptySlots[0];
-            field[slot.zone][slot.idx] = { card: target, tapped: false, attacking: false, target: null, summonedTurn: turn, summonedZone: slot.zone };
-            logBattle(`🐕 對手【牧山羊犬】從墓地特殊召喚【${target.name}】！`);
+            if (await window.xlwSpecialSummonUnit(target, false, {sourcePile: () => window.XLW_ENEMY.grave})) {
+              logBattle(`🐕 對手【牧山羊犬】從墓地特殊召喚【${target.name}】！`);
+            }
           }
         }
       }
@@ -22077,9 +22081,10 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
               }
               
               if (destZone) {
-                graveyard.splice(graveyard.indexOf(chosenCard), 1);
+                const revived = window.XLWDuelConsistency.takeKnownCard(graveyard, chosenCard);
+                if (!revived) return;
                 field[destZone][destIdx] = {
-                  card: structuredClone(chosenCard),
+                  card: structuredClone(revived),
                   tapped: false,
                   attacking: false,
                   target: null,
