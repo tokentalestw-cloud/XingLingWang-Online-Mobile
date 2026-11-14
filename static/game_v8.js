@@ -35687,6 +35687,22 @@ function render() {
   
   const turnSide = window.XLW_gameInProgress ? (isMyTurn ? "player" : "enemy") : "waiting";
   if (phaseDisplayPanel) phaseDisplayPanel.dataset.side = turnSide;
+  const altar = $("boardWrap")?.querySelector(".xlw-arena-floor");
+  if (altar && altar.dataset.turnSide !== turnSide) {
+    const previousSide = altar.dataset.turnSide;
+    altar.dataset.turnSide = turnSide;
+    if (previousSide && previousSide !== "waiting" && turnSide !== "waiting" &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const trace = altar.querySelector(".xlw-altar-handoff path");
+      trace?.getAnimations?.().forEach(animation => animation.cancel());
+      trace?.animate?.([
+        {strokeDashoffset: 100, opacity: 0},
+        {opacity: 1, offset: .14},
+        {opacity: .8, offset: .7},
+        {strokeDashoffset: 0, opacity: 0}
+      ], {duration: 920, easing: "ease-out"});
+    }
+  }
   const turnOwnerLabel = $("phaseTurnOwner");
   if (turnOwnerLabel) turnOwnerLabel.textContent = turnSide === "waiting" ? "準備對戰" :
     (turnSide === "player" ? "我方回合" : "對手回合");
@@ -45938,9 +45954,31 @@ window.logDebug = logDebug;
 window.XLW_animatingTributeSlots = window.XLW_animatingTributeSlots || new Set();
 window.XLW_slamTributeCards = window.XLW_slamTributeCards || new Set();
 
+function playAltarLanding(effect, zone, idx) {
+  if (!["yuki", "annie"].includes(effect?.key) ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const board = $("boardWrap");
+  const slot = board?.querySelector(`.slot[data-zone="${zone}"][data-index="${idx}"]`);
+  const seal = board?.querySelector(`.battle-cell[data-index="${idx}"]`);
+  if (!slot || !seal || !board.getClientRects().length) return;
+
+  const piece = document.createElement("div");
+  piece.className = `xlw-altar-landing ${effect.key}`;
+  piece.setAttribute("aria-hidden", "true");
+  piece.style.left = `${slot.parentElement.offsetLeft + slot.offsetLeft + slot.offsetWidth / 2}px`;
+  const start = slot.parentElement.offsetTop + slot.offsetTop + slot.offsetHeight / 2;
+  const stop = seal.parentElement.offsetTop + seal.offsetTop + seal.offsetHeight / 2;
+  piece.style.top = `${Math.min(start, stop)}px`;
+  piece.style.height = `${Math.abs(stop - start)}px`;
+  piece.dataset.from = start > stop ? "bottom" : "top";
+  board.appendChild(piece);
+  setTimeout(() => piece.remove(), 950);
+}
+
 async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
   const specialCard = field[zone]?.[idx]?.card;
-  if (isRealTribute && window.XLWSpecialSummon?.match(specialCard)) {
+  const specialEffect = isRealTribute && window.XLWSpecialSummon?.match(specialCard);
+  if (specialEffect) {
     const specialKey = `${zone}:${idx}`;
     window.XLW_animatingTributeSlots.add(specialKey);
     render();
@@ -45949,6 +45987,7 @@ async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
     finally {
       window.XLW_animatingTributeSlots.delete(specialKey);
       render();
+      if (field[zone]?.[idx]?.card === specialCard) playAltarLanding(specialEffect, zone, idx);
     }
     return;
   }

@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261114-red-trophy-v1">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-star-ring-altar">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-altar-motion">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -342,7 +342,11 @@
   <div class="game-shell">
     <div class="board-wrap">
       <section id="boardWrap" class="board">
-        <div class="xlw-arena-floor" aria-hidden="true"></div>
+        <div class="xlw-arena-floor" aria-hidden="true">
+          <svg class="xlw-altar-handoff" viewBox="0 0 1230 846" preserveAspectRatio="none" focusable="false">
+            <path pathLength="100" d="M615 25H1085L1200 115V703L1100 801H130L30 703V115L145 25Z"/>
+          </svg>
+        </div>
         <!-- 決鬥場地區桌墊架構 (對方與我方全新桌墊圖) -->
         <div id="enemyPlaymat" class="board-playmat enemy-playmat" style="--altar-art: url('/static/custom_bg/new_mat_opponent_2026.jpg?v=20261024-transparency');"></div>
         <div id="playerPlaymat" class="board-playmat player-playmat" style="--altar-art: url('/static/custom_bg/new_mat_player_2026.jpg?v=20261024-transparency');"></div>
@@ -1052,7 +1056,7 @@
     </section>
   </div>
   <script src="/static/circus_wheel.js?v=3" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261114-observatory-combat" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261114-altar-motion" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

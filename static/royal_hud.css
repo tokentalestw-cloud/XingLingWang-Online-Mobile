@@ -1621,3 +1621,77 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap:has(.row .slot:nth-child(5):i
   color: #e9fbff !important;
   filter: drop-shadow(0 0 8px #78deffac);
 }
+
+/* Short, local feedback on the altar surface. */
+.xlw-altar-handoff {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.xlw-altar-handoff path {
+  fill: none;
+  stroke: #a6ecff;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 19 81;
+  opacity: 0;
+  filter: drop-shadow(0 0 7px #6be5ff);
+}
+[data-turn-side="enemy"] .xlw-altar-handoff path {
+  stroke: #ffcba2;
+  filter: drop-shadow(0 0 7px #ff9259);
+}
+.xlw-altar-landing {
+  position: absolute;
+  width: 42px;
+  z-index: 23;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: xlw-altar-landing-fade 900ms both;
+}
+.xlw-altar-landing::before,
+.xlw-altar-landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.xlw-altar-landing::before {
+  transform-origin: center top;
+  animation: xlw-altar-landing-trace 520ms ease-out both;
+}
+.xlw-altar-landing[data-from="bottom"]::before { transform-origin: center bottom; }
+.xlw-altar-landing.yuki::before {
+  background:
+    repeating-linear-gradient(55deg, transparent 0 13px, #c8f8ffb0 14px 15px, transparent 16px 27px) center / 95% 100%,
+    linear-gradient(90deg, transparent, #67cefb9e 44%, #ecffff 49% 51%, #67cefb9e 56%, transparent);
+  filter: drop-shadow(0 0 9px #75d5ff);
+}
+.xlw-altar-landing.annie::before {
+  background:
+    radial-gradient(circle, #fff5bb 0 12%, #ffa742 14% 24%, #ef4a263b 35%, transparent 55%) center top / 38px 45px repeat-y,
+    linear-gradient(90deg, transparent 44%, #ff882e8c 49% 51%, transparent 56%);
+  filter: drop-shadow(0 0 8px #ff6937);
+}
+.xlw-altar-landing::after {
+  inset: auto 6px -11px;
+  height: 22px;
+  border: 2px solid #bcf4ff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #7bdbff;
+  animation: xlw-altar-landing-fade 350ms 350ms both;
+}
+.xlw-altar-landing[data-from="bottom"]::after { top: -11px; bottom: auto; }
+.xlw-altar-landing.annie::after { border-color: #ffe3a7; box-shadow: 0 0 12px #ff7648; }
+@keyframes xlw-altar-landing-trace {
+  from { transform: scaleY(.03); }
+  to { transform: scaleY(1); }
+}
+@keyframes xlw-altar-landing-fade {
+  0% { opacity: 0; }
+  22%, 59% { opacity: 1; }
+  100% { opacity: 0; }
+}
