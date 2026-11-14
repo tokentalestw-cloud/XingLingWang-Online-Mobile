@@ -37371,19 +37371,16 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     if (window.xlwGetSteamEnergy(true) >= 6) {
       const doCastle = await showXLWConfirm("【移動城堡】耗能打出", "召喚階段：是否改為耗能 6 點，直接打出【移動城堡】？");
       if (doCastle) {
-        if (window.xlwConsumeEnergy(6, true)) {
-          hand.splice(idx, 1);
-          const success = await window.xlwSpecialSummonUnit(card, true);
-          if (success) {
-            normalSummonUsed = true;
-            logBattle("🏰【移動城堡】蒸氣轟鳴！耗能 6 點直接打出成功！");
-            render();
-            return;
-          } else {
-            hand.splice(idx, 0, card);
-            window.xlwChargeEnergy(6, true);
-          }
+        const success = await window.xlwSpecialSummonUnit(card, true, {
+          sourcePile: () => hand,
+          payCost: () => window.xlwConsumeEnergy(6, true)
+        });
+        if (success) {
+          normalSummonUsed = true;
+          logBattle("🏰【移動城堡】蒸氣轟鳴！耗能 6 點直接打出成功！");
+          render();
         }
+        return;
       }
     }
   }
@@ -37453,19 +37450,19 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if (phase === "召喚階段" && (card.id === "SSR-ORC-0064" || card.name?.includes("阿庫瑪")) && playerBonusScore >= 4) {
     const useAkumaBonus = await showXLWConfirm("【鍛造之神 阿庫瑪】降費打出", "是否改為扣除 4★ 獎勵，直接將【鍛造之神 阿庫瑪】打出？");
     if (useAkumaBonus) {
-      playerBonusScore -= 4;
-      renderScore();
-      hand.splice(idx, 1);
-      const success = await window.xlwSpecialSummonUnit(card, true);
+      const success = await window.xlwSpecialSummonUnit(card, true, {
+        sourcePile: () => hand,
+        payCost: () => {
+          if (playerBonusScore < 4) return false;
+          playerBonusScore -= 4;
+          return true;
+        }
+      });
       if (success) {
         logBattle("🔨【鍛造之神 阿庫瑪】扣除 4★ 獎勵直接打出成功！");
         render();
-        return;
-      } else {
-        hand.splice(idx, 0, card);
-        playerBonusScore += 4;
-        renderScore();
       }
+      return;
     }
   }
 
@@ -42067,12 +42064,19 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               const adBoat = playerExtraDeck.find(c => c && (c.id === "C-STP-0058" || c.name?.includes("蒸汽廣告船")));
               if (adBoat && window.xlwGetSteamEnergy(true) >= 2) {
                 const doAd = await showXLWConfirm("【皇家明星號】廣告啟航", "主要階段限一次：是否耗能 2 點從額外區召喚【蒸汽廣告船】？");
-                if (doAd && window.xlwConsumeEnergy(2, true)) {
-                  window.XLW_royalStarUsedThisTurn = true;
-                  playerExtraDeck.splice(playerExtraDeck.indexOf(adBoat), 1);
-                  await window.xlwSpecialSummonUnit(adBoat, true);
-                  logBattle("🌟【皇家明星號】投射霓虹燈光！從額外區召喚【蒸汽廣告船】！");
-                  render();
+                if (doAd) {
+                  const success = await window.xlwSpecialSummonUnit(adBoat, true, {
+                    sourcePile: () => playerExtraDeck,
+                    payCost: () => {
+                      if (window.XLW_royalStarUsedThisTurn || !window.xlwConsumeEnergy(2, true)) return false;
+                      window.XLW_royalStarUsedThisTurn = true;
+                      return true;
+                    }
+                  });
+                  if (success) {
+                    logBattle("🌟【皇家明星號】投射霓虹燈光！從額外區召喚【蒸汽廣告船】！");
+                    render();
+                  }
                   return;
                 }
               }
@@ -48207,13 +48211,19 @@ function showGraveyardDetailModal(title, graveList) {
           if (emptySlots.length > 0) {
             const confirm = await showXLWConfirm("戰勝初心獸人 效果發動", "是否消耗 1 點我方額外獎勵，將墓地中的【戰勝初心獸人】特殊召喚至場上？");
             if (confirm) {
-              playerBonusScore -= 1;
-              const idx = graveyard.indexOf(card);
-              if (idx >= 0) graveyard.splice(idx, 1);
-              await window.xlwSpecialSummonUnit(card, true);
-              logBattle("✨ 戰勝初心獸人 效果：消耗 1 點獎勵分，將墓地中的【戰勝初心獸人】特殊召喚至場上！");
-              render();
-              overlay.remove();
+              const success = await window.xlwSpecialSummonUnit(card, true, {
+                sourcePile: () => graveyard,
+                payCost: () => {
+                  if (playerBonusScore < 1) return false;
+                  playerBonusScore -= 1;
+                  return true;
+                }
+              });
+              if (success) {
+                logBattle("✨ 戰勝初心獸人 效果：消耗 1 點獎勵分，將墓地中的【戰勝初心獸人】特殊召喚至場上！");
+                render();
+                overlay.remove();
+              }
             }
           } else {
             setStatus("場上無空格，無法特殊召喚戰勝初心獸人！");
@@ -52449,7 +52459,9 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
 
   if (slot && !field[slot.zone][slot.idx]) {
     if (options.sourcePile) {
-      card = window.XLWDuelConsistency.takeKnownCard(options.sourcePile(), card);
+      const source = options.sourcePile();
+      if (options.payCost && (!source?.includes(card) || !options.payCost())) return false;
+      card = window.XLWDuelConsistency.takeKnownCard(source, card);
       if (!card) return false;
     }
     field[slot.zone][slot.idx] = {
