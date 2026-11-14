@@ -5,7 +5,7 @@
   
   <title>星靈王 Web Final - 卡牌對戰</title>
   <link rel="stylesheet" href="/static/style_v8.css?v=20261114-red-trophy-v1">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-terrain-v1">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-constellation-v1">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -303,7 +303,10 @@
 
   <!-- 全畫面星光閃爍氛圍層 (柔和深藍微光與多頻率星光點點) -->
   <div id="xlwStarlightAtmosphere" class="xlw-starlight-atmosphere">
-    <canvas id="xlwArenaTerrain" aria-hidden="true"></canvas>
+    <div class="xlw-constellation-art" aria-hidden="true">
+      <img class="xlw-constellation dragon" src="/static/custom_bg/constellation-dragon.webp" alt="">
+      <img class="xlw-constellation phoenix" src="/static/custom_bg/constellation-phoenix.webp" alt="">
+    </div>
     <svg class="arena-celestial-map" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <g fill="none" stroke="currentColor" stroke-width="1">
         <circle cx="800" cy="450" r="554"/>
@@ -1037,9 +1040,8 @@
       </div>
     </section>
   </div>
-  <script src="/static/arena_terrain.js?v=1"></script>
   <script src="/static/circus_wheel.js?v=3" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261114-centered-arena" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261114-constellation-fit" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

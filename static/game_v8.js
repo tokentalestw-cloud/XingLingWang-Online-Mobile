@@ -42969,6 +42969,10 @@ function adjustBoardScale() {
     const phasePanel = logicalRect($("phaseDisplayPanelHard"));
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
+    // The decorative fan can sit close to the mat without covering its top row.
+    const enemyHandObstacle = openArena && enemyHand
+      ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap + 2)}
+      : enemyHand;
     const hand = logicalRect(document.querySelector(".hand-panel"));
     const space = {
       left: openArena ? gap : Math.max(gap, score ? score.right + gap : gap),
@@ -42985,7 +42989,7 @@ function adjustBoardScale() {
       top: (piece.top - origin.top) / currentScale,
       bottom: (piece.bottom - origin.top) / currentScale
     }));
-    const obstacles = [...scores, commands, phasePanel, toolbar, enemyHand].filter(Boolean);
+    const obstacles = [...scores, commands, phasePanel, toolbar, enemyHandObstacle].filter(Boolean);
     const anchorBounds = {...bounds, bottom: Math.max(...fieldPieces.map(piece => piece.bottom))};
     const laneThree = logicalRect(board.querySelector(".player-back .slot:nth-child(3)"));
     const fieldCenter = laneThree ? ((laneThree.left + laneThree.right) / 2 - origin.left) / currentScale
