@@ -42970,7 +42970,7 @@ function adjustBoardScale() {
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
     // Allow the rear mat to tuck just under the decorative edge of the opponent fan.
-    const opponentFanOverlap = openArena ? 15 : 0;
+    const opponentFanOverlap = openArena ? 50 : 0;
     const enemyHandObstacle = openArena && enemyHand
       ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap - opponentFanOverlap)}
       : enemyHand;
