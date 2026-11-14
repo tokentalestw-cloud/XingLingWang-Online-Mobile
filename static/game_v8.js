@@ -36540,6 +36540,38 @@ function renderHand() {
 }
 
 // 渲染戰場格子
+async function xlwResolveAbyssQueen(queen) {
+  const isDemon = card => card?.type === "unit" && (
+    [card.art_subtype, card.race, ...(card.keywords || [])].some(tag =>
+      typeof tag === "string" && tag.split(/[，,、]/).some(part => part.trim() === "魔族")
+    )
+  );
+  const targets = ["player_front", "player_back"].flatMap(zone =>
+    field[zone].flatMap((unit, idx) => unit?.card && unit !== queen &&
+      (unit.card.faction === "勇者公會" || unit.card.deck === "勇者公會" || unit.card.id?.includes("BRV"))
+      ? [{zone, idx, unit}] : []));
+  const demons = graveyard.filter(isDemon);
+  if (!targets.length || !demons.length) return false;
+  if (!await showXLWConfirm("【深淵女王】", "是否破壞 1 個其他勇者公會單位，再從墓地召喚 1 個魔族單位？")) return true;
+  const target = targets[await showXLWChoiceModal("深淵女王", "請點選要破壞的單位。",
+    targets.map(({zone, idx, unit}, value) => ({text: unit.card.name, value, boardTarget: {zone, idx}})), {boardOnly: true})];
+  if (!target || field[target.zone][target.idx] !== target.unit) return true;
+  queen.abyssUsedThisTurn = turn;
+  await destroyUnit(target.zone, target.idx, "player", false);
+  if (field[target.zone][target.idx] === target.unit) return true;
+  const eligible = graveyard.filter(isDemon);
+  if (!eligible.length) return true;
+  const pick = await showXLWChoiceModal("深淵女王", "請選擇要召喚的墓地魔族單位。",
+    eligible.map((card, value) => ({text: card.name, card, value})));
+  if (pick == null || !eligible[pick]) return true;
+  if (await window.xlwSpecialSummonUnit(eligible[pick], true, {sourcePile: () => graveyard})) {
+    logBattle(`【深淵女王】從墓地召喚了【${eligible[pick].name}】。`);
+    if (isMultiplayer) sendFullGameStateToOpponent();
+    render();
+  }
+  return true;
+}
+
 async function xlwResolveExpansionUnitClick(obj, zone, idx) {
   if (field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
 // 🌿 植物園與擴充卡牌主動技能與成長對話
@@ -36590,34 +36622,8 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
       }
     }
 
-    // 👸 深淵女王 (SSR-BRV-0056): 主要階段限一次破壞1個其他勇者公會單位，墓地召喚1個其他魔族
-    if ((obj.card.id === "SSR-BRV-0056" || obj.card.name?.includes("深淵女王")) && !obj.abyssUsedThisTurn) {
-      const braves = [];
-      for (const r of ["player_front", "player_back"]) {
-        (field[r] || []).forEach((u, i) => {
-          if (u && u !== obj && (u.card.faction === "勇者公會" || u.card.deck === "勇者公會" || u.card.id?.includes("BRV"))) {
-            braveUnits.push ? braves.push({ zone: r, idx: i, name: u.card.name }) : braves.push({ zone: r, idx: i, name: u.card.name });
-          }
-        });
-      }
-      const demonsInGrave = (graveyard || []).filter(c => c && (c.art_subtype?.includes("魔族") || c.race?.includes("魔族") || c.name?.includes("魔")));
-      if (braves.length > 0 && demonsInGrave.length > 0) {
-        const doSac = await showXLWConfirm("【深淵女王】深淵獻祭", "主要階段限一次：是否破壞 1 個其他勇者公會單位，從墓地召喚 1 個魔族單位？");
-        if (doSac) {
-          obj.abyssUsedThisTurn = true;
-          const choices = braves.map((b, i) => ({ text: `${b.name} (${b.zone.includes("front") ? "前排" : "後排"}${b.idx + 1})`, value: i }));
-          const pick = await showXLWChoiceModal("選擇獻祭單位", "請選擇獻祭的勇者公會單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            await destroyUnit(braves[pick].zone, braves[pick].idx, "player", false);
-            const dCard = demonsInGrave[0];
-            graveyard.splice(graveyard.indexOf(dCard), 1);
-            await window.xlwSpecialSummonUnit(dCard, true);
-            logBattle(`👑😈【深淵女王】深淵喚醒：獻祭【${braves[pick].name}】，自墓地召喚魔族【${dCard.name}】！`);
-            render();
-            return true;
-          }
-        }
-      }
+    if ((obj.card.id === "SSR-BRV-0056" || obj.card.name?.includes("深淵女王")) && obj.abyssUsedThisTurn !== turn) {
+      return xlwResolveAbyssQueen(obj);
     }
 
     // 🛡️ 祝福勇者 (R-BRV-0058): 主要階段限一次使1個勇者單位敵方魔法抗性
@@ -38005,9 +38011,9 @@ function renderField() {
               }
               const confirmUse = await showXLWConfirm("小魔護士 效果發動", "是否發動【小魔護士】效果，從墓地特殊召喚 1 張「金幣小魔」？");
               if (confirmUse) {
+                const summoned = await window.xlwSpecialSummonUnit(coinImpInGrave, true, {sourcePile: () => graveyard});
+                if (!summoned) return;
                 obj.usedNurseTurn = turn;
-                graveyard.splice(graveyard.indexOf(coinImpInGrave), 1);
-                await window.xlwSpecialSummonUnit(coinImpInGrave, true);
                 logBattle(`✨【小魔護士】效果發動：從墓地特殊召喚了【${coinImpInGrave.name}】！`);
                 if (isMultiplayer) sendFullGameStateToOpponent();
                 render();
