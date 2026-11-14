@@ -587,18 +587,16 @@ window.xlwRevealCard = async function(card, isPlayer) {
         const chosen = await showXLWChoiceModal("刈包 效果發動", "選擇一個墓地中3星或以下的歡樂島單位特殊召喚：", choices);
         if (chosen !== null && chosen !== undefined) {
           const chosenCard = eligibleGrave[chosen];
-          const gIdx = graveyard.indexOf(chosenCard);
-          if (gIdx >= 0) graveyard.splice(gIdx, 1);
-          await window.xlwSpecialSummonUnit(chosenCard, true);
-          logBattle(`✨ 刈包 效果：從墓地特殊召喚了【${chosenCard.name}】！`);
+          if (chosenCard && await window.xlwSpecialSummonUnit(chosenCard, true, {sourcePile: () => graveyard})) {
+            logBattle(`✨ 刈包 效果：從墓地特殊召喚了【${chosenCard.name}】！`);
+          }
           render();
         }
       } else {
         const chosenCard = eligibleGrave[0];
-        const gIdx = myGrave.indexOf(chosenCard);
-        if (gIdx >= 0) myGrave.splice(gIdx, 1);
-        await window.xlwSpecialSummonUnit(chosenCard, false);
-        logBattle(`✨ 對手 刈包 效果：從對手墓地特殊召喚了【${chosenCard.name}】！`);
+        if (chosenCard && await window.xlwSpecialSummonUnit(chosenCard, false, {sourcePile: () => myGrave})) {
+          logBattle(`✨ 對手 刈包 效果：從對手墓地特殊召喚了【${chosenCard.name}】！`);
+        }
         render();
       }
     }
@@ -3569,9 +3567,10 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
         activate = await showXLWConfirm("惡靈幫 惡棍骷 效果發動", "偵測到墓地不死族被除外，是否特殊召喚墓地中的【惡靈幫 惡棍骷】？");
       }
       if (activate) {
-        const rogueCard = graveList.splice(rogueGraveIdx, 1)[0];
-        logBattle(`✨【惡靈幫 惡棍骷】效果發動：自墓地特殊召喚上場！`);
-        await window.xlwSpecialSummonUnit(rogueCard, isPlayer);
+        const rogueCard = graveList[rogueGraveIdx];
+        if (rogueCard && await window.xlwSpecialSummonUnit(rogueCard, isPlayer, {sourcePile: () => graveList})) {
+          logBattle(`✨【惡靈幫 惡棍骷】效果發動：自墓地特殊召喚上場！`);
+        }
       }
     }
   }
@@ -9959,14 +9958,16 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
     if (isPlayer) {
       const doRevive = await showXLWConfirm("【死亡節女士黛絲】亡者盛典", "主要階段開始！是否從墓地中召喚【死亡節女士黛絲】？");
       if (doRevive) {
-        const daisiCard = myGraveyard.splice(daisiIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(daisiCard, true);
-        logBattle("💀【死亡節女士黛絲】歡度盛典：從墓地翩然歸來召喚進場！");
+        const daisiCard = myGraveyard[daisiIdx];
+        if (daisiCard && await window.xlwSpecialSummonUnit(daisiCard, true, {sourcePile: () => myGraveyard})) {
+          logBattle("💀【死亡節女士黛絲】歡度盛典：從墓地翩然歸來召喚進場！");
+        }
       }
     } else {
-      const daisiCard = myGraveyard.splice(daisiIdx, 1)[0];
-      await window.xlwSpecialSummonUnit(daisiCard, false);
-      logBattle("💀 對手【死亡節女士黛絲】發動效果：自墓地復活召喚！");
+      const daisiCard = myGraveyard[daisiIdx];
+      if (daisiCard && await window.xlwSpecialSummonUnit(daisiCard, false, {sourcePile: () => myGraveyard})) {
+        logBattle("💀 對手【死亡節女士黛絲】發動效果：自墓地復活召喚！");
+      }
     }
   }
 
@@ -10041,9 +10042,10 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
     const extraD = isPlayer ? playerExtraDeck : enemyExtraDeck;
     const cheerIdx = extraD.findIndex(c => c && (c.id === "R-SPT-0067" || c.name?.includes("加油的小旅人")));
     if (cheerIdx >= 0) {
-      const cheerCard = extraD.splice(cheerIdx, 1)[0];
-      await window.xlwSpecialSummonUnit(cheerCard, isPlayer);
-      logBattle("📣【加油的小旅人】看見小龍，熱情報到：從額外區特殊召喚進場！");
+      const cheerCard = extraD[cheerIdx];
+      if (cheerCard && await window.xlwSpecialSummonUnit(cheerCard, isPlayer, {sourcePile: () => extraD})) {
+        logBattle("📣【加油的小旅人】看見小龍，熱情報到：從額外區特殊召喚進場！");
+      }
     }
   }
 
@@ -10184,9 +10186,10 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
         doRevive = await showXLWConfirm("【骨灰戰士】遺魂喚醒", `墓地擁有 ${undeadInGrave.length} 隻亡靈，是否遺魂消耗亡靈，將【失去戰意的骨灰戰士】喚醒召喚？`);
       }
       if (doRevive) {
-        const boneCard = myGraveList.splice(boneIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(boneCard, isPlayer);
-        logBattle(`💀【失去戰意的骨灰戰士】遺魂歸來：${isPlayer ? "" : "對手"}自墓地重返戰場！`);
+        const boneCard = myGraveList[boneIdx];
+        if (boneCard && await window.xlwSpecialSummonUnit(boneCard, isPlayer, {sourcePile: () => myGraveList})) {
+          logBattle(`💀【失去戰意的骨灰戰士】遺魂歸來：${isPlayer ? "" : "對手"}自墓地重返戰場！`);
+        }
       }
     }
   }
@@ -10427,9 +10430,10 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
     const graveD = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
     const potIdx = graveD.findIndex(c => c && (c.id === "R-ART-0071" || c.name?.includes("狗頭陶罐")));
     if (potIdx >= 0) {
-      const potCard = graveD.splice(potIdx, 1)[0];
-      await window.xlwSpecialSummonUnit(potCard, isPlayerUnit);
-      logBattle("🏺【木乃伊】亡魂寄託：自墓地復活召喚【狗頭陶罐】！");
+      const potCard = graveD[potIdx];
+      if (potCard && await window.xlwSpecialSummonUnit(potCard, isPlayerUnit, {sourcePile: () => graveD})) {
+        logBattle("🏺【木乃伊】亡魂寄託：自墓地復活召喚【狗頭陶罐】！");
+      }
     }
   }
 
@@ -10652,15 +10656,17 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
     const graveD = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
     let goldIdx = graveD.findIndex(c => c && c.name?.includes("金幣小魔"));
     if (goldIdx >= 0) {
-      const goldCard = graveD.splice(goldIdx, 1)[0];
-      await window.xlwSpecialSummonUnit(goldCard, isPlayer);
-      logBattle("🥊【武僧小魔】戰鬥大捷：從墓地召喚【金幣小魔】！");
+      const goldCard = graveD[goldIdx];
+      if (goldCard && await window.xlwSpecialSummonUnit(goldCard, isPlayer, {sourcePile: () => graveD})) {
+        logBattle("🥊【武僧小魔】戰鬥大捷：從墓地召喚【金幣小魔】！");
+      }
     } else {
       goldIdx = extraD.findIndex(c => c && c.name?.includes("金幣小魔"));
       if (goldIdx >= 0) {
-        const goldCard = extraD.splice(goldIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(goldCard, isPlayer);
-        logBattle("🥊【武僧小魔】戰鬥大捷：從額外區召喚【金幣小魔】！");
+        const goldCard = extraD[goldIdx];
+        if (goldCard && await window.xlwSpecialSummonUnit(goldCard, isPlayer, {sourcePile: () => extraD})) {
+          logBattle("🥊【武僧小魔】戰鬥大捷：從額外區召喚【金幣小魔】！");
+        }
       }
     }
   }
@@ -11210,9 +11216,10 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
       if (fernInGraveIdx >= 0) {
         let doSum = isPlayer ? await showXLWConfirm("【宮廷蕨仕女】召喚小蕨士", "主要階段開始！墓地中有【小蕨士】，是否將其召喚至戰場？") : true;
         if (doSum) {
-          const cardF = gList.splice(fernInGraveIdx, 1)[0];
-          await window.xlwSpecialSummonUnit(cardF, isPlayer);
-          logBattle(`✨【宮廷蕨仕女】效果：從墓地特殊召喚【小蕨士】登場！`);
+          const cardF = gList[fernInGraveIdx];
+          if (cardF && await window.xlwSpecialSummonUnit(cardF, isPlayer, {sourcePile: () => gList})) {
+            logBattle(`✨【宮廷蕨仕女】效果：從墓地特殊召喚【小蕨士】登場！`);
+          }
         }
       }
       break;
@@ -11589,9 +11596,10 @@ window.xlwResolveExpansionPostDestruction = async function(destroyedUnit, zone, 
       if (mobIdx >= 0) {
         let doSum = isPlayerUnit ? await showXLWConfirm("【反人類機械暴民】暴動響應", "人型單位被破壞！是否響應機械飛升約翰，特殊召喚【反人類機械暴民】登場？") : true;
         if (doSum) {
-          const mobCard = extraList.splice(mobIdx, 1)[0];
-          await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit);
-          logBattle(`🤖【反人類機械暴民】憤怒覺醒：從額外區特殊召喚至戰場！`);
+          const mobCard = extraList[mobIdx];
+          if (mobCard && await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit, {sourcePile: () => extraList})) {
+            logBattle(`🤖【反人類機械暴民】憤怒覺醒：從額外區特殊召喚至戰場！`);
+          }
         }
       }
     }
@@ -11606,9 +11614,10 @@ window.xlwResolveExpansionPostDestruction = async function(destroyedUnit, zone, 
       if (mobIdx >= 0) {
         let doSum = isPlayerUnit ? await showXLWConfirm("【反機械人類暴民】暴徒響應", "機械單位被破壞！是否響應瘋狂科學家，特殊召喚【反機械人類暴民】登場？") : true;
         if (doSum) {
-          const mobCard = extraList.splice(mobIdx, 1)[0];
-          await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit);
-          logBattle(`👥【反機械人類暴民】湧上街頭：從額外區特殊召喚至戰場！`);
+          const mobCard = extraList[mobIdx];
+          if (mobCard && await window.xlwSpecialSummonUnit(mobCard, isPlayerUnit, {sourcePile: () => extraList})) {
+            logBattle(`👥【反機械人類暴民】湧上街頭：從額外區特殊召喚至戰場！`);
+          }
         }
       }
     }
@@ -13647,9 +13656,10 @@ async function castSpell(handIndex) {
     if (leafIndex >= 0 && emptySlots.length > 0) {
       const confirmLeaf = await showXLWConfirm("【葉靈訓練師 米兒】效果發動", "你使用了魔法卡！是否從額外區召喚 1 張【葉靈】？");
       if (confirmLeaf) {
-        const leafCard = extraDeck.splice(leafIndex, 1)[0];
-        await window.xlwSpecialSummonUnit(leafCard, true);
-        logBattle("🍃【葉靈訓練師 米兒】效果發動：從額外區特殊召喚了【葉靈】！");
+        const leafCard = extraDeck[leafIndex];
+        if (leafCard && await window.xlwSpecialSummonUnit(leafCard, true, {sourcePile: () => extraDeck})) {
+          logBattle("🍃【葉靈訓練師 米兒】效果發動：從額外區特殊召喚了【葉靈】！");
+        }
         if (typeof renderExtraDecks === "function") renderExtraDecks();
         render();
       }
@@ -18062,10 +18072,9 @@ window.xlwReturnUnitToHand = async function(zone, idx) {
           }
         } else {
           const newCard = playableOrcs[0];
-          const handIdx = myHand.indexOf(newCard);
-          if (handIdx >= 0) myHand.splice(handIdx, 1);
-          await window.xlwSpecialSummonUnit(newCard, false);
-          logBattle(`✨ 對手 獸人姑姑 效果：額外特殊召喚了【${newCard.name}】！`);
+          if (newCard && await window.xlwSpecialSummonUnit(newCard, false, {sourcePile: () => myHand})) {
+            logBattle(`✨ 對手 獸人姑姑 效果：額外特殊召喚了【${newCard.name}】！`);
+          }
           render();
         }
       }
@@ -22232,10 +22241,9 @@ async function performSummonToSlot(zone, idx) {
             }
           } else {
             const chosenCard = eligibleOpponentCats[0];
-            const hIdx = myHand.indexOf(chosenCard);
-            if (hIdx >= 0) myHand.splice(hIdx, 1);
-            await window.xlwSpecialSummonUnit(chosenCard, false);
-            logBattle(`✨ 對手 喵店店長 效果：在對手場上額外特殊召喚了【${chosenCard.name}】！`);
+            if (chosenCard && await window.xlwSpecialSummonUnit(chosenCard, false, {sourcePile: () => myHand})) {
+              logBattle(`✨ 對手 喵店店長 效果：在對手場上額外特殊召喚了【${chosenCard.name}】！`);
+            }
             render();
           }
         }
@@ -30949,9 +30957,10 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
       const extraList = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
       const coinImpIdx = extraList.findIndex(c => c && (c.id === "BRV-0002" || c.id === "R-BRV-0002" || c.name?.includes("金幣小魔")));
       if (coinImpIdx >= 0) {
-        const impCard = extraList.splice(coinImpIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(impCard, isPlayerUnit);
-        logBattle(`✨ 魔族保險員 效果發動：我方魔族單位被破壞，特殊召喚額外牌庫的【金幣小魔】出險！`);
+        const impCard = extraList[coinImpIdx];
+        if (impCard && await window.xlwSpecialSummonUnit(impCard, isPlayerUnit, {sourcePile: () => extraList})) {
+          logBattle(`✨ 魔族保險員 效果發動：我方魔族單位被破壞，特殊召喚額外牌庫的【金幣小魔】出險！`);
+        }
       }
     }
   }
@@ -36266,10 +36275,9 @@ async function endPlayerTurnAndRunEnemy() {
     for (const dCard of [...dragonInGrave]) {
       const emptySlots = window.xlwGetEmptyPlayerSlots();
       if (emptySlots.length > 0) {
-        const gIdx = graveyard.indexOf(dCard);
-        if (gIdx >= 0) graveyard.splice(gIdx, 1);
-        await window.xlwSpecialSummonUnit(dCard, true);
-        logBattle(`✨【小骷龍】結束階段效果：從墓地特殊召喚【小骷龍】！`);
+        if (dCard && await window.xlwSpecialSummonUnit(dCard, true, {sourcePile: () => graveyard})) {
+          logBattle(`✨【小骷龍】結束階段效果：從墓地特殊召喚【小骷龍】！`);
+        }
         render();
       } else {
         break;
@@ -46528,9 +46536,10 @@ async function triggerSneakAttackSuccessEffects(card) {
       const nineIdx = graveyard.findIndex(c => c && (c.id === "R-CAT-0035" || c.name?.includes("惡夢9命喵")));
       const emptySlots = window.xlwGetEmptyPlayerSlots();
       if (nineIdx >= 0 && emptySlots.length > 0) {
-        const nineCard = graveyard.splice(nineIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(nineCard, true);
-        logBattle("✨ 惡夢9命喵 效果：本回合偷襲成功達到 3 次，從墓地特殊召喚【惡夢9命喵】！");
+        const nineCard = graveyard[nineIdx];
+        if (nineCard && await window.xlwSpecialSummonUnit(nineCard, true, {sourcePile: () => graveyard})) {
+          logBattle("✨ 惡夢9命喵 效果：本回合偷襲成功達到 3 次，從墓地特殊召喚【惡夢9命喵】！");
+        }
         render();
       }
     }
@@ -46998,9 +47007,10 @@ async function triggerEnemySneakAttackSuccessEffects(card) {
       const nineIdx = enemyGrave.findIndex(c => c && (c.id === "R-CAT-0035" || c.name?.includes("惡夢9命喵")));
       const emptySlots = window.xlwGetEmptyEnemySlots();
       if (nineIdx >= 0 && emptySlots.length > 0) {
-        const nineCard = enemyGrave.splice(nineIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(nineCard, false);
-        logBattle("✨ 對手 惡夢9命喵 效果：本回合對手偷襲成功達到 3 次，從墓地特殊召喚【惡夢9命喵】！");
+        const nineCard = enemyGrave[nineIdx];
+        if (nineCard && await window.xlwSpecialSummonUnit(nineCard, false, {sourcePile: () => enemyGrave})) {
+          logBattle("✨ 對手 惡夢9命喵 效果：本回合對手偷襲成功達到 3 次，從墓地特殊召喚【惡夢9命喵】！");
+        }
         render();
       }
     }
@@ -48547,9 +48557,10 @@ async function checkCallGameAtTurnStart(isMyTurnStarting) {
       }
       const miracleIdx = hand.findIndex(c => c && (c.id === "R-SPT-0038" || c.name?.includes("奇蹟旅人")));
       if (myTravelerTotal >= 5 && miracleIdx >= 0) {
-        const miracleCard = hand.splice(miracleIdx, 1)[0];
-        await window.xlwSpecialSummonUnit(miracleCard, true);
-        logBattle("✨【奇蹟旅人】奇蹟降臨：提早結束宣告成功且場上有 5 個小旅人，從手牌特殊召喚登場！");
+        const miracleCard = hand[miracleIdx];
+        if (miracleCard && await window.xlwSpecialSummonUnit(miracleCard, true, {sourcePile: () => hand})) {
+          logBattle("✨【奇蹟旅人】奇蹟降臨：提早結束宣告成功且場上有 5 個小旅人，從手牌特殊召喚登場！");
+        }
       }
 
       triggerCallGameEnd("player");
@@ -48894,10 +48905,9 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
           const picked = await showXLWChoiceModal("擲骨者：召喚不死族", "請選擇從墓地召喚的 3★ 或以下不死族：", choices);
           if (picked !== null && picked !== undefined) {
             const targetCard = eligibleUndead[picked];
-            const gIdx = graveyard.indexOf(targetCard);
-            if (gIdx >= 0) graveyard.splice(gIdx, 1);
-            await window.xlwSpecialSummonUnit(targetCard, true);
-            logBattle(`✨【擲骨者】戰鬥成功效果：從墓地召喚了【${targetCard.name}】！`);
+            if (targetCard && await window.xlwSpecialSummonUnit(targetCard, true, {sourcePile: () => graveyard})) {
+              logBattle(`✨【擲骨者】戰鬥成功效果：從墓地召喚了【${targetCard.name}】！`);
+            }
             render();
           }
         } else {
@@ -52789,9 +52799,10 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
             ? await showXLWConfirm("【魁儡操縱師】效果發動", "主要階段開始時限一次，是否從額外區召喚 1 張【被操縱的鎧甲擺件】？")
             : true;
           if (confirmSummon) {
-            const armorCard = extraList.splice(armorIdx, 1)[0];
-            await window.xlwSpecialSummonUnit(armorCard, isPlayerSide);
-            logBattle(`✨【魁儡操縱師】效果發動：從額外區特殊召喚了【${armorCard.name}】！`);
+            const armorCard = extraList[armorIdx];
+            if (armorCard && await window.xlwSpecialSummonUnit(armorCard, isPlayerSide, {sourcePile: () => extraList})) {
+              logBattle(`✨【魁儡操縱師】效果發動：從額外區特殊召喚了【${armorCard.name}】！`);
+            }
             if (isPlayerSide && typeof renderExtraDecks === "function") renderExtraDecks();
             render();
             puppetsSummoned = true;
@@ -53884,9 +53895,10 @@ window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
   // 1. 迷你骷 (C-SKT-0011 / R-SKT-0011)
   const miniIdx = graveList.findIndex(c => c && (c.id?.includes("SKT-0011") || c.name?.includes("迷你骷")));
   if (miniIdx >= 0) {
-    const miniCard = graveList.splice(miniIdx, 1)[0];
-    logBattle(`✨【迷你骷】結束階段效果發動：從墓地特殊召喚【${miniCard.name}】！`);
-    await window.xlwSpecialSummonUnit(miniCard, isPlayerSide);
+    const miniCard = graveList[miniIdx];
+    if (miniCard && await window.xlwSpecialSummonUnit(miniCard, isPlayerSide, {sourcePile: () => graveList})) {
+      logBattle(`✨【迷你骷】結束階段效果發動：從墓地特殊召喚【${miniCard.name}】！`);
+    }
     render();
   }
 
