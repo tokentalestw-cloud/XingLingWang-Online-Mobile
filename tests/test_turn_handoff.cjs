@@ -1,7 +1,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{randomUUID}=require('node:crypto');
 const root=path.join(__dirname,'..'),source=fs.readFileSync(path.join(root,'static/game_v8.js'),'utf8');
 const start=source.indexOf('  ws.onmessage = async (event) => {'),end=source.indexOf('  const gameMessageHandler = ws.onmessage;',start);
-const drawStart=source.indexOf('window.xlwHandlePlayerDeckClick = async function(event) {'),drawEnd=source.indexOf('\n};',drawStart)+3;
+const drawStart=source.indexOf('window.xlwHandlePlayerDeckClick = async function(event) {');
+const drawFunction=source.indexOf('async function xlwFinishPlayerDrawPhase(',drawStart);
+const drawEnd=source.indexOf('\n}',drawFunction)+2;
 const empty=()=>({player_front:Array(5).fill(null),player_back:Array(5).fill(null),enemy_front:Array(5).fill(null),enemy_back:Array(5).fill(null)});
 let tests=0;
 module.exports=(async()=>{
@@ -33,6 +35,9 @@ for(const role of ['player1','player2']){
  // No declared attack means the regular summon phase remains available.
  c.XLW_DEFENSE_RULE.playerNeedsDefense=false;c.field=empty();c.XLW_playerNeedsToDraw=true;
  await c.xlwHandlePlayerDeckClick();assert.equal(defenses,1);assert.equal(summons,1);assert.equal(c.phase,'召喚階段');tests++;
+ c.deck.length=0;c.countdownActive=true;c.countdownRemaining=2;
+ await c.ws.onmessage({data:JSON.stringify({action:'end_turn',next_turn:13,state:{...state,turn:13,field:empty(),countdownActive:true,countdownRemaining:2}})});
+ assert.equal(c.XLW_playerNeedsToDraw,false);assert.equal(c.phase,'召喚階段');assert.equal(summons,2);tests++;
 }
 // Deterministic scheduler checks bulk backups never precede actions or multiply.
 const timers=new Map();let timerId=0;const g={crypto:{randomUUID},setTimeout(fn){timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);}};

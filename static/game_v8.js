@@ -2216,60 +2216,68 @@ window.xlwHandlePlayerDeckClick = async function(event) {
   if (window.XLW_playerNeedsToDraw) {
     window.XLW_playerNeedsToDraw = false;
     logBattle(`—— 我方點選牌庫抽牌，抽取 2 張卡牌 ——`);
-    await performPlayerTurnStartDraw();
-
-    let enemyHasAttackers = false;
-    ["enemy_front", "enemy_back"].forEach(zone => {
-      field[zone].forEach(u => {
-        if (u && (u.attacking || u.target)) {
-          u.attacking = true;
-          enemyHasAttackers = true;
-        }
-      });
-    });
-
-    const needsDefense = enemyHasAttackers || Boolean(window.XLW_DEFENSE_RULE?.playerNeedsDefense);
-
-    if (countdownActive && countdownRemaining === 1) {
-      phase = "召喚階段";
-      window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-      window.xlwCheckYukiOnEnterMainPhase?.(true);
-      await checkCrazyFanSummon();
-      setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！`);
-      render();
-    } else if (needsDefense) {
-      window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
-      phase = "防守階段";
-      window.xlwShowPhaseBanner("防守階段", "#3b82f6");
-      setStatus(`抽牌完成！前一回合對手有進攻宣言，自動進入「防守階段」！`);
-      render();
-      if (isMultiplayer) {
-        sendFullGameStateToOpponent(true);
-      }
-      await sleep(350);
-      await xlwResolvePlayerDefensePhase();
-    } else {
-      window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
-      phase = "召喚階段";
-      window.xlwShowPhaseBanner("召喚階段", "#4ade80");
-      window.xlwCheckYukiOnEnterMainPhase?.(true);
-      await checkCrazyFanSummon();
-      setStatus(`抽牌完成！第 ${turn} 回合「召喚階段」開始！`);
-      render();
-      if (isMultiplayer) {
-        sendFullGameStateToOpponent(true);
-      }
-    }
+    await xlwFinishPlayerDrawPhase();
     return;
   }
 
   // 非待抽牌狀態點擊牌庫
-  if (deck.length > 0) {
-    setStatus(`我方牌庫目前尚餘 ${deck.length} 張卡牌。`);
-  } else {
-    setStatus("我方牌庫已空。");
-  }
+  setStatus(deck.length ? "我方牌庫目前尚餘 " + deck.length + " 張卡牌。" : "我方牌庫已空。");
 };
+
+async function xlwFinishPlayerDrawPhase({ fromHandoff = false } = {}) {
+  const hadCards = deck.length > 0;
+  await performPlayerTurnStartDraw();
+
+  let enemyHasAttackers = false;
+  ["enemy_front", "enemy_back"].forEach(zone => {
+    field[zone].forEach(u => {
+      if (u && (u.attacking || u.target)) {
+        u.attacking = true;
+        enemyHasAttackers = true;
+      }
+    });
+  });
+
+  const needsDefense = enemyHasAttackers || Boolean(window.XLW_DEFENSE_RULE?.playerNeedsDefense);
+
+  if (countdownActive && countdownRemaining === 1) {
+    phase = "召喚階段";
+    window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+    window.xlwCheckYukiOnEnterMainPhase?.(true);
+    await checkCrazyFanSummon();
+    setStatus(`⚠️ 最後一回合！只能進行召喚階段，無戰術佈陣與進攻宣言！`);
+    render();
+  } else if (needsDefense) {
+    window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
+    phase = "防守階段";
+    window.xlwShowPhaseBanner("防守階段", "#3b82f6");
+    setStatus("我方防守階段，可發動防守魔法。");
+    render();
+    if (isMultiplayer) {
+      sendFullGameStateToOpponent(true);
+    }
+    if (fromHandoff) {
+      void sleep(350).then(() => xlwResolvePlayerDefensePhase()).catch(error => {
+        console.error("Defense phase failed after turn handoff", error);
+      });
+    } else {
+      await sleep(350);
+      await xlwResolvePlayerDefensePhase();
+    }
+  } else {
+    window.XLW_DEFENSE_RULE.playerNeedsDefense = false;
+    phase = "召喚階段";
+    window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+    window.xlwCheckYukiOnEnterMainPhase?.(true);
+    await checkCrazyFanSummon();
+    setStatus((hadCards ? "抽牌完成！" : "") + "第 " + turn + " 回合「召喚階段」開始！");
+    render();
+    if (isMultiplayer) {
+      sendFullGameStateToOpponent(true);
+    }
+  }
+
+}
 
 // ===== 4. Mulligan (起手換牌) 流程 =====
 function startMulliganPhase() {
@@ -5704,6 +5712,11 @@ function isDevourFusionUnit(unitOrCard) {
 }
 window.isDevourFusionUnit = isDevourFusionUnit;
 
+function isDessertQueen(card) {
+  return Boolean(card && (card.id?.includes("CND-0057") ||
+    /甜點女王|糖果女王|甜品女王/.test(card.name || "")));
+}
+
 function hasFriendlyDessertQueen(side = "player") {
   const sidePrefix = side + "_";
   if (typeof field === "undefined" || !field) return false;
@@ -5711,14 +5724,7 @@ function hasFriendlyDessertQueen(side = "player") {
     if (field[z]) {
       for (let i = 0; i < 5; i++) {
         const u = field[z][i];
-        if (u && u.card && (
-          u.card.id === "SR-CND-0057" ||
-          u.card.id === "SSR-CND-0057-泳裝" ||
-          u.card.id === "SSR-CND-0057-異圖" ||
-          u.card.id?.includes("CND-0057") ||
-          u.card.name?.includes("甜點女王") ||
-          u.card.name?.includes("糖果女王")
-        ) && !window.isUnitSilenced(u, z, i)) {
+        if (isDessertQueen(u?.card) && !window.isUnitSilenced(u, z, i)) {
           return true;
         }
       }
@@ -5727,6 +5733,30 @@ function hasFriendlyDessertQueen(side = "player") {
   return false;
 }
 window.hasFriendlyDessertQueen = hasFriendlyDessertQueen;
+
+function xlwAllowsTacticalTribute(card) {
+  return window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive ||
+    (hasFriendlyDessertQueen("player") && isDessertCard(card));
+}
+
+function xlwRecoverGummyPhantom(card, isPlayer) {
+  const pile = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+  const target = pile.find(c => c && (/(?:^|-)CND-0060(?:-|$)/.test(c.id || "") || c.name === "軟糖幻影"));
+  if (!target) return;
+  const destination = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
+  const moved = window.XLWDuelConsistency.moveKnownCard(pile, destination, target);
+  if (!moved) return;
+  const message = "【" + card.name + "】從額外區將【" + moved.name + "】加入";
+  const localNotice = message + (isPlayer ? "我方手牌。" : "對手手牌。");
+  logBattle(localNotice);
+  window.XLWBFeedback?.notice(localNotice, "success");
+  renderExtraDecks();
+  if (isMultiplayer && isPlayer) {
+    if (ws?.readyState === 1) ws.send(JSON.stringify({action: "battle_log", message: message + "對手手牌。", showNotice: true}));
+    sendFullGameStateToOpponent();
+  }
+  render();
+}
 
 async function xlwSeparateAllFusedUnits(isPlayer = true) {
   const sidePrefix = isPlayer ? "player_" : "enemy_";
@@ -13892,7 +13922,7 @@ async function castSpell(handIndex) {
     const targets = [];
     for (const z of ["player_front", "player_back"]) {
       field[z].forEach((u, i) => {
-        if (u && isDessertUnit(u) && !window.isUnitMagicImmune(u, z, i)) {
+        if (u && isDessertUnit(u)) {
           const stars = getUnitStars(u, z, i);
           targets.push({ zone: z, idx: i, name: u.card.name, unit: u, stars: stars });
         }
@@ -13910,8 +13940,10 @@ async function castSpell(handIndex) {
       return;
     }
     const targetItem = targets[chosenIdx];
+    if (!targetItem || field[targetItem.zone]?.[targetItem.idx] !== targetItem.unit) return;
+    const spellCard = window.XLWDuelConsistency.takeKnownCard(hand, card);
+    if (!spellCard) return;
     const starsBonus = targetItem.stars;
-    const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
       targetItem.unit.tempValuePunchBuff = (targetItem.unit.tempValuePunchBuff || 0) + starsBonus;
@@ -19164,6 +19196,10 @@ async function confirmTribute() {
   if (selectedHandForTribute === null && selectedTributeCard === null) return;
   let card = selectedTributeCard || (selectedHandForTribute !== null ? hand[selectedHandForTribute] : null);
   if (!card) return;
+  if (phase === "戰術佈陣" && !xlwAllowsTacticalTribute(card)) {
+    setStatus("目前無法在戰術佈陣階段獻祭召喚這張牌。");
+    return;
+  }
   selectedTributeCard = card;
   const targetCost = getCardTributeCost(card);
   const selectedVal = countSelectedTributesValue(selectedTributes, card);
@@ -21340,28 +21376,7 @@ async function performSummonToSlot(zone, idx) {
       // 🍬 甜點王國：軟糖幻影 (C-CND-0060) / 幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
       if (card.id === "C-CND-0060" || card.name === "軟糖幻影" || card.id === "R-CND-0059" || card.name === "幻影軟糖") {
         const isPlayer = zone.startsWith("player_");
-        const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-        let found = extraList.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
-        if (found) {
-          extraList.splice(extraList.indexOf(found), 1);
-        } else {
-          const t = allCards.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
-          if (t) found = structuredClone(t);
-        }
-        if (found) {
-          if (isPlayer) {
-            hand.push(found);
-            logBattle(`✨【${card.name}】立即效果：從額外區將【${found.name}】加入我方手牌！`);
-          } else {
-            if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-            if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-            window.XLW_ENEMY.hand.push(found);
-            logBattle(`✨ 對手【${card.name}】立即效果：從額外區將【${found.name}】加入對手手牌！`);
-          }
-          if (typeof renderExtraDecks === "function") renderExtraDecks();
-          if (isMultiplayer) sendFullGameStateToOpponent();
-          render();
-        }
+        xlwRecoverGummyPhantom(card, isPlayer);
       }
 
       // 🍬 甜點王國：大嘴驚喜包 (CND-0002) 立即: 使你所有合體後的單位被分開
@@ -24655,7 +24670,9 @@ async function changeActionPhase(targetPhase) {
   phase = targetPhase;
   
   if (phase === "戰術佈陣") {
-    setStatus("進入「戰術佈陣」：可拖曳我方單位調整位置，或額外進行1次免祭品/小旅人召喚。");
+    setStatus(hasFriendlyDessertQueen("player")
+      ? "甜點女王生效：戰術佈陣可移動任意數量的單位，並可改為獻祭召喚一張甜點王國單位。"
+      : "進入「戰術佈陣」：可移動我方單位，或額外召喚一次免祭品單位或小旅人。");
     if (window.xlwCheckTacticalPhaseTriggers) {
       await window.xlwCheckTacticalPhaseTriggers("player");
     }
@@ -25777,26 +25794,14 @@ async function xlwResolvePlayerDefensePhase() {
     }
 
     if (hasAnyAttacker) {
-      // 剛進入防守階段一口氣進行防守反制魔法判定，可依序打出多張魔法卡
-      const wantCounter = await showXLWConfirm(
-        "🛡️ 防守階段反制魔法",
-        "對手宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡（可依序打出多張，如山羊術、盾牌人偶、削弱藥水、塗毒等）？",
-        "發動防守魔法",
-        "不發動，直接開始戰鬥"
-      );
-      if (wantCounter) {
-        window.XLW_defenseCounterActive = true;
-        setStatus("🛡️ 防守魔法發動中：可從手牌依序打出防守反制魔法卡（對手可即時反制）。打完所有反制卡後請點擊右下角「結束防守魔法並開始戰鬥結算」。");
-        logBattle("—— 我方防守階段：開啟防守魔法反制時機 ——");
-        render();
-        await new Promise(resolve => {
-          window.XLW_defenseCounterResolve = resolve;
-        });
-        window.XLW_defenseCounterActive = false;
-        render();
-      } else {
-        logBattle("我方選擇不發動防守反制魔法，直接進行戰鬥結算。");
-      }
+      const choice = new Promise(resolve => { window.XLW_defenseCounterResolve = resolve; });
+      window.XLW_defenseCounterActive = true;
+      setStatus("我方防守階段，可發動防守魔法。準備好後開始戰鬥結算。");
+      logBattle("—— 我方防守階段：開啟防守魔法反制時機 ——");
+      render();
+      await choice;
+      window.XLW_defenseCounterActive = false;
+      render();
     }
 
     logBattle("—— 依序進行星星戰線 1 -> 5 戰鬥運算 ——");
@@ -29130,22 +29135,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   await window.xlwResolvePG2Summon(card, destZone, destIdx, false);
   // 🍬 甜點王國：軟糖幻影 (C-CND-0060) / 幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
   if (card.id === "C-CND-0060" || card.name === "軟糖幻影" || card.id === "R-CND-0059" || card.name === "幻影軟糖") {
-    const extraList = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-    let found = extraList.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
-    if (found) {
-      extraList.splice(extraList.indexOf(found), 1);
-    } else {
-      const t = allCards.find(c => c && (c.id === "C-CND-0060" || c.name === "軟糖幻影"));
-      if (t) found = structuredClone(t);
-    }
-    if (found) {
-      if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-      if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-      window.XLW_ENEMY.hand.push(found);
-      logBattle(`✨ 對手【${card.name}】立即效果：從額外區將【${found.name}】加入對手手牌！`);
-      if (typeof renderExtraDecks === "function") renderExtraDecks();
-      render();
-    }
+    xlwRecoverGummyPhantom(card, false);
   }
   // 🍬 甜點王國：大嘴驚喜包 (CND-0002) 立即: 使你所有合體後的單位被分開
   else if (card.id === "CND-0002" || card.name?.includes("大嘴驚喜包")) {
@@ -33829,7 +33819,7 @@ async function aiPlayMagicCardsSummonPhase() {
     const dessertUnits = [];
     for (const z of ["enemy_front", "enemy_back"]) {
       field[z].forEach((u, i) => {
-        if (u && isDessertUnit(u) && !window.isUnitMagicImmune(u, z, i)) {
+        if (u && isDessertUnit(u)) {
           const stars = getUnitStars(u, z, i);
           dessertUnits.push({ zone: z, idx: i, unit: u, stars: stars });
         }
@@ -36390,6 +36380,11 @@ async function endPlayerTurnAndRunEnemy() {
     }
 
     // 進入新回合「抽牌階段」：等待玩家點選右下角【我方牌庫】抽牌
+    if (countdownActive && deck.length === 0) {
+      window.XLW_playerNeedsToDraw = false;
+      await xlwFinishPlayerDrawPhase();
+      return;
+    }
     window.XLW_playerNeedsToDraw = true;
     phase = "抽牌階段";
     window.xlwShowPhaseBanner("請點選牌組抽牌", "#facc15");
@@ -37108,11 +37103,7 @@ window.xlwCanPlayHandCard = function(card, idx) {
 
     // 戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚（除非詛咒通靈效果或甜點女王效果啟用）
     const tributeCost = getCardTributeCost(card);
-    if (phase === "戰術佈陣" && tributeCost > 0 && !window.XLW_playerCurseSummonActive) {
-      if (!(hasFriendlyDessertQueen("player") && isDessertCard(card))) {
-        return false;
-      }
-    }
+    if (phase === "戰術佈陣" && tributeCost > 0 && !xlwAllowsTacticalTribute(card)) return false;
 
     // 麻祖、高塔101等特殊限制
     if (typeof canSummonCard === "function" && !canSummonCard(card, true, {silent:true})) {
@@ -37623,7 +37614,7 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
   const tributeCost = getCardTributeCost(card);
   if (tributeCost > 0) {
     if (phase === "戰術佈陣") {
-      if ((hasFriendlyDessertQueen("player") && isDessertCard(card)) || window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive) {
+      if (xlwAllowsTacticalTribute(card)) {
         // 糖果女王或特定效果允許戰術佈陣階段進行獻祭召喚
       } else {
         setStatus("【戰術限制】戰術佈陣階段只能進行免祭品一般召喚，無法進行獻祭召喚！");
@@ -38525,7 +38516,7 @@ function renderField() {
           // 合體計數標籤
           const fusionBadge = document.createElement("div");
           fusionBadge.className = "xlw-devour-count-badge";
-          fusionBadge.innerHTML = `🍬 合體 ×${obj.devourCards.length}`;
+          fusionBadge.innerHTML = `合體 ×${obj.devourCards.length}`;
           fusionBadge.title = `吞食合體單位（共包含 ${obj.devourCards.length} 張底層卡牌）`;
           cardEl.appendChild(fusionBadge);
         }
@@ -42384,7 +42375,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
             underCard.title = `【合體底層卡】${d.card.name}（+${d.value} 攻）\n點擊可檢視卡牌詳情`;
             underCard.innerHTML = `
               <img src="${d.card.image || '/static/card_back.jpeg'}" alt="${d.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';">
-              <div class="xlw-devour-peek-badge atk">⚔️ +${d.value} ${d.card.name}</div>
+              <div class="xlw-devour-peek-badge atk">攻 +${d.value}</div>
             `;
             underCard.onclick = (e) => {
               e.stopPropagation();
@@ -42403,7 +42394,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
             underCard.title = `【合體底層卡】${d.card.name}（+${d.value}★ 星數）\n點擊可檢視卡牌詳情`;
             underCard.innerHTML = `
               <img src="${d.card.image || '/static/card_back.jpeg'}" alt="${d.card.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/static/card_back.jpeg';">
-              <div class="xlw-devour-peek-badge stars">⭐ +${d.value}★ ${d.card.name}</div>
+              <div class="xlw-devour-peek-badge stars">星 +${d.value}</div>
             `;
             underCard.onclick = (e) => {
               e.stopPropagation();
@@ -43167,8 +43158,9 @@ function renderBattleLine() {
       const marker = document.createElement("button");
       marker.type = "button";
       marker.className = "xlw-trophy-marker";
+      marker.title = "紅星獎盃";
       marker.setAttribute("aria-label", `紅星獎盃，攻擊力 6，灌溉值 ${trophy.irrigation}`);
-      marker.innerHTML = `<span class="xlw-trophy-art" aria-hidden="true"></span><span class="xlw-trophy-stats">⚔ 6 · 💧 ${trophy.irrigation}</span>`;
+      marker.innerHTML = `<span class="xlw-trophy-art" aria-hidden="true"></span><span class="xlw-trophy-stats"><span>⚔ 6</span><span class="xlw-trophy-water">💧 ${trophy.irrigation}</span></span>`;
       marker.onclick = () => showModal(trophy.card);
       cell.appendChild(marker);
       return;
@@ -43440,7 +43432,8 @@ function renderStablePanel() {
   }
   if (window.XLW_defenseCounterActive) {
     setContent(`
-      <button class="stable-action-btn primary" style="background: linear-gradient(135deg, #fa8c16, #fa541c); border-color: #ffd76a; color: #fff; height: auto; padding: 12px; font-size: 15px; cursor: pointer;" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">結束防守魔法並開始戰鬥結算</button>
+      <div class="stable-action-choice-tip" role="status">我方防守階段，可發動魔法卡</div>
+      <button class="stable-action-btn end" onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">開始戰鬥結算</button>
     `);
     return;
   }
@@ -44331,6 +44324,18 @@ function adjustBoardScale() {
     }
 
     root.style.setProperty("--xlw-player-hand-center", playerHandCenter + "px");
+    const rightRailStart = commands?.left ?? phasePanel?.left ?? width;
+    const leftRailEnd = Math.max(gap, ...scores.map(rect => rect.right + gap));
+    const handRight = Math.max(leftRailEnd + gap, rightRailStart - gap);
+    const handWidth = handRight - leftRailEnd;
+    root.style.setProperty("--xlw-dense-hand-width", handWidth + "px");
+    root.style.setProperty("--xlw-dense-hand-center", (leftRailEnd + handWidth / 2) + "px");
+    const noticeRail = phasePanel || commands;
+    if (noticeRail) {
+      root.style.setProperty("--xlw-notice-right", (width - noticeRail.right) + "px");
+      root.style.setProperty("--xlw-notice-top", (phasePanel ? phasePanel.bottom + gap : height * .35) + "px");
+      root.style.setProperty("--xlw-notice-width", (noticeRail.right - noticeRail.left) + "px");
+    }
     root.style.setProperty("--xlw-enemy-hand-center", enemyHandCenter + "px");
     root.style.setProperty("--xlw-field-scale", String(fit.scale));
     root.style.setProperty("--xlw-field-x", fit.x + "px");
@@ -44721,7 +44726,9 @@ function setupWebSocketEvents() {
         }
       }
     } else if (data.action === "battle_log") {
-      logBattle(String(data.message || ""));
+      const message = String(data.message || "");
+      logBattle(message);
+      if (data.showNotice) window.XLWBFeedback?.notice(message, "success");
     } else if (data.action === "game_over") {
       if (data.specialWinner === "player" || data.specialWinner === "enemy") {
         triggerCallGameEnd(data.specialWinner === "player" ? "enemy" : "player", "黑洞羊抵達五號星星戰線");
@@ -45977,6 +45984,11 @@ function setupWebSocketEvents() {
         if (isGameOverFlag) return;
       }
       
+      if (countdownActive && deck.length === 0) {
+        window.XLW_playerNeedsToDraw = false;
+        await xlwFinishPlayerDrawPhase({ fromHandoff: true });
+        return;
+      }
       // 進入新回合「抽牌階段」：等待玩家點選右下角【我方牌庫】抽牌
       window.XLW_playerNeedsToDraw = true;
       phase = "抽牌階段";

@@ -2073,3 +2073,31 @@ html body.xlw-royal-ui #hand:not([data-mulligan]) .card:focus-visible {
 html body.xlw-royal-ui #boardWrap .row .slot .card > img:first-child {
   object-position: center top;
 }
+
+/* Keep contextual notices in the command rail, away from board hit targets. */
+body.xlw-royal-ui.xlw-game-started #xlwActionFeedback {
+  left: auto;
+  right: var(--xlw-notice-right, 12px);
+  top: var(--xlw-notice-top, 33%);
+  bottom: auto;
+  transform: none;
+  width: var(--xlw-notice-width, 150px);
+  max-width: none;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+html body.xlw-royal-ui .hand-panel:has(#hand[data-dense]) {
+  left: var(--xlw-dense-hand-center, 50%) !important;
+  width: var(--xlw-dense-hand-width, 66vw) !important;
+}
+html body.xlw-royal-ui #hand[data-dense]:not([data-mulligan]) {
+  justify-content: safe center !important;
+  overflow-x: auto !important;
+  padding-inline: 8px !important;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  pointer-events: auto !important;
+}
+html body.xlw-royal-ui #hand[data-dense]::-webkit-scrollbar { display: none; }
+html body.xlw-royal-ui #hand[data-dense] > .card { flex-shrink: 0; touch-action: pan-x; }
