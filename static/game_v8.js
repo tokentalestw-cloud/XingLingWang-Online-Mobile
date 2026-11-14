@@ -5197,8 +5197,10 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
           const picked = await showXLWChoiceModal("【火圈巨熊】開盤咆哮", "火圈巨熊開盤！請選擇破壞敵方 1 個單位：", choices);
           if (picked !== null && picked !== undefined) {
             const target = oppUnits[picked];
+            if (target && field[target.zone]?.[target.idx] === target.unit) {
             logBattle(`🐻【火圈巨熊】開盤效果：巨熊撲殺破壞了敵方【${target.unit.card.name}】！`);
-            await destroyUnit(target.zone, target.idx, "enemy", false);
+              await destroyUnit(target.zone, target.idx, "enemy", false);
+            }
           }
         } else {
           const target = oppUnits[0];
@@ -5222,13 +5224,16 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     }
     // 狐狸魔術師 (CCS-0018 / SSR-CCS-0018): 墓地回收 1 張法力為 X 的馬戲團魔法卡
     else if (revealed.id === "CCS-0018" || revealed.id === "SSR-CCS-0018" || revealed.name?.includes("狐狸魔術師")) {
-      const grave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
-      const matchedSpell = grave.find(c => c && window.xlwIsCircusCard(c) && c.type === "magic" && Number(c.cost || c.mana || 0) === wheel.length);
-      if (matchedSpell) {
-        grave.splice(grave.indexOf(matchedSpell), 1);
-        if (isPlayer) hand.push(matchedSpell);
-        else (window.XLW_ENEMY?.hand || []).push(matchedSpell);
-        logBattle(`🦊【狐狸魔術師】開盤魔術：從墓地回收魔法卡【${matchedSpell.name}】（費用: ${wheel.length}）至手牌！`);
+      const cost = wheel.length;
+      const grave = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+      const eligible = (grave() || []).filter(c => c && window.xlwIsCircusCard(c) &&
+        c.type === "magic" && Number(c.mana ?? c.cost ?? 0) === cost);
+      if (eligible.length) {
+        const pick = isPlayer ? await showXLWChoiceModal("狐狸魔術師", "請選擇要回手的馬戲團魔法卡。",
+          eligible.map((card, value) => ({text: card.name, card, value}))) : 0;
+        const recovered = pick == null ? null : window.XLWDuelConsistency.moveKnownCard(
+          grave(), isPlayer ? hand : window.XLW_ENEMY?.hand, eligible[pick]);
+        if (recovered) logBattle(`【狐狸魔術師】回收了法力值 ${cost} 的【${recovered.name}】。`);
       }
     }
     // 馬戲團好夥伴 (R-CCS-0026 / SSSR-CCS-0026): 開盤獎勵 +2
