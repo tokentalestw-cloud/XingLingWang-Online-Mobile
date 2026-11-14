@@ -42969,15 +42969,15 @@ function adjustBoardScale() {
     const phasePanel = logicalRect($("phaseDisplayPanelHard"));
     const toolbar = logicalRect($("xlwFixedTopRightActionBar"));
     const enemyHand = logicalRect($("xlwEnemyFloatingHand"));
-    // The decorative fan can sit close to the mat without covering its top row.
+    // Allow the rear mat to tuck just under the decorative edge of the opponent fan.
     const enemyHandObstacle = openArena && enemyHand
-      ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap + 2)}
+      ? {...enemyHand, bottom: Math.max(enemyHand.top, enemyHand.bottom - gap - 5)}
       : enemyHand;
     const hand = logicalRect(document.querySelector(".hand-panel"));
     const space = {
       left: openArena ? gap : Math.max(gap, score ? score.right + gap : gap),
       right: openArena ? width - gap : Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
-      top: Math.max(gap, enemyHand ? enemyHand.bottom : gap),
+      top: Math.max(gap, enemyHand ? enemyHand.bottom - (openArena ? 5 : 0) : gap),
       // A shallow overlap matches the reference fan without moving any field zones.
       bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
     };
