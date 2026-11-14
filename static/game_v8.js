@@ -1182,26 +1182,20 @@ async function init() {
     return;
   }
   try {
-    try {
-      allCards = await fetch("/api/cards?v=" + Date.now()).then(r => r.json());
-    } catch (eCards) {
-      console.warn("API cards fetch error, using static fallback:", eCards);
-      allCards = await fetch("/static/card_images/cards.json").then(r => r.json()).catch(() => []);
-    }
-
-    try {
-      decks = await fetch("/api/decks?v=" + Date.now()).then(r => r.json());
-    } catch (eDecks) {
-      console.warn("API decks fetch error, using static fallback:", eDecks);
-      decks = await fetch("/static/decks.json").then(r => r.json()).catch(() => ({}));
-    }
-
-    let factionOrder = [];
-    try {
-      factionOrder = await fetch("/api/factions?v=" + Date.now()).then(r => r.json());
-    } catch (eFac) {
-      factionOrder = await fetch("/static/factions.json").then(r => r.json()).catch(() => []);
-    }
+    const readJson = async url => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Game data request failed: " + response.status);
+      return response.json();
+    };
+    const loadData = (api, fallback, initial) => readJson(api + "?v=" + Date.now())
+      .catch(() => readJson(fallback)).catch(() => initial);
+    const [cardsData, deckData, factionOrder] = await Promise.all([
+      loadData("/api/cards", "/static/card_images/cards.json", []),
+      loadData("/api/decks", "/static/decks.json", {}),
+      loadData("/api/factions", "/static/factions.json", [])
+    ]);
+    allCards = cardsData;
+    decks = deckData;
     if (Array.isArray(factionOrder) && factionOrder.length > 0) {
       const factionSelect = document.getElementById("factionSelect");
       if (factionSelect) {
@@ -1412,6 +1406,8 @@ function newGameMultiplayer() {
   enemyBonusScore = 0;
   
   window.XLW_playerTurnDrawnAt=undefined;
+  window.XLW_playerAudienceTurn = undefined;
+  window.XLW_enemyAudienceTurn = undefined;
   window.XLW_peerCollectionBase=undefined;
   window.XLWDuelConsistency?.reset();
   window.XLW_playerNeedsToDraw = false;
@@ -10293,32 +10289,18 @@ window.xlwResolvePG2TurnStart = async function(isPlayer = true) {
     const trophy = window.xlwTrophyAt ? window.xlwTrophyAt(lane) : null;
     return trophy && trophy.irrigation > 0 && trophy.owner === (isPlayer ? "player" : "enemy");
   });
-  if (hasOwnedTrophy) {
-    const extraDeckList = isPlayer ? (window.XLW_playerExtraDeck || playerExtraDeck || []) : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-    let audienceCard = extraDeckList.find(c => c && (c.id === "SSSR-NMS-0092" || c.name?.includes("紅星盃賽場觀眾") || c.name?.includes("紅星杯賽場觀眾") || (c.name?.includes("觀眾") && c.name?.includes("紅星"))));
-    while (audienceCard) {
-      const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
-      if (!emptySlots || emptySlots.length === 0) break;
-      if (isPlayer) {
-        const doSummon = await showXLWConfirm("【紅星盃賽場觀眾】召喚", "星星戰線上有你持有的「紅星獎盃」，是否從額外區召喚【紅星盃賽場觀眾】？");
-        if (!doSummon) break;
-        const success = await window.xlwSpecialSummonUnit(audienceCard, true, { sourcePile: () => extraDeckList });
-        if (success) {
-          logBattle("📣【紅星盃賽場觀眾】熱烈歡呼！從額外區被召喚進場！");
-          if (typeof render === "function") render();
-        } else {
-          break;
-        }
-      } else {
-        const success = await window.xlwSpecialSummonUnit(audienceCard, false, { sourcePile: () => extraDeckList });
-        if (success) {
-          logBattle("📣 對手【紅星盃賽場觀眾】發動效果：自額外區被召喚進場！");
-          if (typeof render === "function") render();
-        } else {
-          break;
-        }
+  const audienceUse = isPlayer ? "XLW_playerAudienceTurn" : "XLW_enemyAudienceTurn";
+  if (hasOwnedTrophy && window[audienceUse] !== turn) {
+    const extra = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const audience = extra.find(c => c && (c.id === "SSSR-NMS-0092" || /紅星[盃杯]賽場觀眾/.test(c.name || "")));
+    const slots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+    if (audience && slots.length) {
+      window[audienceUse] = turn;
+      const accepted = !isPlayer || await showXLWConfirm("【紅星盃賽場觀眾】召喚", "是否從額外區召喚 1 個紅星盃賽場觀眾？");
+      if (accepted && await window.xlwSpecialSummonUnit(audience, isPlayer, {sourcePile: () => extra})) {
+        logBattle("📣【紅星盃賽場觀眾】從額外區被召喚進場！");
+        render();
       }
-      audienceCard = extraDeckList.find(c => c && (c.id === "SSSR-NMS-0092" || c.name?.includes("紅星盃賽場觀眾") || c.name?.includes("紅星杯賽場觀眾") || (c.name?.includes("觀眾") && c.name?.includes("紅星"))));
     }
   }
 };
@@ -11043,19 +11025,22 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   if (cardId === "SSR-CND-0068" || cardName.includes("甜點將軍")) {
     let combinedCount = 0;
     for (const z of [side + "front", side + "back"]) {
-      combinedCount += (field[z] || []).filter(u => u && (u.combinedCards || []).length > 0).length;
+      combinedCount += (field[z] || []).filter(u => u &&
+        (u.devourCards?.length || u.combinedCards?.length || u.fusionCards?.length || u.isCombined)).length;
     }
     if (combinedCount > 0) {
-      const extraD = isPlayer ? playerExtraDeck : enemyExtraDeck;
+      const extraD = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
       const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
       let retrieved = 0;
       for (let k = 0; k < combinedCount; k++) {
-        const swordIdx = extraD.findIndex(c => c && (c.id === "R-CND-0072" || c.name?.includes("枴杖糖寶劍")));
+        const swordIdx = extraD.findIndex(c => c && (c.id === "R-CND-0072" || /[枴拐]杖糖寶劍/.test(c.name || "")));
         if (swordIdx >= 0) {
           myHand.push(extraD.splice(swordIdx, 1)[0]);
           retrieved++;
         }
       }
+      if (!retrieved) return;
+      renderExtraDecks();
       logBattle(`🍭⚔️【甜點將軍】軍備就緒：從額外區將 ${retrieved} 張【枴杖糖寶劍】加入手牌！`);
       if (typeof render === "function") render();
     }
@@ -15929,13 +15914,11 @@ async function castSpell(handIndex) {
     // 我方發動
     const spellsInGrave = graveyard.filter(c => c && (c.type === "magic" || c.type === "魔法"));
     if (spellsInGrave.length > 0) {
-      const choices = spellsInGrave.map((c, i) => ({ text: `${c.name} (墓地)`, value: i }));
-      const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices);
+      const choices = spellsInGrave.map((card, value) => ({ text: card.name, card, value }));
+      const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices, {confirmCard: true});
       if (chosenIdx !== null && chosenIdx !== undefined) {
-        const chosenSpell = spellsInGrave[chosenIdx];
-        const gIdx = graveyard.indexOf(chosenSpell);
-        if (gIdx >= 0) graveyard.splice(gIdx, 1);
-        hand.push(chosenSpell);
+        const chosenSpell = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, spellsInGrave[chosenIdx]);
+        if (!chosenSpell) return;
         logBattle(`✨ 法力回收壺 效果：將墓地魔法卡 ${chosenSpell.name} 回收至手牌！`);
         render();
       }
@@ -21456,24 +21439,13 @@ async function performSummonToSlot(zone, idx) {
           if (residentCard) {
             let targetSlot = null;
             if (isPlayer) {
-              const choices = validSlots.map((s, i) => ({
-                text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
-                value: i
+              const choices = validSlots.map(({zone, idx}, value) => ({
+                text: "召喚至場地", value, boardTarget: {zone, idx, summon: true}
               }));
-              choices.push({ text: "不進行召喚", value: -1 });
-              const titlePrompt = frontSlots.length > 0 ?
-                `【糖果女孩】召喚【糖果居民】(${step + 1}/2) (前排優先)` :
-                `【糖果女孩】召喚【糖果居民】(${step + 1}/2)`;
-              const chosenIdx = await showXLWChoiceModal(
-                titlePrompt,
-                `從${fromWhere}召喚【${residentCard.name}】，請選擇召喚位置：`,
-                choices
-              );
-              if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
-                targetSlot = validSlots[chosenIdx];
-              } else {
-                break;
-              }
+              choices.push({text: "取消召喚", value: "cancel"});
+              const choice = await showXLWChoiceModal("糖果女孩", "請直接點擊亮起的格位召喚糖果居民。", choices, {boardOnly: true});
+              if (choice == null || choice === "cancel") break;
+              targetSlot = validSlots[choice];
             } else {
               targetSlot = validSlots[0];
             }
@@ -28925,7 +28897,7 @@ async function resolveDecayStatus(isPlayerTurn) {
   const zones = ["player_front", "player_back", "enemy_front", "enemy_back"];
   // Capture all end-phase decay before destroying an aura source in an earlier row.
   const decayAtEnd=new Map();
-  for(const zone of zones){if(zone.startsWith('player_')!==isPlayerTurn)continue;for(let i=0;i<5;i++){const unit=field[zone][i];if(unit && unit._xlwDecayResolvedTurn!==turn && isDecayed(zone,i))decayAtEnd.set(zone+':'+i,{unit,tapped:Boolean(unit.tapped)});}}
+  for(const zone of zones){if(zone.startsWith('player_')!==isPlayerTurn)continue;for(let i=0;i<5;i++){const unit=field[zone][i];if(unit && !unit.attacking && unit._xlwDecayResolvedTurn!==turn && isDecayed(zone,i))decayAtEnd.set(zone+':'+i,{unit,tapped:Boolean(unit.tapped)});}}
   for (const zone of zones) {
     const isPlayerUnit = zone.startsWith("player_");
     if (isPlayerUnit !== isPlayerTurn) continue;
@@ -47825,6 +47797,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     `;
 
     const images = options.map(xlwChoiceCardImage);
+    const isCardSearch = config.confirmCard ||
+      (/墓地|牌組|牌庫|額外區|檢索/.test(title + message) && images.some(Boolean));
     let buttonsHTML = "";
     options.forEach((opt, idx) => {
       const isEnd = opt.value === "end_effects";
@@ -47866,6 +47840,40 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         cleanup(null);
       }
     };
+    let selectedCardOption = null;
+    let confirmCardButton;
+    let previewButton;
+    if (isCardSearch) {
+      const controls = document.createElement("div");
+      controls.className = "xlw-card-search-controls";
+      controls.innerHTML = '<button type="button" data-cancel>取消</button><button type="button" data-preview disabled>放大檢視</button><button type="button" data-confirm disabled>確認選牌</button>';
+      box.appendChild(controls);
+      confirmCardButton = controls.querySelector("[data-confirm]");
+      previewButton = controls.querySelector("[data-preview]");
+      controls.querySelector("[data-cancel]").onclick = () => {
+        const cancel = options.find(option => /取消|不發動|跳過|放棄|不選擇/.test(option.text));
+        cleanup(cancel?.value ?? null);
+      };
+      confirmCardButton.onclick = () => {
+        if (selectedCardOption !== null) cleanup(options[selectedCardOption].value);
+      };
+      previewButton.onclick = () => {
+        const image = images[selectedCardOption];
+        if (!image) return;
+        const dialog = document.createElement("dialog");
+        dialog.className = "xlw-card-search-preview";
+        const picture = document.createElement("img");
+        picture.src = image;
+        picture.alt = options[selectedCardOption].text;
+        const close = document.createElement("button");
+        close.textContent = "返回選牌";
+        close.onclick = () => dialog.close();
+        dialog.addEventListener("close", () => dialog.remove(), {once: true});
+        dialog.append(picture, close);
+        overlay.appendChild(dialog);
+        dialog.showModal();
+      };
+    }
 
     if(/Call Game/.test(title)){
       overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
@@ -47889,16 +47897,25 @@ function showXLWChoiceModal(title, message, options, config = {}) {
           const preview = document.createElement("img");
           preview.src = image;
           preview.alt = "";
-          preview.style.cssText = "height:64px;width:auto;vertical-align:middle;margin-left:8px";
+          preview.style.cssText = isCardSearch
+            ? "height:clamp(82px, 28vh, 144px);width:auto;vertical-align:middle"
+            : "height:64px;width:auto;vertical-align:middle;margin-left:8px";
           btn.appendChild(preview);
         }
       }
       const handleChoose = () => {
         const idx = parseInt(btn.dataset.optIdx, 10);
+        if (isCardSearch) {
+          selectedCardOption = idx;
+          box.querySelectorAll(".xlw-choice-btn").forEach(item => item.setAttribute("aria-pressed", String(item === btn)));
+          confirmCardButton.disabled = false;
+          previewButton.disabled = !images[idx];
+          return;
+        }
         cleanup(options[idx] ? options[idx].value : btn.dataset.value);
       };
       btn.onclick = (e) => {e.stopPropagation();handleChoose();};
-      btn.ontouchend = (e) => {
+      if (!isCardSearch) btn.ontouchend = (e) => {
         e.preventDefault();e.stopPropagation();
         handleChoose();
       };
@@ -52492,12 +52509,13 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   if (isPlayer) {
     const choices = candidateSlots.map((s, i) => ({
       text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
-      value: i
+      value: i,
+      boardTarget: {zone: s.zone, idx: s.idx, summon: !field[s.zone]?.[s.idx]}
     }));
     const titlePrompt = (frontPriority && frontSlots.length > 0) ?
       `特殊召喚 【${card.name}】 (前排優先)` :
       `特殊召喚 【${card.name}】`;
-    const chosenIdx = await showXLWChoiceModal(titlePrompt, `請選擇召喚的位置：`, choices);
+    const chosenIdx = await showXLWChoiceModal(titlePrompt, "請直接點擊亮起的場地格。", choices, {boardOnly: true});
     if (chosenIdx !== null && chosenIdx !== undefined) {
       slot = candidateSlots[chosenIdx];
     }

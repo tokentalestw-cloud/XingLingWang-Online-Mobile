@@ -9201,3 +9201,27 @@ body #phaseDisplayPanelHard #phaseTextHard,
 .xlw-trophy-water { font-size: 16px; color: #c8f3ff; }
 .xlw-devour-count-badge { font-size: 13px; white-space: nowrap; animation: none; }
 .xlw-devour-peek-badge { font-size: 15px; height: 20px; }
+.xlw-card-search-controls {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 10px;
+}
+.xlw-card-search-controls button, .xlw-card-search-preview button {
+  padding: 7px 10px;
+  border: 1px solid #8a7959;
+  border-radius: 6px;
+  color: #f4ead5;
+  background: #233040;
+}
+.xlw-card-search-controls button:disabled { opacity: .45; }
+.xlw-choice-btn[aria-pressed="true"] { outline: 3px solid #8ee3f3; outline-offset: -4px; }
+.xlw-card-search-preview {
+  max-width: 95vw;
+  max-height: 94dvh;
+  border: 1px solid #8a7959;
+  border-radius: 8px;
+  background: #111c2b;
+}
+.xlw-card-search-preview::backdrop { background: #030711dd; }
+.xlw-card-search-preview img { display: block; max-width: 83vw; height: min(74dvh, 760px); object-fit: contain; margin-bottom: 8px; }
