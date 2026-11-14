@@ -637,6 +637,32 @@ window.xlwRevealCard = async function(card, isPlayer) {
     }
   }
 
+  // 🥛 C-FMS-0037 大冰奶: 此卡被展示時，可從你額外區尋找1張「奇妙的配方」並使其被洗回牌庫
+  if (card.id === "C-FMS-0037" || card.name?.includes("大冰奶")) {
+    triggered = true;
+    const myExtra = isPlayer ? extraDeck : (window.XLW_ENEMY?.extra || enemyExtraDeck || []);
+    const myDeck = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
+    const fIdx = myExtra.findIndex(c => c && (c.id === "R-FMS-0038" || c.name?.includes("奇妙的配方")));
+    if (fIdx >= 0) {
+      if (isPlayer) {
+        const doShuffle = await showXLWConfirm("【大冰奶】展示發動", "【大冰奶】被展示！是否從額外牌組尋找 1 張【奇妙的配方】洗回牌庫？");
+        if (doShuffle) {
+          const formulaCard = myExtra.splice(fIdx, 1)[0];
+          myDeck.push(formulaCard);
+          shuffle(myDeck);
+          logBattle("🥛✨【大冰奶】展示效果：從額外區尋得【奇妙的配方】並洗回牌庫！");
+          render();
+        }
+      } else {
+        const formulaCard = myExtra.splice(fIdx, 1)[0];
+        myDeck.push(formulaCard);
+        shuffle(myDeck);
+        logBattle("🥛✨ 對手【大冰奶】展示效果：從額外區將【奇妙的配方】洗回牌庫！");
+        render();
+      }
+    }
+  }
+
   // 女王石 SR-FMS-0033
   if (triggered) {
     const sidePrefix = isPlayer ? "player_" : "enemy_";
@@ -668,6 +694,27 @@ window.xlwRevealTopCards = async function(count, isPlayer) {
   if (myDeck.length === 0) return [];
   
   let actualCount = count;
+  // 🌊 SR-FMS-0040 日月湖女神: 一回合限一次，展示牌庫頂牌前，數量改為2，若皆為魔法卡獎勵+5
+  let sunMoonActive = false;
+  const sideP = isPlayer ? "player_" : "enemy_";
+  const hasGoddess = [sideP + "front", sideP + "back"].some(z => {
+    return (field[z] || []).some((u, i) => u && u.card && (u.card.id === "SR-FMS-0040" || u.card.name?.includes("日月湖女神")) && !window.isUnitSilenced(u, z, i));
+  });
+  if (hasGoddess && !window.XLW_sunMoonUsedThisTurn) {
+    if (isPlayer) {
+      const doGoddess = await showXLWConfirm("【日月湖女神】湖中靈光", "展示牌庫頂卡牌前：是否發動【日月湖女神】效果，將本次展示數量改為 2 張？（若皆為魔法卡，額外獎勵 +5★）");
+      if (doGoddess) {
+        sunMoonActive = true;
+        window.XLW_sunMoonUsedThisTurn = true;
+        actualCount = 2;
+      }
+    } else {
+      sunMoonActive = true;
+      window.XLW_sunMoonUsedThisTurn = true;
+      actualCount = 2;
+    }
+  }
+
   const hasTonghulu = [isPlayer ? "player_front" : "enemy_front", isPlayer ? "player_back" : "enemy_back"].some(z => {
     return field[z].some((u, i) => u && u.card && (u.card.id === "R-FMS-0006" || u.card.id === "SSSR-FMS-0006" || u.card.name?.includes("糖葫蘆小童")) && !window.isUnitSilenced(u, z, i));
   });
@@ -689,6 +736,21 @@ window.xlwRevealTopCards = async function(count, isPlayer) {
   
   for (const c of cards) {
     await window.xlwRevealCard(c, isPlayer);
+  }
+
+  // 🌊 日月湖女神 雙魔法卡獎勵結算
+  if (sunMoonActive && cards.length === 2) {
+    const allMagic = cards.every(c => c && (c.type === "magic" || c.type === "spell"));
+    if (allMagic) {
+      if (isPlayer) {
+        playerBonusScore += 5;
+        logBattle("🌊✨【日月湖女神】湖中靈光降臨：展示的 2 張卡皆為魔法卡！我方額外獎勵 +5★！");
+      } else {
+        enemyBonusScore += 5;
+        logBattle("🌊✨【日月湖女神】湖中靈光降臨：展示的 2 張卡皆為魔法卡！對手額外獎勵 +5★！");
+      }
+      renderScore();
+    }
   }
   
   if (tonghuluActive && cards.length > 1) {
@@ -3552,6 +3614,53 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
     else window.XLW_cardsMilledThisTurn_enemy = (window.XLW_cardsMilledThisTurn_enemy || 0) + 1;
   }
 
+  // 🧚‍♀️ SR-EVL-0024 黑妖精法師希妮: 進入墓地時可使墓地1妖精魔法卡回手牌
+  if (card.id === "SR-EVL-0024" || card.id === "SR-EVL-0024-泳裝" || card.name?.includes("黑妖精法師希妮") || card.name?.includes("希妮")) {
+    const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+    const fairySpells = myGrave.filter(c => c && c !== card && (c.type === "magic" || c.type === "spell") && (c.faction === "妖精" || c.deck === "妖精" || c.id?.includes("EVL")));
+    if (fairySpells.length > 0) {
+      if (isPlayer) {
+        const doRetrieve = await showXLWConfirm("【黑妖精法師希妮】回溯法術", "【黑妖精法師希妮】進入墓地！是否將墓地 1 張妖精魔法卡收回手牌？");
+        if (doRetrieve) {
+          const choices = fairySpells.map((c, i) => ({ text: c.name, value: i }));
+          const pick = await showXLWChoiceModal("選擇妖精魔法卡", "請選擇回收至手牌的魔法卡：", choices);
+          if (pick !== null && pick !== undefined) {
+            const chosen = fairySpells[pick];
+            const gIdx = graveyard.indexOf(chosen);
+            if (gIdx >= 0) {
+              graveyard.splice(gIdx, 1);
+              hand.push(chosen);
+              logBattle(`🧚‍♀️🪄【黑妖精法師希妮】法術回收：將【${chosen.name}】從墓地加入手牌！`);
+              render();
+            }
+          }
+        }
+      } else {
+        const chosen = fairySpells[0];
+        const gIdx = myGrave.indexOf(chosen);
+        if (gIdx >= 0) {
+          myGrave.splice(gIdx, 1);
+          (window.XLW_ENEMY?.hand || []).push(chosen);
+          logBattle(`🧚‍♀️🪄 對手【黑妖精法師希妮】將【${chosen.name}】從墓地回收手牌！`);
+          render();
+        }
+      }
+    }
+  }
+
+  // 👻🪞 R-VLG-0051 / SSR-VLG-0051 伽椰貞美子: 進入墓地時回手牌
+  if (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子")) {
+    const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+    const gIdx = myGrave.indexOf(card);
+    if (gIdx >= 0) {
+      myGrave.splice(gIdx, 1);
+      if (isPlayer) hand.push(card);
+      else (window.XLW_ENEMY?.hand || []).push(card);
+      logBattle(`👻🪞【伽椰貞美子】怨念重生：進入墓地時自體返回持有者手牌！`);
+      render();
+    }
+  }
+
   // 快樂墓園 (SKT-0019)
   const happyGraveActive = xlwIsHappyGraveyard(window.xlwGetFactionFieldCard?.(isPlayer));
   if (happyGraveActive && (card.type === "unit" || card.type === "單位")) {
@@ -5048,7 +5157,7 @@ async function xlwResolveWheelEntryEffect(card, isPlayer) {
 }
 
 // 輪轉 (Spin Wheel) 與 開盤 (Reveal)
-window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
+window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null, options = {}) {
   const wheel = isPlayer ? window.XLW_playerRouletteWheel : window.XLW_enemyRouletteWheel;
   let lastRevealedCard = null;
   let lastRevealedAtk = 0;
@@ -5096,6 +5205,16 @@ window.xlwSpinWheel = async function(isPlayer, times = 1, sourceCard = null) {
     }
 
     logBattle(`🎡 輪轉開盤第 ${t + 1} 次！揭開開盤卡牌【${revealed.name}】（開盤攻擊力: ${revealedAtk}★）！`);
+
+    if (options && options.suppressOpenEffect) {
+      logBattle(`⭕🪄【圈圈魔法師 小圓】壓制結界：本次開盤效果已被無效化！`);
+      if (stayOutOfGrave) {
+        // keep out
+      } else {
+        if (isPlayer) graveyard.push(revealed); else (window.XLW_ENEMY?.grave || enemyGraveyard || []).push(revealed);
+      }
+      continue;
+    }
 
     // 觀眾與招牌連鎖反應
     if (isPlayer) {
@@ -7251,6 +7370,36 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
+  // 🪵 野人工藝-木棒 (+2 攻擊力)
+  if (unit.woodClubBonus) {
+    baseAtk += unit.woodClubBonus;
+  }
+
+  // 🗡️ 妖精寶劍 (+2 攻擊力)
+  if (unit.fairySwordBonus) {
+    baseAtk += unit.fairySwordBonus;
+  }
+
+  // 💎 妖精靈魂碎片 (+3 攻擊力)
+  if (unit.soulShardAtk) {
+    baseAtk += unit.soulShardAtk;
+  }
+
+  // 🪵 野人工藝-木棒 (+2 攻擊力)
+  if (unit.woodClubBonus) {
+    baseAtk += unit.woodClubBonus;
+  }
+
+  // 🗡️ 妖精寶劍 (+2 攻擊力)
+  if (unit.fairySwordBonus) {
+    baseAtk += unit.fairySwordBonus;
+  }
+
+  // 💎 妖精靈魂碎片 (+3 攻擊力)
+  if (unit.soulShardAtk) {
+    baseAtk += unit.soulShardAtk;
+  }
+
   // 🥖 旅人法棍 (C-SPT-0061) 加成
   if (unit.baguetteBonus) {
     baseAtk += unit.baguetteBonus;
@@ -7554,6 +7703,11 @@ function getUnitStars(unit, zone, lane) {
   // 衰退扣分
   if (unit.decayScoreDebuff) {
     baseStars -= unit.decayScoreDebuff;
+  }
+
+  // 🧚‍♀️ 小小黑妖精小咪 減星懲罰
+  if (unit.starPenalty) {
+    baseStars -= unit.starPenalty;
   }
 
   // 冰霜法師 水瓶座 (SSSR-NMS-0060) 減星效果
@@ -10187,6 +10341,17 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
 
 // 戰鬥成功與進攻連動結算 (PG2 & 點數兌換卡)
 window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOwner, isAttacker) {
+  // 🗡️ 妖精寶劍進攻成功抽1張牌
+  if (attacker && attacker.hasFairySwordDraw && successOwner === "player") {
+    draw(1);
+    logBattle("🗡️✨【妖精寶劍】進攻戰鬥成功：抽取 1 張牌！");
+  }
+  // 🔥 野人慶典進攻成功獎勵+1
+  if (attacker && attacker.hasCelebrationBonus) {
+    if (successOwner === "player") playerBonusScore += 1; else enemyBonusScore += 1;
+    logBattle(`🔥🍖【野人慶典】戰鬥成功：獲得額外獎勵 +1★！`);
+    if (typeof renderScore === "function") renderScore();
+  }
   if (!attacker || !attacker.card) return;
   const attCard = attacker.card;
   const isPlayer = successOwner === "player";
@@ -10360,6 +10525,96 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
 
 // 立即發動與入場結算 (PG2 & 點數兌換卡)
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
+  if (!card) return;
+  const cardId = card.id || "";
+  const cardName = card.name || "";
+  const side = isPlayer ? "player_" : "enemy_";
+  const oppSide = isPlayer ? "enemy_" : "player_";
+
+  // 🧚‍♀️ SR-EVL-0025 小小黑妖精小咪: 使敵方前排戰線所有單位 -1★
+  if (cardId === "SR-EVL-0025" || cardName.includes("小小黑妖精小咪") || cardName.includes("小咪")) {
+    const oppFront = oppSide + "front";
+    let debuffed = 0;
+    (field[oppFront] || []).forEach((u, i) => {
+      if (u && !window.isUnitEffectImmune?.(u, oppFront, i)) {
+        u.starPenalty = (u.starPenalty || 0) + 1;
+        debuffed++;
+      }
+    });
+    logBattle(`🧚‍♀️✨【小小黑妖精小咪】黑夜微光：使敵方前排戰線 ${debuffed} 個單位被賦予 -1★！`);
+    if (typeof render === "function") render();
+  }
+
+  // 🧚‍♀️ SR-EVL-0033 夜行黑妖精: 立即使敵方場上1個攻擊力為-2或以下的單位被綁架
+  if (cardId === "SR-EVL-0033" || cardName.includes("夜行黑妖精")) {
+    const oppTargets = [];
+    for (const oz of [oppSide + "front", oppSide + "back"]) {
+      (field[oz] || []).forEach((u, i) => {
+        if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
+          const uAtk = typeof getUnitAtk === "function" ? getUnitAtk(u, oz, i) : (parseInt(u.card.attack) || 0);
+          if (uAtk <= -2) {
+            oppTargets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
+          }
+        }
+      });
+    }
+    if (oppTargets.length > 0) {
+      if (isPlayer) {
+        const choices = oppTargets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: i }));
+        const pick = await showXLWChoiceModal("【夜行黑妖精】暗夜誘捕", "選擇綁架敵方攻擊力 <= -2 的單位：", choices);
+        if (pick !== null && pick !== undefined) {
+          const t = oppTargets[pick];
+          await kidnapCard(t.zone, t.idx, zone, idx);
+          logBattle(`🧚‍♀️🌑【夜行黑妖精】暗夜縛鎖：將敵方【${t.name}】綁架！`);
+          render();
+        }
+      } else {
+        const t = oppTargets[0];
+        await kidnapCard(t.zone, t.idx, zone, idx);
+        logBattle(`🧚‍♀️🌑 對手【夜行黑妖精】將我方【${t.name}】綁架！`);
+        render();
+      }
+    }
+  }
+
+  // 🍖 SSR-EWD-0021 貴貴野人: 立即從手牌額外打出2個無需祭品的野人單位
+  if (cardId === "SSR-EWD-0021" || cardName.includes("貴貴野人")) {
+    const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
+    const freeBarbarians = myHand.filter(c => c && c.type === "unit" && (parseInt(c.tribute) || 0) === 0 && (c.faction === "進化野人" || c.deck === "進化野人" || c.id?.includes("EWD") || c.name?.includes("野人")));
+    if (freeBarbarians.length > 0) {
+      if (isPlayer) {
+        for (let k = 0; k < 2; k++) {
+          const curFree = hand.filter(c => c && c.type === "unit" && (parseInt(c.tribute) || 0) === 0 && (c.faction === "進化野人" || c.deck === "進化野人" || c.id?.includes("EWD") || c.name?.includes("野人")));
+          if (curFree.length === 0) break;
+          const choices = curFree.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
+          choices.push({ text: "不再打出", value: -1 });
+          const pick = await showXLWChoiceModal(`【貴貴野人】額外打出 (${k + 1}/2)`, "選擇額外打出的免祭品野人：", choices);
+          if (pick !== null && pick !== undefined && pick !== -1) {
+            const cardToPlay = curFree[pick];
+            const emptySlots = window.xlwGetEmptyPlayerSlots();
+            if (emptySlots.length > 0) {
+              const hIdx = hand.indexOf(cardToPlay);
+              if (hIdx >= 0) hand.splice(hIdx, 1);
+              await window.xlwSpecialSummonUnit(cardToPlay, true);
+              logBattle(`🍖💰【貴貴野人】呼朋引伴：額外打出了【${cardToPlay.name}】！`);
+              render();
+            }
+          } else {
+            break;
+          }
+        }
+      } else {
+        for (let k = 0; k < 2 && freeBarbarians.length > 0; k++) {
+          const cardToPlay = freeBarbarians.shift();
+          const eIdx = (window.XLW_ENEMY?.hand || []).indexOf(cardToPlay);
+          if (eIdx >= 0) window.XLW_ENEMY.hand.splice(eIdx, 1);
+          await window.xlwSpecialSummonUnit(cardToPlay, false);
+          logBattle(`🍖💰 對手【貴貴野人】額外打出了【${cardToPlay.name}】！`);
+          render();
+        }
+      }
+    }
+  }
   if (!card) return;
   const cardId = card.id || "";
   const cardName = card.name || "";
@@ -11273,7 +11528,348 @@ async function castSpell(handIndex) {
   // ==========================================
   
   // ========================================
-  // 第七彈 PG2 魔法卡實裝 (共 18 張)
+    // ========================================
+    // 妖精、野人與中立重要魔法卡專屬實裝
+    // ========================================
+
+    // 1. R-NMG-0041 飛來一顆石頭: 若原始攻擊力及原始星星皆不超過1則破壞
+    } else if (card.id === "R-NMG-0041" || card.name?.includes("飛來一顆石頭")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const oz of ["enemy_front", "enemy_back"]) {
+          (field[oz] || []).forEach((u, i) => {
+            if (u && u.card && (parseInt(u.card.attack) || 0) <= 1 && (parseInt(u.card.score) || 0) <= 1 && !window.isUnitMagicImmune?.(u, oz, i)) {
+              targets.push({ zone: oz, idx: i, name: u.card.name });
+            }
+          });
+        }
+        if (targets.length === 0) {
+          logBattle("🪨【飛來一顆石頭】場上沒有原始攻星皆<=1的敵方目標，魔法無效入墓。");
+          graveyard.push(spellCard);
+          return;
+        }
+        const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+        const pick = await showXLWChoiceModal("【飛來一顆石頭】擊碎弱小", "請點選要擊碎的目標（原始攻星皆<=1）：", choices);
+        if (pick !== null && pick !== undefined) {
+          const tgt = targets[pick];
+          logBattle(`🪨💥【飛來一顆石頭】巨石轟頂！破壞了對手的【${tgt.name}】！`);
+          await destroyUnit(tgt.zone, tgt.idx, "enemy", false);
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 2. R-EWD-0052 野人工藝-木棒: 消逝。使你場上1個野人單位被賦予+2攻擊力
+    } else if (card.id === "R-EWD-0052" || card.name?.includes("木棒")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【野人工藝-木棒】裝備", "請選擇獲得 +2 攻擊力的野人單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = targets[pick];
+            tgt.unit.woodClubBonus = (tgt.unit.woodClubBonus || 0) + 2;
+            logBattle(`🪵【野人工藝-木棒】粗糙有力：使【${tgt.name}】獲得 +2 攻擊力！`);
+          }
+        }
+        // 消逝回到額外區
+        playerExtraDeck.push(spellCard);
+        render();
+      });
+
+    // 3. R-EWD-0053 野人工藝-披風: 使你場上1個野人單位被賦予+2★
+    } else if (card.id === "R-EWD-0053" || card.name?.includes("披風")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【野人工藝-披風】披肩", "請選擇獲得 +2★ 的野人單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = targets[pick];
+            tgt.unit.bonusScore = (tgt.unit.bonusScore || 0) + 2;
+            logBattle(`🧥【野人工藝-披風】威武霸氣：使【${tgt.name}】獲得 +2★ 榮譽！`);
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 4. R-EWD-0054 野人工藝-吊墜: 使你場上1個野人單位被賦予敵方魔法抗性
+    } else if (card.id === "R-EWD-0054" || card.name?.includes("吊墜")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【野人工藝-吊墜】祈福", "請選擇獲得敵方魔法抗性的野人單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = targets[pick];
+            tgt.unit.hasSpellShield = true;
+            logBattle(`📿【野人工藝-吊墜】圖騰庇護：賦予【${tgt.name}】敵方魔法抗性！`);
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 5. R-EWD-0018-泳裝 興奮 黑銀夜烏: 使你場上所有野人單位轉正
+    } else if (card.id === "R-EWD-0018-泳裝" || card.name?.includes("黑銀夜烏")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        let untapCount = 0;
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach(u => {
+            if (u && u.tapped && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              u.tapped = false;
+              untapCount++;
+            }
+          });
+        }
+        logBattle(`🦅【黑銀夜烏】野性振奮：使我方場上 ${untapCount} 個橫置野人單位全體轉正！`);
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 6. R-EVL-0023 重生術: 使你墓地1單位回牌庫頂
+    } else if (card.id === "R-EVL-0023" || card.name?.includes("重生術")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const graveUnits = (graveyard || []).filter(c => c && c.type === "unit");
+        if (graveUnits.length > 0) {
+          const choices = graveUnits.map((c, idx) => ({ text: `${c.name} (${c.score || 0}★)`, value: idx }));
+          const pick = await showXLWChoiceModal("【重生術】回歸牌頂", "請選擇 1 個回牌庫頂的墓地單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const chosenCard = graveUnits[pick];
+            graveyard.splice(graveyard.indexOf(chosenCard), 1);
+            deck.push(chosenCard);
+            logBattle(`✨【重生術】生生不息：將墓地中的【${chosenCard.name}】放回牌庫頂！`);
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 7. R-EVL-0046 妖精寶劍: 使你場上1個妖精單位被賦予+2攻擊力與進攻成功抽1
+    } else if (card.id === "R-EVL-0046" || card.name?.includes("妖精寶劍")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const fairies = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (window.xlwIsUnitFairy?.(u) || u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.id?.includes("EVL"))) {
+              fairies.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (fairies.length > 0) {
+          const choices = fairies.map((f, idx) => ({ text: `${f.name} (${f.zone.includes("front") ? "前排" : "後排"}${f.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【妖精寶劍】佩劍", "請選擇佩戴寶劍的妖精單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = fairies[pick];
+            tgt.unit.fairySwordBonus = (tgt.unit.fairySwordBonus || 0) + 2;
+            tgt.unit.hasFairySwordDraw = true;
+            logBattle(`🗡️✨【妖精寶劍】靈光璀璨：使【${tgt.name}】+2 攻擊力，且進攻成功時抽 1 張牌！`);
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 8. R-EVL-0051 妖精靈魂碎片: 使你場上1個妖精單位+3攻魔法抗性 或 +3★效果抗性
+    } else if (card.id === "R-EVL-0051" || card.name?.includes("妖精靈魂碎片")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const fairies = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (window.xlwIsUnitFairy?.(u) || u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.id?.includes("EVL"))) {
+              fairies.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (fairies.length > 0) {
+          const fChoices = fairies.map((f, idx) => ({ text: `${f.name} (${f.zone.includes("front") ? "前排" : "後排"}${f.idx + 1})`, value: idx }));
+          const fPick = await showXLWChoiceModal("【妖精靈魂碎片】選擇目標", "請選擇融合靈魂碎片的妖精：", fChoices);
+          if (fPick !== null && fPick !== undefined) {
+            const tgt = fairies[fPick];
+            const optChoices = [
+              { text: "⚔️ +3 攻擊力 & 敵方魔法抗性", value: "atk" },
+              { text: "⭐ +3★ (分數) & 敵方效果抗性", value: "score" }
+            ];
+            const optPick = await showXLWChoiceModal("【妖精靈魂碎片】選擇祝福", `請選擇賦予【${tgt.name}】的祝福：`, optChoices);
+            if (optPick === "atk") {
+              tgt.unit.soulShardAtk = (tgt.unit.soulShardAtk || 0) + 3;
+              tgt.unit.hasSpellShield = true;
+              logBattle(`💎✨【妖精靈魂碎片】鋒銳祝福：賦予【${tgt.name}】+3 攻擊力與敵方魔法抗性！`);
+            } else if (optPick === "score") {
+              tgt.unit.bonusScore = (tgt.unit.bonusScore || 0) + 3;
+              tgt.unit.hasEffectImmunity = true;
+              logBattle(`💎✨【妖精靈魂碎片】不朽祝福：賦予【${tgt.name}】+3★ 榮譽與敵方效果抗性！`);
+            }
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 9. EVL-0017 位移魔法: 使敵方場上2個單位位置互換
+    } else if (card.id === "EVL-0017" || card.id === "EVL-0017-ALT" || card.name?.includes("位移魔法")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const oppUnits = [];
+        for (const oz of ["enemy_front", "enemy_back"]) {
+          (field[oz] || []).forEach((u, i) => { if (u && u.card) oppUnits.push({ zone: oz, idx: i, name: u.card.name, unit: u }); });
+        }
+        if (oppUnits.length >= 2) {
+          const choices = oppUnits.map((u, idx) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: idx }));
+          const p1 = await showXLWChoiceModal("【位移魔法】選擇第一個單位", "請選擇第一個互換位置的敵方單位：", choices);
+          if (p1 !== null && p1 !== undefined) {
+            const filtered = oppUnits.filter((_, idx) => idx !== p1);
+            const choices2 = filtered.map((u, idx) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: idx }));
+            const p2 = await showXLWChoiceModal("【位移魔法】選擇第二個單位", "請選擇第二個互換位置的敵方單位：", choices2);
+            if (p2 !== null && p2 !== undefined) {
+              const u1 = oppUnits[p1];
+              const u2 = filtered[p2];
+              const temp = field[u1.zone][u1.idx];
+              field[u1.zone][u1.idx] = field[u2.zone][u2.idx];
+              field[u2.zone][u2.idx] = temp;
+              logBattle(`🌀【位移魔法】乾坤挪移：將對手的【${u1.name}】與【${u2.name}】互換了位置！`);
+            }
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 10. EVL-0020 幻術調位: 使你或敵方1星星戰線的前後排單位位置互換
+    } else if (card.id === "EVL-0020" || card.name?.includes("幻術調位")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const laneChoices = [
+          ...[0,1,2,3,4].map(l => ({ text: `我方戰線 ${l + 1} 前後排互換`, value: { side: "player", lane: l } })),
+          ...[0,1,2,3,4].map(l => ({ text: `敵方戰線 ${l + 1} 前後排互換`, value: { side: "enemy", lane: l } }))
+        ];
+        const pick = await showXLWChoiceModal("【幻術調位】選擇戰線", "請選擇前後排互換的戰線欄位：", laneChoices);
+        if (pick) {
+          const fZ = pick.side + "_front";
+          const bZ = pick.side + "_back";
+          const temp = field[fZ][pick.lane];
+          field[fZ][pick.lane] = field[bZ][pick.lane];
+          field[bZ][pick.lane] = temp;
+          logBattle(`🌀【幻術調位】顛倒乾坤：將 ${pick.side === "player" ? "我方" : "敵方"} 戰線 ${pick.lane + 1} 的前後排單位互換！`);
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 11. EVL-0055 水晶箭矢: 進攻回合破壞敵方1個無需祭品的單位
+    } else if (card.id === "EVL-0055" || card.name?.includes("水晶箭矢")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const oz of ["enemy_front", "enemy_back"]) {
+          (field[oz] || []).forEach((u, i) => {
+            if (u && u.card && (parseInt(u.card.tribute) || 0) === 0 && !window.isUnitMagicImmune?.(u, oz, i)) {
+              targets.push({ zone: oz, idx: i, name: u.card.name });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【水晶箭矢】破空狙殺", "請選擇要破壞的無祭品敵方單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = targets[pick];
+            logBattle(`🏹✨【水晶箭矢】穿雲一擊：破壞了對手的無祭品單位【${tgt.name}】！`);
+            await destroyUnit(tgt.zone, tgt.idx, "enemy", false);
+          }
+        } else {
+          logBattle("🏹【水晶箭矢】場上沒有符合條件的敵方無祭品單位。");
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 12. EWD-0019 就是要打打: 使1野人單位在戰術階段仍可進攻
+    } else if (card.id === "EWD-0019" || card.name?.includes("就是要打打")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        const targets = [];
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (targets.length > 0) {
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("【就是要打打】戰術衝鋒", "請選擇佈陣時仍可進攻的野人：", choices);
+          if (pick !== null && pick !== undefined) {
+            const tgt = targets[pick];
+            tgt.unit.canAttackAfterTactical = true;
+            logBattle(`💥🍖【就是要打打】狂怒戰意：賦予【${tgt.name}】在戰術佈陣階段仍可進攻！`);
+          }
+        }
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 13. EWD-0020 野人慶典: 進攻成功使你獎勵+1
+    } else if (card.id === "EWD-0020" || card.id === "EWD-0020-ALT" || card.name?.includes("野人慶典")) {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        let count = 0;
+        for (const rz of ["player_front", "player_back"]) {
+          (field[rz] || []).forEach(u => {
+            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
+              u.hasCelebrationBonus = true;
+              count++;
+            }
+          });
+        }
+        logBattle(`🔥🍖【野人慶典】狂歡盛宴：賦予我方 ${count} 個野人單位進攻成功時額外獲得 +1★ 獎勵！`);
+        graveyard.push(spellCard);
+        render();
+      });
+
+    // 第七彈 PG2 魔法卡實裝 (共 18 張)
   // ========================================
 
   // 1. SR-NMG-0042 紅星獎盃: 置於星星戰線灌溉15
@@ -17412,6 +18008,108 @@ async function executeTributeEffects(selectedTributes) {
               const targetItem = myTargets[0];
               if (targetItem && field[targetItem.zone][targetItem.idx]) {
                 await window.xlwTransformUnitToGoat(targetItem.unit, targetItem.zone, targetItem.idx, unit.card, false, false);
+              }
+            }
+          }
+        }
+
+        // 💧🌱 C-PLT-0006 養分水球: 此單位被獻祭時，使你場上所有種子單位被灌溉2 或 使你場上的1個植物單位被灌溉4
+        if (unit.card.id === "C-PLT-0006" || unit.card.name?.includes("養分水球")) {
+          const isP = t.zone.startsWith("player_");
+          const myZones = isP ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+          const mySeeds = [];
+          const myPlants = [];
+          for (const mz of myZones) {
+            (field[mz] || []).forEach((u, ui) => {
+              if (u && u !== unit && u.card) {
+                if (window.xlwIsUnitSeed?.(u)) mySeeds.push({ zone: mz, idx: ui, unit: u });
+                if (window.xlwIsUnitPlant?.(u) || u.card.faction === "植物園" || u.card.deck === "植物園" || u.card.id?.includes("PLT")) {
+                  myPlants.push({ zone: mz, idx: ui, unit: u, name: u.card.name });
+                }
+              }
+            });
+          }
+          if (mySeeds.length > 0 || myPlants.length > 0) {
+            if (isP) {
+              const choices = [];
+              if (mySeeds.length > 0) choices.push({ text: `🌱 全體種子單位灌溉 +2 (共 ${mySeeds.length} 個種子)`, value: "seeds" });
+              if (myPlants.length > 0) choices.push({ text: `🌿 單一植物單位灌溉 +4 (可選 ${myPlants.length} 個植物)`, value: "plant" });
+              if (choices.length > 0) {
+                const pick = await showXLWChoiceModal("【養分水球】獻祭滋養", "【養分水球】被獻祭！請選擇滋養方式：", choices);
+                if (pick === "seeds") {
+                  for (const s of mySeeds) {
+                    window.xlwIrrigateUnit?.(s.unit, 2, s.zone, s.idx, "養分水球");
+                  }
+                  logBattle(`💧🌱【養分水球】滋養甘霖：全體 ${mySeeds.length} 個種子單位灌溉值 +2！`);
+                } else if (pick === "plant") {
+                  const pChoices = myPlants.map((p, i) => ({ text: `${p.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+                  const pPick = await showXLWChoiceModal("選擇灌溉植物", "請選擇灌溉 +4 的植物單位：", pChoices);
+                  if (pPick !== null && pPick !== undefined) {
+                    const chosenP = myPlants[pPick];
+                    window.xlwIrrigateUnit?.(chosenP.unit, 4, chosenP.zone, chosenP.idx, "養分水球");
+                    logBattle(`💧🌱【養分水球】重點滋養：使【${chosenP.name}】灌溉值 +4！`);
+                  }
+                }
+              }
+            } else {
+              if (mySeeds.length >= 2) {
+                for (const s of mySeeds) window.xlwIrrigateUnit?.(s.unit, 2, s.zone, s.idx, "養分水球");
+                logBattle(`💧🌱 對手【養分水球】被獻祭：全體種子單位灌溉值 +2！`);
+              } else if (myPlants.length > 0) {
+                const chosenP = myPlants[0];
+                window.xlwIrrigateUnit?.(chosenP.unit, 4, chosenP.zone, chosenP.idx, "養分水球");
+                logBattle(`💧🌱 對手【養分水球】被獻祭：使【${chosenP.name}】灌溉值 +4！`);
+              }
+            }
+          }
+        }
+
+        // 💧🌱 C-PLT-0006 養分水球: 此單位被獻祭時，使你場上所有種子單位被灌溉2 或 使你場上的1個植物單位被灌溉4
+        if (unit.card.id === "C-PLT-0006" || unit.card.name?.includes("養分水球")) {
+          const isP = t.zone.startsWith("player_");
+          const myZones = isP ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
+          const mySeeds = [];
+          const myPlants = [];
+          for (const mz of myZones) {
+            (field[mz] || []).forEach((u, ui) => {
+              if (u && u !== unit && u.card) {
+                if (window.xlwIsUnitSeed?.(u)) mySeeds.push({ zone: mz, idx: ui, unit: u });
+                if (window.xlwIsUnitPlant?.(u) || u.card.faction === "植物園" || u.card.deck === "植物園" || u.card.id?.includes("PLT")) {
+                  myPlants.push({ zone: mz, idx: ui, unit: u, name: u.card.name });
+                }
+              }
+            });
+          }
+          if (mySeeds.length > 0 || myPlants.length > 0) {
+            if (isP) {
+              const choices = [];
+              if (mySeeds.length > 0) choices.push({ text: `🌱 全體種子單位灌溉 +2 (共 ${mySeeds.length} 個種子)`, value: "seeds" });
+              if (myPlants.length > 0) choices.push({ text: `🌿 單一植物單位灌溉 +4 (可選 ${myPlants.length} 個植物)`, value: "plant" });
+              if (choices.length > 0) {
+                const pick = await showXLWChoiceModal("【養分水球】獻祭滋養", "【養分水球】被獻祭！請選擇滋養方式：", choices);
+                if (pick === "seeds") {
+                  for (const s of mySeeds) {
+                    window.xlwIrrigateUnit?.(s.unit, 2, s.zone, s.idx, "養分水球");
+                  }
+                  logBattle(`💧🌱【養分水球】滋養甘霖：全體 ${mySeeds.length} 個種子單位灌溉值 +2！`);
+                } else if (pick === "plant") {
+                  const pChoices = myPlants.map((p, i) => ({ text: `${p.name} (${p.zone.includes("front") ? "前排" : "後排"}${p.idx + 1})`, value: i }));
+                  const pPick = await showXLWChoiceModal("選擇灌溉植物", "請選擇灌溉 +4 的植物單位：", pChoices);
+                  if (pPick !== null && pPick !== undefined) {
+                    const chosenP = myPlants[pPick];
+                    window.xlwIrrigateUnit?.(chosenP.unit, 4, chosenP.zone, chosenP.idx, "養分水球");
+                    logBattle(`💧🌱【養分水球】重點滋養：使【${chosenP.name}】灌溉值 +4！`);
+                  }
+                }
+              }
+            } else {
+              if (mySeeds.length >= 2) {
+                for (const s of mySeeds) window.xlwIrrigateUnit?.(s.unit, 2, s.zone, s.idx, "養分水球");
+                logBattle(`💧🌱 對手【養分水球】被獻祭：全體種子單位灌溉值 +2！`);
+              } else if (myPlants.length > 0) {
+                const chosenP = myPlants[0];
+                window.xlwIrrigateUnit?.(chosenP.unit, 4, chosenP.zone, chosenP.idx, "養分水球");
+                logBattle(`💧🌱 對手【養分水球】被獻祭：使【${chosenP.name}】灌溉值 +4！`);
               }
             }
           }
@@ -36738,6 +37436,62 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
 // 🌿 植物園與擴充卡牌主動技能與成長對話
   if (zone.startsWith("player_") && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "Main Phase") && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive) {
 
+    // 🪵 SSR-EWD-0051 學會工藝的野人: 主要階段限一次，橫放此單位，從額外區尋找1張工藝牌加入手牌
+    if ((obj.card.id === "SSR-EWD-0051" || obj.card.name?.includes("學會工藝的野人")) && !obj.tapped && !obj.craftUsedThisTurn) {
+      const craftCards = (extraDeck || []).filter(c => c && (c.name?.includes("野人工藝") || c.name?.includes("工藝") || c.id?.includes("EWD-005")));
+      if (craftCards.length > 0) {
+        const doCraft = await showXLWConfirm("【學會工藝的野人】工藝精研", "主要階段限一次：是否將此單位橫放，從額外區尋找 1 張工藝魔法牌加入手牌？");
+        if (doCraft) {
+          obj.craftUsedThisTurn = true;
+          obj.tapped = true;
+          const choices = craftCards.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
+          const pick = await showXLWChoiceModal("選擇工藝魔法牌", "請選擇要加入手牌的工藝牌：", choices);
+          if (pick !== null && pick !== undefined) {
+            const chosen = craftCards[pick];
+            const eIdx = extraDeck.indexOf(chosen);
+            if (eIdx >= 0) extraDeck.splice(eIdx, 1);
+            hand.push(chosen);
+            logBattle(`🪵🔨【學會工藝的野人】工藝打造：橫放自身，從額外區獲得了【${chosen.name}】！`);
+            render();
+            return true;
+          }
+        }
+      } else {
+        setStatus("額外區已無野人工藝牌！");
+      }
+    }
+
+    // ⛓️ SSR-EVL-0036 黑妖精監獄長艾摩亞: 主要階段限一次，使敵方場上1個攻擊力為-1或以下的單位被綁架(2)
+    if ((obj.card.id === "SSR-EVL-0036" || obj.card.name?.includes("黑妖精監獄長艾摩亞") || obj.card.name?.includes("艾摩亞")) && !obj.wardenUsedThisTurn) {
+      const oppSide = "enemy";
+      const targets = [];
+      for (const oz of ["enemy_front", "enemy_back"]) {
+        (field[oz] || []).forEach((u, i) => {
+          if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
+            const uAtk = typeof getUnitAtk === "function" ? getUnitAtk(u, oz, i) : (parseInt(u.card.attack) || 0);
+            if (uAtk <= -1) {
+              targets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
+            }
+          }
+        });
+      }
+      if (targets.length > 0) {
+        const doKidnap = await showXLWConfirm("【黑妖精監獄長艾摩亞】黑牢束縛", "主要階段限一次：是否將敵方 1 個攻擊力 <= -1 的單位綁架 2 回合？");
+        if (doKidnap) {
+          obj.wardenUsedThisTurn = true;
+          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
+          const pick = await showXLWChoiceModal("選擇收押目標", "請選擇關入黑牢的敵方單位：", choices);
+          if (pick !== null && pick !== undefined) {
+            const target = targets[pick];
+            await kidnapCard(target.zone, target.idx, zone, idx, 2);
+            logBattle(`⛓️【黑妖精監獄長艾摩亞】黑牢關押：敵方【${target.name}】被束縛綁架 2 回合！`);
+            render();
+            return true;
+          }
+        }
+      }
+    }
+
     // 🦏 犀牛戰車 (SR-ORC-0074): 主要階段限一次綁架(2)獸人；進攻階段限一次召喚至正後方
     if ((obj.card.id === "SR-ORC-0074" || obj.card.name?.includes("犀牛戰車")) && !obj.rhinoUsedThisTurn) {
       const orcs = [];
@@ -48648,6 +49402,21 @@ function promptNextChainAction() {
              name.includes("魔法炸彈客") || cid.includes("NMS-0025") || cid === "NEU-0025";
     });
 
+    // ⭕ SSR-CCS-0037 圈圈魔法師 小圓: 敵方使用魔法時限一次，轉盤>=3則輪轉1次，若轉盤數量>該魔法法力值則無效化該卡，開盤效果無效
+    let eligibleXiaoyuan = null;
+    if (!isLastItemUnit && lastItemCard && (lastItemCard.type === "magic" || lastItemCard.type === "spell") && !window.XLW_xiaoyuanUsedThisTurn) {
+      const wheelCount = (window.XLW_playerRouletteWheel || []).length;
+      if (wheelCount >= 3) {
+        for (const z of ["player_front", "player_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.id === "SSR-CCS-0037" || u.card.name?.includes("圈圈魔法師")) && !window.isUnitSilenced(u, z, i)) {
+              eligibleXiaoyuan = { zone: z, idx: i, unit: u };
+            }
+          });
+        }
+      }
+    }
+
     const eligibleMushroomUnits = [];
     if (!isLastItemUnit) {
       ["player_front", "player_back"].forEach(z => {
@@ -48758,6 +49527,42 @@ function promptNextChainAction() {
         };
         actionsDiv.appendChild(mushBtn);
       });
+
+      if (eligibleXiaoyuan) {
+        const xyBtn = document.createElement("button");
+        xyBtn.className = "chain-action-btn counter-btn";
+        xyBtn.textContent = "⭕ 使用【圈圈魔法師 小圓】輪轉反制";
+        xyBtn.onclick = async () => {
+          if (!takeDecision()) return;
+          actionsDiv.innerHTML = "";
+          statusText.textContent = "⭕ 圈圈魔法師啟動輪轉干涉...";
+          window.XLW_xiaoyuanUsedThisTurn = true;
+          const preWheelCount = (window.XLW_playerRouletteWheel || []).length;
+          await window.xlwSpinWheel(true, 1, eligibleXiaoyuan.unit.card, { suppressOpenEffect: true });
+          const magicMana = Number(lastItemCard.mana || lastItemCard.cost || 0);
+          if (preWheelCount > magicMana) {
+            logBattle(`⭕🪄【圈圈魔法師 小圓】輪轉干涉成功！轉盤數量(${preWheelCount}) > 魔法法力值(${magicMana})，敵方魔法【${lastItemCard.name}】被無效化！`);
+            lastItem.countered = true;
+            const dummyCard = {
+              id: "SSR-CCS-0037-EFFECT",
+              name: "圈圈魔法師 小圓 (輪轉反制)",
+              type: "magic",
+              effect_text: "無效化該魔法卡"
+            };
+            spellChainStack.push({ card: dummyCard, owner: "me" });
+            if (isMultiplayer && ws) {
+              ws.send(JSON.stringify({ action: "spell_chain_add", ownerCollections: window.xlwSpellOwnerCollections?.(), card: dummyCard }));
+            }
+            showSpellChainUI(spellChainStack);
+            promptNextChainAction();
+            render();
+          } else {
+            logBattle(`⭕🪄【圈圈魔法師 小圓】輪轉數量(${preWheelCount}) 未大於魔法法力值(${magicMana})，未能無效化魔法！`);
+            promptNextChainAction();
+          }
+        };
+        actionsDiv.appendChild(xyBtn);
+      }
 
       // Pass button
       const passBtn = document.createElement("button");
@@ -50548,7 +51353,18 @@ window.xlwGetCardGhostCount = function(card) {
   const effect = card.effect_text || "";
 
   if (effect.includes("亡魂")) {
-    const match = effect.match(/亡魂\s*(-?\d+(?:-\d+)?)/);
+    // Support -1~1, -1-1, or plain numbers
+    let match = effect.match(/亡魂\s*(-?\d+)\s*[~～至-]\s*(-?\d+)/);
+    if (match) {
+      const start = parseInt(match[1]);
+      const end = parseInt(match[2]);
+      const range = [];
+      const low = Math.min(start, end);
+      const high = Math.max(start, end);
+      for (let i = low; i <= high; i++) range.push(i);
+      return range;
+    }
+    match = effect.match(/亡魂\s*(-?\d+)/);
     if (match) {
       const valStr = match[1];
       if (valStr.includes("-")) {
@@ -50881,6 +51697,70 @@ window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
       if (c.id === "R-VRT-0050" || c.name?.includes("幽靈骨灰妹妹")) {
         playerBonusScore += 2;
         logBattle("✨ 幽靈骨灰妹妹 效果：此卡因還魂效果回到手牌，我方獎勵 +2★！");
+      }
+
+      // 🥣👻 R-VRT-0068 不敢喝孟婆湯的亡靈: 此卡因還魂回手牌時，可使場上1個攻擊力及星星皆為1的單位變為此卡
+      if (c.id === "R-VRT-0068" || c.name?.includes("不敢喝孟婆湯的亡靈") || c.name?.includes("孟婆湯")) {
+        const validUnits = [];
+        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, uIdx) => {
+            if (u && u.card) {
+              const atk = typeof getUnitAtk === "function" ? getUnitAtk(u, z, uIdx) : (parseInt(u.card.attack) || 0);
+              const stars = typeof getUnitStars === "function" ? getUnitStars(u, z, uIdx) : (parseInt(u.card.score) || 0);
+              if (atk === 1 && stars === 1) {
+                validUnits.push({ zone: z, idx: uIdx, unit: u, name: u.card.name });
+              }
+            }
+          });
+        }
+        if (validUnits.length > 0) {
+          const doTransform = await showXLWConfirm("【不敢喝孟婆湯的亡靈】孟婆湯執念", "此卡因還魂回到手牌！是否使場上 1 個攻擊力及星星皆為 1 的單位變身為【不敢喝孟婆湯的亡靈】？");
+          if (doTransform) {
+            const choices = validUnits.map((item, idx) => ({
+              text: `${item.name} (${item.zone.startsWith("player") ? "我方" : "敵方"}${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+              value: idx
+            }));
+            const pick = await showXLWChoiceModal("選擇變身目標", "請選擇變身的 1/1 單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = validUnits[pick];
+              target.unit.card = structuredClone(c);
+              logBattle(`🥣👻【不敢喝孟婆湯的亡靈】執念附身：使【${target.name}】變成了【不敢喝孟婆湯的亡靈】！`);
+              render();
+            }
+          }
+        }
+      }
+
+      // 🥣👻 R-VRT-0068 不敢喝孟婆湯的亡靈: 此卡因還魂回手牌時，可使場上1個攻擊力及星星皆為1的單位變為此卡
+      if (c.id === "R-VRT-0068" || c.name?.includes("不敢喝孟婆湯的亡靈") || c.name?.includes("孟婆湯")) {
+        const validUnits = [];
+        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, uIdx) => {
+            if (u && u.card) {
+              const atk = typeof getUnitAtk === "function" ? getUnitAtk(u, z, uIdx) : (parseInt(u.card.attack) || 0);
+              const stars = typeof getUnitStars === "function" ? getUnitStars(u, z, uIdx) : (parseInt(u.card.score) || 0);
+              if (atk === 1 && stars === 1) {
+                validUnits.push({ zone: z, idx: uIdx, unit: u, name: u.card.name });
+              }
+            }
+          });
+        }
+        if (validUnits.length > 0) {
+          const doTransform = await showXLWConfirm("【不敢喝孟婆湯的亡靈】孟婆湯執念", "此卡因還魂回到手牌！是否使場上 1 個攻擊力及星星皆為 1 的單位變身為【不敢喝孟婆湯的亡靈】？");
+          if (doTransform) {
+            const choices = validUnits.map((item, idx) => ({
+              text: `${item.name} (${item.zone.startsWith("player") ? "我方" : "敵方"}${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+              value: idx
+            }));
+            const pick = await showXLWChoiceModal("選擇變身目標", "請選擇變身的 1/1 單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              const target = validUnits[pick];
+              target.unit.card = structuredClone(c);
+              logBattle(`🥣👻【不敢喝孟婆湯的亡靈】執念附身：使【${target.name}】變成了【不敢喝孟婆湯的亡靈】！`);
+              render();
+            }
+          }
+        }
       }
     });
     renderScore();
