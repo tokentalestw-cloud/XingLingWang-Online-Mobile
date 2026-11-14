@@ -25461,6 +25461,9 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
     `;
     
     document.body.appendChild(overlay);
+    const lane = document.querySelector(`.battle-cell[data-index="${defIdx}"]`);
+    const impact = String(performance.now());
+    if (lane) lane.dataset.observatoryImpact = impact;
     
     // 播放 700 毫秒後柔和淡出縮放，維持清晰可讀且滑順流暢的對決節奏
     setTimeout(() => {
@@ -25469,6 +25472,7 @@ function showCombatNumberAnimation(attZone, attIdx, defZone, defIdx, atkPower, d
       overlay.style.transform = "translate(-50%, -50%) scale(0.85)";
       setTimeout(() => {
         if (overlay && overlay.parentNode) overlay.remove();
+        if (lane?.dataset.observatoryImpact === impact) delete lane.dataset.observatoryImpact;
         resolve();
       }, 200);
     }, 700);
@@ -41884,7 +41888,8 @@ function renderBattleLine() {
     } else {
       const hasAttacker = (field.player_front[i] && field.player_front[i].attacking) ||
                           (field.player_back[i] && field.player_back[i].attacking) ||
-                          (field.enemy_front[i] && field.enemy_front[i].attacking);
+                          (field.enemy_front[i] && field.enemy_front[i].attacking) ||
+                          (field.enemy_back[i] && field.enemy_back[i].attacking);
 
       if (hasAttacker) {
         cell.textContent = `★${i + 1} ⚔`;

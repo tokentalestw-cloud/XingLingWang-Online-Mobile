@@ -1433,3 +1433,64 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .slot:not(.has-card) {
     --arena-command: clamp(112px, 14vw, 156px);
   }
 }
+
+/* Recess the printed surfaces into the observatory's shared stone bed. */
+html body.xlw-royal-ui.xlw-game-started #boardWrap .xlw-arena-floor {
+  background:
+    url("/static/custom_bg/stellar-arena-frame.webp") center / 100% 100% no-repeat,
+    radial-gradient(ellipse at 52% 44%, #1d344c, #090e1b 78%) center / 91% 84% no-repeat;
+  filter: saturate(.78) brightness(.88) drop-shadow(0 24px 19px #02050ce0);
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat {
+  border-color: #10131c !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px #0a1019, 0 0 0 7px #5e5c5b,
+    0 2px 0 10px #151b29, 0 8px 14px 10px #030711bd !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .board-playmat::before {
+  background: linear-gradient(170deg, #0004, transparent 19% 82%, #0003) !important;
+  box-shadow: inset 0 4px 8px #000b, inset 0 -2px #daeaff53,
+    inset 3px 0 6px #0008, inset -3px 0 6px #0008 !important;
+}
+html body.xlw-royal-ui.xlw-game-started #boardWrap .battle-line-strip::before {
+  border-color: #807051;
+  background: linear-gradient(#0c1421 0 13%, #2c3a4a 14%, #182334 34%, #0b121d 88%, #70604a 100%);
+  box-shadow: 0 0 0 3px #0a1019, 0 7px 0 3px #030810, inset 0 2px #c5b28b65;
+}
+html body.xlw-royal-ui.xlw-game-started .battle-cell:not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell) {
+  --dial-light: #9a835f;
+  border: 1px solid var(--dial-light) !important;
+  border-radius: 12px;
+  color: #e8d7ac !important;
+  font-size: 25px !important;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 2px #030609;
+  background:
+    radial-gradient(ellipse at 50% 48%, #15253a 0 24%, #786244 25% 26%, #0b1423 28% 34%, transparent 36%),
+    repeating-conic-gradient(from -5deg at center, #ab946f4d 0 2deg, transparent 2deg 15deg),
+    linear-gradient(#304053, #111a28 25%, #182536 70%, #0a101b) !important;
+  box-shadow: inset 0 2px 1px #bbc3c753, inset 0 -3px #070d16, 0 3px 4px #050911 !important;
+}
+html body.xlw-royal-ui.xlw-game-started .battle-cell.line-has-attacker:not(.xlw-trophy-lane, .greyed-battle-cell, .countdown-threat-cell, .timer-active-cell) {
+  --dial-light: #b7f2ff;
+  color: #e4fbff !important;
+  box-shadow: inset 0 0 16px #5dd4e58f, 0 0 16px #68d8ef99 !important;
+}
+html body.xlw-royal-ui.xlw-game-started .battle-cell[data-observatory-impact] {
+  outline: 3px solid #ffdb98;
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 9px #ffbf63);
+}
+html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere {
+  background:
+    radial-gradient(ellipse at 16% 69%, #17374b 0%, transparent 42%),
+    radial-gradient(ellipse at 82% 18%, #30213f 0%, transparent 45%),
+    linear-gradient(162deg, #070c1a 12%, #101a2d 56%, #080c19 100%) !important;
+}
+html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere .arena-celestial-map { opacity: .15; }
+.xlw-stellar-background svg { top: 45%; filter: drop-shadow(0 0 6px #80d8ff90); }
+.xlw-stellar-background svg + svg { top: 57%; filter: drop-shadow(0 0 6px #cf9cfa88); }
+.xlw-stellar-background path { opacity: .54; }
+@media (prefers-reduced-motion: reduce) {
+  html body.xlw-royal-ui.xlw-game-started .battle-cell { transition: none !important; }
+}
