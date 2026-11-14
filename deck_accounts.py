@@ -140,7 +140,7 @@ def login(data: Login, request: Request, response: Response):
 
 class PasswordChange(BaseModel):
     current: str = Field(max_length=128)
-    new: str = Field(min_length=12, max_length=128)
+    new: str = Field(min_length=4, max_length=128)
 
 
 @router.post("/password")
