@@ -294,6 +294,7 @@ window.xlwClearAllPendingResolvers = function(force = false) {
     ["XLW_demonicExorcistResolve", null],
     ["XLW_receptionistResolve", null],
     ["XLW_peepeeboyResolve", null],
+    ["XLW_emperorTapResolve", null],
     ["XLW_emperorSlotResolve", null],
     ["XLW_thiefResolve", null]
   ];
@@ -306,6 +307,7 @@ window.xlwClearAllPendingResolvers = function(force = false) {
   }
   window.XLW_receptionistPlacementActive = false;
   window.XLW_peepeeboyPlacementActive = false;
+  window.XLW_emperorTapSelecting = false;
   window.XLW_emperorSlotSelecting = false;
   window.XLW_thiefPlacementActive = false;
   window.XLW_scarecrowMoveActive = false;
@@ -21038,14 +21040,13 @@ async function performSummonToSlot(zone, idx) {
             const pick = await showXLWChoiceModal("【小丑氣球】召喚轉盤單位", "請選擇要從轉盤召喚登場的馬戲團單位：", choices);
             if (pick !== null && pick !== undefined) {
               const summonC = freeInWheel[pick];
-              wheel.splice(wheel.indexOf(summonC), 1);
-              await window.xlwSpecialSummonUnit(summonC, true);
-              logBattle(`🎈【小丑氣球】效果：從轉盤特殊召喚了【${summonC.name}】！`);
+              if (summonC && await window.xlwSpecialSummonUnit(summonC, true, {sourcePile: () => wheel})) {
+                logBattle(`🎈【小丑氣球】效果：從轉盤特殊召喚了【${summonC.name}】！`);
+              }
             }
           } else {
             const summonC = freeInWheel[0];
-            wheel.splice(wheel.indexOf(summonC), 1);
-            await window.xlwSpecialSummonUnit(summonC, false);
+            await window.xlwSpecialSummonUnit(summonC, false, {sourcePile: () => wheel});
           }
         }
       }
@@ -21582,9 +21583,7 @@ async function performSummonToSlot(zone, idx) {
             const validSummons = enemyHand.filter(c => c && c.type === "unit" && (c.faction?.includes("野人") || c.race?.includes("野人") || c.name?.includes("野人") || c.id?.includes("EWD")) && Number(c.tribute || 0) <= 0);
             if (validSummons.length === 0) break;
             const chosenCard = validSummons[0];
-            const hIdx = enemyHand.indexOf(chosenCard);
-            if (hIdx >= 0) enemyHand.splice(hIdx, 1);
-            const success = await window.xlwSpecialSummonUnit(chosenCard, false);
+            const success = await window.xlwSpecialSummonUnit(chosenCard, false, {sourcePile: () => window.XLW_ENEMY?.hand});
             if (!success) break;
             logBattle(`✨ 對手 野人寶寶 效果：額外特殊召喚了【${chosenCard.name}】！`);
             render();
@@ -21854,11 +21853,10 @@ async function performSummonToSlot(zone, idx) {
             if (isBrother && rName !== card.name) {
               const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
               if (emptySlots.length > 0) {
-                const dIdx = myDeck.indexOf(rev[0]);
-                if (dIdx >= 0) myDeck.splice(dIdx, 1);
-                await window.xlwSpecialSummonUnit(rev[0], isPlayer);
-                logBattle(`✨ 麻將兄弟連動：成功特殊召喚了【${rev[0].name}】！`);
-                render();
+                if (await window.xlwSpecialSummonUnit(rev[0], isPlayer, {sourcePile: () => myDeck})) {
+                  logBattle(`✨ 麻將兄弟連動：成功特殊召喚了【${rev[0].name}】！`);
+                  render();
+                }
               }
             }
           }
