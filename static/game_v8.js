@@ -46924,13 +46924,10 @@ async function triggerSneakAttackSuccessEffects(card) {
     if (dingdongInHand && emptySlots.length > 0) {
       const confirm = await showXLWConfirm("【叮噹喵】效果發動", `我方單位【${card.name}】偷襲成功，是否從手牌特殊召喚【叮噹喵】？`);
       if (confirm) {
-        hand.splice(hand.indexOf(dingdongInHand), 1);
-        const success = await window.xlwSpecialSummonUnit(dingdongInHand, true);
+        const success = await window.xlwSpecialSummonUnit(dingdongInHand, true, {sourcePile: () => hand});
         if (success) {
           logBattle("✨ 叮噹喵 效果：特殊召喚成功！");
           render();
-        } else {
-          hand.push(dingdongInHand);
         }
       }
     }
@@ -47169,13 +47166,10 @@ async function triggerEnemySneakAttackSuccessEffects(card) {
       const dingdongInHand = enemyHand.find(c => c && (c.id === "R-CAT-0014" || c.name?.includes("叮噹喵")));
       const emptySlots = window.xlwGetEmptyEnemySlots();
       if (dingdongInHand && emptySlots.length > 0) {
-        enemyHand.splice(enemyHand.indexOf(dingdongInHand), 1);
-        const success = await window.xlwSpecialSummonUnit(dingdongInHand, false);
+        const success = await window.xlwSpecialSummonUnit(dingdongInHand, false, {sourcePile: () => enemyHand});
         if (success) {
           logBattle(`✨ 對手 叮噹喵 效果：因友方單位【${card.name}】偷襲成功，特殊召喚【叮噹喵】！`);
           render();
-        } else {
-          enemyHand.push(dingdongInHand);
         }
       }
     }
@@ -52608,59 +52602,57 @@ window.xlwCheckTacticalPhaseTriggers = async function(activeSide) {
 
   if (isPlayer) {
     // 1. 我方選擇戰術佈陣：檢查我方墓地 火把骷髏小哀妮 (SKT-0010 / ASSR-SKT-0010)
-    const ainiIdx = graveyard.findIndex(c => c && (c.id?.includes("SKT-0010") || c.name?.includes("火把骷髏") || c.name?.includes("小哀妮")));
-    if (ainiIdx >= 0 && window.xlwGetEmptyPlayerSlots().length > 0) {
+    const ainiCard = graveyard.find(c => c && (c.id?.includes("SKT-0010") || c.name?.includes("火把骷髏") || c.name?.includes("小哀妮")));
+    if (ainiCard && window.xlwGetEmptyPlayerSlots().length > 0) {
       const taxOk = await window.xlwCheckGraveyardTax(true);
       if (taxOk) {
         const confirm = await showXLWConfirm("火把骷髏小哀妮 效果發動", "你在戰術階段選擇了佈陣，是否發動墓地【火把骷髏小哀妮】效果，將其額外打出至場上？");
         if (confirm) {
-          const ainiCard = graveyard.splice(ainiIdx, 1)[0];
-          await window.xlwSpecialSummonUnit(ainiCard, true);
-          logBattle("✨【火把骷髏小哀妮】效果：在戰術階段選擇佈陣，從墓地額外打出至場上！");
-          render();
+          if (await window.xlwSpecialSummonUnit(ainiCard, true, {sourcePile: () => graveyard})) {
+            logBattle("✨【火把骷髏小哀妮】效果：在戰術階段選擇佈陣，從墓地額外打出至場上！");
+            render();
+          }
         }
       }
     }
 
     // 2. 我方選擇戰術佈陣：檢查對手墓地 魚骨頭 (R-SKT-0022)
     const enemyGrave = window.XLW_ENEMY?.grave || enemyGraveyard || [];
-    const fishIdx = enemyGrave.findIndex(c => c && (c.id?.includes("SKT-0022") || c.name?.includes("魚骨頭")));
-    if (fishIdx >= 0 && window.xlwGetEmptyPlayerSlots().length > 0) {
+    const fishCard = enemyGrave.find(c => c && (c.id?.includes("SKT-0022") || c.name?.includes("魚骨頭")));
+    if (fishCard && window.xlwGetEmptyPlayerSlots().length > 0) {
       const taxOk = await window.xlwCheckGraveyardTax(false);
       if (taxOk) {
-        const fishCard = enemyGrave.splice(fishIdx, 1)[0];
-        enemyGraveyard = window.XLW_ENEMY.grave = enemyGrave;
-        await window.xlwSpecialSummonUnit(fishCard, true);
-        logBattle("🐟【魚骨頭】效果：由於我方在戰術階段選擇佈陣，對手從墓地將【魚骨頭】額外打出至我方場上！（星數 -2★）");
-        render();
+        if (await window.xlwSpecialSummonUnit(fishCard, true, {sourcePile: () => enemyGrave})) {
+          logBattle("🐟【魚骨頭】效果：由於我方在戰術階段選擇佈陣，對手從墓地將【魚骨頭】額外打出至我方場上！（星數 -2★）");
+          render();
+        }
       }
     }
   } else {
     // 1. 對手選擇戰術佈陣：檢查對手墓地 火把骷髏小哀妮 (SKT-0010 / ASSR-SKT-0010)
     const enemyGrave = window.XLW_ENEMY?.grave || enemyGraveyard || [];
-    const ainiIdx = enemyGrave.findIndex(c => c && (c.id?.includes("SKT-0010") || c.name?.includes("火把骷髏") || c.name?.includes("小哀妮")));
-    if (ainiIdx >= 0 && window.xlwGetEmptyEnemySlots().length > 0) {
+    const ainiCard = enemyGrave.find(c => c && (c.id?.includes("SKT-0010") || c.name?.includes("火把骷髏") || c.name?.includes("小哀妮")));
+    if (ainiCard && window.xlwGetEmptyEnemySlots().length > 0) {
       const taxOk = await window.xlwCheckGraveyardTax(false);
       if (taxOk) {
-        const ainiCard = enemyGrave.splice(ainiIdx, 1)[0];
-        enemyGraveyard = window.XLW_ENEMY.grave = enemyGrave;
-        await window.xlwSpecialSummonUnit(ainiCard, false);
-        logBattle("✨ 對手【火把骷髏小哀妮】效果：在戰術階段選擇佈陣，從墓地額外打出至場上！");
-        render();
+        if (await window.xlwSpecialSummonUnit(ainiCard, false, {sourcePile: () => enemyGrave})) {
+          logBattle("✨ 對手【火把骷髏小哀妮】效果：在戰術階段選擇佈陣，從墓地額外打出至場上！");
+          render();
+        }
       }
     }
 
     // 2. 對手選擇戰術佈陣：檢查我方墓地 魚骨頭 (R-SKT-0022)
-    const fishIdx = graveyard.findIndex(c => c && (c.id?.includes("SKT-0022") || c.name?.includes("魚骨頭")));
-    if (fishIdx >= 0 && window.xlwGetEmptyEnemySlots().length > 0) {
+    const fishCard = graveyard.find(c => c && (c.id?.includes("SKT-0022") || c.name?.includes("魚骨頭")));
+    if (fishCard && window.xlwGetEmptyEnemySlots().length > 0) {
       const taxOk = await window.xlwCheckGraveyardTax(true);
       if (taxOk) {
         const confirm = await showXLWConfirm("魚骨頭 效果發動", "對手在戰術階段選擇了佈陣！是否發動墓地【魚骨頭】效果，將其額外打出在對手場上（給予對手 -2★ 懲罰與佔位）？");
         if (confirm) {
-          const fishCard = graveyard.splice(fishIdx, 1)[0];
-          await window.xlwSpecialSummonUnit(fishCard, false);
-          logBattle("🐟【魚骨頭】效果：由於對手在戰術階段選擇佈陣，我方從墓地將【魚骨頭】額外打出至對手場上！（對手星數 -2★）");
-          render();
+          if (await window.xlwSpecialSummonUnit(fishCard, false, {sourcePile: () => graveyard})) {
+            logBattle("🐟【魚骨頭】效果：由於對手在戰術階段選擇佈陣，我方從墓地將【魚骨頭】額外打出至對手場上！（對手星數 -2★）");
+            render();
+          }
         }
       }
     }
@@ -53684,16 +53676,13 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
     if (oppUnits >= 5 && ninjaInHand && emptySlots.length > 0) {
       const confirm = await showXLWConfirm("【忍喵】效果發動", "對手場上有 5 個或以上的單位，是否從手牌特殊召喚【忍喵】？");
       if (confirm) {
-        hand.splice(hand.indexOf(ninjaInHand), 1);
-        const success = await window.xlwSpecialSummonUnit(ninjaInHand, true);
+        const success = await window.xlwSpecialSummonUnit(ninjaInHand, true, {sourcePile: () => hand});
         if (success) {
           logBattle("✨ 忍喵 效果：特殊召喚成功！");
           if (isMultiplayer && ws) {
             sendFullGameStateToOpponent();
           }
           render();
-        } else {
-          hand.push(ninjaInHand);
         }
       }
     }
@@ -53704,13 +53693,10 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
       const ninjaInHand = enemyHand.find(c => c && (c.id === "R-CAT-0013" || c.name?.includes("忍喵")));
       const emptySlots = window.xlwGetEmptyEnemySlots();
       if (playerUnits >= 5 && ninjaInHand && emptySlots.length > 0) {
-        enemyHand.splice(enemyHand.indexOf(ninjaInHand), 1);
-        const success = await window.xlwSpecialSummonUnit(ninjaInHand, false);
+        const success = await window.xlwSpecialSummonUnit(ninjaInHand, false, {sourcePile: () => enemyHand});
         if (success) {
           logBattle("✨ 對手 忍喵 效果：對手場上有 5 個或以上單位，從手牌特殊召喚【忍喵】！");
           render();
-        } else {
-          enemyHand.push(ninjaInHand);
         }
       }
     }
