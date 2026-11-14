@@ -1756,7 +1756,8 @@
       grid.innerHTML = "";
 
       // 依當前種族篩選
-      let factionCards = allCards.filter(c => belongsToDeck(c, selectedDeckName));
+      const libraryFaction = selectedDeckName || document.getElementById("factionFilterSelect").value;
+      let factionCards = allCards.filter(c => belongsToDeck(c, libraryFaction));
 
       // 去重
       const seen = new Set();
@@ -1769,7 +1770,7 @@
 
       // 篩選主牌組/額外牌組/中立卡牌
       let displayCards = [];
-      const normSelected = normDeckName(selectedDeckName);
+      const normSelected = normDeckName(libraryFaction);
       if (filterMode === "main") {
         displayCards = factionCards.filter(c =>
           c.deck_eligible !== false &&
