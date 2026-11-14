@@ -845,6 +845,7 @@
       <span style="font-size: 16px; color: #ffffff; letter-spacing: 0.5px;">牌組構築器</span>
     </h1>
     <div class="header-actions">
+      <button type="button" id="deckPassword" class="top-nav-btn" hidden>修改密碼</button>
       <button type="button" id="deckLogout" class="top-nav-btn" hidden>登出個人牌組</button>
       <a href="/" class="top-nav-btn" style="border-color: #ffd76a; color: #ffd76a; font-weight: bold;">🏠 返回首頁</a>
     </div>
@@ -856,12 +857,26 @@
       <select id="deckAccountName" class="deck-select">
         <option>SF</option><option>HY</option><option>Alex</option><option>Jason</option>
       </select>
-      <label for="deckAccountKey">登入金鑰</label>
+      <label for="deckAccountKey">登入金鑰或密碼</label>
       <input id="deckAccountKey" type="password" autocomplete="current-password" maxlength="128" required>
       <button type="submit" class="top-nav-btn">登入</button>
     </form>
     <span id="deckAccountStatus" role="status"></span>
   </section>
+
+  <dialog id="deckPasswordDialog" style="max-width:min(90vw,420px);background:#141d30;color:#fff;border:1px solid #b49759;border-radius:10px;padding:20px">
+    <form id="deckPasswordForm" style="display:grid;gap:10px">
+      <strong>修改密碼</strong>
+      <label for="deckCurrentPassword">目前的金鑰或密碼</label>
+      <input id="deckCurrentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+      <label for="deckNewPassword">新密碼（至少 12 個字元）</label>
+      <input id="deckNewPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+      <label for="deckConfirmPassword">再次輸入新密碼</label>
+      <input id="deckConfirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+      <div id="deckPasswordStatus" role="status"></div>
+      <div><button type="submit" class="top-nav-btn">儲存</button> <button type="button" id="deckPasswordCancel" class="top-nav-btn">取消</button></div>
+    </form>
+  </dialog>
 
   <!-- 牌組控制工具條 -->
   <section class="deck-controls-bar">
@@ -2102,6 +2117,7 @@
       loginForm.hidden = Boolean(account.name);
       loginForm.style.display = account.name ? "none" : "flex";
       logoutButton.hidden = !account.name;
+      document.getElementById("deckPassword").hidden = !account.name;
       accountStatus.textContent = account.name ? `${account.name} 的雲端牌組` :
         account.enabled ? "登入後即可建立個人牌組。" : "雲端牌組尚未接上資料庫。";
       for (const section of document.querySelectorAll("body > section:not(#deckAccountPanel), body > main")) {
@@ -2129,6 +2145,40 @@
         button.disabled = false;
       }
     });
+    const passwordDialog = document.getElementById("deckPasswordDialog");
+    const passwordForm = document.getElementById("deckPasswordForm");
+    const passwordStatus = document.getElementById("deckPasswordStatus");
+    document.getElementById("deckPassword").addEventListener("click", () => {
+      passwordForm.reset();
+      passwordStatus.textContent = "";
+      passwordDialog.showModal();
+    });
+    document.getElementById("deckPasswordCancel").addEventListener("click", () => passwordDialog.close());
+    passwordDialog.addEventListener("close", () => passwordForm.reset());
+    passwordForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const current = document.getElementById("deckCurrentPassword").value;
+      const next = document.getElementById("deckNewPassword").value;
+      if (next !== document.getElementById("deckConfirmPassword").value) {
+        passwordStatus.textContent = "兩次輸入的新密碼不同。";
+        return;
+      }
+      const button = passwordForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      try {
+        await fetch("/api/deck-account/password", {
+          method: "POST", headers: {"Content-Type": "application/json", "X-Deck-Account": activeDeckAccount},
+          body: JSON.stringify({current, new: next})
+        }).then(readDeckResponse);
+        passwordDialog.close();
+        showToast("密碼已更新，其他裝置需重新登入。");
+      } catch (error) {
+        passwordStatus.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
     logoutButton.addEventListener("click", async () => {
       try {
         await fetch("/api/deck-account/logout", {method:"POST"}).then(readDeckResponse);
