@@ -44274,13 +44274,17 @@ function adjustBoardScale() {
     const rockRight = logicalRect($("playerExile"));
     if (openArena && rockLeft && rockRight) {
       const toScreenX = x => fit.x + (x - origin.left) / currentScale * fit.scale;
-      const left = toScreenX(rockLeft.left) - 4;
+      const extra = logicalRect($("enemyExtraDeck"));
+      const toDepth = y => {
+        const screenY = fit.y + (y - origin.top) / currentScale * fit.scale;
+        return Math.max(0, Math.min(1, (screenY / height - .135) / .635));
+      };
+      // The left wall widens toward the foreground. Measure it at the upper
+      // edge of the extra deck, where clearance is tightest.
+      const left = toScreenX(Math.min(rockLeft.left, extra?.left ?? rockLeft.left)) - 10;
       const right = toScreenX(rockRight.right) + 4;
-      const middleY = fit.y + ((rockLeft.top + rockLeft.bottom) / 2 - origin.top) / currentScale * fit.scale;
-      // Inner edges of the perspective wall in observatory-square-wall.webp.
-      const depth = Math.max(0, Math.min(1, (middleY / height - .135) / .635));
-      const imageLeft = .203 - .046 * depth;
-      const imageRight = .789 + .054 * depth;
+      const imageLeft = .203 - .046 * toDepth(extra?.top ?? rockLeft.top);
+      const imageRight = .789 + .054 * toDepth((rockRight.top + rockRight.bottom) / 2);
       const imageWidth = (right - left) / (imageRight - imageLeft);
       root.style.setProperty("--xlw-rock-width", imageWidth + "px");
       root.style.setProperty("--xlw-rock-left", (left - imageLeft * imageWidth) + "px");

@@ -1936,14 +1936,21 @@ html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary { borde
 
 /* The rock amphitheater is a scene layer below the live duel controls. */
 html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere {
-  background: #091321 url("/static/custom_bg/observatory-rock-ring.webp") center / 100% 100% no-repeat !important;
+  background:
+    radial-gradient(ellipse at 9% 77%, #5abdd529, transparent 29%),
+    radial-gradient(ellipse at 90% 19%, #e8955c29, transparent 27%),
+    #091321 url("/static/custom_bg/observatory-rock-ring.webp") center / 100% 100% no-repeat !important;
 }
 html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 var(--xlw-rock-left, 0px);
   width: var(--xlw-rock-width, 100%);
-  background: url("/static/custom_bg/observatory-square-wall.webp") center / 100% 100% no-repeat;
+  background:
+    radial-gradient(ellipse at 12% 82%, #4baac52e, transparent 34%),
+    radial-gradient(ellipse at 88% 21%, #e69e6930, transparent 24%),
+    url("/static/custom_bg/observatory-square-wall.webp") center / 100% 100% no-repeat;
+  filter: contrast(1.15) saturate(1.08);
   mask-image: linear-gradient(90deg, transparent, #000 11% 89%, transparent);
   pointer-events: none;
 }
