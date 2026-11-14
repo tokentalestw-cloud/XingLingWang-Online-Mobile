@@ -10747,11 +10747,6 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
       await xlwPushUnit(zone, idx, "back", { offBoardAction: "hand", sourceName: "妖精女祭司芙蕾雅" });
     }
   }
-  if (!card) return;
-  const cardId = card.id || "";
-  const cardName = card.name || "";
-  const side = isPlayer ? "player_" : "enemy_";
-  const oppSide = isPlayer ? "enemy_" : "player_";
 
   // 🧚‍♀️ SR-EVL-0025 小小黑妖精小咪: 使敵方前排戰線所有單位 -1★
   if (cardId === "SR-EVL-0025" || cardName.includes("小小黑妖精小咪") || cardName.includes("小咪")) {
@@ -10837,11 +10832,6 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
       }
     }
   }
-  if (!card) return;
-  const cardId = card.id || "";
-  const cardName = card.name || "";
-  const side = isPlayer ? "player_" : "enemy_";
-  const oppSide = isPlayer ? "enemy_" : "player_";
 
   // A. SR-NMS-0086 時空賞金獵人 雪妮
   if (cardId === "SR-NMS-0086" || cardName.includes("雪妮")) {
