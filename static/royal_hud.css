@@ -1766,7 +1766,7 @@ html body.xlw-royal-ui.xlw-game-started #boardWrap .row .slot:not(.has-card)::be
 /* Reference layout: widen the stone grid toward the side wells and close the center gap. */
 html body.xlw-royal-ui.xlw-game-started #boardWrap {
   --altar-slot-width: calc(var(--cw) + 16px);
-  --altar-column-gap: calc(var(--gap) + 14px);
+  --altar-column-gap: calc(var(--gap) + 22px);
   --altar-grid-width: calc(5 * var(--altar-slot-width) + 4 * var(--altar-column-gap));
 }
 html body.xlw-royal-ui.xlw-game-started #boardWrap :is(.row, .battle-line-strip) {
@@ -1936,7 +1936,7 @@ html body.xlw-royal-ui.xlw-mulligan-active #stableActionPanel .secondary { borde
 
 /* The rock amphitheater is a scene layer below the live duel controls. */
 html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere {
-  background: #091321 url("/static/custom_bg/observatory-square-wall.webp") center / 100% 100% no-repeat !important;
+  background: #091321 url("/static/custom_bg/observatory-square-wall.webp") var(--xlw-rock-left, 50%) center / var(--xlw-rock-width, 100%) 100% no-repeat !important;
 }
 html body.xlw-royal-ui.xlw-game-started #xlwStarlightAtmosphere :is(.xlw-stellar-background, .arena-celestial-map, .starlight-glow-ambient) {
   display: none;

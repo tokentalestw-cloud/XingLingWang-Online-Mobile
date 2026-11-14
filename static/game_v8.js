@@ -44270,12 +44270,27 @@ function adjustBoardScale() {
     };
     const playerHandCenter = laneCenter(".player-back .slot:nth-child(3)");
     const enemyHandCenter = laneCenter(".enemy-back .slot:nth-child(3)");
+    const rockLeft = logicalRect($("enemyExile"));
+    const rockRight = logicalRect($("playerExile"));
+    if (openArena && rockLeft && rockRight) {
+      const toScreenX = x => fit.x + (x - origin.left) / currentScale * fit.scale;
+      const left = toScreenX(rockLeft.left) - 4;
+      const right = toScreenX(rockRight.right) + 4;
+      const middleY = fit.y + ((rockLeft.top + rockLeft.bottom) / 2 - origin.top) / currentScale * fit.scale;
+      // Inner edges of the perspective wall in observatory-square-wall.webp.
+      const depth = Math.max(0, Math.min(1, (middleY / height - .135) / .635));
+      const imageLeft = .203 - .046 * depth;
+      const imageRight = .789 + .054 * depth;
+      const imageWidth = (right - left) / (imageRight - imageLeft);
+      root.style.setProperty("--xlw-rock-width", imageWidth + "px");
+      root.style.setProperty("--xlw-rock-left", (left - imageLeft * imageWidth) + "px");
+    }
+
     root.style.setProperty("--xlw-player-hand-center", playerHandCenter + "px");
     root.style.setProperty("--xlw-enemy-hand-center", enemyHandCenter + "px");
     root.style.setProperty("--xlw-field-scale", String(fit.scale));
     root.style.setProperty("--xlw-field-x", fit.x + "px");
     root.style.setProperty("--xlw-field-y", fit.y + "px");
-
     // Measure the actual strings: short labels can be larger without wrapping names.
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
