@@ -1,9 +1,11 @@
 import os
 import json
+import re
 import shutil
 import secrets
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+import deck_accounts
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -11,6 +13,7 @@ from typing import List, Optional, Union
 
 BASE = Path(__file__).parent
 app = FastAPI(title="星靈王 Web Final")
+app.include_router(deck_accounts.router)
 
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -611,11 +614,17 @@ def get_cards():
     return json.loads(cards_file.read_text(encoding="utf-8"))
 
 @app.get("/api/decks")
-def get_decks():
+def get_decks(request: Request, personal: bool = False):
     decks_file = BASE / "data" / "decks.json"
-    if not decks_file.exists():
-        return {}
-    return json.loads(decks_file.read_text(encoding="utf-8"))
+    defaults = json.loads(decks_file.read_text(encoding="utf-8")) if decks_file.exists() else {}
+    owner = deck_accounts.require_account(request) if personal else deck_accounts.account(request)
+    if not owner:
+        return defaults
+    with deck_accounts.deck_store(owner) as decks:
+        if personal:
+            return {"中立單位": defaults.get("中立單位", []), **decks}
+        return {**defaults, **decks}
+
 
 class ClientErrorLog(BaseModel):
     message: str
@@ -902,16 +911,18 @@ def clean_art_deck():
     static_decks.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
     return {"status": "success", "message": f"已移除 {removed} 張不屬於藝術品陣營的卡片"}
 
+def validate_personal_name(name):
+    if not re.fullmatch(r"[\w .()（）・★☆-]{1,100}", name) or name != name.strip() or name in {"中立單位", "__proto__", "constructor", "prototype"} or name.endswith("_extra"):
+        raise HTTPException(400, "牌組名稱無效。")
+
+
 # 4. 儲存/重構整套牌組
 @app.post("/api/decks/save")
-def save_deck(data: DeckSaveSchema):
-    decks_file = BASE / "data" / "decks.json"
-    decks_data = {}
-    if decks_file.exists():
-        try:
-            decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
-        except:
-            decks_data = {}
+def save_deck(data: DeckSaveSchema, request: Request):
+    owner = deck_accounts.require_account(request)
+    validate_personal_name(data.deck_name)
+    if len(data.card_ids) > 20 or len(data.extra_card_ids or []) > 100:
+        raise HTTPException(400, "牌組張數超過上限。")
 
     # 嚴格後端陣營排他性過濾
     cards_file = BASE / "data" / "cards.json"
@@ -989,7 +1000,7 @@ def save_deck(data: DeckSaveSchema):
     if total_mana > 15:
         raise HTTPException(status_code=400, detail="主牌組法力值總和不可超過 15 點！")
 
-    decks_data[data.deck_name] = cleaned_ids
+    cleaned_extra_ids = []
 
     # 處理並過濾額外牌組
     if data.extra_card_ids is not None:
@@ -1047,17 +1058,17 @@ def save_deck(data: DeckSaveSchema):
                     
             if is_valid:
                 cleaned_extra_ids.append(cid)
-        decks_data[data.deck_name + "_extra"] = cleaned_extra_ids
+        if len(cleaned_extra_ids) != len(data.extra_card_ids):
+            raise HTTPException(400, "額外牌組有不符合陣營的卡牌。")
 
-    try:
-        decks_file.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-        
-        # 同步複製一份 decks.json 到 static/ 目錄，讓前端讀取
-        static_decks = BASE / "static" / "decks.json"
-        static_decks.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"儲存牌組失敗: {str(e)}")
-
+    with deck_accounts.deck_store(owner, write=True) as decks_data:
+        if data.deck_name not in decks_data and sum(not key.endswith("_extra") for key in decks_data) >= 200:
+            raise HTTPException(400, "個人牌組上限為 200 組。")
+        decks_data[data.deck_name] = cleaned_ids
+        if data.extra_card_ids is not None:
+            decks_data[data.deck_name + "_extra"] = cleaned_extra_ids
+        else:
+            decks_data.setdefault(data.deck_name + "_extra", [])
     return {"status": "success", "message": f"成功儲存 {data.deck_name} 牌組！"}
 
 
@@ -1066,29 +1077,15 @@ class DeckDeleteSchema(BaseModel):
 
 
 @app.post("/api/decks/delete")
-def delete_deck(data: DeckDeleteSchema):
-    decks_file = BASE / "data" / "decks.json"
-    if not decks_file.exists():
-        raise HTTPException(status_code=404, detail="decks.json not found")
-    
-    decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
-    
-    if data.deck_name in decks_data:
-        del decks_data[data.deck_name]
-    extra_key = data.deck_name + "_extra"
-    if extra_key in decks_data:
-        del decks_data[extra_key]
-        
-    try:
-        decks_file.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-        
-        # Sync to static/decks.json
-        static_decks = BASE / "static" / "decks.json"
-        static_decks.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"刪除牌組失敗: {str(e)}")
-        
-    return {"status": "success", "message": f"成功刪除預設牌組 {data.deck_name}。"}
+def delete_deck(data: DeckDeleteSchema, request: Request):
+    owner = deck_accounts.require_account(request)
+    validate_personal_name(data.deck_name)
+    with deck_accounts.deck_store(owner, write=True) as decks:
+        if data.deck_name not in decks:
+            raise HTTPException(404, "找不到你的牌組。")
+        del decks[data.deck_name]
+        decks.pop(data.deck_name + "_extra", None)
+    return {"status": "success"}
 
 
 class DeckRenameSchema(BaseModel):
@@ -1097,47 +1094,20 @@ class DeckRenameSchema(BaseModel):
 
 
 @app.post("/api/decks/rename")
-def rename_deck(data: DeckRenameSchema):
-    decks_file = BASE / "data" / "decks.json"
-    if not decks_file.exists():
-        raise HTTPException(status_code=404, detail="decks.json not found")
-        
-    decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
-    
-    base_factions = [
-        "藝術品", "喵喵賊", "妖怪村莊", "獸人", "虛擬世界",
-        "勇者公會", "妖精", "山羊族", "機械軍團", "歡樂島", "特殊旅人",
-        "甜點王國", "發電獸", "碳碳族", "蒸汽世界", "進化野人", "馬戲團", "骷髏人", "植物園"
-    ]
-        
-    if data.old_name not in decks_data:
-        raise HTTPException(status_code=404, detail="找不到指定的舊牌組！")
-        
-    # Validation check for new_name
-    has_faction = any(fac in data.new_name for fac in base_factions)
-    if not has_faction:
-        raise HTTPException(status_code=400, detail="新牌組名稱必須包含所屬種族名稱（例如：喵喵賊、妖怪村莊、藝術品、獸人、虛擬世界、山羊族、妖精等）！")
-        
-    # Rename main and extra
-    decks_data[data.new_name] = decks_data[data.old_name]
-    del decks_data[data.old_name]
-    
-    old_extra = data.old_name + "_extra"
-    new_extra = data.new_name + "_extra"
-    if old_extra in decks_data:
-        decks_data[new_extra] = decks_data[old_extra]
-        del decks_data[old_extra]
-        
-    try:
-        decks_file.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-        
-        # Sync to static/decks.json
-        static_decks = BASE / "static" / "decks.json"
-        static_decks.write_text(json.dumps(decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"重新命名牌組失敗: {str(e)}")
-        
-    return {"status": "success", "message": f"成功將牌組名稱修改為 {data.new_name}。"}
+def rename_deck(data: DeckRenameSchema, request: Request):
+    owner = deck_accounts.require_account(request)
+    validate_personal_name(data.old_name)
+    validate_personal_name(data.new_name)
+    with deck_accounts.deck_store(owner, write=True) as decks:
+        if data.old_name not in decks:
+            raise HTTPException(404, "找不到你的牌組。")
+        if data.new_name in decks:
+            raise HTTPException(409, "此牌組名稱已存在。")
+        decks[data.new_name] = decks.pop(data.old_name)
+        old_extra = data.old_name + "_extra"
+        if old_extra in decks:
+            decks[data.new_name + "_extra"] = decks.pop(old_extra)
+    return {"status": "success"}
 
 
 class DeckReorderSchema(BaseModel):
@@ -1145,45 +1115,15 @@ class DeckReorderSchema(BaseModel):
 
 
 @app.post("/api/decks/reorder")
-def reorder_decks(data: DeckReorderSchema):
-    decks_file = BASE / "data" / "decks.json"
-    if not decks_file.exists():
-        raise HTTPException(status_code=404, detail="decks.json not found")
-        
-    decks_data = json.loads(decks_file.read_text(encoding="utf-8"))
-    
-    new_decks_data = {}
-    
-    # 保持中立單位在最前
-    if "中立單位" in decks_data:
-        new_decks_data["中立單位"] = decks_data["中立單位"]
-        
-    # 依 ordered_decks 的順序放入，並將其 _extra 伴隨其後
-    for deck_name in data.ordered_decks:
-        if deck_name in decks_data:
-            new_decks_data[deck_name] = decks_data[deck_name]
-            extra_key = deck_name + "_extra"
-            if extra_key in decks_data:
-                new_decks_data[extra_key] = decks_data[extra_key]
-                
-    # 將任何未包含在 ordered_decks 中的牌組按原順序補在最後
-    for k, v in decks_data.items():
-        if k == "中立單位" or k.endswith("_extra"):
-            continue
-        if k not in new_decks_data:
-            new_decks_data[k] = v
-            extra_k = k + "_extra"
-            if extra_k in decks_data:
-                new_decks_data[extra_k] = decks_data[extra_k]
-                
-    try:
-        decks_file.write_text(json.dumps(new_decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-        static_decks = BASE / "static" / "decks.json"
-        static_decks.write_text(json.dumps(new_decks_data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"儲存牌組順序失敗: {str(e)}")
-        
-    return {"status": "success", "message": "牌組順序已成功更新！"}
+def reorder_decks(data: DeckReorderSchema, request: Request):
+    owner = deck_accounts.require_account(request)
+    with deck_accounts.deck_store(owner, write=True) as decks:
+        ordered = {key: decks[key] for key in data.ordered_decks if key in decks}
+        ordered.update({key: value for key, value in decks.items() if key not in ordered})
+        decks.clear()
+        decks.update(ordered)
+    return {"status": "success"}
+
 
 
 DEFAULT_FACTIONS = [

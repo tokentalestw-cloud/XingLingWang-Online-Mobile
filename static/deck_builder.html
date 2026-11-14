@@ -845,10 +845,23 @@
       <span style="font-size: 16px; color: #ffffff; letter-spacing: 0.5px;">牌組構築器</span>
     </h1>
     <div class="header-actions">
-      <a href="/static/admin.html" class="top-nav-btn" style="border-color: #ffd76a;">卡牌資料編輯器</a>
+      <button type="button" id="deckLogout" class="top-nav-btn" hidden>登出個人牌組</button>
       <a href="/" class="top-nav-btn" style="border-color: #ffd76a; color: #ffd76a; font-weight: bold;">🏠 返回首頁</a>
     </div>
   </header>
+
+  <section id="deckAccountPanel" class="deck-controls-bar" aria-label="個人牌組帳戶">
+    <form id="deckLogin" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <label for="deckAccountName">個人牌組帳戶</label>
+      <select id="deckAccountName" class="deck-select">
+        <option>SF</option><option>HY</option><option>Alex</option><option>Jason</option>
+      </select>
+      <label for="deckAccountKey">登入金鑰</label>
+      <input id="deckAccountKey" type="password" autocomplete="current-password" maxlength="128" required>
+      <button type="submit" class="top-nav-btn">登入</button>
+    </form>
+    <span id="deckAccountStatus" role="status"></span>
+  </section>
 
   <!-- 牌組控制工具條 -->
   <section class="deck-controls-bar">
@@ -858,8 +871,8 @@
         <select id="factionFilterSelect" class="deck-select" onchange="changeFactionFilter(this.value)">
           <!-- populated dynamically -->
         </select>
-        <button id="moveUpFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(-1)" title="將當前種族順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
-        <button id="moveDownFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(1)" title="將當前種族順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
+        <button hidden id="moveUpFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(-1)" title="將當前種族順序往上移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬆️ 上移</button>
+        <button hidden id="moveDownFactionBtn" class="action-btn order-btn" onclick="moveCurrentFaction(1)" title="將當前種族順序往下移一位" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #ffd76a; padding: 4px 7px; font-size: 11px; border-radius: 4px; cursor: pointer;">⬇️ 下移</button>
       </div>
 
       <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; margin-left: 4px;">
@@ -1175,7 +1188,7 @@
       try {
         const [cardsData, decksData, factionsData] = await Promise.all([
           fetch("/api/cards?v=" + Date.now()).then(r => r.json()),
-          fetch("/api/decks?v=" + Date.now()).then(r => r.json()),
+          fetch("/api/decks?personal=true").then(readDeckResponse),
           fetch("/api/factions?v=" + Date.now()).then(r => r.json()).catch(() => [])
         ]);
 
@@ -1262,7 +1275,7 @@
       try {
         const res = await fetch("/api/decks/reorder", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "X-Deck-Account": activeDeckAccount, "Content-Type": "application/json" },
           body: JSON.stringify({ ordered_decks: orderedKeys })
         }).then(r => r.json());
 
@@ -1314,12 +1327,12 @@
         return;
       }
 
-      currentDecks[fullDeckName] = [...selectedMainIds];
-      currentDecks[fullDeckName + "_extra"] = [...selectedExtraIds];
-
+      const previous = selectedDeckName;
       selectedDeckName = fullDeckName;
-
-      await saveDeckToServer();
+      if (!await saveDeckToServer()) {
+        selectedDeckName = previous;
+        return;
+      }
 
       if (factionFilter && factionFilter.value !== currentFaction) {
         factionFilter.value = currentFaction;
@@ -1356,7 +1369,7 @@
       try {
         const res = await fetch("/api/decks/rename", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "X-Deck-Account": activeDeckAccount, "Content-Type": "application/json" },
           body: JSON.stringify({ old_name: oldName, new_name: newName })
         }).then(r => r.json());
 
@@ -1396,7 +1409,7 @@
       try {
         const res = await fetch("/api/decks/delete", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "X-Deck-Account": activeDeckAccount, "Content-Type": "application/json" },
           body: JSON.stringify({ deck_name: deckName })
         }).then(r => r.json());
 
@@ -2012,6 +2025,10 @@
 
     // 儲存至伺服器
     async function saveDeckToServer() {
+      if (!selectedDeckName) {
+        await addPresetDeck();
+        return;
+      }
       if (selectedMainIds.length !== 20) {
         showToast("主牌組必須剛好為 20 張才能儲存！", true);
         return;
@@ -2033,7 +2050,7 @@
         const res = await fetch("/api/decks/save", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "X-Deck-Account": activeDeckAccount, "Content-Type": "application/json"
           },
           body: JSON.stringify(payload)
         }).then(r => r.json());
@@ -2047,8 +2064,9 @@
             renderDeckListModal();
           }
           showToast(`✔ 成功重構並儲存「${selectedDeckName}」主/額外牌組！`);
+          return true;
         } else {
-          showToast("儲存失敗: " + res.message, true);
+          showToast("儲存失敗: " + (res.detail || res.message), true);
         }
       } catch (err) {
         showToast("儲存連線出錯，請確認伺服器運作中！", true);
@@ -2068,7 +2086,66 @@
     }
 
     // 頁面加載
-    window.onload = loadDeckBuilderData;
+    async function readDeckResponse(response) {
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || "目前無法連線。");
+      return result;
+    }
+
+    let activeDeckAccount = "";
+    const loginForm = document.getElementById("deckLogin");
+    const logoutButton = document.getElementById("deckLogout");
+    const accountStatus = document.getElementById("deckAccountStatus");
+    function showDeckAccount(account) {
+      activeDeckAccount = account.name || "";
+      loginForm.hidden = Boolean(account.name);
+      loginForm.style.display = account.name ? "none" : "flex";
+      logoutButton.hidden = !account.name;
+      accountStatus.textContent = account.name ? `${account.name} 的雲端牌組` :
+        account.enabled ? "登入後即可建立個人牌組。" : "雲端牌組尚未接上資料庫。";
+      for (const section of document.querySelectorAll("body > section:not(#deckAccountPanel), body > main")) {
+        section.inert = !account.name;
+        section.style.visibility = account.name ? "" : "hidden";
+      }
+      loginForm.querySelector("button").disabled = !account.enabled;
+    }
+    loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const key = document.getElementById("deckAccountKey");
+      const button = loginForm.querySelector("button");
+      button.disabled = true;
+      try {
+        const result = await fetch("/api/deck-account/login", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({name: document.getElementById("deckAccountName").value, key: key.value})
+        }).then(readDeckResponse);
+        key.value = "";
+        showDeckAccount({enabled: true, ...result});
+        await loadDeckBuilderData();
+      } catch (error) {
+        accountStatus.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+    logoutButton.addEventListener("click", async () => {
+      try {
+        await fetch("/api/deck-account/logout", {method:"POST"}).then(readDeckResponse);
+        location.reload();
+      } catch (error) {
+        accountStatus.textContent = error.message;
+      }
+    });
+    window.onload = async () => {
+      showDeckAccount({enabled: false});
+      try {
+        const result = await fetch("/api/deck-account").then(readDeckResponse);
+        showDeckAccount(result);
+        if (result.name) await loadDeckBuilderData();
+      } catch (error) {
+        accountStatus.textContent = error.message;
+      }
+    };
   
     let currentModalCardId = null;
 
