@@ -3830,28 +3830,39 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   // 1. 骷妖 (C-SKT-0025 / SR-SKT-0025): 立即：使敵方玩家丟掉1張手牌，你可丟掉1張手牌。
   if (cid.includes("SKT-0025") || name.includes("骷妖")) {
     if (oppHand.length > 0) {
-      let discardIdx = 0;
-      if (!isPlayer) {
-        const choices = oppHand.map((c, i) => ({ text: c.name, value: i }));
-        const picked = await showXLWChoiceModal("骷妖 迫使棄牌", "對手【骷妖】發動效果，請選擇 1 張手牌棄置：", choices);
-        discardIdx = (picked !== null && picked !== undefined) ? picked : 0;
+      let discardedOpp = null;
+      if (isPlayer) {
+        // Opponent hands may contain hidden placeholders during online play.
+        discardedOpp = oppHand.splice(0, 1)[0];
+      } else {
+        const options = oppHand.filter(xlwIsPileCard);
+        if (options.length) {
+          const choices = options.map((c, i) => ({text: c.name, value: i}));
+          const picked = await showXLWChoiceModal("骷妖 迫使棄牌", "對手【骷妖】發動效果，請選擇 1 張手牌棄置：", choices);
+          discardedOpp = window.XLWDuelConsistency.takeKnownCard(oppHand, options[picked ?? 0]);
+        }
       }
-      const discardedOpp = oppHand.splice(discardIdx, 1)[0];
-      oppGrave.push(discardedOpp);
-      logBattle(`✨【骷妖】立即效果：使${isPlayer ? "對手" : "我方"}丟棄了手牌【${discardedOpp.name}】！`);
-      await window.xlwOnCardEntersGraveyard(discardedOpp, !isPlayer, false);
-      render();
+      if (xlwIsPileCard(discardedOpp)) {
+        oppGrave.push(discardedOpp);
+        logBattle(`✨【骷妖】立即效果：使${isPlayer ? "對手" : "我方"}丟棄了手牌【${discardedOpp.name}】！`);
+        await window.xlwOnCardEntersGraveyard(discardedOpp, !isPlayer, false);
+        render();
+      } else if (isPlayer) {
+        render();
+      }
     }
     if (myHand.length > 0) {
       let selfDiscard = isPlayer ? await showXLWConfirm("骷妖 效果", "是否選擇丟掉 1 張我方手牌？") : (Math.random() < 0.5);
       if (selfDiscard) {
-        let discardIdx = 0;
-        if (isPlayer) {
-          const choices = myHand.map((c, i) => ({ text: c.name, value: i }));
+        const options = myHand.filter(xlwIsPileCard);
+        let chosen = options[0];
+        if (isPlayer && options.length) {
+          const choices = options.map((c, i) => ({text: c.name, value: i}));
           const picked = await showXLWChoiceModal("骷妖 選擇棄牌", "請選擇要丟棄的 1 張手牌：", choices);
-          discardIdx = (picked !== null && picked !== undefined) ? picked : 0;
+          chosen = picked == null ? null : options[picked];
         }
-        const discardedSelf = myHand.splice(discardIdx, 1)[0];
+        const discardedSelf = window.XLWDuelConsistency.takeKnownCard(myHand, chosen);
+        if (!discardedSelf) return;
         myGrave.push(discardedSelf);
         logBattle(`✨【骷妖】效果：${isPlayer ? "我方" : "對手"}主動丟棄了手牌【${discardedSelf.name}】！`);
         await window.xlwOnCardEntersGraveyard(discardedSelf, isPlayer, false);
@@ -3944,13 +3955,15 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
     if (myHand.length > 0) {
       let doDiscard = isPlayer ? await showXLWConfirm("小瘟疫 效果", "是否丟掉 1 張手牌？") : true;
       if (doDiscard) {
-        let discardIdx = 0;
-        if (isPlayer) {
-          const choices = myHand.map((c, i) => ({ text: c.name, value: i }));
+        const options = myHand.filter(xlwIsPileCard);
+        let chosen = options[0];
+        if (isPlayer && options.length) {
+          const choices = options.map((c, i) => ({text: c.name, value: i}));
           const picked = await showXLWChoiceModal("小瘟疫 選擇手牌", "請選擇要丟棄的手牌：", choices);
-          discardIdx = (picked !== null && picked !== undefined) ? picked : 0;
+          chosen = picked == null ? null : options[picked];
         }
-        const discarded = myHand.splice(discardIdx, 1)[0];
+        const discarded = window.XLWDuelConsistency.takeKnownCard(myHand, chosen);
+        if (!discarded) return;
         myGrave.push(discarded);
         logBattle(`✨【小瘟疫】效果：丟棄了手牌【${discarded.name}】！`);
         await window.xlwOnCardEntersGraveyard(discarded, isPlayer, false);
@@ -48326,12 +48339,20 @@ function showGraveyardDetailModal(title, graveList) {
             const choices = otherUndead.map((unit, index) => ({ text: unit.name, value: index }));
             const pick = await showXLWChoiceModal("中骷 選擇除外素材", "請選擇要除外的1張墓地不死族單位：", choices);
             const chosen = pick == null ? null : otherUndead[pick];
-            if (chosen && await window.xlwExileCardFromGraveyard(chosen, true)) {
-              normalSummonUsed = true;
-              const idx = graveyard.indexOf(card);
-              if (idx >= 0) graveyard.splice(idx, 1);
+            if (chosen) {
               overlay.remove();
-              await window.xlwSpecialSummonUnit(card, true);
+              const canSummon = () => isMyTurn && phase === "召喚階段" && !normalSummonUsed;
+              const success = await window.xlwSpecialSummonUnit(card, true, {
+                sourcePile: () => graveyard,
+                beforePlacement: () => canSummon() && graveyard.includes(chosen) &&
+                  window.xlwExileCardFromGraveyard(chosen, true),
+                payCost: () => {
+                  if (!canSummon()) return false;
+                  normalSummonUsed = true;
+                  return true;
+                }
+              });
+              if (!success) return;
               logBattle(`💀【中骷】效果：除外墓地【${chosen.name}】，改為從墓地進行通常召喚打出至場上！`);
               render();
             }
