@@ -10,3 +10,8 @@ tail.js
 Thumbs.db
 scratch/
 backup/
+.neon
+node_modules/
+.env
+.env.*
+!.env.example

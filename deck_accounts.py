@@ -15,14 +15,22 @@ COOKIE = "xlw_deck_session"
 SESSION_SECONDS = 30 * 86400
 
 
+def database_url(*, direct=False):
+    if direct:
+        url = os.environ.get("XLW_DECK_DATABASE_URL_UNPOOLED") or os.environ.get("DATABASE_URL_UNPOOLED")
+        if url:
+            return url
+    return os.environ.get("XLW_DECK_DATABASE_URL") or os.environ.get("DATABASE_URL")
+
+
 @contextmanager
-def connection():
-    url = os.environ.get("XLW_DECK_DATABASE_URL")
+def connection(*, direct=False):
+    url = database_url(direct=direct)
     if not url:
         raise HTTPException(503, "雲端牌組尚未設定。")
     import psycopg
     try:
-        with psycopg.connect(url, connect_timeout=8) as db:
+        with psycopg.connect(url, connect_timeout=8, prepare_threshold=None) as db:
             yield db
     except psycopg.Error as error:
         raise HTTPException(503, "雲端牌組暫時無法連線。") from error
@@ -71,7 +79,7 @@ class Login(BaseModel):
 
 @router.get("")
 def status(request: Request):
-    return {"enabled": bool(os.environ.get("XLW_DECK_DATABASE_URL")), "name": account(request)}
+    return {"enabled": bool(database_url()), "name": account(request)}
 
 
 @router.post("/login")
@@ -119,3 +127,9 @@ def deck_store(name, *, write=False):
         if write:
             db.execute("UPDATE xlw_deck_users SET decks=%s WHERE name=%s",
                        (json.dumps(decks, ensure_ascii=False), name))
+
+
+if __name__ == "__main__":
+    with connection(direct=True) as db:
+        init(db)
+    print("Deck PostgreSQL schema ready.")
