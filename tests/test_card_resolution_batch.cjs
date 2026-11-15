@@ -1580,7 +1580,7 @@ test("Wolf Mace uses one authoritative transfer and does not move another extra 
   c.isMultiplayer = true;
   c.renderExtraDecks = () => {};
   const snapshots = [];
-  c.sendFullGameStateToOpponent = () => snapshots.push({hand: [...c.hand], extra: [...c.playerExtraDeck]});
+  c.xlwSendExtraToHand = () => snapshots.push({hand: [...c.hand], extra: [...c.playerExtraDeck]});
   vm.runInContext(slice("async function xlwHandleWolfMaceCombatSuccess(", "async function resolveUnitCombat("), c);
   const activate = () => c.xlwHandleWolfMaceCombatSuccess(orc, "player_front", 0, "player");
   c.showXLWConfirm = async () => false;
@@ -1596,4 +1596,158 @@ test("Wolf Mace uses one authoritative transfer and does not move another extra 
   assert.deepEqual(snapshots, [{hand: [mace], extra: [other]}]);
   c.showXLWConfirm = async () => assert.fail("remote combat should never block on a local choice");
   await c.xlwHandleWolfMaceCombatSuccess(orc, "enemy_front", 0, "enemy");
+});
+
+test("Extra-zone peer summons consume only the identified copy and cannot overwrite an occupied slot", async () => {
+  const c = fixture();
+  const a = {id: "C-GOT-0060", _xlwInstanceId: "a"};
+  const b = {id: a.id, _xlwInstanceId: "b"};
+  const other = {id: "other"};
+  c.enemyExtraDeck.push(a, b, other);
+  vm.runInContext(slice("function xlwRemoveMirroredExtraCard(", "function renderExtraDecks("), c);
+  c.receiveToken = vm.runInContext("(async data => { if (false) {} " +
+    slice('} else if (data.action === "xlw_extra_summon_token") {', '} else if (data.action === "add_to_hand_sync") {')
+      .replace(/^}/, "") + "} })", c);
+  const summon = card => c.receiveToken({action: "xlw_extra_summon_token", zone: "enemy_front", idx: 0, card});
+  await summon(b);
+  assert.equal(c.field.enemy_front[0].card, b);
+  assert.deepEqual(c.enemyExtraDeck, [a, other]);
+  await summon(a);
+  assert.equal(c.field.enemy_front[0].card, b);
+  assert.deepEqual(c.enemyExtraDeck, [a, other]);
+  assert.equal(c.xlwRemoveMirroredExtraCard(c.enemyExtraDeck, b), null);
+});
+
+test("Meow upgrades consume one exact extra card and ignore repeated or stale peer upgrades", async () => {
+  const c = fixture(), source = unit("R-CAT-0028");
+  source.card._xlwInstanceId = "break";
+  const upgraded = {id: "SR-CAT-0047", _xlwInstanceId: "first"};
+  const duplicate = {id: upgraded.id, _xlwInstanceId: "second"};
+  c.structuredClone = structuredClone;
+  c.field.enemy_front[0] = source;
+  c.enemyExtraDeck.push(upgraded, duplicate);
+  let leaveCount = 0;
+  c.cleanUnitLeavingField = async () => { leaveCount++; };
+  vm.runInContext(slice("function xlwRemoveMirroredExtraCard(", "function renderExtraDecks("), c);
+  vm.runInContext(slice("async function xlwApplyMeowUpgrade(", "async function xlwCheckNegativeEnergyMeowUpgrade("), c);
+  c.receiveUpgrade = vm.runInContext("(async data => { if (false) {} " +
+    slice('} else if (data.action === "extra_upgrade_sync"', '} else if (data.action === "double_claw_choice") {')
+      .replace(/^}/, "") + "} })", c);
+  const message = {action: "extra_upgrade_to_hand_sync", zone: "enemy_front", idx: 0, sourceCard: source.card, newCard: upgraded};
+  await c.receiveUpgrade(message);
+  assert.deepEqual(c.enemyExtraDeck, [duplicate]);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [upgraded]);
+  assert.equal(c.field.enemy_front[0], null);
+  c.field.enemy_front[0] = unit("R-CAT-0028");
+  c.field.enemy_front[0].card._xlwInstanceId = "replacement";
+  await c.receiveUpgrade(message);
+  assert.deepEqual(c.enemyExtraDeck, [duplicate]);
+  assert.equal(c.field.enemy_front[0].card._xlwInstanceId, "replacement");
+  assert.equal(leaveCount, 1);
+});
+
+test("An extra retrieval updates the active side's mirror without overwriting its board or taking another copy", () => {
+  const c = fixture();
+  const card = {id: "EVL-0055", _xlwInstanceId: "arrow-a"};
+  const other = {id: card.id, _xlwInstanceId: "arrow-b"};
+  const own = unit("unrelated");
+  c.enemyExtraDeck.push(other, card);
+  c.field.player_back[0] = own;
+  vm.runInContext(slice("function xlwSendExtraToHand(", "function renderExtraDecks("), c);
+  assert.equal(c.isMyTurn, true);
+  assert.equal(c.xlwApplyPeerExtraToHand({...card}), true);
+  assert.equal(c.xlwApplyPeerExtraToHand({...card}), false);
+  assert.deepEqual(c.enemyExtraDeck, [other]);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [card]);
+  assert.equal(c.field.player_back[0], own);
+});
+
+test("The extra thief can use an enemy rear slot and keeps its extra card if that slot becomes occupied", async () => {
+  const c = fixture(), thief = {id: "SSSR-NMS-0064", name: "大耳賊"};
+  const existing = unit("new occupant");
+  c.playerExtraDeck.push(thief);
+  c.structuredClone = structuredClone;
+  c.xlwBlueStarRequirement = () => false;
+  c.window.xlwGetEmptyEnemySlots = () => [{zone: "enemy_front", idx: 0}, {zone: "enemy_back", idx: 2}];
+  c.window.xlwResolvePG2Summon = async () => {};
+  vm.runInContext(slice("window.xlwSpecialSummonUnit =", "window.xlwIsImmediateEffectBlocked ="), c);
+  const summon = () => c.window.xlwSpecialSummonUnit(thief, true, {
+    destinationIsPlayer: false, frontPriority: false, sourcePile: () => c.playerExtraDeck
+  });
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options.length, 2);
+    c.field.enemy_back[2] = existing;
+    return 1;
+  };
+  assert.equal(await summon(), false);
+  assert.equal(c.field.enemy_back[2], existing);
+  assert.deepEqual(c.playerExtraDeck, [thief]);
+  c.field.enemy_back[2] = null;
+  c.showXLWChoiceModal = async () => 1;
+  assert.equal(await summon(), true);
+  assert.equal(c.field.enemy_back[2].card.id, thief.id);
+  assert.deepEqual(c.playerExtraDeck, []);
+});
+
+test("A relayed Prajna evolution affects only the opponent and ignores a repeat", async () => {
+  const c = fixture();
+  const own = unit("own");
+  const old = unit("old");
+  old.card.name = "智慧的般若";
+  old.card._xlwInstanceId = "old-prajna";
+  const upgrade = {id: "SR-VLG-0049", _xlwInstanceId: "first"};
+  const other = {...upgrade, _xlwInstanceId: "second"};
+  c.structuredClone = structuredClone;
+  c.field.player_front[1] = own;
+  c.field.enemy_front[1] = old;
+  c.enemyExtraDeck.push(other, upgrade);
+  const exiled = [];
+  c.exileCard = card => exiled.push(card);
+  c.triggerUpgradeBonus = () => {};
+  vm.runInContext(slice("function xlwRemoveMirroredExtraCard(", "function renderExtraDecks("), c);
+  c.receivePrajna = vm.runInContext("(async data => { if (false) {} " +
+    slice('} else if (data.action === "hannya_evolve_sync") {', '} else if (data.action === "extra_summon_resolved") {')
+      .replace(/^}/, "") + "} })", c);
+  const message = {action: "hannya_evolve_sync", zone: "enemy_front", idx: 1, angryHannya: upgrade, sourceCard: old.card};
+  await c.receivePrajna(message);
+  await c.receivePrajna(message);
+  assert.equal(c.field.player_front[1], own);
+  assert.deepEqual(c.field.enemy_front[1].card, upgrade);
+  assert.deepEqual(c.enemyExtraDeck, [other]);
+  assert.deepEqual(exiled, [old.card]);
+});
+
+test("Peer tactical swaps use relay coordinates once and reject a replay against the changed source slots", async () => {
+  const c = fixture();
+  const a = unit("a"), b = unit("b"), own = unit("own");
+  c.field.enemy_front[0] = a;
+  c.field.enemy_back[0] = b;
+  c.field.player_front[0] = own;
+  c.unitName = candidate => candidate.card.id;
+  vm.runInContext(slice("function xlwMatchesPeerCard(", "function renderExtraDecks("), c);
+  const receive = vm.runInContext("(async data => { if (false) {} " +
+    slice('} else if (data.action === "swap_units") {', '} else if (data.action === "scarecrow_move_sync") {')
+      .replace(/^}/, "") + "} })", c);
+  const msg = {action: "swap_units", zoneA: "enemy_front", idxA: 0, zoneB: "enemy_back", idxB: 0, first: a.card, second: b.card};
+  await receive(msg);
+  await receive(msg);
+  assert.equal(c.field.enemy_front[0], b);
+  assert.equal(c.field.enemy_back[0], a);
+  assert.equal(c.field.player_front[0], own);
+});
+
+test("A mirrored pile summon rejects a stale destination and preserves other copies", () => {
+  const c = fixture();
+  const card = {id: "SSSR-NMS-0060", _xlwInstanceId: "hirako-a"};
+  const other = {...card, _xlwInstanceId: "hirako-b"};
+  c.enemyGraveyard.push(other, card);
+  c.field.enemy_front[0] = unit("occupied");
+  vm.runInContext(slice("function xlwMatchesPeerCard(", "function renderExtraDecks("), c);
+  const summon = idx => c.xlwApplyPeerPileSummon({zone: "enemy_front", idx, card}, c.enemyGraveyard, false);
+  assert.equal(summon(0), false);
+  assert.deepEqual(c.enemyGraveyard, [other, card]);
+  assert.equal(summon(1), true);
+  assert.equal(summon(2), false);
+  assert.deepEqual(c.enemyGraveyard, [other]);
+  assert.equal(c.field.enemy_front[1].card, card);
 });

@@ -91,6 +91,9 @@ async def main():
             await sender.send(json.dumps({'action': 'sync_game_state', 'message_id': f'extra-{seat}', 'state': state}))
             sync = await receive(receiver, lambda d: d.get('action') == 'sync_game_state')
             assert sync['state'] == state
+            await sender.send(json.dumps({'action': 'extra_card_to_hand', 'message_id': f'pick-{seat}', 'card': acquired}))
+            transferred = await receive(receiver, lambda d: d.get('action') == 'extra_card_to_hand')
+            assert transferred['card'] == acquired
         print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing, extra-zone transfer from both seats)')
     finally:
         await a.close()
