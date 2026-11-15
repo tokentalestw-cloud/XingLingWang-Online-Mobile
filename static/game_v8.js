@@ -969,6 +969,14 @@ function isUnitConfined(zone, idx) {
     return false;
   }
 
+  const blackMagicSavage = (unit, lane) => unit?.card?.id?.includes("EWD-0029") &&
+    !window.isUnitSilenced(unit, lane, idx);
+  if (blackMagicSavage(slot, zone)) return true;
+  // The unit immediately opposite may be screened by a closer unit in either half.
+  if ((zone.endsWith("_front") || !field[myPrefix + "_front"]?.[idx]) &&
+      (blackMagicSavage(oppFront, oppPrefix + "_front") ||
+       (!oppFront && blackMagicSavage(oppBack, oppPrefix + "_back")))) return true;
+
   // 🤖 大冰箱 (RBT-0035 / R-RBT-0035): 若此單位為合體後的單位，則使此單位前方所有敵方單位受到禁錮
   for (const oppSlot of [oppFront, oppBack]) {
     if (oppSlot && oppSlot.card && (oppSlot.card.id === "RBT-0035" || oppSlot.card.id === "R-RBT-0035" || oppSlot.card.name?.includes("大冰箱")) && oppSlot.devourCards && oppSlot.devourCards.length > 0 && !window.isUnitSilenced(oppSlot)) {
@@ -1348,6 +1356,8 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  delete window.XLW_ewdGuerrillaPlayerTurn;
+  delete window.XLW_ewdGuerrillaEnemyTurn;
   window.xlwResetFactionState();
   window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
@@ -1623,6 +1633,8 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  delete window.XLW_ewdGuerrillaPlayerTurn;
+  delete window.XLW_ewdGuerrillaEnemyTurn;
   window.xlwResetFactionState();
   window.XLW_callGameRejectedTurn = null;
   window.xlwClearAllPendingResolvers?.(true);
@@ -6605,6 +6617,8 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
 
   // 📣 野人兄弟幫聲援加成
+  baseAtk += unit.ewdTouchKillAtk || 0;
+  baseAtk += (unit.ewdCheers || []).reduce((total, effect) => total + effect.attack, 0);
   if (unit.cheerAtk) {
     baseAtk += unit.cheerAtk;
   }
@@ -10413,9 +10427,26 @@ window.xlwRunMainStart = async function(isPlayerSide) {
 };
 
 // 結束階段效果 (PG2 & 點數兌換卡)
+function xlwEwdInMainPhase() {
+  return ["召喚階段", "戰術佈陣", "進攻宣言", "主要階段"].includes(phase);
+}
+
+function xlwEwdOpposingUnit(zone, idx) {
+  const own = zone.startsWith("player_") ? "player_" : "enemy_";
+  const opp = own === "player_" ? "enemy_" : "player_";
+  if (zone.endsWith("_back") && field[own + "front"][idx]) return null;
+  return field[opp + "front"][idx] || field[opp + "back"][idx];
+}
+
 window.xlwResolvePG2TurnEnd = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
   const oppSide = isPlayer ? "enemy_" : "player_";
+
+  for (const z of [side + "front", side + "back", oppSide + "front", oppSide + "back"]) {
+    for (const unit of field[z]) {
+      if (unit?.ewdCheers) unit.ewdCheers = unit.ewdCheers.filter(effect => effect.expires > turn);
+    }
+  }
 
   // A. C-GOT-0061 鬥山羊
   for (const z of [side + "front"]) {
@@ -10458,6 +10489,47 @@ window.xlwResolvePG2TurnEnd = async function(isPlayer = true) {
 };
 
 // 破壞與離場連動結算 (PG2 & 點數兌換卡)
+window.xlwResolveSavageAfterDestruction = async function(destroyedUnit, zone) {
+  const card = destroyedUnit.card;
+  const isPlayerUnit = zone.startsWith("player_");
+  if (window.xlwIsUnitBarbarian(destroyedUnit) &&
+      (isPlayerUnit ? isMyTurn : !isMultiplayer && !isMyTurn)) {
+    const tactical = phase === "戰術佈陣" || phase === "進攻宣言";
+    const ownExtra = isPlayerUnit ? playerExtraDeck : enemyExtraDeck;
+    const outfielder = tactical && ownExtra.find(c => c?.id === "SR-EWD-0055");
+    if (outfielder && (!isPlayerUnit || await showXLWConfirm(outfielder.name, "是否從額外區打出至對手場上？"))) {
+      await window.xlwSpecialSummonUnit(outfielder, isPlayerUnit, {
+        destinationIsPlayer: !isPlayerUnit,
+        sourcePile: () => ownExtra
+      });
+    }
+
+    const main = tactical || phase === "召喚階段" || phase === "主要階段";
+    const activationKey = isPlayerUnit ? "XLW_ewdGuerrillaPlayerTurn" : "XLW_ewdGuerrillaEnemyTurn";
+    if (main && !card.id?.includes("EWD-0057") && window[activationKey] !== turn) {
+      const sources = [
+        { name: "墓地", pile: isPlayerUnit ? graveyard : window.XLW_ENEMY?.grave },
+        { name: "手牌", pile: isPlayerUnit ? hand : window.XLW_ENEMY?.hand }
+      ].map(source => ({ ...source, card: source.pile?.find(c => c?.id?.includes("EWD-0057")) }))
+        .filter(source => source.card);
+      if (sources.length) {
+        const pick = isPlayerUnit ? await showXLWChoiceModal("游擊野人", "選擇要從哪裡召喚游擊野人。", [
+          ...sources.map((source, index) => ({ text: source.name, value: index })),
+          { text: "不發動", value: -1 }
+        ]) : 0;
+        const source = sources[pick];
+        if (source && window[activationKey] !== turn) {
+          window[activationKey] = turn;
+          const summoned = await window.xlwSpecialSummonUnit(source.card, isPlayerUnit, {
+            frontPriority: false, sourcePile: () => source.pile
+          });
+          if (!summoned) delete window[activationKey];
+        }
+      }
+    }
+  }
+};
+
 window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner, isCombat) {
   if (!destroyedUnit || !destroyedUnit.card) return;
   const card = destroyedUnit.card;
@@ -10672,9 +10744,14 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
     }
   }
   // 🔥 野人慶典進攻成功獎勵+1
-  if (attacker && attacker.hasCelebrationBonus) {
-    if (successOwner === "player") playerBonusScore += 1; else enemyBonusScore += 1;
-    logBattle(`🔥🍖【野人慶典】戰鬥成功：獲得額外獎勵 +1★！`);
+  const celebration = window.xlwGetFactionFieldCard(successOwner === "player");
+  const hasHunt = celebration?.id === "SR-EWD-0046" && window.xlwIsUnitBarbarian(attacker);
+  const cheerReward = (attacker?.ewdCheers || []).reduce((total, effect) => total + (effect.reward || 0), 0);
+  if (attacker && isAttacker && (attacker.hasCelebrationBonus || hasHunt || cheerReward)) {
+    const reward = Number(Boolean(attacker.hasCelebrationBonus || hasHunt)) + cheerReward;
+    if (successOwner === "player") playerBonusScore += reward;
+    else enemyBonusScore += reward;
+    logBattle("【野人】進攻成功，獲得額外獎勵。");
     if (typeof renderScore === "function") renderScore();
   }
   if (!attacker || !attacker.card) return;
@@ -10910,13 +10987,17 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     await xlwResolveFairyStrategist(isPlayer);
   }
 
+  if (cardId === "SR-EWD-0055") {
+    await xlwPushUnit(zone, idx, "back", { offBoardAction: "exile", sourceName: cardName });
+  }
+
   // 📣 野人兄弟幫聲援野人 (R-EWD-0037 / R-EWD-0037-泳裝): 立即全體野人+1攻擊力
   if (cardId.includes("EWD-0037") || cardName.includes("野人兄弟幫聲援野人")) {
     let count = 0;
     for (const z of [side + "front", side + "back"]) {
       (field[z] || []).forEach(u => {
         if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
-          u.cheerAtk = (u.cheerAtk || 0) + 1;
+          (u.ewdCheers ||= []).push({ attack: 1, expires: turn + 1 });
           count++;
         }
       });
@@ -10931,8 +11012,7 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     for (const z of [side + "front", side + "back"]) {
       (field[z] || []).forEach(u => {
         if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
-          u.cheerAtk = (u.cheerAtk || 0) + 2;
-          u.hasCelebrationBonus = true;
+          (u.ewdCheers ||= []).push({ attack: 2, reward: 1, expires: turn + 1 });
           count++;
         }
       });
@@ -11289,6 +11369,12 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
 
 window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
+
+  for (const z of [side + "front", side + "back"]) {
+    for (const unit of field[z]) {
+      if (unit) delete unit.ewdTouchKillAtk;
+    }
+  }
 
   // ⚡ 激動野人 (R-EWD-0032 / R-EWD-0047): 主要階段開始時轉正
   for (const z of [side + "front", side + "back"]) {
@@ -12461,7 +12547,7 @@ async function castSpell(handIndex) {
           });
         }
         logBattle(`🔥🍖【野人慶典】狂歡盛宴：賦予我方 ${count} 個野人單位進攻成功時額外獲得 +1★ 獎勵！`);
-        graveyard.push(spellCard);
+        window.xlwSetFactionFieldCard(spellCard);
         render();
       });
 
@@ -17929,8 +18015,14 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
       handList.push(pushedUnit.card);
       field[pushedSlot.zone][pushedSlot.idx] = null;
     } else {
-      logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，送入墓地！`);
-      await destroyUnit(pushedSlot.zone, pushedSlot.idx, unitOwner, false);
+      const exile = offBoardAction === "exile";
+      logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，${exile ? "被除外" : "送入墓地"}！`);
+      await destroyUnit(pushedSlot.zone, pushedSlot.idx, unitOwner, exile);
+      if (field[pushedSlot.zone]?.[pushedSlot.idx]) return false;
+      if (options.offBoardReward) {
+        if (options.rewardIsPlayer) playerBonusScore += options.offBoardReward;
+        else enemyBonusScore += options.offBoardReward;
+      }
     }
 
     const offIdxInChain = unitsInChain.indexOf(offBoardUnit);
@@ -25172,9 +25264,41 @@ async function selectPlayerTarget(zone, idx) {
   }
 
   selectedAttacker = null;
+  await window.xlwResolveSavageAttack?.(attacker, zone, idx);
   render();
 }
 window.selectPlayerTarget = selectPlayerTarget;
+
+window.xlwResolveSavageAttack = async function(unit, zone, idx) {
+  if (!isMyTurn) return;
+  let changed = false;
+  if (unit.card.id?.includes("EWD-0058") && !window.isUnitSilenced(unit, zone, idx)) {
+    changed = await xlwPushUnit(zone, idx, "front", {
+      sourceName: unit.card.name, offBoardReward: 2, rewardIsPlayer: true
+    });
+  }
+
+  const rows = ["player_front", "player_back"];
+  const attackers = () => rows.reduce((count, row) =>
+    count + field[row].filter(slot => slot?.attacking).length, 0);
+  const upgrade = playerExtraDeck.find(card => card?.id === "R-EWD-0047");
+  if (upgrade && attackers() >= 3) {
+    const options = rows.flatMap(row => field[row].flatMap((slot, i) =>
+      slot && (slot.card.name === "機動野人" || slot.card.id === "R-EWD-0032") ?
+        [{ text: slot.card.name, value: row + ":" + i, boardTarget: { zone: row, idx: i }, slot }] : []));
+    const pick = options.length ? await showXLWChoiceModal(upgrade.name, "可選擇一個機動野人升級。", options, { boardOnly: true }) : null;
+    const selection = options.find(option => option.value === pick);
+    if (selection && attackers() >= 3 &&
+        field[selection.boardTarget.zone][selection.boardTarget.idx] === selection.slot &&
+        window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, upgrade)) {
+      graveyard.push(selection.slot.card);
+      selection.slot.card = structuredClone(upgrade);
+      logBattle("【機動野人】升級為【學會滑板的激動野人】。");
+      changed = true;
+    }
+  }
+  if (changed && isMultiplayer) sendFullGameStateToOpponent(true);
+};
 
 // ===== 自動宣告與切換進攻宣言 =====
 async function xlwAutoDeclarePlayerAttacks() {
@@ -25272,6 +25396,7 @@ async function xlwAutoDeclarePlayerAttacks() {
         targetIdx: finalIdx
       }));
     }
+    await window.xlwResolveSavageAttack?.(playerAttacker, actualZone, i);
   }
 
   window.XLW_DEFENSE_RULE.enemyNeedsDefense = playerAttackCount > 0;
@@ -25560,6 +25685,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
         trophyTargetId: unit.trophyTargetId
       }));
     }
+    await window.xlwResolveSavageAttack?.(unit, zone, idx);
 
     // 🏃‍♂️ 烙人旅人 (R-SPT-0042): 此單位進攻時，你召喚2個小旅人並使其進攻
     if (unit.card && (unit.card.id === "R-SPT-0042" || unit.card.name?.includes("烙人旅人"))) {
@@ -32565,6 +32691,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
   await cleanUnitLeavingField(unit, zone);
   field[zone][idx] = null;
 
+  await window.xlwResolveSavageAfterDestruction?.(unit, zone);
+
   if (owner === "player" && (["EWD-0017", "SSR-EWD-0017"].includes(unit.card.id) || unit.card.name === "超級賽野人")) {
     const evolution = hand.find(c => c && (["SR-EWD-0025", "SSSR-EWD-0025"].includes(c.id) || c.name === "超級賽野人II"));
     if (evolution && await showXLWConfirm("超級賽野人II 效果發動", "場上的超級賽野人被破壞！是否從手牌額外打出【超級賽野人II】？")) {
@@ -37895,6 +38023,20 @@ function renderHand() {
         setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌，再進行卡牌操作！");
         return;
       }
+      if (isMyTurn && xlwEwdInMainPhase() && !window.XLW_exileExcessHandActive && card.id?.includes("EWD-0037")) {
+        const countFacing = () => ["player_front", "player_back"].reduce((count, z) =>
+          count + field[z].filter((u, i) => window.xlwIsUnitBarbarian(u) && xlwEwdOpposingUnit(z, i)).length, 0);
+        const upgrade = playerExtraDeck.find(c => c?.id === "R-EWD-0048");
+        if (upgrade && countFacing() >= 3 && await showXLWConfirm(upgrade.name, "是否將手牌中的聲援野人升級？")) {
+          if (hand[idx] === card && countFacing() >= 3 && window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, upgrade)) {
+            hand[idx] = upgrade;
+            graveyard.push(card);
+            logBattle("【聲援野人】升級為【大聲聲援野人】。");
+            render();
+          }
+          return;
+        }
+      }
       if (window.XLW_exileExcessHandActive) {
         const card = hand[idx];
         hand.splice(idx, 1);
@@ -37980,6 +38122,33 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
   if (field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
 // 🌿 植物園與擴充卡牌主動技能與成長對話
   if (zone.startsWith("player_") && (phase === "召喚階段" || phase === "戰術佈陣" || phase === "Main Phase") && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive) {
+
+    if (isMyTurn && phase === "召喚階段" && obj.card.id?.includes("EWD-0056") && obj.ewdTouchKillTurn !== turn) {
+      const targets = [idx - 1, idx + 1].filter(i => {
+        const unit = field[zone]?.[i];
+        return window.xlwIsUnitBarbarian(unit) && !isUnitIndestructible(unit, zone, i);
+      });
+      if (targets.length) {
+        const pick = await showXLWChoiceModal(obj.card.name, "選擇要破壞的相鄰野人。",
+          targets.map(i => ({ text: field[zone][i].card.name, value: i, boardTarget: { zone, idx: i } })),
+          { boardOnly: true });
+        if (!targets.includes(pick) || field[zone]?.[idx] !== obj || !window.xlwIsUnitBarbarian(field[zone]?.[pick])) return true;
+        const target = field[zone][pick];
+        obj.ewdTouchKillTurn = turn;
+        await destroyUnit(zone, pick, "player", false);
+        if (field[zone][pick] === target) {
+          delete obj.ewdTouchKillTurn;
+          return true;
+        }
+        obj.tapped = false;
+        obj.attacking = false;
+        obj.target = null;
+        obj.ewdTouchKillAtk = 3;
+        render();
+        if (isMultiplayer) sendFullGameStateToOpponent(true);
+        return true;
+      }
+    }
 
     // 🪵 SSR-EWD-0051 學會工藝的野人: 主要階段限一次，橫放此單位，從額外區尋找1張工藝牌加入手牌
     if ((obj.card.id === "SSR-EWD-0051" || obj.card.name?.includes("學會工藝的野人")) && !obj.tapped && !obj.craftUsedThisTurn) {
@@ -43226,6 +43395,30 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
         if (xlwIsOrcCamp(card) && isMyTurn && phase === "召喚階段") {
           await xlwActivateOrcCamp(card);
           return;
+        }
+        if (isMyTurn && xlwEwdInMainPhase() && card.id?.includes("EWD-0020") && playerBonusScore >= 5) {
+          const upgrade = playerExtraDeck.find(c => c?.id === "SR-EWD-0046");
+          if (upgrade && await showXLWConfirm(upgrade.name, "是否將野人慶典升級？") &&
+              playerBonusScore >= 5 && JSON.parse(pf.dataset.card || "null")?.id === card.id &&
+              window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, upgrade)) {
+            pf.dataset.card = JSON.stringify(upgrade);
+            logBattle("【野人慶典】升級為【野人狩獵慶典】。");
+            render();
+            if (isMultiplayer) sendFullGameStateToOpponent(true);
+            return;
+          }
+        }
+        if (isMyTurn && xlwEwdInMainPhase() && card.id === "SR-EWD-0046" && card.ewdReadyTurn !== turn) {
+          const units = ["player_front", "player_back"].flatMap(z => field[z]).filter(u =>
+            window.xlwIsUnitBarbarian(u) && u.tapped && !u.attacking);
+          if (units.length && await showXLWConfirm(card.name, "是否將我方野人單位轉正？")) {
+            card.ewdReadyTurn = turn;
+            pf.dataset.card = JSON.stringify(card);
+            for (const unit of units) unit.tapped = false;
+            render();
+            if (isMultiplayer) sendFullGameStateToOpponent(true);
+            return;
+          }
         }
         // 🍬 糖果城堡 升級為 水晶糖果城堡 (R-CND-0049) 檢測
         if ((card.id === "C-CND-0018" || card.name?.includes("糖果城堡")) && isMyTurn && phase === "主要階段") {
@@ -52723,7 +52916,8 @@ window.xlwOnUnitUpgraded = async function(isPlayer, unit, newCard) {
 
 window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   if (!card || xlwBlueStarRequirement(card, isPlayer)) return false;
-  const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
+  const destinationIsPlayer = options.destinationIsPlayer ?? isPlayer;
+  const emptySlots = destinationIsPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
   const tribute = options.tribute;
   const validTribute = () => isMyTurn && phase === "召喚階段" && !normalSummonUsed &&
     field[tribute.zone][tribute.idx] === tribute.unit &&
@@ -52798,7 +52992,11 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
       window.xlwTriggerUndeadHospital(1, isPlayer);
     }
 
-    if (isPlayer) {
+    if (destinationIsPlayer !== isPlayer) {
+      await window.xlwResolvePG2Summon(card, slot.zone, slot.idx, destinationIsPlayer);
+      render();
+      if (isMultiplayer) sendFullGameStateToOpponent(true);
+    } else if (isPlayer) {
       await performSummonToSlot(card, slot.zone, slot.idx);
     } else {
       await triggerAiSummonEffects(card, slot.zone, slot.idx);
@@ -54151,7 +54349,8 @@ window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
       const u = field[z][i];
       if (u && u.card && (u.card.id?.includes("BRV-0046") || u.card.name === "傳送門" || window.xlwCardHasKeyword(u.card, "消逝"))) {
         logBattle(`✨【${u.card.name}】具備【消逝】，在回合結束時消逝並返回額外牌庫！`);
-        const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+        const extraOwnerIsPlayer = u.card.id === "SR-EWD-0055" ? !isPlayerSide : isPlayerSide;
+        const extraList = extraOwnerIsPlayer ? playerExtraDeck : enemyExtraDeck;
         extraList.push(u.card);
         field[z][i] = null;
       }

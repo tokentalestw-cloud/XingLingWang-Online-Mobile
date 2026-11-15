@@ -627,9 +627,19 @@ TRAVELER_TOKEN_IDS = {
 }
 
 
+EWD_CARD_ALIASES = {
+    "EWD-0056": "C-EWD-0056",
+    "EWD-0057": "C-EWD-0057",
+    "EWD-0023": "R-EWD-0023",
+    "EWD-0023-泳裝": "R-EWD-0023-泳裝",
+    "NY-EWD-0015": "R-EWD-0015-新年",
+    "EWD-0020-ALT": "C-EWD-0020-ALT",
+    "EWD-0023-ALT": "C-EWD-0023-ALT",
+}
+
 def without_traveler_tokens(decks):
     return {
-        name: [card_id for card_id in cards if card_id not in TRAVELER_TOKEN_IDS]
+        name: [EWD_CARD_ALIASES.get(card_id, card_id) for card_id in cards if card_id not in TRAVELER_TOKEN_IDS]
         for name, cards in decks.items()
     }
 
