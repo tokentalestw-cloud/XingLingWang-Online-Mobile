@@ -152,6 +152,7 @@ window.XLW_opponentSneakRecall = {};
 window.XLW_opponentFoodBallChoice = {};
 window.XLW_opponentFoodBallSummon = {};
 window.XLW_opponentDoubleClawNegate = {};
+window.XLW_opponentWolfMaceChoice = {};
 window.XLW_handyMeowOpponentChoice = {};
 window.XLW_playerMeowMotherPending = false;
 window.XLW_playerMeowMotherActive = false;
@@ -997,6 +998,14 @@ function isUnitConfined(zone, idx) {
     }
   }
 
+  // 👻 背後靈 (R-VLG-0046): 使此單位與其前方的你的單位受到禁錮
+  if (zone.includes("front")) {
+    const myBack = field[myPrefix + "_back"]?.[idx];
+    if (myBack && myBack.card && (myBack.card.id === "R-VLG-0046" || myBack.card.name?.includes("背後靈")) && !window.isUnitSilenced(myBack, myPrefix + "_back", idx)) {
+      return true;
+    }
+  }
+
   // 🍬 薄荷冰淇淋 (C-CND-0061): 使此單位正前方的單位被禁錮
   if (zone.includes("front")) {
     if (oppFront && oppFront.card && (oppFront.card.id === "C-CND-0061" || oppFront.card.name?.includes("薄荷冰淇淋")) && !window.isUnitSilenced(oppFront, oppPrefix + "_front", idx)) return true;
@@ -1421,6 +1430,7 @@ function newGameMultiplayer() {
   window.XLW_opponentFoodBallChoice = {};
   window.XLW_opponentFoodBallSummon = {};
   window.XLW_opponentDoubleClawNegate = {};
+  window.XLW_opponentWolfMaceChoice = {};
   window.XLW_bypassTurnCheck = false;
   normalSummonUsed = false;
   tacticalSummonUsed = false;
@@ -1617,6 +1627,7 @@ function initGameEmptyState() {
   window.XLW_opponentFoodBallChoice = {};
   window.XLW_opponentFoodBallSummon = {};
   window.XLW_opponentDoubleClawNegate = {};
+  window.XLW_opponentWolfMaceChoice = {};
   window.XLW_turnSneakCount = 0;
   window.XLW_turnTappedUnits = new Set();
   window.XLW_turnCombatWins = 0;
@@ -1767,6 +1778,7 @@ function newGame() {
   window.XLW_opponentFoodBallChoice = {};
   window.XLW_opponentFoodBallSummon = {};
   window.XLW_opponentDoubleClawNegate = {};
+  window.XLW_opponentWolfMaceChoice = {};
   window.XLW_turnSneakCount = 0;
   window.XLW_turnTappedUnits = new Set();
   window.XLW_turnCombatWins = 0;
@@ -2722,8 +2734,7 @@ function xlwCanSummonToZone(zone, card) {
   if (zone !== "player_front" && zone !== "player_back" && zone !== "enemy_front" && zone !== "enemy_back") return false;
   
   if (zone === "player_back") {
-    if (card?.id?.includes("EVL-0054") || card?.name?.includes("凱迪亞斯")) return true;
-    if (card && (card.id === "GOT-0025" || card.id === "R-GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+    if (card && (card.id === "EVL-0054" || card.name?.includes("妖精戰略家") || card.id === "GOT-0025" || card.id === "R-GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
       // Allowed to summon directly to backline
     } else {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
@@ -2738,7 +2749,7 @@ function xlwCanSummonToZone(zone, card) {
       }
     }
   } else if (zone === "enemy_back") {
-    if (card && (card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
+    if (card && (card.id === "EVL-0054" || card.name?.includes("妖精戰略家") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
       // Allowed to summon directly to backline
     } else {
       const isArtworkUnit = card && (card.faction === "藝術品" || card.deck === "藝術品");
@@ -3263,7 +3274,7 @@ function checkUnitHasPiercing(unit, zone, lane) {
   const c = unit.card || unit;
   if (unit.piercing) return true;
   if (window.xlwCardHasKeyword(c, "貫穿")) return true;
-  if (c.id === "R-BRV-0054" || c.id === "ASSR-ORC-0070") return true;
+  if (c.id === "ORC-0003" || c.id === "SSR-ORC-0003" || c.name?.includes("菜刀哥") || c.id === "R-BRV-0054" || c.id === "ASSR-ORC-0070") return true;
   if (c.id === "C-GOT-0003" || c.id === "R-GOT-0003" || c.id === "R-GOT-0010" || c.id === "STP-0013" || c.id === "SSR-STP-0013" || c.name?.includes("黑山羊") || c.name?.includes("深海潛水員")) return true;
   if (c.id === "VRT-0005" || c.name?.includes("不醉翁")) return true;
   if (unit.equipments && unit.equipments.some(e => e.includes("菜刀") || e.includes("迴旋飛斧") || e.includes("肌肉魔法"))) return true;
@@ -4337,6 +4348,16 @@ window.xlwUnitHasPoison = function(unit, zone, idx) {
       return true;
     }
   }
+
+  // ASSR-EWD-0060 採集毒蘑菇的野人: 使此單位左右邊的野人單位被賦予劇毒
+  if (zone && idx !== undefined && idx !== -1 && typeof field !== "undefined" && field[zone]) {
+    if (window.xlwIsUnitBarbarian && window.xlwIsUnitBarbarian(unit)) {
+      const neighbors = [field[zone][idx - 1], field[zone][idx + 1]];
+      if (neighbors.some(nb => nb && nb.card && (nb.card.id === "ASSR-EWD-0060" || nb.card.name?.includes("採集毒蘑菇")) && !window.isUnitSilenced(nb, zone, field[zone].indexOf(nb)))) {
+        return true;
+      }
+    }
+  }
   return false;
 };
 
@@ -5002,6 +5023,122 @@ async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx, du
   render();
   return true;
 }
+
+// 🦏 犀牛戰車 (SR-ORC-0074): 進攻階段限一次召喚至其正後方
+window.xlwCheckRhinoDeploy = async function(isPlayer) {
+  const frontZone = isPlayer ? "player_front" : "enemy_front";
+  const backZone = isPlayer ? "player_back" : "enemy_back";
+  
+  for (let i = 0; i < 5; i++) {
+    const u = field[frontZone]?.[i];
+    if (u && u.card && (u.card.id === "SR-ORC-0074" || u.card.name?.includes("犀牛戰車"))) {
+      if (u.rhinoDeployTurn === turn) continue;
+      if (!u.kidnappedCards || u.kidnappedCards.length === 0) continue;
+      if (field[backZone]?.[i] !== null) continue;
+      
+      if (isPlayer) {
+        const doDeploy = await showXLWConfirm("【犀牛戰車】出擊召喚", "你的進攻階段限一次：是否將戰車內綁架的 1 張卡牌召喚至其正後方？");
+        if (doDeploy) {
+          let chosenCard = u.kidnappedCards[0];
+          let chosenIdx = 0;
+          if (u.kidnappedCards.length > 1) {
+            const choices = u.kidnappedCards.map((c, cIdx) => ({ text: c.name, value: cIdx }));
+            const pick = await showXLWChoiceModal("選擇出擊卡牌", "請選擇召喚至正後方的單位：", choices);
+            if (pick !== null && pick !== undefined) {
+              chosenIdx = pick;
+              chosenCard = u.kidnappedCards[pick];
+            }
+          }
+          u.kidnappedCards.splice(chosenIdx, 1);
+          u.rhinoDeployTurn = turn;
+          field[backZone][i] = {
+            card: chosenCard,
+            tapped: false,
+            attacking: false,
+            target: null,
+            summonedTurn: turn,
+            summonedZone: backZone
+          };
+          logBattle(`🦏【犀牛戰車】出擊召喚：將被綁架的【${chosenCard.name}】召喚至其正後方（後排${i + 1}）！`);
+          if (isMultiplayer) sendFullGameStateToOpponent();
+          render();
+          return true;
+        }
+      } else {
+        const chosenCard = u.kidnappedCards.shift();
+        u.rhinoDeployTurn = turn;
+        field[backZone][i] = {
+          card: chosenCard,
+          tapped: false,
+          attacking: false,
+          target: null,
+          summonedTurn: turn,
+          summonedZone: backZone
+        };
+        logBattle(`🦏 對手【犀牛戰車】出擊召喚：將被綁架的【${chosenCard.name}】召喚至其正後方（對手後排${i + 1}）！`);
+        if (isMultiplayer) sendFullGameStateToOpponent();
+        render();
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+// 🪓 找不到飛斧的飛斧獸人 (C-ORC-0067)
+window.xlwCheckLostAxeOrcTrigger = async function(unit, zone, idx, spellCard, isPlayer) {
+  if (!unit || !unit.card || !spellCard) return false;
+  const isLostAxe = unit.card.id === "C-ORC-0067" || unit.card.name?.includes("找不到飛斧的飛斧獸人");
+  if (!isLostAxe) return false;
+  
+  const isOrcEquip = (spellCard.faction === "獸人" || spellCard.deck === "獸人" || spellCard.id?.includes("ORC") || spellCard.id?.includes("0RC") || spellCard.id?.includes("ROC") || ["符咒帽", "菜刀", "弓箭", "戰斧牛排", "迴旋飛斧", "狼牙棒", "戰錘", "盾牌", "破甲劍", "挑釁獸人的面具", "牛排戰斧"].some(k => spellCard.name?.includes(k)));
+  if (!isOrcEquip) return false;
+  
+  if (unit.equipments && unit.equipments.length > 0) {
+    let eqIdx = -1;
+    for (let i = unit.equipments.length - 1; i >= 0; i--) {
+      const eq = unit.equipments[i];
+      if (eq === spellCard.name || (typeof eq === "string" && spellCard.name && eq.includes(spellCard.name))) {
+        eqIdx = i;
+        break;
+      }
+    }
+    if (eqIdx >= 0) unit.equipments.splice(eqIdx, 1);
+  }
+  if (unit.xlwArmorBreakSwords) {
+    unit.xlwArmorBreakSwords = unit.xlwArmorBreakSwords.filter(s => s !== spellCard && s?.id !== spellCard.id);
+  }
+  if (spellCard.name?.includes("戰斧牛排")) {
+    unit.atkModifier = (unit.atkModifier || 0) - 5;
+    unit.steakBonus = false;
+  } else if (spellCard.name?.includes("弓箭")) {
+    unit.atkModifier = (unit.atkModifier || 0) - 1;
+    unit.hasRanged = false;
+  } else if (spellCard.name?.includes("符咒帽")) {
+    unit.magicImmune = false;
+  } else if (spellCard.name?.includes("菜刀") || spellCard.name?.includes("迴旋飛斧")) {
+    unit.piercing = false;
+  }
+  
+  const graveCard = structuredClone(spellCard);
+  graveCard.type = "magic";
+  if (isPlayer) {
+    graveyard.push(graveCard);
+    playerBonusScore += 1;
+    await (window.xlwDrawFairyAware?.(1) ?? draw(1));
+    logBattle(`🪓✨【找不到飛斧的飛斧獸人】效果發動：將裝備【${spellCard.name}】送入墓地，我方獲得 +1★ 獎勵並抽 1 張牌！`);
+  } else {
+    window.XLW_ENEMY.grave.push(graveCard);
+    enemyBonusScore += 1;
+    if (window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
+      window.XLW_ENEMY.hand.push(window.XLW_ENEMY.deck.pop());
+    }
+    logBattle(`🪓✨ 對手【找不到飛斧的飛斧獸人】效果發動：將裝備【${spellCard.name}】送入墓地，對手獲得 +1★ 獎勵並抽 1 張牌！`);
+  }
+  renderScore();
+  render();
+  return true;
+};
 
 async function checkPopulationCap(isPlayer) {
   const capActive = isPlayer ? window.XLW_playerPopulationCapActive : window.XLW_enemyPopulationCapActive;
@@ -7163,7 +7300,8 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   // SR-ORC-0062 戰爭巨象 艾勒粉
   if (c.id === "SR-ORC-0062" || c.name?.includes("艾勒粉") || c.name?.includes("戰爭巨象")) {
     const orcEquipCount = (unit.equipments || []).filter(eqName => {
-      return ["帽", "菜刀", "狼牙棒", "弓", "牛排", "斧", "戰錘", "盾牌", "面具"].some(x => eqName.includes(x));
+      const eqStr = typeof eqName === "string" ? eqName : (eqName?.name || "");
+      return ["帽", "菜刀", "狼牙棒", "弓", "牛排", "斧", "戰錘", "盾牌", "面具", "破甲劍", "劍"].some(x => eqStr.includes(x));
     }).length;
     baseAtk += orcEquipCount * 2;
   }
@@ -7256,12 +7394,19 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
 
   // 4. 血戰幫狼牙棒 (裝備)
-  if (unit.equipments && unit.equipments.includes("血戰幫狼牙棒")) {
+  if (unit.equipments && unit.equipments.some(eq => typeof eq === "string" ? eq.includes("血戰幫狼牙棒") : eq?.name?.includes("血戰幫狼牙棒"))) {
+    const isPlayerSide = zone && zone.startsWith("player_");
+    const targetZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
     let maceCount = 0;
-    for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-      field[z].forEach(u => {
-        if (u && u.equipments && u.equipments.includes("血戰幫狼牙棒")) {
-          maceCount++;
+    for (const z of targetZones) {
+      (field[z] || []).forEach(u => {
+        if (u && u.equipments) {
+          u.equipments.forEach(eq => {
+            const eqName = typeof eq === "string" ? eq : (eq?.name || "");
+            if (eqName.includes("血戰幫狼牙棒")) {
+              maceCount++;
+            }
+          });
         }
       });
     }
@@ -7316,6 +7461,11 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
       .filter(d => d.expose === "atk")
       .reduce((sum, d) => sum + Number(d.value || 0), 0);
     baseAtk += devourAtk;
+  }
+
+  // 🎒 背背小鬼 (R-VLG-0035): 寄生合體至敵方單位，使其攻擊力 -2
+  if (unit.equipments && unit.equipments.some(e => typeof e === "string" && e.includes("背背小鬼"))) {
+    baseAtk -= 2;
   }
 
   // 🍬 拐杖糖海賊 (R-CND-0005): 此卡左右邊的單位+1攻擊力
@@ -7578,7 +7728,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (zone && (c.faction === "獸人" || c.deck === "獸人" || c.id?.includes("ORC") || c.name?.includes("獸人"))) {
     const isPlayer = zone.startsWith("player_");
     const sideP = isPlayer ? "player_" : "enemy_";
-    const hasGeneral = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-ORC-0069" || u.card.name?.includes("獸人將軍煞雷")) && !window.isUnitSilenced(u)));
+    const hasGeneral = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-ORC-0069" || u.card.name?.includes("煞雷") || u.card.name?.includes("獸人將軍")) && !window.isUnitSilenced(u)));
     if (hasGeneral) {
       let orcCount = 0;
       for (const r of ["front", "back"]) {
@@ -7735,6 +7885,14 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   }
   const isThinker = c.id?.includes("ART-0003") || /[沉沈]思的男人/.test(c.name || "");
   let baseStars = (isThinker ? -2 : Number(c.score ?? c.stars ?? 0)) + Number(unit.bonusScore ?? 0);
+
+  // 🧚 R-EVL-0022 黑妖精邊緣者: 每個與此卡同排的其他妖精單位使此卡-1★
+  if (c.id === "R-EVL-0022" || c.name?.includes("黑妖精邊緣者")) {
+    if (zone && typeof field !== "undefined" && field[zone]) {
+      const otherFairies = field[zone].filter(u => u && u !== unit && u.card && (u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.race === "妖精" || u.card.id?.includes("EVL")));
+      baseStars = Math.max(0, baseStars - otherFairies.length);
+    }
+  }
 
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
   if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
@@ -8217,6 +8375,9 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     if (hasConductor) {
       baseStars += 1;
     }
+  // 🎒 背背小鬼 (R-VLG-0035): 寄生合體至敵方單位，使其星數 -1
+  if (unit.equipments && unit.equipments.some(e => typeof e === "string" && e.includes("背背小鬼"))) {
+    reduce(1);
   }
 
   return isThinker ? baseStars : Math.max(0, baseStars);
@@ -10745,6 +10906,7 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
       logBattle(`🍻【鬧事酒館】鬧事善後：將破壞的【${card.name}】洗回牌庫並抽 1 張牌！`);
     }
   }
+
 };
 
 // 戰鬥成功與進攻連動結算 (PG2 & 點數兌換卡)
@@ -10808,6 +10970,18 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
         await window.xlwExileCardFromGraveyard(chosen, true);
         logBattle(`🗑️💥 對手【學會刪除檔案的野人】除外了我方墓地的【${chosen.name}】！`);
       }
+    }
+  }
+
+  // 🐐 旅人騎羊 (NY-GOT-0008 / R-GOT-0008): 此單位戰鬥成功時，召喚2個小旅人
+  if (attacker && attacker.card && (attacker.card.id === "NY-GOT-0008" || attacker.card.id === "R-GOT-0008" || attacker.card.name?.includes("旅人騎羊"))) {
+    if (!attacker._goatCombatTravelersHandled) {
+      attacker._goatCombatTravelersHandled = true;
+      setTimeout(() => { if (attacker) delete attacker._goatCombatTravelersHandled; }, 800);
+      const isPlayerWinner = successOwner === "player";
+      await window.xlwSpecialSummonTraveler?.(isPlayerWinner);
+      await window.xlwSpecialSummonTraveler?.(isPlayerWinner);
+      logBattle(`🐐✨【旅人騎羊】戰鬥成功：${isPlayerWinner ? "我方" : "對手"}召喚了 2 個小旅人！`);
     }
   }
   // 🔥 野人慶典進攻成功獎勵+1
@@ -10946,12 +11120,8 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
     }
   }
 
-  // H. ASSR-ORC-0070 不敗獸人灌瑪爾
-  if (attCard.id === "ASSR-ORC-0070" || attCard.name?.includes("灌瑪爾")) {
-    if (isPlayer) playerBonusScore += 2; else enemyBonusScore += 2;
-    logBattle("🏆【不敗獸人灌瑪爾】百戰百勝：獲得獎勵 +2★！");
-    if (typeof renderScore === "function") renderScore();
-  }
+  // H. ASSR-ORC-0070 不敗獸人灌瑪爾：已整合至 applyCombatSuccessReward 通用戰鬥成功獎勵系統
+
 
   // I. SSR-SKT-0062 無頭騎士諾黑德
   if (attCard.id === "SSR-SKT-0062" || attCard.name?.includes("無頭騎士諾黑德")) {
@@ -11236,6 +11406,26 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     }
     logBattle(`📣🔥【野人兄弟幫大聲聲援野人】雷鳴咆哮：我方 ${count} 個野人單位獲得 +2 攻擊力與進攻成功 +1★ 獎勵！`);
     render();
+  }
+
+  // 🍖🪄 EWD-0012 學會魔法的野人: 立即：使你場上所有野人單位不會被敵方魔法卡選為目標直到你下個主要階段開始。
+  if (cardId === "EWD-0012" || cardName.includes("學會魔法的野人")) {
+    if (isPlayer) {
+      window.XLW_playerBarbarianMagicImmune = true;
+    } else {
+      window.XLW_enemyBarbarianMagicImmune = true;
+    }
+    let count = 0;
+    for (const z of [side + "front", side + "back"]) {
+      (field[z] || []).forEach(u => {
+        if (u && window.xlwIsUnitBarbarian && window.xlwIsUnitBarbarian(u)) {
+          u.magicImmuneUntilNextTurn = true;
+          count++;
+        }
+      });
+    }
+    logBattle(`🍖🪄【學會魔法的野人】立即效果：${isPlayer ? "我方" : "對手"}場上 ${count} 個野人單位獲得敵方魔法抗性保護，直到下個主要階段開始！`);
+    if (typeof render === "function") render();
   }
 
   await window.xlwResolveFairyFreyaPush(zone, idx, isPlayer);
@@ -12255,6 +12445,15 @@ async function xlwEquipArmorSword(spellCard) {
   (target.unit.xlwArmorBreakSwords ||= []).push(spellCard);
   (target.unit.equipments ||= []).push(spellCard.name || "破甲劍");
   xlwLogSharedCardEffect("破甲劍", "【" + target.unit.card.name + "】已裝備並獲得破甲。", true);
+  if (target.unit.card.id === "C-ORC-0067" || target.unit.card.name?.includes("找不到飛斧的飛斧獸人")) {
+    target.unit.equipments = (target.unit.equipments || []).filter(e => !String(e).includes("破甲劍"));
+    target.unit.xlwArmorBreakSwords = (target.unit.xlwArmorBreakSwords || []).filter(s => s !== spellCard);
+    if (!graveyard.includes(spellCard)) graveyard.push(spellCard);
+    playerBonusScore += 1;
+    await (window.xlwDrawFairyAware?.(1) ?? draw(1));
+    logBattle("🪓【找不到飛斧的飛斧獸人】效果：裝備魔法卡進入墓地，獲得獎勵 +1★ 並抽 1 張牌！");
+    renderScore();
+  }
   render();
 }
 
@@ -14663,6 +14862,18 @@ async function castSpell(handIndex) {
       render();
     });
     return;
+  } else if (card.id === "ORC-0020" || card.name.includes("有打有嘉獎")) {
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    
+    await castSpellChain(spellCard, async () => {
+      graveyard.push(spellCard);
+      window.XLW_playerOrcAwardActiveUntil = turn + 1;
+      logBattle("✨ 我方發動了【有打有嘉獎！】：使我方場上所有獸人單位 +1 攻擊力及進攻戰鬥成功獎勵額外 +1★，直到下個回合結束！");
+      if (isMultiplayer) sendFullGameStateToOpponent();
+      render();
+    });
+    return;
   } else if (card.id === "C-CAT-0057" || card.name?.includes("路邊的靴子")) {
     const candidates = [];
     deck.forEach(c => { if (c && c.type === "unit" && c.name?.includes("靴喵")) candidates.push(c); });
@@ -15140,7 +15351,7 @@ async function castSpell(handIndex) {
       setStatus("我方墓地無任何單位卡可回收！");
       return;
     }
-  } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" ||
+  } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0050" ||
              card.id === "R-ORC--0035" || card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排")) {
     let hasOrc = false;
     for (const z of ["player_front", "player_back"]) {
@@ -16535,8 +16746,8 @@ async function castSpell(handIndex) {
       render();
       await new Promise(r => { window.XLW_equipSpellResolve = r; });
     }
-  } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" ||
-             card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排") || card.name?.includes("迴旋飛斧") || card.name?.includes("戰錘") || card.name?.includes("盾牌") || card.name?.includes("戰斧") || card.name?.includes("牛排")) {
+  } else if (card.id === "R-0RC-0044" || card.id === "R-ORC-0034" || card.id === "R-ORC-0054" || card.id === "R-ORC-0056" || card.id === "SR-ORC-0043" || card.id === "R-ORC-0025" || card.id === "C-ORC-0063" || card.id === "R-ORC-0050" ||
+             card.name?.includes("符咒帽") || card.name?.includes("菜刀") || card.name?.includes("狼牙棒") || card.name?.includes("弓箭") || card.name?.includes("戰斧牛排") || card.name?.includes("迴旋飛斧") || card.name?.includes("戰錘") || card.name?.includes("盾牌") || card.name?.includes("戰斧") || card.name?.includes("牛排") || card.name?.includes("面具")) {
     let hasOrc = false;
     for (const z of ["player_front", "player_back"]) {
       if (field[z].some(u => u && (u.card?.faction === "獸人" || u.card?.race === "獸人" || u.card?.id?.includes("ORC") || u.card?.id?.includes("0RC") || u.card?.id?.includes("ROC")))) {
@@ -16600,18 +16811,18 @@ async function castSpell(handIndex) {
     await new Promise(r => { window.XLW_equipSpellResolve = r; });
   } else {
     // 普通魔法效果
-    if (card.id === "ORC-0018" || card.name?.includes("賞金")) {
+    if (card.id === "ORC-0018" || card.name?.includes("賞金") || card.id === "R-ORC-0058" || card.id === "R=ORC-0058" || card.name?.includes("懸賞令")) {
       let hasEnemyUnit = false;
       for (const z of ["enemy_front", "enemy_back"]) {
         if (field[z].some(u => u !== null)) hasEnemyUnit = true;
       }
       if (!hasEnemyUnit) {
-        setStatus("敵方場上目前沒有任何單位可以施加賞金！");
+        setStatus("敵方場上目前沒有任何單位可以施加此卡！");
         return;
       }
       window.XLW_tempEquipSpellActive = true;
       window.XLW_tempEquipSpellCard = card;
-      const promptBounty = "請點選敵方場上一個單位以施加賞金狀態！";
+      const promptBounty = (card.name?.includes("懸賞令") || card.id?.includes("0058")) ? "請點選敵方場上一個單位以施加【懸賞令】！" : "請點選敵方場上一個單位以施加賞金狀態！";
       if (typeof window.xlwShowSpellSuccessToast === "function") {
         window.xlwShowSpellSuccessToast(card, promptBounty);
       }
@@ -16619,6 +16830,13 @@ async function castSpell(handIndex) {
       render();
       const targetResult=await new Promise(r => { window.XLW_tempEquipSpellResolve = r; });
       if(targetResult===null)return;
+      // 懸賞令擁有「消逝」關鍵字，使用後除外而非入墓
+      if (card.name?.includes("懸賞令") || card.id === "R-ORC-0058" || card.id === "R=ORC-0058") {
+        const graveIdx = graveyard.indexOf(card);
+        if (graveIdx !== -1) graveyard.splice(graveIdx, 1);
+        exileCard(card, "player");
+        logBattle(`📜【懸賞令】消逝：此卡被除外！`);
+      }
     } else if (isTempEquipMagic) {
       window.XLW_tempEquipSpellActive = true;
       window.XLW_tempEquipSpellCard = card;
@@ -18515,18 +18733,20 @@ window.xlwReturnUnitToHand = async function(zone, idx) {
     if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
     window.XLW_ENEMY.hand.push(card);
   }
+  await cleanUnitLeavingField(unit, zone);
   field[zone][idx] = null;
   render();
 
   // 獸人姑姑 (R-ORC-0047) 效果
+  const isOrcReturned = card && (card.faction === "獸人" || card.deck === "獸人" || card.id?.includes("ORC") || card.id?.includes("0RC") || card.race === "獸人" || card.name?.includes("獸人"));
   const sidePrefix = isPlayer ? "player_" : "enemy_";
   const hasAunt = [sidePrefix + "front", sidePrefix + "back"].some(z => {
     return field[z].some((u, i) => {
-      return u && u.card && (u.card.id === "R-ORC-0047" || u.card.name?.includes("姑姑")) && !window.isUnitSilenced(u, z, i);
+      return u && u.card && (u.card.id?.includes("ORC-0047") || u.card.name?.includes("姑姑")) && !window.isUnitSilenced(u, z, i);
     });
   });
   
-  if (hasAunt && !window.XLW_orcAuntTriggeredThisTurn) {
+  if (isOrcReturned && hasAunt && !window.XLW_orcAuntTriggeredThisTurn) {
     const myHand = isPlayer ? hand : (window.XLW_ENEMY.hand || []);
     const playableOrcs = myHand.filter(c => c && c.type === "unit" && (c.faction === "獸人" || c.id?.includes("ORC")) && Number(c.tribute || 0) === 0);
     
@@ -18590,9 +18810,14 @@ window.xlwTriggerOrcUntapSynergy = function(isPlayer) {
     const zones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
     let hasTappedSteakAx = false;
     
+    const isSteakAx = eq => {
+      const eqName = typeof eq === "string" ? eq : (eq?.name || "");
+      return eqName.includes("牛排戰斧") || (eqName.includes("戰斧") && !eqName.includes("傳說武器") && !eqName.includes("戰斧牛排"));
+    };
+
     zones.forEach(z => {
       field[z].forEach(u => {
-        if (u && u.tapped && u.equipments && u.equipments.some(eq => eq.includes("戰斧") || eq.includes("牛排")) && !window.isUnitSilenced(u, z, field[z].indexOf(u))) {
+        if (u && u.tapped && u.equipments && u.equipments.some(isSteakAx) && !window.isUnitSilenced(u, z, field[z].indexOf(u))) {
           hasTappedSteakAx = true;
         }
       });
@@ -18601,7 +18826,7 @@ window.xlwTriggerOrcUntapSynergy = function(isPlayer) {
     if (hasTappedSteakAx) {
       zones.forEach(z => {
         field[z].forEach((u, i) => {
-          if (u && u.tapped && u.equipments && u.equipments.some(eq => eq.includes("戰斧") || eq.includes("牛排")) && !window.isUnitSilenced(u, z, i)) {
+          if (u && u.tapped && u.equipments && u.equipments.some(isSteakAx) && !window.isUnitSilenced(u, z, i)) {
             u.tapped = false;
             logBattle(`✨ 激動獸人的牛排戰斧 效果：由於場上有其他獸人轉正，【${u.card.name}】也跟著轉正！`);
           }
@@ -18841,6 +19066,49 @@ async function executeTributeEffects(selectedTributes) {
               if (targetItem && field[targetItem.zone][targetItem.idx]) {
                 await window.xlwTransformUnitToGoat(targetItem.unit, targetItem.zone, targetItem.idx, unit.card, false, false);
               }
+            }
+          }
+        }
+
+        // 🎒 背背小鬼 (R-VLG-0035): 此單位被獻祭時，可使此單位對敵方場上1單位發動寄生合體
+        if (unit.card.id === "R-VLG-0035" || unit.card.name?.includes("背背小鬼")) {
+          const isPlayer = t.zone.startsWith("player_");
+          const oppZones = isPlayer ? ["enemy_front", "enemy_back"] : ["player_front", "player_back"];
+          const oppTargets = [];
+          for (const oz of oppZones) {
+            (field[oz] || []).forEach((u, uIdx) => {
+              if (u && u.card && !window.isUnitSilenced(unit, t.zone, t.idx) && !window.isUnitEffectImmune(u, oz, uIdx)) {
+                oppTargets.push({ zone: oz, idx: uIdx, unit: u, name: u.card.name });
+              }
+            });
+          }
+          if (oppTargets.length > 0) {
+            let doParasite = false;
+            let targetItem = null;
+            if (isPlayer) {
+              doParasite = await showXLWConfirm("【背背小鬼】寄生合體", "【背背小鬼】被獻祭！是否對敵方場上 1 個單位發動寄生合體？（使其攻擊力 -2，星數 -1）");
+              if (doParasite) {
+                const choices = oppTargets.map((item, i) => ({
+                  text: `${item.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+                  value: i, boardTarget: { zone: item.zone, idx: item.idx }
+                }));
+                const pick = await showXLWChoiceModal("【背背小鬼】選擇寄生目標", "請選擇被寄生的敵方單位：", choices, { boardOnly: true });
+                if (pick !== null && pick !== undefined) {
+                  targetItem = oppTargets[pick];
+                }
+              }
+            } else {
+              doParasite = true;
+              oppTargets.sort((a, b) => (parseInt(b.unit.card.attack, 10) || 0) - (parseInt(a.unit.card.attack, 10) || 0));
+              targetItem = oppTargets[0];
+            }
+            if (targetItem && field[targetItem.zone]?.[targetItem.idx]) {
+              targetItem.unit.equipments = targetItem.unit.equipments || [];
+              targetItem.unit.equipments.push("背背小鬼");
+              targetItem.unit.combinedCards = targetItem.unit.combinedCards || [];
+              targetItem.unit.combinedCards.push(unit.card);
+              t.xlwBeibeiAttached = true;
+              logBattle(`🎒【背背小鬼】寄生合體成功！附身至【${targetItem.name}】身上（攻擊力 -2，星數 -1）！`);
             }
           }
         }
@@ -19742,6 +20010,18 @@ async function confirmTribute() {
     }
   }
 
+  // 🌊 海坊主 (SR-VLG-0061)：此卡的祭品須為前排單位
+  if (card && (card.id === "SR-VLG-0061" || card.name?.includes("海坊主"))) {
+    const allFront = selectedTributes.every(t => {
+      if (t.zone === "dummy") return false;
+      return t.zone && t.zone.includes("front");
+    });
+    if (!allFront || selectedTributes.length < targetCost) {
+      setStatus("【海坊主】效果限制：此卡的祭品必須全為前排戰線單位！");
+      return;
+    }
+  }
+
   // 祭品送墓前觸發效果
 
   return executeTributeEffects(selectedTributes).then(async () => {
@@ -19781,6 +20061,10 @@ async function confirmTribute() {
       return field[t2.zone]?.[t2.idx] ? field[t2.zone][t2.idx].card : null;
     }).filter(Boolean);
 
+    if (card && (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子"))) {
+      window.XLW_kayasadaSacrificedCards = [...window.XLW_lastSacrificedCards];
+    }
+
     window.XLW_pendingDevourCards = [];
     for (const t of selectedTributes) {
       if (t.zone === "dummy") continue;
@@ -19800,7 +20084,7 @@ async function confirmTribute() {
           unit.equipments = [];
         }
 
-        if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+        if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064" || unit.card.id === "SSSR-NMS-0064" || unit.card.id?.includes("0064")) {
           if (t.zone.startsWith("player_")) {
             enemyBonusScore += 2;
             logBattle(`💥 大耳賊 被獻祭破壞：對手額外獎勵 +2 ★！`);
@@ -19923,6 +20207,8 @@ async function confirmTribute() {
             value: chosenVal
           });
           logBattle(`✨ 【${unit.card.name}】發動【吞食合體】：置於【${card.name}】下方，露出${exposeChoice === "atk" ? `攻擊力 (+${atkVal})` : `星星數 (+${starsVal})`}！`);
+        } else if (t.xlwBeibeiAttached) {
+          logBattle(`🎒【背背小鬼】已寄生合體至敵方單位，不進入墓地。`);
         } else {
           await window.xlwPlayerTributeUnit(unit, t.zone, t.idx);
         }
@@ -24127,6 +24413,101 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
         }
       }
+      else if (card.id === "SR-VLG-0061" || card.name?.includes("海坊主")) {
+        logBattle("🌊【海坊主】立即效果發動：翻江倒海！敵方前排全體向後推擠，破圖單位進入墓地！");
+        const oppFront = zone.startsWith("player_") ? "enemy_front" : "player_front";
+        for (let col = 0; col < 5; col++) {
+          if (field[oppFront]?.[col]) {
+            await xlwPushUnit(oppFront, col, "back", { offBoardAction: "graveyard", sourceName: "海坊主" });
+          }
+        }
+        if (typeof render === "function") render();
+        if (isMultiplayer) sendFullGameStateToOpponent();
+      }
+      else if (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子")) {
+        const sacCards = window.XLW_kayasadaSacrificedCards || window.XLW_lastSacrificedCards || [];
+        for (const sacCard of sacCards) {
+          if (!sacCard) continue;
+          const gIdx = graveyard.findIndex(c => c && (c.id === sacCard.id || c.name === sacCard.name));
+          if (gIdx >= 0) {
+            let destZ = null, destI = -1;
+            const pFrontEmpty = field.player_front.findIndex(u => !u);
+            const pBackEmpty = field.player_back.findIndex(u => !u);
+            if (pFrontEmpty >= 0) {
+              destZ = "player_front";
+              destI = pFrontEmpty;
+            } else if (pBackEmpty >= 0) {
+              destZ = "player_back";
+              destI = pBackEmpty;
+            }
+            if (destZ && destI >= 0) {
+              const revived = graveyard.splice(gIdx, 1)[0];
+              field[destZ][destI] = {
+                card: revived,
+                tapped: false,
+                attacking: false,
+                target: null,
+                summonedTurn: turn,
+                summonedZone: destZ,
+                equipments: []
+              };
+              logBattle(`👻【伽椰貞美子】立即效果：將祭品【${revived.name}】從墓地特殊召喚回場上 ${destZ.includes("front") ? "前排" : "後排"}${destI + 1}！`);
+            }
+          }
+        }
+        window.XLW_kayasadaSacrificedCards = null;
+        if (typeof render === "function") render();
+        if (isMultiplayer) sendFullGameStateToOpponent();
+      }
+      else if (card.id === "R-VLG-0032" || card.name?.includes("伽椰美子")) {
+        const tapeIdx = hand.findIndex(c => c && (c.id?.includes("VLG-0008") || c.name?.includes("恐怖錄影帶")));
+        if (tapeIdx >= 0) {
+          const doTape = await showXLWConfirm("【伽椰美子】立即效果", "手牌中有【恐怖錄影帶】！是否除外手牌的【恐怖錄影帶】？若場上有【恐怖的井】，可使場上的【貞美子】對此單位發動寄生合體！");
+          if (doTape) {
+            const tapeCard = hand.splice(tapeIdx, 1)[0];
+            exileCard(tapeCard, "player");
+            logBattle(`📼【伽椰美子】立即效果：將手牌中的【${tapeCard.name}】除外！`);
+            let hasWell = false;
+            try {
+              const fElem = $("playerField");
+              if (fElem && fElem.dataset.card) {
+                const fc = JSON.parse(fElem.dataset.card);
+                if (fc && (fc.id === "SR-VLG-0019" || fc.name?.includes("恐怖的井"))) hasWell = true;
+              }
+            } catch (e) {}
+            if (hasWell) {
+              let sadakoTarget = null;
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, i) => {
+                  if (u && u.card && (u.card.id === "R-VLG-0010" || u.card.name?.includes("貞美子")) && (z !== zone || i !== idx)) {
+                    sadakoTarget = { zone: z, idx: i, unit: u };
+                  }
+                });
+              }
+              if (sadakoTarget) {
+                const kayakoUnit = field[zone]?.[idx];
+                if (kayakoUnit) {
+                  kayakoUnit.equipments = kayakoUnit.equipments || [];
+                  kayakoUnit.equipments.push("貞美子");
+                  kayakoUnit.combinedCards = kayakoUnit.combinedCards || [];
+                  kayakoUnit.combinedCards.push(sadakoTarget.unit.card);
+                  if (sadakoTarget.unit.combinedCards) {
+                    kayakoUnit.combinedCards.push(...sadakoTarget.unit.combinedCards);
+                  }
+                  field[sadakoTarget.zone][sadakoTarget.idx] = null;
+                  logBattle(`👻📼【伽椰美子】與【貞美子】寄生合體！【貞美子】附身至【伽椰美子】身上！`);
+                }
+              } else {
+                logBattle("【伽椰美子】效果：場上未發現【貞美子】，無法發動寄生合體。");
+              }
+            } else {
+              logBattle("【伽椰美子】效果：場上沒有【恐怖的井】，未觸發寄生合體。");
+            }
+            if (typeof render === "function") render();
+            if (isMultiplayer) sendFullGameStateToOpponent();
+          }
+        }
+      }
       else if (card.name.includes("八岐大蛇")) {
         const needed = 8 - hand.length;
         if (needed > 0) {
@@ -24245,15 +24626,18 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         }
       }
       // 獸人種族立即效果實作
-      else if (card.name?.includes("卡煞") || card.id === "SSSR-ORC-0006") {
+      else if (card.name?.includes("卡煞") || card.id === "ORC-0006" || card.id === "SSR-ORC-0006" || card.id === "SSSR-ORC-0006") {
         function isHumanoid(unit) {
           if (!unit || !unit.card) return false;
           const name = unit.card.name || "";
           const race = unit.card.race || "";
-          return race.includes("人") || race.includes("人類") || name.includes("獸人") || name.includes("爺爺") || name.includes("奶奶") || name.includes("戴比") || name.includes("卡煞") || name.includes("粉絲") || name.includes("公關");
+          const subtype = unit.card.art_subtype || "";
+          return subtype.includes("人型") || race.includes("人") || race.includes("人類") || name.includes("獸人") || name.includes("爺爺") || name.includes("奶奶") || name.includes("戴比") || name.includes("卡煞") || name.includes("粉絲") || name.includes("公關");
         }
+        const isPlayer = zone.startsWith("player_");
+        const targetZones = isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
         let count = 0;
-        for (const z of ["player_front", "player_back"]) {
+        for (const z of targetZones) {
           field[z].forEach(u => {
             if (u && isHumanoid(u) && u.tapped) {
               u.tapped = false;
@@ -24261,7 +24645,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
             }
           });
         }
-        logBattle(`✨ 女獸人 卡煞 效果：使我方場上 ${count} 個人型單位轉正！`);
+        logBattle(`✨ 女獸人 卡煞 效果：使${isPlayer ? "我方" : "對手"}場上 ${count} 個人型單位轉正！`);
       }
       else if (card.name?.includes("天秤座") || card.id === "SSSR-NMS-0068") {
         let playerTotalStars = 0;
@@ -25137,6 +25521,7 @@ async function changeActionPhase(targetPhase) {
     }
   } else if (phase === "進攻宣言") {
     await window.xlwCheckFighterBarbarianAttackPhaseStart?.(true);
+    await window.xlwCheckRhinoDeploy?.(true);
     setStatus("\u9032\u5165\u300c\u9032\u653b\u5ba3\u8a00\u300d\uff1a\u7cfb\u7d71\u6b63\u5728\u70ba\u6211\u65b9\u55ae\u4f4d\u81ea\u52d5\u5ba3\u544a\u9032\u653b\uff08\u8207\u5c0d\u624b\u9032\u653b\u6a21\u5f0f\u4e00\u81f4\uff09\u002e\u002e\u002e");
     if (tacticalSummonUsed || window.XLW_tacticalMoveUsed) {
       setStatus("請點選要進攻的飛天山羊，或其他可在佈陣後進攻的單位。");
@@ -26021,7 +26406,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     const hasPiercing = checkUnitHasPiercing(unit, zone, idx);
     const baseAtkNum = Number(unit.card.attack || 0);
     const hasDoubleAtk = baseAtkNum > 0 && getUnitAtk(unit) === baseAtkNum * 2;
-    const thiefInExtra = playerExtraDeck.find(c => c && (c.id === "NEU-0064" || c.name === "大耳賊"));
+    const thiefInExtra = playerExtraDeck.find(c => c && (c.id === "NEU-0064" || c.id === "SSSR-NMS-0064" || c.id?.includes("0064") || c.name === "大耳賊"));
 
     if (hasPiercing && hasDoubleAtk && thiefInExtra) {
       const confirmSummon = await showXLWConfirm(
@@ -27284,6 +27669,106 @@ async function xlwSummonGoatTravelers(zone, idx) {
   if (placed.length) logBattle(`【旅人騎羊】戰鬥成功，召喚了 ${placed.length} 個小旅人。`);
 }
 
+async function xlwHandleWolfMaceCombatSuccess(winningUnit, winZone, winIdx, winOwner) {
+  if (!winningUnit || !winningUnit.card) return;
+  const isOrc = winningUnit.card && (
+    winningUnit.card.faction === "獸人" ||
+    winningUnit.card.race === "獸人" ||
+    winningUnit.card.id?.includes("ORC") ||
+    winningUnit.card.id?.includes("0RC")
+  );
+  if (!isOrc) return;
+
+  const hasOtherEquip = winningUnit.equipments && winningUnit.equipments.some(eqName => {
+    if (eqName === "血戰幫狼牙棒") return false;
+    if (winningUnit.tempEquips && winningUnit.tempEquips[eqName] !== undefined) return false;
+    if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
+    return true;
+  });
+  if (!hasOtherEquip) return;
+
+  const isPlayerOwner = (winOwner === "player");
+  const maceInExtra = isPlayerOwner
+    ? playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"))
+    : (window.XLW_enemyExtraDeck || enemyExtraDeck || []).find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+
+  if (!maceInExtra) return;
+
+  if (isPlayerOwner) {
+    const confirmAdd = await showXLWConfirm(
+      "狼牙棒 效果觸發",
+      `我方獸人單位 ${winningUnit.card.name} 戰鬥成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
+      "是",
+      "否"
+    );
+    if (confirmAdd) {
+      playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
+      hand.push(maceInExtra);
+      logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
+      if (typeof renderExtraDecks === "function") renderExtraDecks();
+      render();
+    }
+    if (isMultiplayer) {
+      ws.send(JSON.stringify({
+        action: "wolf_mace_choice",
+        winZone: winZone,
+        winIdx: winIdx,
+        accepted: Boolean(confirmAdd)
+      }));
+    }
+  } else {
+    // 對手的獸人戰勝了
+    if (isMultiplayer) {
+      const key = `${winZone}:${winIdx}`;
+      setStatus("等待對手決定是否將【血戰幫狼牙棒】自額外區加入手牌...");
+      render();
+      if (!window.XLW_opponentWolfMaceChoice) window.XLW_opponentWolfMaceChoice = {};
+      if (window.XLW_opponentWolfMaceChoice[key] === undefined) {
+        await new Promise(resolve => {
+          const startT = Date.now();
+          const check = setInterval(() => {
+            if (window.XLW_opponentWolfMaceChoice[key] !== undefined || Date.now() - startT > 15000) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 50);
+        });
+      }
+      const accepted = Boolean(window.XLW_opponentWolfMaceChoice[key]);
+      delete window.XLW_opponentWolfMaceChoice[key];
+      if (accepted) {
+        const oppExtra = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
+        const idx = oppExtra.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+        if (idx !== -1) {
+          oppExtra.splice(idx, 1);
+        } else if (oppExtra.length > 0) {
+          oppExtra.pop();
+        }
+        if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
+          window.XLW_ENEMY.hand.push(null);
+        }
+        logBattle(`✨ 對手發動【血戰幫狼牙棒】效果：將【血戰幫狼牙棒】自額外牌庫加入手牌！`);
+        if (typeof renderExtraDecks === "function") renderExtraDecks();
+        render();
+      }
+      setStatus("");
+    } else {
+      // AI 模式
+      const oppExtra = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
+      const idx = oppExtra.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
+      if (idx !== -1) {
+        const c = oppExtra.splice(idx, 1)[0];
+        if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
+          window.XLW_ENEMY.hand.push(c);
+        }
+        logBattle(`✨ 對手【血戰幫狼牙棒】效果：將【血戰幫狼牙棒】自額外牌庫加入手牌！`);
+        if (typeof renderExtraDecks === "function") renderExtraDecks();
+        render();
+      }
+    }
+  }
+}
+
 async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner) {
   const attacker = field[attZone]?.[attIdx];
   const defender = field[defZone]?.[defIdx];
@@ -27968,14 +28453,17 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
 
     // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
     const hasPiercing = checkUnitHasPiercing(attacker, attZone, attIdx);
+    let destroyedCount = 1;
     if (hasPiercing && defZone.includes("front")) {
       const backZone = defZone.replace("front", "back");
       const backUnit = field[backZone]?.[defIdx];
       if (backUnit) {
         destPromise.push(destroyUnit(backZone, defIdx, defenderOwner, false, true));
         piercingMsg = `，並貫穿擊破了後排的 ${unitName(backUnit)}`;
+        destroyedCount = 2;
       }
     }
+    attacker.xlwDestroyedInCombatCount = destroyedCount;
   }
 
   if (destPromise.length > 0) {
@@ -28124,6 +28612,18 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
         }
       }
     }
+    // 懸賞令 (R=ORC-0058 / R-ORC-0058) 戰鬥失敗效果
+    const defeatedLosingUnit = (successOwner === (attZone.startsWith("player_") ? "player" : "enemy")) ? defender : attacker;
+    if (defeatedLosingUnit && defeatedLosingUnit.equipments && defeatedLosingUnit.equipments.some(e => typeof e === "string" && e.includes("懸賞令"))) {
+      if (successOwner === "player") {
+        playerBonusScore += 1;
+        logBattle(`📜【懸賞令】效果：附有懸賞令的敵方單位戰鬥失敗，我方額外獲得 +1★ 獎勵！`);
+      } else {
+        enemyBonusScore += 1;
+        logBattle(`📜【懸賞令】效果：附有懸賞令的我方單位戰鬥失敗，對手額外獲得 +1★ 獎勵！`);
+      }
+      renderScore();
+    }
     // 勇者公會：好戰者任務看板 (BRV-0030)
     const checkFriendlyPrefix = successOwner === "player" ? "player_" : "enemy_";
     const hasWarBoard = [checkFriendlyPrefix + "front", checkFriendlyPrefix + "back"].some(z => {
@@ -28253,49 +28753,21 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
 
     // --- 血戰幫狼牙棒 額外啟動效果 ---
-    if (successOwner === "player") {
-      const isOrc = attacker.card && (attacker.card.faction === "獸人" || attacker.card.race === "獸人" || attacker.card.id.includes("ORC") || attacker.card.id.includes("0RC"));
-      const hasOtherEquip = attacker.equipments && attacker.equipments.some(eqName => {
-        if (eqName === "血戰幫狼牙棒") return false;
-        if (attacker.tempEquips && attacker.tempEquips[eqName] !== undefined) return false;
-        if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
-        return true;
-      });
-      const maceInExtra = playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
-
-      if (isOrc && hasOtherEquip && maceInExtra) {
-        const confirmAdd = await showXLWConfirm(
-          "狼牙棒 效果觸發",
-          `我方獸人單位 ${attacker.card.name} 進攻成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
-          "是",
-          "否"
-        );
-        if (confirmAdd) {
-          playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
-          hand.push(maceInExtra);
-          logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
-          
-          if (isMultiplayer) {
-            ws.send(JSON.stringify({
-              action: "add_to_hand_sync"
-            }));
-            sendFullGameStateToOpponent();
-          }
-          render();
-        }
-      }
-    }
+    await xlwHandleWolfMaceCombatSuccess(attacker, attZone, attIdx, successOwner);
     // ---------------------------------
   }
   if (defenderSuccess) {
     const successOwner = defenderOwner;
     await applyCombatSuccessReward(defender, attacker, successOwner, false);
+    // --- 血戰幫狼牙棒 額外啟動效果 (防守戰鬥成功) ---
+    await xlwHandleWolfMaceCombatSuccess(defender, defZone, defIdx, successOwner);
+    // ---------------------------------------------
   }
 
   const winner = attackerSuccess ? attacker : defenderSuccess ? defender : null;
   const winnerZone = attackerSuccess ? attZone : defZone;
-  const winnerIdx = attackerSuccess ? attIdx : defIdx;
-  if (winner?.card && (/(?:^|-)GOT-0008(?:-|$)/.test(winner.card.id) || winner.card.name?.includes("旅人騎羊")) &&
+  // 🐐 旅人騎羊 (NY-GOT-0008, R-GOT-0008): 戰鬥成功時，召喚2個小旅人
+  if (winner?.card && (winner.card.id === "NY-GOT-0008" || /(?:^|-)GOT-0008(?:-|$)/.test(winner.card.id) || winner.card.name?.includes("旅人騎羊")) &&
       !window.isUnitSilenced(winner, winnerZone, winnerIdx)) {
     await xlwSummonGoatTravelers(winnerZone, winnerIdx);
   }
@@ -28625,6 +29097,22 @@ function canSummonCard(card, isPlayer, options = {}) {
     }
     return ok;
   }
+
+  // 👺 天狗 (SR-VLG-0021 / SSR-VLG-0021): 你的主要階段，若你墓地有8個或以上的妖怪村莊單位，才可從手牌額外打出此卡
+  if (card.id === "SR-VLG-0021" || card.id === "SSR-VLG-0021" || card.name?.includes("天狗")) {
+    const isMain = (typeof phase !== "undefined" && (phase === "主要階段" || phase === "召喚階段" || phase === "戰術佈陣"));
+    if (!isMain) {
+      if (isPlayer) report("【召喚限制】天狗 只能在你的主要階段打出！");
+      return false;
+    }
+    const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+    const vlgUnitCount = myGrave.filter(c => c && (c.type === "unit" || c.type === "戰線" || c.type === "單位") && (c.faction === "妖怪村莊" || c.deck === "妖怪村莊" || c.id?.includes("VLG"))).length;
+    if (vlgUnitCount < 8) {
+      if (isPlayer) report(`【召喚限制】天狗 需要我方墓地有 8 個或以上的妖怪村莊單位！（目前 ${vlgUnitCount}/8）`);
+      return false;
+    }
+  }
+
   if (!card) return false;
 
   if (isPlayer) {
@@ -28802,6 +29290,13 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
   if (unit.magicImmuneUntilNextTurn || unit.hasSpellShield ||
       (window.xlwFairyForestLevel?.(unit, zone, idx) || 0) >= 3 ||
       (window.xlwFairyPrisonLevel?.(unit, zone) || 0) >= 3) return true;
+
+  // 🍖🪄 學會魔法的野人 (EWD-0012): 使你場上所有野人單位不會被敵方魔法卡選為目標直到你下個主要階段開始
+  if (window.xlwIsUnitBarbarian && window.xlwIsUnitBarbarian(unit)) {
+    const isP = zone ? zone.startsWith("player_") : false;
+    if (isP && window.XLW_playerBarbarianMagicImmune) return true;
+    if (!isP && window.XLW_enemyBarbarianMagicImmune) return true;
+  }
 
   // 📿 靈異驅魔師 (C-VLG-0065): 敵方魔法抗性
   if (c.id === "C-VLG-0065" || c.name?.includes("靈異驅魔師")) return true;
@@ -29035,6 +29530,9 @@ function isUnitEffectImmune(unit, zone, idx) {
 
   // ❄️ 北極居民 (R-ELE-0034) & 雪怪 (SR-ELE-0036): 敵方效果抗性
   if (c.id === "R-ELE-0034" || c.name?.includes("北極居民") || c.id === "SR-ELE-0036" || c.name?.includes("雪怪")) return true;
+
+  // 👺 天狗 (SR-VLG-0021 / SSR-VLG-0021): 敵方效果抗性（不會被敵方單位效果選為目標）
+  if (c.id === "SR-VLG-0021" || c.id === "SSR-VLG-0021" || c.name?.includes("天狗")) return true;
 
   // ☂️ 撐洋傘的女人 (C-ART-0069): 敵方效果抗性
   if (c.id === "C-ART-0069" || c.name?.includes("撐洋傘的女人")) return true;
@@ -30585,6 +31083,92 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
       logBattle("對手 恐怖錄影帶 效果：對手牌庫中沒有「恐怖的井」。");
     }
   }
+  else if (card.id === "SR-VLG-0061" || card.name?.includes("海坊主")) {
+    logBattle("🌊 對手【海坊主】立即效果發動：翻江倒海！敵方前排全體向後推擠，破圖單位進入墓地！");
+    for (let col = 0; col < 5; col++) {
+      if (field["player_front"]?.[col]) {
+        await xlwPushUnit("player_front", col, "back", { offBoardAction: "graveyard", sourceName: "海坊主" });
+      }
+    }
+    if (typeof render === "function") render();
+  }
+  else if (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子")) {
+    const sacCards = window.XLW_aiKayasadaSacrificedCards || [];
+    const oppGrave = window.XLW_ENEMY?.grave || [];
+    for (const sacCard of sacCards) {
+      if (!sacCard) continue;
+      const gIdx = oppGrave.findIndex(c => c && (c.id === sacCard.id || c.name === sacCard.name));
+      if (gIdx >= 0) {
+        let destZ = null, destI = -1;
+        const eFrontEmpty = field.enemy_front.findIndex(u => !u);
+        const eBackEmpty = field.enemy_back.findIndex(u => !u);
+        if (eFrontEmpty >= 0) {
+          destZ = "enemy_front";
+          destI = eFrontEmpty;
+        } else if (eBackEmpty >= 0) {
+          destZ = "enemy_back";
+          destI = eBackEmpty;
+        }
+        if (destZ && destI >= 0) {
+          const revived = oppGrave.splice(gIdx, 1)[0];
+          field[destZ][destI] = {
+            card: revived,
+            tapped: false,
+            attacking: false,
+            target: null,
+            summonedTurn: turn,
+            summonedZone: destZ,
+            equipments: []
+          };
+          logBattle(`👻 對手【伽椰貞美子】立即效果：將祭品【${revived.name}】從墓地特殊召喚回場上 ${destZ.includes("front") ? "前排" : "後排"}${destI + 1}！`);
+        }
+      }
+    }
+    window.XLW_aiKayasadaSacrificedCards = null;
+    if (typeof render === "function") render();
+  }
+  else if (card.id === "R-VLG-0032" || card.name?.includes("伽椰美子")) {
+    const oppHand = window.XLW_ENEMY?.hand || [];
+    const tapeIdx = oppHand.findIndex(c => c && (c.id?.includes("VLG-0008") || c.name?.includes("恐怖錄影帶")));
+    if (tapeIdx >= 0) {
+      const tapeCard = oppHand.splice(tapeIdx, 1)[0];
+      exileCard(tapeCard, "enemy");
+      logBattle(`📼 對手【伽椰美子】立即效果：將手牌中的【${tapeCard.name}】除外！`);
+      let hasWell = false;
+      try {
+        const fElem = $("enemyField");
+        if (fElem && fElem.dataset.card) {
+          const fc = JSON.parse(fElem.dataset.card);
+          if (fc && (fc.id === "SR-VLG-0019" || fc.name?.includes("恐怖的井"))) hasWell = true;
+        }
+      } catch (e) {}
+      if (hasWell) {
+        let sadakoTarget = null;
+        for (const z of ["enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card && (u.card.id === "R-VLG-0010" || u.card.name?.includes("貞美子")) && (z !== destZone || i !== destIdx)) {
+              sadakoTarget = { zone: z, idx: i, unit: u };
+            }
+          });
+        }
+        if (sadakoTarget) {
+          const kayakoUnit = field[destZone]?.[destIdx];
+          if (kayakoUnit) {
+            kayakoUnit.equipments = kayakoUnit.equipments || [];
+            kayakoUnit.equipments.push("貞美子");
+            kayakoUnit.combinedCards = kayakoUnit.combinedCards || [];
+            kayakoUnit.combinedCards.push(sadakoTarget.unit.card);
+            if (sadakoTarget.unit.combinedCards) {
+              kayakoUnit.combinedCards.push(...sadakoTarget.unit.combinedCards);
+            }
+            field[sadakoTarget.zone][sadakoTarget.idx] = null;
+            logBattle(`👻📼 對手【伽椰美子】與【貞美子】寄生合體！【貞美子】附身至【伽椰美子】身上！`);
+          }
+        }
+      }
+      if (typeof render === "function") render();
+    }
+  }
   else if (card.id === "SSSR-NMS-0059" || card.name?.includes("雙面幻影 雙子座 亞子") || card.name?.includes("雙子座 亞子")) {
     const hirako = enemyExtraDeck.find(c => c && (c.id === "SSSR-NMS-0060" || c.name?.includes("平子")));
     if (hirako) {
@@ -31928,6 +32512,16 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         } else {
           playerBonusScore += 3;
           logBattle(`💥 附有【賞金】的敵方單位 ${unit.card.name} 被戰鬥破壞：我方額外獲得 +3★ 獎勵！`);
+        }
+        renderScore();
+      }
+      if ((eqName === "懸賞令" || eqName.includes("懸賞令")) && isCombatDestruction) {
+        if (zone.startsWith("player_")) {
+          enemyBonusScore += 1;
+          logBattle(`📜 附有【懸賞令】的我方單位 ${unit.card.name} 戰鬥破壞：對手額外獲得 +1★ 獎勵！`);
+        } else {
+          playerBonusScore += 1;
+          logBattle(`📜 附有【懸賞令】的敵方單位 ${unit.card.name} 戰鬥破壞：我方額外獲得 +1★ 獎勵！`);
         }
         renderScore();
       }
@@ -34438,6 +35032,21 @@ async function aiPlayMagicCardsSummonPhase() {
     }
   }
 
+  // 有打有嘉獎! (ORC-0020)
+  const awardIdx = hand.findIndex(c => c && (c.id === "ORC-0020" || c.name?.includes("有打有嘉獎")));
+  if (awardIdx >= 0) {
+    const myOrcsCount = ["enemy_front", "enemy_back"].reduce((sum, z) => sum + field[z].filter(u => u && u.card && (u.card.faction === "獸人" || u.card.id?.includes("ORC"))).length, 0);
+    if (myOrcsCount >= 1) {
+      const spellCard = hand.splice(awardIdx, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "enemy");
+      await aiCastSpell(spellCard, async () => {
+        window.XLW_enemyOrcAwardActiveUntil = turn + 1;
+        logBattle("✨ 對手 AI 發動了【有打有嘉獎！】！使對手場上所有獸人單位 +1 攻擊力及進攻戰鬥成功獎勵額外 +1★，直到下個回合結束！");
+        render();
+      });
+    }
+  }
+
   // 大雷擊：當我方總分落後 10★ 或以上時，破壞玩家前排所有單位
   const grtLightningIdx = hand.findIndex(c => c && (c.id === "SSR-NMG-0017" || c.name?.includes("大雷擊")));
   if (grtLightningIdx >= 0) {
@@ -35267,6 +35876,10 @@ window.aiFindBestSummonableCard = function() {
         const hasHu = enemyExile.some(ex => ex && (ex.id === "SR-FMS-0016" || ex.id === "R-FMS-0017" || ex.name?.includes("大三元") || ex.name?.includes("小四喜")));
         if (!hasHu) return;
       }
+      if (c.id === "SR-VLG-0021" || c.id === "SSR-VLG-0021" || c.name?.includes("天狗")) {
+        const vlgCount = enemyGrave.filter(cg => cg && (cg.type === "unit" || cg.type === "戰線" || cg.type === "單位") && (cg.faction === "妖怪村莊" || cg.deck === "妖怪村莊" || (cg.id && String(cg.id).includes("VLG")))).length;
+        if (vlgCount < 8) return;
+      }
 
       if (xlwBlueStarRequirement(c, false)) return;
       const cost = getCardTributeCost(c);
@@ -35297,6 +35910,13 @@ window.aiFindBestSummonableCard = function() {
           const travelerUnits = aiAvailableUnits.filter(u => u.unit && u.unit.card && (u.unit.card.id === "TOKEN_TRAVELER" || u.unit.card.id === "SPT-LITTLE" || u.unit.card.id === "C-NMS-0071" || u.unit.card.name?.includes("小旅人")));
           if (travelerUnits.length >= cost) {
             candidates.push({ handIdx, card: c, tributeUnits: travelerUnits.slice(0, cost), priority: 50 + numAtk });
+          }
+          return;
+        }
+        if (c.id === "SR-VLG-0061" || c.name?.includes("海坊主")) {
+          const frontUnits = aiAvailableUnits.filter(u => u.zone && u.zone.includes("front"));
+          if (frontUnits.length >= cost) {
+            candidates.push({ handIdx, card: c, tributeUnits: frontUnits.slice(0, cost), priority: 85 + numAtk });
           }
           return;
         }
@@ -35729,6 +36349,9 @@ async function runEnemyTurn() {
       // 若需獻祭，先行獻祭以騰出戰場格位
       const aiPendingDevourCards = [];
       if (tributeUnits && tributeUnits.length > 0) {
+        if (card && (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子"))) {
+          window.XLW_aiKayasadaSacrificedCards = tributeUnits.map(s => s.unit?.card).filter(Boolean);
+        }
         for (const sac of tributeUnits) {
           if (sac.unit && isDevourFusionUnit(sac.unit)) {
             // 🍬 AI 吞食合體！
@@ -35743,7 +36366,33 @@ async function runEnemyTurn() {
             });
             logBattle(`🍬 對手【${sac.unit.card.name}】發動【吞食合體】，墊入新單位下方，露出${expose === "atk" ? "攻擊力(+" + val + ")" : "星星數(+" + val + "★)"}！`);
           } else {
-            try { await window.xlwEnemyTributeUnit(sac.unit, sac.zone, sac.idx); } catch (e) {}
+            // 🎒 檢查背背小鬼 (R-VLG-0035 / SSR-VLG-0035) 寄生合體
+            if (sac.unit && sac.unit.card && (sac.unit.card.id === "R-VLG-0035" || sac.unit.card.id === "SSR-VLG-0035" || sac.unit.card.name?.includes("背背小鬼"))) {
+              const oppTargets = [];
+              for (const pz of ["player_front", "player_back"]) {
+                (field[pz] || []).forEach((pu, pi) => {
+                  if (pu && pu.card && !pu.equipments?.includes("背背小鬼")) {
+                    oppTargets.push({ zone: pz, idx: pi, unit: pu, name: pu.card.name });
+                  }
+                });
+              }
+              if (oppTargets.length > 0) {
+                oppTargets.sort((a, b) => (parseInt(b.unit.card.attack, 10) || 0) - (parseInt(a.unit.card.attack, 10) || 0));
+                const targetItem = oppTargets[0];
+                targetItem.unit.equipments = targetItem.unit.equipments || [];
+                targetItem.unit.equipments.push("背背小鬼");
+                targetItem.unit.combinedCards = targetItem.unit.combinedCards || [];
+                targetItem.unit.combinedCards.push(sac.unit.card);
+                sac.xlwBeibeiAttached = true;
+                logBattle(`🎒 對手【背背小鬼】寄生合體成功！附身至我方【${targetItem.name}】身上（攻擊力 -2，星數 -1）！`);
+              }
+            }
+
+            if (sac.xlwBeibeiAttached) {
+              logBattle(`🎒 對手【背背小鬼】已寄生合體至我方單位，不進入墓地。`);
+            } else {
+              try { await window.xlwEnemyTributeUnit(sac.unit, sac.zone, sac.idx); } catch (e) {}
+            }
           }
           // 檢查跳跳糖 (C-CND-0058) 獻祭效果: 此單位被獻祭時，可使敵方場上1個星星數為2或以下的單位被破壞
           if (sac.unit && sac.unit.card && (sac.unit.card.id === "C-CND-0058" || sac.unit.card.name?.includes("跳跳糖"))) {
@@ -36026,6 +36675,33 @@ async function runEnemyTurn() {
     } else {
       try { await checkPopulationCap(false); } catch (e) {}
 
+      // 🩸 對手 AI 觸殺野人 (EWD-0056) 主動技能判定
+      for (const ez of ["enemy_front", "enemy_back"]) {
+        for (let ei = 0; ei < 5; ei++) {
+          const eu = field[ez]?.[ei];
+          if (eu && eu.card && (eu.card.id === "EWD-0056" || eu.card.name?.includes("觸殺野人")) && eu.ewdTouchKillTurn !== turn) {
+            const aiNeighbors = [];
+            if (ei > 0 && field[ez]?.[ei - 1] && window.xlwIsUnitBarbarian?.(field[ez][ei - 1]) && !window.isUnitEffectImmune?.(field[ez][ei - 1], ez, ei - 1)) {
+              aiNeighbors.push({ idx: ei - 1, unit: field[ez][ei - 1] });
+            }
+            if (ei < 4 && field[ez]?.[ei + 1] && window.xlwIsUnitBarbarian?.(field[ez][ei + 1]) && !window.isUnitEffectImmune?.(field[ez][ei + 1], ez, ei + 1)) {
+              aiNeighbors.push({ idx: ei + 1, unit: field[ez][ei + 1] });
+            }
+            if (aiNeighbors.length > 0) {
+              const sacTarget = aiNeighbors[0];
+              await destroyUnit(ez, sacTarget.idx, "enemy", false);
+              if (field[ez][sacTarget.idx] === sacTarget.unit) continue;
+              eu.ewdTouchKillTurn = turn;
+              eu.tapped = false;
+              eu.ewdTouchKillAtk = 3;
+              logBattle(`🩸💥 對手【觸殺野人】觸殺獻祭：破壞了鄰近的【${sacTarget.unit.card.name}】，自身轉正並獲得 +3 攻擊力！`);
+              render();
+              await sleep(400);
+            }
+          }
+        }
+      }
+
       // 檢查進攻可行性
       let opponentAttackCount = 0;
       try {
@@ -36037,6 +36713,7 @@ async function runEnemyTurn() {
         } else if (window.XLW_enemyCannotAttackThisTurn) {
           logBattle("座敷童子/和平巨人 效果生效：本回合對手無法進行任何進攻！");
         } else {
+          await window.xlwCheckRhinoDeploy?.(false);
           for (let i = 0; i < 5; i++) {
             const enemyAttacker = field.enemy_front[i] || field.enemy_back[i];
             const enemyAttackerZone = field.enemy_front[i] ? "enemy_front" : "enemy_back";
@@ -36948,6 +37625,7 @@ async function endPlayerTurnAndRunEnemy() {
     window.XLW_turnCombatWins = 0;
     window.XLW_turnExtraSummonsCount = 0;
     window.XLW_opponentDoubleClawNegate = {};
+    window.XLW_opponentWolfMaceChoice = {};
     normalSummonUsed = false;
     tacticalSummonUsed = false;
     window.XLW_tacticalMoveUsed = false;
@@ -37104,12 +37782,15 @@ function playerUntap() {
     });
     window.XLW_playerFogExiledCards = [];
   }
+  window.XLW_playerBarbarianMagicImmune = false;
   ["player_front", "player_back"].forEach(zone => {
     field[zone].forEach(u => {
       if (u) {
         u.attacking = false;
         u.target = null;
         u.tempAtkModifier = 0;
+        u.tempAtkBonus = 0;
+        u.magicImmuneUntilNextTurn = false;
         u.bossLadyTriggered = false;
         u.spivarTriggeredThisTurn = false;
         if (u.card && (u.card.id === "ORC-0008" || u.card.name?.includes("雷哥"))) {
@@ -37124,6 +37805,7 @@ function playerUntap() {
 }
 
 function untapEnemy() {
+  window.XLW_enemyBarbarianMagicImmune = false;
   window.xlwCheckYukiOnEnterMainPhase?.(false);
   window.enemyReceptionistTriggeredThisTurn = false;
   window.XLW_enemyTavernTriggeredThisTurn = false;
@@ -37173,6 +37855,8 @@ function untapEnemy() {
         u.attacking = false;
         u.target = null;
         u.tempAtkModifier = 0;
+        u.tempAtkBonus = 0;
+        u.magicImmuneUntilNextTurn = false;
         u.bossLadyTriggered = false;
         u.spivarTriggeredThisTurn = false;
         if (u.card && (u.card.id === "ORC-0008" || u.card.name?.includes("雷哥"))) {
@@ -37826,11 +38510,6 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   document.body.appendChild(menu);
 
   // 計算選單居中顯示在手牌正上方
-  const menuLabel = document.createElement("span");
-  menuLabel.className = "xlw-hand-quick-name";
-  menuLabel.textContent = card.name;
-  menu.prepend(menuLabel);
-
   const menuWidth = canPlay ? 150 : 88;
   const menuHeight = 38;
   let left = rect.left + (rect.width / 2) - (menuWidth / 2);
@@ -38335,9 +39014,6 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
 function renderHand() {
   const container = $("hand");
   if (!container) return;
-  container.toggleAttribute("data-mulligan", mulliganActive);
-  container.toggleAttribute("data-dense", !mulliganActive && hand.length >= 7);
-  document.body.classList.toggle("xlw-mulligan-active", mulliganActive);
   container.innerHTML = "";
 
   hand.forEach((card, idx) => {
@@ -38345,10 +39021,6 @@ function renderHand() {
     cardEl.className = "card";
     cardEl.setAttribute("draggable", window.matchMedia("(pointer: coarse)").matches ? "false" : "true");
     cardEl.dataset.handIndex = idx;
-    if (!mulliganActive) {
-      cardEl.tabIndex = 0;
-      cardEl.setAttribute("aria-label", card.name);
-    }
     
     if (selectedHandForSummon === idx || selectedHandForTribute === idx) {
       cardEl.classList.add("selected-hand-summon");
@@ -38367,13 +39039,13 @@ function renderHand() {
     // Mulligan 換牌高亮與即時卡牌放大預覽按鈕 (確保於 innerHTML 之後加入，避免被覆蓋)
     if (mulliganActive) {
       cardEl.classList.add("mulligan-card");
-      const replace = selectedMulliganIndexes.has(idx);
-      cardEl.classList.toggle("mulligan-selected", replace);
-      const mark = document.createElement("span");
-      mark.className = "mulligan-status-badge";
-      mark.textContent = replace ? "✓" : "";
-      mark.setAttribute("aria-hidden", "true");
-      cardEl.appendChild(mark);
+      if (selectedMulliganIndexes.has(idx)) {
+        cardEl.classList.add("mulligan-selected");
+        const statusBadge = document.createElement("div");
+        statusBadge.className = "mulligan-status-badge";
+        statusBadge.innerHTML = "🔄 預定替換";
+        cardEl.appendChild(statusBadge);
+      }
       const inspectBtn = document.createElement("div");
       inspectBtn.className = "mulligan-card-inspect-btn";
       inspectBtn.title = "點擊查看卡牌詳情";
@@ -38400,12 +39072,10 @@ function renderHand() {
     const N = hand.length;
     const mid = (N - 1) / 2;
     const diff = idx - mid;
-    const dense = N >= 7;
-    const rotationStep = dense ? Math.min(2.7, (N >= 10 ? 6 : 8) / mid) : 5;
-    const rot = diff * rotationStep;
-    const ty = Math.abs(diff) * (dense ? .4 : 3);
-    const tx = dense ? 0 : diff * -4;
-    if (!mulliganActive) cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
+    const rot = diff * 5; // 每張牌旋轉 5 度
+    const ty = Math.abs(diff) * 3; // 兩側牌向下微調 3px 呈圓弧
+    const tx = diff * -4; // 微調間距使扇形收納緊湊
+    cardEl.style.setProperty("transform", `perspective(300px) translate(${tx}px, ${ty}px) rotate(${rot}deg) rotateX(${rx}deg)`, "important");
 
     // 手牌點擊事件 (區分換牌、魔法、一般召喚與獻祭)
     cardEl.onclick = async (e) => {
@@ -38480,7 +39150,48 @@ function renderHand() {
 
     container.appendChild(cardEl);
   });
+
+  try { window.xlwUpdateTargetingArcFromHand?.(); } catch (e) {}
 }
+
+window.xlwUpdateTargetingArc = function(cardEl, slotEl) {
+  const svg = document.getElementById("xlwTargetingArcSvg");
+  const path = document.getElementById("xlwTargetingArcPath");
+  if (!svg || !path) return;
+  if (!cardEl || !slotEl) {
+    path.setAttribute("d", "");
+    svg.style.display = "none";
+    return;
+  }
+  const r1 = cardEl.getBoundingClientRect();
+  const r2 = slotEl.getBoundingClientRect();
+  const x1 = r1.left + r1.width / 2;
+  const y1 = r1.top + 4;
+  const x2 = r2.left + r2.width / 2;
+  const y2 = r2.bottom - 6;
+  
+  const midY = (y1 + y2) / 2;
+  const d = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+  path.setAttribute("d", d);
+  svg.style.display = "block";
+};
+
+window.xlwUpdateTargetingArcFromHand = function() {
+  const selectedCard = document.querySelector("#hand .card.selected-hand-summon, #hand .card.tribute-selected");
+  if (!selectedCard) {
+    window.xlwUpdateTargetingArc(null, null);
+    return;
+  }
+  let targetSlot = document.querySelector("#boardWrap .row.player-front .slot:nth-child(3):not(.has-card)");
+  if (!targetSlot) {
+    targetSlot = document.querySelector("#boardWrap .slot.xlw-hand-front-legal, #boardWrap .slot:not(.has-card)");
+  }
+  if (targetSlot) {
+    window.xlwUpdateTargetingArc(selectedCard, targetSlot);
+  } else {
+    window.xlwUpdateTargetingArc(null, null);
+  }
+};
 
 // 渲染戰場格子
 async function xlwResolveAbyssQueen(queen) {
@@ -38702,26 +39413,32 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
     }
 
     // 🦏 犀牛戰車 (SR-ORC-0074): 主要階段限一次綁架(2)獸人；進攻階段限一次召喚至正後方
-    if ((obj.card.id === "SR-ORC-0074" || obj.card.name?.includes("犀牛戰車")) && !obj.rhinoUsedThisTurn) {
-      const orcs = [];
-      for (const r of ["player_front", "player_back"]) {
-        (field[r] || []).forEach((u, i) => {
-          if (u && u !== obj && (u.card.faction === "獸人" || u.card.deck === "獸人" || u.card.id?.includes("ORC") || u.card.name?.includes("獸人"))) {
-            orcs.push({ zone: r, idx: i, name: u.card.name, unit: u });
-          }
-        });
+    if (obj.card.id === "SR-ORC-0074" || obj.card.name?.includes("犀牛戰車")) {
+      if (phase === "進攻宣言") {
+        const deployed = await window.xlwCheckRhinoDeploy?.(true);
+        if (deployed) return true;
       }
-      if (orcs.length > 0) {
-        const doKidnap = await showXLWConfirm("【犀牛戰車】裝載戰士", "主要階段限一次：是否將場上 1 個獸人單位載入戰車（綁架 2 回合）？");
-        if (doKidnap) {
-          obj.rhinoUsedThisTurn = true;
-          const choices = orcs.map((o, i) => ({ text: `${o.name} (${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: i }));
-          const pick = await showXLWChoiceModal("選擇登車獸人", "請選擇載入戰車的獸人：", choices);
-          if (pick !== null && pick !== undefined) {
-            await kidnapCard(orcs[pick].zone, orcs[pick].idx, zone, idx);
-            logBattle(`🦏【犀牛戰車】全速裝載：將【${orcs[pick].name}】載入戰車！`);
-            render();
-            return true;
+      if (obj.rhinoKidnapTurn !== turn) {
+        const orcs = [];
+        for (const r of ["player_front", "player_back"]) {
+          (field[r] || []).forEach((u, i) => {
+            if (u && u !== obj && (u.card.faction === "獸人" || u.card.deck === "獸人" || u.card.id?.includes("ORC") || u.card.name?.includes("獸人"))) {
+              orcs.push({ zone: r, idx: i, name: u.card.name, unit: u });
+            }
+          });
+        }
+        if (orcs.length > 0) {
+          const doKidnap = await showXLWConfirm("【犀牛戰車】裝載戰士", "主要階段限一次：是否將場上 1 個獸人單位載入戰車（綁架 2 回合）？");
+          if (doKidnap) {
+            obj.rhinoKidnapTurn = turn;
+            const choices = orcs.map((o, i) => ({ text: `${o.name} (${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: i }));
+            const pick = await showXLWChoiceModal("選擇登車獸人", "請選擇載入戰車的獸人：", choices);
+            if (pick !== null && pick !== undefined) {
+              await kidnapCard(orcs[pick].zone, orcs[pick].idx, zone, idx, 2);
+              logBattle(`🦏【犀牛戰車】全速裝載：將【${orcs[pick].name}】載入戰車（綁架 2 回合）！`);
+              render();
+              return true;
+            }
           }
         }
       }
@@ -39473,10 +40190,17 @@ function renderField() {
               else if (spellCard.name?.includes("戰錘") || spellCard.id === "R-ORC-0033") {
                 logBattle(`✨ 阿庫瑪的戰錘 效果：${obj.card.name} 攻擊力 +1 且戰鬥勝利結算額外 +1★！`);
               }
+              else if (spellCard.name?.includes("面具") || spellCard.id === "C-ORC-0063") {
+                logBattle(`✨ 挑釁獸人的面具 效果：${obj.card.name} 裝備面具，敵方結束階段時將強迫其正前方單位發起進攻！`);
+              }
+              else if (spellCard.name?.includes("盾牌") || spellCard.id === "R-ORC-0050") {
+                logBattle(`✨ 盾牌獸人的盾牌 效果：${obj.card.name} 獲得阻擋效果，且左右相鄰單位戰鬥成功時使你獲得 +1★！`);
+              }
               else if (spellCard.name === "法術保護-護盾") {
                 obj.magicImmune = true;
                 logBattle(`✨ 法術保護 效果：${obj.card.name} 獲得永久對魔法抗性！`);
               }
+              await window.xlwCheckLostAxeOrcTrigger?.(obj, zone, idx, spellCard, true);
               if (isMultiplayer) {
                 ws.send(JSON.stringify({
                   action: "equip_spell_resolved",
@@ -40600,45 +41324,82 @@ function renderField() {
                 setStatus("該單位處於沉默狀態，無法發動效果。");
                 return;
               }
-              if (obj.akumaUsedThisTurn) {
+              if (obj.akumaUsedTurn === turn) {
                 setStatus("【鍛造之神 阿庫瑪】的效果本回合已使用過。");
                 return;
               }
+              function isOrcEquipCard(c) {
+                if (!c || c.type !== "magic") return false;
+                const isOrcFaction = c.faction === "獸人" || c.deck === "獸人" || c.id?.includes("ORC") || c.id?.includes("0RC") || c.id?.includes("ROC");
+                const isEquip = (c.keywords && (c.keywords.includes("裝備") || c.keywords.includes("裝備卡"))) || ["斧", "刀", "棒", "錘", "帽", "弓", "盾", "劍", "裝備"].some(k => c.name?.includes(k));
+                return isOrcFaction && isEquip;
+              }
               const orcEquips = [];
+              // 1. 牌庫
               deck.forEach(c => {
-                if (c && c.type === "magic" && (c.keywords?.includes("裝備") || c.name?.includes("斧") || c.name?.includes("刀") || c.name?.includes("棒") || c.name?.includes("裝"))) {
+                if (isOrcEquipCard(c)) {
                   orcEquips.push({ card: c, source: "deck" });
                 }
               });
+              // 2. 墓地
               graveyard.forEach(c => {
-                if (c && c.type === "magic" && (c.keywords?.includes("裝備") || c.name?.includes("斧") || c.name?.includes("刀") || c.name?.includes("棒") || c.name?.includes("裝"))) {
+                if (isOrcEquipCard(c)) {
                   orcEquips.push({ card: c, source: "grave" });
                 }
               });
+              // 3. 我方場上裝備
+              for (const z of ["player_front", "player_back"]) {
+                (field[z] || []).forEach((u, colIdx) => {
+                  if (u && u.equipments && u.equipments.length > 0) {
+                    u.equipments.forEach((eqName, eqIdx) => {
+                      const eqCard = allCards.find(c => c && c.type === "magic" && isOrcEquipCard(c) && (c.name === eqName || eqName.includes(c.name) || c.name.includes(eqName))) || { id: "ORC-EQUIP", name: eqName, type: "magic", faction: "獸人" };
+                      if (isOrcEquipCard(eqCard)) {
+                        orcEquips.push({ card: eqCard, source: "field", unit: u, eqIdx, eqName, zone: z, idx: colIdx });
+                      }
+                    });
+                  }
+                });
+              }
+
               if (orcEquips.length > 0) {
                 const choices = orcEquips.map((item, i) => ({
-                  text: `【${item.card.name}】(${item.source === "deck" ? "牌庫" : "墓地"})`,
+                  text: `【${item.card.name}】(${item.source === "deck" ? "牌庫" : (item.source === "grave" ? "墓地" : `場上 ${item.unit.card.name}`)})`,
                   value: i
                 }));
-                const pick = await showXLWChoiceModal("【鍛造之神 阿庫瑪】尋找裝備", "主要階段限一次，從牌庫或墓地尋找 1 張獸人裝備卡加入手牌：", choices);
+                const pick = await showXLWChoiceModal("【鍛造之神 阿庫瑪】尋找裝備", "主要階段限一次，從場上/墓地/牌庫尋找 1 張獸人裝備卡加入手牌：", choices);
                 if (pick !== null && pick !== undefined) {
-                  obj.akumaUsedThisTurn = true;
+                  obj.akumaUsedTurn = turn;
                   const chosen = orcEquips[pick];
                   if (chosen.source === "deck") {
                     const dIdx = deck.indexOf(chosen.card);
                     if (dIdx >= 0) deck.splice(dIdx, 1);
                     shuffle(deck);
-                  } else {
+                  } else if (chosen.source === "grave") {
                     const gIdx = graveyard.indexOf(chosen.card);
                     if (gIdx >= 0) graveyard.splice(gIdx, 1);
+                  } else if (chosen.source === "field") {
+                    const u = chosen.unit;
+                    u.equipments.splice(chosen.eqIdx, 1);
+                    if (chosen.eqName.includes("戰斧牛排")) {
+                      u.atkModifier = (u.atkModifier || 0) - 5;
+                      u.steakBonus = false;
+                    } else if (chosen.eqName.includes("弓箭")) {
+                      u.atkModifier = (u.atkModifier || 0) - 1;
+                      u.hasRanged = false;
+                    } else if (chosen.eqName.includes("符咒帽")) {
+                      u.magicImmune = false;
+                    } else if (chosen.eqName.includes("菜刀") || chosen.eqName.includes("迴旋飛斧")) {
+                      u.piercing = false;
+                    }
                   }
                   hand.push(chosen.card);
-                  logBattle(`🔨【鍛造之神 阿庫瑪】效果：從${chosen.source === "deck" ? "牌庫" : "墓地"}將【${chosen.card.name}】加入手牌！`);
+                  const sourceName = chosen.source === "deck" ? "牌庫" : (chosen.source === "grave" ? "墓地" : "場上");
+                  logBattle(`🔨【鍛造之神 阿庫瑪】效果：從${sourceName}將【${chosen.card.name}】加入手牌！`);
                   render();
                   return;
                 }
               } else {
-                setStatus("牌庫與墓地中無獸人裝備卡可檢索！");
+                setStatus("場上、墓地與牌庫中無獸人裝備卡可檢索！");
                 return;
               }
             }
@@ -42449,16 +43210,14 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               return;
             }
 
-            const isEmperor = obj.card?.id === "SR-ART-0059" || obj.card?.id === "ASSR-ART-0059" || obj.card?.name === "始皇帝";
+            const isEmperor = obj.card?.id === "SR-ART-0059" || obj.card?.id === "ASSR-ART-0059" || obj.card?.name?.includes("始皇帝");
             if (isEmperor) {
               if (phase !== "召喚階段") {
                 setStatus("【始皇帝】的效果只能在召喚階段發動！");
-                
                 return;
               }
               if (obj.emperorEffectUsedTurn === turn) {
                 setStatus("始皇帝 的效果本回合已使用過。");
-                
                 return;
               }
               
@@ -42472,16 +43231,9 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                 if (u === null) backEmpty.push({ zone: "player_back", idx: i });
               });
 
-              let allowedSlots = [];
-              if (frontEmpty.length > 0) {
-                allowedSlots = frontEmpty;
-              } else if (backEmpty.length > 0) {
-                allowedSlots = backEmpty;
-              }
-
+              let allowedSlots = frontEmpty.length > 0 ? frontEmpty : backEmpty;
               if (allowedSlots.length === 0) {
                 setStatus("我方場上已無空位，無法召喚戰士陶俑！");
-                
                 return;
               }
               
@@ -42495,7 +43247,6 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
               }
               if (!hasUpright) {
                 setStatus("場上已無直立單位可供橫置！");
-                
                 return;
               }
               
@@ -42504,90 +43255,123 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
                 "是否發動【始皇帝】效果：將場上一個直立單位橫置，並召喚一張【戰士陶俑】？"
               );
               if (confirmUse) {
-                // 1. 點選橫置單位階段
-                window.XLW_emperorTapSelecting = true;
-                setStatus("【始皇帝】請直接點選場上一個直立單位進行橫置！");
-                render();
-                
-                const selectedTappedUnit = await new Promise(resolve => {
-                  window.XLW_emperorTapResolve = resolve;
-                });
-                
-                if (!selectedTappedUnit) return;
-                // 2. 點選召喚格子階段
-                window.XLW_emperorSlotSelecting = true;
-                window.XLW_emperorAllowedSlots = allowedSlots;
-                setStatus("【始皇帝】請點選我方的空格決定戰士陶俑召喚位置！" + (frontEmpty.length > 0 ? "（前排有空位必須優先召喚至前排）" : ""));
-                render();
-                
-                const chosenSlot = await new Promise(resolve => {
-                  window.XLW_emperorSlotResolve = resolve;
-                });
-                
-                if (!chosenSlot || field[zone]?.[idx] !== obj || obj.emperorEffectUsedTurn === turn ||
-                    field[selectedTappedUnit.zone]?.[selectedTappedUnit.idx] !== selectedTappedUnit.unit ||
-                    selectedTappedUnit.unit.tapped || field[chosenSlot.zone]?.[chosenSlot.idx] !== null) return;
-                const targetZone = chosenSlot.zone;
-                const targetIdx = chosenSlot.idx;
-                
-                selectedTappedUnit.unit.tapped = true;
-                if (!selectedTappedUnit.isEnemy) {
-                  await xlwOnPlayerUnitTapped(selectedTappedUnit.zone, selectedTappedUnit.idx);
-                }
-                
-                if (field[targetZone]?.[targetIdx] !== null) return;
-                let terracottaCard = playerExtraDeck.find(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
-                if (terracottaCard) {
-                  playerExtraDeck.splice(playerExtraDeck.indexOf(terracottaCard), 1);
-                } else {
-                  const ref = allCards.find(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
-                  if (ref) {
-                    terracottaCard = structuredClone(ref);
-                  } else {
-                    terracottaCard = {
-                      id: "C-ART-0060",
-                      name: "戰士陶俑",
-                      deck: "藝術品",
-                      type: "unit",
-                      faction: "藝術品",
-                      race: "藝術品",
-                      attack: "3",
-                      score: 1,
-                      tribute: 0,
-                      keywords: ["敵方魔法抗性", "橫放", "獎勵"],
-                      effect_text: "敵方魔法抗性。此單位被橫置時，獎勵+1",
-                      image: "/static/card_images/c_art_0060.jpeg",
-                      art_subtype: "陶俑"
-                    };
+                try {
+                  // 1. 點選橫置單位階段
+                  window.XLW_emperorTapSelecting = true;
+                  setStatus("【始皇帝】請直接點選場上一個直立單位進行橫置！");
+                  render();
+                  
+                  const selectedTappedUnit = await new Promise(resolve => {
+                    window.XLW_emperorTapResolve = resolve;
+                  });
+                  
+                  if (!selectedTappedUnit) {
+                    setStatus("");
+                    render();
+                    return;
                   }
+
+                  // 重新獲取最新的空格（以防在等待點選期間場上空位發生變化）
+                  frontEmpty = [];
+                  backEmpty = [];
+                  field["player_front"].forEach((u, i) => {
+                    if (u === null) frontEmpty.push({ zone: "player_front", idx: i });
+                  });
+                  field["player_back"].forEach((u, i) => {
+                    if (u === null) backEmpty.push({ zone: "player_back", idx: i });
+                  });
+                  allowedSlots = frontEmpty.length > 0 ? frontEmpty : backEmpty;
+                  if (allowedSlots.length === 0) {
+                    setStatus("我方場上已無空位，無法召喚戰士陶俑！");
+                    return;
+                  }
+
+                  // 2. 點選召喚格子階段
+                  window.XLW_emperorSlotSelecting = true;
+                  window.XLW_emperorAllowedSlots = allowedSlots;
+                  setStatus("【始皇帝】請點選我方的空格決定戰士陶俑召喚位置！" + (frontEmpty.length > 0 ? "（前排有空位必須優先召喚至前排）" : ""));
+                  render();
+                  
+                  const chosenSlot = await new Promise(resolve => {
+                    window.XLW_emperorSlotResolve = resolve;
+                  });
+                  
+                  const currentEmperor = field[zone]?.[idx];
+                  if (!currentEmperor || !currentEmperor.card?.name?.includes("始皇帝") || currentEmperor.emperorEffectUsedTurn === turn) return;
+                  const targetUnitOnBoard = field[selectedTappedUnit.zone]?.[selectedTappedUnit.idx];
+                  if (!chosenSlot || !targetUnitOnBoard || targetUnitOnBoard.tapped || field[chosenSlot.zone]?.[chosenSlot.idx] !== null) return;
+
+                  const targetZone = chosenSlot.zone;
+                  const targetIdx = chosenSlot.idx;
+                  
+                  targetUnitOnBoard.tapped = true;
+                  if (!selectedTappedUnit.isEnemy) {
+                    await xlwOnPlayerUnitTapped(selectedTappedUnit.zone, selectedTappedUnit.idx);
+                  }
+                  if (typeof window.xlwHandleUnitTappedTriggers === "function") {
+                    await window.xlwHandleUnitTappedTriggers(targetUnitOnBoard, selectedTappedUnit.zone, selectedTappedUnit.idx);
+                  }
+                  
+                  if (field[targetZone]?.[targetIdx] !== null) return;
+                  let terracottaCard = playerExtraDeck.find(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
+                  if (terracottaCard) {
+                    playerExtraDeck.splice(playerExtraDeck.indexOf(terracottaCard), 1);
+                  } else {
+                    const ref = allCards.find(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
+                    if (ref) {
+                      terracottaCard = structuredClone(ref);
+                    } else {
+                      terracottaCard = {
+                        id: "C-ART-0060",
+                        name: "戰士陶俑",
+                        deck: "藝術品",
+                        type: "unit",
+                        faction: "藝術品",
+                        race: "藝術品",
+                        attack: "3",
+                        score: 1,
+                        tribute: 0,
+                        keywords: ["敵方魔法抗性", "橫放", "獎勵"],
+                        effect_text: "敵方魔法抗性。此單位被橫置時，獎勵+1",
+                        image: "/static/card_images/c_art_0060.jpeg",
+                        art_subtype: "陶俑"
+                      };
+                    }
+                  }
+                  
+                  field[targetZone][targetIdx] = {
+                    card: terracottaCard,
+                    tapped: false,
+                    attacking: false,
+                    target: null,
+                    summonedTurn: turn,
+                    summonedZone: targetZone
+                  };
+                  
+                  currentEmperor.emperorEffectUsedTurn = turn;
+                  logBattle(`✨ 始皇帝 效果：橫置了 ${selectedTappedUnit.isEnemy ? "對手" : "我方"}的 【${targetUnitOnBoard.card.name}】，從額外牌組特殊召喚【戰士陶俑】！`);
+                  
+                  if (isMultiplayer) {
+                    ws.send(JSON.stringify({
+                      action: "emperor_activate",
+                      fromZone: selectedTappedUnit.zone,
+                      fromIdx: selectedTappedUnit.idx,
+                      toZone: targetZone,
+                      toIdx: targetIdx,
+                      terracottaCard: terracottaCard
+                    }));
+                    sendFullGameStateToOpponent();
+                  }
+                  render();
+                } finally {
+                  window.XLW_emperorTapSelecting = false;
+                  window.XLW_emperorTapResolve = null;
+                  window.XLW_emperorSlotSelecting = false;
+                  window.XLW_emperorSlotResolve = null;
+                  window.XLW_emperorAllowedSlots = null;
+                  setStatus("");
+                  render();
                 }
-                
-                field[targetZone][targetIdx] = {
-                  card: terracottaCard,
-                  tapped: false,
-                  attacking: false,
-                  target: null,
-                  summonedTurn: turn,
-                  summonedZone: targetZone
-                };
-                
-                obj.emperorEffectUsedTurn = turn;
-                logBattle(`✨ 始皇帝 效果：橫置了 ${selectedTappedUnit.isEnemy ? "對手" : "我方"}的 【${selectedTappedUnit.unit.card.name}】，從額外牌組特殊召喚【戰士陶俑】！`);
-                
-                if (isMultiplayer) {
-                  ws.send(JSON.stringify({
-                    action: "emperor_activate",
-                    fromZone: selectedTappedUnit.zone,
-                    fromIdx: selectedTappedUnit.idx,
-                    toZone: targetZone,
-                    toIdx: targetIdx,
-                    terracottaCard: terracottaCard
-                  }));
-                  sendFullGameStateToOpponent();
-                }
-                render();
-              } else {
-                
               }
               return;
             }
@@ -44075,40 +44859,17 @@ function renderScore() {
     ` : ""}
 
     <div class="score-badge-section">
-      <div class="score-badge-card player ${playerLead ? "leading" : ""}">
-        <div class="score-badge-top-row">
-          <div class="score-player-identity">
-            <span class="score-crest player-crest">🔷</span>
-            <span class="score-name">我方總分</span>
-          </div>
-          ${playerLeadBadge}
-        </div>
-        <div class="score-badge-main-row">
-          <div class="score-gem-socket player-gem">
-            <span class="score-gem-glow"></span>
-            <span class="score-gem-val">${playerStars}</span>
-            <span class="score-gem-star">★</span>
-          </div>
-          <div class="score-bonus-badge" title="我方額外加分">
-            <span class="bonus-lbl">額外加分</span>
-            <span class="bonus-val">+${playerBonusScore}★</span>
-          </div>
-        </div>
-      </div>
-
       <div class="score-badge-card enemy ${enemyLead ? "leading" : ""}">
         <div class="score-badge-top-row">
           <div class="score-player-identity">
-            <span class="score-crest enemy-crest">🔻</span>
             <span class="score-name">對手總分</span>
           </div>
           ${enemyLeadBadge}
         </div>
         <div class="score-badge-main-row">
           <div class="score-gem-socket enemy-gem">
-            <span class="score-gem-glow"></span>
+            <span class="score-gem-star">✶</span>
             <span class="score-gem-val">${enemyStars}</span>
-            <span class="score-gem-star">★</span>
           </div>
           <div class="score-bonus-badge" title="對手額外加分">
             <span class="bonus-lbl">額外加分</span>
@@ -44116,10 +44877,32 @@ function renderScore() {
           </div>
         </div>
       </div>
+
+      <div class="score-badge-card player ${playerLead ? "leading" : ""}">
+        <div class="score-badge-top-row">
+          <div class="score-player-identity">
+            <span class="score-name">我方總分</span>
+          </div>
+          ${playerLeadBadge}
+        </div>
+        <div class="score-badge-main-row">
+          <div class="score-gem-socket player-gem">
+            <span class="score-gem-star">✶</span>
+            <span class="score-gem-val">${playerStars}</span>
+          </div>
+          <div class="score-bonus-badge" title="我方額外加分">
+            <span class="bonus-lbl">額外加分</span>
+            <span class="bonus-val">+${playerBonusScore}★</span>
+          </div>
+        </div>
+      </div>
       ${puzzleSectionHtml}
       ${callGameSectionHtml}
     </div>
   `;
+
+  const brandPill = $("xlwBrandTurnPill");
+  if (brandPill) brandPill.textContent = `TURN ${turn}`;
 
   adjustBoardScale();
   const topResetBtn = $("xlwPuzzleResetTopbarBtn");
@@ -44187,19 +44970,17 @@ function renderStablePanel() {
   if (mulliganActive) {
     if (isMultiplayer) {
       setContent(`
-        <div class="xlw-mulligan-intro"><h2>起手換牌</h2><p>選擇要換掉的手牌</p></div>
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
-          <span class="btn-main-text">確認換牌</span>
+          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
         </button>
       `);
     } else {
       setContent(`
-        <div class="xlw-mulligan-intro"><h2>起手換牌</h2><p>選擇要換掉的手牌</p></div>
         <button id="stableActionMulliganConfirm" class="stable-action-btn primary" onclick="event.stopPropagation(); confirmMulligan()">
-          <span class="btn-main-text">確認換牌</span>
+          <span class="btn-main-text">確認換牌</span><span class="btn-sub-turn">CONFIRM</span>
         </button>
         <button class="stable-action-btn secondary" onclick="event.stopPropagation(); newGame()">
-          <span class="btn-main-text">重置新局</span>
+          <span class="btn-main-text">重置新局</span><span class="btn-sub-turn">RESET</span>
         </button>
       `);
     }
@@ -44292,7 +45073,7 @@ function renderStablePanel() {
     <button id="stableActionEnd" class="stable-action-btn end ${isEnding ? "btn-processing" : ""}" ${isEnding ? "disabled" : ""} onclick="event.stopPropagation(); endPlayerTurnAndRunEnemy()">
       ${isEnding 
         ? `<span class="btn-main-text">⏳ 結算中...</span><span class="btn-sub-turn">RESOLVING</span>` 
-        : `<span class="btn-main-text">結束回合</span><span class="btn-sub-turn">END TURN</span>`}
+        : `<span class="btn-icon">💎</span><span class="btn-main-text">結束回合</span>`}
     </button>
   `);
 
@@ -45056,26 +45837,6 @@ function adjustBoardScale() {
     };
     const playerHandCenter = laneCenter(".player-back .slot:nth-child(3)");
     const enemyHandCenter = laneCenter(".enemy-back .slot:nth-child(3)");
-    const rockLeft = logicalRect($("enemyExile"));
-    const rockRight = logicalRect($("playerExile"));
-    if (openArena && rockLeft && rockRight) {
-      const toScreenX = x => fit.x + (x - origin.left) / currentScale * fit.scale;
-      const extra = logicalRect($("enemyExtraDeck"));
-      const toDepth = y => {
-        const screenY = fit.y + (y - origin.top) / currentScale * fit.scale;
-        return Math.max(0, Math.min(1, (screenY / height - .135) / .635));
-      };
-      // The left wall widens toward the foreground. Measure it at the upper
-      // edge of the extra deck, where clearance is tightest.
-      const left = toScreenX(Math.min(rockLeft.left, extra?.left ?? rockLeft.left)) - 10;
-      const right = toScreenX(rockRight.right) + 4;
-      const imageLeft = .203 - .046 * toDepth(extra?.top ?? rockLeft.top);
-      const imageRight = .789 + .054 * toDepth((rockRight.top + rockRight.bottom) / 2);
-      const imageWidth = (right - left) / (imageRight - imageLeft);
-      root.style.setProperty("--xlw-rock-width", imageWidth + "px");
-      root.style.setProperty("--xlw-rock-left", (left - imageLeft * imageWidth) + "px");
-    }
-
     root.style.setProperty("--xlw-player-hand-center", playerHandCenter + "px");
     const rightRailStart = commands?.left ?? phasePanel?.left ?? width;
     const leftRailEnd = Math.max(gap, ...scores.map(rect => rect.right + gap));
@@ -45093,6 +45854,7 @@ function adjustBoardScale() {
     root.style.setProperty("--xlw-field-scale", String(fit.scale));
     root.style.setProperty("--xlw-field-x", fit.x + "px");
     root.style.setProperty("--xlw-field-y", fit.y + "px");
+
     // Measure the actual strings: short labels can be larger without wrapping names.
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
@@ -45248,6 +46010,7 @@ function setupWebSocketEvents() {
         window.checkMultiplayerDecksReady();
       }
     } else if (data.type === "opponent_rejoined_ack") {
+      window.XLW_reconnectingWaitSync = true;
       window.XLW_gameInProgress = true;
       window.xlwEnterActiveOnlineBoardUI();
       logBattle(data.message);
@@ -45258,6 +46021,10 @@ function setupWebSocketEvents() {
     } else if (data.action === "sync_game_state") {
       const s = data.state;
       if (s && Number.isFinite(s.turn) && s.turn < turn) return;
+      if (isMyTurn && !data.turnHandoff && !window.XLW_reconnectingWaitSync && s && s.turn <= turn) {
+        return;
+      }
+      window.XLW_reconnectingWaitSync = false;
       if (s) {
         // Ordered delivery prevents a snapshot from overtaking an unfinished effect.
         // Do not resolve outstanding counter/placement promises as a side effect of syncing.
@@ -45777,6 +46544,8 @@ function setupWebSocketEvents() {
         } else if (spellCard.name === "法術保護-護盾") {
           obj.magicImmune = true;
         }
+        const isPlayerUnit = zone.startsWith("player_");
+        await window.xlwCheckLostAxeOrcTrigger?.(obj, zone, idx, spellCard, isPlayerUnit);
         render();
       }
     } else if (data.action === "demonic_exorcist_resolved") {
@@ -46454,6 +47223,12 @@ function setupWebSocketEvents() {
       const tappedUnit = field[tappedZone]?.[tappedIdx];
       if (tappedUnit) {
         tappedUnit.tapped = true;
+        if (tappedZone.startsWith("player_")) {
+          if (typeof xlwOnPlayerUnitTapped === "function") await xlwOnPlayerUnitTapped(tappedZone, tappedIdx);
+        }
+        if (typeof window.xlwHandleUnitTappedTriggers === "function") {
+          await window.xlwHandleUnitTappedTriggers(tappedUnit, tappedZone, tappedIdx);
+        }
       }
       
       field[summonZone][summonIdx] = {
@@ -46465,14 +47240,16 @@ function setupWebSocketEvents() {
         summonedZone: summonZone
       };
       
-      if (enemyExtraDeck && enemyExtraDeck.length > 0) {
-        const idx = enemyExtraDeck.findIndex(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
+      const oppExtra = window.XLW_enemyExtraDeck || enemyExtraDeck;
+      if (oppExtra && oppExtra.length > 0) {
+        const idx = oppExtra.findIndex(c => c && (c.id === "C-ART-0060" || c.name === "戰士陶俑"));
         if (idx !== -1) {
-          enemyExtraDeck.splice(idx, 1);
+          oppExtra.splice(idx, 1);
         } else {
-          enemyExtraDeck.pop();
+          oppExtra.pop();
         }
       }
+      if (typeof renderExtraDecks === "function") renderExtraDecks();
       
       logBattle(`對手發動 始皇帝 效果：橫置了 【${tappedUnit ? tappedUnit.card.name : "單位"}】，特殊召喚【戰士陶俑】到其場上！`);
       render();
@@ -46517,6 +47294,14 @@ function setupWebSocketEvents() {
     } else if (data.action === "sneak_recall") {
       const key = `${data.attZone}:${data.attIdx}`;
       window.XLW_opponentSneakRecall[key] = data.recall;
+    } else if (data.action === "wolf_mace_choice") {
+      if (!window.XLW_opponentWolfMaceChoice) window.XLW_opponentWolfMaceChoice = {};
+      if (data.winZone !== undefined) {
+        window.XLW_opponentWolfMaceChoice[`${data.winZone}:${data.winIdx}`] = data.accepted;
+      }
+      if (data.attZone !== undefined) {
+        window.XLW_opponentWolfMaceChoice[`${data.attZone}:${data.attIdx}`] = data.accepted;
+      }
     } else if (data.action === "foodball_choice") {
       const key = `${data.zone}:${data.idx}`;
       window.XLW_opponentFoodBallChoice[key] = data.trigger;
@@ -48989,10 +49774,10 @@ function showGraveyardDetailModal(title, graveList) {
     
     cardEl.onmouseover = () => showModal(card);
     cardEl.onclick = async () => {
-      if (phase === "召喚階段" && graveList === graveyard && playerBonusScore > 0) {
+      if ((phase === "主要階段" || phase === "召喚階段") && graveList === graveyard && playerBonusScore > 0) {
         if (card.id === "R-ORC-0038" || card.name?.includes("初心獸人")) {
           const confirm = await showXLWConfirm("初心獸人 效果發動", "是否消耗 1 點我方額外獎勵，將墓地中的【初心獸人】回收至手牌？");
-          if (confirm && phase === "召喚階段" && playerBonusScore > 0 &&
+          if (confirm && (phase === "主要階段" || phase === "召喚階段") && playerBonusScore > 0 &&
               window.XLWDuelConsistency.moveKnownCard(graveyard, hand, card)) {
             playerBonusScore -= 1;
             logBattle("✨ 初心獸人 效果：消耗 1 點獎勵分，將墓地中的【初心獸人】回收至手牌！");
@@ -49843,8 +50628,35 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
     logBattle(`✨【背刺獸人】進攻成功，自帶效果獎勵 +2★！`);
   }
   if ((cid === "ORC-0003" || cid === "SSR-ORC-0003" || name?.includes("菜刀哥")) && isAttacker) {
-    baseReward += 1;
+    const destroyedCount = (unit.xlwDestroyedInCombatCount !== undefined && unit.xlwDestroyedInCombatCount > 0) ? unit.xlwDestroyedInCombatCount : 1;
+    baseReward += destroyedCount;
     hasRewardEffect = true;
+    logBattle(`✨【菜刀哥】戰鬥破壞 ${destroyedCount} 個單位，自帶效果獎勵 +${destroyedCount}★！`);
+    unit.xlwDestroyedInCombatCount = undefined;
+  }
+  if (cid === "ORC-0009" || cid === "SSR-ORC-0009" || name?.includes("加爾帝") || name?.includes("獸人王")) {
+    baseReward += 3;
+    hasRewardEffect = true;
+    logBattle(`✨【獸人王 加爾帝】戰鬥成功，自帶效果獎勵 +3★！`);
+  }
+  if (cid === "SSR-ORC-0064" || name?.includes("阿庫瑪")) {
+    const sidePrefix = isPlayer ? "player_" : "enemy_";
+    let orcEquipTotal = 0;
+    for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
+      for (const u of field[z] || []) {
+        if (u && u.equipments && u.equipments.length > 0) {
+          orcEquipTotal += u.equipments.filter(eq => {
+            const eqStr = typeof eq === "string" ? eq : (eq.name || "");
+            return ["帽", "菜刀", "弓", "牛排", "斧", "狼牙棒", "戰錘", "盾牌", "面具", "破甲劍", "劍"].some(k => eqStr.includes(k));
+          }).length;
+        }
+      }
+    }
+    if (orcEquipTotal > 0) {
+      baseReward += orcEquipTotal;
+      hasRewardEffect = true;
+      logBattle(`🔨【鍛造之神 阿庫瑪】戰鬥成功：場上有 ${orcEquipTotal} 張獸人裝備卡，獲得獎勵 +${orcEquipTotal}★！`);
+    }
   }
   if ((cid === "ORC-0004" || name?.includes("破甲獸人")) && isAttacker) {
     baseReward += 2;
@@ -49920,7 +50732,8 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
   }
   if (cid === "SR-ORC-0062" || name?.includes("艾勒粉") || name?.includes("戰爭巨象")) {
     const orcEquipCount = (unit.equipments || []).filter(eqName => {
-      return ["帽", "菜刀", "狼牙棒", "弓", "牛排", "斧", "戰錘", "盾牌", "面具"].some(x => eqName.includes(x));
+      const eqStr = typeof eqName === "string" ? eqName : (eqName?.name || "");
+      return ["帽", "菜刀", "狼牙棒", "弓", "牛排", "斧", "戰錘", "盾牌", "面具", "破甲劍", "劍"].some(x => eqStr.includes(x));
     }).length;
     const xVal = orcEquipCount * 2;
     if (xVal > 0) {
@@ -50059,7 +50872,7 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
     }
   }
 
-  if ((cid === "R-ORC-0015" || name?.includes("獸人弓箭手")) && isAttacker) {
+  if ((cid === "ORC-0015" || cid === "R-ORC-0015" || name?.includes("獸人弓箭手")) && isAttacker) {
     baseReward += 2;
     hasRewardEffect = true;
   }
@@ -50095,6 +50908,16 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
   if (cid === "SSR-ORC-0057" || cid === "SR-ORC-0057" || cid === "R-ORC-0057" || name?.includes("禁衛軍獸人")) {
     baseReward += 2;
     hasRewardEffect = true;
+  }
+  if (cid === "ASSR-ORC-0070" || name?.includes("灌瑪爾")) {
+    baseReward += 2;
+    hasRewardEffect = true;
+    logBattle(`🏆【不敗獸人 灌瑪爾】戰鬥成功，自帶效果獎勵 +2★！`);
+  }
+  if (cid === "R-ORC-0039" || name?.includes("虛擬獸人機甲")) {
+    baseReward += 1;
+    hasRewardEffect = true;
+    logBattle(`✨【虛擬獸人機甲】戰鬥成功，自帶效果獎勵 +1★！`);
   }
   
   if (hasRewardEffect && ((isPlayer && window.XLW_debbieActive) || (!isPlayer && window.XLW_enemyDebbieActive))) {
@@ -53514,6 +54337,84 @@ window.xlwCheckTacticalPhaseTriggers = async function(activeSide) {
         }
       }
     }
+    // 3. 我方選擇戰術佈陣：檢查對手場上 挑釁獸人 (R-ORC-0061)
+    let oppTauntCount = 0;
+    for (const z of ["enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && u.card && (u.card.id === "R-ORC-0061" || u.card.name?.includes("挑釁獸人")) && !window.isUnitSilenced(u, z, i)) {
+          oppTauntCount++;
+        }
+      });
+    }
+    if (oppTauntCount > 0) {
+      enemyBonusScore += oppTauntCount;
+      logBattle(`✨ 對手【挑釁獸人】效果：敵方選擇戰術佈陣，對手獲得獎勵 +${oppTauntCount}★！`);
+      renderScore();
+    }
+
+    // 4. 我方選擇戰術佈陣：檢查我方場上 靈騷獸人 (R-ORC-0030)
+    if (!window.XLW_playerGhostOrcTurn || window.XLW_playerGhostOrcTurn !== turn) {
+      const ghostOrcs = [];
+      for (const z of ["player_front", "player_back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && u.card && (u.card.id === "R-ORC-0030" || u.card.name?.includes("靈騷獸人")) && !window.isUnitSilenced(u, z, i)) {
+            ghostOrcs.push({ zone: z, idx: i, unit: u });
+          }
+        });
+      }
+      if (ghostOrcs.length > 0) {
+        const otherOrcs = [];
+        for (const z of ["player_front", "player_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card && !ghostOrcs.some(g => g.unit === u)) {
+              const isOrc = u.card.faction === "獸人" || u.card.race === "獸人" || u.card.deck === "獸人" || u.card.id?.includes("ORC") || u.card.name?.includes("獸人");
+              const canMove = !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, i));
+              if (isOrc && canMove) {
+                otherOrcs.push({ zone: z, idx: i, unit: u, name: u.card.name });
+              }
+            }
+          });
+        }
+        const emptySlots = [];
+        for (const z of ["player_front", "player_back"]) {
+          for (let i = 0; i < 5; i++) {
+            if (!field[z][i]) {
+              emptySlots.push({ zone: z, idx: i, label: `${z === "player_front" ? "前排" : "後排"}${i + 1}` });
+            }
+          }
+        }
+        if (otherOrcs.length > 0 && emptySlots.length > 0) {
+          const doMove = await showXLWConfirm("【靈騷獸人】效果發動", "你的戰術階段開始時，可移動你場上 1 個其他獸人單位（一回合限一次）。是否發動？");
+          if (doMove) {
+            const unitChoices = otherOrcs.map((o, idx) => ({
+              text: `[${o.zone === "player_front" ? "前排" : "後排"}${o.idx + 1}] ${o.name}`,
+              value: idx
+            }));
+            const chosenUnitIdx = await showXLWChoiceModal("【靈騷獸人】選擇移動單位", "請選擇要移動的其他獸人單位：", [{ text: "取消", value: -1 }, ...unitChoices]);
+            if (chosenUnitIdx !== null && chosenUnitIdx !== undefined && chosenUnitIdx !== -1) {
+              const movingOrc = otherOrcs[chosenUnitIdx];
+              const slotChoices = emptySlots.map((s, idx) => ({
+                text: s.label,
+                value: idx
+              }));
+              const chosenSlotIdx = await showXLWChoiceModal("【靈騷獸人】選擇目標位置", `將【${movingOrc.name}】移動至：`, [{ text: "取消", value: -1 }, ...slotChoices]);
+              if (chosenSlotIdx !== null && chosenSlotIdx !== undefined && chosenSlotIdx !== -1) {
+                const targetSlot = emptySlots[chosenSlotIdx];
+                field[targetSlot.zone][targetSlot.idx] = movingOrc.unit;
+                field[movingOrc.zone][movingOrc.idx] = null;
+                movingOrc.unit.summonedZone = targetSlot.zone;
+                window.XLW_playerGhostOrcTurn = turn;
+                logBattle(`👻✨【靈騷獸人】效果：將我方【${movingOrc.name}】移動至 ${targetSlot.label}！`);
+                if (isMultiplayer) {
+                  sendFullGameStateToOpponent();
+                }
+                render();
+              }
+            }
+          }
+        }
+      }
+    }
   } else {
     // 1. 對手選擇戰術佈陣：檢查對手墓地 火把骷髏小哀妮 (SKT-0010 / ASSR-SKT-0010)
     const enemyGrave = window.XLW_ENEMY?.grave || enemyGraveyard || [];
@@ -53537,6 +54438,86 @@ window.xlwCheckTacticalPhaseTriggers = async function(activeSide) {
         if (confirm) {
           if (await window.xlwSpecialSummonUnit(fishCard, false, {sourcePile: () => graveyard})) {
             logBattle("🐟【魚骨頭】效果：由於對手在戰術階段選擇佈陣，我方從墓地將【魚骨頭】額外打出至對手場上！（對手星數 -2★）");
+            render();
+          }
+        }
+      }
+    }
+
+    // 3. 對手選擇戰術佈陣：檢查我方場上 挑釁獸人 (R-ORC-0061)
+    let myTauntCount = 0;
+    for (const z of ["player_front", "player_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (u && u.card && (u.card.id === "R-ORC-0061" || u.card.name?.includes("挑釁獸人")) && !window.isUnitSilenced(u, z, i)) {
+          myTauntCount++;
+        }
+      });
+    }
+    if (myTauntCount > 0) {
+      playerBonusScore += myTauntCount;
+      logBattle(`✨【挑釁獸人】效果發動：敵方在其戰術階段選擇戰術佈陣，我方獲得獎勵 +${myTauntCount}★！`);
+      renderScore();
+    }
+
+    // 4. 對手選擇戰術佈陣：檢查對手場上 靈騷獸人 (R-ORC-0030)
+    if (!window.XLW_enemyGhostOrcTurn || window.XLW_enemyGhostOrcTurn !== turn) {
+      const enemyGhostOrcs = [];
+      for (const z of ["enemy_front", "enemy_back"]) {
+        (field[z] || []).forEach((u, i) => {
+          if (u && u.card && (u.card.id === "R-ORC-0030" || u.card.name?.includes("靈騷獸人")) && !window.isUnitSilenced(u, z, i)) {
+            enemyGhostOrcs.push({ zone: z, idx: i, unit: u });
+          }
+        });
+      }
+      if (enemyGhostOrcs.length > 0) {
+        const enemyOtherOrcs = [];
+        for (const z of ["enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (u && u.card && !enemyGhostOrcs.some(g => g.unit === u)) {
+              const isOrc = u.card.faction === "獸人" || u.card.race === "獸人" || u.card.deck === "獸人" || u.card.id?.includes("ORC") || u.card.name?.includes("獸人");
+              const canMove = !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, i));
+              if (isOrc && canMove) {
+                enemyOtherOrcs.push({ zone: z, idx: i, unit: u, name: u.card.name });
+              }
+            }
+          });
+        }
+        const enemyEmptySlots = [];
+        for (const z of ["enemy_front", "enemy_back"]) {
+          for (let i = 0; i < 5; i++) {
+            if (!field[z][i]) {
+              enemyEmptySlots.push({ zone: z, idx: i, label: `${z === "enemy_front" ? "前排" : "後排"}${i + 1}` });
+            }
+          }
+        }
+        if (enemyOtherOrcs.length > 0 && enemyEmptySlots.length > 0) {
+          let chosenOrc = null;
+          let targetSlot = null;
+          const weakFrontOrc = enemyOtherOrcs.find(o => o.zone === "enemy_front" && (getUnitAtk(o.unit, o.zone, o.idx) <= 2));
+          const emptyBackSlot = enemyEmptySlots.find(s => s.zone === "enemy_back");
+          if (weakFrontOrc && emptyBackSlot) {
+            chosenOrc = weakFrontOrc;
+            targetSlot = emptyBackSlot;
+          } else {
+            const strongBackOrc = enemyOtherOrcs.find(o => o.zone === "enemy_back" && (getUnitAtk(o.unit, o.zone, o.idx) >= 3));
+            const emptyFrontSlot = enemyEmptySlots.find(s => s.zone === "enemy_front");
+            if (strongBackOrc && emptyFrontSlot) {
+              chosenOrc = strongBackOrc;
+              targetSlot = emptyFrontSlot;
+            } else {
+              chosenOrc = enemyOtherOrcs[0];
+              targetSlot = enemyEmptySlots[0];
+            }
+          }
+          if (chosenOrc && targetSlot) {
+            field[targetSlot.zone][targetSlot.idx] = chosenOrc.unit;
+            field[chosenOrc.zone][chosenOrc.idx] = null;
+            chosenOrc.unit.summonedZone = targetSlot.zone;
+            window.XLW_enemyGhostOrcTurn = turn;
+            logBattle(`👻✨ 對手【靈騷獸人】效果：將對手【${chosenOrc.name}】移動至 ${targetSlot.label}！`);
+            if (isMultiplayer) {
+              sendFullGameStateToOpponent();
+            }
             render();
           }
         }
@@ -55011,7 +55992,7 @@ window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
 // - SR-CRB-0001, SSR-CRB-0001, 碳碳子
 // - SR-CRB-0009, 旅人捷運
 
-// R-ORC-0030 靈騷獸人
+// R-ORC-0030 靈騷獸人 (已在 window.xlwCheckTacticalPhaseTriggers 戰術階段開始時完整實作)
 
 
 // ===== 🎴 3D 視差傾斜與 SR/SSR 雷射虹光特效系統 =====
@@ -56641,10 +57622,10 @@ function renderEnemyFloatingHand() {
   
   container.innerHTML = `
     <div class="floating-enemy-hand-wrap">
-      <span class="floating-enemy-count-badge">👾 對手手牌 (${handCount}張)</span>
       <div class="floating-enemy-cards-row">
         ${cardsHTML}
       </div>
+      <span class="floating-enemy-count-badge"><span class="enemy-hand-star-icon">✦</span> 對手手牌 (${handCount}張)</span>
     </div>
   `;
 }
