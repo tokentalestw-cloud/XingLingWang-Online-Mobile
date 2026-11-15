@@ -10854,8 +10854,10 @@ async function xlwResolveFairyStrategist(isPlayer) {
   const rows = ["player_front", "player_back", "enemy_front", "enemy_back"];
   const getDestinations = zone => rows.filter(row => row.startsWith(zone.split("_")[0] + "_"))
     .flatMap(row => field[row].flatMap((unit, idx) => unit ? [] : [{zone: row, idx}]));
+  const canMove = (unit, zone, idx) => !xlwIsUnitUnmovable(unit, zone, idx) &&
+    (isPlayer === zone.startsWith("player_") || !window.isUnitEffectImmune?.(unit, zone, idx));
   const targets = rows.flatMap(zone => field[zone].flatMap((unit, idx) =>
-    unit && !xlwIsUnitUnmovable(unit, zone, idx) && getDestinations(zone).length ? [{zone, idx, unit}] : []));
+    unit && canMove(unit, zone, idx) && getDestinations(zone).length ? [{zone, idx, unit}] : []));
   if (!targets.length) return;
   const choose = (title, list, summon = false) => showXLWChoiceModal(title, "直接點選亮起的格位。", [
     ...list.map(({zone, idx, unit}, value) => ({text: unit?.card.name || "移至此格", value, boardTarget: {zone, idx, summon}})),
@@ -10866,7 +10868,7 @@ async function xlwResolveFairyStrategist(isPlayer) {
   const destinations = getDestinations(target.zone);
   const dest = isPlayer ? destinations[await choose("【凱迪亞斯】選擇移動位置", destinations, true)] : destinations[0];
   if (!dest || field[target.zone][target.idx] !== target.unit || field[dest.zone][dest.idx] ||
-      xlwIsUnitUnmovable(target.unit, target.zone, target.idx)) return;
+      !canMove(target.unit, target.zone, target.idx)) return;
   field[target.zone][target.idx] = null;
   field[dest.zone][dest.idx] = target.unit;
   target.unit.summonedZone = dest.zone;
