@@ -1200,7 +1200,7 @@ async function init() {
       if (!response.ok) throw new Error("Game data request failed: " + response.status);
       return response.json();
     };
-    const loadData = (api, fallback, initial) => readJson(api + "?v=" + Date.now())
+    const loadData = (api, fallback, initial) => readJson(api)
       .catch(() => readJson(fallback)).catch(() => initial);
     const [cardsData, deckData, factionOrder] = await Promise.all([
       loadData("/api/cards", "/static/card_images/cards.json", []),
@@ -1255,46 +1255,6 @@ async function init() {
       adjustBoardScale();
       // mobile_viewport.js owns resize/orientation events; avoid delayed duplicate fits.
     } catch (e) {}
-
-    // 解除首頁按鈕的載入鎖定
-    try {
-      const aiBtn = document.getElementById("xlwWelcomeAiBtn");
-      const multiBtn = document.getElementById("xlwWelcomeMultiBtn");
-      const tutBtn = document.getElementById("xlwWelcomeTutorialBtn");
-      const puzzleBtn = document.getElementById("xlwWelcomePuzzleBtn");
-      const aiText = document.getElementById("xlwAiBtnText");
-      const multiText = document.getElementById("xlwMultiBtnText");
-      const tutText = document.getElementById("xlwTutorialBtnText");
-      const puzzleText = document.getElementById("xlwPuzzleBtnText");
-
-      if (aiBtn) {
-        aiBtn.disabled = false;
-        aiBtn.style.opacity = "1";
-        aiBtn.style.cursor = "pointer";
-      }
-      if (multiBtn) {
-        multiBtn.disabled = false;
-        multiBtn.style.opacity = "1";
-        multiBtn.style.cursor = "pointer";
-      }
-      if (tutBtn) {
-        tutBtn.disabled = false;
-        tutBtn.style.opacity = "1";
-        tutBtn.style.cursor = "pointer";
-      }
-      if (puzzleBtn) {
-        puzzleBtn.disabled = false;
-        puzzleBtn.style.opacity = "1";
-        puzzleBtn.style.cursor = "pointer";
-      }
-      if (aiText) aiText.textContent = "單人對抗 AI";
-      if (multiText) multiText.textContent = "線上雙人對決";
-      if (tutText) tutText.textContent = "🎓 新手教學模式";
-      if (puzzleText) puzzleText.textContent = "🧩 殘局挑戰";
-      console.log("Welcome buttons unlocked: card database loaded successfully!");
-    } catch (eUnlock) {
-      console.warn("Failed to unlock welcome buttons:", eUnlock);
-    }
 
     // 解析線上房間參數
     try {
@@ -49014,7 +48974,24 @@ function executeGameOverCalculations(isCallGame = false) {
 }
 
 // 啟動對戰引擎
-init();
+const xlwGameReady = init();
+window.xlwRunWelcomeAction = async action => {
+  const status = $("xlwWelcomeLoadingStatus");
+  window.xlwQueuedWelcomeAction = action;
+  if (!allCards.length && status) status.textContent = "正在準備遊戲資料…";
+  await xlwGameReady;
+  if (window.xlwQueuedWelcomeAction !== action) return;
+  window.xlwQueuedWelcomeAction = null;
+  if (!allCards.length) {
+    if (status) status.textContent = "遊戲資料載入失敗，請重新整理再試。";
+    return;
+  }
+  if (status) status.textContent = "";
+  if (action === "tutorial") return window.xlwStartTutorial();
+  if (action === "puzzle") return window.xlwOpenPuzzleStageSelect();
+  return window.xlwChooseMode(action);
+};
+if (window.xlwQueuedWelcomeAction) void window.xlwRunWelcomeAction(window.xlwQueuedWelcomeAction);
 
 
 function showCORSProtocolWarning() {

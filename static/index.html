@@ -179,33 +179,45 @@
         </div>
       </div>
 
+      <script>
+        window.xlwRequestWelcomeAction = action => {
+          const status = document.getElementById("xlwWelcomeLoadingStatus");
+          const run = window.xlwRunWelcomeAction;
+          if (run) run(action);
+          else {
+            window.xlwQueuedWelcomeAction = action;
+            status.textContent = "正在準備遊戲資料…";
+          }
+        };
+      </script>
+      <p id="xlwWelcomeLoadingStatus" role="status" aria-live="polite" style="margin:0;color:#dfc99f;font-size:12px"></p>
       <!-- 三大遊戲模式主入口按鈕 -->
       <div class="welcome-menu">
-        <button class="menu-btn menu-ai" id="xlwWelcomeAiBtn" onclick="window.xlwChooseMode('single')" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-ai" id="xlwWelcomeAiBtn" onclick="window.xlwRequestWelcomeAction('single')">
           <span class="btn-icon">⚔️</span>
-          <span class="btn-text" id="xlwAiBtnText">載入中...</span>
+          <span class="btn-text" id="xlwAiBtnText">單人對抗 AI</span>
           <span class="btn-shine"></span>
         </button>
         
-        <button class="menu-btn menu-multi" id="xlwWelcomeMultiBtn" onclick="window.xlwChooseMode('multi')" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-multi" id="xlwWelcomeMultiBtn" onclick="window.xlwRequestWelcomeAction('multi')">
           <span class="btn-icon">🌐</span>
-          <span class="btn-text" id="xlwMultiBtnText">載入中...</span>
+          <span class="btn-text" id="xlwMultiBtnText">線上雙人對決</span>
           <span class="btn-shine"></span>
         </button>
         
-        <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwStartTutorial()" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwRequestWelcomeAction('tutorial')">
           <span class="btn-icon">🎓</span>
-          <span class="btn-text" id="xlwTutorialBtnText">載入中...</span>
+          <span class="btn-text" id="xlwTutorialBtnText">新手教學模式</span>
           <span class="btn-shine"></span>
         </button>
 
-        <button class="menu-btn menu-puzzle" id="xlwWelcomePuzzleBtn" onclick="window.xlwOpenPuzzleStageSelect()" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-puzzle" id="xlwWelcomePuzzleBtn" onclick="window.xlwRequestWelcomeAction('puzzle')">
           <span class="btn-icon">🧩</span>
-          <span class="btn-text" id="xlwPuzzleBtnText">載入中...</span>
+          <span class="btn-text" id="xlwPuzzleBtnText">殘局挑戰</span>
           <span class="btn-shine"></span>
         </button>
 
-        <a href="/static/deck_builder.html?v=20261115-traveler-tokens" style="text-decoration: none; width: 100%; display: flex; justify-content: center;">
+        <a href="/static/deck_builder.html?v=20261115-load-performance" style="text-decoration: none; width: 100%; display: flex; justify-content: center;">
           <button class="menu-btn menu-builder" type="button">
             <span class="btn-icon">🎴</span>
             <span class="btn-text">牌組編輯器</span>
@@ -1080,7 +1092,7 @@
     </section>
   </div>
   <script src="/static/circus_wheel.js?v=3" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261115-orc-equipment" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261115-load-performance" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->
