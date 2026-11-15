@@ -1799,12 +1799,35 @@ function shuffle(arr) {
   }
 }
 
+window.xlwResolveFairyDrawReward = function(isPlayer, emptyDraw) {
+  if (mulliganActive || (!isPlayer && isMultiplayer)) return 0;
+  const own = isPlayer ? deck : window.XLW_ENEMY?.deck;
+  const opposing = isPlayer ? window.XLW_ENEMY?.deck : deck;
+  if (!own || own.length || (!emptyDraw && !opposing?.length)) return 0;
+  const side = isPlayer ? "player_" : "enemy_";
+  const id = emptyDraw ? "R-EVL-0028" : "R-EVL-0009";
+  let gained = 0;
+  for (const source of window.xlwActiveFairySources(side, id)) {
+    if (!emptyDraw) {
+      if (source.fairyElderDrawTurn === turn) continue;
+      source.fairyElderDrawTurn = turn;
+    }
+    const points = emptyDraw ? 1 : 2;
+    gained += points;
+    logBattle(`✨【${source.card.name}】獎勵 +${points}★。`);
+  }
+  if (gained && isPlayer) playerBonusScore += gained;
+  if (gained && !isPlayer) enemyBonusScore += gained;
+  return gained;
+};
+
 function draw(n) {
   const soundStartCount = hand.length;
   const deckName = $("deckSelect") ? $("deckSelect").value : "喵喵賊";
   for (let i = 0; i < n; i++) {
     if (deck.length === 0) {
       setStatus("牌庫已空。");
+      window.xlwResolveFairyDrawReward?.(true, true);
       break;
     }
     const c = deck.pop();
@@ -1823,7 +1846,7 @@ window.xlwSpringFairyRefill = async function(isPlayer) {
   if (!getDeck() || getDeck().length || !getGrave()) return false;
   for (const zone of [side + "front", side + "back"]) {
     for (const [idx, unit] of field[zone].entries()) {
-      const valid = () => unit?.card?.id === "R-EVL-0052" && field[zone][idx] === unit &&
+      const valid = () => (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id === "R-EVL-0052" && field[zone][idx] === unit &&
         unit.springFairyTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
       if (!valid()) continue;
       const cards = (getGrave() || []).filter(card => card?.type === "unit" || card?.type === "單位");
@@ -1850,6 +1873,7 @@ window.xlwDrawFairyAware = async function(n, isPlayer = true) {
     if (!getDeck()?.length) await window.xlwSpringFairyRefill(isPlayer);
     if (!getDeck()?.length) {
       if (isPlayer) setStatus("牌庫已空。");
+      window.xlwResolveFairyDrawReward?.(isPlayer, true);
       return count;
     }
     const amount = Math.min(n - count, getDeck().length);
@@ -2105,11 +2129,14 @@ async function performPlayerTurnStartDraw() {
     }
     const drawCount = Math.max(0, 2 - ningSubstituted);
     for (let i = 0; i < drawCount; i++) {
-      if (deck.length > 0) {
-        drawn.push(deck.pop());
+      if (deck.length === 0) {
+        window.xlwResolveFairyDrawReward?.(true, true);
+        break;
       }
+      drawn.push(deck.pop());
     }
   }
+  window.xlwResolveFairyDrawReward?.(true, false);
   
   if (drawn.length === 0) {
     setStatus("牌庫已空。");
@@ -3703,34 +3730,10 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
     }
   }
 
-  // 💀 詛咒黑妖精 (R-EVL-0044): 進入墓地時使敵方場上1個單位被賦予-3攻擊力
-  if (card.id === "R-EVL-0044" || card.name?.includes("詛咒黑妖精")) {
-    const oppPrefix = isPlayer ? "enemy_" : "player_";
-    const targets = [];
-    for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
-      (field[oz] || []).forEach((u, i) => {
-        if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
-          targets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
-        }
-      });
-    }
-    if (targets.length > 0) {
-      if (isPlayer) {
-        const choices = targets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: i }));
-        const pick = await showXLWChoiceModal("【詛咒黑妖精】臨終詛咒", "選擇敵方 1 個單位賦予 -3 攻擊力：", choices);
-        if (pick !== null && pick !== undefined) {
-          const t = targets[pick];
-          t.unit.curseAtkDebuff = (t.unit.curseAtkDebuff || 0) + 3;
-          logBattle(`💀🖤【詛咒黑妖精】怨咒降臨：敵方【${t.name}】被賦予 -3 攻擊力！`);
-          render();
-        }
-      } else {
-        const t = targets[0];
-        t.unit.curseAtkDebuff = (t.unit.curseAtkDebuff || 0) + 3;
-        logBattle(`💀🖤 對手【詛咒黑妖精】使我方【${t.name}】被賦予 -3 攻擊力！`);
-        render();
-      }
-    }
+  if (card.id === "R-EVL-0044") {
+    const target = await window.xlwPickDarkFairyTarget?.(card.name, isPlayer, () => true,
+      "點選要降低 3 點攻擊力的敵方單位。");
+    if (window.xlwDarkFairyAttackPenalty?.(target, 3)) render();
   }
 
   // 快樂墓園 (SKT-0019)
@@ -4853,8 +4856,9 @@ function hasImmediateEffect(card) {
 window.hasImmediateEffect = hasImmediateEffect;
 
 // ===== 綁架 (Kidnap) 機制輔助函式 =====
-async function cleanUnitLeavingField(unit, zone) {
-  if (unit?.xlwArmorBreakSwords?.length) {
+async function cleanUnitLeavingField(unit, zone, {releaseOnly = false} = {}) {
+  if (!releaseOnly && unit?.fairyCopiedEffectCard) delete unit.fairyCopiedEffectCard;
+  if (!releaseOnly && unit?.xlwArmorBreakSwords?.length) {
     const ownerGrave = zone.startsWith("player_") ? graveyard : (window.XLW_ENEMY.grave ||= xlwGravePile([], false));
     for (const sword of unit.xlwArmorBreakSwords) ownerGrave.push(sword);
     unit.xlwArmorBreakSwords = [];
@@ -4865,16 +4869,26 @@ async function cleanUnitLeavingField(unit, zone) {
   const kidnapperIsPlayer = zone.startsWith("player_");
   
   const policeZones = kidnapperIsPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
-  const hasPolice = policeZones.some(row => field[row].some((police, idx) =>
+  const hasPolice = !releaseOnly && policeZones.some(row => field[row].some((police, idx) =>
     police?.card?.id === "SSSR-NMS-0050" && !window.isUnitSilenced?.(police, row, idx)));
-  const isMolan = unit.card?.id === "SSR-ART-0043" && !window.isUnitSilenced?.(unit, zone);
+  const isMolan = !releaseOnly && unit.card?.id === "SSR-ART-0043" && !window.isUnitSilenced?.(unit, zone);
   const captured = unit.kidnappedCards;
   unit.kidnappedCards = [];
 
   for (const card of captured) {
     if (!card) continue;
     const originalOwner = card.originalOwner || (kidnapperIsPlayer ? "enemy" : "player");
+    delete card.fairyReleaseTurn;
     
+    if (!releaseOnly && unit.card?.id === "SR-EVL-0041") {
+      delete card.originalOwner;
+      const ownerGrave = originalOwner === "player" ? graveyard : (window.XLW_ENEMY.grave ||= xlwGravePile([], false));
+      ownerGrave.push(card);
+      if (originalOwner === "enemy") enemyGraveyard = ownerGrave;
+      logBattle(`✨【黑城堡回收機器人】離場，【${card.name}】進入其擁有者的墓地。`);
+      continue;
+    }
+
     if (isMolan) {
       exileCard(card, originalOwner);
       const scoreBonus = Number(card.tribute || 0);
@@ -4956,7 +4970,7 @@ async function cleanUnitLeavingField(unit, zone) {
   }
 }
 
-async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx) {
+async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx, duration = 0) {
   const targetUnit = field[targetZone]?.[targetIdx];
   const kidnapperUnit = field[kidnapperZone]?.[kidnapperIdx];
   if (!targetUnit?.card || !kidnapperUnit?.card || targetUnit === kidnapperUnit) return false;
@@ -4968,6 +4982,7 @@ async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx) {
   // Save original owner and card details
   const cardObj = structuredClone(targetUnit.card);
   cardObj.originalOwner = targetZone.startsWith("player_") ? "player" : "enemy";
+  if (duration > 0) cardObj.fairyReleaseTurn = turn + duration;
   
   // Change both locations before any nested leave-field or synchronization hook.
   field[targetZone][targetIdx] = null;
@@ -6615,7 +6630,10 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     const isPlayerSide = zone.startsWith("player_");
     const testZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
     const hasHorn = testZones.some(tz =>
-      (field[tz] || []).some(u => u && u.card && (u.card.id === "EVL-0004" || u.card.name?.includes("號角妖精")) && !window.isUnitSilenced(u))
+      (field[tz] || []).some((unit, idx) => {
+        const effect = window.xlwFairyEffectCard?.(unit) || unit?.card;
+        return effect?.id === "EVL-0004" && !window.isUnitSilenced(unit, tz, idx);
+      })
     );
     if (hasHorn) baseAtk += 2;
   }
@@ -6633,8 +6651,10 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     baseAtk = backFairyCount;
   }
 
+  baseAtk += window.xlwFairyValkyrieBonus?.(unit, zone) || 0;
+
   // 朗德只計算我方效果對敵方場上單位造成的扣星。
-  if (c.id === "R-EVL-0027" && zone && !window.isUnitSilenced(unit, zone, lane)) {
+  if ((window.xlwFairyEffectCard?.(unit) || c).id === "R-EVL-0027" && zone && !window.isUnitSilenced(unit, zone, lane)) {
     const side = zone.startsWith("player_") ? "player" : "enemy";
     const opposing = side === "player" ? "enemy" : "player";
     const total = ["front", "back"].reduce((count, row) => count + field[opposing + "_" + row].reduce((sum, target, idx) =>
@@ -6646,7 +6666,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     const opposing = zone.startsWith("player_") ? "enemy_" : "player_";
     baseAtk -= window.xlwFairyOppositeSources?.(unit, zone, lane, "R-EVL-0031").length || 0;
     const hostage = field[opposing + "front"][lane];
-    if (hostage?.card?.id?.includes("EVL-0034") && !window.isUnitSilenced(hostage, opposing + "front", lane)) {
+    if ((window.xlwFairyEffectCard?.(hostage) || hostage?.card)?.id?.includes("EVL-0034") && !window.isUnitSilenced(hostage, opposing + "front", lane)) {
       const targetSide = zone.startsWith("player_") ? "player_" : "enemy_";
       const exposed = ["front", "back"].map(row => field[targetSide + row][lane])
         .find(target => target && !window.XLW_isShieldUnit(target));
@@ -7066,7 +7086,8 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     for (const idx of [lane - 1, lane + 1]) {
       if (idx >= 0 && idx < 5) {
         const adj = field[zone][idx];
-        if (adj && adj.card && (adj.card.id === "R-EVL-0006" || adj.card.id === "SSR-EVL-0006" || adj.card.name?.includes("葛登") || adj.card.name?.includes("妖精戰士長")) && !window.isUnitSilenced(adj, zone, idx)) {
+        const effect = window.xlwFairyEffectCard?.(adj) || adj?.card;
+        if (effect?.id?.includes("EVL-0006") && !window.isUnitSilenced(adj, zone, idx)) {
           baseAtk += 2;
         }
       }
@@ -7093,14 +7114,15 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
       if (typeof field !== "undefined" && field[z]) {
         for (let i = 0; i < 5; i++) {
           const u = field[z][i];
-          if (u && u.card && (u.card.id === "R-EVL-0035" || u.card.name?.includes("黑妖精獄卒")) && !window.isUnitSilenced(u, z, i)) {
+          const effectCard = window.xlwFairyEffectCard?.(u) || u?.card;
+          if ((effectCard?.id === "R-EVL-0035" || effectCard?.name?.includes("黑妖精獄卒")) && !window.isUnitSilenced(u, z, i)) {
             oppJailerCount++;
           }
         }
       }
     }
     if (oppJailerCount > 0) {
-      baseAtk = Math.max(0, baseAtk - oppJailerCount);
+      baseAtk -= oppJailerCount;
     }
   }
 
@@ -7581,7 +7603,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   }
 
   // 親衛隊的 X 使用尚未計入女王獎勵的扣星量。
-  if (c.id === "C-EVL-0066" && zone) {
+  if ((window.xlwFairyEffectCard?.(unit) || c).id === "C-EVL-0066" && zone) {
     baseAtk += window.xlwGetTotalStarsReducedByEffects?.(zone.startsWith("player_")) || 0;
   }
 
@@ -7660,6 +7682,9 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (unit.candySwordBonusTurn === turn && phase !== "結束階段") baseAtk += unit.candySwordBonus || 0;
 
   if ((window.xlwFairyForestLevel?.(unit, zone, lane) || 0) >= 2) baseAtk += 2;
+  if ((window.xlwFairyPrisonLevel?.(unit, zone) || 0) >= 1) baseAtk += 1;
+  baseAtk -= (unit.darkFairyAttackPenalties || []).reduce((sum, effect) =>
+    sum + (turn <= effect.expiresTurn ? effect.amount : 0), 0);
   return baseAtk + rainbowBonus - (unit.houndDebuff || 0);
 }
 
@@ -7987,7 +8012,8 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
       }
     }
     // 妖精女孩 小英 (EVL-0007 / R-EVL-0007 / SSR-EVL-0007)：此卡若在後排戰線 +3 星
-    if ((c.id === "EVL-0007" || c.id === "R-EVL-0007" || c.id === "SSR-EVL-0007" || c.name?.includes("妖精女孩") || c.name?.includes("小英")) && zone && zone.includes("back") && !window.isUnitSilenced(unit, zone, lane)) {
+    const fairyEffect = window.xlwFairyEffectCard?.(unit) || c;
+    if (fairyEffect.id?.includes("EVL-0007") && zone?.endsWith("_back") && !window.isUnitSilenced(unit, zone, lane)) {
       baseStars += 3;
     }
 
@@ -7995,13 +8021,15 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     if (zone && zone.includes("back") && lane !== undefined && lane >= 0) {
       const frontZone = zone.replace("back", "front");
       const frontUnit = field[frontZone]?.[lane];
-      if (frontUnit && frontUnit.card && (frontUnit.card.id === "EVL-0003" || frontUnit.card.name?.includes("盾牌妖精")) && !window.isUnitSilenced(frontUnit, frontZone, lane)) {
+      const effect = window.xlwFairyEffectCard?.(frontUnit) || frontUnit?.card;
+      if (effect?.id === "EVL-0003" && typeof isGameOverFlag !== "undefined" && isGameOverFlag &&
+          !window.isUnitSilenced(frontUnit, frontZone, lane)) {
         baseStars += 2;
       }
     }
 
     // 妖精司令 艾文 (EVL-0010 / SSR-EVL-0010)：每個與此卡同排的其他妖精單位使此卡 +1 星
-    if ((c.id === "EVL-0010" || c.id === "SSR-EVL-0010" || c.name?.includes("妖精司令") || c.name?.includes("艾文")) && zone && field[zone] && !window.isUnitSilenced(unit, zone, lane)) {
+    if (fairyEffect.id?.includes("EVL-0010") && zone && field[zone] && !window.isUnitSilenced(unit, zone, lane)) {
       let otherFairies = 0;
       for (let i = 0; i < 5; i++) {
         if (i === lane) continue;
@@ -8015,7 +8043,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     }
 
     // 風流妖精 (EVL-0011 / R-EVL-0011-泳裝)：此卡前後左右每個你的妖精單位使此卡 +1 星
-    if ((c.id === "EVL-0011" || c.id === "R-EVL-0011-泳裝" || c.name?.includes("風流妖精")) && zone && lane !== undefined && !window.isUnitSilenced(unit, zone, lane)) {
+    if (fairyEffect.id?.includes("EVL-0011") && zone && lane !== undefined && !window.isUnitSilenced(unit, zone, lane)) {
       const sidePrefix = zone.startsWith("player_") ? "player_" : "enemy_";
       const otherRowZone = zone.includes("front") ? sidePrefix + "back" : sidePrefix + "front";
       let adjacentFairies = 0;
@@ -8048,8 +8076,14 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   }
 
   
+  if ((window.xlwFairyEffectCard?.(unit) || c).id?.includes("EVL-0022") &&
+      field[zone] && !window.isUnitSilenced(unit, zone, lane)) {
+    const nearby = field[zone].filter(ally => ally !== unit && window.xlwIsUnitFairy(ally));
+    reduce(nearby.length, ownSide);
+  }
+
   // 🖤 黑妖精女王莫拉娜 (SR-EVL-0064): 使此單位+X★。X=場上單位因為你的效果所減少的★總數
-  if (!skipFairyReductionAwards && (c.id === "SR-EVL-0064" || c.name?.includes("黑妖精女王莫拉娜")) &&
+  if (!skipFairyReductionAwards && (window.xlwFairyEffectCard?.(unit) || c).id === "SR-EVL-0064" &&
       !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && typeof window.xlwGetTotalStarsReducedByEffects === "function") {
       const isPlayer = zone.startsWith("player_");
@@ -8072,7 +8106,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   }
 
   // 🖤 黑妖精長老奧克 (SR-EVL-0068): 你場上的每個其他單位使此單位-1★
-  if (c.id === "SR-EVL-0068" && !window.isUnitSilenced(unit, zone, lane)) {
+  if ((window.xlwFairyEffectCard?.(unit) || c).id === "SR-EVL-0068" && !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && typeof field !== "undefined") {
       const isPlayer = zone.startsWith("player_");
       const sideP = isPlayer ? "player_" : "enemy_";
@@ -8085,7 +8119,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   }
 
   // 🖤 黑妖精貪婪者絲娜 (C-EVL-0069): 你的每張手牌使此單位-1★
-  if (c.id === "C-EVL-0069" && !window.isUnitSilenced(unit, zone, lane)) {
+  if ((window.xlwFairyEffectCard?.(unit) || c).id === "C-EVL-0069" && !window.isUnitSilenced(unit, zone, lane)) {
     const isPlayer = zone ? zone.startsWith("player_") : true;
     const handCount = isPlayer ? (hand || []).length : (window.XLW_ENEMY?.hand || []).length;
     reduce(handCount);
@@ -8170,27 +8204,8 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     }
   }
 
-  // 👙 風流妖精 (泳裝) (R-EVL-0011-泳裝): 此單位前後左右每個你的妖精單位使此單位+1⭐
-  if (c.id === "R-EVL-0011-泳裝" && !window.isUnitSilenced(unit, zone, lane)) {
-    if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined") {
-      const isPlayer = zone.startsWith("player_");
-      const sideP = isPlayer ? "player_" : "enemy_";
-      const isFront = zone.includes("front");
-      const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
-      let adjFairies = 0;
-      if (field[zone]) {
-        if (lane > 0 && field[zone][lane - 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane - 1])) adjFairies++;
-        if (lane < 4 && field[zone][lane + 1] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[zone][lane + 1])) adjFairies++;
-      }
-      if (field[otherRowZone] && field[otherRowZone][lane] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[otherRowZone][lane])) {
-        adjFairies++;
-      }
-      baseStars += (1 * adjFairies);
-    }
-  }
-
   // 🌲 魔化森林妖精 (R-EVL-0059): 使橫放的此單位-3⭐
-  if (c.id === "R-EVL-0059" && unit.tapped && !unit.attacking && !window.isUnitSilenced(unit, zone, lane)) {
+  if ((window.xlwFairyEffectCard?.(unit) || c).id === "R-EVL-0059" && unit.tapped && !unit.attacking && !window.isUnitSilenced(unit, zone, lane)) {
     reduce(3);
   }
 
@@ -8198,7 +8213,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   if (zone && typeof window.XLW_isShieldUnit === "function" && window.XLW_isShieldUnit(unit)) {
     const isPlayer = zone.startsWith("player_");
     const sideP = isPlayer ? "player_" : "enemy_";
-    const hasConductor = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-EVL-0062" || u.card.name?.includes("妖精前線指揮家")) && !window.isUnitSilenced(u)));
+    const hasConductor = window.xlwActiveFairySources?.(sideP, "EVL-0062")?.length;
     if (hasConductor) {
       baseStars += 1;
     }
@@ -8260,15 +8275,21 @@ window.xlwFairyCrossbowCanAttack = function(unit) {
 };
 
 window.xlwFairyCrossbowTargets = function(unit, zone, idx) {
-  if (unit?.card?.id !== "EVL-0056" || !zone.endsWith("_front") || unit.summonedTurn === turn ||
-      !field[zone.replace("_front", "_back")]?.[idx] || window.isUnitSilenced(unit, zone, idx)) return [];
+  if (!unit || !zone || window.isUnitSilenced(unit, zone, idx)) return [];
+  const id = (window.xlwFairyEffectCard?.(unit) || unit.card)?.id;
+  const crossbowReady = id === "EVL-0056" && zone.endsWith("_front") && unit.summonedTurn !== turn &&
+    field[zone.replace("_front", "_back")]?.[idx];
+  const sniper = id?.includes("EVL-0030");
+  if (!sniper && !id?.includes("EVL-0001") && !crossbowReady) return [];
+  const rows = ["front", "back"];
   const enemy = zone.startsWith("player_") ? "enemy_" : "player_";
-  return ["front", "back"].flatMap(row => {
+  return rows.flatMap(row => {
     const targetZone = enemy + row;
-    return field[targetZone].flatMap((target, targetIdx) => target &&
-      !isUnitAttackProtected(targetZone, targetIdx) && !xlwFairHeroBlocksAttack(unit, zone, idx, targetZone, targetIdx) &&
-      (!window.XLW_isShieldUnit(target, targetZone, targetIdx) || hasArmorBreak(unit, zone, idx)) ?
-      [{zone: targetZone, idx: targetIdx, unit: target}] : []);
+    return field[targetZone].flatMap((target, targetIdx) => {
+      if (sniper && row === "front" && targetIdx !== idx) return [];
+      if (xlwAttackTargetBlock(unit, zone, idx, targetZone, targetIdx)) return [];
+      return [{zone: targetZone, idx: targetIdx, unit: target}];
+    });
   });
 };
 
@@ -9370,11 +9391,18 @@ window.xlwCountTravelersOnField = function(isPlayer = true) {
   return count;
 };
 
+window.xlwFairyEffectCard = function(unit) {
+  if (unit?.card?.id === "SR-EVL-0041") {
+    return unit.fairyCopiedEffectCard || unit.card;
+  }
+  return unit?.card;
+};
+
 window.xlwActiveFairySources = function(side, id) {
   return ["front", "back"].flatMap(row => {
     const zone = side + row;
     return field[zone].filter((unit, idx) =>
-      unit?.card?.id?.includes(id) && !window.isUnitSilenced(unit, zone, idx));
+      (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id?.includes(id) && !window.isUnitSilenced(unit, zone, idx));
   });
 };
 
@@ -9385,7 +9413,7 @@ window.xlwFairyOppositeSources = function(unit, zone, idx, id) {
   if ((field[own + "front"][idx] || field[own + "back"][idx]) !== unit) return [];
   return [other + "front", other + "back"].filter(row => {
     const source = field[row][idx];
-    return source?.card?.id === id && (row.endsWith("_front") || !field[other + "front"][idx]) &&
+    return (window.xlwFairyEffectCard?.(source) || source?.card)?.id === id && (row.endsWith("_front") || !field[other + "front"][idx]) &&
       !window.isUnitSilenced(source, row, idx);
   });
 };
@@ -9415,6 +9443,16 @@ window.xlwFairyForestLevel = function(unit, zone, idx) {
       !["召喚階段", "主要階段", "戰術佈陣", "進攻宣言"].includes(phase)) return 0;
   const totals = window.xlwReadStarReductions(unit, zone, idx);
   return totals.player + totals.enemy + totals.unattributed;
+};
+
+window.xlwFairyPrisonLevel = function(unit, zone) {
+  if (!zone || !unit?.card || (!window.xlwIsUnitFairy?.(unit) && !unit.kidnappedCards?.length &&
+      !window.xlwCardHasKeyword?.(unit.card, "綁架"))) return 0;
+  const own = zone.startsWith("player_");
+  if (window.xlwGetFactionFieldCard?.(own)?.id !== "R-EVL-0040") return 0;
+  const side = own ? "player_" : "enemy_";
+  return ["front", "back"].reduce((total, row) => total + field[side + row].reduce((sum, source) =>
+    sum + (source?.kidnappedCards?.filter(card => card?.id).length || 0), 0), 0);
 };
 
 const TROPHY_ATTACK = 6;
@@ -9499,7 +9537,7 @@ window.xlwCheckLunaDefenseReaction = async function(isAiOwner = false) {
   const rows = [side + "front", side + "back"];
   const units = rows.flatMap(zone => field[zone].map((unit, idx) => ({unit, zone, idx})));
   for (const {unit, zone, idx} of units) {
-    const legal = () => unit?.card?.id === "ASSR-EVL-0065" && field[zone][idx] === unit &&
+    const legal = () => (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id === "ASSR-EVL-0065" && field[zone][idx] === unit &&
       unit.lunaUsedTurn !== turn && !window.isUnitSilenced(unit, zone, idx) && !xlwIsUnitUnmovable(unit, zone, idx);
     if (!legal()) continue;
     const slots = rows.flatMap(row => field[row].flatMap((occupant, col) =>
@@ -10725,24 +10763,32 @@ window.xlwRetrieveCrystalArrow = async function(unit, isPlayer) {
   return true;
 };
 
+window.xlwFairyValkyrieBonus = function(unit, zone) {
+  if (!zone || !window.xlwIsUnitFairy(unit) || !field[zone]?.includes(unit)) return 0;
+  const side = zone.startsWith("player_") ? "player_" : "enemy_";
+  return window.xlwActiveFairySources(side, "EVL-0026").length;
+};
+
+window.xlwResolveFairyCombatDraw = async function(unit, isPlayer, isAttacker) {
+  if (!unit?.card || (!isPlayer && isMultiplayer)) return 0;
+  const side = isPlayer ? "player_" : "enemy_";
+  const zone = [side + "front", side + "back"].find(row => field[row].includes(unit));
+  const idx = zone ? field[zone].indexOf(unit) : undefined;
+  const effect = window.xlwFairyEffectCard(unit);
+  const sword = isAttacker && unit.hasFairySwordDraw ? 1 : 0;
+  const recruit = effect?.id === "EVL-0008" && !window.isUnitSilenced(unit, zone, idx) ? 1 : 0;
+  const valkyries = isAttacker ? window.xlwFairyValkyrieBonus(unit, zone) : 0;
+  let drawn = 0;
+  for (let i = 0; i < sword + recruit + valkyries; i++) {
+    drawn += await window.xlwDrawFairyAware(1, isPlayer);
+  }
+  if (drawn) logBattle(`✨【${unit.card.name}】戰鬥成功：抽取 ${drawn} 張牌！`);
+  return drawn;
+};
+
 window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOwner, isAttacker) {
   await window.xlwRetrieveCrystalArrow?.(attacker, successOwner === "player");
-  // 🗡️ 妖精寶劍進攻成功抽1張牌
-  if (attacker && attacker.hasFairySwordDraw && successOwner === "player") {
-    await (window.xlwDrawFairyAware?.(1) ?? draw(1));
-    logBattle("🗡️✨【妖精寶劍】進攻戰鬥成功：抽取 1 張牌！");
-  }
-
-  // 🤖 新兵機器人 (EVL-0008): 戰鬥成功時抽1張牌
-  if (attacker && attacker.card && (attacker.card.id === "EVL-0008" || attacker.card.name?.includes("新兵機器人"))) {
-    if (successOwner === "player") {
-      await (window.xlwDrawFairyAware?.(1) ?? draw(1));
-      logBattle("🤖✨【新兵機器人】戰鬥成功：抽取 1 張牌！");
-    } else {
-      window.XLW_ENEMY?.deck?.pop();
-      logBattle("🤖✨ 對手【新兵機器人】戰鬥成功：抽 1 張牌！");
-    }
-  }
+  await window.xlwResolveFairyCombatDraw(attacker, successOwner === "player", isAttacker);
 
   // 🗑️ 學會刪除檔案的野人 (R-EWD-0030): 戰鬥成功時，除外敵方墓地1張★<=2的單位
   if (attacker && attacker.card && (attacker.card.id === "R-EWD-0030" || attacker.card.name?.includes("學會刪除檔案的野人"))) {
@@ -10937,11 +10983,16 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
   }
 };
 
-async function xlwResolveFairyStrategist(isPlayer) {
+async function xlwResolveFairyStrategist(isPlayer, charm = false) {
+  if (!isPlayer && isMultiplayer) return;
+  const name = charm ? "克莉雅" : "凱迪亞斯";
+  const sourceSide = isPlayer ? "player" : "enemy";
   const rows = ["player_front", "player_back", "enemy_front", "enemy_back"];
   const getDestinations = zone => rows.filter(row => row.startsWith(zone.split("_")[0] + "_"))
     .flatMap(row => field[row].flatMap((unit, idx) => unit ? [] : [{zone: row, idx}]));
   const canMove = (unit, zone, idx) => !xlwIsUnitUnmovable(unit, zone, idx) &&
+    (!charm || (!zone.startsWith(sourceSide + "_") &&
+      (window.xlwReadStarReductions?.(unit, zone, idx)?.[sourceSide] || 0) > 0)) &&
     (isPlayer === zone.startsWith("player_") || !window.isUnitEffectImmune?.(unit, zone, idx));
   const targets = rows.flatMap(zone => field[zone].flatMap((unit, idx) =>
     unit && canMove(unit, zone, idx) && getDestinations(zone).length ? [{zone, idx, unit}] : []));
@@ -10950,10 +11001,10 @@ async function xlwResolveFairyStrategist(isPlayer) {
     ...list.map(({zone, idx, unit}, value) => ({text: unit?.card.name || "移至此格", value, boardTarget: {zone, idx, summon}})),
     {text: "取消", value: "cancel"}
   ], {boardOnly: true});
-  const target = isPlayer ? targets[await choose("【凱迪亞斯】選擇單位", targets)] : targets[0];
+  const target = isPlayer ? targets[await choose(`【${name}】選擇單位`, targets)] : targets[0];
   if (!target) return;
   const destinations = getDestinations(target.zone);
-  const dest = isPlayer ? destinations[await choose("【凱迪亞斯】選擇移動位置", destinations, true)] : destinations[0];
+  const dest = isPlayer ? destinations[await choose(`【${name}】選擇移動位置`, destinations, true)] : destinations[0];
   if (!dest || field[target.zone][target.idx] !== target.unit || field[dest.zone][dest.idx] ||
       !canMove(target.unit, target.zone, target.idx)) return;
   field[target.zone][target.idx] = null;
@@ -10961,7 +11012,7 @@ async function xlwResolveFairyStrategist(isPlayer) {
   target.unit.summonedZone = dest.zone;
   window.XLWBattleFlow?.forget(target.zone, target.idx);
   render();
-  if ((target.unit.tapped || target.unit.attacking) && isPlayer &&
+  if (!charm && (target.unit.tapped || target.unit.attacking) && isPlayer &&
       await showXLWConfirm("【凱迪亞斯】", "是否將已移動的單位轉正？") &&
       field[dest.zone][dest.idx] === target.unit) {
     target.unit.tapped = false;
@@ -10969,7 +11020,7 @@ async function xlwResolveFairyStrategist(isPlayer) {
     target.unit.target = null;
     target.unit.trophyTargetId = null;
   }
-  logBattle("✨【妖精戰略家凱迪亞斯】效果：移動了【" + target.unit.card.name + "】。");
+  logBattle(`✨【${name}】效果：移動了【${target.unit.card.name}】。`);
   render();
 }
 
@@ -11002,6 +11053,123 @@ window.xlwResolveFairySoulRefiner = async function(isPlayer) {
   window.XLWDuelConsistency.moveKnownCard(latest.fromHand, latest.fromGrave, sacrifice);
   logBattle(`【黑妖精煉魂師絲塔】將【${sacrifice.name}】送墓，並把【${recovered.name}】放回牌庫頂。`);
   return true;
+};
+
+window.xlwPickDarkFairyTarget = async function(sourceName, isPlayer, predicate, prompt) {
+  if (isMultiplayer && !isPlayer) return null;
+  const opposing = isPlayer ? "enemy_" : "player_";
+  const valid = ({zone, idx, unit}) => field[zone][idx] === unit && unit?.card &&
+    !window.isUnitEffectImmune(unit, zone, idx) && predicate(unit, zone, idx);
+  const targets = ["front", "back"].flatMap(row => {
+    const zone = opposing + row;
+    return field[zone].map((unit, idx) => ({zone, idx, unit})).filter(valid);
+  });
+  if (!targets.length) return null;
+  const pick = isPlayer ? await showXLWChoiceModal(sourceName, prompt, targets.map((target, value) =>
+    ({text: target.unit.card.name, value, boardTarget: {zone: target.zone, idx: target.idx}})), {boardOnly: true}) : 0;
+  const target = targets[pick];
+  return target && valid(target) ? target : null;
+};
+
+window.xlwDarkFairyAttackPenalty = function(target, amount, duration = 1) {
+  if (!target || !Number.isFinite(amount)) return false;
+  (target.unit.darkFairyAttackPenalties ||= []).push({amount, expiresTurn: turn + duration});
+  return true;
+};
+
+window.xlwActivateFairyRecycler = async function(unit, zone, idx, isPlayer) {
+  if (unit?.card?.id !== "SR-EVL-0041" || (isMultiplayer && !isPlayer)) return false;
+  const owner = isPlayer ? "player" : "enemy";
+  const pile = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  const options = (pile() || []).filter(card => card?.type === "unit" && window.xlwIsUnitFairy(card));
+  if (!options.length) return false;
+  const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "選擇墓地的一張妖精單位綁架。", [
+    ...options.map((card, value) => ({card, text: card.name, value})),
+    {text: "取消", value: -1}
+  ]) : 0;
+  const card = options[pick];
+  if (!card || field[zone]?.[idx] !== unit ||
+      unit.fairyCopiedEffectCard) return false;
+  const captured = window.XLWDuelConsistency.moveKnownCard(pile(), (unit.kidnappedCards ||= []), card);
+  if (!captured) return false;
+  captured.originalOwner = owner;
+  unit.fairyCopiedEffectCard = {id: captured.id, name: captured.name};
+  logBattle(`⛓️【黑城堡回收機器人】綁架墓地的【${captured.name}】。`);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwResolveFairyShootingInstructor = async function(source, zone, idx, isPlayer) {
+  if (!source?.card || (!isPlayer && isMultiplayer) || !zone.endsWith("_front")) return false;
+  const rear = zone.replace("_front", "_back");
+  if (field[rear][idx]) return false;
+  const legal = ({row, lane, unit}) => unit && unit !== source && field[row][lane] === unit &&
+    window.xlwIsUnitFairy(unit) && !xlwIsUnitUnmovable(unit, row, lane);
+  const targets = [zone, rear].flatMap(row => field[row].map((unit, lane) => ({row, lane, unit})).filter(legal));
+  if (!targets.length) return false;
+  const pick = isPlayer ? await showXLWChoiceModal(source.card.name, "選擇一個妖精單位移到教官後方並轉正。", [
+    ...targets.map(({row, lane, unit}, value) => ({text: unit.card.name, value, boardTarget: {zone: row, idx: lane}})),
+    {text: "取消", value: -1}
+  ], {boardOnly: true}) : 0;
+  const target = targets[pick];
+  if (!target || !legal(target) || field[zone][idx] !== source || field[rear][idx]) return false;
+  field[target.row][target.lane] = null;
+  field[rear][idx] = target.unit;
+  target.unit.summonedZone = rear;
+  target.unit.tapped = false;
+  target.unit.attacking = false;
+  target.unit.target = null;
+  target.unit.trophyTargetId = null;
+  window.XLWBattleFlow?.forget(target.row, target.lane);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwResolveFairyExecutioner = async function(isPlayer) {
+  if (!isPlayer && isMultiplayer) return false;
+  const own = isPlayer ? "player_" : "enemy_";
+  const targets = ["front", "back"].flatMap(row => {
+    const zone = own + row;
+    return field[zone].flatMap((unit, idx) => (unit?.kidnappedCards || []).filter(Boolean)
+      .map(card => ({zone, idx, unit, card})));
+  });
+  if (!targets.length) return false;
+  const pick = isPlayer ? await showXLWChoiceModal("黑妖精處刑者", "選擇一張己方綁架的卡牌除外。", [
+    ...targets.map(({unit, card}, value) => ({card, text: `${card.name}（${unit.card.name}）`, value})),
+    {text: "取消", value: -1}
+  ]) : 0;
+  const target = targets[pick];
+  if (!target || field[target.zone][target.idx] !== target.unit) return false;
+  const pile = target.unit.kidnappedCards;
+  const index = pile?.indexOf(target.card) ?? -1;
+  if (index < 0) return false;
+  const [card] = pile.splice(index, 1);
+  const owner = card.originalOwner || (isPlayer ? "enemy" : "player");
+  delete card.originalOwner;
+  delete card.fairyReleaseTurn;
+  exileCard(card, owner);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwResolveFairyFreyaPush = async function(zone, idx, summonIsPlayer) {
+  const target = field[zone]?.[idx];
+  if (!zone.endsWith("_front") || !target?.card ||
+      window.isUnitEffectImmune(target, zone, idx)) return false;
+  const defendingSide = summonIsPlayer ? "enemy_" : "player_";
+  const sources = () => window.xlwActiveFairySources(defendingSide, "EVL-0047");
+  if (!sources().length) return false;
+  if (!summonIsPlayer && !isMultiplayer && !await showXLWConfirm(
+    "【妖精女祭司芙蕾雅】", `是否將敵方前排的【${target.card.name}】往後推擠？`
+  )) return false;
+  if (field[zone][idx] !== target || !sources().length ||
+      window.isUnitEffectImmune(target, zone, idx)) return false;
+  const moved = await xlwPushUnit(zone, idx, "back", {offBoardAction: "hand", sourceName: "妖精女祭司芙蕾雅"});
+  if (moved) logBattle("🧚‍♀️🌊【妖精女祭司芙蕾雅】使敵方前排登場單位向後推擠。");
+  return moved;
 };
 
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
@@ -11070,53 +11238,31 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     render();
   }
 
-  // 🧚‍♀️ 妖精女祭司芙蕾雅 (R-EVL-0047 / SSR-EVL-0047) 敵方前排召喚推擠反應
-  if (zone.includes("front")) {
-    const oppZones = [oppSide + "front", oppSide + "back"];
-    let freyaUnit = null;
-    for (const oz of oppZones) {
-      (field[oz] || []).forEach(u => {
-        if (u && u.card && (u.card.id?.includes("EVL-0047") || u.card.name?.includes("妖精女祭司芙蕾雅") || u.card.name?.includes("芙蕾雅")) && !window.isUnitSilenced(u)) {
-          freyaUnit = u;
-        }
-      });
-    }
-    if (freyaUnit) {
-      logBattle(`🧚‍♀️🌊【妖精女祭司芙蕾雅】神聖排斥：敵方前排登場單位被向後推擠！`);
-      await xlwPushUnit(zone, idx, "back", { offBoardAction: "hand", sourceName: "妖精女祭司芙蕾雅" });
-    }
+  await window.xlwResolveFairyFreyaPush(zone, idx, isPlayer);
+
+  if (cardId === "R-EVL-0029" && field[zone]?.[idx]?.card?.id === cardId) {
+    await window.xlwResolveFairyShootingInstructor(field[zone][idx], zone, idx, isPlayer);
+  }
+  if (cardId === "R-EVL-0042") await window.xlwResolveFairyExecutioner(isPlayer);
+  if (cardId === "R-EVL-0048") await xlwResolveFairyStrategist(isPlayer, true);
+
+  if (cardId === "SR-EVL-0041") {
+    await window.xlwActivateFairyRecycler(field[zone]?.[idx], zone, idx, isPlayer);
   }
 
-  // 🧚‍♀️ SR-EVL-0033 夜行黑妖精: 立即使敵方場上1個攻擊力為-2或以下的單位被綁架
-  if (cardId === "SR-EVL-0033" || cardName.includes("夜行黑妖精")) {
-    const oppTargets = [];
-    for (const oz of [oppSide + "front", oppSide + "back"]) {
-      (field[oz] || []).forEach((u, i) => {
-        if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
-          const uAtk = typeof getUnitAtk === "function" ? getUnitAtk(u, oz, i) : (parseInt(u.card.attack) || 0);
-          if (uAtk <= -2) {
-            oppTargets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
-          }
-        }
-      });
+  if (cardId === "SR-EVL-0033") {
+    const source = field[zone]?.[idx];
+    const target = await window.xlwPickDarkFairyTarget(cardName, isPlayer,
+      (unit, row, col) => getUnitAtk(unit, row, col) <= -2, "點選攻擊力 -2 或以下的敵方單位。");
+    if (target && source?.card?.id === cardId && field[zone][idx] === source) {
+      await kidnapCard(target.zone, target.idx, zone, idx);
     }
-    if (oppTargets.length > 0) {
-      if (isPlayer) {
-        const choices = oppTargets.map((t, i) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: i }));
-        const pick = await showXLWChoiceModal("【夜行黑妖精】暗夜誘捕", "選擇綁架敵方攻擊力 <= -2 的單位：", choices);
-        if (pick !== null && pick !== undefined) {
-          const t = oppTargets[pick];
-          await kidnapCard(t.zone, t.idx, zone, idx);
-          logBattle(`🧚‍♀️🌑【夜行黑妖精】暗夜縛鎖：將敵方【${t.name}】綁架！`);
-          render();
-        }
-      } else {
-        const t = oppTargets[0];
-        await kidnapCard(t.zone, t.idx, zone, idx);
-        logBattle(`🧚‍♀️🌑 對手【夜行黑妖精】將我方【${t.name}】綁架！`);
-        render();
-      }
-    }
+  }
+  if (cardId === "R-EVL-0045") {
+    const target = await window.xlwPickDarkFairyTarget(cardName, isPlayer, () => true,
+      "點選要降低攻擊力的敵方單位，扣減值為它目前的星數。");
+    if (target && window.xlwDarkFairyAttackPenalty(target,
+        getUnitStars(target.unit, target.zone, target.idx))) render();
   }
 
   // 🍖 SSR-EWD-0021 貴貴野人: 立即從手牌額外打出2個無需祭品的野人單位
@@ -11407,7 +11553,7 @@ window.xlwResolveFairyLawyer = async function(isPlayer) {
   if (!grave() || !targetHand) return;
   for (const zone of [side + "front", side + "back"]) {
     for (const [idx, unit] of field[zone].entries()) {
-      const legal = () => unit?.card?.id === "C-EVL-0061" && field[zone][idx] === unit &&
+      const legal = () => (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id === "C-EVL-0061" && field[zone][idx] === unit &&
         !unit.tapped && !unit.attacking && unit.fairyLawyerTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
       if (!legal()) continue;
       const cards = (grave() || []).filter(card => card?.type === "magic" || card?.type === "魔法");
@@ -11434,7 +11580,7 @@ window.xlwResolveBalloonFairy = async function(isPlayer) {
     window.xlwIsUnitFairy(unit) && getUnitStars(unit, zone, idx) >= 4));
   for (const zone of rows) {
     for (const [idx, source] of field[zone].entries()) {
-      if (source?.card?.id !== "R-EVL-0043" || source.balloonFairyTurn === turn ||
+      if ((window.xlwFairyEffectCard?.(source) || source?.card)?.id !== "R-EVL-0043" || source.balloonFairyTurn === turn ||
           window.isUnitSilenced(source, zone, idx) || !bigFairy()) continue;
       source.balloonFairyTurn = turn;
       if (window.xlwDrawFairyAware) {
@@ -11451,7 +11597,27 @@ window.xlwResolveBalloonFairy = async function(isPlayer) {
   }
 };
 
+window.xlwReleaseTimedFairyCaptives = async function(isPlayer) {
+  const side = isPlayer ? "player_" : "enemy_";
+  for (const zone of [side + "front", side + "back"]) {
+    for (const unit of field[zone]) {
+      const released = unit?.kidnappedCards?.filter(card => Number.isFinite(card?.fairyReleaseTurn) && card.fairyReleaseTurn <= turn) || [];
+      if (!released.length) continue;
+      unit.kidnappedCards = unit.kidnappedCards.filter(card => !released.includes(card));
+      await cleanUnitLeavingField({kidnappedCards: released}, zone, {releaseOnly: true});
+    }
+  }
+};
+
 window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
+  await window.xlwReleaseTimedFairyCaptives?.(isPlayer);
+  for (const row of Object.values(field)) {
+    for (const unit of row) {
+      if (unit?.darkFairyAttackPenalties) {
+        unit.darkFairyAttackPenalties = unit.darkFairyAttackPenalties.filter(effect => effect.expiresTurn >= turn);
+      }
+    }
+  }
   const side = isPlayer ? "player_" : "enemy_";
   const opposing = isPlayer ? "enemy_" : "player_";
   for (const row of ["front", "back"]) {
@@ -12731,6 +12897,24 @@ async function castSpell(handIndex) {
           }
         }
       }
+      graveyard.push(spellCard);
+      render();
+    });
+
+  } else if (card.id === "R-EVL-0037") {
+    const legal = (unit, zone, idx) => zone === "enemy_front" &&
+      !window.XLW_isShieldUnit(unit, zone, idx) && !window.isUnitMagicImmune(unit, zone, idx, card);
+    if (!field.enemy_front.some((unit, idx) => unit?.card && legal(unit, "enemy_front", idx) &&
+        !window.isUnitEffectImmune(unit, "enemy_front", idx))) {
+      setStatus("【人質脅迫】需要敵方前排一個可被指定的非阻擋單位。");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const target = await window.xlwPickDarkFairyTarget(spellCard.name, true, legal,
+        "點選敵方前排非阻擋單位，扣除其原始攻擊力。");
+      if (target) window.xlwDarkFairyAttackPenalty(target, Number(target.unit.card.attack) || 0, 0);
       graveyard.push(spellCard);
       render();
     });
@@ -19836,7 +20020,7 @@ function xlwUnitHasCover(unit, zone, idx) {
   const shield = window.XLW_isShieldUnit?.(unit, zone, idx);
   const side = zone.startsWith("player_") ? "player" : "enemy";
   return [side + "_front", side + "_back"].some(row => field[row].some((source, lane) => {
-    const aura = source?.card;
+    const aura = (window.xlwFairyEffectCard?.(source) || source?.card);
     if (!aura || window.isUnitSilenced(source, row, lane)) return false;
     return (mech && (aura.id?.includes("RBT-0010") || aura.name?.includes("機械師瑪琪"))) ||
       (shield && (aura.id?.includes("EVL-0062") || aura.name?.includes("妖精前線指揮家")));
@@ -24983,6 +25167,10 @@ function moveFieldUnit(fromZone, fromIdx, toZone, toIdx) {
   if (!unit) return;
 
   const c = unit.card || unit;
+  if ((window.xlwFairyEffectCard?.(unit) || c).id?.includes("EVL-0030")) {
+    setStatus(`【移動失敗】${c.name} 只能透過效果移動。`);
+    return;
+  }
   if (xlwIsUnitUnmovable(unit, fromZone, fromIdx)) {
     setStatus(`【移動失敗】${c.name} 完全不能被移動！`);
     return;
@@ -25040,6 +25228,11 @@ function swapFieldUnits(zoneA, idxA, zoneB, idxB) {
 
   const nameA = unitName(unitA);
   const nameB = unitName(unitB);
+
+  if ([unitA, unitB].some(unit => (window.xlwFairyEffectCard?.(unit) || unit.card)?.id?.includes("EVL-0030"))) {
+    setStatus("【互換失敗】妖精狙擊手昆狄的能力只允許透過效果移動。");
+    return;
+  }
 
   if (xlwIsUnitUnmovable(unitA, zoneA, idxA)) {
     setStatus(`【互換失敗】${nameA} 完全不能被移動！`);
@@ -25165,7 +25358,7 @@ async function selectPlayerTarget(zone, idx) {
 
   // 星星戰線（同欄位）限制（雙弓勇者可進攻敵方場上任意位置）
   if (selectedAttacker.idx !== idx && !isDoubleArcher && !isCrossbowTarget) {
-    setStatus("只能指定相同星星戰線的目標！（除非是【雙弓勇者】可進攻任意位置）");
+    setStatus("這個單位無法指定該星星戰線的目標。");
     return;
   }
 
@@ -25181,7 +25374,7 @@ async function selectPlayerTarget(zone, idx) {
   const frontIsFlying = frontDefender && window.hasFlying(frontDefender);
 
   if (frontDefender && zone === "enemy_back") {
-    if (!hasRanged && !frontIsFlying) {
+    if (!hasRanged && !frontIsFlying && !isCrossbowTarget) {
       setStatus("敵方同戰線前排仍有單位，必須優先攻擊前排！（除非是遠程或飛行單位，或前排為飛行單位）");
       return;
     }
@@ -25468,23 +25661,23 @@ async function xlwAutoDeclarePlayerAttacks() {
   render();
 }
 
-function xlwAttackTargetBlock(unit, zone, idx, targetZone) {
-  const target = field[targetZone][idx];
+function xlwAttackTargetBlock(unit, zone, idx, targetZone, targetIdx = idx) {
+  const target = field[targetZone][targetIdx];
   if (!target) return "該位置沒有敵方單位。";
   if (window.hasFlying(target) && !window.hasFlying(unit) && !window.xlwUnitHasRanged(unit, zone, idx)) {
     return "【飛行保護】只有飛行或遠程單位可以進攻飛行單位。";
   }
-  if (window.XLW_isShieldUnit(target) && !hasArmorBreak(unit, zone, idx)) {
+  if (window.XLW_isShieldUnit(target, targetZone, targetIdx) && !hasArmorBreak(unit, zone, idx)) {
     return "【阻擋】目標是盾牌單位，具有破甲效果的單位才可進攻。";
   }
-  if (window.xlwIsUnitSeed?.(target) && ["enemy_front", "enemy_back"].some(row =>
+  if (window.xlwIsUnitSeed?.(target) && [targetZone.split("_")[0] + "_front", targetZone.split("_")[0] + "_back"].some(row =>
     field[row].some((guard, i) =>
       (guard?.card?.id === "C-PLT-0002" || guard?.card?.name?.includes("林區稻草人")) &&
       !window.isUnitSilenced(guard, row, i)))) {
     return "【稻草人守護】受到「林區稻草人」保護，種子單位無法被進攻。";
   }
-  if (xlwFairHeroBlocksAttack(unit, zone, idx, targetZone, idx)) return "【公平勇者】攻擊力不同，無法指定為目標。";
-  if (isUnitAttackProtected(targetZone, idx)) return "【進攻失敗】敵方單位受到牆壁上的香蕉保護。";
+  if (xlwFairHeroBlocksAttack(unit, zone, idx, targetZone, targetIdx)) return "【公平勇者】攻擊力不同，無法指定為目標。";
+  if (isUnitAttackProtected(targetZone, targetIdx)) return "【進攻失敗】敵方單位受到牆壁上的香蕉保護。";
   return "";
 }
 
@@ -28607,7 +28800,8 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
 
   // 🛡️ 祝福勇者 (R-BRV-0058): 敵方魔法抗性
   if (unit.magicImmuneUntilNextTurn || unit.hasSpellShield ||
-      (window.xlwFairyForestLevel?.(unit, zone, idx) || 0) >= 3) return true;
+      (window.xlwFairyForestLevel?.(unit, zone, idx) || 0) >= 3 ||
+      (window.xlwFairyPrisonLevel?.(unit, zone) || 0) >= 3) return true;
 
   // 📿 靈異驅魔師 (C-VLG-0065): 敵方魔法抗性
   if (c.id === "C-VLG-0065" || c.name?.includes("靈異驅魔師")) return true;
@@ -28765,7 +28959,7 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
       for (const col of [i - 1, i + 1]) {
         if (col >= 0 && col < 5) {
           const adjU = field[z][col];
-          if (adjU && adjU.card && (adjU.card.id === "R-EVL-0012" || adjU.card.name?.includes("奇異妖精")) && !window.isUnitSilenced(adjU, z, col)) {
+          if (adjU && adjU.card && (window.xlwFairyEffectCard?.(adjU) || adjU?.card)?.id === "R-EVL-0012" && !window.isUnitSilenced(adjU, z, col)) {
             return true;
           }
         }
@@ -28898,7 +29092,8 @@ function isUnitEffectImmune(unit, zone, idx) {
   }
   if (z && i !== undefined && i !== -1 && window.isUnitSilenced(unit, z, i)) return false;
 
-  if (unit.enemyEffectImmune || (window.xlwFairyForestLevel?.(unit, z, i) || 0) >= 4) return true;
+  if (unit.enemyEffectImmune || (window.xlwFairyForestLevel?.(unit, z, i) || 0) >= 4 ||
+      (window.xlwFairyPrisonLevel?.(unit, z) || 0) >= 2) return true;
   if (unit.card && (unit.card.id === "RBT-0045" || unit.card.id === "R-RBT-0045" || unit.card.id === "SSR-RBT-0045" || unit.card.name?.includes("古代機神巨人"))) return true;
   if (unit.devourCards && unit.devourCards.length > 0) {
     const hasRightFoot = unit.card.id === "RBT-0044" || unit.card.id === "R-RBT-0044" || unit.card.name?.includes("古代機神遺骸右腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0044" || d.card.id === "R-RBT-0044" || d.card.name?.includes("古代機神遺骸右腳")));
@@ -34990,7 +35185,8 @@ async function aiPerformTacticalMovement() {
     const backUnit = field.enemy_back[i];
     
     if (frontUnit && !backUnit) {
-      const isUnmovable = xlwIsUnitUnmovable(frontUnit, "enemy_front", i);
+      const isUnmovable = xlwIsUnitUnmovable(frontUnit, "enemy_front", i) ||
+        (window.xlwFairyEffectCard?.(frontUnit) || frontUnit.card)?.id?.includes("EVL-0030");
       const isSummonedThisTurn = (frontUnit.summonedTurn === turn);
       
       if (!isUnmovable && !isSummonedThisTurn) {
@@ -35359,6 +35555,8 @@ async function runEnemyTurn() {
           enemyDrawn.forEach(c => (window.XLW_ENEMY.hand || []).push(c));
         }
       }
+      if (enemyDrawn.length < 2) window.xlwResolveFairyDrawReward?.(false, true);
+      window.xlwResolveFairyDrawReward?.(false, false);
       logBattle("對手整備：對手抽卡結算完成，單位全體轉正。");
       render();
     } catch (e) { console.warn("AI 抽牌階段異常:", e); }
@@ -37528,6 +37726,10 @@ window.xlwCanPlayHandCard = function(card, idx) {
 
     if (typeof field === "undefined" || !field) return false;
 
+    if (card.id === "SR-EVL-0026") {
+      const materials = xlwValkyrieMaterials(card);
+      if (xlwValkyrieMaterialStars(materials.filter(({unit, zone, idx}) => getUnitStars(unit, zone, idx) > 0)) >= 5) return true;
+    }
     // 祭品檢查
     if (tributeCost > 0) {
       const myUnits = (field["player_front"] || []).concat(field["player_back"] || []).filter(u => u !== null);
@@ -37758,8 +37960,88 @@ async function xlwResolveBreakfast(card, position = null) {
   render();
 }
 
+function xlwValkyrieMaterials(card) {
+  if (card?.id !== "SR-EVL-0026" || !isMyTurn || phase !== "召喚階段" ||
+      normalSummonUsed || !hand.includes(card) || calculateTotalStars(true) < 14) return [];
+  return ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit?.card && !xlwIsUnitUnsacrificable(unit, zone, idx) ? [{zone, idx, unit}] : []));
+}
+
+function xlwValkyrieMaterialStars(materials) {
+  return materials.reduce((sum, {unit, zone, idx}) => sum + getUnitStars(unit, zone, idx), 0);
+}
+
+window.xlwSummonFairyValkyrie = async function(card) {
+  const chosen = [];
+  while (true) {
+    const materials = xlwValkyrieMaterials(card);
+    if (!chosen.every(entry => materials.some(current => current.unit === entry.unit &&
+        current.zone === entry.zone && current.idx === entry.idx))) return false;
+    const available = materials.filter(entry => !chosen.some(current => current.unit === entry.unit));
+    const stars = xlwValkyrieMaterialStars(chosen);
+    const options = available.map(({unit, zone, idx}, value) =>
+      ({text: unit.card.name, value, boardTarget: {zone, idx}}));
+    if (stars >= 5) options.unshift({text: "確認送墓單位", value: "confirm", boardAction: true});
+    options.push({text: "取消", value: "cancel"});
+    const pick = await showXLWChoiceModal(card.name, `選擇送墓的單位，合計至少 5★（已選 ${stars}★）。`, options, {boardOnly: available.length > 0});
+    if (pick === "confirm" && stars >= 5) break;
+    if (!available[pick]) return false;
+    chosen.push(available[pick]);
+  }
+
+  const placements = () => {
+    const slots = ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+      (!unit || chosen.some(entry => entry.unit === unit && entry.zone === zone && entry.idx === idx)) &&
+      (window.xlwCheckDesireQueenConstraint?.(zone, idx) ?? true) ? [{zone, idx}] : []));
+    return slots.some(slot => slot.zone === "player_front") ? slots.filter(slot => slot.zone === "player_front") : slots;
+  };
+  const slots = placements();
+  if (!slots.length) return false;
+  const pick = await showXLWChoiceModal(card.name, "選擇瓦蓮娜的召喚位置。", [
+    ...slots.map(({zone, idx}, value) => ({text: "召喚至此", value, boardTarget: {zone, idx, summon: !field[zone][idx]}})),
+    {text: "取消", value: "cancel"}
+  ], {boardOnly: true});
+  const slot = slots[pick];
+  const materials = xlwValkyrieMaterials(card);
+  if (!slot || !placements().some(current => current.zone === slot.zone && current.idx === slot.idx) ||
+      !chosen.every(entry => materials.some(current => current.unit === entry.unit &&
+        current.zone === entry.zone && current.idx === entry.idx)) ||
+      xlwValkyrieMaterialStars(chosen) < 5) return false;
+
+  const summoned = window.XLWDuelConsistency.takeKnownCard(hand, card);
+  if (!summoned) return false;
+  normalSummonUsed = true;
+  clearModes();
+  for (const entry of chosen) field[entry.zone][entry.idx] = null;
+  field[slot.zone][slot.idx] = {card: structuredClone(summoned), tapped: false, attacking: false,
+    target: null, summonedTurn: turn, summonedZone: slot.zone};
+  for (const entry of chosen) {
+    const sent = entry.unit.card;
+    await cleanUnitLeavingField(entry.unit, entry.zone);
+    if (!sent.name?.includes("小旅人") && sent.id !== "TOKEN_TRAVELER") {
+      graveyard.push(sent);
+      if (graveyard.includes(sent)) await window.xlwOnCardEntersGraveyard?.(sent, true, true);
+    }
+  }
+  await performSummonToSlot(summoned, slot.zone, slot.idx);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
 window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if(xlwRequireSpellCompletion())return;
+  const valkyrieMaterials = xlwValkyrieMaterials(card);
+  if (valkyrieMaterials.length && xlwValkyrieMaterialStars(valkyrieMaterials.filter(({unit, zone, idx}) =>
+      getUnitStars(unit, zone, idx) > 0)) >= 5) {
+    const options = [{text: "送墓合計 5★ 以上的單位並打出", value: "valkyrie"}, {text: "取消", value: "cancel"}];
+    if (window.xlwGetEmptyPlayerSlots().length) options.unshift({text: "通常召喚", value: "normal"});
+    const pick = await showXLWChoiceModal(card.name, "選擇召喚方式。", options);
+    if (pick === "valkyrie") await window.xlwSummonFairyValkyrie(card);
+    if (pick !== "normal") return;
+    idx = hand.indexOf(card);
+    if (idx < 0) return;
+  }
   if (xlwIsBreakfast(card) && xlwCanActivateBreakfast()) {
     const choices = [{text: "展示、抽 1 張牌並洗回牌庫", value: "activate"}];
     const canPlace = phase === "召喚階段" ? !normalSummonUsed : phase === "戰術佈陣" && !tacticalSummonUsed;
@@ -38300,6 +38582,48 @@ window.xlwActivateSavageCraft = async function(unit, zone, idx) {
   return true;
 };
 
+window.xlwActivateDarkFairyAlchemist = async function(unit, zone, idx) {
+  const valid = () => isMyTurn && xlwEwdInMainPhase() && zone.startsWith("player_") &&
+    field[zone]?.[idx] === unit && (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id?.includes("EVL-0038") &&
+    unit.fairyAlchemyTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+  if (!valid()) return false;
+  const legalMaterial = card => card?.type === "unit" && window.xlwIsUnitFairy(card) &&
+    Number.isFinite(Number(card.score)) && Number(card.score) <= 3;
+  const materials = hand.filter(legalMaterial);
+  if (!materials.length) return false;
+  const selection = await showXLWChoiceModal(unit.card.name, "可選一張 3★ 或以下的妖精單位送墓。", [
+    ...materials.map((card, value) => ({card, text: card.name, value})),
+    {text: "不發動", value: -1}
+  ]);
+  const material = materials[selection];
+  if (!material || !valid()) return false;
+  const target = await window.xlwPickDarkFairyTarget(unit.card.name, true, () => true,
+    "點選敵方單位，使其 -2 攻擊力直到下個回合結束。");
+  if (!target || !valid() || !legalMaterial(material) || !hand.includes(material) ||
+      !window.XLWDuelConsistency.moveKnownCard(hand, graveyard, material)) return false;
+  unit.fairyAlchemyTurn = turn;
+  window.xlwDarkFairyAttackPenalty(target, 2);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwActivateFairyWarden = async function(unit, zone, idx) {
+  const valid = () => isMyTurn && xlwEwdInMainPhase() && zone.startsWith("player_") &&
+    field[zone]?.[idx] === unit && (window.xlwFairyEffectCard?.(unit) || unit?.card)?.id?.includes("EVL-0036") &&
+    unit.fairyWardenTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+  if (!valid()) return false;
+  const target = await window.xlwPickDarkFairyTarget(unit.card.name, true,
+    (enemy, row, col) => getUnitAtk(enemy, row, col) <= -1, "點選攻擊力 -1 或以下的敵方單位。");
+  if (!target || !valid()) return false;
+  unit.fairyWardenTurn = turn;
+  if (!await kidnapCard(target.zone, target.idx, zone, idx, 2)) {
+    delete unit.fairyWardenTurn;
+    return false;
+  }
+  return true;
+};
+
 async function xlwResolveExpansionUnitClick(obj, zone, idx) {
   if (field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
 // 🌿 植物園與擴充卡牌主動技能與成長對話
@@ -38329,37 +38653,6 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
         render();
         if (isMultiplayer) sendFullGameStateToOpponent(true);
         return true;
-      }
-    }
-
-    // ⛓️ SSR-EVL-0036 黑妖精監獄長艾摩亞: 主要階段限一次，使敵方場上1個攻擊力為-1或以下的單位被綁架(2)
-    if ((obj.card.id === "SSR-EVL-0036" || obj.card.name?.includes("黑妖精監獄長艾摩亞") || obj.card.name?.includes("艾摩亞")) && !obj.wardenUsedThisTurn) {
-      const oppSide = "enemy";
-      const targets = [];
-      for (const oz of ["enemy_front", "enemy_back"]) {
-        (field[oz] || []).forEach((u, i) => {
-          if (u && !window.isUnitEffectImmune?.(u, oz, i)) {
-            const uAtk = typeof getUnitAtk === "function" ? getUnitAtk(u, oz, i) : (parseInt(u.card.attack) || 0);
-            if (uAtk <= -1) {
-              targets.push({ zone: oz, idx: i, name: u.card.name, unit: u });
-            }
-          }
-        });
-      }
-      if (targets.length > 0) {
-        const doKidnap = await showXLWConfirm("【黑妖精監獄長艾摩亞】黑牢束縛", "主要階段限一次：是否將敵方 1 個攻擊力 <= -1 的單位綁架 2 回合？");
-        if (doKidnap) {
-          obj.wardenUsedThisTurn = true;
-          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-          const pick = await showXLWChoiceModal("選擇收押目標", "請選擇關入黑牢的敵方單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            const target = targets[pick];
-            await kidnapCard(target.zone, target.idx, zone, idx, 2);
-            logBattle(`⛓️【黑妖精監獄長艾摩亞】黑牢關押：敵方【${target.name}】被束縛綁架 2 回合！`);
-            render();
-            return true;
-          }
-        }
       }
     }
 
@@ -39113,7 +39406,9 @@ function renderField() {
           // 電腦版也可使用此方式，原本滑鼠拖曳仍保留。
           if (selectedHandForTribute === null && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive &&
               !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive &&
-              await window.xlwActivateSavageCraft?.(obj, zone, idx)) return;
+              (await window.xlwActivateSavageCraft?.(obj, zone, idx) ||
+               await window.xlwActivateFairyWarden?.(obj, zone, idx) ||
+               await window.xlwActivateDarkFairyAlchemist?.(obj, zone, idx))) return;
 
           if (phase === "戰術佈陣" && zone.startsWith("player_") && !window.XLW_equipSpellActive && !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive) {
             if (isMultiplayer && !isMyTurn) {
@@ -45792,7 +46087,9 @@ function setupWebSocketEvents() {
         window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
         attacker.target = { zone: targetZone, idx: targetIdx,
-          ...(data.lockedFairyCrossbow && attacker.card?.id === "EVL-0056" ? {redirected: true} : {}) };
+          ...(data.lockedFairyCrossbow &&
+            /EVL-(0001|0030|0056)/.test((window.xlwFairyEffectCard?.(attacker) || attacker.card)?.id || "")
+            ? {redirected: true} : {}) };
         attacker.tapped = true;
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true; // 我方防守階段標記
         attacker.trophyTargetId = trophyTarget || null;
@@ -48085,7 +48382,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
 
     // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
-    if (!config.iconChoices && boardTargets.length > 0 && boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length) {
+    if (!config.iconChoices && boardTargets.length > 0 && (boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length ||
+        (options.some(opt => opt.boardAction) && targetMaps.every(({opt, target}) => target || opt.boardAction)))) {
       let settled = false;
       const attachedSlotCleanups = [];
       const refreshHighlights = [];
@@ -48105,7 +48403,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         const isCancel = target && target.type === "cancel";
         if (isCancel) {
           pillsHtml += `<button class="xlw-direct-prompt-cancel-btn" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text || "取消"}</button>`;
-        } else if (!config.boardOnly) {
+        } else if (!config.boardOnly || opt.boardAction) {
           pillsHtml += `<button class="xlw-direct-prompt-pill" data-opt-idx="${optIdx}" data-val="${opt.value}">${opt.text}</button>`;
         }
       });

@@ -935,6 +935,8 @@ test("fairy crossbow cannot attack on entry and only reaches other lanes with a 
   c.isUnitAttackProtected = () => false;
   c.xlwFairHeroBlocksAttack = () => false;
   c.hasArmorBreak = () => false;
+  c.window.hasFlying = () => false;
+  vm.runInContext(slice("function xlwAttackTargetBlock(", "async function xlwTogglePlayerAttack("), c);
   vm.runInContext(slice("window.xlwFairyCrossbowCanAttack =", "function validPlayerAttackLine("), c);
   assert.equal(c.window.xlwFairyCrossbowCanAttack(crossbow), false);
   c.turn++;
@@ -1093,4 +1095,384 @@ test("Spring Fairy cannot remove a stale graveyard card or replace a freshly ref
   c.showXLWChoiceModal = async () => { c.graveyard.splice(1, 1); return 0; };
   assert.equal(await c.window.xlwDrawFairyAware(1), 0);
   assert.equal(c.graveyard[0].id, "magic");
+});
+
+test("dark fairy target selection keeps its original target and checks resistance after selection", async () => {
+  const c = fixture(), target = unit("target", {attack: -2});
+  c.field.enemy_back[2] = target;
+  vm.runInContext(slice("window.xlwPickDarkFairyTarget =", "window.xlwResolvePG2Summon ="), c);
+  const pick = () => c.window.xlwPickDarkFairyTarget("夜行黑妖精", true, candidate => candidate.attack <= -2, "目標");
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options[0].boardTarget.idx, 2);
+    target.immune = true;
+    return 0;
+  };
+  assert.equal(await pick(), null);
+  target.immune = false;
+  c.showXLWChoiceModal = async () => { c.field.enemy_back[2] = unit("replacement"); return 0; };
+  assert.equal(await pick(), null);
+  c.field.enemy_back[2] = target;
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal((await pick()).unit, target);
+});
+
+test("warden cancellation preserves the turn limit and a successful choice stores a two-turn capture", async () => {
+  const c = fixture(), warden = unit("R-EVL-0036"), captive = unit("target", {attack: -1});
+  c.field.player_front[0] = warden;
+  c.field.enemy_back[0] = captive;
+  c.structuredClone = structuredClone;
+  c.xlwEwdInMainPhase = () => true;
+  c.getUnitAtk = target => target.attack;
+  vm.runInContext(slice("window.xlwPickDarkFairyTarget =", "window.xlwResolvePG2Summon ="), c);
+  vm.runInContext(slice("async function kidnapCard(", "async function checkPopulationCap"), c);
+  vm.runInContext(slice("window.xlwActivateFairyWarden =", "async function xlwResolveExpansionUnitClick"), c);
+  c.showXLWChoiceModal = async () => null;
+  assert.equal(await c.window.xlwActivateFairyWarden(warden, "player_front", 0), false);
+  assert.equal(warden.fairyWardenTurn, undefined);
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await c.window.xlwActivateFairyWarden(warden, "player_front", 0), true);
+  assert.equal(warden.kidnappedCards[0].fairyReleaseTurn, c.turn + 2);
+  assert.equal(warden.kidnappedCards[0].originalOwner, "enemy");
+  assert.equal(await c.window.xlwActivateFairyWarden(warden, "player_front", 0), false);
+});
+
+test("timed fairy captives return to their owner without diverting to the officer's grave", async () => {
+  const c = fixture();
+  const timed = {id: "timed", originalOwner: "enemy", fairyReleaseTurn: c.turn + 2};
+  const permanent = {id: "permanent", originalOwner: "enemy"};
+  const captor = unit("R-EVL-0036", {kidnappedCards: [timed, permanent]});
+  c.field.player_front[0] = captor;
+  c.field.player_front[1] = unit("SSSR-NMS-0050");
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard"), c);
+  vm.runInContext(slice("window.xlwReleaseTimedFairyCaptives =", "window.xlwResolveExpansionTurnStart ="), c);
+  await c.window.xlwReleaseTimedFairyCaptives(true);
+  assert.equal(c.field.enemy_front[0], null);
+  c.turn += 2;
+  await c.window.xlwReleaseTimedFairyCaptives(false);
+  assert.equal(c.field.enemy_front[0], null);
+  await c.window.xlwReleaseTimedFairyCaptives(true);
+  assert.equal(c.field.enemy_front[0].card, timed);
+  assert.equal(timed.fairyReleaseTurn, undefined);
+  assert.deepEqual([...captor.kidnappedCards], [permanent]);
+  assert.deepEqual(c.enemyGraveyard, []);
+});
+
+test("Black Castle Prison counts its side's captive cards for fairies and kidnapping units only", () => {
+  const c = fixture(), ownFairy = unit("fairy"), captor = unit("captor", {kidnappedCards: [{id: "A"}, null, {id: "B"}]});
+  c.field.player_front.splice(0, 2, ownFairy, captor);
+  c.field.enemy_front[0] = unit("enemy", {kidnappedCards: [{id: "C"}]});
+  c.window.xlwGetFactionFieldCard = own => own ? {id: "R-EVL-0040"} : null;
+  c.window.xlwIsUnitFairy = candidate => candidate === ownFairy;
+  vm.runInContext(slice("window.xlwFairyPrisonLevel =", "const TROPHY_ATTACK"), c);
+  assert.equal(c.window.xlwFairyPrisonLevel(ownFairy, "player_front"), 2);
+  assert.equal(c.window.xlwFairyPrisonLevel(captor, "player_front"), 2);
+  assert.equal(c.window.xlwFairyPrisonLevel(unit("unrelated"), "player_front"), 0);
+  captor.kidnappedCards.pop();
+  assert.equal(c.window.xlwFairyPrisonLevel(ownFairy, "player_front"), 1);
+});
+
+test("alchemy spends one eligible fairy only after a valid target and only once per turn", async () => {
+  const c = fixture(), alchemist = unit("R-EVL-0038"), enemy = unit("target");
+  const material = {id: "material", name: "妖精", type: "unit", score: 3};
+  c.field.player_front[0] = alchemist;
+  c.hand.push(material, {...material, score: 4});
+  c.window.xlwIsUnitFairy = () => true;
+  c.xlwEwdInMainPhase = () => true;
+  c.showXLWChoiceModal = async (_, __, choices) => {
+    assert.equal(choices.length, 2);
+    return 0;
+  };
+  c.window.XLWDuelConsistency = {moveKnownCard(from, to, card) {
+    to.push(...from.splice(from.indexOf(card), 1));
+    return true;
+  }};
+  vm.runInContext(slice("window.xlwPickDarkFairyTarget =", "window.xlwResolvePG2Summon ="), c);
+  vm.runInContext(slice("window.xlwActivateDarkFairyAlchemist =", "window.xlwActivateFairyWarden ="), c);
+  const activate = () => c.window.xlwActivateDarkFairyAlchemist(alchemist, "player_front", 0);
+  c.window.xlwPickDarkFairyTarget = async () => null;
+  assert.equal(await activate(), false);
+  assert.equal(c.hand[0], material);
+  assert.deepEqual(c.graveyard, []);
+  c.window.xlwPickDarkFairyTarget = async () => ({unit: enemy});
+  assert.equal(await activate(), true);
+  assert.deepEqual(c.graveyard, [material]);
+  assert.equal(enemy.darkFairyAttackPenalties[0].amount, 2);
+  assert.equal(enemy.darkFairyAttackPenalties[0].expiresTurn, c.turn + 1);
+  assert.equal(await activate(), false);
+});
+
+test("Black Castle Recycler captures only a live Fairy grave unit and keeps its copied aura until leaving the field", async () => {
+  const c = fixture(), robot = unit("SR-EVL-0041");
+  const fairy = {id: "R-EVL-0025", type: "unit", name: "妖精", fairy: true};
+  const other = {id: "other", type: "unit"};
+  c.field.player_front[0] = robot;
+  c.graveyard.push(other, fairy);
+  c.window.xlwIsUnitFairy = card => Boolean(card.fairy);
+  vm.runInContext(slice("window.xlwActivateFairyRecycler =", "window.xlwResolvePG2Summon ="), c);
+  vm.runInContext(slice("window.xlwFairyEffectCard =", "window.xlwReadStarReductions ="), c);
+  const activate = () => c.window.xlwActivateFairyRecycler(robot, "player_front", 0, true);
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options.length, 2);
+    assert.equal(options[0].card, fairy);
+    return -1;
+  };
+  assert.equal(await activate(), false);
+  assert.deepEqual(c.graveyard, [other, fairy]);
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await activate(), true);
+  assert.deepEqual(c.graveyard, [other]);
+  assert.equal(robot.kidnappedCards[0], fairy);
+  assert.equal(c.window.xlwActiveFairySources("player_", "EVL-0025")[0], robot);
+  robot.silenced = true;
+  assert.equal(c.window.xlwActiveFairySources("player_", "EVL-0025").length, 0);
+  robot.silenced = false;
+  robot.kidnappedCards.pop();
+  assert.equal(c.window.xlwActiveFairySources("player_", "EVL-0025").length, 1);
+  c.field.player_front[0] = null;
+  assert.equal(c.window.xlwActiveFairySources("player_", "EVL-0025").length, 0);
+  assert.equal(robot.card.id, "SR-EVL-0041");
+});
+
+test("Black Castle Recycler returns its captives to each owner's grave without ownership metadata", async () => {
+  const c = fixture(), own = {id: "own", originalOwner: "player"};
+  const enemy = {id: "enemy", originalOwner: "enemy"};
+  const robot = unit("SR-EVL-0041", {kidnappedCards: [own, enemy]});
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard"), c);
+  await c.cleanUnitLeavingField(robot, "player_front");
+  assert.deepEqual(c.graveyard, [{id: "own"}]);
+  assert.deepEqual(c.enemyGraveyard, [{id: "enemy"}]);
+  assert.equal(robot.kidnappedCards.length, 0);
+  assert.equal(c.field.player_front[0], null);
+  assert.equal(c.field.enemy_front[0], null);
+});
+
+test("timed release keeps the captor's equipped armor break sword", async () => {
+  const c = fixture(), sword = {id: "sword"};
+  const captor = unit("R-EVL-0036", {xlwArmorBreakSwords: [sword], equipments: ["破甲劍"], kidnappedCards: [{id: "enemy", originalOwner: "enemy"}]});
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard"), c);
+  await c.cleanUnitLeavingField(captor, "player_front", {releaseOnly: true});
+  assert.deepEqual(captor.xlwArmorBreakSwords, [sword]);
+  assert.deepEqual(c.graveyard, []);
+  assert.equal(c.field.enemy_front[0].card.id, "enemy");
+});
+
+test("Freya can decline a local defense and cannot push a stale or resistant summon", async () => {
+  const c = fixture(), freya = unit("R-EVL-0047"), target = unit("target");
+  c.field.player_back[0] = freya;
+  c.field.enemy_front[0] = target;
+  vm.runInContext(slice("window.xlwFairyEffectCard =", "window.xlwReadStarReductions ="), c);
+  vm.runInContext(slice("window.xlwResolveFairyFreyaPush =", "window.xlwResolvePG2Summon ="), c);
+  vm.runInContext(push, c);
+  const react = () => c.window.xlwResolveFairyFreyaPush("enemy_front", 0, false);
+  c.showXLWConfirm = async () => false;
+  assert.equal(await react(), false);
+  assert.equal(c.field.enemy_front[0], target);
+  c.showXLWConfirm = async () => { target.immune = true; return true; };
+  assert.equal(await react(), false);
+  target.immune = false;
+  c.showXLWConfirm = async () => { c.field.enemy_front[0] = unit("replacement"); return true; };
+  assert.equal(await react(), false);
+  c.field.enemy_front[0] = target;
+  c.showXLWConfirm = async () => true;
+  assert.equal(await react(), true);
+  assert.equal(c.field.enemy_back[0], target);
+});
+
+test("Dark Fairy Executioner exiles the exact captive to its original owner only after a valid selection", async () => {
+  const c = fixture(), captive = {id: "duplicate", originalOwner: "enemy", fairyReleaseTurn: 6};
+  const other = {id: "duplicate", originalOwner: "player"};
+  const captor = unit("captor", {kidnappedCards: [other, captive]});
+  const opposingCaptor = unit("opposing", {kidnappedCards: [{id: "opposing-captive"}]});
+  const exiled = [];
+  c.field.player_front[0] = captor;
+  c.field.enemy_front[0] = opposingCaptor;
+  c.exileCard = (card, owner) => exiled.push({card, owner});
+  vm.runInContext(slice("window.xlwResolveFairyExecutioner =", "window.xlwResolveFairyFreyaPush ="), c);
+  const activate = () => c.window.xlwResolveFairyExecutioner(true);
+  c.showXLWChoiceModal = async (_, __, choices) => {
+    assert.equal(choices.length, 3);
+    assert.equal(choices[1].card, captive);
+    return -1;
+  };
+  assert.equal(await activate(), false);
+  c.showXLWChoiceModal = async () => { c.field.player_front[0] = null; return 1; };
+  assert.equal(await activate(), false);
+  c.field.player_front[0] = captor;
+  c.showXLWChoiceModal = async () => 1;
+  assert.equal(await activate(), true);
+  assert.equal(exiled[0].card, captive);
+  assert.equal(exiled[0].owner, "enemy");
+  assert.deepEqual(captive, {id: "duplicate"});
+  assert.deepEqual(captor.kidnappedCards, [other]);
+  assert.equal(opposingCaptor.kidnappedCards.length, 1);
+});
+
+test("Klia can move only an enemy whose stars were reduced by its summoner and leaves it tapped", async () => {
+  const c = fixture(), affected = unit("affected", {tapped: true});
+  c.field.enemy_front[0] = affected;
+  c.field.enemy_front[1] = unit("unattributed");
+  c.field.player_front[0] = unit("friendly");
+  c.window.xlwReadStarReductions = candidate => candidate === affected ? {player: 1} : {unattributed: 1};
+  c.showXLWConfirm = async () => assert.fail("Klia cannot turn a card upright");
+  let picks = 0;
+  c.showXLWChoiceModal = async (_, __, options) => {
+    if (++picks === 1) {
+      assert.equal(options.length, 2);
+      assert.equal(options[0].boardTarget.zone, "enemy_front");
+      return 0;
+    }
+    return options.findIndex(choice => choice.boardTarget?.zone === "enemy_back" && choice.boardTarget.idx === 2);
+  };
+  vm.runInContext(slice("async function xlwResolveFairyStrategist(", "window.xlwResolveFairySoulRefiner ="), c);
+  await c.xlwResolveFairyStrategist(true, true);
+  assert.equal(c.field.enemy_front[0], null);
+  assert.equal(c.field.enemy_back[2], affected);
+  assert.equal(affected.tapped, true);
+});
+
+test("Fairy draw rewards distinguish empty draw attempts and post-phase checks for each side", () => {
+  const c = fixture(), elder = unit("R-EVL-0009"), mayor = unit("R-EVL-0028");
+  const opposingMayor = unit("R-EVL-0028");
+  c.deck = [{id: "last"}];
+  c.window.XLW_ENEMY.deck = [{id: "opponent"}];
+  c.playerBonusScore = 0;
+  c.enemyBonusScore = 0;
+  c.mulliganActive = false;
+  c.$ = () => null;
+  c.setStatus = () => {};
+  c.field.player_front[0] = elder;
+  c.field.player_back[0] = mayor;
+  c.field.enemy_front[0] = opposingMayor;
+  vm.runInContext(slice("window.xlwFairyEffectCard =", "window.xlwReadStarReductions ="), c);
+  vm.runInContext(slice("window.xlwResolveFairyDrawReward =", "window.xlwSpringFairyRefill ="), c);
+  const reward = c.window.xlwResolveFairyDrawReward;
+  c.draw(1);
+  assert.equal(c.playerBonusScore, 0);
+  assert.equal(reward(true, false), 2);
+  assert.equal(reward(true, false), 0);
+  c.draw(2);
+  assert.equal(c.playerBonusScore, 3);
+  c.window.XLW_ENEMY.deck.pop();
+  c.turn++;
+  assert.equal(reward(true, false), 0);
+  assert.equal(reward(false, true), 1);
+  assert.equal(c.enemyBonusScore, 1);
+  c.isMultiplayer = true;
+  assert.equal(reward(false, true), 0);
+  c.mulliganActive = true;
+  assert.equal(reward(true, true), 0);
+});
+
+test("Fairy Shooting Instructor rechecks its rear slot and moves only eligible Fairy units upright", async () => {
+  const c = fixture(), instructor = unit("R-EVL-0029");
+  const ally = unit("ally", {fairy: true, tapped: true, attacking: true, target: {idx: 1}});
+  c.field.player_front[0] = instructor;
+  c.field.player_front[1] = unit("unmovable", {fairy: true, fixed: true});
+  c.field.player_back[2] = ally;
+  c.field.enemy_front[2] = unit("enemy", {fairy: true});
+  c.window.xlwIsUnitFairy = candidate => Boolean(candidate?.fairy);
+  vm.runInContext(slice("window.xlwResolveFairyShootingInstructor =", "window.xlwResolveFairyExecutioner ="), c);
+  const activate = () => c.window.xlwResolveFairyShootingInstructor(instructor, "player_front", 0, true);
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options.length, 2);
+    assert.equal(options[0].boardTarget.idx, 2);
+    c.field.player_back[0] = unit("new occupant");
+    return 0;
+  };
+  assert.equal(await activate(), false);
+  assert.equal(c.field.player_back[2], ally);
+  c.field.player_back[0] = null;
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await activate(), true);
+  assert.equal(c.field.player_back[2], null);
+  assert.equal(c.field.player_back[0], ally);
+  assert.equal(ally.tapped, false);
+  assert.equal(ally.attacking, false);
+  assert.equal(ally.target, null);
+});
+
+test("Fairy ranged targets respect sniper rows and destination protections across both perspectives", () => {
+  const c = fixture();
+  c.window.hasFlying = () => false;
+  c.window.XLW_isShieldUnit = candidate => Boolean(candidate.shield);
+  c.isUnitAttackProtected = (zone, idx) => zone === "enemy_back" && idx === 3;
+  c.xlwFairHeroBlocksAttack = () => false;
+  c.hasArmorBreak = () => false;
+  c.field.enemy_front[0] = unit("same lane");
+  c.field.enemy_front[2] = unit("other front");
+  c.field.enemy_back[3] = unit("protected");
+  c.field.enemy_back[4] = unit("other back");
+  c.field.player_back[3] = unit("opposite");
+  vm.runInContext(slice("function xlwAttackTargetBlock(", "async function xlwTogglePlayerAttack("), c);
+  vm.runInContext(slice("window.xlwFairyCrossbowCanAttack =", "function validPlayerAttackLine("), c);
+  const targets = (id, zone) => Array.from(c.window.xlwFairyCrossbowTargets(unit(id), zone, 0),
+    target => target.unit.card.id);
+  assert.deepEqual(targets("SR-EVL-0030", "player_front"), ["same lane", "other back"]);
+  assert.deepEqual(targets("EVL-0001", "player_front"), ["same lane", "other front", "other back"]);
+  assert.deepEqual(targets("SR-EVL-0030", "enemy_front"), ["opposite"]);
+});
+
+test("Valkyrie bonuses stay on their side and grant cards only for attacking wins", async () => {
+  const c = fixture();
+  const valkyrie = unit("SR-EVL-0026", {fairy: true});
+  const recruit = unit("EVL-0008", {fairy: true, hasFairySwordDraw: true});
+  const enemyValkyrie = unit("SR-EVL-0026", {fairy: true});
+  const nonFairy = unit("nonfairy");
+  c.field.player_front.splice(0, 2, recruit, nonFairy);
+  c.field.player_back[0] = valkyrie;
+  c.field.enemy_back[0] = enemyValkyrie;
+  c.window.xlwIsUnitFairy = candidate => Boolean(candidate?.fairy);
+  const draws = [];
+  c.window.xlwDrawFairyAware = async (amount, player) => { draws.push(player); return amount; };
+  vm.runInContext(slice("window.xlwFairyEffectCard =", "window.xlwReadStarReductions ="), c);
+  vm.runInContext(slice("window.xlwFairyValkyrieBonus =", "window.xlwResolvePG2CombatSuccess ="), c);
+  assert.equal(c.window.xlwFairyValkyrieBonus(recruit, "player_front"), 1);
+  assert.equal(c.window.xlwFairyValkyrieBonus(nonFairy, "player_front"), 0);
+  assert.equal(await c.window.xlwResolveFairyCombatDraw(recruit, true, false), 1);
+  assert.equal(await c.window.xlwResolveFairyCombatDraw(recruit, true, true), 3);
+  valkyrie.silenced = true;
+  assert.equal(c.window.xlwFairyValkyrieBonus(recruit, "player_front"), 0);
+  assert.equal(await c.window.xlwResolveFairyCombatDraw(recruit, true, true), 2);
+  assert.equal(await c.window.xlwResolveFairyCombatDraw(enemyValkyrie, false, true), 1);
+  c.isMultiplayer = true;
+  assert.equal(await c.window.xlwResolveFairyCombatDraw(enemyValkyrie, false, true), 0);
+  assert.deepEqual(draws, [true, true, true, true, true, true, false]);
+});
+
+test("Valkyrie reuses a selected material slot on a full board and only pays after placement", async () => {
+  const c = fixture(), val = {id: "SR-EVL-0026", name: "瓦蓮娜", type: "unit"};
+  c.hand.push(val);
+  c.normalSummonUsed = false;
+  c.calculateTotalStars = () => 14;
+  c.getUnitStars = candidate => candidate.stars;
+  c.xlwIsUnitUnsacrificable = candidate => Boolean(candidate.fixed);
+  c.clearModes = () => {};
+  c.structuredClone = structuredClone;
+  c.performSummonToSlot = async () => {};
+  c.field.player_front.fill(unit("fixed", {fixed: true}));
+  c.field.player_back.fill(unit("fixed back", {fixed: true}));
+  const a = unit("A", {stars: 2}), b = unit("B", {stars: 3});
+  c.field.player_front.splice(0, 2, a, b);
+  vm.runInContext(slice("function xlwValkyrieMaterials(", "window.xlwExecuteHandUnitSummon ="), c);
+  const activate = () => c.window.xlwSummonFairyValkyrie(val);
+  for (const placement of ["cancel", 0]) {
+    const answers = [0, 0, "confirm", placement];
+    c.showXLWChoiceModal = async (_, __, options) => {
+      const answer = answers.shift();
+      assert.ok(options.some(choice => choice.value === answer));
+      return answer;
+    };
+    assert.equal(await activate(), placement !== "cancel");
+    if (placement === "cancel") {
+      assert.equal(c.hand[0], val);
+      assert.equal(c.field.player_front[0], a);
+      assert.deepEqual(c.graveyard, []);
+      assert.equal(c.normalSummonUsed, false);
+    }
+  }
+  assert.deepEqual(c.hand, []);
+  assert.deepEqual(c.graveyard, [a.card, b.card]);
+  assert.equal(c.field.player_front[0].card.id, val.id);
+  assert.equal(c.field.player_front[1], null);
+  assert.equal(c.normalSummonUsed, true);
 });

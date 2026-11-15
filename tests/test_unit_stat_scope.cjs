@@ -113,3 +113,19 @@ require("node:test")("Fairy source integration keeps aura target, stage and owne
   g.field.enemy_front[2] = null;
   assert.equal(g.getUnitStars(back, "player_back", 0), 3);
 });
+
+require("node:test")("dark fairy attack reductions stack and expire independently", () => {
+  const g = fixture(), target = unit("test", "目標", 6);
+  const start = source.indexOf("window.xlwDarkFairyAttackPenalty = function");
+  vm.runInContext(source.slice(start, source.indexOf("window.xlwResolvePG2Summon", start)), g);
+  g.field.enemy_front[0] = target;
+  const first = g.turn;
+  g.xlwDarkFairyAttackPenalty({unit: target}, 3);
+  g.turn++;
+  g.xlwDarkFairyAttackPenalty({unit: target}, 2);
+  assert.equal(g.getUnitAtk(target, "enemy_front", 0), 1);
+  g.turn = first + 2;
+  assert.equal(g.getUnitAtk(target, "enemy_front", 0), 4);
+  g.turn = first + 3;
+  assert.equal(g.getUnitAtk(target, "enemy_front", 0), 6);
+});
