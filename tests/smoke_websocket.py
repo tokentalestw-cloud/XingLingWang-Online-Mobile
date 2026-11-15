@@ -82,7 +82,16 @@ async def main():
                                           'casterDefensePhase': in_defense}))
             relayed = await receive(receiver, lambda d: d.get('action') == action)
             assert relayed['casterDefensePhase'] is in_defense
-        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing)')
+        # Only the owner changes their extra zone. Both seats get the exact new hand and extra list.
+        for sender, receiver, seat in ((a, b, 'host'), (b, a, 'guest')):
+            acquired = {'id': 'R-ORC-0054', '_xlwInstanceId': f'{seat}-mace'}
+            remaining = {'id': 'R-EVL-0050', '_xlwInstanceId': f'{seat}-relocation'}
+            state = {'playerHand': [acquired], 'playerExtraDeck': [remaining],
+                     'factionState': {'fairyRetreats': [{'turn': 4, 'side': 'enemy', 'id': 'retreated'}]}}
+            await sender.send(json.dumps({'action': 'sync_game_state', 'message_id': f'extra-{seat}', 'state': state}))
+            sync = await receive(receiver, lambda d: d.get('action') == 'sync_game_state')
+            assert sync['state'] == state
+        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing, extra-zone transfer from both seats)')
     finally:
         await a.close()
         await b.close()

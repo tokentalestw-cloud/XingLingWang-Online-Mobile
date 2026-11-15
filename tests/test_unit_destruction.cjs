@@ -8,7 +8,7 @@ function section(name) {
   const next = source.slice(start + 1).search(/\n(?:async )?function /);
   return source.slice(start, next < 0 ? undefined : start + 1 + next);
 }
-const code = ['destroyUnit', 'isUnitIndestructible', 'isUnitAttackProtected', 'resolveUnitCombat'].map(section).join('\n');
+const code = ['destroyUnit', 'isUnitIndestructible', 'isUnitAttackProtected', 'xlwHandleWolfMaceCombatSuccess', 'resolveUnitCombat'].map(section).join('\n');
 function unit(id, attack, properties = {}) {
   return { card: { id, name: id, attack, score: 1 }, equipments: [], ...properties };
 }

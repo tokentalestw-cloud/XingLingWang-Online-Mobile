@@ -1562,6 +1562,7 @@ test("Relocation upgrade requires two distinct enemy retreats in the ending turn
   mark(second, "enemy_back", "enemy_front");
   assert.equal(await activate(), false);
   mark(second, "enemy_front", "enemy_back");
+  c.field.enemy_back[0] = null;
   c.showXLWChoiceModal = async () => -1;
   assert.equal(await activate(), false);
   assert.deepEqual(c.hand, [source]);
@@ -1569,4 +1570,30 @@ test("Relocation upgrade requires two distinct enemy retreats in the ending turn
   assert.equal(await activate(), true);
   assert.deepEqual(c.hand, [upgrade]);
   assert.deepEqual(c.playerExtraDeck, []);
+});
+
+test("Wolf Mace uses one authoritative transfer and does not move another extra card on a stale choice", async () => {
+  const c = fixture(), orc = unit("R-ORC-0001", {equipments: ["破甲劍"]});
+  const mace = {id: "R-ORC-0054"}, other = {id: "other"};
+  c.field.player_front[0] = orc;
+  c.playerExtraDeck.push(mace, other);
+  c.isMultiplayer = true;
+  c.renderExtraDecks = () => {};
+  const snapshots = [];
+  c.sendFullGameStateToOpponent = () => snapshots.push({hand: [...c.hand], extra: [...c.playerExtraDeck]});
+  vm.runInContext(slice("async function xlwHandleWolfMaceCombatSuccess(", "async function resolveUnitCombat("), c);
+  const activate = () => c.xlwHandleWolfMaceCombatSuccess(orc, "player_front", 0, "player");
+  c.showXLWConfirm = async () => false;
+  await activate();
+  assert.deepEqual(c.playerExtraDeck, [mace, other]);
+  c.showXLWConfirm = async () => { c.playerExtraDeck.shift(); return true; };
+  await activate();
+  assert.deepEqual(c.playerExtraDeck, [other]);
+  assert.deepEqual(c.hand, []);
+  c.playerExtraDeck.unshift(mace);
+  c.showXLWConfirm = async () => true;
+  await activate();
+  assert.deepEqual(snapshots, [{hand: [mace], extra: [other]}]);
+  c.showXLWConfirm = async () => assert.fail("remote combat should never block on a local choice");
+  await c.xlwHandleWolfMaceCombatSuccess(orc, "enemy_front", 0, "enemy");
 });

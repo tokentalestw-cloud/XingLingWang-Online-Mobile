@@ -7878,14 +7878,6 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
   const isThinker = c.id?.includes("ART-0003") || /[沉沈]思的男人/.test(c.name || "");
   let baseStars = (isThinker ? -2 : Number(c.score ?? c.stars ?? 0)) + Number(unit.bonusScore ?? 0);
 
-  // 🧚 R-EVL-0022 黑妖精邊緣者: 每個與此卡同排的其他妖精單位使此卡-1★
-  if (c.id === "R-EVL-0022" || c.name?.includes("黑妖精邊緣者")) {
-    if (zone && typeof field !== "undefined" && field[zone]) {
-      const otherFairies = field[zone].filter(u => u && u !== unit && u.card && (u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.race === "妖精" || u.card.id?.includes("EVL")));
-      baseStars = Math.max(0, baseStars - otherFairies.length);
-    }
-  }
-
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
   if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
     const isPlayer = zone && zone.startsWith("player_");
@@ -8367,6 +8359,8 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     if (hasConductor) {
       baseStars += 1;
     }
+  }
+
   // 🎒 背背小鬼 (R-VLG-0035): 寄生合體至敵方單位，使其星數 -1
   if (unit.equipments && unit.equipments.some(e => typeof e === "string" && e.includes("背背小鬼"))) {
     reduce(1);
@@ -8491,6 +8485,7 @@ window.xlwSetFactionFieldCard = function(card, isPlayer = true) {
 window.xlwCaptureFactionState = function() {
   return {
     trophies: window.xlwStarLineTrophies,
+    fairyRetreats: window.XLW_fairyRetreats || [],
     playerEnergy: window.XLW_playerSteamEnergy || 0,
     enemyEnergy: window.XLW_enemySteamEnergy || 0,
     playerBlackHoleLane: window.XLW_playerBlackHoleLane || 0,
@@ -8507,6 +8502,15 @@ window.xlwCaptureFactionState = function() {
 window.xlwRestoreFactionState = function(state, peer = false) {
   if (!state || typeof state !== "object") return;
   if (Array.isArray(state.trophies)) xlwRestoreTrophies(state.trophies, peer);
+  if (Array.isArray(state.fairyRetreats)) {
+    const records = state.fairyRetreats.map(record => peer ? {
+      ...record, side: record.side === "player" ? "enemy" : "player"
+    } : record);
+    const all = peer ? [...(window.XLW_fairyRetreats || []), ...records] : records;
+    const latest = all.reduce((max, record) => Math.max(max, record.turn), 0);
+    window.XLW_fairyRetreats = [...new Map(all.filter(record => record.turn >= latest - 1)
+      .map(record => [JSON.stringify([record.turn, record.side, record.id]), record])).values()];
+  }
   for (const [suffix, key] of [["SteamEnergy", "Energy"], ["BlackHoleLane", "BlackHoleLane"]]) {
     for (const side of ["player", "enemy"]) {
       const source = peer ? (side === "player" ? "enemy" : "player") : side;
@@ -8537,6 +8541,7 @@ window.xlwRestoreFactionState = function(state, peer = false) {
   }
 };
 window.xlwResetFactionState = function() {
+  window.XLW_fairyRetreats = [];
   window.XLW_playerRouletteWheel = [];
   window.XLW_enemyRouletteWheel = [];
   window.XLW_playerWheelSpinsThisTurn = window.XLW_enemyWheelSpinsThisTurn = 0;
@@ -11292,15 +11297,20 @@ window.xlwResolveFairyShootingInstructor = async function(source, zone, idx, isP
 };
 
 window.xlwRecordFairyRetreat = function(unit, from, to) {
-  if (unit && from.endsWith("_front") && to === from.replace("_front", "_back")) {
-    unit.fairyRetreatTurn = turn;
+  if (!unit?.card || !from.endsWith("_front") || to !== from.replace("_front", "_back")) return;
+  unit.fairyRetreatId ||= window.XLWDuelConsistency.identify([unit.card])[0]._xlwInstanceId;
+  const side = from.startsWith("player_") ? "player" : "enemy";
+  const records = (window.XLW_fairyRetreats || []).filter(record => record.turn >= turn - 1);
+  if (!records.some(record => record.turn === turn && record.side === side && record.id === unit.fairyRetreatId)) {
+    records.push({turn, side, id: unit.fairyRetreatId});
   }
+  window.XLW_fairyRetreats = records;
 };
 
 window.xlwTryFairyRelocationUpgrade = async function(endingTurn) {
   const upgraded = playerExtraDeck.find(card => card?.id === "R-EVL-0050");
-  const retreats = () => ["enemy_front", "enemy_back"].flatMap(zone => field[zone])
-    .filter(unit => unit?.fairyRetreatTurn === endingTurn).length;
+  const retreats = () => (window.XLW_fairyRetreats || [])
+    .filter(record => record.side === "enemy" && record.turn === endingTurn).length;
   if (!upgraded || retreats() < 2) return false;
   const sources = [hand, graveyard].flatMap(pile => pile.filter(card => card?.id?.includes("EVL-0017"))
     .map(card => ({pile, card})));
@@ -24110,12 +24120,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
             for (const cCard of takenCards) {
               hand.push(cCard);
               logBattle(`✨ 刁鑽的藝術收藏家 效果：將藝術品牌【${cCard.name}】加入手牌！`);
-              if (isMultiplayer) {
-                ws.send(JSON.stringify({
-                  action: "add_to_hand_sync",
-                  card: cCard
-                }));
-              }
+
             }
             if (isMultiplayer) sendFullGameStateToOpponent(false);
             render();
@@ -24304,12 +24309,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
                 logBattle(`✨ 實習畫家 效果：將墓地中的【${chosenCard.name}】回收至手牌！`);
               }
               hand.push(chosenCard);
-              if (isMultiplayer) {
-                ws.send(JSON.stringify({
-                  action: "add_to_hand_sync",
-                  card: chosenCard
-                }));
-              }
+              if (isMultiplayer) sendFullGameStateToOpponent(false);
               render();
             }
           }, 500);
@@ -24355,12 +24355,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
               hand.push(chosenCard);
               logBattle(`✨ 最後的下午茶 效果：將牌庫中的【${chosenCard.name}】加入手牌！`);
               shuffle(deck);
-              if (isMultiplayer) {
-                ws.send(JSON.stringify({
-                  action: "add_to_hand_sync",
-                  card: chosenCard
-                }));
-              }
+              if (isMultiplayer) sendFullGameStateToOpponent(false);
               render();
             }
           }, 500);
@@ -24844,12 +24839,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
           playerExtraDeck.splice(playerExtraDeck.indexOf(hirako), 1);
           hand.push(hirako);
           logBattle(`✨ 雙面幻影 雙子座 亞子 效果：從額外牌庫將【雙面幻影 雙子座 平子】加入手牌！`);
-          if (isMultiplayer) {
-            ws.send(JSON.stringify({
-              action: "add_to_hand_sync",
-              card: hirako
-            }));
-          }
+          if (isMultiplayer) sendFullGameStateToOpponent(false);
           render();
         } else {
           logBattle("雙面幻影 雙子座 亞子 效果：額外牌庫中無【雙面幻影 雙子座 平子】。");
@@ -27812,86 +27802,21 @@ async function xlwHandleWolfMaceCombatSuccess(winningUnit, winZone, winIdx, winO
   });
   if (!hasOtherEquip) return;
 
-  const isPlayerOwner = (winOwner === "player");
-  const maceInExtra = isPlayerOwner
-    ? playerExtraDeck.find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"))
-    : (window.XLW_enemyExtraDeck || enemyExtraDeck || []).find(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
-
-  if (!maceInExtra) return;
-
-  if (isPlayerOwner) {
-    const confirmAdd = await showXLWConfirm(
-      "狼牙棒 效果觸發",
-      `我方獸人單位 ${winningUnit.card.name} 戰鬥成功且裝備了其他裝備卡！是否將【血戰幫狼牙棒】自額外牌庫加入手牌？`,
-      "是",
-      "否"
-    );
-    if (confirmAdd) {
-      playerExtraDeck.splice(playerExtraDeck.indexOf(maceInExtra), 1);
-      hand.push(maceInExtra);
-      logBattle(`✨ 血戰幫狼牙棒 效果：將【血戰幫狼牙棒】自額外牌庫加入我方手牌！`);
-      if (typeof renderExtraDecks === "function") renderExtraDecks();
-      render();
-    }
-    if (isMultiplayer) {
-      ws.send(JSON.stringify({
-        action: "wolf_mace_choice",
-        winZone: winZone,
-        winIdx: winIdx,
-        accepted: Boolean(confirmAdd)
-      }));
-    }
-  } else {
-    // 對手的獸人戰勝了
-    if (isMultiplayer) {
-      const key = `${winZone}:${winIdx}`;
-      setStatus("等待對手決定是否將【血戰幫狼牙棒】自額外區加入手牌...");
-      render();
-      if (!window.XLW_opponentWolfMaceChoice) window.XLW_opponentWolfMaceChoice = {};
-      if (window.XLW_opponentWolfMaceChoice[key] === undefined) {
-        await new Promise(resolve => {
-          const startT = Date.now();
-          const check = setInterval(() => {
-            if (window.XLW_opponentWolfMaceChoice[key] !== undefined || Date.now() - startT > 15000) {
-              clearInterval(check);
-              resolve();
-            }
-          }, 50);
-        });
-      }
-      const accepted = Boolean(window.XLW_opponentWolfMaceChoice[key]);
-      delete window.XLW_opponentWolfMaceChoice[key];
-      if (accepted) {
-        const oppExtra = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-        const idx = oppExtra.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
-        if (idx !== -1) {
-          oppExtra.splice(idx, 1);
-        } else if (oppExtra.length > 0) {
-          oppExtra.pop();
-        }
-        if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
-          window.XLW_ENEMY.hand.push(null);
-        }
-        logBattle(`✨ 對手發動【血戰幫狼牙棒】效果：將【血戰幫狼牙棒】自額外牌庫加入手牌！`);
-        if (typeof renderExtraDecks === "function") renderExtraDecks();
-        render();
-      }
-      setStatus("");
-    } else {
-      // AI 模式
-      const oppExtra = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-      const idx = oppExtra.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
-      if (idx !== -1) {
-        const c = oppExtra.splice(idx, 1)[0];
-        if (window.XLW_ENEMY && Array.isArray(window.XLW_ENEMY.hand)) {
-          window.XLW_ENEMY.hand.push(c);
-        }
-        logBattle(`✨ 對手【血戰幫狼牙棒】效果：將【血戰幫狼牙棒】自額外牌庫加入手牌！`);
-        if (typeof renderExtraDecks === "function") renderExtraDecks();
-        render();
-      }
-    }
-  }
+  const isPlayerOwner = winOwner === "player";
+  if (!isPlayerOwner && isMultiplayer) return;
+  const extra = isPlayerOwner ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck);
+  const destination = isPlayerOwner ? hand : window.XLW_ENEMY?.hand;
+  const mace = extra?.find(card => card?.id === "R-ORC-0054");
+  if (!mace || !destination) return;
+  if (isPlayerOwner && !await showXLWConfirm(
+    "血戰幫狼牙棒", `【${winningUnit.card.name}】戰鬥成功，是否將額外區的狼牙棒加入手牌？`
+  )) return;
+  if (field[winZone]?.[winIdx] !== winningUnit ||
+      !window.XLWDuelConsistency.moveKnownCard(extra, destination, mace)) return;
+  logBattle("✨【血戰幫狼牙棒】已從額外區加入手牌。");
+  renderExtraDecks();
+  render();
+  if (isMultiplayer) sendFullGameStateToOpponent();
 }
 
 async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner) {
@@ -40640,12 +40565,7 @@ function renderField() {
               if (returnToPlayer) {
                 hand.push(cloned);
                 logBattle(`✨ 驅魔人 效果：將 ${obj.card.name} 上的【${chosenEq}】送回我方手牌！`);
-                if (isMultiplayer) {
-                  ws.send(JSON.stringify({
-                    action: "add_to_hand_sync",
-                    card: cloned
-                  }));
-                }
+                if (isMultiplayer) sendFullGameStateToOpponent(false);
               } else {
                 window.XLW_ENEMY.hand.push(cloned);
                 logBattle(`✨ 驅魔人 效果：將 ${obj.card.name} 上的【${chosenEq}】送回對手手牌！`);
@@ -47129,15 +47049,7 @@ function setupWebSocketEvents() {
       if (window.XLW_ENEMY.hand) {
         window.XLW_ENEMY.hand.push(null);
       }
-      if (enemyExtraDeck && enemyExtraDeck.length > 0) {
-        const idx = enemyExtraDeck.findIndex(c => c && (c.id === "R-ORC-0054" || c.name === "血戰幫狼牙棒"));
-        if (idx !== -1) {
-          enemyExtraDeck.splice(idx, 1);
-        } else {
-          enemyExtraDeck.pop();
-        }
-      }
-      logBattle("對手從其額外牌庫將 1 張卡牌加入手牌。");
+      logBattle("對手將 1 張卡牌加入手牌。");
       render();
     } else if (data.action === "grave_to_hand_sync") {
       const card = data.card;
@@ -47388,14 +47300,6 @@ function setupWebSocketEvents() {
     } else if (data.action === "sneak_recall") {
       const key = `${data.attZone}:${data.attIdx}`;
       window.XLW_opponentSneakRecall[key] = data.recall;
-    } else if (data.action === "wolf_mace_choice") {
-      if (!window.XLW_opponentWolfMaceChoice) window.XLW_opponentWolfMaceChoice = {};
-      if (data.winZone !== undefined) {
-        window.XLW_opponentWolfMaceChoice[`${data.winZone}:${data.winIdx}`] = data.accepted;
-      }
-      if (data.attZone !== undefined) {
-        window.XLW_opponentWolfMaceChoice[`${data.attZone}:${data.attIdx}`] = data.accepted;
-      }
     } else if (data.action === "foodball_choice") {
       const key = `${data.zone}:${data.idx}`;
       window.XLW_opponentFoodBallChoice[key] = data.trigger;
