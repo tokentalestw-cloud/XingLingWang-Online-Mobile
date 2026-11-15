@@ -5730,6 +5730,7 @@ window.hasFriendlyDessertQueen = hasFriendlyDessertQueen;
 
 function xlwAllowsTacticalTribute(card) {
   return window.xlwIsFlowerGirlTributePlayable?.(card) ||
+    card?.id?.includes("ART-0066") || /[魁傀]儡操縱師/.test(card?.name || "") ||
     window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive ||
     (hasFriendlyDessertQueen("player") && isDessertCard(card));
 }
@@ -11885,6 +11886,39 @@ async function castSpellChain(spellCard, effectCallback) {
 }
 window.castSpellChain = castSpellChain;
 
+async function xlwResolveSoftClocks() {
+  const available = ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit && (!unit.tapped || unit.attacking) ? [{zone, idx, unit}] : []));
+  const selected = [];
+  while (available.length) {
+    const targets = available.filter(({zone, idx, unit}) => field[zone][idx] === unit && (!unit.tapped || unit.attacking));
+    if (!targets.length) break;
+    const options = targets.map(({zone, idx, unit}, value) => ({
+      text: unit.card.name, value, boardTarget: {zone, idx}
+    }));
+    options.push({text: "結束選擇", value: "cancel"});
+    const pick = await showXLWChoiceModal("軟爛的時鐘們", "點選要橫放的我方單位，選完請按結束選擇。", options, {boardOnly: true});
+    const target = targets[pick];
+    if (!target) break;
+    selected.push(target);
+    available.splice(available.indexOf(target), 1);
+  }
+  let count = 0;
+  for (const {zone, idx, unit} of selected) {
+    if (field[zone][idx] !== unit || (unit.tapped && !unit.attacking)) continue;
+    if (unit.attacking) {
+      unit.attacking = false;
+      unit.target = null;
+      unit.trophyTargetId = null;
+      window.XLWBattleFlow?.forget(zone, idx);
+    }
+    unit.tapped = true;
+    count++;
+    await xlwOnPlayerUnitTapped(zone, idx);
+  }
+  logBattle(`⏳【軟爛的時鐘們】效果：橫放 ${count} 個我方單位。`);
+}
+
 // 魔法卡點擊發動
 async function castSpell(handIndex) {
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
@@ -12705,16 +12739,11 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      let tappedCount = 0;
-      for (const z of ["player_front", "player_back"]) {
-        (field[z] || []).forEach(u => {
-          if (u && !u.tapped) { u.tapped = true; tappedCount++; }
-        });
-      }
-      logBattle(`⏳【軟爛的時鐘們】時間融化：我方場上 ${tappedCount} 個單位全部鬆弛橫置！`);
+      await xlwResolveSoftClocks();
       graveyard.push(spellCard);
       render();
     });
+    return;
 
   // 14. R-VRT-0070 鬧事酒館
   } else if (card.id === "R-VRT-0070" || card.name?.includes("鬧事酒館")) {
@@ -37046,6 +37075,7 @@ function createDeckVisual(zoneId, count, label) {
 // 判定手牌中的卡牌當前是否符合發動或召喚條件
 window.xlwCanPlayHandCard = function(card, idx) {
   if (!card) return false;
+  if (xlwIsBreakfast(card) && xlwCanActivateBreakfast()) return true;
   // 🎈 巨大小丑氣球 (SR-CCS-0023): 本回合已輪轉至少 3 次才可從手牌打出
   if (card.id === "SR-CCS-0023" || card.name?.includes("巨大小丑氣球")) {
     if ((window.XLW_playerWheelSpinsThisTurn || 0) < 3) return false;
@@ -37225,7 +37255,7 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
   }
 
   const isMagic = (card.type === "magic" || card.type === "魔法");
-  const actionText = isMagic ? "✨ 發動" : "⚔️ 召喚";
+  const actionText = isMagic ? "✨ 發動" : xlwIsBreakfast(card) ? "✨ 使用" : "⚔️ 召喚";
   const actionClass = isMagic ? "cast-btn" : "summon-btn";
   const canPlay = window.xlwCanPlayHandCard(card, idx);
   if (!canPlay && window.XLWBFeedback) {
@@ -37381,8 +37411,51 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
 };
 
 // 執行手牌單位召喚處理邏輯
+function xlwIsBreakfast(card) {
+  return Boolean(card && (card.id?.includes("ART-0030") || card.name?.includes("最後的早餐")));
+}
+
+function xlwCanActivateBreakfast() {
+  return isMyTurn && !xlwSpellActionPending() && ["召喚階段", "戰術佈陣", "進攻宣言"].includes(phase);
+}
+
+async function xlwResolveBreakfast(card, position = null) {
+  if (!xlwCanActivateBreakfast()) return;
+  let breakfast;
+  if (position) {
+    const {zone, idx, unit} = position;
+    if (field[zone]?.[idx] !== unit || window.isUnitSilenced(unit, zone, idx)) return;
+    breakfast = unit.card;
+    const cleanup = cleanUnitLeavingField(unit, zone);
+    field[zone][idx] = null;
+    window.XLWBattleFlow?.forget(zone, idx);
+    await cleanup;
+  } else {
+    breakfast = window.XLWDuelConsistency.takeKnownCard(hand, card);
+    if (!breakfast) return;
+  }
+  draw(1);
+  deck.push(breakfast);
+  shuffle(deck);
+  logBattle("✨【最後的早餐】效果：抽牌並將原卡洗回牌庫。");
+  if (isMultiplayer) {
+    ws.send(JSON.stringify({action: "breakfast_reveal_sync", card: breakfast, fromField: Boolean(position)}));
+    sendFullGameStateToOpponent();
+  }
+  render();
+}
+
 window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if(xlwRequireSpellCompletion())return;
+  if (xlwIsBreakfast(card) && xlwCanActivateBreakfast()) {
+    const choices = [{text: "展示、抽 1 張牌並洗回牌庫", value: "activate"}];
+    const canPlace = phase === "召喚階段" ? !normalSummonUsed : phase === "戰術佈陣" && !tacticalSummonUsed;
+    if (canPlace) choices.unshift({text: "召喚到場上", value: "summon"});
+    const choice = await showXLWChoiceModal("【最後的早餐】", "選擇要執行的操作。", choices);
+    if (choice === "activate") await xlwResolveBreakfast(card);
+    if (choice !== "summon") return;
+  }
+
   // 🐐 山羊術手牌變形判定
   const isPolymorphGoatHandCard = (
     card.id === "GOT-0002" || card.id === "R-GOT-0002" || card.id === "C-GOT-0002" || card.id === "PROMO-GOT-0002" ||
@@ -37630,36 +37703,6 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
   if (phase === "戰術佈陣" && tacticalSummonUsed && !window.XLW_bypassTurnCheck) {
     setStatus("【召喚限制】本回合戰術佈陣階段的召喚已使用過！");
     return;
-  }
-
-  // 特殊卡牌：最後的早餐 (R-ART-0030)
-  if (phase === "召喚階段" && (card.id === "R-ART-0030" || card.name?.includes("最後的早餐"))) {
-    const choices = [
-      { text: "【召喚】一般免祭品特殊召喚此單位", value: "summon" },
-      { text: "【展示抽一】展示此卡並抽 1，然後將此卡洗回牌庫", value: "activate" }
-    ];
-    const choice = await showXLWChoiceModal("【最後的早餐】效果選擇", "請選擇要執行的操作：", choices);
-    if (choice === "activate") {
-      const breakfast = window.XLWDuelConsistency.takeKnownCard(hand, card);
-      if (!breakfast) return;
-      logBattle(`✨ 我方展示了手牌中的【最後的早餐】！`);
-      draw(1);
-      deck.push(breakfast);
-      shuffle(deck);
-      logBattle(`✨ 最後的早餐 效果：已將此卡洗回牌庫，並完成重洗！`);
-      
-      if (isMultiplayer) {
-        ws.send(JSON.stringify({
-          action: "breakfast_reveal_sync",
-          card: breakfast
-        }));
-        sendFullGameStateToOpponent();
-      }
-      render();
-      return;
-    } else if (choice !== "summon") {
-      return;
-    }
   }
 
   // 檢查特定卡牌限制 (如麻祖、高塔101號等)
@@ -39371,6 +39414,14 @@ function renderField() {
             setStatus("對手回合中，請稍候！");
             return;
           }
+          if (zone.startsWith("player_") && xlwCanActivateBreakfast() && selectedHandForTribute === null &&
+              !window.XLW_directBoardPrompt && xlwIsBreakfast(obj.card) && !window.isUnitSilenced(obj, zone, idx)) {
+            const accepted = await showXLWConfirm("【最後的早餐】", "是否抽 1 張牌，並將場上的這張卡洗回牌庫？");
+            if (accepted) {
+              await xlwResolveBreakfast(obj.card, {zone, idx, unit: obj});
+              return;
+            }
+          }
           if (phase === "進攻宣言") {
             if (zone.startsWith("player_")) {
               await xlwTogglePlayerAttack(zone, idx);
@@ -39379,7 +39430,7 @@ function renderField() {
             }
             return;
           }
-          if (phase === "召喚階段" && selectedHandForTribute !== null) {
+          if ((phase === "召喚階段" || phase === "戰術佈陣") && selectedHandForTribute !== null) {
             toggleTributeSelection(zone, idx);
             return;
           }
@@ -45636,7 +45687,7 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "breakfast_reveal_sync") {
-      logBattle(`✨ 對手展示了手牌中的【最後的早餐】！`);
+      logBattle(data.fromField ? "✨ 對手發動場上的【最後的早餐】！" : "✨ 對手展示了手牌中的【最後的早餐】！");
       showRevealedCardModal(data.card, "對手");
       logBattle(`✨ 對手【最後的早餐】效果：對手展示該卡並抽 1 張牌，然後洗回牌庫！`);
       render();

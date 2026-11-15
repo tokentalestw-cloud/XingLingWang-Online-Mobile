@@ -21,6 +21,7 @@ test("tactical tribute recognizes queen variants, excludes other factions, and r
   assert.ok(!context.xlwAllowsTacticalTribute(dessert));
   vm.runInContext(section("window.xlwIsFlowerGirlTributePlayable =", "// 13."), context);
   assert.ok(context.xlwAllowsTacticalTribute({id: "R-VLG-0062", type: "unit"}));
+  assert.ok(context.xlwAllowsTacticalTribute({id: "C-ART-0066", type: "unit"}));
   assert.ok(!context.xlwAllowsTacticalTribute({id: "VLG-0001", type: "unit"}));
 });
 
