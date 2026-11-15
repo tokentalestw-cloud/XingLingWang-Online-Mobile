@@ -7519,21 +7519,6 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     baseAtk += unit.soulShardAtk;
   }
 
-  // 🪵 野人工藝-木棒 (+2 攻擊力)
-  if (unit.woodClubBonus) {
-    baseAtk += unit.woodClubBonus;
-  }
-
-  // 🗡️ 妖精寶劍 (+2 攻擊力)
-  if (unit.fairySwordBonus) {
-    baseAtk += unit.fairySwordBonus;
-  }
-
-  // 💎 妖精靈魂碎片 (+3 攻擊力)
-  if (unit.soulShardAtk) {
-    baseAtk += unit.soulShardAtk;
-  }
-
   // 🥖 旅人法棍 (C-SPT-0061) 加成
   if (unit.baguetteBonus) {
     baseAtk += unit.baguetteBonus;
@@ -9596,19 +9581,16 @@ window.xlwCheckLemonTartPreventDestruction = async function(destroyedUnit, zone,
 
 // 4. C-EWD-0066 學會踢擊的野人: 進攻時檢索「無影腳」
 window.xlwCheckKickingBarbarianAttack = async function(attacker, isPlayer) {
-  if (!attacker || !attacker.card) return;
-  const c = attacker.card;
-  if (c.id === "C-EWD-0066" || c.name?.includes("學會踢擊的野人")) {
-    const extraD = isPlayer ? playerExtraDeck : enemyExtraDeck;
-    const kickIdx = extraD.findIndex(card => card && (card.id === "R-EWD-0069" || card.name?.includes("無影腳")));
-    if (kickIdx >= 0) {
-      const kickCard = extraD.splice(kickIdx, 1)[0];
-      const hList = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-      hList.push(kickCard);
-      logBattle("🦵【學會踢擊的野人】凌空踢擊：從額外區將【無影腳】領悟加入手牌！");
-      if (typeof render === "function") render();
-    }
-  }
+  if (!attacker?.card?.id?.includes("EWD-0066")) return false;
+  const extra = isPlayer ? playerExtraDeck : enemyExtraDeck;
+  const card = extra.find(candidate => candidate?.id === "R-EWD-0069" || candidate?.name === "無影腳");
+  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  if (!card || !targetHand || (isPlayer && !await showXLWConfirm(attacker.card.name, "是否從額外區將無影腳加入手牌？"))) return false;
+  const taken = window.XLWDuelConsistency.takeKnownCard(extra, card);
+  if (!taken) return false;
+  targetHand.push(taken);
+  logBattle("【學會踢擊的野人】從額外區取得【無影腳】。");
+  return true;
 };
 
 // 5. C-FMS-0044 義氣一族 龍哥 & C-FMS-0045 義氣一族 虎哥: 防守階段開始展示
@@ -12078,6 +12060,24 @@ async function xlwResolveSoftClocks() {
 }
 
 // 魔法卡點擊發動
+async function xlwResolveSavageCraftSpell(card) {
+  const targets = ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    window.xlwIsUnitBarbarian(unit) ? [{ unit, zone, idx }] : []));
+  const pick = targets.length ? await showXLWChoiceModal(card.name, "請點選要獲得效果的野人。", targets.map((target, value) =>
+    ({ text: target.unit.card.name, value, boardTarget: { zone: target.zone, idx: target.idx } })),
+    { boardOnly: true, required: true }) : null;
+  const target = targets[pick];
+  if (target && field[target.zone][target.idx] === target.unit && window.xlwIsUnitBarbarian(target.unit)) {
+    const { unit } = target;
+    if (card.id === "R-EWD-0052") unit.woodClubBonus = (unit.woodClubBonus || 0) + 2;
+    if (card.id === "R-EWD-0053") unit.bonusScore = (unit.bonusScore || 0) + 2;
+    if (card.id === "R-EWD-0054") unit.hasSpellShield = true;
+    logBattle(`【${card.name}】賦予【${unit.card.name}】效果。`);
+  }
+  (window.xlwCardHasKeyword(card, "消逝") ? playerExtraDeck : graveyard).push(card);
+  render();
+}
+
 async function castSpell(handIndex) {
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
     setStatus("【磁場干擾】本回合受到磁場搗亂機影響，無法使用魔法卡！");
@@ -12245,84 +12245,11 @@ async function castSpell(handIndex) {
         render();
       });
 
-    // 2. R-EWD-0052 野人工藝-木棒: 消逝。使你場上1個野人單位被賦予+2攻擊力
-    } else if (card.id === "R-EWD-0052" || card.name?.includes("木棒")) {
+    // 野人工藝：由玩家直接點選場上的野人。
+    } else if (["R-EWD-0052", "R-EWD-0053", "R-EWD-0054"].includes(card.id)) {
       const spellCard = hand.splice(handIndex, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "player");
-      await castSpellChain(spellCard, async () => {
-        const targets = [];
-        for (const rz of ["player_front", "player_back"]) {
-          (field[rz] || []).forEach((u, i) => {
-            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
-              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
-            }
-          });
-        }
-        if (targets.length > 0) {
-          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-          const pick = await showXLWChoiceModal("【野人工藝-木棒】裝備", "請選擇獲得 +2 攻擊力的野人單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            const tgt = targets[pick];
-            tgt.unit.woodClubBonus = (tgt.unit.woodClubBonus || 0) + 2;
-            logBattle(`🪵【野人工藝-木棒】粗糙有力：使【${tgt.name}】獲得 +2 攻擊力！`);
-          }
-        }
-        // 消逝回到額外區
-        playerExtraDeck.push(spellCard);
-        render();
-      });
-
-    // 3. R-EWD-0053 野人工藝-披風: 使你場上1個野人單位被賦予+2★
-    } else if (card.id === "R-EWD-0053" || card.name?.includes("披風")) {
-      const spellCard = hand.splice(handIndex, 1)[0];
-      await xlwShowSpellActivationOverlay(spellCard, "player");
-      await castSpellChain(spellCard, async () => {
-        const targets = [];
-        for (const rz of ["player_front", "player_back"]) {
-          (field[rz] || []).forEach((u, i) => {
-            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
-              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
-            }
-          });
-        }
-        if (targets.length > 0) {
-          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-          const pick = await showXLWChoiceModal("【野人工藝-披風】披肩", "請選擇獲得 +2★ 的野人單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            const tgt = targets[pick];
-            tgt.unit.bonusScore = (tgt.unit.bonusScore || 0) + 2;
-            logBattle(`🧥【野人工藝-披風】威武霸氣：使【${tgt.name}】獲得 +2★ 榮譽！`);
-          }
-        }
-        graveyard.push(spellCard);
-        render();
-      });
-
-    // 4. R-EWD-0054 野人工藝-吊墜: 使你場上1個野人單位被賦予敵方魔法抗性
-    } else if (card.id === "R-EWD-0054" || card.name?.includes("吊墜")) {
-      const spellCard = hand.splice(handIndex, 1)[0];
-      await xlwShowSpellActivationOverlay(spellCard, "player");
-      await castSpellChain(spellCard, async () => {
-        const targets = [];
-        for (const rz of ["player_front", "player_back"]) {
-          (field[rz] || []).forEach((u, i) => {
-            if (u && u.card && (u.card.faction === "進化野人" || u.card.deck === "進化野人" || u.card.id?.includes("EWD") || u.card.name?.includes("野人"))) {
-              targets.push({ zone: rz, idx: i, name: u.card.name, unit: u });
-            }
-          });
-        }
-        if (targets.length > 0) {
-          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-          const pick = await showXLWChoiceModal("【野人工藝-吊墜】祈福", "請選擇獲得敵方魔法抗性的野人單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            const tgt = targets[pick];
-            tgt.unit.hasSpellShield = true;
-            logBattle(`📿【野人工藝-吊墜】圖騰庇護：賦予【${tgt.name}】敵方魔法抗性！`);
-          }
-        }
-        graveyard.push(spellCard);
-        render();
-      });
+      await castSpellChain(spellCard, () => xlwResolveSavageCraftSpell(spellCard));
 
     // 5. R-EWD-0018-泳裝 興奮 黑銀夜烏: 使你場上所有野人單位轉正
     } else if (card.id === "R-EWD-0018-泳裝" || card.name?.includes("黑銀夜烏")) {
@@ -25272,6 +25199,9 @@ window.selectPlayerTarget = selectPlayerTarget;
 window.xlwResolveSavageAttack = async function(unit, zone, idx) {
   if (!isMyTurn) return;
   let changed = false;
+  if (unit.card.id?.includes("EWD-0066") && !window.isUnitSilenced(unit, zone, idx)) {
+    changed = await window.xlwCheckKickingBarbarianAttack(unit, true);
+  }
   if (unit.card.id?.includes("EWD-0058") && !window.isUnitSilenced(unit, zone, idx)) {
     changed = await xlwPushUnit(zone, idx, "front", {
       sourceName: unit.card.name, offBoardReward: 2, rewardIsPlayer: true
@@ -28513,7 +28443,7 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
   const c = unit.card || unit;
 
   // 🛡️ 祝福勇者 (R-BRV-0058): 敵方魔法抗性
-  if (unit.magicImmuneUntilNextTurn) return true;
+  if (unit.magicImmuneUntilNextTurn || unit.hasSpellShield) return true;
 
   // 📿 靈異驅魔師 (C-VLG-0065): 敵方魔法抗性
   if (c.id === "C-VLG-0065" || c.name?.includes("靈異驅魔師")) return true;
@@ -38118,6 +38048,31 @@ async function xlwResolveAbyssQueen(queen) {
   return true;
 }
 
+window.xlwActivateSavageCraft = async function(unit, zone, idx) {
+  const canActivate = () => isMyTurn && xlwEwdInMainPhase() &&
+    field[zone]?.[idx] === unit && !unit.tapped && !unit.attacking &&
+    unit.craftUsedTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+  if (!zone.startsWith("player_") || !unit.card.id?.includes("EWD-0051") || !canActivate()) return false;
+  const cards = playerExtraDeck.filter(card => card?.type === "magic" &&
+    (card.art_subtype?.includes("工藝") || card.name?.startsWith("野人工藝")));
+  if (!cards.length) return false;
+  const pick = await showXLWChoiceModal(unit.card.name, "可將此單位橫放，從額外區選一張工藝牌加入手牌。", [
+    ...cards.map((card, value) => ({ card, text: card.name, value })),
+    { text: "不發動", value: -1 }
+  ]);
+  if (!cards[pick] || !canActivate()) return false;
+  const card = window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, cards[pick]);
+  if (!card) return false;
+  unit.tapped = true;
+  unit.craftUsedTurn = turn;
+  hand.push(card);
+  logBattle(`【${unit.card.name}】橫放並取得【${card.name}】。`);
+  await xlwOnPlayerUnitTapped(zone, idx);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
 async function xlwResolveExpansionUnitClick(obj, zone, idx) {
   if (field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
 // 🌿 植物園與擴充卡牌主動技能與成長對話
@@ -38147,31 +38102,6 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
         render();
         if (isMultiplayer) sendFullGameStateToOpponent(true);
         return true;
-      }
-    }
-
-    // 🪵 SSR-EWD-0051 學會工藝的野人: 主要階段限一次，橫放此單位，從額外區尋找1張工藝牌加入手牌
-    if ((obj.card.id === "SSR-EWD-0051" || obj.card.name?.includes("學會工藝的野人")) && !obj.tapped && !obj.craftUsedThisTurn) {
-      const craftCards = (extraDeck || []).filter(c => c && (c.name?.includes("野人工藝") || c.name?.includes("工藝") || c.id?.includes("EWD-005")));
-      if (craftCards.length > 0) {
-        const doCraft = await showXLWConfirm("【學會工藝的野人】工藝精研", "主要階段限一次：是否將此單位橫放，從額外區尋找 1 張工藝魔法牌加入手牌？");
-        if (doCraft) {
-          obj.craftUsedThisTurn = true;
-          obj.tapped = true;
-          const choices = craftCards.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
-          const pick = await showXLWChoiceModal("選擇工藝魔法牌", "請選擇要加入手牌的工藝牌：", choices);
-          if (pick !== null && pick !== undefined) {
-            const chosen = craftCards[pick];
-            const eIdx = extraDeck.indexOf(chosen);
-            if (eIdx >= 0) extraDeck.splice(eIdx, 1);
-            hand.push(chosen);
-            logBattle(`🪵🔨【學會工藝的野人】工藝打造：橫放自身，從額外區獲得了【${chosen.name}】！`);
-            render();
-            return true;
-          }
-        }
-      } else {
-        setStatus("額外區已無野人工藝牌！");
       }
     }
 
@@ -38980,6 +38910,10 @@ function renderField() {
 
           // 手機版戰術佈陣：改成「點單位 → 點空格」移動，避免拖曳時誤開圖片或卡住。
           // 電腦版也可使用此方式，原本滑鼠拖曳仍保留。
+          if (selectedHandForTribute === null && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive &&
+              !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive &&
+              await window.xlwActivateSavageCraft?.(obj, zone, idx)) return;
+
           if (phase === "戰術佈陣" && zone.startsWith("player_") && !window.XLW_equipSpellActive && !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive) {
             if (isMultiplayer && !isMyTurn) {
               setStatus("對手回合中，請稍候！");
