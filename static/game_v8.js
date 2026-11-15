@@ -921,6 +921,7 @@ function isUnitConfined(zone, idx) {
   if (!slot) return false;
   
   if (slot.confined || xlwHasAngelSeason(zone, 4)) return true;
+  if (slot.card?.id === "C-EVL-0058" && !window.isUnitSilenced(slot, zone, idx)) return true;
   const houndSide = zone.startsWith("player_") ? "enemy_" : "player_";
   if (["front", "back"].some(row => {
     const sourceZone = houndSide + row;
@@ -1356,6 +1357,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
@@ -1635,6 +1637,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
@@ -6510,6 +6513,15 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
 window.xlwSeparateSingleFusedUnit = xlwSeparateSingleFusedUnit;
 
 // 單位真實攻擊力 (盾牌為 0)
+window.xlwCountAdjacentRootFairies = function(unit, zone, lane) {
+  if (!zone || !Number.isInteger(lane) || !window.xlwIsUnitFairy?.(unit)) return 0;
+  const other = zone.replace(/_(front|back)$/, (_, row) => row === "front" ? "_back" : "_front");
+  return [[zone, lane - 1], [zone, lane + 1], [other, lane]].filter(([row, index]) => {
+    const source = field[row]?.[index];
+    return source?.card?.id === "C-EVL-0058" && !window.isUnitSilenced(source, row, index);
+  }).length;
+};
+
 function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (!unit) return 0;
   if ((!zone || lane === undefined || lane === -1) && typeof field !== "undefined" && field) {
@@ -7476,24 +7488,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
-  // 🧚 樹根妖精 (C-EVL-0058): 使此單位前後左右的你的妖精單位+2攻擊力
-  if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined" && window.xlwIsUnitFairy && window.xlwIsUnitFairy(unit)) {
-    const isPlayer = zone.startsWith("player_");
-    const sideP = isPlayer ? "player_" : "enemy_";
-    const isFront = zone.includes("front");
-    const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
-    let hasAdjacentRootFairy = false;
-    if (field[zone]) {
-      if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card.id === "C-EVL-0058" || field[zone][lane - 1].card.name?.includes("樹根妖精"))) hasAdjacentRootFairy = true;
-      if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card.id === "C-EVL-0058" || field[zone][lane + 1].card.name?.includes("樹根妖精"))) hasAdjacentRootFairy = true;
-    }
-    if (field[otherRowZone] && field[otherRowZone][lane] && (field[otherRowZone][lane].card.id === "C-EVL-0058" || field[otherRowZone][lane].card.name?.includes("樹根妖精"))) {
-      hasAdjacentRootFairy = true;
-    }
-    if (hasAdjacentRootFairy) {
-      baseAtk += 2;
-    }
-  }
+  baseAtk += window.xlwCountAdjacentRootFairies?.(unit, zone, lane) * 2 || 0;
 
   // 🪵 野人工藝-木棒 (+2 攻擊力)
   if (unit.woodClubBonus) {
@@ -8134,24 +8129,7 @@ function getUnitStars(unit, zone, lane) {
     }
   }
 
-  // 🧚 樹根妖精 (C-EVL-0058): 使此單位前後左右的你的妖精單位+2⭐
-  if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined" && window.xlwIsUnitFairy && window.xlwIsUnitFairy(unit)) {
-    const isPlayer = zone.startsWith("player_");
-    const sideP = isPlayer ? "player_" : "enemy_";
-    const isFront = zone.includes("front");
-    const otherRowZone = isFront ? (sideP + "back") : (sideP + "front");
-    let hasAdjacentRoot = false;
-    if (field[zone]) {
-      if (lane > 0 && field[zone][lane - 1] && (field[zone][lane - 1].card.id === "C-EVL-0058" || field[zone][lane - 1].card.name?.includes("樹根妖精"))) hasAdjacentRoot = true;
-      if (lane < 4 && field[zone][lane + 1] && (field[zone][lane + 1].card.id === "C-EVL-0058" || field[zone][lane + 1].card.name?.includes("樹根妖精"))) hasAdjacentRoot = true;
-    }
-    if (field[otherRowZone] && field[otherRowZone][lane] && (field[otherRowZone][lane].card.id === "C-EVL-0058" || field[otherRowZone][lane].card.name?.includes("樹根妖精"))) {
-      hasAdjacentRoot = true;
-    }
-    if (hasAdjacentRoot) {
-      baseStars += 2;
-    }
-  }
+  baseStars += window.xlwCountAdjacentRootFairies?.(unit, zone, lane) * 2 || 0;
 
   // 🖤 黑妖精厭世者 (C-EVL-0060): 此單位前後左右的每個你的妖精單位使此單位-2⭐
   if (c.id === "C-EVL-0060" || c.name?.includes("黑妖精厭世者")) {
@@ -9448,36 +9426,34 @@ window.xlwCheckSisterRevealPush = async function(isPlayerRevealer = true) {
 };
 
 // 1. ASSR-EVL-0065 武鬥家妖精 露娜芮: 敵方防守用魔法時移動並轉正
-window.xlwCheckLunaDefenseReaction = async function(isPlayerEnemy = false) {
-  const side = isPlayerEnemy ? "enemy_" : "player_";
-  for (const z of [side + "front", side + "back"]) {
-    const lunas = (field[z] || []).filter(u => u && (u.card.id === "ASSR-EVL-0065" || u.card.name?.includes("露娜芮")) && !u.lunaUsedThisTurn);
-    for (const luna of lunas) {
-      if (!isPlayerEnemy) {
-        const doMove = await showXLWConfirm("【武鬥家妖精 露娜芮】靈動身法", "敵方在防守階段使用魔法卡！是否移動露娜芮至我方任意位置並轉正自身？");
-        if (doMove) {
-          luna.lunaUsedThisTurn = true;
-          const emptySlots = [];
-          for (const rz of ["player_front", "player_back"]) {
-            for (let s = 0; s < 5; s++) if (!field[rz]?.[s]) emptySlots.push({ zone: rz, idx: s });
-          }
-          if (emptySlots.length > 0) {
-            const choices = emptySlots.map((s, i) => ({ text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`, value: i }));
-            const pick = await showXLWChoiceModal("選擇移動位置", "請選擇露娜芮瞬移的空格：", choices);
-            if (pick !== null && pick !== undefined) {
-              const dest = emptySlots[pick];
-              field[z][field[z].indexOf(luna)] = null;
-              field[dest.zone][dest.idx] = luna;
-              luna.summonedZone = dest.zone;
-              luna.tapped = false;
-              logBattle(`🥋🧚【武鬥家妖精 露娜芮】凌波微步：瞬移至 ${dest.zone.includes("front") ? "前排" : "後排"}${dest.idx + 1} 並轉正！`);
-              if (typeof render === "function") render();
-            }
-          }
-        }
-      }
-      break;
+window.xlwCheckLunaDefenseReaction = async function(isAiOwner = false) {
+  const side = isAiOwner ? "enemy_" : "player_";
+  const rows = [side + "front", side + "back"];
+  const units = rows.flatMap(zone => field[zone].map((unit, idx) => ({unit, zone, idx})));
+  for (const {unit, zone, idx} of units) {
+    const legal = () => unit?.card?.id === "ASSR-EVL-0065" && field[zone][idx] === unit &&
+      unit.lunaUsedTurn !== turn && !window.isUnitSilenced(unit, zone, idx) && !xlwIsUnitUnmovable(unit, zone, idx);
+    if (!legal()) continue;
+    const slots = rows.flatMap(row => field[row].flatMap((occupant, col) =>
+      occupant ? [] : [{zone: row, idx: col, summon: true}]));
+    if (!slots.length) continue;
+    const pick = isAiOwner ? 0 : await showXLWChoiceModal(unit.card.name, "可點選我方空格移動露娜芮。", slots.map((slot, value) =>
+      ({text: unit.card.name, value, boardTarget: slot})), {boardOnly: true});
+    const slot = slots[pick];
+    if (!slot || !legal() || field[slot.zone][slot.idx]) continue;
+    field[zone][idx] = null;
+    field[slot.zone][slot.idx] = unit;
+    unit.summonedZone = slot.zone;
+    unit.lunaUsedTurn = turn;
+    if ((unit.tapped || unit.attacking) && (isAiOwner || await showXLWConfirm(unit.card.name, "是否使露娜芮轉正？")) &&
+        field[slot.zone][slot.idx] === unit) {
+      unit.tapped = false;
+      unit.attacking = false;
+      unit.target = null;
     }
+    logBattle("【武鬥家妖精 露娜芮】因敵方防守魔法而移動。");
+    if (isMultiplayer && !isAiOwner) sendFullGameStateToOpponent();
+    render();
   }
 };
 
@@ -10666,7 +10642,23 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
 };
 
 // 戰鬥成功與進攻連動結算 (PG2 & 點數兌換卡)
+window.xlwRetrieveCrystalArrow = async function(unit, isPlayer) {
+  if ((!isPlayer && isMultiplayer) || !window.xlwIsUnitFairy?.(unit)) return false;
+  const side = isPlayer ? "player_" : "enemy_";
+  const extra = isPlayer ? playerExtraDeck : enemyExtraDeck;
+  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  const hasWeaponMaster = () => ["front", "back"].some(row => field[side + row].some((ally, idx) =>
+    ally?.card?.id?.includes("EVL-0032") && !window.isUnitSilenced(ally, side + row, idx)));
+  const arrow = extra.find(card => card?.id === "EVL-0055");
+  if (!arrow || !targetHand || !hasWeaponMaster()) return false;
+  if (isPlayer && !await showXLWConfirm("水晶箭矢", "妖精戰鬥成功，是否從額外區取得水晶箭矢？")) return false;
+  if (!hasWeaponMaster() || !window.XLWDuelConsistency.moveKnownCard(extra, targetHand, arrow)) return false;
+  logBattle("【妖精武器長拜恩】使【水晶箭矢】加入手牌。");
+  return true;
+};
+
 window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOwner, isAttacker) {
+  await window.xlwRetrieveCrystalArrow?.(attacker, successOwner === "player");
   // 🗡️ 妖精寶劍進攻成功抽1張牌
   if (attacker && attacker.hasFairySwordDraw && successOwner === "player") {
     draw(1);
@@ -11320,6 +11312,33 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   }
 };
 
+window.xlwResolveFairyLawyer = async function(isPlayer) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const grave = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  if (!grave() || !targetHand) return;
+  for (const zone of [side + "front", side + "back"]) {
+    for (const [idx, unit] of field[zone].entries()) {
+      const legal = () => unit?.card?.id === "C-EVL-0061" && field[zone][idx] === unit &&
+        !unit.tapped && !unit.attacking && unit.fairyLawyerTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+      if (!legal()) continue;
+      const cards = (grave() || []).filter(card => card?.type === "magic" || card?.type === "魔法");
+      if (!cards.length) return;
+      const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "可橫放此單位，從墓地選一張魔法卡回手。", [
+        ...cards.map((card, value) => ({card, text: card.name, value})),
+        {text: "不發動", value: -1}
+      ]) : 0;
+      if (!cards[pick] || !legal()) continue;
+      const card = window.XLWDuelConsistency.moveKnownCard(grave(), targetHand, cards[pick]);
+      if (!card) continue;
+      unit.tapped = true;
+      unit.fairyLawyerTurn = turn;
+      if (isPlayer) await xlwOnPlayerUnitTapped(zone, idx);
+      logBattle(`【${unit.card.name}】回收了【${card.name}】。`);
+    }
+  }
+};
+
 window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
 
@@ -11424,33 +11443,7 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
     }
   }
 
-  // E. C-EVL-0061 妖精法務員: 主要階段開始時限一次，可使此單位被橫放，若成功則使墓地1張魔法卡回手牌
-  for (const z of [side + "front", side + "back"]) {
-    const lawyers = (field[z] || []).filter(u => u && (u.card.id === "C-EVL-0061" || u.card.name?.includes("妖精法務員")) && !u.tapped);
-    for (const law of lawyers) {
-      const gList = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
-      const spellsInGrave = gList.filter(c => c && (c.type === "magic" || c.type === "魔法"));
-      if (spellsInGrave.length > 0) {
-        if (isPlayer) {
-          const doTap = await showXLWConfirm("【妖精法務員】法律回收", "主要階段開始！是否橫置【妖精法務員】，從墓地回收 1 張魔法卡至手牌？");
-          if (doTap) {
-            law.tapped = true;
-            const choices = spellsInGrave.map((s, idx) => ({ text: s.name, value: idx }));
-            const pick = await showXLWChoiceModal("【妖精法務員】選擇魔法卡", "請選擇回收的魔法卡：", choices);
-            if (pick !== null && pick !== undefined) {
-              const targetSpell = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, spellsInGrave[pick]);
-              if (targetSpell) logBattle(`⚖️【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入手牌！`);
-            }
-          }
-        } else {
-          law.tapped = true;
-          const targetSpell = window.XLWDuelConsistency.moveKnownCard(gList, window.XLW_ENEMY?.hand, spellsInGrave[0]);
-          if (targetSpell) logBattle(`⚖️ 對手【妖精法務員】橫置回收：將墓地中的【${targetSpell.name}】加入對手手牌！`);
-        }
-      }
-      break;
-    }
-  }
+  await window.xlwResolveFairyLawyer?.(isPlayer);
 
   // F. C-CRB-0027 滅碳器: 主要階段開始時限一次，可使你場上1個碳單位被破壞，若成功則從額外區尋找1張「白碳子」洗回牌庫
   for (const z of [side + "front", side + "back"]) {
@@ -11642,6 +11635,32 @@ window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
 };
 
 // 7. 擴充卡牌被破壞後續觸發結算
+window.xlwResolveFairySoulCrystal = async function(card, isPlayer) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const grave = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  if ((!isPlayer && isMultiplayer) || !grave()?.includes(card) || !window.xlwIsUnitFairy(card)) return false;
+  for (const zone of [side + "front", side + "back"]) {
+    for (const [idx, crystal] of field[zone].entries()) {
+      const valid = () => field[zone][idx] === crystal && crystal?.card?.id === "C-EVL-0063" &&
+        !window.isUnitSilenced(crystal, zone, idx);
+      if (!valid()) continue;
+      if (isPlayer && !await showXLWConfirm(crystal.card.name, `是否使水晶進墓並召喚【${card.name}】？`)) continue;
+      if (await window.xlwSpecialSummonUnit(card, isPlayer, {
+        frontPriority: false,
+        sourcePile: grave,
+        beforePlacement: async () => {
+          if (!valid() || !grave()?.includes(card)) return false;
+          field[zone][idx] = null;
+          grave().push(crystal.card);
+          await cleanUnitLeavingField(crystal, zone);
+          return true;
+        }
+      })) return true;
+    }
+  }
+  return false;
+};
+
 window.xlwResolveExpansionPostDestruction = async function(destroyedUnit, zone, idx, owner, isCombat) {
   if (!destroyedUnit || !destroyedUnit.card) return;
   const card = destroyedUnit.card;
@@ -11689,28 +11708,6 @@ window.xlwResolveExpansionPostDestruction = async function(destroyedUnit, zone, 
       if (isPlayerUnit) playerBonusScore += 2; else enemyBonusScore += 2;
       logBattle(`💥【爆爆仙人掌】感應到多肉爆炸：獲得獎勵 +2★！`);
       renderScore();
-    }
-  }
-
-  // E. C-EVL-0063 靈魂守護水晶: 你場上的妖精單位因破壞而進入墓地後，可使此卡進入墓地，若成功則使該單位卡被召喚
-  if (window.xlwIsUnitFairy(card)) {
-    for (const z of [side + "front", side + "back"]) {
-      const crystalIdx = (field[z] || []).findIndex(u => u && (u.card.id === "C-EVL-0063" || u.card.name?.includes("靈魂守護水晶")));
-      if (crystalIdx >= 0) {
-        if (isPlayerUnit) {
-          const doResurrect = await showXLWConfirm("【靈魂守護水晶】靈魂復甦", `妖精【${card.name}】被破壞！是否將靈魂守護水晶送入墓地，使【${card.name}】復活召喚？`);
-          if (doResurrect) {
-            const crystalUnit = field[z][crystalIdx];
-            field[z][crystalIdx] = null;
-            graveyard.push(crystalUnit.card);
-            const deadIdx = graveyard.indexOf(card);
-            if (deadIdx >= 0) graveyard.splice(deadIdx, 1);
-            await window.xlwSpecialSummonUnit(card, true);
-            logBattle(`💎【靈魂守護水晶】碎裂獻祭：成功復活妖精【${card.name}】！`);
-          }
-        }
-        break;
-      }
     }
   }
 
@@ -12055,6 +12052,13 @@ window.xlwCanTargetDefenseBuff = function(card, zone, idx) {
   return own || (!isUnitEffectImmune(unit, zone, idx) && !isUnitMagicImmune(unit, zone, idx, card));
 };
 
+window.xlwCrystalArrowTargets = function(card) {
+  return ["enemy_front", "enemy_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit?.card && getCardTributeCost(unit.card) === 0 && !isUnitIndestructible(unit, zone, idx) &&
+      !window.isUnitMagicImmune(unit, zone, idx, card) && !window.isUnitEffectImmune(unit, zone, idx) ?
+      [{unit, zone, idx}] : []));
+};
+
 async function castSpell(handIndex) {
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
     setStatus("【磁場干擾】本回合受到磁場搗亂機影響，無法使用魔法卡！");
@@ -12318,18 +12322,20 @@ async function castSpell(handIndex) {
           const fPick = await showXLWChoiceModal("【妖精靈魂碎片】選擇目標", "請選擇融合靈魂碎片的妖精：", fChoices);
           if (fPick !== null && fPick !== undefined) {
             const tgt = fairies[fPick];
+            const current = () => tgt && field[tgt.zone][tgt.idx] === tgt.unit && window.xlwIsUnitFairy(tgt.unit);
+            if (!current()) { graveyard.push(spellCard); return; }
             const optChoices = [
               { text: "⚔️ +3 攻擊力 & 敵方魔法抗性", value: "atk" },
               { text: "⭐ +3★ (分數) & 敵方效果抗性", value: "score" }
             ];
             const optPick = await showXLWChoiceModal("【妖精靈魂碎片】選擇祝福", `請選擇賦予【${tgt.name}】的祝福：`, optChoices);
-            if (optPick === "atk") {
+            if (current() && optPick === "atk") {
               tgt.unit.soulShardAtk = (tgt.unit.soulShardAtk || 0) + 3;
               tgt.unit.hasSpellShield = true;
               logBattle(`💎✨【妖精靈魂碎片】鋒銳祝福：賦予【${tgt.name}】+3 攻擊力與敵方魔法抗性！`);
-            } else if (optPick === "score") {
+            } else if (current() && optPick === "score") {
               tgt.unit.bonusScore = (tgt.unit.bonusScore || 0) + 3;
-              tgt.unit.hasEffectImmunity = true;
+              tgt.unit.enemyEffectImmune = true;
               logBattle(`💎✨【妖精靈魂碎片】不朽祝福：賦予【${tgt.name}】+3★ 榮譽與敵方效果抗性！`);
             }
           }
@@ -12390,29 +12396,25 @@ async function castSpell(handIndex) {
         render();
       });
 
-    // 11. EVL-0055 水晶箭矢: 進攻回合破壞敵方1個無需祭品的單位
-    } else if (card.id === "EVL-0055" || card.name?.includes("水晶箭矢")) {
+    // 水晶箭矢只在進攻宣言階段可用，同名卡每回合一次。
+    } else if (card.id === "EVL-0055") {
+      if (!isMyTurn || phase !== "進攻宣言" || window.XLW_crystalArrowTurn === turn ||
+          !window.xlwCrystalArrowTargets(card).length) {
+        setStatus("【水晶箭矢】須在我方進攻宣言階段，且有可破壞的敵方免祭品單位。");
+        return;
+      }
       const spellCard = hand.splice(handIndex, 1)[0];
+      window.XLW_crystalArrowTurn = turn;
       await xlwShowSpellActivationOverlay(spellCard, "player");
       await castSpellChain(spellCard, async () => {
-        const targets = [];
-        for (const oz of ["enemy_front", "enemy_back"]) {
-          (field[oz] || []).forEach((u, i) => {
-            if (u && u.card && (parseInt(u.card.tribute) || 0) === 0 && !window.isUnitMagicImmune?.(u, oz, i)) {
-              targets.push({ zone: oz, idx: i, name: u.card.name });
-            }
-          });
-        }
-        if (targets.length > 0) {
-          const choices = targets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-          const pick = await showXLWChoiceModal("【水晶箭矢】破空狙殺", "請選擇要破壞的無祭品敵方單位：", choices);
-          if (pick !== null && pick !== undefined) {
-            const tgt = targets[pick];
-            logBattle(`🏹✨【水晶箭矢】穿雲一擊：破壞了對手的無祭品單位【${tgt.name}】！`);
-            await destroyUnit(tgt.zone, tgt.idx, "enemy", false);
-          }
-        } else {
-          logBattle("🏹【水晶箭矢】場上沒有符合條件的敵方無祭品單位。");
+        const targets = window.xlwCrystalArrowTargets(spellCard);
+        const pick = targets.length ? await showXLWChoiceModal(spellCard.name, "請點選要破壞的敵方免祭品單位。", targets.map((target, value) =>
+          ({text: target.unit.card.name, value, boardTarget: {zone: target.zone, idx: target.idx}})),
+          {boardOnly: true, required: true}) : null;
+        const target = targets[pick];
+        if (target && window.xlwCrystalArrowTargets(spellCard).some(current => current.unit === target.unit &&
+            current.zone === target.zone && current.idx === target.idx)) {
+          await destroyUnit(target.zone, target.idx, "enemy", false);
         }
         graveyard.push(spellCard);
         render();
@@ -32645,6 +32647,7 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
   await cleanUnitLeavingField(unit, zone);
   field[zone][idx] = null;
 
+  await window.xlwResolveFairySoulCrystal?.(unit.card, owner === "player");
   await window.xlwResolveSavageAfterDestruction?.(unit, zone);
 
   if (owner === "player" && (["EWD-0017", "SSR-EWD-0017"].includes(unit.card.id) || unit.card.name === "超級賽野人")) {
@@ -33899,6 +33902,7 @@ function checkAiAttackFavorability(attacker, attZone, attIdx, defender, defZone,
 // Helper to handle AI spell casting with spell chain/counter checks
 async function aiCastSpell(spellCard, effectCallback, casterDefensePhase = false) {
   spellChainStack = [{ card: spellCard, owner: "opponent", casterDefensePhase }];
+  if (casterDefensePhase && spellCard.type === "magic") await window.xlwCheckLunaDefenseReaction?.();
   showSpellChainUI(spellChainStack);
   promptNextChainAction();
 
@@ -37287,6 +37291,9 @@ window.xlwCanPlayHandCard = function(card, idx) {
   const isMagic = (card.type === "magic" || card.type === "魔法");
 
   if (isMagic) {
+    if (card.id === "EVL-0055") return isMyTurn && phase === "進攻宣言" &&
+      window.XLW_crystalArrowTurn !== turn && window.XLW_playerCannotUseCardIdThisTurn !== card.id &&
+      window.xlwCrystalArrowTargets(card).length > 0;
     if (isMultiplayer && !isMyTurn && !window.XLW_defenseCounterActive && phase !== "防守階段") {
       return false;
     }
@@ -45278,6 +45285,7 @@ function setupWebSocketEvents() {
       void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack = [{ card: data.card, owner: "opponent", casterDefensePhase: data.casterDefensePhase === true }];
       if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
+      if (data.casterDefensePhase === true && data.card.type === "magic") await window.xlwCheckLunaDefenseReaction?.();
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_add") {
@@ -45285,6 +45293,7 @@ function setupWebSocketEvents() {
       void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack.push({ card: data.card, owner: "opponent", casterDefensePhase: data.casterDefensePhase === true });
       if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
+      if (data.casterDefensePhase === true && data.card.type === "magic") await window.xlwCheckLunaDefenseReaction?.();
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_resolve") {
@@ -50091,6 +50100,11 @@ async function aiRespondToSpellChain() {
   if (spellChainStack.length === 0) return;
   const lastItem = spellChainStack[spellChainStack.length - 1];
   if (lastItem.owner !== "me") return; 
+
+  if (lastItem.casterDefensePhase && lastItem.card.type === "magic") {
+    await window.xlwCheckLunaDefenseReaction?.(true);
+    if (spellChainStack.at(-1) !== lastItem) return;
+  }
 
   const isLastItemUnit = lastItem.card.type === "unit" || 
                          (lastItem.card.name && lastItem.card.name.includes("魔法炸彈客")) || 

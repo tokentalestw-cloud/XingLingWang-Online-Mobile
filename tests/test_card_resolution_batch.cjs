@@ -826,3 +826,102 @@ test("AI successful transformations and disappearing potions do not duplicate th
   assert.deepEqual(c.window.XLW_ENEMY.grave, []);
   assert.deepEqual(c.enemyExtraDeck.map(card => card.id), ["BRV-0037", "BRV-0038"]);
 });
+
+test("root fairy counts only unsilenced adjacent friendly sources", () => {
+  const c = fixture(), ally = unit("fairy", {savage: false});
+  c.window.xlwIsUnitFairy = candidate => candidate === ally;
+  c.field.player_front[2] = ally;
+  c.field.player_front[1] = unit("C-EVL-0058");
+  c.field.player_front[3] = unit("C-EVL-0058", {silenced: true});
+  c.field.player_back[2] = unit("C-EVL-0058");
+  c.field.enemy_front[2] = unit("C-EVL-0058");
+  vm.runInContext(slice("window.xlwCountAdjacentRootFairies =", "function getUnitAtk("), c);
+  assert.equal(c.window.xlwCountAdjacentRootFairies(ally, "player_front", 2), 2);
+  assert.equal(c.window.xlwCountAdjacentRootFairies(unit("nonfairy"), "player_front", 2), 0);
+});
+
+test("fairy lawyer pays its tap only after transfer and may recover again next turn", async () => {
+  const c = fixture(), lawyer = unit("C-EVL-0061");
+  c.field.player_front[0] = lawyer;
+  c.graveyard.push({id: "first", type: "magic"}, {id: "second", type: "magic"});
+  c.xlwOnPlayerUnitTapped = async () => {};
+  vm.runInContext(slice("window.xlwResolveFairyLawyer =", "window.xlwResolveExpansionTurnStart ="), c);
+  c.showXLWChoiceModal = async () => -1;
+  await c.window.xlwResolveFairyLawyer(true);
+  assert.equal(lawyer.tapped, undefined);
+  c.showXLWChoiceModal = async () => 0;
+  await c.window.xlwResolveFairyLawyer(true);
+  assert.equal(lawyer.tapped, true);
+  lawyer.tapped = false;
+  await c.window.xlwResolveFairyLawyer(true);
+  assert.equal(c.hand.length, 1);
+  c.turn++;
+  await c.window.xlwResolveFairyLawyer(true);
+  assert.equal(c.hand.length, 2);
+});
+
+test("soul crystal is preserved on cancel and spends itself only at a valid revival placement", async () => {
+  const c = fixture(), crystal = unit("C-EVL-0063"), fairy = unit("fairy").card;
+  c.window.xlwIsUnitFairy = card => card === fairy;
+  c.field.player_front[0] = crystal;
+  c.graveyard = [fairy];
+  vm.runInContext(slice("window.xlwResolveFairySoulCrystal =", "window.xlwResolveExpansionPostDestruction ="), c);
+  c.window.xlwSpecialSummonUnit = async () => false;
+  await c.window.xlwResolveFairySoulCrystal(fairy, true);
+  assert.equal(c.field.player_front[0], crystal);
+  assert.deepEqual(c.graveyard, [fairy]);
+  c.window.xlwSpecialSummonUnit = async (selected, _, opts) => {
+    assert.equal(selected, fairy);
+    assert.equal(await opts.beforePlacement(), true);
+    return Boolean(c.window.XLWDuelConsistency.takeKnownCard(opts.sourcePile(), selected));
+  };
+  assert.equal(await c.window.xlwResolveFairySoulCrystal(fairy, true), true);
+  assert.equal(c.field.player_front[0], null);
+  assert.deepEqual(c.graveyard, [crystal.card]);
+});
+
+test("Luna does not spend its once-per-turn reaction on cancellation or a stale destination", async () => {
+  const c = fixture(), luna = unit("ASSR-EVL-0065", {tapped: true, attacking: true});
+  c.field.player_front[0] = luna;
+  vm.runInContext(slice("window.xlwCheckLunaDefenseReaction =", "// 2. C-CCS-0044"), c);
+  c.showXLWChoiceModal = async () => { c.field.player_front[1] = unit("blocker"); return 0; };
+  await c.window.xlwCheckLunaDefenseReaction();
+  assert.equal(luna.lunaUsedTurn, undefined);
+  assert.equal(c.field.player_front[0], luna);
+  c.showXLWChoiceModal = async () => 0;
+  await c.window.xlwCheckLunaDefenseReaction();
+  assert.equal(c.field.player_front[2], luna);
+  assert.equal(luna.lunaUsedTurn, c.turn);
+  assert.equal(luna.tapped, false);
+  assert.equal(luna.attacking, false);
+});
+
+test("weapon master must still be active for the actual Crystal Arrow to move from extra", async () => {
+  const c = fixture(), master = unit("R-EVL-0032"), winner = unit("fairy");
+  const arrow = {id: "EVL-0055", name: "水晶箭矢"};
+  c.window.xlwIsUnitFairy = candidate => candidate === winner;
+  c.field.player_front[1] = master;
+  c.playerExtraDeck.push(arrow);
+  vm.runInContext(slice("window.xlwRetrieveCrystalArrow =", "window.xlwResolvePG2CombatSuccess ="), c);
+  c.showXLWConfirm = async () => { master.silenced = true; return true; };
+  assert.equal(await c.window.xlwRetrieveCrystalArrow(winner, true), false);
+  assert.deepEqual(c.playerExtraDeck, [arrow]);
+  master.silenced = false;
+  c.showXLWConfirm = async () => true;
+  assert.equal(await c.window.xlwRetrieveCrystalArrow(winner, true), true);
+  assert.deepEqual(c.hand, [arrow]);
+  assert.equal(c.playerExtraDeck.length, 0);
+});
+
+test("Crystal Arrow target choices exclude tributes and all applicable protections", () => {
+  const c = fixture();
+  c.getCardTributeCost = card => card.tribute || 0;
+  c.isUnitIndestructible = candidate => Boolean(candidate.indestructible);
+  c.window.isUnitMagicImmune = candidate => Boolean(candidate.magicImmune);
+  const paid = unit("paid");
+  paid.card.tribute = 1;
+  c.field.enemy_front.splice(0, 5, paid, unit("magic", {magicImmune: true}), unit("effect", {immune: true}),
+    unit("indestructible", {indestructible: true}), unit("legal"));
+  vm.runInContext(slice("window.xlwCrystalArrowTargets =", "async function castSpell(handIndex)"), c);
+  assert.deepEqual(Array.from(c.window.xlwCrystalArrowTargets({id: "EVL-0055"}), entry => entry.idx), [4]);
+});

@@ -96,8 +96,9 @@ module.exports=(async()=>{
        vm.runInContext('async function run(card, isPlayer) {' + section('// 1. 魔法山羊 (GOT-0001', '// 2. ',) + '}', g);
        await g.run({id:'GOT-0001'}, true);
      } else if (effect === 'lawyer') {
-       vm.runInContext('async function run(isPlayer, side) {' + section('// E. C-EVL-0061', '// F. C-CRB-0027') + '}', g);
-       await g.run(true, 'player_');
+       g.xlwOnPlayerUnitTapped = async () => {};
+       vm.runInContext(section('window.xlwResolveFairyLawyer =', 'window.xlwResolveExpansionTurnStart ='), g);
+       await g.xlwResolveFairyLawyer(true);
      } else {
        vm.runInContext(section('function xlwIsFieldMagic(', 'async function xlwResolveAries('), g);
        vm.runInContext('async function run(cid, isPlayer, myDeck, name) {' + section('// 3. 造墓者小布', '// 4. 除屍雞') + '}', g);
