@@ -252,3 +252,274 @@ test("25 brewing dispatches the drunken effect by the revised card ID", async ()
   await c.window.xlwOnMagicCardCast(false, {id: "C-VRT-0065", name: "渣釀酒"});
   assert.deepEqual(calls, [true, false]);
 });
+
+test("kidnapping commits both locations before cleanup and cannot target itself", async () => {
+  const c = fixture();
+  const carrier = unit("carrier");
+  const captive = unit("captive");
+  c.field.player_front[0] = carrier;
+  c.field.enemy_front[0] = captive;
+  vm.runInContext(slice("async function kidnapCard(", "async function checkPopulationCap"), c);
+  c.cleanUnitLeavingField = async () => {
+    assert.equal(c.field.enemy_front[0], null);
+    assert.equal(carrier.kidnappedCards[0].originalOwner, "enemy");
+    c.field.enemy_front[0] = unit("replacement");
+  };
+  c.structuredClone = structuredClone;
+  assert.equal(await c.kidnapCard("player_front", 0, "player_front", 0), false);
+  assert.equal(await c.kidnapCard("enemy_front", 0, "player_front", 0), true);
+  assert.equal(c.field.enemy_front[0].card.id, "replacement");
+});
+
+test("a silenced officer does not divert a captive to the grave", async () => {
+  const c = fixture();
+  const held = {...unit("held").card, originalOwner: "enemy"};
+  const carrier = unit("carrier", {kidnappedCards: [held]});
+  c.field.player_front[0] = unit("SSSR-NMS-0050", {silenced: true});
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard"), c);
+  await c.cleanUnitLeavingField(carrier, "player_front");
+  assert.equal(c.field.enemy_front[0].card, held);
+  assert.equal(c.enemyGraveyard.length, 0);
+  await c.cleanUnitLeavingField(carrier, "player_front");
+  assert.equal(c.field.enemy_front[1], null);
+});
+
+test("Molan awards the captor but sends the captive to its owner's exile", async () => {
+  const c = fixture();
+  const held = {...unit("held").card, originalOwner: "enemy", tribute: 2};
+  const carrier = unit("SSR-ART-0043", {kidnappedCards: [held]});
+  c.playerBonusScore = 0;
+  c.exileCard = (card, owner) => { assert.equal(owner, "enemy"); assert.equal(card, held); };
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard"), c);
+  await c.cleanUnitLeavingField(carrier, "player_front");
+  assert.equal(c.playerBonusScore, 2);
+  assert.equal(carrier.kidnappedCards.length, 0);
+});
+
+const resolveChain = slice("function resolveLocalSpellChain()", "function renderExtraDecks()");
+function chainFixture(deckTop, bombId = "R-NMS-0025") {
+  const c = fixture();
+  const spell = {id: "target", name: "測試魔法", type: "magic"};
+  const bomb = {id: bombId, name: "魔法炸彈客", type: "unit"};
+  c.deck = [];
+  c.window.XLW_ENEMY.deck = deckTop ? [deckTop] : [];
+  c.spellChainStack = [{card: spell, owner: "me"}, {card: bomb, owner: "opponent"}];
+  c.hideSpellChainUI = () => {};
+  c.exiled = {player: [], enemy: []};
+  c.exileCard = (card, owner) => c.exiled[owner].push(card);
+  c.window.XLW_pendingSpellResolve = result => { c.result = result; };
+  vm.runInContext(resolveChain, c);
+  return {c, spell, bomb};
+}
+
+test("bomber cannot negate without paying its deck top", () => {
+  const {c, bomb} = chainFixture(null);
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [bomb]);
+  assert.deepEqual(c.exiled, {player: [], enemy: []});
+});
+
+test("bomber pays and exiles each physical card exactly once", () => {
+  const top = {id: "top", name: "牌庫頂"};
+  const {c, spell, bomb} = chainFixture(top, "SSR-NMG-0025-特殊");
+  c.resolveLocalSpellChain();
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, true);
+  assert.deepEqual(c.exiled.player, [spell]);
+  assert.deepEqual(c.exiled.enemy, [top, bomb]);
+  assert.equal(c.window.XLW_ENEMY.deck.length, 0);
+});
+
+test("a failed bomber cannot target a unit effect", () => {
+  const top = {id: "top", name: "牌庫頂"};
+  const {c, spell, bomb} = chainFixture(top);
+  spell.type = "unit";
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+  assert.deepEqual(c.window.XLW_ENEMY.deck, [top]);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [bomb]);
+});
+
+test("virtual wheel and mushroom counters never become graveyard cards", () => {
+  for (const id of ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"]) {
+    const {c} = chainFixture(null);
+    c.spellChainStack[1].card = {id, name: id, type: "magic"};
+    c.resolveLocalSpellChain();
+    assert.equal(c.result.countered, true);
+    assert.equal(c.enemyGraveyard.length, 0);
+  }
+});
+
+test("a middle counter negated by roar returns to its owner's hand", () => {
+  const {c} = chainFixture(null);
+  const counter = {id: "counter", name: "魔法反制", type: "magic", mana: 1};
+  c.spellChainStack[1].card = counter;
+  c.spellChainStack.push({card: {id: "R-ORC-0036", name: "怒吼", type: "magic"}, owner: "me"});
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [counter]);
+  assert.equal(c.window.XLW_enemyCannotUseCardIdThisTurn, counter.id);
+});
+
+function counterPromptFixture() {
+  const c = fixture();
+  const actions = {
+    children: [],
+    set innerHTML(_value) { this.children = []; },
+    appendChild(item) { this.children.push(item); }
+  };
+  const status = {};
+  const item = {card: {id: "spell", name: "測試魔法", type: "magic", mana: 1}, owner: "opponent"};
+  c.deck = [];
+  c.spellChainStack = [item];
+  c.document = {getElementById: id => id === "xlw-chain-status" ? status : actions, createElement: () => ({})};
+  c.getOrCreateSpellChainOverlay = () => null;
+  c.clearTimeout = () => {};
+  c.setTimeout = () => 1;
+  c.requestAnimationFrame = callback => callback();
+  c.showSpellChainUI = () => {};
+  c.xlwShowSpellActivationOverlay = async () => {};
+  c.hideSpellChainUI = () => {};
+  vm.runInContext(slice("function promptNextChainAction()", "function resolveLocalSpellChain()"), c);
+  const button = name => actions.children.find(entry => entry.textContent?.includes(name));
+  return {c, item, button};
+}
+
+test("bomber is unavailable with no deck cost and offered once the deck has a real card", () => {
+  const {c, button} = counterPromptFixture();
+  c.hand.push({id: "SSR-NMG-0025-特殊", name: "魔法炸彈客", type: "unit"});
+  c.promptNextChainAction();
+  assert.equal(button("炸彈客"), undefined);
+  c.deck.push({id: "top", name: "牌庫頂"});
+  c.promptNextChainAction();
+  assert.ok(button("炸彈客"));
+});
+
+test("a stale button cannot cast an already-removed counter or spend a different copy", async () => {
+  const {c, button} = counterPromptFixture();
+  c.hand.push({id: "NMG-0020", name: "魔法反制", _xlwInstanceId: "removed"});
+  c.promptNextChainAction();
+  const old = button("魔法反制");
+  c.hand[0] = {...c.hand[0], _xlwInstanceId: "remaining"};
+  await old.onclick();
+  assert.equal(c.spellChainStack.length, 1);
+  assert.equal(c.hand[0]._xlwInstanceId, "remaining");
+});
+
+test("a delayed bomber click cannot cast after its deck is depleted", async () => {
+  const {c, button} = counterPromptFixture();
+  c.hand.push({id: "R-NMS-0025", name: "魔法炸彈客"});
+  c.deck.push({id: "top", name: "牌庫頂"});
+  c.promptNextChainAction();
+  const old = button("炸彈客");
+  c.deck.pop();
+  await old.onclick();
+  assert.equal(c.spellChainStack.length, 1);
+  assert.equal(c.hand.length, 1);
+});
+
+test("a tapped mushroom can counter and is destroyed after its owner chooses the effect", async () => {
+  const {c, button} = counterPromptFixture();
+  const mushroom = unit("VRT-0011", {tapped: true});
+  c.field.player_front[1] = mushroom;
+  c.promptNextChainAction();
+  await button("魔法魔菇").onclick();
+  assert.equal(c.field.player_front[1], null);
+  assert.equal(c.spellChainStack.at(-1).card.type, "unit");
+});
+
+test("a stale mushroom button never destroys the unit that took its slot", async () => {
+  const {c, button} = counterPromptFixture();
+  c.field.player_front[1] = unit("VRT-0011");
+  c.promptNextChainAction();
+  const old = button("魔法魔菇");
+  c.field.player_front[1] = unit("replacement");
+  await old.onclick();
+  assert.equal(c.field.player_front[1].card.id, "replacement");
+  assert.equal(c.spellChainStack.length, 1);
+});
+
+test("wheel reaction is shown without any ordinary counters only during the rival's turn", () => {
+  const {c, button} = counterPromptFixture();
+  c.window.XLW_playerRouletteWheel = [1, 2, 3];
+  c.field.player_back[0] = unit("SSR-CCS-0037");
+  c.promptNextChainAction();
+  assert.equal(button("輪轉反制"), undefined);
+  c.isMyTurn = false;
+  c.promptNextChainAction();
+  assert.ok(button("輪轉反制"));
+});
+
+test("wheel reaction rechecks the minimum wheel size before spending the once-per-turn use", async () => {
+  const {c, button} = counterPromptFixture();
+  c.isMyTurn = false;
+  c.window.XLW_playerRouletteWheel = [1, 2, 3];
+  c.field.player_back[0] = unit("SSR-CCS-0037");
+  c.window.xlwSpinWheel = async () => assert.fail("wheel is no longer large enough");
+  c.promptNextChainAction();
+  const old = button("輪轉反制");
+  c.window.XLW_playerRouletteWheel.pop();
+  await old.onclick();
+  assert.equal(c.window.XLW_xiaoyuanUsedThisTurn, undefined);
+});
+
+test("wheel animation cannot add a counter to a chain already closed by the peer", async () => {
+  const {c, button} = counterPromptFixture();
+  c.isMyTurn = false;
+  c.window.XLW_playerRouletteWheel = [1, 2, 3];
+  c.field.player_back[0] = unit("SSR-CCS-0037");
+  c.window.xlwSpinWheel = async () => { c.spellChainStack = []; };
+  c.promptNextChainAction();
+  await button("輪轉反制").onclick();
+  assert.equal(c.spellChainStack.length, 0);
+});
+
+test("a silenced merchant cannot make black orb playable at reduced cost", () => {
+  const {c, button} = counterPromptFixture();
+  c.hand.push({id: "R-STP-0030", name: "黑球"});
+  c.window.xlwGetSteamEnergy = () => 2;
+  c.field.player_front[0] = unit("STP-0016", {silenced: true});
+  c.promptNextChainAction();
+  assert.equal(button("黑球"), undefined);
+  c.field.player_front[0].silenced = false;
+  c.promptNextChainAction();
+  assert.ok(button("黑球"));
+});
+
+test("a magic-only counter cannot counter the mushroom's unit effect", () => {
+  const {c} = chainFixture(null);
+  c.spellChainStack[1].card = {id: "VRT-0011-EFFECT", name: "酒醉的魔法魔菇", type: "unit"};
+  const handCounter = {id: "NMG-0020", name: "魔法反制", type: "magic"};
+  c.spellChainStack.push({card: handCounter, owner: "me"});
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, true);
+  assert.deepEqual(c.graveyard.slice(0, 1), [handCounter]);
+});
+
+test("virtual wheel effects do not remove hidden cards in collection fallback", () => {
+  const c = fixture();
+  const obscured = [null];
+  assert.equal(c.window.XLWDuelConsistency.removeCard(obscured, {id: "SSR-CCS-0037-EFFECT", name: "輪轉反制"}), null);
+  assert.deepEqual(obscured, [null]);
+});
+
+test("a delayed roar cannot negate a zero-mana spell", () => {
+  const {c, spell} = chainFixture(null);
+  spell.mana = 0;
+  c.spellChainStack[1].card = {id: "R-ORC-0036", name: "怒吼", type: "magic"};
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+  assert.deepEqual(c.hand, []);
+  assert.equal(c.window.XLW_playerCannotUseCardIdThisTurn, undefined);
+});
+
+test("a delayed roar cannot return a unit effect to hand", () => {
+  const {c, spell} = chainFixture(null);
+  spell.type = "unit";
+  spell.mana = 2;
+  c.spellChainStack[1].card = {id: "R-ORC-0036", name: "怒吼", type: "magic"};
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+  assert.deepEqual(c.hand, []);
+});

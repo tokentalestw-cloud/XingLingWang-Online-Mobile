@@ -1356,6 +1356,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
   delete window.XLW_ewdGuerrillaEnemyTurn;
@@ -1634,6 +1635,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
   delete window.XLW_ewdGuerrillaEnemyTurn;
@@ -4807,22 +4809,19 @@ async function cleanUnitLeavingField(unit, zone) {
 
   const kidnapperIsPlayer = zone.startsWith("player_");
   
-  // Check if kidnapper's owner has 暗巷壞壞警官 帕豹 on the field
-  let hasPolice = false;
   const policeZones = kidnapperIsPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
-  for (const z of policeZones) {
-    if (field[z].some(u => u && u.card && (u.card.id === "SSSR-NMS-0050" || u.card.name.includes("帕豹")))) {
-      hasPolice = true;
-    }
-  }
+  const hasPolice = policeZones.some(row => field[row].some((police, idx) =>
+    police?.card?.id === "SSSR-NMS-0050" && !window.isUnitSilenced?.(police, row, idx)));
+  const isMolan = unit.card?.id === "SSR-ART-0043" && !window.isUnitSilenced?.(unit, zone);
+  const captured = unit.kidnappedCards;
+  unit.kidnappedCards = [];
 
-  const isMolan = unit.card && (unit.card.id === "SSR-ART-0043" || unit.card.name?.includes("茉蘭"));
-
-  for (const card of unit.kidnappedCards) {
+  for (const card of captured) {
+    if (!card) continue;
     const originalOwner = card.originalOwner || (kidnapperIsPlayer ? "enemy" : "player");
     
     if (isMolan) {
-      exileCard(card, kidnapperIsPlayer ? "player" : "enemy");
+      exileCard(card, originalOwner);
       const scoreBonus = Number(card.tribute || 0);
       if (kidnapperIsPlayer) {
         playerBonusScore += scoreBonus;
@@ -4897,16 +4896,15 @@ async function cleanUnitLeavingField(unit, zone) {
       }
     }
   }
-  unit.kidnappedCards = [];
   if (isMultiplayer) {
     sendFullGameStateToOpponent();
   }
 }
 
 async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx) {
-  const targetUnit = field[targetZone][targetIdx];
-  const kidnapperUnit = field[kidnapperZone][kidnapperIdx];
-  if (!targetUnit || !kidnapperUnit) return;
+  const targetUnit = field[targetZone]?.[targetIdx];
+  const kidnapperUnit = field[kidnapperZone]?.[kidnapperIdx];
+  if (!targetUnit?.card || !kidnapperUnit?.card || targetUnit === kidnapperUnit) return false;
   
   if (!kidnapperUnit.kidnappedCards) {
     kidnapperUnit.kidnappedCards = [];
@@ -4916,11 +4914,10 @@ async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx) {
   const cardObj = structuredClone(targetUnit.card);
   cardObj.originalOwner = targetZone.startsWith("player_") ? "player" : "enemy";
   
-  // Release any cards the target unit itself had kidnapped
-  await cleanUnitLeavingField(targetUnit, targetZone);
-  
-  // Push to kidnapper's kidnapped cards
+  // Change both locations before any nested leave-field or synchronization hook.
+  field[targetZone][targetIdx] = null;
   kidnapperUnit.kidnappedCards.push(cardObj);
+  await cleanUnitLeavingField(targetUnit, targetZone);
   
   const kidnapperIsPlayer = kidnapperZone.startsWith("player_");
   if (kidnapperIsPlayer) {
@@ -4929,13 +4926,11 @@ async function kidnapCard(targetZone, targetIdx, kidnapperZone, kidnapperIdx) {
     logBattle(`⛓️ 我方場上的【${targetUnit.card.name}】被對手的【${kidnapperUnit.card.name}】綁架了！`);
   }
   
-  // Remove target unit from field
-  field[targetZone][targetIdx] = null;
-  
   if (isMultiplayer) {
     sendFullGameStateToOpponent();
   }
   render();
+  return true;
 }
 
 async function checkPopulationCap(isPlayer) {
@@ -45344,6 +45339,7 @@ function setupWebSocketEvents() {
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_add") {
+      if (!spellChainStack.length || !data.card?.id) return;
       void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack.push({ card: data.card, owner: "opponent" });
       if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
@@ -50181,7 +50177,7 @@ function hideSpellChainUI() {
   window.XLW_chainMinimized = false;
 }
 
-function aiRespondToSpellChain() {
+async function aiRespondToSpellChain() {
   if(!spellChainStack[spellChainStack.length-1]?.card)return;
   if (spellChainStack.length === 0) return;
   const lastItem = spellChainStack[spellChainStack.length - 1];
@@ -50201,7 +50197,7 @@ function aiRespondToSpellChain() {
     if (!c) return false;
     const name = c.name || "";
     const cid = c.id || "";
-    return name.includes("魔法炸彈客") || cid.includes("NMS-0025") || cid === "NEU-0025";
+    return name.includes("魔法炸彈客") || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(cid) || cid === "NEU-0025";
   });
   const isAITurnForChain = !isMyTurn && (spellChainStack.length > 0 && spellChainStack[0].owner === "opponent");
   const counterCard = aiHand.find(c => {
@@ -50226,14 +50222,14 @@ function aiRespondToSpellChain() {
     field[z].forEach((u, i) => {
       if (u && u.card && 
           (u.card.id === "VRT-0011" || u.card.name?.includes("酒醉的魔法魔菇")) &&
-          !u.tapped && 
           !window.isUnitSilenced(u, z, i)) {
         aiMushroomUnits.push({ zone: z, idx: i, unit: u });
       }
     });
   });
 
-  if (bombCard && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0 && Math.random() < 0.45) {
+  const bombCost = window.XLW_ENEMY.deck?.at(-1);
+  if (bombCard && bombCost?.id && bombCost?.name && Math.random() < 0.45) {
     const idx = aiHand.indexOf(bombCard);
     aiHand.splice(idx, 1);
     logBattle(`對手 AI 從手牌連鎖發動了 ${bombCard.name}！`);
@@ -50249,13 +50245,14 @@ function aiRespondToSpellChain() {
     promptNextChainAction();
   } else if (aiMushroomUnits.length > 0 && Math.random() < 0.5) {
     const mushItem = aiMushroomUnits[0];
-    mushItem.unit.tapped = true;
-    logBattle(`✨ 對手 AI 發動了場上【酒醉的魔法魔菇】的反制效果，並將其橫置！`);
+    await destroyUnit(mushItem.zone, mushItem.idx, "enemy", false);
+    if (spellChainStack.at(-1) !== lastItem) return;
+    logBattle("對手發動了【酒醉的魔法魔菇】的反制效果。");
     
     const dummyCard = {
       id: "VRT-0011-EFFECT",
       name: "酒醉的魔法魔菇 (反制)",
-      type: "magic",
+      type: "unit",
       effect_text: "使該魔法效果無效並破壞該魔法"
     };
     spellChainStack.push({ card: dummyCard, owner: "opponent" });
@@ -50318,20 +50315,23 @@ function promptNextChainAction() {
       // 🌑 黑暗道具 黑球 (R-STP-0030): 耗能4。無效化該魔法卡。若你場上有商人單位，則此卡耗能-2
       if (name.includes("黑球") || cid === "R-STP-0030" || name.includes("黑暗道具 黑球")) {
         const hasMerchant = ["player_front", "player_back"].some(z => 
-          (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
+          (field[z] || []).some((u, i) => u && u.card && !window.isUnitSilenced(u, z, i) && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
         );
         const reqEnergy = hasMerchant ? 2 : 4;
         return window.xlwGetSteamEnergy(true) >= reqEnergy;
       }
+      if (name.includes("魔法炸彈客") || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(cid) || cid === "NEU-0025") {
+        const top = deck.at(-1);
+        return Boolean(top?.id && top?.name);
+      }
       return name.includes("魔法反制") || cid.includes("NMG-0020") ||
              name.includes("終極無效化") || cid.includes("NMG-0026") ||
-             name.includes("法術解析") || cid.includes("NMG-0039") ||
-             name.includes("魔法炸彈客") || cid.includes("NMS-0025") || cid === "NEU-0025";
+             name.includes("法術解析") || cid.includes("NMG-0039");
     });
 
     // ⭕ SSR-CCS-0037 圈圈魔法師 小圓: 敵方使用魔法時限一次，轉盤>=3則輪轉1次，若轉盤數量>該魔法法力值則無效化該卡，開盤效果無效
     let eligibleXiaoyuan = null;
-    if (!isLastItemUnit && lastItemCard && (lastItemCard.type === "magic" || lastItemCard.type === "spell") && !window.XLW_xiaoyuanUsedThisTurn) {
+    if (!isMyTurn && !isLastItemUnit && lastItemCard && (lastItemCard.type === "magic" || lastItemCard.type === "spell") && !window.XLW_xiaoyuanUsedThisTurn) {
       const wheelCount = (window.XLW_playerRouletteWheel || []).length;
       if (wheelCount >= 3) {
         for (const z of ["player_front", "player_back"]) {
@@ -50350,7 +50350,6 @@ function promptNextChainAction() {
         field[z].forEach((u, i) => {
           if (u && u.card && 
               (u.card.id === "VRT-0011" || u.card.name?.includes("酒醉的魔法魔菇")) &&
-              !u.tapped && 
               !window.isUnitSilenced(u, z, i)) {
             eligibleMushroomUnits.push({ zone: z, idx: i, unit: u });
           }
@@ -50358,7 +50357,7 @@ function promptNextChainAction() {
       });
     }
 
-    if (counterCards.length > 0 || eligibleMushroomUnits.length > 0) {
+    if (counterCards.length || eligibleMushroomUnits.length || eligibleXiaoyuan) {
       statusText.textContent = `🔥 對手連鎖發動了 ${lastItem.card.name}，是否進行連鎖反制？`;
       
       // Counter buttons
@@ -50368,44 +50367,41 @@ function promptNextChainAction() {
         counterBtn.textContent = `🔥 使用 ${c.name}`;
         counterBtn.onclick = async () => {
           if(!takeDecision())return;
+          const handIndex = hand.findIndex(card => card === c || (c._xlwInstanceId && card?._xlwInstanceId === c._xlwInstanceId));
+          const isBomber = c.name?.includes("魔法炸彈客") || c.id === "NEU-0025" || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(c.id || "");
+          if (handIndex < 0 || (isBomber && !deck.at(-1)?.id)) {
+            promptNextChainAction();
+            return;
+          }
           actionsDiv.innerHTML = "";
           statusText.textContent = `🔥 正在連鎖施放 ${c.name}...`;
           
           // 🌑 黑暗道具 黑球 能量扣除
           if (c.id === "R-STP-0030" || c.name?.includes("黑球")) {
             const hasMerchant = ["player_front", "player_back"].some(z => 
-              (field[z] || []).some(u => u && u.card && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
+              (field[z] || []).some((u, i) => u && u.card && !window.isUnitSilenced(u, z, i) && (u.card.job === "商人" || u.card.name?.includes("商人") || u.card.id === "STP-0016" || u.card.id === "STP-0017"))
             );
             const reqEnergy = hasMerchant ? 2 : 4;
             if (!window.xlwConsumeEnergy(reqEnergy, true)) { decisionTaken = false; showSpellChainUI(spellChainStack); promptNextChainAction(); return; }
             logBattle(`🌑【黑暗道具 黑球】消耗 ${reqEnergy} 點蒸氣能量（商人折抵後），發動連鎖反制！`);
           }
 
-          // Remove from hand immediately
-          const hIdx = hand.indexOf(c);
-          if (hIdx !== -1) {
-            hand.splice(hIdx, 1);
-          } else {
-            const fallbackIdx = hand.findIndex(item => item && c && item.id && item.id === c.id);
-            if (fallbackIdx !== -1) hand.splice(fallbackIdx, 1);
-          }
-          
-          // Add to local stack
-          const addedItem={card:c,owner:'me'};
+          const used = hand.splice(handIndex, 1)[0];
+          const addedItem = {card: used, owner: "me"};
           spellChainStack.push(addedItem);
-          
+
           // Sync with opponent immediately
           if (isMultiplayer && ws) {
             ws.send(JSON.stringify({
               action: "spell_chain_add",
               ownerCollections: window.xlwSpellOwnerCollections?.(),
-              card: c
+              card: used
             }));
 
           }
           render();
 
-          await xlwShowSpellActivationOverlay(c, "player");
+          await xlwShowSpellActivationOverlay(used, "player");
           
           // A remote auto-pass can resolve the chain while this local animation plays.
           if(spellChainStack[spellChainStack.length-1]!==addedItem)return;
@@ -50421,19 +50417,24 @@ function promptNextChainAction() {
       eligibleMushroomUnits.forEach(item => {
         const mushBtn = document.createElement("button");
         mushBtn.className = "chain-action-btn mushroom-btn";
-        mushBtn.textContent = `🍄 橫置【酒醉的魔法魔菇】反制`;
+        mushBtn.textContent = "🍄 使用【酒醉的魔法魔菇】反制";
         mushBtn.onclick = async () => {
           if(!takeDecision())return;
           actionsDiv.innerHTML = "";
+          if (field[item.zone]?.[item.idx] !== item.unit || window.isUnitSilenced(item.unit, item.zone, item.idx)) {
+            promptNextChainAction();
+            return;
+          }
           statusText.textContent = `🍄 正在發動【酒醉的魔法魔菇】的反制效果...`;
           
-          item.unit.tapped = true;
-          logBattle(`✨ 我方發動了場上【酒醉的魔法魔菇】的反制效果，並將其橫置！`);
+          await destroyUnit(item.zone, item.idx, "player", false);
+          if (spellChainStack.at(-1) !== lastItem) return;
+          logBattle("我方發動了【酒醉的魔法魔菇】的反制效果。");
           
           const dummyCard = {
             id: "VRT-0011-EFFECT",
             name: "酒醉的魔法魔菇 (反制)",
-            type: "magic",
+            type: "unit",
             effect_text: "使該魔法效果無效並破壞該魔法"
           };
           
@@ -50463,17 +50464,23 @@ function promptNextChainAction() {
           if (!takeDecision()) return;
           actionsDiv.innerHTML = "";
           statusText.textContent = "⭕ 圈圈魔法師啟動輪轉干涉...";
-          window.XLW_xiaoyuanUsedThisTurn = true;
           const preWheelCount = (window.XLW_playerRouletteWheel || []).length;
+          if (isMyTurn || window.XLW_xiaoyuanUsedThisTurn || preWheelCount < 3 ||
+              field[eligibleXiaoyuan.zone]?.[eligibleXiaoyuan.idx] !== eligibleXiaoyuan.unit ||
+              window.isUnitSilenced(eligibleXiaoyuan.unit, eligibleXiaoyuan.zone, eligibleXiaoyuan.idx)) {
+            promptNextChainAction();
+            return;
+          }
+          window.XLW_xiaoyuanUsedThisTurn = true;
           await window.xlwSpinWheel(true, 1, eligibleXiaoyuan.unit.card, { suppressOpenEffect: true });
+          if (spellChainStack.at(-1) !== lastItem) return;
           const magicMana = Number(lastItemCard.mana || lastItemCard.cost || 0);
           if (preWheelCount > magicMana) {
             logBattle(`⭕🪄【圈圈魔法師 小圓】輪轉干涉成功！轉盤數量(${preWheelCount}) > 魔法法力值(${magicMana})，敵方魔法【${lastItemCard.name}】被無效化！`);
-            lastItem.countered = true;
             const dummyCard = {
               id: "SSR-CCS-0037-EFFECT",
               name: "圈圈魔法師 小圓 (輪轉反制)",
-              type: "magic",
+              type: "unit",
               effect_text: "無效化該魔法卡"
             };
             spellChainStack.push({ card: dummyCard, owner: "me" });
@@ -50559,14 +50566,36 @@ function resolveLocalSpellChain() {
   }
   // 1. Work backwards from the top of the stack to determine which counter/spell resolves
   const resolved = new Array(spellChainStack.length).fill(true);
+  const unpaidBombs = new Set();
+  const bombCosts = new Map();
+  const bomb = card => card?.name?.includes("魔法炸彈客") || card?.id === "NEU-0025" ||
+    /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(card?.id || "");
+  const deckPositions = {me: deck.length - 1, opponent: (window.XLW_ENEMY?.deck?.length || 0) - 1};
   for (let i = spellChainStack.length - 1; i >= 1; i--) {
     if (resolved[i]) {
       const counteringCard = spellChainStack[i] ? spellChainStack[i].card : null;
       const targetCard = spellChainStack[i - 1] ? spellChainStack[i - 1].card : null;
       
       if (counteringCard && targetCard) {
+        if (bomb(counteringCard)) {
+          const owner = spellChainStack[i].owner;
+          const pile = owner === "me" ? deck : window.XLW_ENEMY?.deck;
+          const position = deckPositions[owner];
+          const top = pile?.[position];
+          if (!top?.id || !top?.name || targetCard.type === "unit" || bomb(targetCard)) {
+            unpaidBombs.add(i);
+            resolved[i] = false;
+            continue;
+          }
+          deckPositions[owner]--;
+          bombCosts.set(i, {pile, position, card: top});
+          spellChainStack[i - 1].wasExiledByBomb = true;
+          resolved[i - 1] = false;
+          continue;
+        }
         const isRoar = counteringCard.name?.includes("怒吼") || counteringCard.id === "R-ORC-0036";
         if (isRoar) {
+          if (targetCard.type !== "magic" || Number(targetCard.mana || 0) < 1) continue;
           spellChainStack[i - 1].wasRoared = true;
           resolved[i - 1] = false;
         }
@@ -50577,7 +50606,7 @@ function resolveLocalSpellChain() {
                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u4fdd\u8b77")) ||
                                    (counteringCard.name && counteringCard.name.includes("黑球")) ||
                                    (counteringCard.id === "R-STP-0030") ||
-                                   (counteringCard.id === "VRT-0011-EFFECT");
+                                   ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"].includes(counteringCard.id);
                                    
         if (isTargetUnit && isCounterMagicOnly) {
           logBattle(`\u3010\u53cd\u5236\u7121\u6548\u3011${counteringCard.name} \u7121\u6cd5\u53cd\u5236\u55ae\u4f4d\u5361 ${targetCard.name} \u7684\u6548\u679c\uff01`);
@@ -50593,57 +50622,27 @@ function resolveLocalSpellChain() {
   const S = spellChainStack[0];
   const isCountered = !resolved[0];
 
-  // We process counters first (indices 1 to stack.length - 1)
+  // Pay reserved top cards in descending stack order so deck indices cannot shift.
+  for (const [index, cost] of bombCosts) {
+    const owner = spellChainStack[index].owner === "me" ? "player" : "enemy";
+    cost.pile.splice(cost.position, 1);
+    exileCard(cost.card, owner);
+  }
   for (let i = 1; i < spellChainStack.length; i++) {
     const item = spellChainStack[i];
-    const isItemCountered = !resolved[i];
-    const cOwner = item.owner === "me" ? "player" : "enemy";
-
-    if (item.card.name.includes("魔法炸彈客") || item.card.id === "NEU-0025") {
-      if (isItemCountered) {
-        if (item.owner === "me") {
-          graveyard.push(item.card);
-
-        } else {
-          enemyGraveyard.push(item.card);
-
-        }
-      } else {
-        // It resolves!
-        // (a) Exile the magic bomber card itself
-        exileCard(item.card, cOwner);
-        // (b) Exile the top card of its owner's deck
-        if (item.owner === "me") {
-          if (deck.length > 0) {
-            const topCard = deck.pop();
-            exileCard(topCard, "player");
-            const topName = (topCard && topCard.name) ? topCard.name : "未知卡牌";
-            logBattle(`[魔法炸彈客] 效果：我方牌庫頂的 ${topName} 被除外。`);
-          }
-        } else {
-          if (window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
-            let topCard = window.XLW_ENEMY.deck.pop();
-            if (!topCard) {
-              topCard = { name: "對手卡牌", id: "UNKNOWN", type: "單位" };
-            }
-            exileCard(topCard, "enemy");
-            const topName = topCard.name;
-            logBattle(`[魔法炸彈客] 效果：對手牌庫頂的 ${topName} 被除外。`);
-          }
-        }
-        // (c) Exile the card targeted/countered by it
-        const targetItem = spellChainStack[i - 1];
-        targetItem.wasExiledByBomb = true;
+    if (!item?.card || ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"].includes(item.card.id)) continue;
+    const ours = item.owner === "me";
+    const owner = ours ? "player" : "enemy";
+    if (item.wasExiledByBomb || bombCosts.has(i)) {
+      exileCard(item.card, owner);
+    } else if (unpaidBombs.has(i) || item.wasRoared) {
+      const ownerHand = ours ? hand : window.XLW_ENEMY.hand;
+      ownerHand.push(item.card);
+      if (item.wasRoared) {
+        window[ours ? "XLW_playerCannotUseCardIdThisTurn" : "XLW_enemyCannotUseCardIdThisTurn"] = item.card.id;
       }
     } else {
-      // Normal counter spell
-      if (item.card.id !== "VRT-0011-EFFECT") {
-        if (item.owner === "me") {
-          graveyard.push(item.card);
-        } else {
-          enemyGraveyard.push(item.card);
-        }
-      }
+      (ours ? graveyard : enemyGraveyard).push(item.card);
     }
   }
 
@@ -50704,19 +50703,6 @@ function resolveLocalSpellChain() {
         window.XLW_pendingSpellResolve = null;
         resolve({ countered: false });
       }
-    }
-  }
-
-  // Also clean up any other counter cards in the stack that were countered/exiled by a bomb
-  for (let i = 1; i < spellChainStack.length; i++) {
-    const item = spellChainStack[i];
-    if (item.wasExiledByBomb) {
-      const list = item.owner === "me" ? graveyard : enemyGraveyard;
-      const idx = list.indexOf(item.card);
-      if (idx >= 0) {
-        list.splice(idx, 1);
-      }
-      exileCard(item.card, item.owner === "me" ? "player" : "enemy");
     }
   }
 
