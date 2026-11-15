@@ -1476,3 +1476,97 @@ test("Valkyrie reuses a selected material slot on a full board and only pays aft
   assert.equal(c.field.player_front[1], null);
   assert.equal(c.normalSummonUsed, true);
 });
+
+test("Saade and Shini use the actual grave entry and distinguish Fairy units from Fairy spells", async () => {
+  const c = fixture();
+  const saade = {id: "NY-EVL-0016", type: "unit", fairy: true};
+  const shini = {id: "SR-EVL-0024", type: "unit", fairy: true};
+  const spell = {id: "spell", type: "magic", fairy: true};
+  const nonfairy = {id: "other", type: "unit"};
+  c.window.xlwIsUnitFairy = card => Boolean(card.fairy);
+  c.graveyard.push(saade, shini, spell, nonfairy);
+  vm.runInContext(slice("window.xlwRecoverFairyFromGrave =", "window.xlwOnCardEntersGraveyard ="), c);
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options.length, 2);
+    assert.equal(options[0].card, spell);
+    return -1;
+  };
+  assert.equal(await c.window.xlwRecoverFairyFromGrave(shini, true), false);
+  c.showXLWChoiceModal = async (_, __, options) => {
+    assert.equal(options[0].card, shini);
+    return 0;
+  };
+  assert.equal(await c.window.xlwRecoverFairyFromGrave(saade, true), true);
+  assert.deepEqual(c.hand, [shini]);
+  assert.deepEqual(c.graveyard, [saade, spell, nonfairy]);
+  assert.equal(await c.window.xlwRecoverFairyFromGrave(shini, true), false);
+});
+
+test("Fairy Reinforcement reveals only selected Fairy units and keeps unchosen cards at the deck bottom", async () => {
+  const c = fixture();
+  const old = {id: "old"}, spell = {id: "spell", type: "magic", fairy: true};
+  const fairy = {id: "fairy", type: "unit", fairy: true};
+  const revealed = [];
+  c.window.xlwIsUnitFairy = card => Boolean(card.fairy);
+  c.window.xlwRevealCard = async card => { revealed.push(card); };
+  vm.runInContext(slice("window.xlwResolveFairyReinforcement =", "window.xlwResolveFairyExecutioner ="), c);
+  c.deck = [old, spell, fairy];
+  assert.equal(await c.window.xlwResolveFairyReinforcement(c.deck, c.hand), 1);
+  assert.deepEqual(c.deck, [spell, old]);
+  assert.deepEqual(c.hand, [fairy]);
+  assert.deepEqual(revealed, [fairy]);
+  c.deck = [old, spell, fairy];
+  const picks = [-1, 1];
+  c.showXLWChoiceModal = async () => picks.shift();
+  assert.equal(await c.window.xlwResolveFairyReinforcement(c.deck, c.hand), 0);
+  assert.deepEqual(c.deck, [spell, fairy, old]);
+});
+
+test("Fairy mass relocation can swap occupied slots atomically and cannot displace fixed units", async () => {
+  const c = fixture();
+  const a = unit("a"), b = unit("b"), fixed = unit("fixed", {fixed: true});
+  c.field.player_front.splice(0, 3, a, b, fixed);
+  vm.runInContext(slice("window.xlwResolveFairyMassRelocation =", "window.xlwResolveFairyReinforcement ="), c);
+  const activate = () => c.window.xlwResolveFairyMassRelocation();
+  for (const cancel of [true, false]) {
+    let pickCount = 0;
+    c.showXLWChoiceModal = async (_, __, options) => {
+      pickCount++;
+      if (pickCount === 1) return "player";
+      const boardOptions = options.filter(choice => choice.boardTarget);
+      assert.ok(boardOptions.every(choice => choice.boardTarget.idx !== 2 || choice.boardTarget.zone !== "player_front"));
+      assert.equal(c.field.player_front[0], a);
+      assert.equal(c.field.player_front[1], b);
+      if (cancel && pickCount === 3) return "cancel";
+      return boardOptions.find(choice => choice.boardTarget.zone === "player_front" &&
+        choice.boardTarget.idx === (pickCount === 2 ? 1 : 0)).value;
+    };
+    assert.equal(await activate(), !cancel);
+  }
+  assert.deepEqual(c.field.player_front.slice(0, 3), [b, a, fixed]);
+});
+
+test("Relocation upgrade requires two distinct enemy retreats in the ending turn and replaces a known card", async () => {
+  const c = fixture(), first = unit("first"), second = unit("second");
+  const source = {id: "EVL-0017"}, upgrade = {id: "R-EVL-0050", name: "挪移大魔法"};
+  c.hand.push(source);
+  c.playerExtraDeck.push(upgrade);
+  c.field.enemy_back[0] = first;
+  c.field.enemy_back[1] = second;
+  vm.runInContext(slice("window.xlwRecordFairyRetreat =", "window.xlwResolveFairyMassRelocation ="), c);
+  const mark = c.window.xlwRecordFairyRetreat;
+  const activate = () => c.window.xlwTryFairyRelocationUpgrade(c.turn);
+  mark(first, "enemy_front", "enemy_back");
+  mark(first, "enemy_front", "enemy_back");
+  assert.equal(await activate(), false);
+  mark(second, "enemy_back", "enemy_front");
+  assert.equal(await activate(), false);
+  mark(second, "enemy_front", "enemy_back");
+  c.showXLWChoiceModal = async () => -1;
+  assert.equal(await activate(), false);
+  assert.deepEqual(c.hand, [source]);
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await activate(), true);
+  assert.deepEqual(c.hand, [upgrade]);
+  assert.deepEqual(c.playerExtraDeck, []);
+});

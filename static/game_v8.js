@@ -2300,6 +2300,7 @@ window.xlwHandlePlayerDeckClick = async function(event) {
 };
 
 async function xlwFinishPlayerDrawPhase({ fromHandoff = false } = {}) {
+  await window.xlwTryFairyRelocationUpgrade?.(turn - 1);
   const hadCards = deck.length > 0;
   await performPlayerTurnStartDraw();
 
@@ -3686,6 +3687,29 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
   return true;
 };
 
+window.xlwRecoverFairyFromGrave = async function(source, isPlayer) {
+  if ((!isPlayer && isMultiplayer) || !source) return false;
+  const unitRecovery = source.id?.includes("EVL-0016");
+  if (!unitRecovery && !source.id?.includes("EVL-0024")) return false;
+  const pile = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  const grave = pile();
+  if (!grave?.includes(source) || !targetHand) return false;
+  const options = grave.filter(card => card && card !== source && window.xlwIsUnitFairy(card) &&
+    (unitRecovery ? ["unit", "單位"].includes(card.type) : ["magic", "spell", "魔法"].includes(card.type)));
+  if (!options.length) return false;
+  const pick = isPlayer ? await showXLWChoiceModal(source.name, "選擇一張要從墓地回手的妖精卡。", [
+    ...options.map((card, value) => ({card, text: card.name, value})),
+    {text: "取消", value: -1}
+  ]) : 0;
+  const selected = options[pick];
+  if (!selected || !pile()?.includes(source) ||
+      !window.XLWDuelConsistency.moveKnownCard(pile(), targetHand, selected)) return false;
+  logBattle(`✨【${source.name}】將【${selected.name}】從墓地回手。`);
+  render();
+  return true;
+};
+
 window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
   if (!card) return;
 
@@ -3694,39 +3718,7 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
     else window.XLW_cardsMilledThisTurn_enemy = (window.XLW_cardsMilledThisTurn_enemy || 0) + 1;
   }
 
-  // 🧚‍♀️ SR-EVL-0024 黑妖精法師希妮: 進入墓地時可使墓地1妖精魔法卡回手牌
-  if (card.id === "SR-EVL-0024" || card.id === "SR-EVL-0024-泳裝" || card.name?.includes("黑妖精法師希妮") || card.name?.includes("希妮")) {
-    const myGrave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
-    const fairySpells = myGrave.filter(c => c && c !== card && (c.type === "magic" || c.type === "spell") && (c.faction === "妖精" || c.deck === "妖精" || c.id?.includes("EVL")));
-    if (fairySpells.length > 0) {
-      if (isPlayer) {
-        const doRetrieve = await showXLWConfirm("【黑妖精法師希妮】回溯法術", "【黑妖精法師希妮】進入墓地！是否將墓地 1 張妖精魔法卡收回手牌？");
-        if (doRetrieve) {
-          const choices = fairySpells.map((c, i) => ({ text: c.name, value: i }));
-          const pick = await showXLWChoiceModal("選擇妖精魔法卡", "請選擇回收至手牌的魔法卡：", choices);
-          if (pick !== null && pick !== undefined) {
-            const chosen = fairySpells[pick];
-            const gIdx = graveyard.indexOf(chosen);
-            if (gIdx >= 0) {
-              graveyard.splice(gIdx, 1);
-              hand.push(chosen);
-              logBattle(`🧚‍♀️🪄【黑妖精法師希妮】法術回收：將【${chosen.name}】從墓地加入手牌！`);
-              render();
-            }
-          }
-        }
-      } else {
-        const chosen = fairySpells[0];
-        const gIdx = myGrave.indexOf(chosen);
-        if (gIdx >= 0) {
-          myGrave.splice(gIdx, 1);
-          (window.XLW_ENEMY?.hand || []).push(chosen);
-          logBattle(`🧚‍♀️🪄 對手【黑妖精法師希妮】將【${chosen.name}】從墓地回收手牌！`);
-          render();
-        }
-      }
-    }
-  }
+  await window.xlwRecoverFairyFromGrave(card, isPlayer);
 
   // 👻🪞 R-VLG-0051 / SSR-VLG-0051 伽椰貞美子: 進入墓地時回手牌
   if (card.id === "R-VLG-0051" || card.id === "SSR-VLG-0051" || card.name?.includes("伽椰貞美子")) {
@@ -11179,6 +11171,7 @@ async function xlwResolveFairyStrategist(isPlayer, charm = false) {
       !canMove(target.unit, target.zone, target.idx)) return;
   field[target.zone][target.idx] = null;
   field[dest.zone][dest.idx] = target.unit;
+  window.xlwRecordFairyRetreat?.(target.unit, target.zone, dest.zone);
   target.unit.summonedZone = dest.zone;
   window.XLWBattleFlow?.forget(target.zone, target.idx);
   render();
@@ -11286,6 +11279,7 @@ window.xlwResolveFairyShootingInstructor = async function(source, zone, idx, isP
   if (!target || !legal(target) || field[zone][idx] !== source || field[rear][idx]) return false;
   field[target.row][target.lane] = null;
   field[rear][idx] = target.unit;
+  window.xlwRecordFairyRetreat?.(target.unit, target.row, rear);
   target.unit.summonedZone = rear;
   target.unit.tapped = false;
   target.unit.attacking = false;
@@ -11295,6 +11289,110 @@ window.xlwResolveFairyShootingInstructor = async function(source, zone, idx, isP
   if (isMultiplayer) sendFullGameStateToOpponent();
   render();
   return true;
+};
+
+window.xlwRecordFairyRetreat = function(unit, from, to) {
+  if (unit && from.endsWith("_front") && to === from.replace("_front", "_back")) {
+    unit.fairyRetreatTurn = turn;
+  }
+};
+
+window.xlwTryFairyRelocationUpgrade = async function(endingTurn) {
+  const upgraded = playerExtraDeck.find(card => card?.id === "R-EVL-0050");
+  const retreats = () => ["enemy_front", "enemy_back"].flatMap(zone => field[zone])
+    .filter(unit => unit?.fairyRetreatTurn === endingTurn).length;
+  if (!upgraded || retreats() < 2) return false;
+  const sources = [hand, graveyard].flatMap(pile => pile.filter(card => card?.id?.includes("EVL-0017"))
+    .map(card => ({pile, card})));
+  if (!sources.length) return false;
+  const pick = await showXLWChoiceModal(upgraded.name, "選擇要升級的位移魔法。", [
+    ...sources.map(({pile, card}, value) => ({card, value, text: pile === hand ? "手牌" : "墓地"})),
+    {text: "不升級", value: -1}
+  ]);
+  const source = sources[pick];
+  if (!source || retreats() < 2 || !playerExtraDeck.includes(upgraded) || !source.pile.includes(source.card)) return false;
+  if (source.pile === graveyard && !await window.xlwCheckGraveyardTax(true)) return false;
+  if (retreats() < 2 || !playerExtraDeck.includes(upgraded) || !source.pile.includes(source.card)) return false;
+  window.XLWDuelConsistency.takeKnownCard(source.pile, source.card);
+  window.XLWDuelConsistency.moveKnownCard(playerExtraDeck, hand, upgraded);
+  logBattle(`✨【${source.card.name}】升級為【${upgraded.name}】並加入手牌。`);
+  if (isMultiplayer && isMyTurn) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwResolveFairyMassRelocation = async function() {
+  const entries = side => ["front", "back"].flatMap(row => {
+    const zone = side + "_" + row;
+    return field[zone].map((unit, idx) => ({zone, idx, unit}));
+  });
+  const movable = ({zone, idx, unit}) => unit?.card && !xlwIsUnitUnmovable(unit, zone, idx) &&
+    (zone.startsWith("player_") || !isUnitMagicImmune(unit, zone, idx));
+  const teams = ["player", "enemy"].filter(side => entries(side).some(movable));
+  if (!teams.length) return false;
+  const side = await showXLWChoiceModal("挪移大魔法", "選擇要重新排列的一方。", [
+    ...teams.map(value => ({value, text: value === "player" ? "我方" : "敵方"})),
+    {value: "cancel", text: "取消"}
+  ]);
+  if (!teams.includes(side)) return false;
+  const original = entries(side);
+  const moving = original.filter(movable);
+  if (!moving.length) return false;
+  let available = original.filter(entry => !entry.unit || moving.includes(entry));
+  const assignments = [];
+  for (const entry of moving) {
+    const pick = await showXLWChoiceModal("挪移大魔法", `選擇【${entry.unit.card.name}】的新位置。`, [
+      ...available.map(({zone, idx, unit}, value) => ({
+        text: "移至此格", value, boardTarget: {zone, idx, summon: !unit}
+      })),
+      {text: "取消整次移動", value: "cancel"}
+    ], {boardOnly: true});
+    const destination = available[pick];
+    if (!destination) return false;
+    assignments.push({entry, destination});
+    available = available.filter(slot => slot !== destination);
+  }
+  if (original.some(({zone, idx, unit}) => field[zone][idx] !== unit) || !moving.every(movable)) return false;
+  for (const {zone, idx} of moving) field[zone][idx] = null;
+  for (const {entry, destination} of assignments) {
+    field[destination.zone][destination.idx] = entry.unit;
+    if (entry.zone === destination.zone && entry.idx === destination.idx) continue;
+    window.xlwRecordFairyRetreat?.(entry.unit, entry.zone, destination.zone);
+    entry.unit.summonedZone = destination.zone;
+    window.XLWBattleFlow?.forget(entry.zone, entry.idx);
+  }
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+  return true;
+};
+
+window.xlwResolveFairyReinforcement = async function(sourceDeck, targetHand) {
+  const revealed = sourceDeck.slice(-2).reverse();
+  const available = revealed.filter(card => card?.type === "unit" && window.xlwIsUnitFairy(card));
+  const selected = [];
+  while (available.length) {
+    const pick = await showXLWChoiceModal("強力增援", "選擇要展示並加入手牌的妖精單位。", [
+      ...available.map((card, value) => ({card, text: card.name, value})),
+      {text: "完成選擇", value: -1}
+    ]);
+    if (!available[pick]) break;
+    selected.push(available.splice(pick, 1)[0]);
+  }
+  const bottom = revealed.filter(card => !selected.includes(card));
+  if (bottom.length > 1) {
+    const pick = await showXLWChoiceModal("強力增援", "選擇哪張牌要放在最底下。", bottom.map((card, value) =>
+      ({card, text: card.name, value})));
+    if (pick === 1) bottom.reverse();
+  }
+  if (!revealed.every((card, idx) => sourceDeck[sourceDeck.length - idx - 1] === card)) return 0;
+  sourceDeck.splice(sourceDeck.length - revealed.length, revealed.length);
+  sourceDeck.unshift(...bottom);
+  targetHand.push(...selected);
+  for (const card of selected) {
+    logBattle(`✨【強力增援】展示【${card.name}】並加入手牌。`);
+    await window.xlwRevealCard?.(card, true);
+  }
+  return selected.length;
 };
 
 window.xlwResolveFairyExecutioner = async function(isPlayer) {
@@ -12727,6 +12825,24 @@ async function castSpell(handIndex) {
         render();
       });
 
+    } else if (card.id === "R-EVL-0050") {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        await window.xlwResolveFairyMassRelocation();
+        graveyard.push(spellCard);
+        render();
+      });
+
+    } else if (card.id === "R-EVL-0018") {
+      const spellCard = hand.splice(handIndex, 1)[0];
+      await xlwShowSpellActivationOverlay(spellCard, "player");
+      await castSpellChain(spellCard, async () => {
+        await window.xlwResolveFairyReinforcement(deck, hand);
+        graveyard.push(spellCard);
+        render();
+      });
+
     // 6. R-EVL-0023 重生術: 使你墓地1單位回牌庫頂
     } else if (card.id === "R-EVL-0023" || card.name?.includes("重生術")) {
       const spellCard = hand.splice(handIndex, 1)[0];
@@ -12834,6 +12950,8 @@ async function castSpell(handIndex) {
               const temp = field[u1.zone][u1.idx];
               field[u1.zone][u1.idx] = field[u2.zone][u2.idx];
               field[u2.zone][u2.idx] = temp;
+              window.xlwRecordFairyRetreat?.(u1.unit, u1.zone, u2.zone);
+              window.xlwRecordFairyRetreat?.(u2.unit, u2.zone, u1.zone);
               logBattle(`🌀【位移魔法】乾坤挪移：將對手的【${u1.name}】與【${u2.name}】互換了位置！`);
             }
           }
@@ -12858,6 +12976,7 @@ async function castSpell(handIndex) {
           const temp = field[fZ][pick.lane];
           field[fZ][pick.lane] = field[bZ][pick.lane];
           field[bZ][pick.lane] = temp;
+          window.xlwRecordFairyRetreat?.(temp, fZ, bZ);
           logBattle(`🌀【幻術調位】顛倒乾坤：將 ${pick.side === "player" ? "我方" : "敵方"} 戰線 ${pick.lane + 1} 的前後排單位互換！`);
         }
         graveyard.push(spellCard);
@@ -18394,6 +18513,7 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
       const toSlot = unitsInChain[i + 1].slot;
       const u = unitsInChain[i].unit;
       field[toSlot.zone][toSlot.idx] = u;
+      window.xlwRecordFairyRetreat?.(u, fromSlot.zone, toSlot.zone);
       u.summonedZone = toSlot.zone;
       field[fromSlot.zone][fromSlot.idx] = null;
     }
@@ -18440,6 +18560,7 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
       const toSlot = unitsInChain[i + 1].slot;
       const u = unitsInChain[i].unit;
       field[toSlot.zone][toSlot.idx] = u;
+      window.xlwRecordFairyRetreat?.(u, fromSlot.zone, toSlot.zone);
       u.summonedZone = toSlot.zone;
       field[fromSlot.zone][fromSlot.idx] = null;
     }
@@ -18449,6 +18570,7 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
       const fromSlot = unitsInChain[i].slot;
       const u = unitsInChain[i].unit;
       field[dest.zone][dest.idx] = u;
+      window.xlwRecordFairyRetreat?.(u, fromSlot.zone, dest.zone);
       u.summonedZone = dest.zone;
       field[fromSlot.zone][fromSlot.idx] = null;
       dest = fromSlot;
@@ -25575,6 +25697,7 @@ function moveFieldUnit(fromZone, fromIdx, toZone, toIdx) {
 
   field[toZone][toIdx] = unit;
   field[fromZone][fromIdx] = null;
+  window.xlwRecordFairyRetreat?.(unit, fromZone, toZone);
   logBattle(`戰術移動：將 ${unitName(unit)} 移動至 ${toZone === "player_front" ? "前排" : "後排"}${toIdx + 1}`);
   
   if (isMultiplayer) {
@@ -25647,6 +25770,8 @@ function swapFieldUnits(zoneA, idxA, zoneB, idxB) {
   // 執行互換
   field[zoneA][idxA] = unitB;
   field[zoneB][idxB] = unitA;
+  window.xlwRecordFairyRetreat?.(unitA, zoneA, zoneB);
+  window.xlwRecordFairyRetreat?.(unitB, zoneB, zoneA);
 
   logBattle(`✨ 戰術位置互換：將【${nameA}】(${zoneA === "player_front" ? "前排" : "後排"}${idxA + 1}) 與【${nameB}】(${zoneB === "player_front" ? "前排" : "後排"}${idxB + 1}) 互換位置！`);
 
@@ -32910,25 +33035,6 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         }
       }
 
-      // 妖精預組 - R-EVL-0016 守墓黑妖精 薩德 (此卡進入墓地時，可使你墓地1其他妖精單位回手牌)
-      if (unit.card && (unit.card.id === "R-EVL-0016" || unit.card.name?.includes("守墓黑妖精"))) {
-        const otherFairies = graveyard.filter(c => c && c !== unit.card && c.type === "unit" && (c.faction === "妖精" || c.deck === "妖精" || c.id?.includes("EVL") || c.name?.includes("妖精")));
-        if (otherFairies.length > 0) {
-          const confirmSaade = await showXLWConfirm("守墓黑妖精 效果發動", "【守墓黑妖精 薩德】進入墓地，是否發動效果，將墓地中 1 個其他妖精單位回收至手牌？");
-          if (confirmSaade) {
-            const choices = otherFairies.map((c, i) => ({ text: `${c.name} (攻:${c.attack || 0}/星:${c.score || 0})`, value: i }));
-            const chosen = await showXLWChoiceModal("選擇回收的妖精單位", "請選擇回收至手牌的妖精：", choices);
-            if (chosen !== null && chosen !== undefined) {
-              const targetFairy = otherFairies[chosen];
-              graveyard.splice(graveyard.indexOf(targetFairy), 1);
-              hand.push(targetFairy);
-              logBattle(`✨ 守墓黑妖精 薩德 效果：將墓地中的妖精單位【${targetFairy.name}】回收至手牌！`);
-              render();
-            }
-          }
-        }
-      }
-
       // 妖精預組 - EVL-0019 妖精同胞情 (你場上的妖精單位被破壞時，查看牌庫頂2張牌，可打出其中任意個妖精單位，其餘送入墓地)
       const isPlayerFairy = unit.card && (unit.card.faction === "妖精" || unit.card.deck === "妖精" || unit.card.id?.includes("EVL") || unit.card.name?.includes("妖精")) && unit.card.type === "unit";
       if (isPlayerFairy && !shouldExile) {
@@ -33042,20 +33148,6 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
           logBattle(`✨ 對手 廢墟探險家 進入墓地效果：對手抽 1 張牌！`);
         } else {
           logBattle(`✨ 對手 廢墟探險家 進入墓地效果，但對手牌庫已無卡牌！`);
-        }
-      }
-
-      // 妖精預組 - R-EVL-0016 守墓黑妖精 薩德 (對手端)
-      if (unit.card && (unit.card.id === "R-EVL-0016" || unit.card.name?.includes("守墓黑妖精"))) {
-        const oppGrave = window.XLW_ENEMY.grave || [];
-        const otherFairies = oppGrave.filter(c => c && c !== unit.card && c.type === "unit" && (c.faction === "妖精" || c.deck === "妖精" || c.id?.includes("EVL") || c.name?.includes("妖精")));
-        if (otherFairies.length > 0) {
-          const targetFairy = otherFairies[0];
-          oppGrave.splice(oppGrave.indexOf(targetFairy), 1);
-          if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-          window.XLW_ENEMY.hand.push(targetFairy);
-          logBattle(`✨ 對手 守墓黑妖精 薩德 效果：將對手墓地中的妖精單位【${targetFairy.name}】回收至手牌！`);
-          render();
         }
       }
 
@@ -35806,6 +35898,7 @@ async function aiPerformTacticalMovement() {
         const isWeak = (atk <= 2) || (stars >= 3 && atk < stars);
         if (isWeak) {
           field.enemy_back[i] = frontUnit;
+          window.xlwRecordFairyRetreat?.(frontUnit, "enemy_front", "enemy_back");
           field.enemy_front[i] = null;
           frontUnit.summonedZone = "enemy_back";
           
@@ -37053,6 +37146,7 @@ async function endPlayerTurnAndRunEnemy() {
     }
 
   phase = "結束階段";
+  await window.xlwTryFairyRelocationUpgrade?.(turn);
   if (typeof window.xlwResolveExpansionTurnEnd === "function") {
     try { await window.xlwResolveExpansionTurnEnd(true); } catch(e) { console.error("Error in xlwResolveExpansionTurnEnd:", e); }
   } // 結束階段
