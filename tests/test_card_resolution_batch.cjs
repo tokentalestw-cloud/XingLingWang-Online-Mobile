@@ -695,3 +695,134 @@ test("AI attacking-power reward uses the resolved difference after a chain respo
   await run();
   assert.equal(c.enemyBonusScore, 1);
 });
+
+test("goat transformation disposes the original unit, fused pieces, and true equipment once", async () => {
+  const c = fixture(), original = unit("old");
+  const piece = unit("piece").card;
+  const sword = {id: "R-ORC-0054", name: "破甲劍", type: "magic"};
+  const coat = {id: "coat", name: "外衣", type: "magic"};
+  Object.assign(original, {
+    devourCards: [{card: piece}, null], equipments: [sword, coat, "削弱藥水"],
+    xlwArmorBreakSwords: [sword], hasSpellShield: true, hasPoison: true,
+    woodClubBonus: 4, tempEquips: {削弱藥水: c.turn},
+    attacking: true, tapped: true, target: {zone: "enemy_front", idx: 0}
+  });
+  c.field.player_front[0] = original;
+  c.structuredClone = structuredClone;
+  c.window.xlwTriggerGoatPolymorphReactions = async () => {};
+  vm.runInContext(slice("async function cleanUnitLeavingField(", "async function kidnapCard("), c);
+  vm.runInContext(slice("window.xlwTransformUnitToGoat =", "// 觸發山羊變形被動"), c);
+  const goat = {id: "GOT-0014", name: "盾牌山羊", _xlwInstanceId: "from-hand"};
+  assert.equal(await c.window.xlwTransformUnitToGoat(original, "player_front", 0, goat, true), true);
+  assert.deepEqual(c.graveyard.map(card => card.id).sort(), ["R-ORC-0054", "coat", "old", "piece"]);
+  assert.equal(c.field.player_front[0], original);
+  assert.equal(original.card._xlwInstanceId, "from-hand");
+  assert.equal(original.tapped, true);
+  assert.equal(original.attacking, true);
+  assert.equal(original.target.idx, 0);
+  for (const modifier of ["devourCards", "hasSpellShield", "hasPoison", "woodClubBonus", "tempEquips", "xlwArmorBreakSwords"]) {
+    assert.equal(original[modifier], undefined, modifier);
+  }
+});
+
+test("a stale target does not receive a goat transformation and an on-board goat is not cloned with its ID", async () => {
+  const c = fixture(), original = unit("old"), source = unit("goat");
+  source.card._xlwInstanceId = "board-goat";
+  c.field.player_back[1] = source;
+  c.structuredClone = structuredClone;
+  c.window.xlwTriggerGoatPolymorphReactions = async () => {};
+  vm.runInContext(slice("window.xlwTransformUnitToGoat =", "// 觸發山羊變形被動"), c);
+  const transform = () => c.window.xlwTransformUnitToGoat(original, "player_front", 0, source.card, true);
+  assert.equal(await transform(), false);
+  assert.equal(c.graveyard.length, 0);
+  c.field.player_front[0] = original;
+  assert.equal(await transform(), true);
+  assert.equal(source.card._xlwInstanceId, "board-goat");
+  assert.equal(original.card._xlwInstanceId, undefined);
+});
+
+test("canceling the transformation target preserves the chosen tribute and hand card", async () => {
+  const c = fixture(), tribute = unit("tribute");
+  const spell = {id: "GOT-0014", name: "盾牌山羊"};
+  c.field.player_front[0] = tribute;
+  c.field.enemy_front[1] = unit("target");
+  c.hand.push(spell);
+  c.getCardTributeCost = () => 1;
+  c.window.isUnitMagicImmune = () => false;
+  c.window.xlwPlayerTributeUnit = async () => assert.fail("cost on canceled target");
+  const choices = [0, null];
+  c.showXLWChoiceModal = async (_, __, options) => {
+    if (choices.length === 1) assert.equal(options.some(option => option.boardTarget.zone === "player_front"), false);
+    return choices.shift();
+  };
+  vm.runInContext(slice("window.xlwInitiateGoatPolymorphFromHand =", "window.xlwFinishBlackHoleVictory"), c);
+  await c.window.xlwInitiateGoatPolymorphFromHand(spell, 0);
+  assert.deepEqual(c.hand, [spell]);
+  assert.equal(c.field.player_front[0], tribute);
+});
+
+test("splitting rechecks the slot after an interactive choice and skips missing materials", async () => {
+  const c = fixture(), host = unit("host", {isCombined: true, devourCards: [null, {card: unit("piece").card}]});
+  c.field.player_front[0] = host;
+  const newOccupant = unit("replacement");
+  c.structuredClone = structuredClone;
+  let prompts = 0;
+  c.showXLWChoiceModal = async (_, __, choices) => {
+    if (prompts++ === 0) {
+      assert.equal(choices[0].boardTarget.idx, 0);
+      c.field.player_front[0] = newOccupant;
+    }
+    return 0;
+  };
+  vm.runInContext(slice("async function xlwSeparateSingleFusedUnit(", "// 單位真實攻擊力"), c);
+  assert.equal(await c.xlwSeparateSingleFusedUnit("player_front", 0), 2);
+  assert.equal(host.isCombined, false);
+  assert.equal(c.field.player_front[0], newOccupant);
+  assert.deepEqual(c.field.player_front.slice(1, 3).map(u => u.card.id), ["host", "piece"]);
+});
+
+test("armor sword does not attach to a unit transformed while the choice is open", async () => {
+  const c = fixture();
+  const host = unit("ORC-0010");
+  c.field.player_front[0] = host;
+  c.showXLWChoiceModal = async () => { host.card = unit("GOT-0014").card; return 0; };
+  const sword = {id: "R-ORC-0054", name: "破甲劍"};
+  vm.runInContext(slice("function xlwArmorSwordTargets()", "async function xlwResolveSoftClocks()"), c);
+  await c.xlwEquipArmorSword(sword);
+  assert.equal(host.xlwArmorBreakSwords, undefined);
+  assert.deepEqual(c.graveyard, [sword]);
+});
+
+test("legacy peer transformation settles ownership without repeating active goat reactions", async () => {
+  const c = fixture();
+  const target = unit("former");
+  c.field.enemy_front[0] = target;
+  c.structuredClone = structuredClone;
+  c.window.xlwTriggerGoatPolymorphReactions = async () => assert.fail("peer reaction already settled");
+  const goat = {id: "SSR-NMG-0012", name: "山羊術", _xlwInstanceId: "spell"};
+  vm.runInContext(slice("window.xlwTransformUnitToGoat =", "// 觸發山羊變形被動"), c);
+  await c.window.xlwTransformUnitToGoat(target, "enemy_front", 0, goat, false, false, {replay: true});
+  assert.equal(c.graveyard.length, 0);
+  assert.equal(c.window.XLW_ENEMY.grave[0].id, "former");
+  assert.equal(target.card.creator, "enemy");
+});
+
+test("AI successful transformations and disappearing potions do not duplicate the spell in grave", async () => {
+  const c = fixture();
+  c.window.xlwStarLineTrophies = [];
+  c.window.xlwOnMagicCardCast = async () => {};
+  c.window.xlwCardHasKeyword = (_, kw) => kw === "消逝";
+  c.enemyExileZone = [];
+  c.showSpellChainUI = () => {};
+  c.promptNextChainAction = () => queueMicrotask(() => c.window.XLW_pendingSpellResolve({countered: false}));
+  c.setTimeout = () => 1;
+  vm.runInContext(slice("async function aiCastSpell(", "async function aiPlayMagicCardsSummonPhase"), c);
+  const goat = {id: "SSR-NMG-0012", name: "山羊術"};
+  await c.aiCastSpell(goat, async () => "transformed", true);
+  for (const id of ["BRV-0037", "BRV-0038"]) {
+    const potion = {id, name: id};
+    await c.aiCastSpell(potion, async () => {}, true);
+  }
+  assert.deepEqual(c.window.XLW_ENEMY.grave, []);
+  assert.deepEqual(c.enemyExtraDeck.map(card => card.id), ["BRV-0037", "BRV-0038"]);
+});

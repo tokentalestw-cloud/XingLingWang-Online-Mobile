@@ -6398,8 +6398,9 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
 
   const sidePrefix = isPlayer ? "player_" : "enemy_";
   const wasBananaBoat = u.card && (u.card.id === "R-CND-0035" || u.card.name?.includes("香蕉船"));
-  const devouredList = [...u.devourCards];
+  const devouredList = u.devourCards.filter(piece => piece?.card?.id);
   u.devourCards = [];
+  u.isCombined = false;
 
   field[origZone][origIdx] = null;
 
@@ -6430,36 +6431,18 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
 
   for (let uIdx = 0; uIdx < unitsToPlace.length; uIdx++) {
     const item = unitsToPlace[uIdx];
-    const frontZone = sidePrefix + "front";
-    const backZone = sidePrefix + "back";
-
-    const emptyFrontSlots = [];
-    const emptyBackSlots = [];
-    if (field[frontZone]) {
-      for (let s = 0; s < 5; s++) {
-        if (!field[frontZone][s]) emptyFrontSlots.push({ zone: frontZone, idx: s });
-      }
-    }
-    if (field[backZone]) {
-      for (let s = 0; s < 5; s++) {
-        if (!field[backZone][s]) emptyBackSlots.push({ zone: backZone, idx: s });
-      }
-    }
-
-    let legalSlots = isOrigFront ? 
-      (emptyFrontSlots.length > 0 ? emptyFrontSlots : emptyBackSlots) :
-      (emptyBackSlots.length > 0 ? emptyBackSlots : emptyFrontSlots);
-
-    if (legalSlots.length === 0) {
-      if (isPlayer) {
-        hand.push(item.card);
-        logBattle(`✨ 戰場已滿，分開的【${item.card.name}】回到我方手牌！`);
-      } else {
-        if (!window.XLW_ENEMY) window.XLW_ENEMY = { hand: [] };
-        if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-        window.XLW_ENEMY.hand.push(item.card);
-        logBattle(`✨ 戰場已滿，分開的【${item.card.name}】回到對手手牌！`);
-      }
+    const zones = isOrigFront ? [sidePrefix + "front", sidePrefix + "back"] : [sidePrefix + "back", sidePrefix + "front"];
+    const freeSlots = () => zones.map(zone => (field[zone] || []).flatMap((slot, idx) =>
+      slot ? [] : [{zone, idx}])).find(slots => slots.length) || [];
+    const returnToHand = async () => {
+      const destination = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
+      destination.push(item.card);
+      if (item.isHost) await cleanUnitLeavingField(item.unitObj, origZone);
+      logBattle(`戰場已滿，分開的【${item.card.name}】回到手牌。`);
+    };
+    const legalSlots = freeSlots();
+    if (!legalSlots.length) {
+      await returnToHand();
       continue;
     }
 
@@ -6467,9 +6450,10 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
     if (isPlayer) {
       const choices = legalSlots.map((s, cIdx) => ({
         text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
-        value: cIdx
+        value: cIdx,
+        boardTarget: {zone: s.zone, idx: s.idx, summon: true}
       }));
-      let chosenIdx = await showXLWChoiceModal(`【合體分開】選擇放置位置 (${uIdx + 1}/${unitsToPlace.length})`, `原【${item.displayName}】分開：請選擇放置的戰場位置：`, choices);
+      let chosenIdx = await showXLWChoiceModal(`【合體分開】選擇放置位置 (${uIdx + 1}/${unitsToPlace.length})`, `原【${item.displayName}】分開：請選擇放置的戰場位置：`, choices, {boardOnly: true});
       if (chosenIdx === null || chosenIdx === undefined || chosenIdx < 0 || chosenIdx >= legalSlots.length) {
         chosenIdx = 0;
       }
@@ -6478,6 +6462,11 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
       chosenSlot = legalSlots[0];
     }
 
+    if (field[chosenSlot.zone]?.[chosenSlot.idx]) chosenSlot = freeSlots()[0];
+    if (!chosenSlot) {
+      await returnToHand();
+      continue;
+    }
     item.unitObj.summonedZone = chosenSlot.zone;
     field[chosenSlot.zone][chosenSlot.idx] = item.unitObj;
     logBattle(`✨ 分開合體：【${item.card.name}】放置於 ${chosenSlot.zone.includes("front") ? "前排" : "後排"}${chosenSlot.idx + 1}！`);
@@ -6492,19 +6481,21 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
     }
 
     // 香蕉切片聖代 (R-CND-0051) 升級檢測
-    if (item.isHost && wasBananaBoat) {
+    if (item.isHost && wasBananaBoat && item.unitObj.card === item.card) {
       const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
       const sundaeIdx = extraList.findIndex(c => c && (c.id === "R-CND-0051" || c.name?.includes("香蕉切片聖代")));
       if (sundaeIdx >= 0) {
+        const sundae = extraList[sundaeIdx];
         let doUpgrade = false;
         if (isPlayer) {
           doUpgrade = await showXLWConfirm("【香蕉切片聖代】升級進化", "合體後的【香蕉船】已被分開！是否將其升級為額外區的【香蕉切片聖代】？");
         } else {
           doUpgrade = true;
         }
-        if (doUpgrade) {
-          const sundaeCard = extraList.splice(sundaeIdx, 1)[0];
-          field[chosenSlot.zone][chosenSlot.idx].card = structuredClone(sundaeCard);
+        if (doUpgrade && field[chosenSlot.zone][chosenSlot.idx] === item.unitObj && item.unitObj.card === item.card) {
+          const sundaeCard = window.XLWDuelConsistency.takeKnownCard(extraList, sundae);
+          if (!sundaeCard) continue;
+          item.unitObj.card = structuredClone(sundaeCard);
           logBattle(`🍌【香蕉船】升級進化為【${sundaeCard.name}】！`);
           if (typeof renderExtraDecks === "function") renderExtraDecks();
         }
@@ -8437,55 +8428,48 @@ window.xlwCountGoats = function(sideFilter = "all") {
 };
 
 // 執行山羊變形（山羊術轉換）
-window.xlwTransformUnitToGoat = async function(unit, zone, idx, goatCard, isPlayerSide, byPlayer = true) {
-  if (!unit || !unit.card) return false;
-  const origName = unit.card.name;
+window.xlwTransformUnitToGoat = async function(unit, zone, idx, goatCard, isPlayerSide, byPlayer = true, {replay = false} = {}) {
+  if (!unit?.card || !goatCard?.id || field[zone]?.[idx] !== unit) return false;
+  const old = { ...unit };
+  const origName = old.card.name;
   const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
-  
-  // 原卡牌送墓
-  if (targetOwner === "player") {
-    graveyard.push(unit.card);
-  } else {
-    if (!window.XLW_ENEMY) window.XLW_ENEMY = { grave: xlwGravePile([], false) };
-    if (!window.XLW_ENEMY.grave) window.XLW_ENEMY.grave = xlwGravePile([], false);
-    window.XLW_ENEMY.grave.push(unit.card);
-    enemyGraveyard = window.XLW_ENEMY.grave;
-  }
+  const targetGrave = targetOwner === "player" ? graveyard :
+    (window.XLW_ENEMY.grave ||= xlwGravePile([], false));
+  if (targetOwner === "enemy") enemyGraveyard = targetGrave;
 
-  // 裝備卡送墓
-  if (unit.equipments && unit.equipments.length > 0) {
-    unit.equipments.forEach(eqName => {
-      const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-      if (isTempMagic) return;
-      const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
-      const cloned = structuredClone(cardObj);
-      cloned.type = "magic";
-      if (targetOwner === "player") {
-        graveyard.push(cloned);
-      } else {
-        window.XLW_ENEMY.grave.push(cloned);
-      }
-    });
-  }
-
-  // 變形為山羊卡
   const transformedCard = structuredClone(goatCard);
+  if (Object.values(field).some(row => row.some(slot => slot?.card === goatCard ||
+      (goatCard._xlwInstanceId && slot?.card?._xlwInstanceId === goatCard._xlwInstanceId)))) {
+    delete transformedCard._xlwInstanceId;
+  }
   transformedCard.type = "unit";
   transformedCard.creator = byPlayer ? "player" : "enemy";
-  
-  unit.card = transformedCard;
-  unit.isTransformedToGoat = true;
-  unit.goatPolymorphed = true;
-  unit.equipments = [];
-  unit.atkModifier = 0;
-  unit.piercing = goatCard.keywords?.includes("貫穿") || false;
-  unit.hasPoison = goatCard.keywords?.includes("劇毒") || false;
-  unit.isShield = goatCard.keywords?.includes("阻擋") || (goatCard.art_subtype === "盾牌") || false;
+
+  // Preserve placement and declared attacks; the replaced card's modifiers leave with it.
+  const placement = Object.fromEntries(["tapped", "attacking", "attackTapped", "target", "secondTarget",
+    "trophyTargetId", "summonedTurn", "summonedZone"].filter(key => key in old).map(key => [key, old[key]]));
+  for (const key of Object.keys(unit)) delete unit[key];
+  Object.assign(unit, placement, {
+    card: transformedCard, isTransformedToGoat: true, goatPolymorphed: true, equipments: []
+  });
+
+  targetGrave.push(old.card);
+  for (const entry of old.devourCards || []) {
+    if (entry?.card && entry.card !== old.card) targetGrave.push(entry.card);
+  }
+  for (const equipment of old.equipments || []) {
+    const name = typeof equipment === "string" ? equipment : equipment?.name;
+    if (!name || old.tempEquips?.[name] != null || /削弱藥水|振奮藥水|塗毒|睡眠反擊拳|法術保護/.test(name) ||
+        (name.includes("破甲劍") && old.xlwArmorBreakSwords?.length)) continue;
+    const original = typeof equipment === "object" ? equipment : allCards.find(card => card?.name === name);
+    if (original) targetGrave.push(structuredClone(original));
+  }
+  await cleanUnitLeavingField(old, zone);
 
   logBattle(`🐐【山羊術】施放！將 ${zone.includes("front") ? "前排" : "後排"}${idx + 1} 的【${origName}】變形為【${goatCard.name}】！`);
 
   // 觸發山羊變形連鎖反應
-  await window.xlwTriggerGoatPolymorphReactions(zone, idx, targetOwner, byPlayer);
+  if (!replay) await window.xlwTriggerGoatPolymorphReactions(zone, idx, targetOwner, byPlayer);
   render();
   return true;
 };
@@ -8574,32 +8558,30 @@ window.xlwTriggerGoatPolymorphReactions = async function(zone, idx, targetOwner,
 window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
   // 檢查是否需要祭品 (例如盾牌山羊 GOT-0014 需要 1 祭品)
   const reqTrib = getCardTributeCost(card);
-  if (reqTrib > 0) {
-    const myUnits = [];
-    for (const z of ["player_front", "player_back"]) {
-      (field[z] || []).forEach((u, i) => {
-        if (u && !window.xlwIsUnitUnsacrificable?.(u, z, i)) {
-          myUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
-        }
-      });
-    }
-    if (myUnits.length < reqTrib) {
-      setStatus(`發動【${card.name}】需要 ${reqTrib} 個祭品，我方場上祭品不足！`);
-      return;
-    }
-    const tribChoices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i, boardTarget: {zone: u.zone, idx: u.idx} }));
-    const pPick = await showXLWChoiceModal(`【${card.name}】獻祭`, `發動此山羊術需要 1 個祭品，請選擇獻祭單位：`, tribChoices, {boardOnly: true});
-    if (pPick === null || pPick === undefined) return;
-    const sacrificed = myUnits[pPick];
-    logBattle(`🔥 獻祭了我方【${sacrificed.name}】作為【${card.name}】的施法代價！`);
-    await destroyUnit(sacrificed.zone, sacrificed.idx, "player", false);
+  const tributes = [];
+  const tributeCandidates = () => ["player_front", "player_back"].flatMap(zone =>
+    field[zone].flatMap((unit, idx) => unit && !tributes.some(choice => choice.unit === unit) &&
+      !window.xlwIsUnitUnsacrificable?.(unit, zone, idx) ? [{ zone, idx, unit }] : []));
+  if (tributeCandidates().length < reqTrib) {
+    setStatus(`發動【${card.name}】需要 ${reqTrib} 個祭品，我方場上祭品不足。`);
+    return false;
+  }
+  for (let count = 0; count < reqTrib; count++) {
+    const available = tributeCandidates();
+    if (!available.length) return false;
+    const pick = await showXLWChoiceModal(card.name, `點選祭品（${count + 1}/${reqTrib}）。`, available.map((candidate, value) =>
+      ({ text: candidate.unit.card.name, value, boardTarget: { zone: candidate.zone, idx: candidate.idx } })),
+      { boardOnly: true });
+    if (!available[pick]) return false;
+    tributes.push(available[pick]);
   }
 
   // 選擇場上任意合法目標變形
   const allFieldUnits = [];
   for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     (field[z] || []).forEach((u, i) => {
-      if (u && !window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i, card)) {
+      if (u && !tributes.some(choice => choice.unit === u) && (z.startsWith("player_") ||
+          (!window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i, card)))) {
         allFieldUnits.push({ zone: z, idx: i, name: u.card.name, isPlayer: z.startsWith("player_"), unit: u });
       }
     });
@@ -8619,11 +8601,18 @@ window.xlwInitiateGoatPolymorphFromHand = async function(card, handIdx) {
   if (pick === null || pick === undefined) return;
 
   const target = allFieldUnits[pick];
-  const sourceIndex = hand.indexOf(card);
-  if (!target || sourceIndex < 0 || field[target.zone]?.[target.idx] !== target.unit ||
-      window.isUnitEffectImmune(target.unit, target.zone, target.idx) ||
-      window.isUnitMagicImmune(target.unit, target.zone, target.idx, card)) return;
-  hand.splice(sourceIndex, 1);
+  const validTarget = () => target && field[target.zone]?.[target.idx] === target.unit &&
+    (target.isPlayer || (!window.isUnitEffectImmune(target.unit, target.zone, target.idx) &&
+       !window.isUnitMagicImmune(target.unit, target.zone, target.idx, card)));
+  if (!validTarget() || !hand.includes(card) || tributes.some(({zone, idx, unit}) =>
+      field[zone]?.[idx] !== unit || window.xlwIsUnitUnsacrificable?.(unit, zone, idx))) return false;
+  for (const {zone, idx, unit} of tributes) {
+    if (field[zone]?.[idx] !== unit || window.xlwIsUnitUnsacrificable?.(unit, zone, idx)) return false;
+    await window.xlwPlayerTributeUnit(unit, zone, idx);
+    if (field[zone]?.[idx] === unit) field[zone][idx] = null;
+    await cleanUnitLeavingField(unit, zone);
+  }
+  if (!validTarget() || !window.XLWDuelConsistency.takeKnownCard(hand, card)) return false;
 
   // 若非「無限山羊」生效中，消耗本回合正常召喚次數
   if (!window.XLW_infiniteGoatsActive) {
@@ -11986,13 +11975,14 @@ function xlwArmorSwordTargets() {
 }
 
 async function xlwEquipArmorSword(spellCard) {
-  const targets = xlwArmorSwordTargets();
+  const targets = xlwArmorSwordTargets().map(target => ({...target, card: target.unit.card}));
   const choices = targets.map(({zone, idx, unit}, value) => ({
     text: unit.card.name, value, boardTarget: {zone, idx}
   }));
   const pick = choices.length ? await showXLWChoiceModal("破甲劍", "點選要裝備破甲劍的我方獸人。", choices, {boardOnly: true}) : null;
   const target = targets[pick];
-  if (!target || field[target.zone][target.idx] !== target.unit) {
+  if (!target || target.card !== target.unit.card || !xlwArmorSwordTargets().some(current => current.unit === target.unit &&
+      current.zone === target.zone && current.idx === target.idx)) {
     graveyard.push(spellCard);
     return;
   }
@@ -12113,6 +12103,14 @@ async function castSpell(handIndex) {
       setStatus("【提示】反制魔法卡無法直接打出，必須在對手使用魔法卡時進行反制。");
     }
     showModal(card);
+    return;
+  }
+
+  if ((card.id?.includes("NMG-0012") || card.name === "山羊術") &&
+      (window.xlwIsGoatBlocked(true) || !["player_front", "player_back", "enemy_front", "enemy_back"].some(zone =>
+        field[zone].some((unit, idx) => unit?.card && (zone.startsWith("player_") ||
+          (!isUnitEffectImmune(unit, zone, idx) && !isUnitMagicImmune(unit, zone, idx, card))))))) {
+    setStatus("【山羊術】目前沒有可變形的目標，或受到山羊勇者限制。");
     return;
   }
 
@@ -16054,7 +16052,8 @@ async function castSpell(handIndex) {
     }
     let hasAnyUnit = false;
     for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-      if (field[zone].some(u => u !== null)) hasAnyUnit = true;
+      if (field[zone].some((unit, idx) => unit?.card && (zone.startsWith("player_") ||
+          (!isUnitEffectImmune(unit, zone, idx) && !isUnitMagicImmune(unit, zone, idx, card))))) hasAnyUnit = true;
     }
     if (hasAnyUnit) {
       window.XLW_goatSpellActive = true;
@@ -33925,7 +33924,13 @@ async function aiCastSpell(spellCard, effectCallback, casterDefensePhase = false
   }
   
   await window.xlwOnMagicCardCast(false, spellCard);
-  await effectCallback();
+  const outcome = await effectCallback();
+  if (outcome === "transformed") return true;
+  if (["BRV-0037", "BRV-0038"].some(id => spellCard?.id?.includes(id)) &&
+      window.xlwCardHasKeyword(spellCard, "消逝")) {
+    enemyExtraDeck.push(spellCard);
+    return true;
+  }
   // 送入對手墓地（若未被除外且非場地魔法）
   if (spellCard && !window.xlwStarLineTrophies.some(trophy => trophy?.card === spellCard && trophy.irrigation > 0) &&
       !enemyExileZone.includes(spellCard) && spellCard.art_subtype !== "場地" && spellCard.magic_type !== "場地") {
@@ -34792,41 +34797,10 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
       
       await castDefenseSpell(spellCard, async () => {
         if (!attackerPresent() || isUnitMagicImmune(attacker, attZone, lane, spellCard) || window.xlwIsGoatBlocked(false)) return;
-        logBattle(`✨ 對手 AI 從手牌發動了【山羊術】！將我方進攻單位 ${attacker.card.name} 變為山羊！`);
-        
-        graveyard.push(attacker.card);
-        if (attacker.equipments && attacker.equipments.length > 0) {
-          attacker.equipments.forEach(eqName => {
-            const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-            if (isTempMagic) return;
-            const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
-            const cloned = structuredClone(cardObj);
-            cloned.type = "magic";
-            graveyard.push(cloned);
-          });
-        }
-        
-        const goatSpellCard = allCards.find(c => c && c.name?.includes("山羊術")) || { name: "山羊術", id: "SSR-NMG-0012", type: "magic", effect_text: "山羊術" };
-        const goatUnitCard = structuredClone(goatSpellCard);
-        goatUnitCard.type = "unit";
-        goatUnitCard.attack = 3;
-        goatUnitCard.score = 1;
-        goatUnitCard.tribute = 0;
-        goatUnitCard.faction = "中立";
-        goatUnitCard.creator = "enemy";
-        
-        field[attZone][lane] = {
-          card: goatUnitCard,
-          tapped: attacker.tapped,
-          attacking: attacker.attacking,
-          target: attacker.target,
-          summonedTurn: turn,
-          summonedZone: attZone
-        };
-        
-        render();
-        await window.xlwCheckGoatResearcherTrigger();
-        await sleep(650);
+        const transformed = await window.xlwTransformUnitToGoat(attacker, attZone, lane, {
+          ...spellCard, attack: 3, score: 1, tribute: 0, faction: "中立"
+        }, true, false);
+        if (transformed) return "transformed";
       });
       return;
     }
@@ -39487,63 +39461,17 @@ function renderField() {
                 return;
               }
             }
-            const goatSpellCard = window.XLW_goatSpellCard || { name: "山羊術", id: "SSR-NMG-0019", type: "magic", effect_text: "山羊術" };
-            logBattle(`山羊術 效果：將場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
-            
-            // 送入墓地
-            const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
-            if (targetOwner === "player") {
-              graveyard.push(obj.card);
-            } else {
-              window.XLW_ENEMY.grave.push(obj.card);
-              enemyGraveyard = window.XLW_ENEMY.grave;
+            const goatSpellCard = window.XLW_goatSpellCard;
+            if (!goatSpellCard) return;
+            window.XLW_goatSpellCard = null;
+            if (!await window.xlwTransformUnitToGoat(obj, zone, idx, {
+              ...goatSpellCard, attack: 3, score: 1, tribute: 0, faction: "中立"
+            }, zone.startsWith("player_"), true)) {
+              window.XLW_goatSpellCard = goatSpellCard;
+              return;
             }
+            if (isMultiplayer) sendFullGameStateToOpponent();
 
-            // 處理裝備卡送入墓地
-            if (obj.equipments && obj.equipments.length > 0) {
-              obj.equipments.forEach(eqName => {
-                const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-                if (isTempMagic) return;
-                const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
-                const cloned = structuredClone(cardObj);
-                cloned.type = "magic";
-                if (targetOwner === "player") {
-                  graveyard.push(cloned);
-                  logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入我方墓地。`);
-                } else {
-                  window.XLW_ENEMY.grave.push(cloned);
-                  enemyGraveyard = window.XLW_ENEMY.grave;
-                  logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入對手墓地。`);
-                }
-              });
-            }
-            
-            // 以我方山羊術卡片取代原單位，維持直立/橫置狀態 (不變更 obj.tapped)
-            const goatUnitCard = structuredClone(goatSpellCard);
-            goatUnitCard.type = "unit";
-            goatUnitCard.attack = 3;
-            goatUnitCard.score = 1;
-            goatUnitCard.tribute = 0;
-            goatUnitCard.faction = "中立";
-            goatUnitCard.creator = "player"; // 標記為我方創造
-            
-            obj.card = goatUnitCard;
-            obj.equipments = [];
-            obj.atkModifier = 0;
-            obj.piercing = false;
-            obj.magicImmune = false;
-            obj.hasRanged = false;
-            obj.steakBonus = false;
-            
-            if (isMultiplayer) {
-              ws.send(JSON.stringify({
-                action: "goat_spell_resolved",
-                zone: zone,
-                idx: idx,
-                goatSpellCard: goatSpellCard
-              }));
-            }
-            
             window.XLW_goatSpellActive = false;
             window.XLW_goatSpellCard = null;
             if (window.XLW_goatResolve) {
@@ -39552,7 +39480,6 @@ function renderField() {
               resolve();
             }
             render();
-            await window.xlwCheckGoatResearcherTrigger();
             return;
           }
 
@@ -45401,52 +45328,14 @@ function setupWebSocketEvents() {
       logBattle(`✨ 對手發動 驅魔人 效果：移除了【${data.eqName}】！`);
       render();
     } else if (data.action === "goat_spell_resolved") {
-      const zone = data.zone;
-      const idx = data.idx;
-      const goatSpellCard = data.goatSpellCard;
-      
+      const {zone, idx, goatSpellCard} = data;
       const obj = field[zone]?.[idx];
-      if (obj) {
-        logBattle(`對手使用 山羊術：將我方場上的 ${obj.card.name} 送入墓地，並用山羊術卡片取代！`);
-        graveyard.push(obj.card); // 進入我方墓地
-
-        const targetOwner = zone.startsWith("player_") ? "player" : "enemy";
-        if (obj.equipments && obj.equipments.length > 0) {
-          obj.equipments.forEach(eqName => {
-            const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x));
-            if (isTempMagic) return;
-            const cardObj = allCards.find(c => c && c.name === eqName) || { name: eqName, type: "magic" };
-            const cloned = structuredClone(cardObj);
-            cloned.type = "magic";
-            if (targetOwner === "player") {
-              graveyard.push(cloned);
-              logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入我方墓地。`);
-            } else {
-              window.XLW_ENEMY.grave.push(cloned);
-              enemyGraveyard = window.XLW_ENEMY.grave;
-              logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位變山羊進入對手墓地。`);
-            }
-          });
-        }
-        
-        const goatUnitCard = structuredClone(goatSpellCard);
-        goatUnitCard.type = "unit";
-        goatUnitCard.attack = 3;
-        goatUnitCard.score = 1;
-        goatUnitCard.tribute = 0;
-        goatUnitCard.faction = "中立";
-        goatUnitCard.creator = "enemy"; // 標記為敵方創造
-        
-        obj.card = goatUnitCard;
-        obj.equipments = [];
-        obj.atkModifier = 0;
-        obj.piercing = false;
-        obj.magicImmune = false;
-        obj.hasRanged = false;
-        obj.steakBonus = false;
-        
-        render();
-        await window.xlwCheckGoatResearcherTrigger();
+      // Compatibility with older clients; current clients publish the settled field once.
+      if (obj?.card && goatSpellCard?.id &&
+          !(obj.goatPolymorphed && obj.card.id === goatSpellCard.id && obj.card.creator === "enemy")) {
+        await window.xlwTransformUnitToGoat(obj, zone, idx, {
+          ...goatSpellCard, attack: 3, score: 1, tribute: 0, faction: "中立"
+        }, zone.startsWith("player_"), false, {replay: true});
       }
     } else if (data.action === "aquarius_request_reveal") {
       logBattle("好奇女巫 水瓶座 效果：對手請求展示我方手牌以供檢查。");

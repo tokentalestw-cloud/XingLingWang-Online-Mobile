@@ -15,7 +15,7 @@ function fixture() {
     turn: 3, hand: [], deck: [], graveyard: [], enemyGraveyard: [], allCards: [], playerExtraDeck: [], enemyExtraDeck: [],
     playerBonusScore: 0, enemyBonusScore: 0,
     isUnitSilenced: u => Boolean(u.silenced), render() {}, renderScore() {}, logBattle() {},
-    showXLWConfirm: async () => false, structuredClone,
+    showXLWConfirm: async () => false, structuredClone, cleanUnitLeavingField: async () => {},
     setTimeout() { throw Error('Detached effect timer is forbidden'); }
   };
   g.window = g; g.XLW_ENEMY = { grave: [], hand: [], deck: [] };
