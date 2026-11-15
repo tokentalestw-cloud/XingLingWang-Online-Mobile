@@ -1356,6 +1356,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
   delete window.XLW_ewdGuerrillaEnemyTurn;
   window.xlwResetFactionState();
@@ -1633,6 +1634,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  delete window.XLW_samuraiTacticalAttackTurn;
   delete window.XLW_ewdGuerrillaPlayerTurn;
   delete window.XLW_ewdGuerrillaEnemyTurn;
   window.xlwResetFactionState();
@@ -4255,6 +4257,11 @@ window.xlwUnitHasPoison = function(unit, zone, idx) {
   if (!unit || !unit.card) return false;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced(unit, zone, idx)) return false;
   if (unit.hasPoison) return true;
+  if (zone && Number.isInteger(idx) && window.xlwIsUnitBarbarian(unit) &&
+      [idx - 1, idx + 1].some(i => {
+        const source = field[zone]?.[i];
+        return source?.card?.id === "ASSR-EWD-0060" && !window.isUnitSilenced(source, zone, i);
+      })) return true;
   if (unit.card.id === "EWD-0005" || unit.card.id?.includes("EWD-0005") || unit.card.name?.includes("吃了毒蘑菇的野人") || unit.card.name?.includes("毒蘑菇")) return true;
   if (window.xlwCardHasKeyword(unit.card, "劇毒")) return true;
   if (unit.card.keywords && (unit.card.keywords.includes("劇毒") || unit.card.keywords.some(k => k && k.includes("劇毒")))) return true;
@@ -4580,14 +4587,16 @@ window.xlwTriggerSageEffect = async function(isPlayerSide, sageUnit) {
 window.xlwOnMagicCardCast = async function(isPlayer, castedCard) {
   const friendlyPrefix = isPlayer ? "player_" : "enemy_";
   const enemyPrefix = isPlayer ? "enemy_" : "player_";
+  if (castedCard?.id === "C-VRT-0065") await window.xlwCheckDrunkenBoyBeerMove?.(isPlayer);
 
   // 1. 見習魔法師 (BRV-0025)：主要階段限一次，使用魔法卡時，可使敵方場上1個星星為1的單位被破壞
   // 升級條件：破壞1個非小旅人單位時，可使其升級為「巫師勇者」(BRV-0036)
   const apprentices = [];
+  const apprenticeTiming = ["召喚階段", "戰術佈陣", "進攻宣言", "主要階段"].includes(phase);
   for (const z of [friendlyPrefix + "front", friendlyPrefix + "back"]) {
     field[z].forEach((u, i) => {
       if (u && u.card && (u.card.id === "R-BRV-0025" || u.card.id === "BRV-0025" || u.card.name?.includes("見習魔法師") || u.card.name?.includes("學徒魔術師")) && !window.isUnitSilenced(u, z, i)) {
-        if (u.apprenticeUsedTurn !== turn) {
+        if (apprenticeTiming && u.apprenticeUsedTurn !== turn) {
           apprentices.push({ unit: u, zone: z, idx: i });
         }
       }
@@ -4598,7 +4607,7 @@ window.xlwOnMagicCardCast = async function(isPlayer, castedCard) {
     const targets = [];
     for (const z of [enemyPrefix + "front", enemyPrefix + "back"]) {
       field[z].forEach((u, i) => {
-        if (u && u.card && getUnitStars(u, z, i) === 1 && !isUnitEffectImmune(u, z, i)) {
+        if (u && u.card && getUnitStars(u, z, i) === 1 && !isUnitEffectImmune(u, z, i) && !isUnitIndestructible(u, z, i)) {
           targets.push({ zone: z, idx: i, name: u.card.name, unit: u });
         }
       });
@@ -4620,7 +4629,9 @@ window.xlwOnMagicCardCast = async function(isPlayer, castedCard) {
         chosenTarget = targets[0];
       }
 
-      if (chosenTarget) {
+      if (chosenTarget && field[appInfo.zone][appInfo.idx] === appInfo.unit &&
+          field[chosenTarget.zone][chosenTarget.idx] === chosenTarget.unit &&
+          getUnitStars(chosenTarget.unit, chosenTarget.zone, chosenTarget.idx) === 1) {
         appInfo.unit.apprenticeUsedTurn = turn;
         const targetName = chosenTarget.name;
         logBattle(`✨ 見習魔法師 效果發動：${isPlayer ? "我方" : "對手"}破壞了 1★ 單位【${targetName}】！`);
@@ -4628,14 +4639,17 @@ window.xlwOnMagicCardCast = async function(isPlayer, castedCard) {
         render();
 
         // 升級條件：破壞1個非小旅人單位時，可升級為「巫師勇者」
-        const isNotTraveler = !targetName.includes("小旅人") && !targetName.includes("尋寶小旅人") && chosenTarget.unit.card.id !== "TOKEN_TRAVELER";
-        if (isNotTraveler) {
+        const destroyed = !Object.values(field).some(row => row.includes(chosenTarget.unit));
+        if (destroyed && !window.xlwIsLittleTraveler(chosenTarget.unit, chosenTarget.zone, chosenTarget.idx) &&
+            field[appInfo.zone][appInfo.idx] === appInfo.unit) {
           const curExtra = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
           const wizardIdx = curExtra.findIndex(c => c && (c.id === "BRV-0036" || c.id === "SSR-BRV-0036" || c.name?.includes("巫師勇者")));
           if (wizardIdx >= 0) {
+            const wizard = curExtra[wizardIdx];
             const doUpgrade = isPlayer ? await showXLWConfirm("【巫師勇者】升級進化", `見習魔法師成功破壞了非小旅人單位【${targetName}】！\n是否升級為額外區的【巫師勇者】？`) : true;
-            if (doUpgrade) {
-              const wizardCard = curExtra.splice(wizardIdx, 1)[0];
+            if (doUpgrade && field[appInfo.zone][appInfo.idx] === appInfo.unit) {
+              const wizardCard = window.XLWDuelConsistency.takeKnownCard(curExtra, wizard);
+              if (!wizardCard) continue;
               appInfo.unit.card = structuredClone(wizardCard);
               logBattle(`✨ 額外升級：${isPlayer ? "我方" : "對手"}【見習魔法師】成功升級進化為【${wizardCard.name}】！`);
               if (window.xlwOnUnitUpgraded) await window.xlwOnUnitUpgraded(isPlayer, appInfo.unit, wizardCard);
@@ -5978,7 +5992,9 @@ window.xlwIsAncientRemains = function(card) {
 
 // 執行機械合體核心處理
 window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone, sourceIdx, targetZone, targetIdx, isPlayer = true) {
-  if (!sourceUnit || !targetUnit) return false;
+  if (!sourceUnit?.card || !targetUnit?.card || sourceUnit === targetUnit ||
+      (sourceZone && sourceIdx !== undefined && field[sourceZone]?.[sourceIdx] !== sourceUnit) ||
+      (targetZone && targetIdx !== undefined && field[targetZone]?.[targetIdx] !== targetUnit)) return false;
 
   const sourceCard = structuredClone(sourceUnit.card);
   const targetCard = targetUnit.card;
@@ -6067,44 +6083,25 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
 
   // (D) 盜版機神科學家 (RBT-0058 / R-RBT-0058): 一回合限一次，遺骸單位合體時，額外區召喚「盜版遺骸」
   const hasRemainsInvolved = window.xlwIsAncientRemains(sourceCard) || window.xlwIsAncientRemains(targetCard);
-  if (hasRemainsInvolved && !window.XLW_copycatScientistUsedThisTurn) {
-    let hasScientist = false;
-    for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-      if (field[z] && field[z].some(u => u && u.card && (u.card.id === "RBT-0058" || u.card.id === "R-RBT-0058" || u.card.name?.includes("盜版機神科學家")) && !window.isUnitSilenced(u))) {
-        hasScientist = true;
-        break;
-      }
-    }
-    if (hasScientist) {
-      const extraDeck = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-      const copycatIdx = extraDeck.findIndex(c => c && (c.id === "RBT-0059" || c.id === "R-RBT-0059" || c.name?.includes("盜版遺骸")));
-      if (copycatIdx >= 0) {
-        window.XLW_copycatScientistUsedThisTurn = true;
-        const copycatCard = extraDeck.splice(copycatIdx, 1)[0];
-        const emptySlots = [];
-        for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-          (field[z] || []).forEach((u, idx) => { if (!u) emptySlots.push({ zone: z, idx }); });
-        }
-        if (emptySlots.length > 0) {
-          const s = emptySlots[0];
-          field[s.zone][s.idx] = {
-            card: copycatCard,
-            tapped: false,
-            attacking: false,
-            target: null,
-            summonedTurn: turn,
-            summonedZone: s.zone
-          };
-          logBattle(`👨‍🔬【盜版機神科學家】效果：從額外區召喚【盜版遺骸】登場！`);
-          if (typeof renderExtraDecks === "function") renderExtraDecks();
-        }
-      }
+  const scientist = [sidePrefix + "front", sidePrefix + "back"].flatMap(zone =>
+    field[zone].map((unit, idx) => ({unit, zone, idx}))).find(({unit, zone, idx}) =>
+    unit?.card?.id?.includes("RBT-0058") && unit.copycatUsedTurn !== turn && !window.isUnitSilenced(unit, zone, idx));
+  if (hasRemainsInvolved && scientist) {
+    const extra = isPlayer ? playerExtraDeck : enemyExtraDeck;
+    const card = extra.find(candidate => candidate?.id?.includes("RBT-0059"));
+    if (card && await window.xlwSpecialSummonUnit(card, isPlayer, {sourcePile: () => extra})) {
+      scientist.unit.copycatUsedTurn = turn;
+      logBattle("【盜版機神科學家】召喚【盜版遺骸】。");
     }
   }
 
   // 4. 觸發「此卡合體時」個別卡牌效果
   const combinedCards = [sourceCard, targetCard];
   const isMechaCombine = combinedCards.some(c => c.name?.includes("機甲") || c.art_subtype?.includes("機甲") || (c.subtypes && c.subtypes.includes("機甲")) || c.id?.includes("0066") || c.id?.includes("0067") || c.id?.includes("0068") || c.id?.includes("0069"));
+
+  if (combinedCards.some(c => c.id === "C-RBT-0074")) {
+    await window.xlwCheckElectricFanPush?.({card: combinedCards.find(c => c.id === "C-RBT-0074")}, targetZone, targetIdx, isPlayer);
+  }
 
   if (combinedCards.some(c => c.id === "C-RBT-0066" || c.name?.includes("星兔機甲號-X"))) {
     const oppPrefix = isPlayer ? "enemy_" : "player_";
@@ -6312,7 +6309,9 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     const allFieldUnits = [];
     for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
       (field[z] || []).forEach((u, i) => {
-        if (u) allFieldUnits.push({ zone: z, idx: i, name: u.card.name, tapped: u.tapped, unit: u });
+        if (u && (z.startsWith(sidePrefix) || !window.isUnitEffectImmune(u, z, i))) {
+          allFieldUnits.push({ zone: z, idx: i, name: u.card.name, tapped: u.tapped, unit: u });
+        }
       });
     }
     if (allFieldUnits.length > 0) {
@@ -6320,10 +6319,13 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
       if (isPlayer) {
         const choices = allFieldUnits.map((u, idx) => ({ text: `${u.name} (${u.tapped ? "橫置" : "直立"})`, value: idx }));
         const pick = await showXLWChoiceModal("【巨大機械針頭】調控形態", "請選擇 1 個要轉正或橫置的單位：", choices);
-        if (pick !== null && pick !== undefined) chosen = allFieldUnits[pick];
+        chosen = allFieldUnits[pick];
       }
-      chosen.unit.tapped = !chosen.unit.tapped;
-      logBattle(`💉【巨大機械針頭】效果觸發：將【${chosen.name}】${chosen.unit.tapped ? "橫放" : "轉正"}！`);
+      if (chosen && field[chosen.zone][chosen.idx] === chosen.unit) {
+        chosen.unit.tapped = !chosen.unit.tapped;
+        if (chosen.unit.tapped && chosen.zone.startsWith("player_")) await xlwOnPlayerUnitTapped(chosen.zone, chosen.idx);
+        logBattle(`【巨大機械針頭】將【${chosen.name}】${chosen.unit.tapped ? "橫放" : "轉正"}。`);
+      }
     }
   }
 
@@ -6335,7 +6337,7 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
     for (const z of [oppSide + "front", oppSide + "back"]) {
       (field[z] || []).forEach((u, i) => {
         if (u && getUnitStars(u, z, i) === myStars && !window.isUnitEffectImmune(u, z, i)) {
-          sameStarUnits.push({ zone: z, idx: i, name: u.card.name });
+          sameStarUnits.push({ zone: z, idx: i, name: u.card.name, unit: u });
         }
       });
     }
@@ -6346,8 +6348,11 @@ window.xlwExecuteMechCombine = async function(sourceUnit, targetUnit, sourceZone
         const pick = await showXLWChoiceModal("【深淵雷射眼】激光破壞", `破壞 1 個與當前合體單位同為 ${myStars}★ 的敵方單位：`, choices);
         if (pick !== null && pick !== undefined) chosen = sameStarUnits[pick];
       }
-      logBattle(`👁️‍🗨️【深淵雷射眼】激光發射：破壞了敵方【${chosen.name}】(${myStars}★)！`);
-      await destroyUnit(chosen.zone, chosen.idx, isPlayer ? "enemy" : "player", false);
+      if (chosen && field[chosen.zone][chosen.idx] === chosen.unit &&
+          getUnitStars(chosen.unit, chosen.zone, chosen.idx) === getUnitStars(targetUnit, targetZone, targetIdx) &&
+          !window.isUnitEffectImmune(chosen.unit, chosen.zone, chosen.idx)) {
+        await destroyUnit(chosen.zone, chosen.idx, isPlayer ? "enemy" : "player", false);
+      }
     }
   }
 
@@ -9652,15 +9657,16 @@ window.xlwCheckDragonTigerDefense = async function(isPlayerTurn, isFriendlyDefen
 };
 
 // 6. C-RBT-0074 電風扇: 機械合體時正前方後推破圖回手牌
-window.xlwCheckElectricFanPush = async function(unit, zone, idx) {
-  if (!unit || !unit.card) return;
-  const c = unit.card;
-  if (c.id === "C-RBT-0074" || c.name?.includes("電風扇")) {
-    const oppSide = zone.startsWith("player_") ? "enemy_front" : "player_front";
-    logBattle("🌬️【電風扇】風暴旋轉：機械合體引發強風推擠！");
-    await xlwPushUnit(oppSide, idx, "back", { offBoardAction: "hand", sourceName: "電風扇" });
-    if (typeof render === "function") render();
-  }
+window.xlwCheckElectricFanPush = async function(unit, zone, idx, isPlayer) {
+  if (unit?.card?.id !== "C-RBT-0074" || !/^(player|enemy)_(front|back)$/.test(zone)) return false;
+  const side = zone.startsWith("player_") ? "player" : "enemy";
+  const other = side === "player" ? "enemy" : "player";
+  const targetZone = zone.endsWith("_back") && field[side + "_front"][idx] ? side + "_front" : other + "_front";
+  const target = field[targetZone]?.[idx];
+  if (!target || (targetZone.startsWith(other + "_") && window.isUnitEffectImmune(target, targetZone, idx))) return false;
+  if (isPlayer && !await showXLWConfirm(unit.card.name, `是否向後推擠【${target.card.name}】？`)) return false;
+  if (field[targetZone][idx] !== target) return false;
+  return xlwPushUnit(targetZone, idx, "back", { offBoardAction: "hand", sourceName: unit.card.name });
 };
 
 // 7. C-VLG-0063 笑面鬼武士: 被獻祭時使本回合佈陣階段仍可進攻
@@ -9668,7 +9674,7 @@ window.xlwCheckGhostSamuraiSacrifice = function(card, isPlayer) {
   if (!card) return;
   if (card.id === "C-VLG-0063" || card.name?.includes("笑面鬼武士")) {
     if (isPlayer) {
-      window.XLW_canAttackAfterTacticalThisTurn = true;
+      window.XLW_samuraiTacticalAttackTurn = turn;
       logBattle("👺⚔️【笑面鬼武士】武士魂獻祭：本回合在戰術佈陣階段後仍可宣告進攻！");
     }
   }
@@ -9677,33 +9683,25 @@ window.xlwCheckGhostSamuraiSacrifice = function(card, isPlayer) {
 // 8. C-VRT-0073 醉拳小子: 使用「渣酒」時移動轉正
 window.xlwCheckDrunkenBoyBeerMove = async function(isPlayer) {
   const side = isPlayer ? "player_" : "enemy_";
-  for (const z of [side + "front", side + "back"]) {
-    const boys = (field[z] || []).filter(u => u && (u.card.id === "C-VRT-0073" || u.card.name?.includes("醉拳小子")));
-    for (const boy of boys) {
-      if (isPlayer) {
-        const doMove = await showXLWConfirm("【醉拳小子】醉拳飄忽", "使用了渣酒！是否使醉拳小子移動至任意位置並轉正？");
-        if (doMove) {
-          const emptySlots = [];
-          for (const rz of ["player_front", "player_back"]) {
-            for (let s = 0; s < 5; s++) if (!field[rz]?.[s]) emptySlots.push({ zone: rz, idx: s });
-          }
-          if (emptySlots.length > 0) {
-            const choices = emptySlots.map((s, i) => ({ text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`, value: i }));
-            const pick = await showXLWChoiceModal("選擇移動位置", "請選擇醉拳小子移動的空格：", choices);
-            if (pick !== null && pick !== undefined) {
-              const dest = emptySlots[pick];
-              field[z][field[z].indexOf(boy)] = null;
-              field[dest.zone][dest.idx] = boy;
-              boy.summonedZone = dest.zone;
-              boy.tapped = false;
-              logBattle(`🍶🥋【醉拳小子】步履蹣跚，身手矯健：移動並轉正！`);
-              if (typeof render === "function") render();
-            }
-          }
-        }
-      }
-      break;
-    }
+  const rows = [side + "front", side + "back"];
+  const sources = rows.flatMap(zone => field[zone].map((unit, idx) => ({unit, zone, idx})))
+    .filter(({unit}) => unit?.card?.id === "C-VRT-0073");
+  for (const {unit, zone, idx} of sources) {
+    const canMove = () => field[zone][idx] === unit && !window.isUnitSilenced(unit, zone, idx) && !xlwIsUnitUnmovable(unit, zone, idx);
+    if (!canMove()) continue;
+    const slots = rows.flatMap(row => field[row].flatMap((occupant, col) => occupant ? [] : [{zone: row, idx: col, summon: true}]));
+    if (!slots.length) continue;
+    const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "可點選空格移動並轉正。", slots.map((slot, value) =>
+      ({text: unit.card.name, value, boardTarget: slot})), {boardOnly: true}) : 0;
+    const slot = slots[pick];
+    if (!slot || !canMove() || field[slot.zone][slot.idx]) continue;
+    field[zone][idx] = null;
+    field[slot.zone][slot.idx] = unit;
+    unit.summonedZone = slot.zone;
+    unit.tapped = false;
+    unit.attacking = false;
+    unit.target = null;
+    logBattle("【醉拳小子】移動並轉正。");
   }
 };
 
@@ -9750,18 +9748,13 @@ window.xlwCheckExpelledGuestBeforeDestroy = async function(unit, isPlayer) {
   if (c.id === "R-VRT-0071" || c.name?.includes("被驅逐的不速之客")) {
     const hList = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
     const freePatrons = hList.filter(card => card && card.type === "unit" && (parseInt(card.tribute) || 0) === 0 && window.xlwIsUnitPatron(card));
-    if (freePatrons.length > 0 && isPlayer) {
-      const doPlay = await showXLWConfirm("【被驅逐的不速之客】臨別喚友", "即將退場！是否從手牌額外打出 1 張免祭品酒客單位？");
-      if (doPlay) {
-        const choices = freePatrons.map((p, i) => ({ text: p.name, value: i }));
-        const pick = await showXLWChoiceModal("選擇打出酒客", "請選擇接替打出的酒客：", choices);
-        if (pick !== null && pick !== undefined) {
-          const chosen = freePatrons[pick];
-          hList.splice(hList.indexOf(chosen), 1);
-          await window.xlwSpecialSummonUnit(chosen, true);
-          logBattle(`🍻🚪【被驅逐的不速之客】交接出場：額外打出了【${chosen.name}】！`);
-        }
-      }
+    if (!freePatrons.length || (!isPlayer && isMultiplayer)) return;
+    const pick = isPlayer ? await showXLWChoiceModal(c.name, "可從手牌額外打出一張免祭品酒客。", [
+      ...freePatrons.map((card, value) => ({ card, text: card.name, value })),
+      { text: "不發動", value: -1 }
+    ]) : 0;
+    if (freePatrons[pick] && await window.xlwSpecialSummonUnit(freePatrons[pick], isPlayer, {sourcePile: () => hList})) {
+      logBattle(`【${c.name}】額外打出了【${freePatrons[pick].name}】。`);
     }
   }
 };
@@ -9814,22 +9807,22 @@ window.xlwCheckFighterBarbarianAttackPhaseStart = async function(isPlayer) {
 };
 
 // 16. SR-GOT-0060 神秘羊面人: 山羊術被無效後從墓地回手牌
-window.xlwCheckGoatMaskSpellCountered = function(counteredCard, isPlayer) {
-  if (!counteredCard) return;
-  const isGoatSpell = counteredCard.name?.includes("山羊術") || counteredCard.id?.includes("GOT");
-  if (isGoatSpell) {
-    const side = isPlayer ? "player_" : "enemy_";
-    const hasMask = ["front", "back"].some(r => (field[side + r] || []).some(u => u && (u.card.id === "SR-GOT-0060" || u.card.name?.includes("神秘羊面人")) && !u.maskUsedThisTurn));
-    if (hasMask) {
-      const graveD = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || []);
-      const gIdx = graveD.indexOf(counteredCard);
-      if (gIdx >= 0) graveD.splice(gIdx, 1);
-      const hList = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-      hList.push(counteredCard);
-      logBattle(`🐐🎭【神秘羊面人】秘法回收：山羊術被無效後，將【${counteredCard.name}】回收至手牌！`);
-      if (typeof render === "function") render();
-    }
-  }
+window.xlwCheckGoatMaskSpellCountered = async function(counteredCard, isPlayer) {
+  if (!counteredCard?.name?.includes("山羊術")) return false;
+  const side = isPlayer ? "player_" : "enemy_";
+  const mask = ["front", "back"].flatMap(row => field[side + row].map((unit, idx) => ({unit, idx, zone: side + row})))
+    .find(({unit, idx, zone}) => unit?.card?.id === "SR-GOT-0060" && unit.maskUsedTurn !== turn &&
+      !window.isUnitSilenced(unit, zone, idx));
+  const grave = isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  const target = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  if (!mask || !grave?.includes(counteredCard) || !target) return false;
+  if (isPlayer && !await showXLWConfirm(mask.unit.card.name, "是否將被無效的山羊術回手？")) return false;
+  if (field[mask.zone][mask.idx] !== mask.unit || mask.unit.maskUsedTurn === turn ||
+      window.isUnitSilenced(mask.unit, mask.zone, mask.idx) ||
+      !window.XLWDuelConsistency.moveKnownCard(grave, target, counteredCard)) return false;
+  mask.unit.maskUsedTurn = turn;
+  logBattle(`【神秘羊面人】將【${counteredCard.name}】回收至手牌。`);
+  return true;
 };
 
 // 17. SR-VRT-0077 亡靈法師: 敵方用魔法時還魂X無效化
@@ -10883,17 +10876,6 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
     }
   }
 
-  // J. R-EWD-0068 左鉤拳
-  const hasLeftHook = (isPlayer ? hand : (window.XLW_ENEMY?.hand || [])).some(c => c && (c.id === "R-EWD-0068" || c.name?.includes("左鉤拳")));
-  if (isAttacker && hasLeftHook && window.xlwIsUnitBarbarian?.(attacker) && defender?.summonedZone) {
-    const defCol = field[defender.summonedZone]?.indexOf(defender) ?? -1;
-    if (defCol >= 0) {
-      logBattle("🥊【左鉤拳】拳風呼嘯：將受擊單位向左側猛烈推擠！");
-      await xlwPushUnit(defender.summonedZone, defCol, "left", { offBoardAction: "graveyard", sourceName: "左鉤拳" });
-      if (typeof render === "function") render();
-    }
-  }
-
   // K. SR-RBT-0075 星兔狙擊手
   if ((attCard.id === "SR-RBT-0075" || attCard.name?.includes("星兔狙擊手")) && (attacker.combinedCards || []).length > 0) {
     const oppHand = isPlayer ? (window.XLW_ENEMY?.hand || []) : hand;
@@ -11290,8 +11272,11 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     const extraD = isPlayer ? playerExtraDeck : enemyExtraDeck;
     const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
     const lIdx = extraD.findIndex(c => c && (c.id === "R-EWD-0068" || c.name?.includes("左鉤拳")));
-    if (lIdx >= 0) {
-      myHand.push(extraD.splice(lIdx, 1)[0]);
+    const leftHook = extraD[lIdx];
+    if (leftHook && (isPlayer ? await showXLWConfirm(cardName, "是否從額外區將左鉤拳加入手牌？") : !isMultiplayer)) {
+      const taken = window.XLWDuelConsistency.takeKnownCard(extraD, leftHook);
+      if (!taken) return;
+      myHand.push(taken);
       logBattle("🥊【左撇子野人】武術領悟：從額外區將【左鉤拳】加入手牌！");
       if (typeof render === "function") render();
     }
@@ -11952,6 +11937,7 @@ async function castSpellChain(spellCard, effectCallback) {
   });
 
   if (response && response.countered) {
+    await window.xlwCheckGoatMaskSpellCountered?.(spellCard, true);
     if(isMultiplayer)sendFullGameStateToOpponent(false);
     clearModes();
     render();
@@ -12830,25 +12816,10 @@ async function castSpell(handIndex) {
       render();
     });
 
-  // 15. R-EWD-0068 左鉤拳
-  } else if (card.id === "R-EWD-0068" || card.name?.includes("左鉤拳")) {
-    const spellCard = hand.splice(handIndex, 1)[0];
-    await xlwShowSpellActivationOverlay(spellCard, "player");
-    await castSpellChain(spellCard, async () => {
-      logBattle("🥊【左鉤拳】拳架已擺好！野人進攻戰鬥成功將強力向左推擠！");
-      graveyard.push(spellCard);
-      render();
-    });
-
-  // 16. R-EWD-0069 無影腳
-  } else if (card.id === "R-EWD-0069" || card.name?.includes("無影腳")) {
-    const spellCard = hand.splice(handIndex, 1)[0];
-    await xlwShowSpellActivationOverlay(spellCard, "player");
-    await castSpellChain(spellCard, async () => {
-      logBattle("🦶【無影腳】腿法迅捷！前排野人進攻時將前方的敵方單位後推破圖回手牌！");
-      graveyard.push(spellCard);
-      render();
-    });
+  // 武術反應由進攻宣言或戰鬥成功時發動。
+  } else if (["R-EWD-0068", "R-EWD-0069"].includes(card.id)) {
+    setStatus("這張武術牌會在符合卡文的時機詢問是否發動。");
+    return;
 
   // 17. C-CCS-0045 全部身家
   } else if (card.id === "C-CCS-0045" || card.name?.includes("全部身家")) {
@@ -15086,6 +15057,7 @@ async function castSpell(handIndex) {
   });
 
   if (response.countered) {
+    await window.xlwCheckGoatMaskSpellCountered?.(card, true);
     if(isMultiplayer)sendFullGameStateToOpponent(false);
     clearModes();
     render();
@@ -17855,6 +17827,8 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
     }
   }
 
+  if (!slotSeq.length) return false;
+
   // 尋找被推動的單位鏈與推擠終點/碰撞點
   const unitsInChain = [{ slot: slotSeq[0], unit: movingUnit }];
   let crashTarget = null;
@@ -17899,6 +17873,7 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
 
     logBattle(`💥【${crashing.unit.card.name}】被推擠時撞上被禁錮的【${confined.card.name}】，直接被破壞！推擠停止！`);
     await destroyUnit(crashing.slot.zone, crashing.slot.idx, crashingOwner, false);
+    if (field[crashing.slot.zone][crashing.slot.idx]) return false;
 
     const crashingIdxInChain = unitsInChain.indexOf(crashing);
     for (let i = crashingIdxInChain - 1; i >= 0; i--) {
@@ -17913,9 +17888,10 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
     const pushedUnit = offBoardUnit.unit;
     const pushedSlot = offBoardUnit.slot;
     const unitOwner = pushedSlot.zone.startsWith("player_") ? "player" : "enemy";
-    const handList = unitOwner === "player" ? hand : (window.XLW_ENEMY?.hand || []);
+    const handList = unitOwner === "player" ? hand : window.XLW_ENEMY?.hand;
 
     if (offBoardAction === "hand") {
+      if (!Array.isArray(handList)) return false;
       logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，返回手牌！`);
       if (pushedUnit.equipments && pushedUnit.equipments.length > 0) {
         const graveList = unitOwner === "player" ? graveyard : (window.XLW_ENEMY?.grave || []);
@@ -17930,6 +17906,10 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
       }
       handList.push(pushedUnit.card);
       field[pushedSlot.zone][pushedSlot.idx] = null;
+      for (const piece of pushedUnit.devourCards || []) {
+        if (piece?.card) handList.push(piece.card);
+      }
+      await cleanUnitLeavingField(pushedUnit, pushedSlot.zone);
     } else {
       const exile = offBoardAction === "exile";
       logBattle(`💥【${pushedUnit.card.name}】被推擠出戰線，${exile ? "被除外" : "送入墓地"}！`);
@@ -18479,6 +18459,7 @@ window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
     logBattle(`🛡️ 【${unit.card.name}】完全不能被獻祭！`);
     return;
   }
+  if (!window.isUnitSilenced(unit, zone, idx)) window.xlwCheckGhostSamuraiSacrifice?.(unit.card, true);
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
     logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
   } else {
@@ -24764,8 +24745,8 @@ function xlwIsFlyingGoat(unit) {
 }
 
 function xlwCanAttackAfterTactical(unit, zone, idx) {
-  return Boolean(unit && !window.isUnitSilenced(unit, zone, idx) &&
-    (unit.canAttackAfterTactical || xlwIsFlyingGoat(unit)));
+  return Boolean(unit && (window.XLW_samuraiTacticalAttackTurn === turn ||
+    (!window.isUnitSilenced(unit, zone, idx) && (unit.canAttackAfterTactical || xlwIsFlyingGoat(unit)))));
 }
 
 function xlwCanDeclareAfterTactical() {
@@ -25186,16 +25167,57 @@ async function selectPlayerTarget(zone, idx) {
 }
 window.selectPlayerTarget = selectPlayerTarget;
 
+window.xlwResolveSavageMartial = async function(id, isPlayer, attacker, attZone, attIdx, defZone, defIdx, defender) {
+  if (isMultiplayer && (id === "R-EWD-0068" || !isPlayer)) return false;
+  const cards = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  const card = cards?.find(spell => spell?.id === id);
+  const legal = () => attacker && field[attZone]?.[attIdx] === attacker &&
+    window.xlwIsUnitBarbarian(attacker) && Boolean(defender) && field[defZone]?.[defIdx] === defender &&
+    (id !== "R-EWD-0069" || (attacker.attacking && attZone.endsWith("_front"))) &&
+    !isUnitMagicImmune(defender, defZone, defIdx, card) && !xlwIsUnitUnmovable(defender, defZone, defIdx);
+  if (!card || !legal() || (isPlayer && !await showXLWConfirm(card.name, "符合武術牌的發動時機，是否發動？"))) return false;
+  if (!legal() || !window.XLWDuelConsistency.takeKnownCard(cards, card)) return false;
+  const extra = isPlayer ? playerExtraDeck : enemyExtraDeck;
+  let pushed = false;
+  const apply = async () => {
+    if (field[defZone]?.[defIdx] === defender) {
+      const direction = id === "R-EWD-0069" ? "back" : (defZone.startsWith("player_") ? "left" : "right");
+      pushed = await xlwPushUnit(defZone, defIdx, direction, {
+        sourceName: card.name, offBoardAction: id === "R-EWD-0069" ? "hand" : "graveyard"
+      });
+    }
+    extra.push(card);
+  };
+  if (isPlayer) await castSpellChain(card, apply);
+  else await aiCastSpell(card, apply);
+  return pushed;
+};
+
 window.xlwResolveSavageAttack = async function(unit, zone, idx) {
   if (!isMyTurn) return;
   let changed = false;
   if (unit.card.id?.includes("EWD-0066") && !window.isUnitSilenced(unit, zone, idx)) {
     changed = await window.xlwCheckKickingBarbarianAttack(unit, true);
   }
+  if (zone.endsWith("_front") && window.xlwIsUnitBarbarian(unit)) {
+    const targetZone = field.enemy_front[idx] ? "enemy_front" : "enemy_back";
+    const target = field[targetZone][idx];
+    if (target && await window.xlwResolveSavageMartial("R-EWD-0069", true, unit, zone, idx, targetZone, idx, target)) {
+      if (unit.target?.zone === targetZone && unit.target.idx === idx) {
+        const movedZone = ["enemy_front", "enemy_back"].find(row => field[row][idx] === target);
+        unit.target = movedZone ? {...unit.target, zone: movedZone} : null;
+        if (!unit.target) {
+          unit.attacking = false;
+          unit.tapped = true;
+        }
+      }
+      changed = true;
+    }
+  }
   if (unit.card.id?.includes("EWD-0058") && !window.isUnitSilenced(unit, zone, idx)) {
     changed = await xlwPushUnit(zone, idx, "front", {
       sourceName: unit.card.name, offBoardReward: 2, rewardIsPlayer: true
-    });
+    }) || changed;
   }
 
   const rows = ["player_front", "player_back"];
@@ -27610,7 +27632,9 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   if (attackerShouldDie) {
     destPromise.push(destroyUnit(attZone, attIdx, defenderOwner === "player" ? "enemy" : "player", defenderIsKnightCat, true));
   }
-  if (defenderShouldDie) {
+  const pushedByLeftHook = defenderShouldDie && !attackerShouldDie && await window.xlwResolveSavageMartial?.(
+    "R-EWD-0068", defenderOwner === "enemy", attacker, attZone, attIdx, defZone, defIdx, defender);
+  if (defenderShouldDie && !pushedByLeftHook && field[defZone]?.[defIdx] === defender) {
     destPromise.push(destroyUnit(defZone, defIdx, defenderOwner, attackerIsKnightCat, true));
 
     // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
@@ -27629,7 +27653,9 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     await Promise.all(destPromise);
     
     // --- 狂歡跳跳蛙 (SSSR-NMS-0049) 效果 ---
-    const playerUnitDestroyedInCombat = (defenderShouldDie && defenderOwner === "player") || (attackerShouldDie && defenderOwner === "enemy");
+    const playerUnitDestroyedInCombat =
+      (defenderShouldDie && !pushedByLeftHook && defenderOwner === "player" && field[defZone][defIdx] === null) ||
+      (attackerShouldDie && defenderOwner === "enemy" && field[attZone][attIdx] === null);
     const destroyedPlayerZone = (defenderShouldDie && defenderOwner === "player") ? defZone : ((attackerShouldDie && defenderOwner === "enemy") ? attZone : null);
     const destroyedPlayerIdx = (defenderShouldDie && defenderOwner === "player") ? defIdx : ((attackerShouldDie && defenderOwner === "enemy") ? attIdx : -1);
     
@@ -27666,7 +27692,9 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       }
     }
     
-    const enemyUnitDestroyedInCombat = (defenderShouldDie && defenderOwner === "enemy") || (attackerShouldDie && defenderOwner === "player");
+    const enemyUnitDestroyedInCombat =
+      (defenderShouldDie && !pushedByLeftHook && defenderOwner === "enemy" && field[defZone][defIdx] === null) ||
+      (attackerShouldDie && defenderOwner === "player" && field[attZone][attIdx] === null);
     const destroyedEnemyZone = (defenderShouldDie && defenderOwner === "enemy") ? defZone : ((attackerShouldDie && defenderOwner === "player") ? attZone : null);
     const destroyedEnemyIdx = (defenderShouldDie && defenderOwner === "enemy") ? defIdx : ((attackerShouldDie && defenderOwner === "player") ? attIdx : -1);
     
@@ -30748,7 +30776,9 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
   activeDestructions.add(unit);
   try {
     // 🪓 雙斧野人 (C-EWD-0061): 防守階段限一次,此單位被破壞時,可使該次破壞無效化
-    if (typeof phase !== "undefined" && phase === "防守階段" && (unit.card.id === "C-EWD-0061" || unit.card.name?.includes("雙斧野人")) && unit.twinAxeNegatedThisTurn !== turn) {
+    if (typeof phase !== "undefined" && phase === "防守階段" && unit.card.id === "C-EWD-0061" &&
+        unit.twinAxeNegatedThisTurn !== turn && !window.isUnitSilenced(unit, zone, idx) &&
+        (owner === "player" ? await showXLWConfirm(unit.card.name, "是否無效這次破壞？") : !isMultiplayer)) {
       unit.twinAxeNegatedThisTurn = turn;
       logBattle(`🪓【雙斧野人】效果發動：防守階段使此次破壞無效化！`);
       return;
@@ -32608,6 +32638,9 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
     unit.devourCards = [];
   }
 
+  if (unit.card.id === "R-VRT-0071" && !window.isUnitSilenced(unit, zone, idx)) {
+    await window.xlwCheckExpelledGuestBeforeDestroy?.(unit, owner === "player");
+  }
   await cleanUnitLeavingField(unit, zone);
   field[zone][idx] = null;
 
@@ -33885,6 +33918,7 @@ async function aiCastSpell(spellCard, effectCallback) {
   });
 
   if (response.countered) {
+    await window.xlwCheckGoatMaskSpellCountered?.(spellCard, false);
     return false;
   }
   
