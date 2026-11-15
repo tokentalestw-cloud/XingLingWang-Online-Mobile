@@ -1815,6 +1815,58 @@ function draw(n) {
   if (hand.length > soundStartCount && window.XLW_gameInProgress) window.xlwPlaySFX?.('draw');
 }
 
+window.xlwSpringFairyRefill = async function(isPlayer) {
+  if (phase === "抽牌階段" || mulliganActive || (!isPlayer && isMultiplayer)) return false;
+  const side = isPlayer ? "player_" : "enemy_";
+  const getDeck = () => isPlayer ? deck : window.XLW_ENEMY?.deck;
+  const getGrave = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
+  if (!getDeck() || getDeck().length || !getGrave()) return false;
+  for (const zone of [side + "front", side + "back"]) {
+    for (const [idx, unit] of field[zone].entries()) {
+      const valid = () => unit?.card?.id === "R-EVL-0052" && field[zone][idx] === unit &&
+        unit.springFairyTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+      if (!valid()) continue;
+      const cards = (getGrave() || []).filter(card => card?.type === "unit" || card?.type === "單位");
+      if (!cards.length) return false;
+      const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "牌庫已空。可選一張墓地單位放回牌庫頂。", [
+        ...cards.map((card, value) => ({card, text: card.name, value})),
+        {text: "不發動", value: -1}
+      ]) : 0;
+      if (!cards[pick] || !valid() || getDeck()?.length !== 0) continue;
+      const card = window.XLWDuelConsistency.moveKnownCard(getGrave(), getDeck(), cards[pick]);
+      if (!card) continue;
+      unit.springFairyTurn = turn;
+      logBattle(`【回春老妖精】把【${card.name}】放回牌庫頂。`);
+      return true;
+    }
+  }
+  return false;
+};
+
+window.xlwDrawFairyAware = async function(n, isPlayer = true) {
+  const getDeck = () => isPlayer ? deck : window.XLW_ENEMY?.deck;
+  const getHand = () => isPlayer ? hand : window.XLW_ENEMY?.hand;
+  for (let count = 0; count < n;) {
+    if (!getDeck()?.length) await window.xlwSpringFairyRefill(isPlayer);
+    if (!getDeck()?.length) {
+      if (isPlayer) setStatus("牌庫已空。");
+      return count;
+    }
+    const amount = Math.min(n - count, getDeck().length);
+    if (isPlayer) draw(amount);
+    else {
+      const destination = getHand();
+      if (!destination) return count;
+      for (let i = 0; i < amount; i++) {
+        const card = getDeck().pop();
+        if (card) destination.push(card);
+      }
+    }
+    count += amount;
+  }
+  return n;
+};
+
 // 智慧的般若/憤怒的般若：視覺化展示抽到的卡牌
 function showRevealedCardModal(card, ownerName) {
   return new Promise((resolve) => {
@@ -6581,41 +6633,30 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     baseAtk = backFairyCount;
   }
 
-  // 🧑‍🏫 黑妖精主任朗德 (R-EVL-0027): X=敵方場上單位因為你的效果所減少的★總數（上限6）
-  if (c && (c.id === "R-EVL-0027" || c.name?.includes("黑妖精主任朗德") || c.name?.includes("朗德"))) {
-    const isPlayerSide = zone ? zone.startsWith("player_") : true;
-    const oppZones = isPlayerSide ? ["enemy_front", "enemy_back"] : ["player_front", "player_back"];
-    let reducedStars = 0;
-    oppZones.forEach(oz => {
-      (field[oz] || []).forEach(u => {
-        if (u) {
-          if (u.starPenalty) reducedStars += u.starPenalty;
-          if (u.decayScoreDebuff) reducedStars += u.decayScoreDebuff;
-        }
-      });
-    });
-    baseAtk = Math.min(6, reducedStars);
+  // 朗德只計算我方效果對敵方場上單位造成的扣星。
+  if (c.id === "R-EVL-0027" && zone && !window.isUnitSilenced(unit, zone, lane)) {
+    const side = zone.startsWith("player_") ? "player" : "enemy";
+    const opposing = side === "player" ? "enemy" : "player";
+    const total = ["front", "back"].reduce((count, row) => count + field[opposing + "_" + row].reduce((sum, target, idx) =>
+      sum + (target ? window.xlwReadStarReductions?.(target, opposing + "_" + row, idx)[side] || 0 : 0), 0), 0);
+    baseAtk += Math.min(6, total);
   }
 
-  // 🐛 黑妖精蠶食者 (R-EVL-0031): 正前方敵方單位 -1 攻擊力
-  if (zone && lane !== undefined && lane !== -1) {
-    const isPlayerSide = zone.startsWith("player_");
-    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
-    const oppUnit = field[oppFront]?.[lane];
-    if (oppUnit && oppUnit.card && (oppUnit.card.id === "R-EVL-0031" || oppUnit.card.name?.includes("黑妖精蠶食者")) && !window.isUnitSilenced(oppUnit)) {
-      baseAtk -= 1;
+  if (zone && Number.isInteger(lane)) {
+    const opposing = zone.startsWith("player_") ? "enemy_" : "player_";
+    baseAtk -= window.xlwFairyOppositeSources?.(unit, zone, lane, "R-EVL-0031").length || 0;
+    const hostage = field[opposing + "front"][lane];
+    if (hostage?.card?.id?.includes("EVL-0034") && !window.isUnitSilenced(hostage, opposing + "front", lane)) {
+      const targetSide = zone.startsWith("player_") ? "player_" : "enemy_";
+      const exposed = ["front", "back"].map(row => field[targetSide + row][lane])
+        .find(target => target && !window.XLW_isShieldUnit(target));
+      if (exposed === unit) baseAtk -= Number(c.attack) || 0;
     }
-  }
 
-  // 🆘 求救的人質妖精 (EVL-0034): 正前方非阻擋單位 -X 攻擊力 (X = 原始攻擊力)
-  if (zone && lane !== undefined && lane !== -1) {
-    const isPlayerSide = zone.startsWith("player_");
-    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
-    const oppUnit = field[oppFront]?.[lane];
-    if (oppUnit && oppUnit.card && (oppUnit.card.id?.includes("EVL-0034") || oppUnit.card.name?.includes("人質妖精")) && !window.isUnitSilenced(oppUnit)) {
-      if (!window.checkUnitHasBlock?.(unit, zone, lane)) {
-        baseAtk = 0;
-      }
+    const sourceSide = opposing.slice(0, -1);
+    const magicians = window.xlwActiveFairySources?.(opposing, "R-EVL-0039") || [];
+    if (magicians.length && (window.xlwReadStarReductions?.(unit, zone, lane)[sourceSide] || 0) > 0) {
+      baseAtk -= 2 * magicians.length;
     }
   }
 
@@ -7618,11 +7659,12 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (unit.tempAtkBonus) baseAtk += unit.tempAtkBonus;
   if (unit.candySwordBonusTurn === turn && phase !== "結束階段") baseAtk += unit.candySwordBonus || 0;
 
+  if ((window.xlwFairyForestLevel?.(unit, zone, lane) || 0) >= 2) baseAtk += 2;
   return baseAtk + rainbowBonus - (unit.houndDebuff || 0);
 }
 
 // 單位星數分數 (加入加成)
-function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
+function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, recordReduction = null) {
   if (!unit) return 0;
   if ((!zone || lane === undefined || lane === -1) && typeof field !== "undefined" && field) {
     for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
@@ -7637,6 +7679,12 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
     }
   }
   const c = unit.card || unit;
+  const ownSide = zone?.startsWith("player_") ? "player" : "enemy";
+  const otherSide = ownSide === "player" ? "enemy" : "player";
+  const reduce = (amount, side = ownSide) => {
+    baseStars -= amount;
+    if (amount > 0) recordReduction?.(amount, side);
+  };
 
   // 🌿 學會自我灌溉的野人 (C-EWD-0063): X = 此單位的灌溉值
   if (c.id === "C-EWD-0063" || c.name?.includes("學會自我灌溉的野人")) {
@@ -7790,36 +7838,26 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
 
   // 衰退扣分
   if (unit.decayScoreDebuff) {
-    baseStars -= unit.decayScoreDebuff;
+    reduce(unit.decayScoreDebuff, null);
   }
 
-  // 🧚‍♀️ 小小黑妖精小咪 減星懲罰
-  if (unit.starPenalty) {
-    baseStars -= unit.starPenalty;
+  if (zone && Number.isInteger(lane)) {
+    const opposing = otherSide + "_";
+    const small = zone.endsWith("_front") ? window.xlwActiveFairySources?.(opposing, "EVL-0025")?.length || 0 : 0;
+    const older = window.xlwActiveFairySources?.(opposing, "EVL-0049")?.length || 0;
+    reduce(small + older, otherSide);
   }
 
-  // 🧚‍♀️ 黑妖精布琳 (EVL-0005): 敵方後排戰線所有單位 -1★
-  if (zone && zone.includes("back")) {
-    const oppPrefix = zone.startsWith("player_") ? "enemy_" : "player_";
-    const hasBrin = [oppPrefix + "front", oppPrefix + "back"].some(z =>
-      (field[z] || []).some(u => u && u.card && (u.card.id === "EVL-0005" || u.card.name?.includes("黑妖精布琳")) && !window.isUnitSilenced(u))
-    );
-    if (hasBrin) baseStars -= 1;
+  // 布琳只在最終結算扣星。
+  if (zone?.endsWith("_back") && typeof isGameOverFlag !== "undefined" && isGameOverFlag) {
+    const brins = window.xlwActiveFairySources?.(otherSide + "_", "EVL-0005") || [];
+    reduce(brins.length, otherSide);
   }
 
-  // 🐛 黑妖精蠶食者 (R-EVL-0031): 正前方敵方單位 -1★
-  if (zone && lane !== undefined && lane !== -1) {
-    const isPlayerSide = zone.startsWith("player_");
-    const oppFront = isPlayerSide ? "enemy_front" : "player_front";
-    const oppUnit = field[oppFront]?.[lane];
-    if (oppUnit && oppUnit.card && (oppUnit.card.id === "R-EVL-0031" || oppUnit.card.name?.includes("黑妖精蠶食者")) && !window.isUnitSilenced(oppUnit)) {
-      baseStars -= 1;
-    }
-  }
+  reduce(window.xlwFairyOppositeSources?.(unit, zone, lane, "R-EVL-0031").length || 0, otherSide);
 
-  // 冰霜法師 水瓶座 (SSSR-NMS-0060) 減星效果
   if (unit.equipments && (unit.equipments.includes("冰霜法師(-3)") || unit.equipments.some(e => e.includes("冰霜法師(-3)")))) {
-    baseStars -= 3;
+    reduce(3, otherSide);
   }
 
   // 千面病毒 增星效果
@@ -7854,7 +7892,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
         (field[z] || []).some(u => u && u.card && (u.card.id === "C-CND-0066" || u.card.name?.includes("阿嬤軟糖")))
       );
       if (hasGrandma) {
-        baseStars -= 2;
+        reduce(2);
       }
     }
   }
@@ -7931,7 +7969,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
         if (!window.isUnitSilenced(rightUnit, zone, lane + 1)) {
           // 檢查達亞右邊也有單位
           if (lane < 3 && field[zone][lane + 2] !== null) {
-            baseStars -= 3;
+            reduce(3);
           }
         }
       }
@@ -8015,7 +8053,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
       !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && typeof window.xlwGetTotalStarsReducedByEffects === "function") {
       const isPlayer = zone.startsWith("player_");
-      baseStars += window.xlwGetTotalStarsReducedByEffects(isPlayer);
+      baseStars += window.xlwGetTotalStarsReducedByEffects(isPlayer, true);
     }
   }
 
@@ -8042,7 +8080,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
       for (const r of ["front", "back"]) {
         otherUnits += (field[sideP + r] || []).filter(u => u && u !== unit).length;
       }
-      baseStars -= otherUnits;
+      reduce(otherUnits);
     }
   }
 
@@ -8050,7 +8088,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
   if (c.id === "C-EVL-0069" && !window.isUnitSilenced(unit, zone, lane)) {
     const isPlayer = zone ? zone.startsWith("player_") : true;
     const handCount = isPlayer ? (hand || []).length : (window.XLW_ENEMY?.hand || []).length;
-    baseStars -= handCount;
+    reduce(handCount);
   }
 
   // 🗿 旅巨人 (C-SPT-0069): 此單位左側的每個小旅人使此單位+1★
@@ -8107,7 +8145,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
     const sideP = isPlayer ? "player_" : "enemy_";
     const hasVillain = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-ELE-0027" || u.card.name?.includes("地球超壞蛋")) && !window.isUnitSilenced(u)));
     if (hasVillain) {
-      baseStars -= 1;
+      reduce(1);
     }
   }
 
@@ -8128,7 +8166,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
       if (field[otherRowZone] && field[otherRowZone][lane] && window.xlwIsUnitFairy && window.xlwIsUnitFairy(field[otherRowZone][lane])) {
         adjFairies++;
       }
-      baseStars -= (2 * adjFairies);
+      reduce(2 * adjFairies);
     }
   }
 
@@ -8153,7 +8191,7 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
 
   // 🌲 魔化森林妖精 (R-EVL-0059): 使橫放的此單位-3⭐
   if (c.id === "R-EVL-0059" && unit.tapped && !unit.attacking && !window.isUnitSilenced(unit, zone, lane)) {
-    baseStars -= 3;
+    reduce(3);
   }
 
   // 🎼 妖精前線指揮家 (SR-EVL-0062): 使你場上的阻擋單位被賦予掩護及+1⭐
@@ -9332,21 +9370,51 @@ window.xlwCountTravelersOnField = function(isPlayer = true) {
   return count;
 };
 
-window.xlwGetTotalStarsReducedByEffects = function(isPlayer = true) {
-  if (typeof field === "undefined") return 0;
-  const side = isPlayer ? "player_" : "enemy_";
-  let totalReduced = 0;
-  for (const z of [side + "front", side + "back"]) {
-    (field[z] || []).forEach((u, i) => {
-      if (!u || !u.card) return;
-      const baseScore = parseInt(u.card.score) || 0;
-      const currentStars = typeof getUnitStars === "function" ? getUnitStars(u, z, i, true) : baseScore;
-      if (currentStars < baseScore) {
-        totalReduced += (baseScore - currentStars);
-      }
-    });
-  }
-  return Math.max(0, totalReduced);
+window.xlwActiveFairySources = function(side, id) {
+  return ["front", "back"].flatMap(row => {
+    const zone = side + row;
+    return field[zone].filter((unit, idx) =>
+      unit?.card?.id?.includes(id) && !window.isUnitSilenced(unit, zone, idx));
+  });
+};
+
+window.xlwFairyOppositeSources = function(unit, zone, idx, id) {
+  if (!zone || !Number.isInteger(idx)) return [];
+  const own = zone.startsWith("player_") ? "player_" : "enemy_";
+  const other = own === "player_" ? "enemy_" : "player_";
+  if ((field[own + "front"][idx] || field[own + "back"][idx]) !== unit) return [];
+  return [other + "front", other + "back"].filter(row => {
+    const source = field[row][idx];
+    return source?.card?.id === id && (row.endsWith("_front") || !field[other + "front"][idx]) &&
+      !window.isUnitSilenced(source, row, idx);
+  });
+};
+
+window.xlwReadStarReductions = function(unit, zone, idx) {
+  const totals = {player: 0, enemy: 0, unattributed: 0};
+  getUnitStars(unit, zone, idx, true, (amount, side) => {
+    totals[side || "unattributed"] += amount;
+  });
+  return totals;
+};
+
+window.xlwGetTotalStarsReducedByEffects = function(isPlayer = true, byEffectOwner = false) {
+  const side = isPlayer ? "player" : "enemy";
+  const zones = byEffectOwner ? ["player_front", "player_back", "enemy_front", "enemy_back"] :
+    [side + "_front", side + "_back"];
+  return zones.reduce((sum, zone) => sum + field[zone].reduce((subtotal, unit, idx) => {
+    if (!unit) return subtotal;
+    const totals = window.xlwReadStarReductions(unit, zone, idx);
+    return subtotal + (byEffectOwner ? totals[side] : totals.player + totals.enemy + totals.unattributed);
+  }, 0), 0);
+};
+
+window.xlwFairyForestLevel = function(unit, zone, idx) {
+  if (!zone || !Number.isInteger(idx) || !window.xlwIsUnitFairy?.(unit) ||
+      window.xlwGetFactionFieldCard?.(zone.startsWith("player_"))?.id !== "C-EVL-0067" ||
+      !["召喚階段", "主要階段", "戰術佈陣", "進攻宣言"].includes(phase)) return 0;
+  const totals = window.xlwReadStarReductions(unit, zone, idx);
+  return totals.player + totals.enemy + totals.unattributed;
 };
 
 const TROPHY_ATTACK = 6;
@@ -10635,7 +10703,7 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
       const myDeck = isPlayerUnit ? deck : (window.XLW_ENEMY?.deck || []);
       myDeck.push(card);
       shuffle(myDeck);
-      if (isPlayerUnit) draw(1);
+      if (isPlayerUnit) await (window.xlwDrawFairyAware?.(1) ?? draw(1));
       logBattle(`🍻【鬧事酒館】鬧事善後：將破壞的【${card.name}】洗回牌庫並抽 1 張牌！`);
     }
   }
@@ -10661,14 +10729,14 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
   await window.xlwRetrieveCrystalArrow?.(attacker, successOwner === "player");
   // 🗡️ 妖精寶劍進攻成功抽1張牌
   if (attacker && attacker.hasFairySwordDraw && successOwner === "player") {
-    draw(1);
+    await (window.xlwDrawFairyAware?.(1) ?? draw(1));
     logBattle("🗡️✨【妖精寶劍】進攻戰鬥成功：抽取 1 張牌！");
   }
 
   // 🤖 新兵機器人 (EVL-0008): 戰鬥成功時抽1張牌
   if (attacker && attacker.card && (attacker.card.id === "EVL-0008" || attacker.card.name?.includes("新兵機器人"))) {
     if (successOwner === "player") {
-      draw(1);
+      await (window.xlwDrawFairyAware?.(1) ?? draw(1));
       logBattle("🤖✨【新兵機器人】戰鬥成功：抽取 1 張牌！");
     } else {
       window.XLW_ENEMY?.deck?.pop();
@@ -11019,20 +11087,6 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     }
   }
 
-  // 🧚‍♀️ SR-EVL-0025 小小黑妖精小咪: 使敵方前排戰線所有單位 -1★
-  if (cardId === "SR-EVL-0025" || cardName.includes("小小黑妖精小咪") || cardName.includes("小咪")) {
-    const oppFront = oppSide + "front";
-    let debuffed = 0;
-    (field[oppFront] || []).forEach((u, i) => {
-      if (u && !window.isUnitEffectImmune?.(u, oppFront, i)) {
-        u.starPenalty = (u.starPenalty || 0) + 1;
-        debuffed++;
-      }
-    });
-    logBattle(`🧚‍♀️✨【小小黑妖精小咪】黑夜微光：使敵方前排戰線 ${debuffed} 個單位被賦予 -1★！`);
-    if (typeof render === "function") render();
-  }
-
   // 🧚‍♀️ SR-EVL-0033 夜行黑妖精: 立即使敵方場上1個攻擊力為-2或以下的單位被綁架
   if (cardId === "SR-EVL-0033" || cardName.includes("夜行黑妖精")) {
     const oppTargets = [];
@@ -11113,7 +11167,7 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
         const count = toShuffle.length;
         deck.push(...toShuffle);
         shuffle(deck);
-        draw(count);
+        await (window.xlwDrawFairyAware?.(count) ?? draw(count));
         logBattle(`⏱️【時空賞金獵人 雪妮】時空躍遷：調度了 ${count} 張手牌！`);
         if (typeof render === "function") render();
       }
@@ -11217,14 +11271,9 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   // F. C-EVL-0069 黑妖精貪婪者絲娜
   if (cardId === "C-EVL-0069" || cardName.includes("絲娜")) {
     if (isPlayer) {
-      draw(2);
-    } else {
-      for (let k = 0; k < 2; k++) {
-        if (window.XLW_ENEMY?.deck?.length > 0) {
-          const drawn = window.XLW_ENEMY.deck.pop();
-          (window.XLW_ENEMY.hand = window.XLW_ENEMY.hand || []).push(drawn);
-        }
-      }
+      await (window.xlwDrawFairyAware?.(2) ?? draw(2));
+    } else if (window.xlwDrawFairyAware) {
+      await window.xlwDrawFairyAware(2, false);
     }
     logBattle("🖤【黑妖精貪婪者絲娜】貪得無厭：立即抽取 2 張牌！");
   }
@@ -11388,8 +11437,10 @@ window.xlwResolveBalloonFairy = async function(isPlayer) {
       if (source?.card?.id !== "R-EVL-0043" || source.balloonFairyTurn === turn ||
           window.isUnitSilenced(source, zone, idx) || !bigFairy()) continue;
       source.balloonFairyTurn = turn;
-      if (isPlayer) {
-        await draw(1);
+      if (window.xlwDrawFairyAware) {
+        if (!await window.xlwDrawFairyAware(1, isPlayer)) continue;
+      } else if (isPlayer) {
+        draw(1);
       } else {
         const card = window.XLW_ENEMY?.deck?.pop();
         if (!card) continue;
@@ -12784,7 +12835,7 @@ async function castSpell(handIndex) {
             sameCount += (field[z] || []).filter(u => u && u.card.name === chosenCard.name).length;
           }
           const drawCount = Math.max(0, sameCount - 1);
-          draw(drawCount);
+          await (window.xlwDrawFairyAware?.(drawCount) ?? draw(drawCount));
           logBattle(`⚡🔮【發電球】放電召喚：額外打出【${chosenCard.name}】，並抽取 ${drawCount} 張牌！`);
         }
       }
@@ -13017,7 +13068,7 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      draw(1);
+      await (window.xlwDrawFairyAware?.(1) ?? draw(1));
       logBattle(`🥖 發動【旅人法棍】：抽 1 張牌！`);
       const travelers = [];
       for (const z of ["player_front", "player_back"]) {
@@ -16209,7 +16260,7 @@ async function castSpell(handIndex) {
           await showXLWConfirm("力場保護", "我方場上目前沒有場地卡，無法發動此效果！請選擇「抽一張牌」！", "確定");
         }
       } else if (opt === "draw_card") {
-        draw(1);
+        await (window.xlwDrawFairyAware?.(1) ?? draw(1));
         logBattle("✨ 力場保護 效果：我方抽 1 張牌。");
         break;
       }
@@ -17248,7 +17299,7 @@ async function castSpell(handIndex) {
           if (target.unit.card.id === "C-ORC-0067" || target.unit.card.name?.includes("找不到飛斧的飛斧獸人")) {
             target.unit.equipments = target.unit.equipments.filter(e => !e.includes("迴旋飛斧"));
             playerBonusScore += 1;
-            draw(1);
+            await (window.xlwDrawFairyAware?.(1) ?? draw(1));
             logBattle("🪓【找不到飛斧的飛斧獸人】效果：裝備魔法卡進入墓地，獲得獎勵 +1★ 並抽 1 張牌！");
             renderScore();
           }
@@ -17339,11 +17390,11 @@ async function castSpell(handIndex) {
         }
         render();
       } else {
-        draw(2);
+        await (window.xlwDrawFairyAware?.(2) ?? draw(2));
         logBattle(`發動魔法 ${card.name}：抽 2 張牌`);
       }
     } else if (text.includes("抽1張")) {
-      draw(1);
+      await (window.xlwDrawFairyAware?.(1) ?? draw(1));
       logBattle(`發動魔法 ${card.name}：抽 1 張牌`);
     } else if (text.includes("加分") || text.includes("額外分")) {
       playerBonusScore += 1;
@@ -19224,7 +19275,7 @@ async function executeTributeEffects(selectedTributes) {
         if (unit.card.id === "R-VLG-0007" || unit.card.name.includes("藍小鬼棒子")) {
           const isPlayer = t.zone.startsWith("player_");
           if (isPlayer) {
-            draw(1);
+            await (window.xlwDrawFairyAware?.(1) ?? draw(1));
             logBattle("藍小鬼棒子 效果：被獻祭，我方抽 1 張牌。");
           } else {
             if (window.XLW_ENEMY.deck.length) {
@@ -21491,7 +21542,7 @@ async function performSummonToSlot(zone, idx) {
       // 🎭 偽裝成特殊旅人的小旅人 (R-SPT-0051): 此卡被召喚時，抽1張牌
       if (card.id === "R-SPT-0051" || card.name?.includes("偽裝成特殊旅人的小旅人")) {
         if (zone.startsWith("player_")) {
-          draw(1);
+          await (window.xlwDrawFairyAware?.(1) ?? draw(1));
           logBattle("🎭【偽裝成特殊旅人的小旅人】被召喚：抽 1 張牌！");
         } else if (window.XLW_ENEMY?.deck?.length > 0) {
           window.XLW_ENEMY.hand.push(window.XLW_ENEMY.deck.pop());
@@ -21534,8 +21585,8 @@ async function performSummonToSlot(zone, idx) {
       // 👧 娜娜 (SSSR-NMS-0074) 立即: 抽2張牌,使敵方抽1張牌
       if (card.id === "SSSR-NMS-0074" || card.name?.includes("娜娜")) {
         if (zone.startsWith("player_")) {
-          draw(1);
-          draw(1);
+          await (window.xlwDrawFairyAware?.(1) ?? draw(1));
+          await (window.xlwDrawFairyAware?.(1) ?? draw(1));
           if (window.XLW_ENEMY?.deck && window.XLW_ENEMY.deck.length > 0) {
             const oppDrawn = window.XLW_ENEMY.deck.pop();
             (window.XLW_ENEMY.hand || []).push(oppDrawn);
@@ -21548,7 +21599,7 @@ async function performSummonToSlot(zone, idx) {
             if (c1) (window.XLW_ENEMY.hand || []).push(c1);
             if (c2) (window.XLW_ENEMY.hand || []).push(c2);
           }
-          draw(1);
+          await (window.xlwDrawFairyAware?.(1) ?? draw(1));
           logBattle("✨ 對手【娜娜】立即效果發動：對手抽 2 張牌，我方抽 1 張牌！");
         }
         render();
@@ -21736,7 +21787,7 @@ async function performSummonToSlot(zone, idx) {
       if (card.id === "EWD-0006" || card.id?.includes("EWD-0006") || card.name?.includes("學會投資")) {
         const isPlayer = zone.startsWith("player_");
         if (isPlayer) {
-          draw(1);
+          await (window.xlwDrawFairyAware?.(1) ?? draw(1));
           logBattle("✨ 學會投資的野人 效果發動：我方抽了一張牌！");
         } else if (!isPlayer && window.XLW_ENEMY && window.XLW_ENEMY.deck && window.XLW_ENEMY.deck.length > 0) {
           const drawn = window.XLW_ENEMY.deck.pop();
@@ -23895,7 +23946,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
       else if (card.name.includes("八岐大蛇")) {
         const needed = 8 - hand.length;
         if (needed > 0) {
-          draw(needed);
+          await (window.xlwDrawFairyAware?.(needed) ?? draw(needed));
           logBattle(`八岐大蛇 效果：抽滿 8 張牌（抽了 ${needed} 張）！`);
         }
         setTimeout(async () => {
@@ -28457,7 +28508,7 @@ function isUnitIndestructible(unit, zone, idx, isCombatDestruction = false) {
 
   if(zone && idx!==undefined && isUnitAttackProtected(zone,idx))return true;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced(unit, zone, idx)) return false;
-  if (unit.indestructible || c.id === "EVL-0057") return true;
+  if (unit.indestructible || c.id === "EVL-0057" || (window.xlwFairyForestLevel?.(unit, zone, idx) || 0) >= 5) return true;
   
   // 女法師獸人 艾娜 (SR-ORC-0022)：使我方場上原始攻擊力 <=2 的獸人單位不會被破壞
   if (c.faction === "獸人" || c.id?.includes("ORC")) {
@@ -28555,7 +28606,8 @@ function isUnitMagicImmune(unit, zone, idx, spellCard = null) {
   const c = unit.card || unit;
 
   // 🛡️ 祝福勇者 (R-BRV-0058): 敵方魔法抗性
-  if (unit.magicImmuneUntilNextTurn || unit.hasSpellShield) return true;
+  if (unit.magicImmuneUntilNextTurn || unit.hasSpellShield ||
+      (window.xlwFairyForestLevel?.(unit, zone, idx) || 0) >= 3) return true;
 
   // 📿 靈異驅魔師 (C-VLG-0065): 敵方魔法抗性
   if (c.id === "C-VLG-0065" || c.name?.includes("靈異驅魔師")) return true;
@@ -28846,7 +28898,7 @@ function isUnitEffectImmune(unit, zone, idx) {
   }
   if (z && i !== undefined && i !== -1 && window.isUnitSilenced(unit, z, i)) return false;
 
-  if (unit.enemyEffectImmune) return true;
+  if (unit.enemyEffectImmune || (window.xlwFairyForestLevel?.(unit, z, i) || 0) >= 4) return true;
   if (unit.card && (unit.card.id === "RBT-0045" || unit.card.id === "R-RBT-0045" || unit.card.id === "SSR-RBT-0045" || unit.card.name?.includes("古代機神巨人"))) return true;
   if (unit.devourCards && unit.devourCards.length > 0) {
     const hasRightFoot = unit.card.id === "RBT-0044" || unit.card.id === "R-RBT-0044" || unit.card.name?.includes("古代機神遺骸右腳") || unit.devourCards.some(d => d.card && (d.card.id === "RBT-0044" || d.card.id === "R-RBT-0044" || d.card.name?.includes("古代機神遺骸右腳")));
@@ -31191,7 +31243,7 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
         const oppSide = isPlayer ? "enemy" : "player";
         logBattle(`✨ 寶箱怪 效果發動：防守方寶箱怪被擊破，${oppSide === 'player' ? '我方' : '對手'}抽 2 張牌！`);
         if (oppSide === "player") {
-          draw(2);
+          await (window.xlwDrawFairyAware?.(2) ?? draw(2));
         } else if (window.XLW_ENEMY) {
           const enemy = window.XLW_ENEMY;
           enemy.hand ||= [];
@@ -33143,7 +33195,7 @@ async function xlwOnUnitReturnedToDeck(card, ownerSide) {
               window.XLW_ENEMY.deck.sort(() => Math.random() - 0.5);
             }
             
-            draw(1);
+            await (window.xlwDrawFairyAware?.(1) ?? draw(1));
             if (isMultiplayer) {
               sendFullGameStateToOpponent();
             }
@@ -36535,7 +36587,7 @@ async function endPlayerTurnAndRunEnemy() {
     (field[pz] || []).some((u, i) => u && u.card && (u.card.id === "R-SPT-0054" || u.card.name?.includes("交易的小旅人")) && !window.isUnitSilenced(u, pz, i))
   );
   if (hasTradeInOppFront && myHasTrader) {
-    draw(1);
+    await (window.xlwDrawFairyAware?.(1) ?? draw(1));
     logBattle("🤝【交易的小旅人】效果觸發：偵測到敵方前排有小旅人，我方抽 1 張牌！");
   }
 
@@ -37695,7 +37747,7 @@ async function xlwResolveBreakfast(card, position = null) {
     breakfast = window.XLWDuelConsistency.takeKnownCard(hand, card);
     if (!breakfast) return;
   }
-  draw(1);
+  await (window.xlwDrawFairyAware?.(1) ?? draw(1));
   deck.push(breakfast);
   shuffle(deck);
   logBattle("✨【最後的早餐】效果：抽牌並將原卡洗回牌庫。");
@@ -38527,7 +38579,7 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
       const doBeast = await showXLWConfirm("【紅森林年獸】年節狂舞", "本回合曾展示牌庫！是否發動年獸效果：抽取 2 張牌並洗回至多 2 張手牌？");
       if (doBeast) {
         obj.beastUsedThisTurn = true;
-        draw(2);
+        await (window.xlwDrawFairyAware?.(2) ?? draw(2));
         if ((hand || []).length > 0) {
           const numToReturn = Math.min(2, hand.length);
           const returned = [];
@@ -46955,7 +47007,7 @@ async function triggerSneakAttackSuccessEffects(card) {
   if (card.id === "CAT-0010" || card.id === "R-CAT-0010" || card.name.includes("粉喵")) {
     const confirmUse = await showXLWConfirm("粉喵 效果發動", "是否發動【粉喵】效果：偷襲成功時抽 1 張牌？");
     if (confirmUse) {
-      draw(1);
+      await (window.xlwDrawFairyAware?.(1) ?? draw(1));
       logBattle(`🥷 粉喵 效果發動：我方抽 1 張牌。`);
       render();
     }
@@ -53351,7 +53403,7 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
         const hasFieldCard = isPlayerSide ? Boolean(window.XLW_playerFieldCard || window.playerFieldCard) : Boolean(window.XLW_enemyFieldCard || window.enemyFieldCard);
         if (hasFieldCard) {
           if (isPlayerSide) {
-            draw(1);
+            await (window.xlwDrawFairyAware?.(1) ?? draw(1));
             logBattle("🌸【蘭蘭】效果發動：場上有場地魔法卡，我方抽 1 張牌！");
           } else {
             if (window.XLW_ENEMY?.deck) {

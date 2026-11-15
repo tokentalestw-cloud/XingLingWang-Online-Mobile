@@ -969,11 +969,12 @@ test("fairy reduction count uses base stats without calling the queen award recu
   c.field.player_front[0] = unit("SR-EVL-0064");
   c.field.player_front[1] = unit("reduced");
   c.field.player_front[1].card.score = 5;
-  c.getUnitStars = (unit, _, __, skipAwards) => {
+  c.getUnitStars = (unit, _, __, skipAwards, record) => {
     assert.equal(skipAwards, true);
-    return unit.card.id === "reduced" ? 2 : 0;
+    if (unit.card.id === "reduced") record(3, "player");
+    return 0;
   };
-  vm.runInContext(slice("window.xlwGetTotalStarsReducedByEffects = function", "const TROPHY_ATTACK"), c);
+  vm.runInContext(slice("window.xlwReadStarReductions = function", "const TROPHY_ATTACK"), c);
   assert.equal(c.window.xlwGetTotalStarsReducedByEffects(true), 3);
 });
 
@@ -1011,4 +1012,85 @@ test("Balloon Fairy gives the AI its actual top card once, while a silenced copy
   await c.window.xlwResolveBalloonFairy(false);
   assert.deepEqual(c.window.XLW_ENEMY.hand, [top]);
   assert.equal(c.window.XLW_ENEMY.deck.length, 1);
+});
+
+test("Morlana counts reductions caused by her side across both fields without netting other bonuses", () => {
+  const c = fixture(), friendly = unit("friendly"), opposing = unit("opposing");
+  c.field.player_front[0] = friendly;
+  c.field.enemy_front[0] = opposing;
+  c.getUnitStars = (target, _, __, skipAward, record) => {
+    assert.equal(skipAward, true);
+    if (target === friendly) { record(2, "enemy"); record(1, null); }
+    if (target === opposing) { record(4, "player"); record(1, "enemy"); }
+    return 20;
+  };
+  vm.runInContext(slice("window.xlwReadStarReductions = function", "const TROPHY_ATTACK"), c);
+  assert.equal(c.window.xlwGetTotalStarsReducedByEffects(true, true), 4);
+  assert.equal(c.window.xlwGetTotalStarsReducedByEffects(false, true), 3);
+  assert.equal(c.window.xlwGetTotalStarsReducedByEffects(true), 3);
+});
+
+test("Fairy Forest's reductions are bound to the current field, side, unit type and main phase", () => {
+  const c = fixture(), fairy = unit("fairy");
+  c.window.xlwIsUnitFairy = candidate => candidate === fairy;
+  c.window.xlwGetFactionFieldCard = own => own ? {id: "C-EVL-0067"} : null;
+  c.getUnitStars = (_, __, ___, ____, reduce) => { reduce(2, "player"); reduce(3, "enemy"); return 8; };
+  vm.runInContext(slice("window.xlwReadStarReductions = function", "const TROPHY_ATTACK"), c);
+  assert.equal(c.window.xlwFairyForestLevel(fairy, "player_front", 0), 5);
+  assert.equal(c.window.xlwFairyForestLevel(fairy, "enemy_front", 0), 0);
+  assert.equal(c.window.xlwFairyForestLevel(unit("other"), "player_front", 0), 0);
+  c.phase = "防守階段";
+  assert.equal(c.window.xlwFairyForestLevel(fairy, "player_front", 0), 0);
+});
+
+function springFairyFixture() {
+  const c = fixture(), old = unit("R-EVL-0052");
+  const target = {id: "revived", name: "回收單位", type: "unit"};
+  c.field.player_front[0] = old;
+  c.deck = [];
+  c.graveyard = [{id: "magic", type: "magic"}, target];
+  c.mulliganActive = false;
+  c.setStatus = () => {};
+  c.draw = count => { for (let i = 0; i < count; i++) c.hand.push(c.deck.pop()); };
+  vm.runInContext(slice("window.xlwSpringFairyRefill =", "// 智慧的般若"), c);
+  return {c, old, target};
+}
+
+test("Spring Fairy cannot refill during normal draws or while silenced", async () => {
+  const {c, old} = springFairyFixture();
+  c.phase = "抽牌階段";
+  assert.equal(await c.window.xlwDrawFairyAware(1), 0);
+  c.phase = "召喚階段";
+  old.silenced = true;
+  assert.equal(await c.window.xlwDrawFairyAware(1), 0);
+  assert.equal(c.graveyard.length, 2);
+});
+
+test("Spring Fairy offers only unit cards and cancellation preserves the once-per-turn use", async () => {
+  const {c, old, target} = springFairyFixture();
+  c.showXLWChoiceModal = async (_, __, choices) => {
+    assert.equal(choices[0].card, target);
+    assert.equal(choices.length, 2);
+    return -1;
+  };
+  assert.equal(await c.window.xlwDrawFairyAware(1), 0);
+  assert.equal(old.springFairyTurn, undefined);
+  assert.equal(c.graveyard.length, 2);
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await c.window.xlwDrawFairyAware(2), 1);
+  assert.equal(old.springFairyTurn, c.turn);
+  assert.deepEqual(c.hand, [target]);
+});
+
+test("Spring Fairy cannot remove a stale graveyard card or replace a freshly refilled deck top", async () => {
+  const {c, target, old} = springFairyFixture();
+  const lateTop = {id: "late", name: "剛放入牌庫頂"};
+  c.showXLWChoiceModal = async () => { c.deck.push(lateTop); return 0; };
+  assert.equal(await c.window.xlwDrawFairyAware(1), 1);
+  assert.deepEqual(c.hand, [lateTop]);
+  assert.ok(c.graveyard.includes(target));
+  assert.equal(old.springFairyTurn, undefined);
+  c.showXLWChoiceModal = async () => { c.graveyard.splice(1, 1); return 0; };
+  assert.equal(await c.window.xlwDrawFairyAware(1), 0);
+  assert.equal(c.graveyard[0].id, "magic");
 });

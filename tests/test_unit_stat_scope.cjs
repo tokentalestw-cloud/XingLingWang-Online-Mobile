@@ -86,3 +86,30 @@ module.exports = (async () => {
   }
   console.log(`${tests} bidirectional attack/score scope, traveler buffs and summon-stat checks: PASS`);
 })();
+
+require("node:test")("Fairy source integration keeps aura target, stage and owner distinct", () => {
+  const g = fixture();
+  const start = source.indexOf("window.xlwActiveFairySources = function");
+  vm.runInContext(source.slice(start, source.indexOf("const TROPHY_ATTACK", start)), g);
+  g.isGameOverFlag = false;
+  const target = unit("target", "target", 5, 6);
+  const back = unit("back", "back", 2, 5);
+  const shelter = unit("R-EVL-0031", "黑妖精蠶食者");
+  g.field.player_front[0] = target;
+  g.field.player_back[0] = back;
+  g.field.enemy_front[0] = shelter;
+  g.field.enemy_back[0] = unit("EVL-0005", "黑妖精布琳");
+  g.field.enemy_front[1] = unit("EVL-0025-ALT", "小小黑妖精小咪");
+  g.field.enemy_front[2] = unit("R-EVL-0049", "青少女黑妖精小咪");
+  g.field.enemy_front[3] = unit("R-EVL-0039", "黑妖精魔術師");
+  assert.equal(g.getUnitAtk(target, "player_front", 0), 2);
+  assert.equal(g.getUnitStars(target, "player_front", 0), 3);
+  assert.equal(g.getUnitStars(back, "player_back", 0), 4);
+  assert.equal(g.xlwGetTotalStarsReducedByEffects(false, true), 4);
+  g.field.player_front[0] = null;
+  assert.equal(g.getUnitStars(back, "player_back", 0), 3);
+  g.isGameOverFlag = true;
+  assert.equal(g.getUnitStars(back, "player_back", 0), 2);
+  g.field.enemy_front[2] = null;
+  assert.equal(g.getUnitStars(back, "player_back", 0), 3);
+});
