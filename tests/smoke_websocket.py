@@ -63,6 +63,15 @@ async def main():
         await a.send(json.dumps({'action': 'sync_game_state', 'message_id': 'snapshot', 'state': {'enemyHand': [], 'enemyDeck': [], 'field': {'player_front': [None]}}}))
         snapshot = await receive(b, lambda d: d.get('action') == 'sync_game_state')
         assert snapshot['state']['enemyHand'] == [] and 'player_front' in snapshot['state']['field']
+        # A supported Crossbow can target a different lane on the opposite screen.
+        await a.send(json.dumps({'action': 'attack_declare', 'message_id': 'crossbow',
+                                 'attZone': 'player_front', 'attIdx': 0,
+                                 'targetZone': 'enemy_back', 'targetIdx': 4,
+                                 'lockedFairyCrossbow': True}))
+        crossbow = await receive(b, lambda d: d.get('action') == 'attack_declare')
+        assert crossbow['attZone'] == 'enemy_front' and crossbow['attIdx'] == 0
+        assert crossbow['targetZone'] == 'player_back' and crossbow['targetIdx'] == 4
+        assert crossbow['lockedFairyCrossbow'] is True
         # Defense timing belongs to each card in a chain and must survive the relay.
         for sender, receiver, action, in_defense in (
             (a, b, 'spell_chain_start', True),

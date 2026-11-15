@@ -4288,7 +4288,7 @@ window.xlwUnitHasPoison = function(unit, zone, idx) {
 window.xlwUnitHasRanged = function(unit, zone, idx) {
   if (!unit) return false;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced && window.isUnitSilenced(unit, zone, idx)) return false;
-  if (unit.hasRanged || unit.ranged) return true;
+  if (unit.hasRanged || unit.ranged || unit.fairyWeaponRanged) return true;
   const c = unit.card || unit;
   if (window.xlwCardHasKeyword && window.xlwCardHasKeyword(c, "遠程")) return true;
   if (c.keywords && Array.isArray(c.keywords)) {
@@ -7539,28 +7539,9 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
     }
   }
 
-  // 🖤 黑妖精女王親衛隊 (C-EVL-0066): X=你場上單位因效果而減少的★總數
-  if (c.id === "C-EVL-0066" || c.name?.includes("黑妖精女王親衛隊")) {
-    if (zone && typeof field !== "undefined") {
-      const isP = zone.startsWith("player_");
-      const checkZones = isP ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
-      let totalReducedStars = 0;
-      for (const r of checkZones) {
-        (field[r] || []).forEach((u, ui) => {
-          if (u) {
-            const orig = parseInt(u.card.score) || 0;
-            const current = typeof getUnitStars === "function" ? getUnitStars(u, r, ui) : orig;
-            if (orig > current) {
-              totalReducedStars += (orig - current);
-            }
-            if (u.reducedStars) {
-              totalReducedStars += u.reducedStars;
-            }
-          }
-        });
-      }
-      baseAtk = totalReducedStars;
-    }
+  // 親衛隊的 X 使用尚未計入女王獎勵的扣星量。
+  if (c.id === "C-EVL-0066" && zone) {
+    baseAtk += window.xlwGetTotalStarsReducedByEffects?.(zone.startsWith("player_")) || 0;
   }
 
   // 📣 紅星盃賽場觀眾 (SSSR-NMS-0092): 使你持有的「紅星獎盃」所在戰線的你的單位+1攻擊力
@@ -7641,7 +7622,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
 }
 
 // 單位星數分數 (加入加成)
-function getUnitStars(unit, zone, lane) {
+function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false) {
   if (!unit) return 0;
   if ((!zone || lane === undefined || lane === -1) && typeof field !== "undefined" && field) {
     for (const testZone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
@@ -8030,7 +8011,8 @@ function getUnitStars(unit, zone, lane) {
 
   
   // 🖤 黑妖精女王莫拉娜 (SR-EVL-0064): 使此單位+X★。X=場上單位因為你的效果所減少的★總數
-  if (c.id === "SR-EVL-0064" || c.name?.includes("黑妖精女王莫拉娜")) {
+  if (!skipFairyReductionAwards && (c.id === "SR-EVL-0064" || c.name?.includes("黑妖精女王莫拉娜")) &&
+      !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && typeof window.xlwGetTotalStarsReducedByEffects === "function") {
       const isPlayer = zone.startsWith("player_");
       baseStars += window.xlwGetTotalStarsReducedByEffects(isPlayer);
@@ -8052,7 +8034,7 @@ function getUnitStars(unit, zone, lane) {
   }
 
   // 🖤 黑妖精長老奧克 (SR-EVL-0068): 你場上的每個其他單位使此單位-1★
-  if (c.id === "SR-EVL-0068" || c.name?.includes("黑妖精長老奧克")) {
+  if (c.id === "SR-EVL-0068" && !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && typeof field !== "undefined") {
       const isPlayer = zone.startsWith("player_");
       const sideP = isPlayer ? "player_" : "enemy_";
@@ -8065,7 +8047,7 @@ function getUnitStars(unit, zone, lane) {
   }
 
   // 🖤 黑妖精貪婪者絲娜 (C-EVL-0069): 你的每張手牌使此單位-1★
-  if (c.id === "C-EVL-0069" || c.name?.includes("絲娜")) {
+  if (c.id === "C-EVL-0069" && !window.isUnitSilenced(unit, zone, lane)) {
     const isPlayer = zone ? zone.startsWith("player_") : true;
     const handCount = isPlayer ? (hand || []).length : (window.XLW_ENEMY?.hand || []).length;
     baseStars -= handCount;
@@ -8132,7 +8114,7 @@ function getUnitStars(unit, zone, lane) {
   baseStars += window.xlwCountAdjacentRootFairies?.(unit, zone, lane) * 2 || 0;
 
   // 🖤 黑妖精厭世者 (C-EVL-0060): 此單位前後左右的每個你的妖精單位使此單位-2⭐
-  if (c.id === "C-EVL-0060" || c.name?.includes("黑妖精厭世者")) {
+  if (c.id === "C-EVL-0060" && !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined") {
       const isPlayer = zone.startsWith("player_");
       const sideP = isPlayer ? "player_" : "enemy_";
@@ -8151,7 +8133,7 @@ function getUnitStars(unit, zone, lane) {
   }
 
   // 👙 風流妖精 (泳裝) (R-EVL-0011-泳裝): 此單位前後左右每個你的妖精單位使此單位+1⭐
-  if (c.id === "R-EVL-0011-泳裝" || c.name?.includes("風流妖精 (泳裝)")) {
+  if (c.id === "R-EVL-0011-泳裝" && !window.isUnitSilenced(unit, zone, lane)) {
     if (zone && lane !== undefined && lane >= 0 && typeof field !== "undefined") {
       const isPlayer = zone.startsWith("player_");
       const sideP = isPlayer ? "player_" : "enemy_";
@@ -8170,7 +8152,7 @@ function getUnitStars(unit, zone, lane) {
   }
 
   // 🌲 魔化森林妖精 (R-EVL-0059): 使橫放的此單位-3⭐
-  if ((c.id === "R-EVL-0059" || c.name?.includes("魔化森林妖精")) && unit.tapped) {
+  if (c.id === "R-EVL-0059" && unit.tapped && !unit.attacking && !window.isUnitSilenced(unit, zone, lane)) {
     baseStars -= 3;
   }
 
@@ -8235,11 +8217,29 @@ function isUnitAttackProtected(zone, lane) {
 }
 
 // 我方是否可宣告進攻
+window.xlwFairyCrossbowCanAttack = function(unit) {
+  return unit?.card?.id !== "EVL-0056" || unit.summonedTurn !== turn;
+};
+
+window.xlwFairyCrossbowTargets = function(unit, zone, idx) {
+  if (unit?.card?.id !== "EVL-0056" || !zone.endsWith("_front") || unit.summonedTurn === turn ||
+      !field[zone.replace("_front", "_back")]?.[idx] || window.isUnitSilenced(unit, zone, idx)) return [];
+  const enemy = zone.startsWith("player_") ? "enemy_" : "player_";
+  return ["front", "back"].flatMap(row => {
+    const targetZone = enemy + row;
+    return field[targetZone].flatMap((target, targetIdx) => target &&
+      !isUnitAttackProtected(targetZone, targetIdx) && !xlwFairHeroBlocksAttack(unit, zone, idx, targetZone, targetIdx) &&
+      (!window.XLW_isShieldUnit(target, targetZone, targetIdx) || hasArmorBreak(unit, zone, idx)) ?
+      [{zone: targetZone, idx: targetIdx, unit: target}] : []);
+  });
+};
+
 function validPlayerAttackLine(zone, lane) {
   const unit = field[zone]?.[lane];
-  if (!unit) return false;
+  if (!unit || window.xlwFairyCrossbowCanAttack?.(unit) === false) return false;
   if (unit.tapped) return false; // 橫置狀態不可宣告攻擊
   if (window.XLW_isShieldUnit(unit)) return false; // 盾牌不可宣告攻擊
+  if (window.xlwFairyCrossbowTargets?.(unit, zone, lane).length) return true;
   if (!enemyLaneHasAny(lane)) return false; // 空戰線不可進攻
   if (enemyFrontIsShield(lane) && !hasArmorBreak(unit, zone, lane)) return false; // 前排為盾牌不可進攻（具破甲者可進攻）
 
@@ -9340,7 +9340,7 @@ window.xlwGetTotalStarsReducedByEffects = function(isPlayer = true) {
     (field[z] || []).forEach((u, i) => {
       if (!u || !u.card) return;
       const baseScore = parseInt(u.card.score) || 0;
-      const currentStars = typeof getUnitStars === "function" ? getUnitStars(u, z, i) : baseScore;
+      const currentStars = typeof getUnitStars === "function" ? getUnitStars(u, z, i, true) : baseScore;
       if (currentStars < baseScore) {
         totalReduced += (baseScore - currentStars);
       }
@@ -10906,6 +10906,36 @@ async function xlwResolveFairyStrategist(isPlayer) {
 }
 
 // 立即發動與入場結算 (PG2 & 點數兌換卡)
+window.xlwResolveFairySoulRefiner = async function(isPlayer) {
+  const readPiles = () => ({
+    fromHand: isPlayer ? hand : window.XLW_ENEMY?.hand,
+    fromGrave: isPlayer ? graveyard : window.XLW_ENEMY?.grave,
+    toDeck: isPlayer ? deck : window.XLW_ENEMY?.deck
+  });
+  const isFairy = card => card?.type === "unit" && window.xlwIsUnitFairy?.(card);
+  const {fromHand, fromGrave, toDeck} = readPiles();
+  if (!fromHand || !fromGrave || !toDeck || (!isPlayer && isMultiplayer)) return false;
+  const offered = fromHand.filter(isFairy);
+  const recoverable = fromGrave.filter(isFairy);
+  if (!offered.length || !recoverable.length) return false;
+  const choose = async (cards, title) => {
+    const pick = isPlayer ? await showXLWChoiceModal("黑妖精煉魂師絲塔", title,
+      cards.map((card, value) => ({card, text: card.name, value}))) : 0;
+    return cards[pick];
+  };
+  const sacrifice = await choose(offered, "選擇一張手牌中的妖精單位送墓。");
+  if (!sacrifice) return false;
+  const recovered = await choose(recoverable, "選擇墓地另一張妖精單位放回牌庫頂。");
+  if (!recovered) return false;
+  const latest = readPiles();
+  if (!latest.fromHand?.includes(sacrifice) || !latest.fromGrave?.includes(recovered) || !latest.toDeck) return false;
+  const moved = window.XLWDuelConsistency.moveKnownCard(latest.fromGrave, latest.toDeck, recovered);
+  if (!moved) return false;
+  window.XLWDuelConsistency.moveKnownCard(latest.fromHand, latest.fromGrave, sacrifice);
+  logBattle(`【黑妖精煉魂師絲塔】將【${sacrifice.name}】送墓，並把【${recovered.name}】放回牌庫頂。`);
+  return true;
+};
+
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   if (!card) return;
   const cardId = card.id || "";
@@ -10923,6 +10953,15 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
       logBattle("🍖💰 對手【好野人】獲得額外獎勵 +3★！");
     }
     renderScore();
+  }
+
+  if (cardId === "SR-EVL-0053") await window.xlwResolveFairySoulRefiner?.(isPlayer);
+
+  if (cardId.includes("EVL-0032")) {
+    for (const neighbor of [idx - 1, idx + 1]) {
+      const ally = field[zone]?.[neighbor];
+      if (window.xlwIsUnitFairy?.(ally)) ally.fairyWeaponRanged = true;
+    }
   }
 
   if (cardId.includes("EVL-0054") || cardName.includes("凱迪亞斯")) {
@@ -11339,8 +11378,36 @@ window.xlwResolveFairyLawyer = async function(isPlayer) {
   }
 };
 
+window.xlwResolveBalloonFairy = async function(isPlayer) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const rows = [side + "front", side + "back"];
+  const bigFairy = () => rows.some(zone => field[zone].some((unit, idx) =>
+    window.xlwIsUnitFairy(unit) && getUnitStars(unit, zone, idx) >= 4));
+  for (const zone of rows) {
+    for (const [idx, source] of field[zone].entries()) {
+      if (source?.card?.id !== "R-EVL-0043" || source.balloonFairyTurn === turn ||
+          window.isUnitSilenced(source, zone, idx) || !bigFairy()) continue;
+      source.balloonFairyTurn = turn;
+      if (isPlayer) {
+        await draw(1);
+      } else {
+        const card = window.XLW_ENEMY?.deck?.pop();
+        if (!card) continue;
+        (window.XLW_ENEMY.hand ||= []).push(card);
+      }
+      logBattle("【氣球妖精】在主要階段開始時抽一張牌。");
+    }
+  }
+};
+
 window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
+  const opposing = isPlayer ? "enemy_" : "player_";
+  for (const row of ["front", "back"]) {
+    for (const unit of field[opposing + row]) {
+      if (unit?.fairyWeaponRanged) delete unit.fairyWeaponRanged;
+    }
+  }
 
   for (const z of [side + "front", side + "back"]) {
     for (const unit of field[z]) {
@@ -11358,22 +11425,7 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
     });
   }
 
-  // 🎈 氣球妖精 (R-EVL-0043): 主要階段開始時限一次，若場上有>=4★妖精單位，抽1張牌
-  const hasBigFairy = [side + "front", side + "back"].some(z =>
-    (field[z] || []).some((u, i) => u && (u.card.faction === "妖精" || u.card.deck === "妖精" || u.card.id?.includes("EVL")) && getUnitStars(u, z, i) >= 4)
-  );
-  const hasBalloon = [side + "front", side + "back"].some(z =>
-    (field[z] || []).some(u => u && (u.card.id === "R-EVL-0043" || u.card.name?.includes("氣球妖精")) && !window.isUnitSilenced(u))
-  );
-  if (hasBigFairy && hasBalloon) {
-    if (isPlayer) {
-      draw(1);
-      logBattle("🎈✨【氣球妖精】微風輕揚：場上有高星妖精，主要階段開始抽取 1 張牌！");
-    } else {
-      window.XLW_ENEMY?.deck?.pop();
-      logBattle("🎈✨ 對手【氣球妖精】主要階段開始抽 1 張牌！");
-    }
-  }
+  await window.xlwResolveBalloonFairy?.(isPlayer);
 
   // 重置各卡一回合限一次標記
   if (isPlayer) {
@@ -17719,6 +17771,11 @@ function toggleTributeSelection(zone, idx) {
   const card = hand[selectedHandForTribute];
   const targetCost = getCardTributeCost(card);
 
+  if (card?.id === "EVL-0057" && existIdx < 0 && !window.xlwIsUnitFairy(unit)) {
+    setStatus("【妖精英雄凱薩倫】只能使用妖精單位作為祭品。");
+    return;
+  }
+
   const isGraffiti = card && (card.id === "R-ART-0046" || card.name?.includes("牆壁上的塗鴉"));
   if (isGraffiti && !isPigmentCard(c)) {
     setStatus("【獻祭失敗】牆壁上的塗鴉 只能使用顏料單位作為祭品！");
@@ -19360,6 +19417,11 @@ async function confirmTribute() {
   selectedTributeCard = card;
   const targetCost = getCardTributeCost(card);
   const selectedVal = countSelectedTributesValue(selectedTributes, card);
+  if (card.id === "EVL-0057" && !selectedTributes.every(({zone, idx}) => zone.startsWith("player_") &&
+      window.xlwIsUnitFairy(field[zone]?.[idx]) && !xlwIsUnitUnsacrificable(field[zone][idx], zone, idx))) {
+    setStatus("【妖精英雄凱薩倫】祭品必須全為可獻祭的妖精單位。");
+    return;
+  }
   if (selectedVal < targetCost) {
     setStatus("祭品數量不足！");
     return;
@@ -25045,10 +25107,13 @@ async function selectPlayerTarget(zone, idx) {
   const attacker = field[selectedAttacker.zone][selectedAttacker.idx];
   if (!attacker) return;
 
+  if (window.xlwFairyCrossbowCanAttack?.(attacker) === false) return;
+  const crossbowTargets = window.xlwFairyCrossbowTargets?.(attacker, selectedAttacker.zone, selectedAttacker.idx) || [];
+  const isCrossbowTarget = crossbowTargets.some(target => target.zone === zone && target.idx === idx);
   const isDoubleArcher = attacker.card && (attacker.card.id === "BRV-0028" || attacker.card.id === "SSR-BRV-0028" || attacker.card.name?.includes("雙弓勇者"));
 
   // 星星戰線（同欄位）限制（雙弓勇者可進攻敵方場上任意位置）
-  if (selectedAttacker.idx !== idx && !isDoubleArcher) {
+  if (selectedAttacker.idx !== idx && !isDoubleArcher && !isCrossbowTarget) {
     setStatus("只能指定相同星星戰線的目標！（除非是【雙弓勇者】可進攻任意位置）");
     return;
   }
@@ -25072,7 +25137,7 @@ async function selectPlayerTarget(zone, idx) {
   }
 
   // 飛行防守保護：非飛行單位無法進攻飛行單位
-  if (window.hasFlying(defender) && !window.hasFlying(attacker)) {
+  if (window.hasFlying(defender) && !window.hasFlying(attacker) && !isCrossbowTarget) {
     setStatus("【飛行保護】非飛行單位無法進攻飛行單位！（若該飛行單位後排有單位，可直接攻擊其後排單位）");
     return;
   }
@@ -25112,7 +25177,7 @@ async function selectPlayerTarget(zone, idx) {
   if (xlwFairHeroBlocksAttack(attacker, selectedAttacker.zone, selectedAttacker.idx, finalZone, finalIdx)) return;
   if(isUnitAttackProtected(finalZone,finalIdx)){setStatus("【進攻失敗】目標受到牆壁上的香蕉保護！");return;}
   attacker.attacking = true;
-  attacker.target = { zone: finalZone, idx: finalIdx };
+  attacker.target = { zone: finalZone, idx: finalIdx, ...(isCrossbowTarget ? {redirected: true} : {}) };
 
   // 雙弓勇者 (BRV-0028)：此單位可進攻敵方場上2個任意單位位置
   if (isDoubleArcher) {
@@ -25160,12 +25225,14 @@ async function selectPlayerTarget(zone, idx) {
       attZone: selectedAttacker.zone,
       attIdx: selectedAttacker.idx,
       targetZone: finalZone,
-      targetIdx: finalIdx
+      targetIdx: finalIdx,
+      lockedFairyCrossbow: isCrossbowTarget
     }));
   }
 
+  const origin = selectedAttacker;
   selectedAttacker = null;
-  await window.xlwResolveSavageAttack?.(attacker, zone, idx);
+  await window.xlwResolveSavageAttack?.(attacker, origin.zone, origin.idx);
   render();
 }
 window.selectPlayerTarget = selectPlayerTarget;
@@ -25257,7 +25324,8 @@ async function xlwAutoDeclarePlayerAttacks() {
   let playerAttackCount = 0;
   for (let i = 0; i < 5; i++) {
     const playerAttacker = field.player_front[i] || field.player_back[i];
-    if (!playerAttacker || playerAttacker.tapped || window.xlwTrophyAt?.(i)) continue;
+    if (!playerAttacker || playerAttacker.tapped || window.xlwFairyCrossbowCanAttack?.(playerAttacker) === false ||
+        window.xlwTrophyAt?.(i)) continue;
     if (window.XLW_isShieldUnit(playerAttacker)) continue;
 
     const actualZone = field.player_front[i] === playerAttacker ? "player_front" : "player_back";
@@ -25471,8 +25539,8 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
       return;
     }
     const c = unit.card || unit;
-    const cannotAttack = (c.effect_text && c.effect_text.includes("無法進攻")) ||
-                          (c.keywords && c.keywords.includes("無法進攻"));
+    const cannotAttack = c.id === "EVL-0056" ? window.xlwFairyCrossbowCanAttack?.(unit) === false :
+      c.effect_text?.includes("無法進攻") || c.keywords?.includes("無法進攻");
     if (cannotAttack) {
       setStatus("該單位無法進攻！");
       return;
@@ -25481,6 +25549,20 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
     // 保留各卡牌的進攻限制，再依遠程效果開放同戰線的合法目標。
     if (c.id === "SSR-STP-0061" || c.id === "R-CRB-0026" || c.name?.includes("和平巨星 約翰") || c.name?.includes("旅人坦克")) {
       setStatus("【無法進攻】此單位無法進行攻擊宣告！");
+      return;
+    }
+
+    const crossbowTargets = window.xlwFairyCrossbowTargets?.(unit, zone, idx) || [];
+    if (crossbowTargets.length) {
+      const pick = await showXLWChoiceModal(unit.card.name, "請點選敵方任意合法單位。", crossbowTargets.map((target, value) =>
+        ({text: target.unit.card.name, value, boardTarget: {zone: target.zone, idx: target.idx}})), {boardOnly: true});
+      const target = crossbowTargets[pick];
+      if (!target || field[zone][idx] !== unit || unit.tapped || phase !== "進攻宣言" ||
+          !(window.xlwFairyCrossbowTargets?.(unit, zone, idx) || []).some(current =>
+            current.unit === target.unit && current.zone === target.zone && current.idx === target.idx)) return;
+      selectedAttacker = {zone, idx};
+      await window.selectPlayerTarget(target.zone, target.idx);
+      if (selectedAttacker?.zone === zone && selectedAttacker?.idx === idx) selectedAttacker = null;
       return;
     }
 
@@ -28176,6 +28258,15 @@ function xlwBlueStarRequirement(card, isPlayer) {
 
 function canSummonCard(card, isPlayer, options = {}) {
   if (!card) return false;
+  if (card.id === "EVL-0057") {
+    const side = isPlayer ? "player_" : "enemy_";
+    const eligible = ["front", "back"].reduce((count, row) => count + (field[side + row] || []).filter((unit, idx) =>
+      window.xlwIsUnitFairy(unit) && !xlwIsUnitUnsacrificable(unit, side + row, idx)).length, 0);
+    if (eligible < getCardTributeCost(card)) {
+      if (isPlayer && !options.silent) setStatus("【妖精英雄凱薩倫】目前沒有足夠的妖精祭品。");
+      return false;
+    }
+  }
   const restriction = xlwBlueStarRequirement(card, isPlayer);
   if (restriction) {
     if (isPlayer && !options.silent) setStatus(restriction);
@@ -28366,7 +28457,7 @@ function isUnitIndestructible(unit, zone, idx, isCombatDestruction = false) {
 
   if(zone && idx!==undefined && isUnitAttackProtected(zone,idx))return true;
   if (zone && idx !== undefined && idx !== -1 && window.isUnitSilenced(unit, zone, idx)) return false;
-  if (unit.indestructible) return true;
+  if (unit.indestructible || c.id === "EVL-0057") return true;
   
   // 女法師獸人 艾娜 (SR-ORC-0022)：使我方場上原始攻擊力 <=2 的獸人單位不會被破壞
   if (c.faction === "獸人" || c.id?.includes("ORC")) {
@@ -34932,6 +35023,12 @@ window.aiFindBestSummonableCard = function() {
       if (xlwBlueStarRequirement(c, false)) return;
       const cost = getCardTributeCost(c);
       const numAtk = parseInt(c.attack, 10) || 0;
+      if (c.id === "EVL-0057" && cost > 0) {
+        if (phase === "戰術佈陣") return;
+        const fairies = aiAvailableUnits.filter(({unit}) => window.xlwIsUnitFairy(unit));
+        if (fairies.length >= cost) candidates.push({handIdx, card: c, tributeUnits: fairies.slice(0, cost), priority: 80 + numAtk});
+        return;
+      }
       if (cost <= 0) {
         candidates.push({ handIdx, card: c, tributeUnits: [], priority: 100 + numAtk });
       } else {
@@ -35331,7 +35428,7 @@ async function runEnemyTurn() {
       const playerHasPicky = ["player_front", "player_back"].some(pz => 
         (field[pz] || []).some(pu => pu && pu.card && (pu.card.id === "R-CND-0048" || pu.card.name?.includes("偏食家")))
       );
-      if (playerHasPicky && tributeUnits && tributeUnits.length > 0) {
+      if (card.id !== "EVL-0057" && playerHasPicky && tributeUnits && tributeUnits.length > 0) {
         const playerDevourOnEnemy = [];
         for (const ez of ["enemy_front", "enemy_back"]) {
           (field[ez] || []).forEach((eu, ei) => {
@@ -35696,10 +35793,19 @@ async function runEnemyTurn() {
             if (!enemyAttacker || enemyAttacker.tapped) continue;
             if (window.XLW_isShieldUnit(enemyAttacker)) continue;
             const enemyAttackerCard = enemyAttacker.card || enemyAttacker;
-            const enemyCannotAttack = (enemyAttackerCard.effect_text && enemyAttackerCard.effect_text.includes("無法進攻")) ||
-                                       (enemyAttackerCard.keywords && enemyAttackerCard.keywords.includes("無法進攻"));
+            const enemyCannotAttack = enemyAttackerCard.id === "EVL-0056" ?
+              window.xlwFairyCrossbowCanAttack?.(enemyAttacker) === false :
+              enemyAttackerCard.effect_text?.includes("無法進攻") || enemyAttackerCard.keywords?.includes("無法進攻");
             if (enemyCannotAttack) continue;
             if (window.xlwIsAttackBlockedByClea(enemyAttackerZone, i)) continue;
+            const crossbowTargets = window.xlwFairyCrossbowTargets?.(enemyAttacker, enemyAttackerZone, i) || [];
+            if (crossbowTargets.length) {
+              const {zone, idx} = crossbowTargets[0];
+              enemyAttacker.attacking = true;
+              enemyAttacker.tapped = true;
+              enemyAttacker.target = {zone, idx, redirected: true};
+              continue;
+            }
 
             const hasRanged = (window.xlwUnitHasRanged ? window.xlwUnitHasRanged(enemyAttacker, enemyAttackerZone, i) : window.xlwCardHasKeyword(enemyAttacker.card, "遠程")) || window.hasFlying(enemyAttacker);
             const isBoarKnight = enemyAttacker.card && (enemyAttacker.card.id === "R-NMS-0061" || enemyAttacker.card.name?.includes("野豬騎士"));
@@ -45633,7 +45739,8 @@ function setupWebSocketEvents() {
       if (attacker && (trophyTarget || (field[targetZone] && !isUnitAttackProtected(targetZone,targetIdx) && !xlwFairHeroBlocksAttack(attacker, attZone, attIdx, targetZone, targetIdx)))) {
         window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
-        attacker.target = { zone: targetZone, idx: targetIdx };
+        attacker.target = { zone: targetZone, idx: targetIdx,
+          ...(data.lockedFairyCrossbow && attacker.card?.id === "EVL-0056" ? {redirected: true} : {}) };
         attacker.tapped = true;
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true; // 我方防守階段標記
         attacker.trophyTargetId = trophyTarget || null;

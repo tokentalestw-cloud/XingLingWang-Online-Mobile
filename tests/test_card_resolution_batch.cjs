@@ -925,3 +925,90 @@ test("Crystal Arrow target choices exclude tributes and all applicable protectio
   vm.runInContext(slice("window.xlwCrystalArrowTargets =", "async function castSpell(handIndex)"), c);
   assert.deepEqual(Array.from(c.window.xlwCrystalArrowTargets({id: "EVL-0055"}), entry => entry.idx), [4]);
 });
+
+test("fairy crossbow cannot attack on entry and only reaches other lanes with a unit directly behind it", () => {
+  const c = fixture();
+  const crossbow = unit("EVL-0056", {summonedTurn: c.turn});
+  c.field.player_front[0] = crossbow;
+  c.field.enemy_back[4] = unit("opponent");
+  c.window.XLW_isShieldUnit = candidate => Boolean(candidate.shield);
+  c.isUnitAttackProtected = () => false;
+  c.xlwFairHeroBlocksAttack = () => false;
+  c.hasArmorBreak = () => false;
+  vm.runInContext(slice("window.xlwFairyCrossbowCanAttack =", "function validPlayerAttackLine("), c);
+  assert.equal(c.window.xlwFairyCrossbowCanAttack(crossbow), false);
+  c.turn++;
+  assert.equal(c.window.xlwFairyCrossbowCanAttack(crossbow), true);
+  assert.equal(c.window.xlwFairyCrossbowTargets(crossbow, "player_front", 0).length, 0);
+  c.field.player_back[0] = unit("support");
+  assert.equal(c.window.xlwFairyCrossbowTargets(crossbow, "player_front", 0)[0].idx, 4);
+  crossbow.silenced = true;
+  assert.equal(c.window.xlwFairyCrossbowTargets(crossbow, "player_front", 0).length, 0);
+});
+
+test("AI Kasaren takes only fairy tributes", () => {
+  const c = fixture();
+  const hero = {id: "EVL-0057", type: "unit", name: "妖精英雄凱薩倫", attack: 7, tribute: 1};
+  c.window.XLW_ENEMY.hand.push(hero);
+  c.enemyExileZone = [];
+  c.xlwIsUnitUnsacrificable = () => false;
+  c.xlwBlueStarRequirement = () => "";
+  c.getCardTributeCost = card => card.tribute;
+  c.field.enemy_front[0] = unit("non-fairy");
+  vm.runInContext(slice("window.aiFindBestSummonableCard =", "async function runEnemyTurn"), c);
+  assert.equal(c.window.aiFindBestSummonableCard(), null);
+  c.field.enemy_back[0] = unit("fairy", {fairy: true});
+  c.window.xlwIsUnitFairy = candidate => Boolean(candidate?.fairy);
+  const result = c.window.aiFindBestSummonableCard();
+  assert.equal(result.card, hero);
+  assert.equal(result.tributeUnits[0].unit.card.id, "fairy");
+});
+
+test("fairy reduction count uses base stats without calling the queen award recursively", () => {
+  const c = fixture();
+  c.field.player_front[0] = unit("SR-EVL-0064");
+  c.field.player_front[1] = unit("reduced");
+  c.field.player_front[1].card.score = 5;
+  c.getUnitStars = (unit, _, __, skipAwards) => {
+    assert.equal(skipAwards, true);
+    return unit.card.id === "reduced" ? 2 : 0;
+  };
+  vm.runInContext(slice("window.xlwGetTotalStarsReducedByEffects = function", "const TROPHY_ATTACK"), c);
+  assert.equal(c.window.xlwGetTotalStarsReducedByEffects(true), 3);
+});
+
+test("soul refiner does not discard the first choice if the second selection is canceled", async () => {
+  const c = fixture(), offered = unit("offered").card, old = unit("old").card;
+  c.deck = [{id: "existing"}];
+  c.hand = [offered];
+  c.graveyard = [old];
+  c.window.xlwIsUnitFairy = () => true;
+  vm.runInContext(slice("window.xlwResolveFairySoulRefiner =", "window.xlwResolvePG2Summon ="), c);
+  const picks = [0, null];
+  c.showXLWChoiceModal = async () => picks.shift();
+  assert.equal(await c.window.xlwResolveFairySoulRefiner(true), false);
+  assert.deepEqual(c.hand, [offered]);
+  assert.deepEqual(c.graveyard, [old]);
+  c.showXLWChoiceModal = async () => 0;
+  assert.equal(await c.window.xlwResolveFairySoulRefiner(true), true);
+  assert.deepEqual(c.graveyard, [offered]);
+  assert.equal(c.deck.at(-1), old);
+  assert.equal(c.hand.length, 0);
+});
+
+test("Balloon Fairy gives the AI its actual top card once, while a silenced copy gives no draw", async () => {
+  const c = fixture();
+  const source = unit("R-EVL-0043", {fairy: true});
+  const top = {id: "top"};
+  c.window.XLW_ENEMY.deck = [{id: "next"}, top];
+  c.field.enemy_front[0] = source;
+  c.field.enemy_front[1] = unit("R-EVL-0043", {silenced: true, fairy: true});
+  c.field.enemy_front[2] = unit("high", {fairy: true, stars: 4});
+  c.window.xlwIsUnitFairy = target => Boolean(target?.fairy);
+  c.getUnitStars = target => target.stars || 0;
+  vm.runInContext(slice("window.xlwResolveBalloonFairy =", "window.xlwResolveExpansionTurnStart ="), c);
+  await c.window.xlwResolveBalloonFairy(false);
+  await c.window.xlwResolveBalloonFairy(false);
+  assert.deepEqual(c.window.XLW_ENEMY.hand, [top]);
+  assert.equal(c.window.XLW_ENEMY.deck.length, 1);
+});
