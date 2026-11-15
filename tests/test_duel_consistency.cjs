@@ -27,6 +27,7 @@ for(const role of ['player1','player2']){
 module.exports=(async()=>{
  for(const role of ['player1','player2']){
   const g=context();let animations=0,publish=0;g.hand=[{id:'NMG-0009',name:'和平巨人',type:'magic',effect_text:''},card('keep')];g.xlwShowSpellActivationOverlay=async()=>{animations++;};g.sendFullGameStateToOpponent=()=>publish++;g.promptNextChainAction=()=>queueMicrotask(()=>g.XLW_pendingSpellResolve({countered:false}));
+  g.xlwLogSharedCardEffect=()=>{};
   vm.runInContext(section('async function castSpell(handIndex)','// 點手牌的獻祭怪'),g);
   const first=g.castSpell(0),second=g.castSpell(0);await Promise.all([first,second]);assert.equal(animations,1);assert.equal(g.hand.length,1);assert.equal(g.graveyard.length,1);assert.equal(g.XLW_enemyCannotAttackOnNextTurn,true);assert.equal(g.XLW_castSpellBusy,false);tests++;
   // Early special branches must return rather than casting a second time.

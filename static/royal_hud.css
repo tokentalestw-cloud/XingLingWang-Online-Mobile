@@ -993,6 +993,16 @@ body.xlw-royal-ui #xlwActionFeedback[hidden] {display:none !important;}
 #xlwCardEffectFeedback strong, #xlwCardEffectFeedback span { display: block; overflow-wrap: anywhere; }
 #xlwCardEffectFeedback strong { color: #ffdd9c; font-size: clamp(12px, 1.2vw, 17px); }
 #xlwCardEffectFeedback span { font-size: clamp(10px, 1vw, 14px); }
+.xlw-attack-restriction {
+  color: #ffdb8b;
+  background: #381e20;
+  border: 1px solid #b17b51;
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: clamp(10px, 1.2vw, 15px);
+  line-height: 1.25;
+}
+.xlw-attack-restriction[hidden] { display: none; }
 body.xlw-royal-ui #xlwActionFeedback[data-tone='warning'] {border-color:#c09863;border-left-color:#edc487;color:#f7dfb4;}
 body.xlw-royal-ui #xlwActionFeedback[data-tone='success'] {border-color:#75b7ad;color:#b3ebdc;}
 /* v7 / 5: use the existing badge footprint, so score feedback cannot shrink the field. */

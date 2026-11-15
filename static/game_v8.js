@@ -2624,6 +2624,7 @@ function xlwCanSummonToZone(zone, card) {
   if (zone !== "player_front" && zone !== "player_back" && zone !== "enemy_front" && zone !== "enemy_back") return false;
   
   if (zone === "player_back") {
+    if (card?.id?.includes("EVL-0054") || card?.name?.includes("凱迪亞斯")) return true;
     if (card && (card.id === "GOT-0025" || card.id === "R-GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "SR-CND-0022" || card.name?.includes("麻鼠") || card.id === "GOT-0025" || card.id === "C-GOT-0025" || card.id === "SW-GOT-0025" || card.name?.includes("飛天山羊") || card.id === "R-ART-0058" || card.id === "SSR-ART-0058" || card.name?.includes("駭客") || card.id === "R-VRT-0035" || card.id === "SSR-VRT-0035" || card.name?.includes("海王干貝") || card.id === "R-CAT-0036" || card.id === "R-CAT-0056" || card.name?.includes("神隱喵") || card.name?.includes("DJ喵") || card.id === "R-CAT-0014" || card.name?.includes("叮噹喵"))) {
       // Allowed to summon directly to backline
     } else {
@@ -3063,7 +3064,8 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
     const enemyUnits = [];
     for (const z of ["enemy_front", "enemy_back"]) {
       field[z].forEach((u, i) => {
-        if (u && u.card && u.card.atk <= 3) {
+        const original = Number(u?.card?.attack ?? u?.card?.atk);
+        if (u?.card && u.summonedTurn === turn && Number.isFinite(original) && original <= 3) {
           enemyUnits.push({ unit: u, zone: z, idx: i });
         }
       });
@@ -3072,7 +3074,7 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
       const useTrap = await showXLWConfirm("【小陷阱】手牌反制觸發", `對手本回合已召喚第 ${window.XLW_enemySummonCountThisTurn} 個單位。是否從手牌發動【小陷阱】進行反制？`);
       if (useTrap) {
         const choices = enemyUnits.map(item => ({
-          text: `${item.zone === "enemy_front" ? "前排" : "後排"}${item.idx + 1}: ${item.unit.card.name} (原始ATK: ${item.unit.card.atk})`,
+          text: `${item.zone === "enemy_front" ? "前排" : "後排"}${item.idx + 1}: ${item.unit.card.name} (原始ATK: ${item.unit.card.attack ?? item.unit.card.atk})`,
           value: JSON.stringify({ zone: item.zone, idx: item.idx })
         }));
         choices.push({ text: "不發動/取消", value: "cancel" });
@@ -3083,9 +3085,12 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
         );
         if (choiceVal && choiceVal !== "cancel") {
           const target = JSON.parse(choiceVal);
-          const tUnit = field[target.zone][target.idx];
+          const chosen = enemyUnits.find(item => item.zone === target.zone && item.idx === target.idx);
+          const tUnit = chosen && field[target.zone]?.[target.idx] === chosen.unit ? chosen.unit : null;
           if (tUnit) {
             const trapIdx = hand.findIndex(c => c && (c.id === "R-NMG-0018" || c.id === "NMG-0018-2" || c.name?.includes("小陷阱")));
+            if (trapIdx < 0) return;
+            window.XLWDuelConsistency.identify(hand);
             const trapCard = hand.splice(trapIdx, 1)[0];
             graveyard.push(trapCard);
             logBattle(`✨ 我方從手牌發動了【小陷阱】，將對手場上的【${tUnit.card.name}】破壞！`);
@@ -3095,7 +3100,8 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
                 action: "cast_trap_sync",
                 trapCard: trapCard,
                 targetZone: target.zone,
-                targetIdx: target.idx
+                targetIdx: target.idx,
+                targetInstanceId: tUnit.card._xlwInstanceId
               }));
             }
             render();
@@ -10844,6 +10850,40 @@ window.xlwResolvePG2CombatSuccess = async function(attacker, defender, successOw
   }
 };
 
+async function xlwResolveFairyStrategist(isPlayer) {
+  const rows = ["player_front", "player_back", "enemy_front", "enemy_back"];
+  const getDestinations = zone => rows.filter(row => row.startsWith(zone.split("_")[0] + "_"))
+    .flatMap(row => field[row].flatMap((unit, idx) => unit ? [] : [{zone: row, idx}]));
+  const targets = rows.flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit && !xlwIsUnitUnmovable(unit, zone, idx) && getDestinations(zone).length ? [{zone, idx, unit}] : []));
+  if (!targets.length) return;
+  const choose = (title, list, summon = false) => showXLWChoiceModal(title, "直接點選亮起的格位。", [
+    ...list.map(({zone, idx, unit}, value) => ({text: unit?.card.name || "移至此格", value, boardTarget: {zone, idx, summon}})),
+    {text: "取消", value: "cancel"}
+  ], {boardOnly: true});
+  const target = isPlayer ? targets[await choose("【凱迪亞斯】選擇單位", targets)] : targets[0];
+  if (!target) return;
+  const destinations = getDestinations(target.zone);
+  const dest = isPlayer ? destinations[await choose("【凱迪亞斯】選擇移動位置", destinations, true)] : destinations[0];
+  if (!dest || field[target.zone][target.idx] !== target.unit || field[dest.zone][dest.idx] ||
+      xlwIsUnitUnmovable(target.unit, target.zone, target.idx)) return;
+  field[target.zone][target.idx] = null;
+  field[dest.zone][dest.idx] = target.unit;
+  target.unit.summonedZone = dest.zone;
+  window.XLWBattleFlow?.forget(target.zone, target.idx);
+  render();
+  if ((target.unit.tapped || target.unit.attacking) && isPlayer &&
+      await showXLWConfirm("【凱迪亞斯】", "是否將已移動的單位轉正？") &&
+      field[dest.zone][dest.idx] === target.unit) {
+    target.unit.tapped = false;
+    target.unit.attacking = false;
+    target.unit.target = null;
+    target.unit.trophyTargetId = null;
+  }
+  logBattle("✨【妖精戰略家凱迪亞斯】效果：移動了【" + target.unit.card.name + "】。");
+  render();
+}
+
 // 立即發動與入場結算 (PG2 & 點數兌換卡)
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   if (!card) return;
@@ -10862,6 +10902,10 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
       logBattle("🍖💰 對手【好野人】獲得額外獎勵 +3★！");
     }
     renderScore();
+  }
+
+  if (cardId.includes("EVL-0054") || cardName.includes("凱迪亞斯")) {
+    await xlwResolveFairyStrategist(isPlayer);
   }
 
   // 📣 野人兄弟幫聲援野人 (R-EWD-0037 / R-EWD-0037-泳裝): 立即全體野人+1攻擊力
@@ -17242,7 +17286,7 @@ async function castSpell(handIndex) {
       }
     } else if (card.id === "NMG-0009" || card.id === "R-NMG-0009" || card.name?.includes("和平巨人")) {
       window.XLW_enemyCannotAttackOnNextTurn = true;
-      logBattle(`✨ 和平巨人 效果：下個回合對手玩家不得發動進攻！`);
+      xlwLogSharedCardEffect("和平巨人", "施放者的對手下個回合不能進攻。", true);
     } else if (text.includes("抽2張")) {
       const oppHasAngry = ["enemy_front", "enemy_back"].some(z => field[z].some((u, i) => u && u.card && u.card.name?.includes("憤怒的般若") && !window.isUnitSilenced(u, z, i)));
       if (oppHasAngry && deck.length >= 2) {
@@ -19674,18 +19718,21 @@ async function confirmTribute() {
 function xlwUnitHasCover(unit, zone, idx) {
   if (!unit?.card || window.isUnitSilenced(unit, zone, idx)) return false;
   const card = unit.card;
+  const isConductor = card.id?.includes("EVL-0062") || card.name?.includes("妖精前線指揮家");
   const hasMagiAura = card.id === "RBT-0010" || card.id === "SSR-RBT-0010" || card.name?.includes("機械師瑪琪");
   const isCancer = card.id === "SSSR-NMS-0067" || card.name?.includes("盾甲騎士 巨蟹座");
   if (unit.equipments?.some(equipment => (equipment?.name || equipment) === "金屬盾牌") ||
       (isCancer && unit.tapped) ||
-      (!hasMagiAura && !isCancer && window.xlwCardHasKeyword(card, "掩護"))) return true;
+      (!hasMagiAura && !isCancer && !isConductor && window.xlwCardHasKeyword(card, "掩護"))) return true;
 
-  if (!window.xlwIsUnitMech(unit, zone, idx)) return false;
+  const mech = window.xlwIsUnitMech(unit, zone, idx);
+  const shield = window.XLW_isShieldUnit?.(unit, zone, idx);
   const side = zone.startsWith("player_") ? "player" : "enemy";
   return [side + "_front", side + "_back"].some(row => field[row].some((source, lane) => {
     const aura = source?.card;
-    return aura && (aura.id === "RBT-0010" || aura.id === "SSR-RBT-0010" || aura.name?.includes("機械師瑪琪")) &&
-      !window.isUnitSilenced(source, row, lane);
+    if (!aura || window.isUnitSilenced(source, row, lane)) return false;
+    return (mech && (aura.id?.includes("RBT-0010") || aura.name?.includes("機械師瑪琪"))) ||
+      (shield && (aura.id?.includes("EVL-0062") || aura.name?.includes("妖精前線指揮家")));
   }));
 }
 
@@ -19718,6 +19765,7 @@ async function xlwResolveSummonCover(pending) {
 
   field.player_front[idx] = null;
   field.player_back[chosen.lane] = unit;
+  unit.summonedZone = "player_back";
   logBattle(`🛡️【掩護】${unitName(unit)} 移至【${unitName(chosen.source)}】正後方。`);
   return true;
 }
@@ -21605,6 +21653,11 @@ async function performSummonToSlot(zone, idx) {
                 summonedZone: targetSlot.zone,
                 equipments: []
               };
+              const cover = isPlayer && xlwCaptureSummonCover(targetSlot.zone, targetSlot.idx);
+              if (cover) {
+                render();
+                await xlwResolveSummonCover(cover);
+              }
               summonedCount++;
               logBattle(`🍬【糖果女孩】立即效果：從${fromWhere}特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
               render();
@@ -36733,7 +36786,10 @@ function renderRaceCards() {
     const deckSelect = $("deckSelect");
     const deckName = deckSelect ? deckSelect.value : "喵喵賊";
     const normName = normDeckName(deckName);
-    pRace.innerHTML = raceCardImgHtml(normName);
+    if (pRace.dataset.race !== normName || !pRace.firstElementChild) {
+      pRace.innerHTML = raceCardImgHtml(normName);
+      pRace.dataset.race = normName;
+    }
     
     // Apply rotation based on Call Game declaration
     pRace.className = "zone side blue";
@@ -36749,7 +36805,10 @@ function renderRaceCards() {
   if (eRace) {
     const oppDeck = window.XLW_ENEMY.deckName || "妖怪村莊";
     const normOppName = normDeckName(oppDeck);
-    eRace.innerHTML = raceCardImgHtml(normOppName);
+    if (eRace.dataset.race !== normOppName || !eRace.firstElementChild) {
+      eRace.innerHTML = raceCardImgHtml(normOppName);
+      eRace.dataset.race = normOppName;
+    }
     
     // Apply rotation based on Call Game declaration
     eRace.className = "zone side red";
@@ -36945,6 +37004,22 @@ function render() {
   if (turnOwnerLabel) turnOwnerLabel.textContent = turnSide === "waiting" ? "準備對戰" :
     (turnSide === "player" ? "我方回合" : "對手回合");
   if (phaseDisplayText) phaseDisplayText.textContent = phase;
+  if (phaseDisplayPanel) {
+    let restriction = phaseDisplayPanel.querySelector(".xlw-attack-restriction");
+    const text = window.XLW_playerCannotAttackThisTurn ? "我方本回合不能進攻" :
+      window.XLW_enemyCannotAttackThisTurn ? "對手本回合不能進攻" :
+      window.XLW_playerCannotAttackOnNextTurn ? "我方下回合不能進攻" :
+      window.XLW_enemyCannotAttackOnNextTurn ? "對手下回合不能進攻" : "";
+    if (!restriction && text) {
+      restriction = document.createElement("span");
+      restriction.className = "xlw-attack-restriction";
+      phaseDisplayPanel.appendChild(restriction);
+    }
+    if (restriction) {
+      restriction.hidden = !text;
+      restriction.textContent = text;
+    }
+  }
   if (phaseHelpText) {
     phaseHelpText.textContent = isMultiplayer && !isMyTurn ? "等待對手操作中..." : getPhaseHelpText(phase);
   }
@@ -36956,7 +37031,6 @@ function render() {
   if (turnEl) turnEl.textContent = turn;
   const handCountEl = $("handCount");
   if (handCountEl) handCountEl.textContent = hand.length;
-  $("playerDeck").innerHTML = `我方牌組 (${deck.length})`;
   renderGraveyard("playerGrave", graveyard, "我方墓地");
   renderGraveyard("enemyGrave", window.XLW_ENEMY.grave, "對手墓地");
   renderGraveyard("playerExile", playerExileZone, "我方除外");
@@ -37005,6 +37079,9 @@ function renderDeckVisuals() {
 function createDeckVisual(zoneId, count, label) {
   const zone = $(zoneId);
   if (!zone) return;
+  const visualKey = count + ":" + Boolean(zoneId === "playerDeck" && window.XLW_playerNeedsToDraw);
+  if (zone.dataset.deckVisualKey === visualKey && zone.firstElementChild?.classList.contains("deck-stack-final-fixed")) return;
+  zone.dataset.deckVisualKey = visualKey;
   zone.innerHTML = "";
 
   const wrap = document.createElement("div");
@@ -38447,7 +38524,6 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
 }
 
 function renderField() {
-  console.log("[XLW renderField Debug] tributeWaitingPosition =", tributeWaitingPosition, "selectedHandForSummon =", selectedHandForSummon, "selectedTributeCard =", selectedTributeCard);
   window.XLW_animatingSlots = window.XLW_animatingSlots || new Set();
   for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
     document.querySelectorAll(`[data-zone="${zone}"]`).forEach(slot => {
@@ -38490,7 +38566,6 @@ function renderField() {
           slot.appendChild(wallEl);
         }
         if (obj.attacking) {
-          console.log(`[XLW Attacking Debug] Slot ${zone}[${idx}] (${obj.card.name}) is attacking. target:`, obj.target, "phase:", phase);
           slot.classList.add("attacking-slot");
           if (zone.startsWith("player_")) {
             slot.classList.add("xlw-my-attacker");
@@ -44556,10 +44631,8 @@ function setupWebSocketEvents() {
           xlwExpectedIncomingSeq = data.seq;
         }
       }
-      console.log("收到線上廣播數據:", data);
     
     if (data.type === "restore_client_backup") {
-      console.log("Received restore_client_backup from server:", data.state);
       if (data.state) {
         if (data.state.pendingInteraction) throw new Error("尚未完成的卡牌效果在重新整理時中斷，請雙方重新開局。");
         if (!window.xlwApplySavedStateObject(data.state)) throw new Error("無法完整恢復對局備份。");
@@ -44825,14 +44898,13 @@ function setupWebSocketEvents() {
         if (s.playerDeckName) {
           if (!window.XLW_ENEMY) window.XLW_ENEMY = {};
           window.XLW_ENEMY.deckName = s.playerDeckName;
-          renderRaceCards();
         }
         if (s.isGameOverFlag && !isGameOverFlag) {
           executeGameOverCalculations();
         }
         
         if (!data.turnHandoff) {
-          saveLocalGameState();
+          if (!window.XLW_sync?.processing) saveLocalGameState();
           render();
         }
       }
@@ -45807,22 +45879,19 @@ function setupWebSocketEvents() {
         render();
       }
     } else if (data.action === "cast_trap_sync") {
-      if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
-        const rIdx = window.XLW_ENEMY.hand.findIndex(c => c && (c.id === "R-NMG-0018" || c.id === "NMG-0018-2" || c.name?.includes("小陷阱")));
-        if (rIdx >= 0) {
-          const rCard = window.XLW_ENEMY.hand.splice(rIdx, 1)[0];
-          window.XLW_ENEMY.grave.push(rCard);
-          enemyGraveyard = window.XLW_ENEMY.grave;
-        } else {
-          window.XLW_ENEMY.hand.pop();
-        }
+      const trap = data.trapCard;
+      if (trap) {
+        window.XLWDuelConsistency.removeCard(window.XLW_ENEMY.hand || [], trap);
+        const grave = window.XLW_ENEMY.grave ||= xlwGravePile([], false);
+        if (!trap._xlwInstanceId || !grave.some(c => c?._xlwInstanceId === trap._xlwInstanceId)) grave.push(trap);
+        enemyGraveyard = grave;
       }
-      const tUnit = field[data.targetZone][data.targetIdx];
-      if (tUnit) {
-        logBattle(`✨ 對手從手牌發動了【小陷阱】，將我方場上的【${tUnit.card.name}】破壞！`);
+      const tUnit = field[data.targetZone]?.[data.targetIdx];
+      if (tUnit && (!data.targetInstanceId || tUnit.card?._xlwInstanceId === data.targetInstanceId)) {
+        logBattle("✨ 小陷阱 效果：對手破壞我方【" + tUnit.card.name + "】。");
         await destroyUnit(data.targetZone, data.targetIdx, "player", false);
-        render();
       }
+      render();
     } else if (data.action === "cast_ad_sync") {
       if (window.XLW_ENEMY.hand && window.XLW_ENEMY.hand.length > 0) {
         const rIdx = window.XLW_ENEMY.hand.findIndex(c => c && (c.id === "R-NMG-0034" || c.name?.includes("嚇人彈跳廣告")));
