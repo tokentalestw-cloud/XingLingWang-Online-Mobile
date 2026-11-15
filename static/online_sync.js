@@ -86,6 +86,11 @@
         if (latest) this.raw(latest);
       }, 1000);
     }
+    clearBackup() {
+      if (this.backupTimer !== null) clearTimeout(this.backupTimer);
+      this.backupTimer = null;
+      this.latestBackup = null;
+    }
     send(message) {
       if (message.action === 'leave_room') {
         message.message_id ||= global.crypto.randomUUID();
@@ -101,6 +106,7 @@
         return;
       }
       if (this.failed) throw new Error('Online synchronization is paused');
+      if (message.action === 'new_game') this.clearBackup();
       message.message_id ||= global.crypto.randomUUID();
       if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("send:entry",{action:message.action});
       if (this.pending.get(message.message_id) !== message) this.encodedPending.delete(message.message_id);
@@ -126,6 +132,7 @@
       }
     }
     attach(socket) {
+      this.clearBackup();
       this.socket = socket;
       this.originalSend = socket.send;
       this.ready = false;
@@ -144,6 +151,10 @@
         let data;
         try { data = JSON.parse(event.data); }
         catch (error) { this.stop(error); return; }
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          this.stop(new Error('收到無法辨識的同步訊息，請重新整理。'));
+          return;
+        }
         if (data.type === 'welcome') {
           if (data.sync_protocol !== 2) {
             this.stop(new Error('伺服器版本不同，請雙方重新整理後再連線。'));
@@ -159,7 +170,8 @@
           if (sent && ["end_turn","mulligan_confirm"].includes(sent.action)) global.XLWInputDiagnostics?.mark("wire:ack",{action:sent.action});
           this.pending.delete(data.message_id);
           this.lastAttempt.delete(data.message_id);
-          this.persistOutbox();
+          try { this.persistOutbox(); }
+          catch (_) { return; } // persistOutbox already pauses synchronization.
           return;
         }
         if (data.action === 'pong') { this.lastPong = Date.now(); return; }
@@ -227,9 +239,7 @@
     }
     stop(error) {
       if (this.failed) return;
-      if (this.backupTimer !== null) clearTimeout(this.backupTimer);
-      this.backupTimer = null;
-      this.latestBackup = null;
+      this.clearBackup();
       this.failed = true;
       this.ready = false;
       this.wireReady = false;

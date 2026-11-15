@@ -39,4 +39,27 @@ assert.equal(writes.at(-1)[1], '[]');
 const count = writes.length;
 socket.onmessage({ data: JSON.stringify({ type: 'delivery_ack', message_id: 'snapshot' }) });
 assert.equal(writes.length, count);
-console.log('8 immutable snapshot, single encoding, retry, ACK cleanup and duplicate ACK performance checks: PASS');
+sync.send({ action: 'backup_client_state', state: { turn: 1 } });
+assert.notEqual(sync.backupTimer, null);
+sync.attach({ readyState: 1, send() {} });
+assert.equal(sync.backupTimer, null);
+assert.equal(sync.latestBackup, null);
+sync.ready = true;
+sync.send({ action: 'backup_client_state', state: { turn: 2 } });
+sync.send({ action: 'new_game', message_id: 'restart' });
+assert.equal(sync.backupTimer, null);
+assert.equal(sync.latestBackup, null);
+
+const errors = [];
+const limitedStorage = { getItem: () => null, setItem() {} };
+const limited = new scope.XLWOnlineSync({
+  key: 'limited', storage: limitedStorage, process() {}, checkpoint() {}, fail: message => errors.push(message)
+});
+const limitedSocket = { readyState: 1, send() {} };
+limited.attach(limitedSocket);
+limited.send({ action: 'move_unit', message_id: 'queued' });
+limitedStorage.setItem = () => { throw new Error('quota'); };
+assert.doesNotThrow(() => limitedSocket.onmessage({data: '{"type":"delivery_ack","message_id":"queued"}'}));
+assert.equal(limited.failed, true);
+assert.equal(errors.length, 1);
+console.log('Transport checks: immutable outbox, ACK cleanup, backup reset and storage errors PASS');
