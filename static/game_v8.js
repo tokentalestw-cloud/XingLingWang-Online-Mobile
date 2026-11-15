@@ -910,11 +910,24 @@ function isAffectedByRottenGod(zone, idx) {
 window.isAffectedByRottenGod = isAffectedByRottenGod;
 
 // 全域禁錮判定函數 (僅限真正的禁錮效果：被土蜘蛛、長脖子的女人、沉思的男人、腐爛神、雪女、虎姑媽等效果禁錮)
+window.xlwIsOrcHound = card => Boolean(card && (card.id?.includes("ORC-0073") || card.name?.includes("獸人獵犬")));
+window.xlwOrcHoundTarget = (zone, idx) => {
+  const opponent = zone.startsWith("player_") ? "enemy_" : "player_";
+  return field[opponent + "front"]?.[idx] || field[opponent + "back"]?.[idx] || null;
+};
+
 function isUnitConfined(zone, idx) {
   const slot = field[zone]?.[idx];
   if (!slot) return false;
   
   if (slot.confined || xlwHasAngelSeason(zone, 4)) return true;
+  const houndSide = zone.startsWith("player_") ? "enemy_" : "player_";
+  if (["front", "back"].some(row => {
+    const sourceZone = houndSide + row;
+    const source = field[sourceZone]?.[idx];
+    return window.xlwIsOrcHound?.(source?.card) && !window.isUnitSilenced(source, sourceZone, idx) &&
+      window.xlwOrcHoundTarget(sourceZone, idx) === slot;
+  })) return true;
 
   const c = slot.card;
   if (!c) return false;
@@ -4792,6 +4805,12 @@ window.hasImmediateEffect = hasImmediateEffect;
 
 // ===== 綁架 (Kidnap) 機制輔助函式 =====
 async function cleanUnitLeavingField(unit, zone) {
+  if (unit?.xlwArmorBreakSwords?.length) {
+    const ownerGrave = zone.startsWith("player_") ? graveyard : (window.XLW_ENEMY.grave ||= xlwGravePile([], false));
+    for (const sword of unit.xlwArmorBreakSwords) ownerGrave.push(sword);
+    unit.xlwArmorBreakSwords = [];
+    unit.equipments = (unit.equipments || []).filter(eq => !String(eq).includes("破甲劍"));
+  }
   if (!unit || !unit.kidnappedCards || unit.kidnappedCards.length === 0) return;
 
   const kidnapperIsPlayer = zone.startsWith("player_");
@@ -7667,7 +7686,7 @@ function getUnitAtk(unit, zone, lane, isBeingAttacked = false) {
   if (unit.tempAtkBonus) baseAtk += unit.tempAtkBonus;
   if (unit.candySwordBonusTurn === turn && phase !== "結束階段") baseAtk += unit.candySwordBonus || 0;
 
-  return baseAtk + rainbowBonus;
+  return baseAtk + rainbowBonus - (unit.houndDebuff || 0);
 }
 
 // 單位星數分數 (加入加成)
@@ -7709,7 +7728,8 @@ function getUnitStars(unit, zone, lane) {
     const xVal = (mechCount + humanCount) - Math.abs(mechCount - humanCount);
     return Math.max(0, xVal) + Number(unit.bonusScore ?? 0);
   }
-  let baseStars = Number(c.score ?? c.stars ?? 0) + Number(unit.bonusScore ?? 0);
+  const isThinker = c.id?.includes("ART-0003") || /[沉沈]思的男人/.test(c.name || "");
+  let baseStars = (isThinker ? -2 : Number(c.score ?? c.stars ?? 0)) + Number(unit.bonusScore ?? 0);
 
   // 🎪 加油小丑 (CCS-0035): X = 你轉盤的數量
   if (c.id === "CCS-0035" || c.name?.includes("加油小丑")) {
@@ -8230,7 +8250,7 @@ function getUnitStars(unit, zone, lane) {
     }
   }
 
-  return Math.max(0, baseStars);
+  return isThinker ? baseStars : Math.max(0, baseStars);
 }
 
 function unitName(unit) {
@@ -10052,29 +10072,22 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
       }
     }
   });
-  enqueue("獸人獵犬", () => hasUnit("ORC-0073", "獸人獵犬") && field[oppSide + "front"].some(Boolean), async () => {
-    // I. C-ORC-0073 獸人獵犬
-    for (const z of [side + "front"]) {
-      for (let col = 0; col < 5; col++) {
-        const u = field[z]?.[col];
-        if (u && (u.card.id === "C-ORC-0073" || u.card.name?.includes("獸人獵犬"))) {
-          const frontOpp = field[oppSide + "front"]?.[col];
-          if (frontOpp && !frontOpp.isConfined) {
-            frontOpp.isConfined = true;
-            logBattle(`🐕【獸人獵犬】狂吠撲擊：敵方正前方【${frontOpp.card.name}】被禁錮！`);
-          }
-          if (isPlayer) {
-            const doSuicide = await showXLWConfirm("【獸人獵犬】捨身撕咬", "主要階段開始：是否使獸人獵犬自毀，使正前方敵方單位 -4 攻擊力直到下個敵方主要階段？");
-            if (doSuicide) {
-              await destroyUnit(z, col, "player", false);
-              const oppTarget = field[oppSide + "front"]?.[col] || field[oppSide + "back"]?.[col];
-              if (oppTarget) {
-                oppTarget.houndDebuff = (oppTarget.houndDebuff || 0) + 4;
-                logBattle(`🐕💥【獸人獵犬】烈性撕咬自毀：使正前方【${oppTarget.card.name}】攻擊力 -4！`);
-              }
-            }
-          }
-        }
+  enqueue("獸人獵犬", () => hasUnit("ORC-0073", "獸人獵犬") &&
+    rows.some(zone => field[zone].some((unit, idx) => window.xlwIsOrcHound(unit?.card) &&
+      !window.isUnitSilenced(unit, zone, idx) && window.xlwOrcHoundTarget(zone, idx))), async () => {
+    for (const zone of rows) {
+      for (let idx = 0; idx < field[zone].length; idx++) {
+        const hound = field[zone][idx];
+        if (!window.xlwIsOrcHound(hound?.card) || window.isUnitSilenced(hound, zone, idx)) continue;
+        const target = window.xlwOrcHoundTarget(zone, idx);
+        if (!target) continue;
+        const accepted = isPlayer && await showXLWConfirm("【獸人獵犬】捨身撕咬", "是否破壞獸人獵犬，使正前方的單位 -4 攻擊力直到敵方主要階段開始？");
+        if (!accepted || field[zone][idx] !== hound || window.xlwOrcHoundTarget(zone, idx) !== target) continue;
+        await destroyUnit(zone, idx, "player", false);
+        if (field[zone][idx] === hound || window.xlwOrcHoundTarget(zone, idx) !== target) continue;
+        target.houndDebuff = (target.houndDebuff || 0) + 4;
+        logBattle("🐕【獸人獵犬】效果：使正前方的【" + target.card.name + "】攻擊力 -4。");
+        render();
       }
     }
   });
@@ -10265,6 +10278,9 @@ window.xlwRunMainStart = async function(isPlayerSide) {
   const turnKey = isPlayer ? "XLW_playerMainStartTurn" : "XLW_enemyMainStartTurn";
   if (window[turnKey] === turn) return;
   window[turnKey] = turn;
+  for (const row of ["front", "back"]) {
+    for (const unit of field[side + row] || []) if (unit?.houndDebuff) delete unit.houndDebuff;
+  }
   const extra = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
   const liveUnits = predicate => [side + "front", side + "back"].flatMap(zone =>
     (field[zone] || []).filter((unit, idx) => unit?.card && predicate(unit) && !window.isUnitSilenced(unit, zone, idx)));
@@ -11886,6 +11902,56 @@ async function castSpellChain(spellCard, effectCallback) {
 }
 window.castSpellChain = castSpellChain;
 
+function xlwIsOrcCamp(card) {
+  return Boolean(card && (card.id?.includes("ORC-0065") || card.name?.includes("獸人傭兵營")));
+}
+
+async function xlwActivateOrcCamp(card) {
+  if (xlwRequireSpellCompletion()) return;
+  if (playerBonusScore < 1) {
+    setStatus("【獸人傭兵營】需要至少 1 點獎勵。");
+    return;
+  }
+  const raw = $("playerField")?.dataset.card;
+  const effectTurn = turn;
+  const choices = Array.from({length: Math.floor(playerBonusScore)}, (_, i) => ({
+    text: "獎勵 -" + (i + 1) + "★，獸人祭品 -" + (i + 1), value: i + 1
+  }));
+  const cost = await showXLWChoiceModal("【獸人傭兵營】", "選擇要支付的獎勵。", choices);
+  if (!Number.isInteger(cost) || cost < 1 || cost > playerBonusScore || !isMyTurn ||
+      turn !== effectTurn || phase !== "召喚階段" || !raw || $("playerField")?.dataset.card !== raw) return;
+  if (window.XLW_orcTributeDiscountTurn !== turn) window.XLW_orcTributeDiscount = 0;
+  window.XLW_orcTributeDiscountTurn = turn;
+  window.XLW_orcTributeDiscount += cost;
+  playerBonusScore -= cost;
+  xlwLogSharedCardEffect(card.name, "支付 " + cost + "★，本召喚階段手牌獸人所需祭品 -" + cost + "。", true);
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  render();
+}
+
+function xlwArmorSwordTargets() {
+  return ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit?.card && (unit.card.id?.includes("ORC") || unit.card.faction === "獸人" ||
+      unit.card.deck === "獸人" || unit.card.race === "獸人") ? [{zone, idx, unit}] : []));
+}
+
+async function xlwEquipArmorSword(spellCard) {
+  const targets = xlwArmorSwordTargets();
+  const choices = targets.map(({zone, idx, unit}, value) => ({
+    text: unit.card.name, value, boardTarget: {zone, idx}
+  }));
+  const pick = choices.length ? await showXLWChoiceModal("破甲劍", "點選要裝備破甲劍的我方獸人。", choices, {boardOnly: true}) : null;
+  const target = targets[pick];
+  if (!target || field[target.zone][target.idx] !== target.unit) {
+    graveyard.push(spellCard);
+    return;
+  }
+  (target.unit.xlwArmorBreakSwords ||= []).push(spellCard);
+  (target.unit.equipments ||= []).push(spellCard.name || "破甲劍");
+  xlwLogSharedCardEffect("破甲劍", "【" + target.unit.card.name + "】已裝備並獲得破甲。", true);
+  render();
+}
+
 async function xlwResolveSoftClocks() {
   const available = ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
     unit && (!unit.tapped || unit.attacking) ? [{zone, idx, unit}] : []));
@@ -12570,30 +12636,26 @@ async function castSpell(handIndex) {
       render();
     });
 
-  // 7. R-ORC-0072 破甲劍
-  } else if (card.id === "R-ORC-0072" || card.name?.includes("破甲劍")) {
+  } else if (card.id === "SR-ORC-0065" || card.name?.includes("獸人傭兵營")) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
-    await castSpellChain(spellCard, async () => {
-      const orcs = [];
-      for (const z of ["player_front", "player_back"]) {
-        (field[z] || []).forEach((u, i) => {
-          if (u && (u.card.faction === "獸人" || u.card.deck === "獸人" || u.card.id?.includes("ORC"))) {
-            orcs.push({ zone: z, idx: i, unit: u, name: u.card.name });
-          }
-        });
-      }
-      if (orcs.length > 0) {
-        const choices = orcs.map((o, i) => ({ text: `${o.name} (${o.zone.includes("front") ? "前排" : "後排"}${o.idx + 1})`, value: i }));
-        const pick = await showXLWChoiceModal("選擇裝備破甲劍的獸人", "請選擇賦予破甲的獸人單位：", choices);
-        if (pick !== null && pick !== undefined) {
-          orcs[pick].unit.armorBreak = true;
-          logBattle(`🗡️【破甲劍】重刃在手：【${orcs[pick].name}】被賦予【破甲】！`);
-        }
-      }
-      graveyard.push(spellCard);
+    await castSpellChain(spellCard, () => {
+      window.xlwSetFactionFieldCard(spellCard, true);
+      logBattle("🏕️【獸人傭兵營】效果：已放置於場地區。");
       render();
     });
+    return;
+
+  // 7. R-ORC-0072 破甲劍
+  } else if (card.id === "R-ORC-0072" || card.name?.includes("破甲劍")) {
+    if (!xlwArmorSwordTargets().length) {
+      setStatus("【破甲劍】我方場上沒有可裝備的獸人。");
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, () => xlwEquipArmorSword(spellCard));
+    return;
 
   // 8. R-CND-0072 枴杖糖寶劍
   } else if (card.id === "R-CND-0072" || card.name?.includes("枴杖糖寶劍")) {
@@ -17164,37 +17226,6 @@ async function castSpell(handIndex) {
         }
       } else {
         setStatus("我方場上無獸人單位可裝備【迴旋飛斧】！");
-        hand.splice(handIndex, 0, card);
-        render();
-        return;
-      }
-    } else if (card.id === "SR-ORC-0065" || card.name?.includes("獸人傭兵營")) {
-      if (phase !== "召喚階段") {
-        setStatus("【獸人傭兵營】只能在召喚階段發動！");
-        hand.splice(handIndex, 0, card);
-        render();
-        return;
-      }
-      if (playerBonusScore <= 0) {
-        setStatus("當前獎勵分數為 0，無法發動【獸人傭兵營】！");
-        hand.splice(handIndex, 0, card);
-        render();
-        return;
-      }
-      const choices = [];
-      for (let s = 1; s <= Math.min(playerBonusScore, 7); s++) {
-        choices.push({ text: `獎勵 -${s}★，手牌獸人單位所需祭品 -${s}`, value: s });
-      }
-      const pickedX = await showXLWChoiceModal("【獸人傭兵營】發動", "請選擇要消耗的獎勵分數以減免手牌獸人祭品：", choices);
-      if (pickedX !== null && pickedX !== undefined) {
-        playerBonusScore -= pickedX;
-        window.XLW_orcTributeDiscount = (window.XLW_orcTributeDiscount || 0) + pickedX;
-        graveyard.push(card);
-        logBattle(`🏕️【獸人傭兵營】發動：消耗 ${pickedX}★ 獎勵，本回合手牌獸人所需祭品 -${pickedX}！`);
-        renderScore();
-        if (isMultiplayer) sendFullGameStateToOpponent();
-        render();
-      } else {
         hand.splice(handIndex, 0, card);
         render();
         return;
@@ -29123,7 +29154,7 @@ function getCardTributeCost(card) {
   if (window.XLW_steamSupplyTributeDiscount && window.xlwIsSteamCard(card)) {
     trib = Math.max(0, trib - window.XLW_steamSupplyTributeDiscount);
   }
-  if (window.XLW_orcTributeDiscount && (card.faction === "獸人" || card.deck === "獸人" || card.id?.includes("ORC") || card.id?.includes("0RC"))) {
+  if (phase === "召喚階段" && isMyTurn && window.XLW_orcTributeDiscountTurn === turn && window.XLW_orcTributeDiscount && (card.faction === "獸人" || card.deck === "獸人" || card.id?.includes("ORC") || card.id?.includes("0RC"))) {
     trib = Math.max(0, trib - window.XLW_orcTributeDiscount);
   }
   const isArt = card.faction === "藝術品" || card.id?.includes("ART") || card.race?.includes("藝術品");
@@ -38596,6 +38627,7 @@ function renderField() {
             else if (eqName.includes("弓箭")) { icon = "🏹"; bonusText = "+1攻"; }
             else if (eqName.includes("戰斧牛排")) { icon = "🥩"; bonusText = "+5攻"; }
             else if (eqName.includes("狼牙棒")) { icon = "🔨"; bonusText = "增攻"; }
+            else if (eqName.includes("破甲劍")) { icon = "🗡️"; bonusText = "破甲"; }
             else if (eqName.includes("削弱藥水")) { icon = "🧪"; bonusText = "-3攻"; }
             else if (eqName.includes("振奮藥水")) { icon = "🧪"; bonusText = "+3攻"; }
             else if (eqName.includes("法術保護") || eqName.includes("符咒帽")) { icon = "🛡️"; bonusText = "魔抗"; }
@@ -43154,6 +43186,10 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
       div.innerHTML = `<img src="${card.image}"><div class="field-magic-title-fixed">${card.name}</div>`;
       div.onclick = async (e) => {
         e.stopPropagation();
+        if (xlwIsOrcCamp(card) && isMyTurn && phase === "召喚階段") {
+          await xlwActivateOrcCamp(card);
+          return;
+        }
         // 🍬 糖果城堡 升級為 水晶糖果城堡 (R-CND-0049) 檢測
         if ((card.id === "C-CND-0018" || card.name?.includes("糖果城堡")) && isMyTurn && phase === "主要階段") {
           let combinedDessertCount = 0;
@@ -43943,8 +43979,8 @@ function showModal(card, equipments, unitObj) {
       const baseAtk = Number(card.attack ?? card.atk ?? 0);
       const atkBonus = currentAtk - baseAtk;
 
-      const currentStars = hasUnitObj ? getUnitStars(unitObj) : Number(card.stars ?? card.star ?? 0);
-      const baseStars = Number(card.stars ?? card.star ?? 0);
+      const currentStars = hasUnitObj ? getUnitStars(unitObj) : Number(card.score ?? card.stars ?? card.star ?? 0);
+      const baseStars = Number(card.score ?? card.stars ?? card.star ?? 0);
       const starBonus = currentStars - baseStars;
 
       const isUnitCard = (card.type === "unit" || card.type === "單位" || typeof card.attack !== "undefined" || typeof card.atk !== "undefined");
@@ -51404,6 +51440,8 @@ function saveLocalGameState() {
       enemy_deckName: window.XLW_ENEMY && window.XLW_ENEMY.deckName ? window.XLW_ENEMY.deckName : "",
       gameInProgress: window.XLW_gameInProgress || false,
       XLW_playerTurnDrawnAt: window.XLW_playerTurnDrawnAt,
+      XLW_orcTributeDiscount: window.XLW_orcTributeDiscount,
+      XLW_orcTributeDiscountTurn: window.XLW_orcTributeDiscountTurn,
       XLW_playerMainStartTurn: window.XLW_playerMainStartTurn,
       XLW_enemyMainStartTurn: window.XLW_enemyMainStartTurn,
       XLW_playerAudienceTurn: window.XLW_playerAudienceTurn,
@@ -51495,6 +51533,8 @@ window.xlwApplySavedStateObject = function(s) {
     
     window.XLW_gameInProgress = typeof s.gameInProgress === 'boolean' ? s.gameInProgress : true;
     window.XLW_playerTurnDrawnAt=s.XLW_playerTurnDrawnAt;
+    window.XLW_orcTributeDiscount = s.XLW_orcTributeDiscount || 0;
+    window.XLW_orcTributeDiscountTurn = s.XLW_orcTributeDiscountTurn;
     window.XLW_playerMainStartTurn = s.XLW_playerMainStartTurn;
     window.XLW_enemyMainStartTurn = s.XLW_enemyMainStartTurn;
     window.XLW_playerAudienceTurn = s.XLW_playerAudienceTurn;

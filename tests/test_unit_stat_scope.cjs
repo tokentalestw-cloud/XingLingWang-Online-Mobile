@@ -36,6 +36,11 @@ module.exports = (async () => {
     g.field[zone][2] = u;
     assert.equal(g.getUnitAtk(u, zone, 2), 5);
     assert.equal(g.getUnitAtk(u), 5);
+    u.houndDebuff = 4;
+    assert.equal(g.getUnitAtk(u, zone, 2), 1);
+    delete u.houndDebuff;
+    assert.equal(g.getUnitStars(unit('R-ART-0003', '沉思的男人', 0, -2), zone, 2), -2);
+    tests += 2;
     tests += 2;
     Object.assign(u, {
       tempValuePunchBuff: 4, tempValuePunchExpireTurn: g.turn + 1,
