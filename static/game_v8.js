@@ -8298,8 +8298,11 @@ window.xlwSetFactionFieldCard = function(card, isPlayer = true) {
   if (!el || !card) return false;
   const previous = window.xlwGetFactionFieldCard(isPlayer);
   if (previous) {
-    if (isPlayer) graveyard.push(previous);
-    else { window.XLW_ENEMY.grave ||= xlwGravePile([], false); window.XLW_ENEMY.grave.push(previous); enemyGraveyard = window.XLW_ENEMY.grave; }
+    const sheltered = previous.id === "R-EWD-0062" ? previous.shelteredCards || [] : [];
+    delete previous.shelteredCards;
+    delete previous.caveUsedTurn;
+    if (isPlayer) graveyard.push(previous, ...sheltered);
+    else { window.XLW_ENEMY.grave ||= xlwGravePile([], false); window.XLW_ENEMY.grave.push(previous, ...sheltered); enemyGraveyard = window.XLW_ENEMY.grave; }
   }
   el.dataset.card = JSON.stringify({ ...structuredClone(card), art_subtype: "場地" });
   return true;
@@ -9786,27 +9789,26 @@ window.xlwCheckCandyAdvisorSwallow = async function(isPlayer) {
 // 15. SR-EWD-0065 格鬥專家野人: 進攻階段開始檢索武術牌
 window.xlwCheckFighterBarbarianAttackPhaseStart = async function(isPlayer) {
   const side = isPlayer ? "player_" : "enemy_";
-  for (const z of [side + "front", side + "back"]) {
-    const fighters = (field[z] || []).filter(u => u && (u.card.id === "SR-EWD-0065" || u.card.name?.includes("格鬥專家野人")) && !u.fighterUsedThisTurn);
-    for (const ft of fighters) {
-      const extraD = isPlayer ? playerExtraDeck : enemyExtraDeck;
-      const martialCards = extraD.filter(c => c && window.xlwIsUnitMartial(c));
-      if (martialCards.length > 0 && isPlayer) {
-        const doRetrieve = await showXLWConfirm("【格鬥專家野人】武術預備", "進攻階段開始！是否從額外區尋找 1 張武術牌加入手牌？");
-        if (doRetrieve) {
-          ft.fighterUsedThisTurn = true;
-          const choices = martialCards.map((c, i) => ({ text: c.name, value: i }));
-          const pick = await showXLWChoiceModal("選擇武術卡", "請選擇領悟的武術：", choices);
-          if (pick !== null && pick !== undefined) {
-            const chosen = martialCards[pick];
-            extraD.splice(extraD.indexOf(chosen), 1);
-            hand.push(chosen);
-            logBattle(`🥋🦴【格鬥專家野人】擺好拳架：從額外區將【${chosen.name}】加入手牌！`);
-            if (typeof render === "function") render();
-          }
-        }
-      }
-      break;
+  const extra = isPlayer ? playerExtraDeck : enemyExtraDeck;
+  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  if (!targetHand) return;
+  for (const zone of [side + "front", side + "back"]) {
+    for (const [idx, unit] of field[zone].entries()) {
+      const canSearch = () => field[zone][idx] === unit && unit?.card?.id === "SR-EWD-0065" &&
+        unit.fighterUsedTurn !== turn && !window.isUnitSilenced(unit, zone, idx);
+      if (!canSearch()) continue;
+      const cards = extra.filter(card => card?.type === "magic" && window.xlwIsUnitMartial(card));
+      if (!cards.length) return;
+      const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "進攻階段開始，可選一張武術牌加入手牌。", [
+        ...cards.map((card, value) => ({ card, text: card.name, value })),
+        { text: "不發動", value: -1 }
+      ]) : 0;
+      if (!cards[pick] || !canSearch()) continue;
+      const card = window.XLWDuelConsistency.takeKnownCard(extra, cards[pick]);
+      if (!card) continue;
+      unit.fighterUsedTurn = turn;
+      targetHand.push(card);
+      logBattle(`【${unit.card.name}】取得【${card.name}】。`);
     }
   }
 };
@@ -11575,15 +11577,7 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
     }
   }
 
-  // I. R-EWD-0062 野人獨旅洞穴: 在下個主要階段開始時使此卡下方所有的單位卡被召喚
-  if (window.XLW_caveShelteredUnits && window.XLW_caveShelteredUnits.length > 0) {
-    const toSummon = [...window.XLW_caveShelteredUnits];
-    window.XLW_caveShelteredUnits = [];
-    for (const unitCard of toSummon) {
-      await window.xlwSpecialSummonUnit(unitCard, isPlayer);
-      logBattle(`🏕️【野人獨旅洞穴】效果：獨旅結束，野人【${unitCard.name}】走出洞穴回到戰場！`);
-    }
-  }
+  await window.xlwReleaseSavageCave?.(isPlayer);
 
   if (typeof render === "function") render();
 };
@@ -11669,7 +11663,7 @@ window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
   // D. C-EWD-0063 學會自我灌溉的野人: 結束階段時, 使此單位被灌溉1
   for (const z of [side + "front", side + "back"]) {
     (field[z] || []).forEach((u, i) => {
-      if (u && (u.card.id === "C-EWD-0063" || u.card.name?.includes("學會自我灌溉的野人"))) {
+      if (u?.card?.id === "C-EWD-0063" && !window.isUnitSilenced(u, z, i)) {
         window.xlwIrrigateUnit(u, 1, z, i, "學會自我灌溉的野人");
       }
     });
@@ -24866,6 +24860,7 @@ async function changeActionPhase(targetPhase) {
       await window.xlwCheckTacticalPhaseTriggers("player");
     }
   } else if (phase === "進攻宣言") {
+    await window.xlwCheckFighterBarbarianAttackPhaseStart?.(true);
     setStatus("\u9032\u5165\u300c\u9032\u653b\u5ba3\u8a00\u300d\uff1a\u7cfb\u7d71\u6b63\u5728\u70ba\u6211\u65b9\u55ae\u4f4d\u81ea\u52d5\u5ba3\u544a\u9032\u653b\uff08\u8207\u5c0d\u624b\u9032\u653b\u6a21\u5f0f\u4e00\u81f4\uff09\u002e\u002e\u002e");
     if (tacticalSummonUsed || window.XLW_tacticalMoveUsed) {
       setStatus("請點選要進攻的飛天山羊，或其他可在佈陣後進攻的單位。");
@@ -35745,6 +35740,7 @@ async function runEnemyTurn() {
       if (opponentAttackCount > 0) {
         // ★ 選擇「進攻宣言」：只有選擇進攻，才不能再繼續進行單位召喚！
         phase = "進攻宣言";
+        await window.xlwCheckFighterBarbarianAttackPhaseStart?.(false);
         window.xlwShowPhaseBanner("進攻宣言", "#ef4444");
         window.XLW_DEFENSE_RULE.playerNeedsDefense = true;
         logBattle(`—— 對手選擇「進攻宣言」，已宣告 ${opponentAttackCount} 條星星戰線進攻（選擇進攻，無法再進行單位召喚，跳過戰術佈陣）。 ——`);
@@ -38048,6 +38044,48 @@ async function xlwResolveAbyssQueen(queen) {
   return true;
 }
 
+window.xlwReleaseSavageCave = async function(isPlayer) {
+  const node = document.getElementById(isPlayer ? "playerField" : "enemyField");
+  const read = () => window.xlwGetFactionFieldCard(isPlayer);
+  const cave = read();
+  if (cave?.id !== "R-EWD-0062" || !cave.shelteredCards?.length) return;
+  const cards = cave.shelteredCards;
+  for (const card of [...cards]) {
+    const prior = node.dataset.card;
+    const caveStillInPlay = () => node.dataset.card === prior;
+    const summoned = await window.xlwSpecialSummonUnit(card, isPlayer, {
+      frontPriority: false,
+      sourcePile: () => cards,
+      payCost: caveStillInPlay,
+      onSourceTaken: () => { node.dataset.card = JSON.stringify(cave); }
+    });
+    if (node.dataset.card !== (summoned ? JSON.stringify(cave) : prior)) break;
+  }
+};
+
+async function xlwShelterInSavageCave(node, card) {
+  if (!isMyTurn || !xlwEwdInMainPhase() || card.caveUsedTurn === turn) return false;
+  const targets = ["player_front", "player_back"].flatMap(zone => field[zone].flatMap((unit, idx) =>
+    unit?.tapped && !unit.attacking && window.xlwIsUnitBarbarian(unit) ? [{ unit, zone, idx }] : []));
+  if (!targets.length) return false;
+  const pick = await showXLWChoiceModal(card.name, "可點選一個橫放的野人放到洞穴下方。", targets.map((target, value) =>
+    ({ text: target.unit.card.name, value, boardTarget: { zone: target.zone, idx: target.idx } })), { boardOnly: true });
+  const target = targets[pick];
+  if (!target || !isMyTurn || !xlwEwdInMainPhase() ||
+      field[target.zone][target.idx] !== target.unit || !target.unit.tapped || target.unit.attacking) return false;
+  const cave = window.xlwGetFactionFieldCard(true);
+  if (cave?.id !== card.id || cave.caveUsedTurn === turn) return false;
+  cave.caveUsedTurn = turn;
+  (cave.shelteredCards ||= []).push(target.unit.card);
+  node.dataset.card = JSON.stringify(cave);
+  field[target.zone][target.idx] = null;
+  await cleanUnitLeavingField(target.unit, target.zone);
+  logBattle(`【${target.unit.card.name}】進入【${card.name}】。`);
+  render();
+  if (isMultiplayer) sendFullGameStateToOpponent();
+  return true;
+}
+
 window.xlwActivateSavageCraft = async function(unit, zone, idx) {
   const canActivate = () => isMyTurn && xlwEwdInMainPhase() &&
     field[zone]?.[idx] === unit && !unit.tapped && !unit.attacking &&
@@ -38592,33 +38630,7 @@ async function xlwResolveExpansionUnitClick(obj, zone, idx) {
       }
     }
 
-    if ((obj.card.id === "R-EWD-0062" || obj.card.name?.includes("野人獨旅洞穴")) && obj.caveUsedThisTurn !== turn) {
-      const tappedBarbarians = [];
-      for (const z of ["player_front", "player_back"]) {
-        (field[z] || []).forEach((u, i) => {
-          if (u && u !== obj && u.tapped && window.xlwIsUnitBarbarian && window.xlwIsUnitBarbarian(u)) {
-            tappedBarbarians.push({ zone: z, idx: i, unit: u });
-          }
-        });
-      }
-      if (tappedBarbarians.length > 0) {
-        const doShelter = await showXLWConfirm("【野人獨旅洞穴】獨旅庇護", `主要階段限一次！場上有 ${tappedBarbarians.length} 個橫放野人，是否將其置於洞穴下方庇護，下回合開始時回歸？`);
-        if (doShelter) {
-          obj.caveUsedThisTurn = turn;
-          const choices = tappedBarbarians.map((b, i) => ({ text: `${b.unit.card.name} (${b.zone.includes("front") ? "前排" : "後排"}${b.idx + 1})`, value: i }));
-          const pick = await showXLWChoiceModal("選擇進洞獨旅的野人", "請選擇：", choices);
-          if (pick !== null && pick !== undefined) {
-            const targetB = tappedBarbarians[pick];
-            window.XLW_caveShelteredUnits = window.XLW_caveShelteredUnits || [];
-            window.XLW_caveShelteredUnits.push(targetB.unit.card);
-            field[targetB.zone][targetB.idx] = null;
-            logBattle(`🏕️【野人獨旅洞穴】野人【${targetB.unit.card.name}】進入洞穴開始獨旅！`);
-            render();
-            return true;
-          }
-        }
-      }
-    }
+
   }
 
   return false;
@@ -43326,6 +43338,7 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
       div.innerHTML = `<img src="${card.image}"><div class="field-magic-title-fixed">${card.name}</div>`;
       div.onclick = async (e) => {
         e.stopPropagation();
+        if (card.id === "R-EWD-0062" && await xlwShelterInSavageCave(pf, card)) return;
         if (xlwIsOrcCamp(card) && isMyTurn && phase === "召喚階段") {
           await xlwActivateOrcCamp(card);
           return;
@@ -52911,6 +52924,7 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
       if (options.payCost && (!source?.includes(card) || !options.payCost())) return false;
       card = window.XLWDuelConsistency.takeKnownCard(source, card);
       if (!card) return false;
+      options.onSourceTaken?.();
     }
     field[slot.zone][slot.idx] = {
       card: structuredClone(card),

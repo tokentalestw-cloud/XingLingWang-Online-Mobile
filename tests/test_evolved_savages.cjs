@@ -118,3 +118,59 @@ test("three printed attack buffs are each consumed exactly once by the stat reso
     assert.equal(statResolver.split("baseAtk += unit." + property).length - 1, 1, property);
   }
 });
+
+test("a cave releases only its own side's cards and persists placement before summon reactions", async () => {
+  const cave = id => ({id: "R-EWD-0062", shelteredCards: [{id}]});
+  const playerField = {dataset: {card: JSON.stringify(cave("first"))}};
+  const enemyField = {dataset: {card: JSON.stringify(cave("second"))}};
+  const node = own => own ? playerField : enemyField;
+  let allow = false;
+  const context = vm.createContext({
+    document: {getElementById: id => node(id === "playerField")},
+    window: {
+      xlwGetFactionFieldCard: own => JSON.parse(node(own).dataset.card),
+      xlwSpecialSummonUnit: async (card, own, opts) => {
+        if (!allow) return false;
+        assert.ok(opts.payCost());
+        assert.equal(card.id, "second");
+        opts.sourcePile().pop();
+        opts.onSourceTaken();
+        assert.equal(JSON.parse(enemyField.dataset.card).shelteredCards.length, 0);
+        return true;
+      }
+    }
+  });
+  vm.runInContext(code("window.xlwReleaseSavageCave =", "async function xlwShelterInSavageCave"), context);
+  await context.window.xlwReleaseSavageCave(true);
+  allow = true;
+  await context.window.xlwReleaseSavageCave(false);
+  assert.equal(JSON.parse(playerField.dataset.card).shelteredCards[0].id, "first");
+  assert.equal(JSON.parse(enemyField.dataset.card).shelteredCards.length, 0);
+});
+
+test("fighter search can be declined and is allowed again in a later turn", async () => {
+  const unit = {card: {id: "SR-EWD-0065", name: "格鬥專家野人"}};
+  const cards = [
+    {type: "magic", id: "R-EWD-0068"},
+    {type: "magic", id: "R-EWD-0069"}
+  ];
+  const context = vm.createContext({
+    turn: 1, field: {player_front: [unit], player_back: []}, hand: [],
+    playerExtraDeck: [...cards], showXLWChoiceModal: async () => context.pick,
+    window: {xlwIsUnitMartial: () => true, isUnitSilenced: () => false, XLWDuelConsistency: {
+      takeKnownCard: (pile, card) => pile.splice(pile.indexOf(card), 1)[0]
+    }}, logBattle() {}
+  });
+  vm.runInContext(code("window.xlwCheckFighterBarbarianAttackPhaseStart =", "// 16. SR-GOT-0060"), context);
+  const search = context.window.xlwCheckFighterBarbarianAttackPhaseStart;
+  context.pick = -1;
+  await search(true);
+  assert.equal(context.hand.length, 0);
+  context.pick = 0;
+  await search(true);
+  await search(true);
+  assert.equal(context.hand.length, 1);
+  context.turn++;
+  await search(true);
+  assert.deepEqual(context.hand, cards);
+});
