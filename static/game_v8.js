@@ -11902,12 +11902,13 @@ function xlwAcceptSpellOwnerCollections(collections){
 // 魔法反制與連鎖連線輔助函式
 async function castSpellChain(spellCard, effectCallback) {
   // 對手反制判定 (單機 VS AI 模式與 multiplayer 連鎖反制機制統一整合)
-  spellChainStack = [{ card: spellCard, owner: "me" }];
+  spellChainStack = [{ card: spellCard, owner: "me", casterDefensePhase: phase === "防守階段" }];
   showSpellChainUI(spellChainStack);
 
   if (isMultiplayer) {
     ws.send(JSON.stringify({
       action: "spell_chain_start",
+      casterDefensePhase: spellChainStack[0].casterDefensePhase,
       ownerCollections: window.xlwSpellOwnerCollections?.(),
       card: spellCard
     }));
@@ -12052,6 +12053,17 @@ async function xlwResolveSavageCraftSpell(card) {
   (window.xlwCardHasKeyword(card, "消逝") ? playerExtraDeck : graveyard).push(card);
   render();
 }
+
+window.xlwCanTargetDefenseBuff = function(card, zone, idx) {
+  const unit = field[zone]?.[idx];
+  if (!unit?.card) return false;
+  const own = zone.startsWith("player_");
+  if (card.name?.includes("睡眠反擊拳")) {
+    return own && ["enemy_front", "enemy_back"].some(row =>
+      field[row].some(attack => attack?.attacking && attack.target?.zone === zone && attack.target.idx === idx));
+  }
+  return own || (!isUnitEffectImmune(unit, zone, idx) && !isUnitMagicImmune(unit, zone, idx, card));
+};
 
 async function castSpell(handIndex) {
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
@@ -14963,21 +14975,15 @@ async function castSpell(handIndex) {
     }
   }
 
-  const isTempEquipMagic = 
-    card.name.includes("削弱藥水") || card.id?.includes("0003") ||
-    card.name.includes("振奮藥水") || card.id?.includes("0002") ||
-    card.name.includes("塗毒") || card.id?.includes("0004") ||
-    card.name.includes("睡眠反擊拳") || card.id?.includes("0025");
+  const isTempEquipMagic = /削弱藥水|振奮藥水|塗毒|睡眠反擊拳/.test(card.name);
 
   if (isTempEquipMagic) {
     if (phase !== "防守階段") {
       setStatus(`【${card.name}】只能在防守階段使用！`);
       return;
     }
-    let hasAnyUnit = false;
-    for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-      if (field[zone].some(u => u !== null)) hasAnyUnit = true;
-    }
+    const hasAnyUnit = ["player_front", "player_back", "enemy_front", "enemy_back"].some(zone =>
+      field[zone].some((_, idx) => window.xlwCanTargetDefenseBuff(card, zone, idx)));
     if (!hasAnyUnit) {
       setStatus(`場上沒有任何單位可以施放【${card.name}】！`);
       return;
@@ -15022,12 +15028,13 @@ async function castSpell(handIndex) {
   await xlwShowSpellActivationOverlay(card, "player");
 
   // 對手反制判定 (單機 VS AI 模式與 multiplayer 連鎖反制機制統一整合)
-  spellChainStack = [{ card: card, owner: "me" }];
+  spellChainStack = [{ card: card, owner: "me", casterDefensePhase: phase === "防守階段" }];
   showSpellChainUI(spellChainStack);
 
   if (isMultiplayer) {
     ws.send(JSON.stringify({
       action: "spell_chain_start",
+      casterDefensePhase: spellChainStack[0].casterDefensePhase,
       ownerCollections: window.xlwSpellOwnerCollections?.(),
       card: card
     }));
@@ -16335,7 +16342,7 @@ async function castSpell(handIndex) {
       } else if (card.name.includes("塗毒")) {
         promptText = "請選擇場上一個單位，賦予劇毒。";
       } else if (card.name.includes("睡眠反擊拳")) {
-        promptText = "請選擇我方場上一個防守單位（橫置單位），賦予 +3 攻擊力直到本回合結束。";
+        promptText = "請選擇正在被敵方進攻的我方單位，賦予 +3 攻擊力直到本回合結束。";
       }
       if (typeof window.xlwShowSpellSuccessToast === "function") {
         window.xlwShowSpellSuccessToast(card, promptText);
@@ -33891,8 +33898,8 @@ function checkAiAttackFavorability(attacker, attZone, attIdx, defender, defZone,
 
 // 2. AI 主要/召喚階段發動魔法卡
 // Helper to handle AI spell casting with spell chain/counter checks
-async function aiCastSpell(spellCard, effectCallback) {
-  spellChainStack = [{ card: spellCard, owner: "opponent" }];
+async function aiCastSpell(spellCard, effectCallback, casterDefensePhase = false) {
+  spellChainStack = [{ card: spellCard, owner: "opponent", casterDefensePhase }];
   showSpellChainUI(spellChainStack);
   promptNextChainAction();
 
@@ -34626,19 +34633,24 @@ async function aiPlayMagicCardsSummonPhase() {
 // 3. AI 防守階段發動魔法卡以取得優勢
 async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, attacker, attZone) {
   if (isMultiplayer) return;
+  const castDefenseSpell = (card, apply) => aiCastSpell(card, apply, true);
   
   
-  let hand = window.XLW_ENEMY.hand;
+  const hand = window.XLW_ENEMY.hand;
+  const attackerPresent = () => attacker && field[attZone]?.[lane] === attacker && attacker.attacking;
+  const defenderPresent = () => defender && field[defZone]?.[defIdx] === defender;
 
   // (0-A) 公平之力 (BRV-0011)：若進攻單位攻擊力 != 目標防守攻擊力，轉正取消進攻
   const fairPowerIdx = hand.findIndex(c => c && (c.id?.includes("BRV-0011") || c.name?.includes("公平之力")));
-  if (fairPowerIdx >= 0 && attacker && !isUnitMagicImmune(attacker, attZone, lane)) {
+  if (fairPowerIdx >= 0 && attackerPresent() && defenderPresent() && !isUnitMagicImmune(attacker, attZone, lane)) {
     const attAtk = getUnitAtk(attacker, attZone, lane);
     const defAtk = defender ? getUnitAtk(defender, defZone, defIdx, true) : 0;
     if (attAtk !== defAtk) {
       const spellCard = hand.splice(fairPowerIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
-      await aiCastSpell(spellCard, async () => {
+      await castDefenseSpell(spellCard, async () => {
+        if (!attackerPresent() || !defenderPresent() || isUnitMagicImmune(attacker, attZone, lane, spellCard) ||
+            getUnitAtk(attacker, attZone, lane) === getUnitAtk(defender, defZone, defIdx, true)) return;
         attacker.attacking = false;
         attacker.tapped = false;
         attacker.attackTapped = false;
@@ -34660,9 +34672,14 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
     if (impIdx >= 0 && emptySlots.length > 0) {
       const spellCard = hand.splice(scapegoatIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
-      await aiCastSpell(spellCard, async () => {
-        const impCard = enemyExtra.splice(impIdx, 1)[0];
-        const chosenSlot = emptySlots.find(s => s.zone === "enemy_front") || emptySlots[0];
+      const imp = enemyExtra[impIdx];
+      await castDefenseSpell(spellCard, async () => {
+        if (!attackerPresent()) return;
+        const slots = window.xlwGetEmptyEnemySlots();
+        const chosenSlot = slots.find(s => s.zone === "enemy_front") || slots[0];
+        if (!chosenSlot || field[chosenSlot.zone][chosenSlot.idx]) return;
+        const impCard = window.XLWDuelConsistency.takeKnownCard(enemyExtra, imp);
+        if (!impCard) return;
         field[chosenSlot.zone][chosenSlot.idx] = {
           card: impCard,
           tapped: false,
@@ -34689,7 +34706,8 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
     if (attAtk >= defAtk) {
       const spellCard = hand.splice(armorPotIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
-      await aiCastSpell(spellCard, async () => {
+      await castDefenseSpell(spellCard, async () => {
+        if (!defenderPresent()) return;
         defender.hasArmorPotionBlocker = true;
         defender.armorPotionBlockerExpiresTurn = turn + 1;
         logBattle(`✨ 對手 AI 發動了【護甲藥水】！使其防守單位 ${defender.card.name} 獲得【阻擋】！`);
@@ -34708,7 +34726,8 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
     if (attAtk >= defAtk && defAtk + 2 >= attAtk) {
       const spellCard = hand.splice(ampPotIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
-      await aiCastSpell(spellCard, async () => {
+      await castDefenseSpell(spellCard, async () => {
+        if (!defenderPresent()) return;
         defender.tempAmpPotionBuff = (defender.tempAmpPotionBuff || 0) + 2;
         defender.ampPotionExpiresTurn = turn + 2;
         logBattle(`✨ 對手 AI 發動了【增幅藥水】！使其防守單位 ${defender.card.name} 攻擊力 +2！`);
@@ -34725,7 +34744,8 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
     const spellCard = hand.splice(weakenIdx, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "enemy");
     
-    await aiCastSpell(spellCard, async () => {
+    await castDefenseSpell(spellCard, async () => {
+      if (!attackerPresent() || isUnitMagicImmune(attacker, attZone, lane, spellCard)) return;
       attacker.equipments = attacker.equipments || [];
       if (!attacker.equipments.includes("削弱藥水(-3)")) {
         attacker.equipments.push("削弱藥水(-3)");
@@ -34748,10 +34768,12 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
       const spellCard = hand.splice(sleepIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
       
-      await aiCastSpell(spellCard, async () => {
-        defender.atkModifier = (defender.atkModifier || 0) + 3;
-        defender.equipments = defender.equipments || [];
-        defender.equipments.push("睡眠反擊拳(+3)");
+      await castDefenseSpell(spellCard, async () => {
+        if (!defenderPresent()) return;
+        const label = "睡眠反擊拳(+3)";
+        defender.equipments ||= [];
+        if (!defender.equipments.includes(label)) defender.equipments.push(label);
+        (defender.tempEquips ||= {})[label] = turn;
         logBattle(`✨ 對手 AI 從手牌發動了【睡眠反擊拳】！使其防守單位 ${defender.card.name} 攻擊力 +3！`);
         render();
         await sleep(650);
@@ -34768,7 +34790,8 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
       const spellCard = hand.splice(goatIdx, 1)[0];
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
       
-      await aiCastSpell(spellCard, async () => {
+      await castDefenseSpell(spellCard, async () => {
+        if (!attackerPresent() || isUnitMagicImmune(attacker, attZone, lane, spellCard) || window.xlwIsGoatBlocked(false)) return;
         logBattle(`✨ 對手 AI 從手牌發動了【山羊術】！將我方進攻單位 ${attacker.card.name} 變為山羊！`);
         
         graveyard.push(attacker.card);
@@ -34821,9 +34844,12 @@ async function aiPlayMagicCardsDefensePhase(lane, defender, defZone, defIdx, att
         const spellCard = hand.splice(bullyIdx, 1)[0];
         await xlwShowSpellActivationOverlay(spellCard, "enemy");
         
-        await aiCastSpell(spellCard, async () => {
-          enemyBonusScore += X;
-          logBattle(`✨ 對手 AI 從手牌發動了【以小欺大】！對手額外獲得與我方攻擊力差額 ${X}★ 的分數！`);
+        await castDefenseSpell(spellCard, async () => {
+          if (!defenderPresent() || !attackerPresent() || !isDemon(defender)) return;
+          const finalReward = getUnitAtk(attacker, attZone, lane) - getUnitAtk(defender, defZone, defIdx);
+          if (finalReward <= 0) return;
+          enemyBonusScore += finalReward;
+          logBattle(`✨ 對手 AI 從手牌發動了【以小欺大】！對手額外獲得與我方攻擊力差額 ${finalReward}★ 的分數！`);
           renderScore();
           render();
           await sleep(650);
@@ -39107,26 +39133,11 @@ function renderField() {
           if (window.XLW_tempEquipSpellActive) {
             const spellCard = window.XLW_tempEquipSpellCard;
 
-            if (spellCard.name.includes("睡眠反擊拳") || spellCard.id?.includes("0025")) {
-              if (!zone.startsWith("player_")) {
-                setStatus("【睡眠反擊拳】只能施加在我方場上的單位！");
-                return;
-              }
-            }
-
-            if (zone.startsWith("enemy_")) {
-              if (isUnitEffectImmune(obj, zone, idx)) {
-                setStatus(`${obj.card.name} 具有效果免疫保護，無法被選為效果或魔法目標！`);
-                return;
-              }
-              if (isUnitMagicImmune(obj, zone, idx)) {
-                if (obj.card && (obj.card.id === "R-ORC-0029" || obj.card.name?.includes("符咒獸人"))) {
-                  setStatus("【符咒獸人】不會被對手的魔法卡指定！");
-                } else {
-                  setStatus("該單位具有魔法免疫，無法被魔法指定！");
-                }
-                return;
-              }
+            if (!window.xlwCanTargetDefenseBuff(spellCard, zone, idx)) {
+              setStatus(spellCard.name.includes("睡眠反擊拳")
+                ? "【睡眠反擊拳】請選擇正在被敵方進攻的我方單位。"
+                : "該單位受到敵方魔法或效果抗性保護。");
+              return;
             }
 
             if (!obj.equipments) obj.equipments = [];
@@ -39134,14 +39145,14 @@ function renderField() {
             if (!obj.equipments.includes(spellNameClean)) {
               obj.equipments.push(spellNameClean);
             }
-            if (spellNameClean.includes("塗毒") || spellCard.id?.includes("0004")) {
+            if (spellNameClean.includes("塗毒")) {
               obj.hasPoison = true;
             }
 
             if (!obj.tempEquips) obj.tempEquips = {};
-            if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || spellCard.id?.includes("0003") || spellCard.id?.includes("0025")) {
+            if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳")) {
               obj.tempEquips[spellNameClean] = turn;
-            } else if (spellNameClean.includes("振奮藥水") || spellCard.id?.includes("0002")) {
+            } else if (spellNameClean.includes("振奮藥水")) {
               obj.tempEquips[spellNameClean] = turn + 1;
             }
 
@@ -39153,6 +39164,9 @@ function renderField() {
                 zone: zone,
                 idx: idx,
                 spellCard: spellCard,
+                targetCardId: obj.card.id,
+                targetInstanceId: obj.card._xlwInstanceId,
+                targetSummonedTurn: obj.summonedTurn,
                 currentTurn: turn
               }));
               sendFullGameStateToOpponent();
@@ -45333,15 +45347,16 @@ function setupWebSocketEvents() {
     } else if (data.action === "samurai_recover_result") {
       const resolve=window.XLW_samuraiRecoveryWaiters?.get(data.requestId);if(resolve){window.XLW_samuraiRecoveryWaiters.delete(data.requestId);resolve(data.card||null);}
     } else if (data.action === "spell_chain_start") {
+      if (!data.card?.id) return;
       void xlwShowSpellActivationOverlay(data.card, "enemy");
-      spellChainStack = [{ card: data.card, owner: "opponent" }];
+      spellChainStack = [{ card: data.card, owner: "opponent", casterDefensePhase: data.casterDefensePhase === true }];
       if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
     } else if (data.action === "spell_chain_add") {
       if (!spellChainStack.length || !data.card?.id) return;
       void xlwShowSpellActivationOverlay(data.card, "enemy");
-      spellChainStack.push({ card: data.card, owner: "opponent" });
+      spellChainStack.push({ card: data.card, owner: "opponent", casterDefensePhase: data.casterDefensePhase === true });
       if(!window.xlwAcceptSpellOwnerCollections?.(data.ownerCollections))window.XLWDuelConsistency?.removeCard(window.XLW_ENEMY.hand,data.card);
       showSpellChainUI(spellChainStack);
       promptNextChainAction();
@@ -46114,19 +46129,24 @@ function setupWebSocketEvents() {
     } else if (data.action === "temp_equip_spell_resolved") {
       const resolvedZone = data.zone; // The server already flipped this coordinate.
       const targetUnit = field[resolvedZone]?.[data.idx];
-      if (targetUnit) {
+      const spellNameClean = data.spellCard?.name;
+      if (targetUnit?.card && /削弱藥水|振奮藥水|塗毒|睡眠反擊拳/.test(spellNameClean || "") &&
+          (!data.targetCardId || data.targetCardId === targetUnit.card.id) &&
+          (!data.targetInstanceId || data.targetInstanceId === targetUnit.card._xlwInstanceId) &&
+          (data.targetSummonedTurn == null || data.targetSummonedTurn === targetUnit.summonedTurn) &&
+          Number.isInteger(data.currentTurn) &&
+          (spellNameClean.includes("塗毒") || data.currentTurn + Number(spellNameClean.includes("振奮藥水")) >= turn)) {
         if (!targetUnit.equipments) targetUnit.equipments = [];
-        const spellNameClean = data.spellCard.name;
         if (!targetUnit.equipments.includes(spellNameClean)) {
           targetUnit.equipments.push(spellNameClean);
         }
-        if (spellNameClean.includes("塗毒") || data.spellCard.id?.includes("0004")) {
+        if (spellNameClean.includes("塗毒")) {
           targetUnit.hasPoison = true;
         }
         if (!targetUnit.tempEquips) targetUnit.tempEquips = {};
-        if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳") || data.spellCard.id?.includes("0003") || data.spellCard.id?.includes("0025")) {
+        if (spellNameClean.includes("削弱藥水") || spellNameClean.includes("睡眠反擊拳")) {
           targetUnit.tempEquips[spellNameClean] = data.currentTurn;
-        } else if (spellNameClean.includes("振奮藥水") || data.spellCard.id?.includes("0002")) {
+        } else if (spellNameClean.includes("振奮藥水")) {
           targetUnit.tempEquips[spellNameClean] = data.currentTurn + 1;
         }
         logBattle(`✨ 對手發動魔法 ${spellNameClean}：賦予場上 ${targetUnit.card?.name || "單位"} 該效果作為臨時裝備。`);
@@ -50197,7 +50217,7 @@ async function aiRespondToSpellChain() {
     if (!c) return false;
     const name = c.name || "";
     const cid = c.id || "";
-    return name.includes("魔法炸彈客") || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(cid) || cid === "NEU-0025";
+    return name.includes("魔法炸彈客") || /(?:^|-)NMS-0025(?:-|$)/.test(cid) || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(cid);
   });
   const isAITurnForChain = !isMyTurn && (spellChainStack.length > 0 && spellChainStack[0].owner === "opponent");
   const counterCard = aiHand.find(c => {
@@ -50212,9 +50232,9 @@ async function aiRespondToSpellChain() {
       if (!isAITurnForChain) return false;
       return true;
     }
+    if (name.includes("法術解析") || cid.includes("NMG-0039")) return lastItem.casterDefensePhase === true;
     return name.includes("魔法反制") || cid.includes("NMG-0020") ||
-           name.includes("終極無效化") || cid.includes("NMG-0026") ||
-           name.includes("法術解析") || cid.includes("NMG-0039");
+           name.includes("終極無效化") || cid.includes("NMG-0026");
   });
 
   const aiMushroomUnits = [];
@@ -50240,7 +50260,7 @@ async function aiRespondToSpellChain() {
     const idx = aiHand.indexOf(counterCard);
     aiHand.splice(idx, 1);
     logBattle(`對手 AI 從手牌連鎖發動了 ${counterCard.name}！`);
-    spellChainStack.push({ card: counterCard, owner: "opponent" });
+    spellChainStack.push({ card: counterCard, owner: "opponent", casterDefensePhase: false });
     showSpellChainUI(spellChainStack);
     promptNextChainAction();
   } else if (aiMushroomUnits.length > 0 && Math.random() < 0.5) {
@@ -50320,13 +50340,13 @@ function promptNextChainAction() {
         const reqEnergy = hasMerchant ? 2 : 4;
         return window.xlwGetSteamEnergy(true) >= reqEnergy;
       }
-      if (name.includes("魔法炸彈客") || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(cid) || cid === "NEU-0025") {
+      if (name.includes("魔法炸彈客") || /(?:^|-)NMS-0025(?:-|$)/.test(cid) || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(cid)) {
         const top = deck.at(-1);
         return Boolean(top?.id && top?.name);
       }
+      if (name.includes("法術解析") || cid.includes("NMG-0039")) return lastItem.casterDefensePhase === true;
       return name.includes("魔法反制") || cid.includes("NMG-0020") ||
-             name.includes("終極無效化") || cid.includes("NMG-0026") ||
-             name.includes("法術解析") || cid.includes("NMG-0039");
+             name.includes("終極無效化") || cid.includes("NMG-0026");
     });
 
     // ⭕ SSR-CCS-0037 圈圈魔法師 小圓: 敵方使用魔法時限一次，轉盤>=3則輪轉1次，若轉盤數量>該魔法法力值則無效化該卡，開盤效果無效
@@ -50368,7 +50388,7 @@ function promptNextChainAction() {
         counterBtn.onclick = async () => {
           if(!takeDecision())return;
           const handIndex = hand.findIndex(card => card === c || (c._xlwInstanceId && card?._xlwInstanceId === c._xlwInstanceId));
-          const isBomber = c.name?.includes("魔法炸彈客") || c.id === "NEU-0025" || /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(c.id || "");
+          const isBomber = c.name?.includes("魔法炸彈客") || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(c.id) || /(?:^|-)NMS-0025(?:-|$)/.test(c.id || "");
           if (handIndex < 0 || (isBomber && !deck.at(-1)?.id)) {
             promptNextChainAction();
             return;
@@ -50387,13 +50407,14 @@ function promptNextChainAction() {
           }
 
           const used = hand.splice(handIndex, 1)[0];
-          const addedItem = {card: used, owner: "me"};
+          const addedItem = {card: used, owner: "me", casterDefensePhase: phase === "防守階段"};
           spellChainStack.push(addedItem);
 
           // Sync with opponent immediately
           if (isMultiplayer && ws) {
             ws.send(JSON.stringify({
               action: "spell_chain_add",
+              casterDefensePhase: addedItem.casterDefensePhase,
               ownerCollections: window.xlwSpellOwnerCollections?.(),
               card: used
             }));
@@ -50568,8 +50589,8 @@ function resolveLocalSpellChain() {
   const resolved = new Array(spellChainStack.length).fill(true);
   const unpaidBombs = new Set();
   const bombCosts = new Map();
-  const bomb = card => card?.name?.includes("魔法炸彈客") || card?.id === "NEU-0025" ||
-    /(?:^|-)(?:NMS|NMG)-0025(?:-|$)/.test(card?.id || "");
+  const bomb = card => card?.name?.includes("魔法炸彈客") || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(card?.id) ||
+    /(?:^|-)NMS-0025(?:-|$)/.test(card?.id || "");
   const deckPositions = {me: deck.length - 1, opponent: (window.XLW_ENEMY?.deck?.length || 0) - 1};
   for (let i = spellChainStack.length - 1; i >= 1; i--) {
     if (resolved[i]) {
@@ -50593,6 +50614,8 @@ function resolveLocalSpellChain() {
           resolved[i - 1] = false;
           continue;
         }
+        const isSpellAnalysis = counteringCard.name?.includes("法術解析") || counteringCard.id?.includes("NMG-0039");
+        if (isSpellAnalysis && (spellChainStack[i - 1].casterDefensePhase !== true || targetCard.type !== "magic")) continue;
         const isRoar = counteringCard.name?.includes("怒吼") || counteringCard.id === "R-ORC-0036";
         if (isRoar) {
           if (targetCard.type !== "magic" || Number(targetCard.mana || 0) < 1) continue;

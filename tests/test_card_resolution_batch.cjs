@@ -523,3 +523,175 @@ test("a delayed roar cannot return a unit effect to hand", () => {
   assert.equal(c.result.countered, false);
   assert.deepEqual(c.hand, []);
 });
+
+test("Spell Analysis is offered only if its immediate target was cast in defense", () => {
+  const {c, item, button} = counterPromptFixture();
+  c.hand.push({id: "SSSR-NMG-0039", name: "法術解析", type: "magic"});
+  for (const castInDefense of [undefined, false, true]) {
+    item.casterDefensePhase = castInDefense;
+    c.promptNextChainAction();
+    assert.equal(Boolean(button("法術解析")), castInDefense === true);
+  }
+});
+
+test("Spell Analysis adjudicates the preceding link, not the root spell's phase", () => {
+  for (const defensePhase of [false, true]) {
+    const {c} = chainFixture(null);
+    const original = c.spellChainStack[0];
+    original.casterDefensePhase = !defensePhase;
+    const counter = {id: "NMG-0020", name: "魔法反制", type: "magic", mana: 1};
+    c.spellChainStack[1].card = counter;
+    c.spellChainStack[1].casterDefensePhase = defensePhase;
+    c.spellChainStack.push({card: {id: "SSSR-NMG-0039", name: "法術解析", type: "magic"}, owner: "me"});
+    c.resolveLocalSpellChain();
+    assert.equal(c.result.countered, !defensePhase);
+  }
+});
+
+test("Spell Analysis cannot negate a unit effect even with the defense timestamp", () => {
+  const {c, spell} = chainFixture(null);
+  spell.type = "unit";
+  c.spellChainStack[0].casterDefensePhase = true;
+  c.spellChainStack[1].card = {id: "SSSR-NMG-0039", name: "法術解析", type: "magic"};
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, false);
+});
+
+test("sleep counterpunch is never offered as a bomber counter", () => {
+  const {c, button} = counterPromptFixture();
+  c.hand.push({id: "R-NMG-0025", name: "睡眠反擊拳", type: "magic"});
+  c.deck.push({id: "top", name: "牌庫頂"});
+  c.promptNextChainAction();
+  assert.equal(button("睡眠反擊拳"), undefined);
+});
+
+test("a special bomber variant applies costs even if the display name changes", () => {
+  const top = {id: "top", name: "牌庫頂"};
+  const {c, spell, bomb} = chainFixture(top, "SSR-NMG-0025-特殊");
+  bomb.name = "本地化顯示名稱";
+  c.resolveLocalSpellChain();
+  assert.equal(c.result.countered, true);
+  assert.deepEqual(c.exiled.player, [spell]);
+  assert.deepEqual(c.exiled.enemy, [top, bomb]);
+});
+
+function aiDefenseFixture(cardId, cardName) {
+  const c = fixture();
+  const attacker = unit("attacker", {attacking: true, tapped: true, attack: 6, target: {zone: "enemy_front", idx: 0}});
+  const defender = unit("defender", {attack: 4});
+  const spell = {id: cardId, name: cardName, type: "magic"};
+  c.window.XLW_ENEMY.hand.push(spell);
+  c.window.XLW_isShieldUnit = () => false;
+  c.getUnitAtk = u => u.attack;
+  c.xlwShowSpellActivationOverlay = async () => {};
+  c.sleep = async () => {};
+  c.field.player_front[0] = attacker;
+  c.field.enemy_front[0] = defender;
+  vm.runInContext(slice("async function aiPlayMagicCardsDefensePhase(", "// 4. AI 戰術佈陣"), c);
+  return {c, attacker, defender, run: () => c.aiPlayMagicCardsDefensePhase(0, defender, "enemy_front", 0, attacker, "player_front")};
+}
+
+test("AI sleep counterpunch adds one temporary bonus and no permanent attack modifier", async () => {
+  const {c, defender, run} = aiDefenseFixture("R-NMG-0025", "睡眠反擊拳");
+  await run();
+  assert.deepEqual([...defender.equipments], ["睡眠反擊拳(+3)"]);
+  assert.equal(defender.atkModifier, undefined);
+  assert.equal(defender.tempEquips["睡眠反擊拳(+3)"], c.turn);
+});
+
+test("AI Fair Power cannot ready an attacker after the defender leaves", async () => {
+  const {c, attacker, run} = aiDefenseFixture("BRV-0011", "公平之力");
+  c.aiCastSpell = async (_, apply, defense) => {
+    assert.equal(defense, true);
+    c.field.enemy_front[0] = null;
+    await apply();
+  };
+  await run();
+  assert.equal(attacker.attacking, true);
+  assert.equal(attacker.tapped, true);
+});
+
+test("AI protection and buff spells do not mutate a defender whose slot was replaced", async () => {
+  for (const [id, name, property] of [
+    ["BRV-0037", "護甲藥水", "hasArmorPotionBlocker"],
+    ["BRV-0038", "增幅藥水", "tempAmpPotionBuff"],
+    ["R-NMG-0025", "睡眠反擊拳", "tempEquips"]
+  ]) {
+    const {c, defender, run} = aiDefenseFixture(id, name);
+    c.aiCastSpell = async (_, apply) => {
+      c.field.enemy_front[0] = unit("replacement");
+      await apply();
+    };
+    await run();
+    assert.equal(defender[property], undefined, name);
+    assert.equal(c.field.enemy_front[0][property], undefined, name);
+  }
+});
+
+test("AI scapegoat leaves the imp in extra when the destination becomes full", async () => {
+  const {c, attacker, run} = aiDefenseFixture("BRV-0032", "替罪小魔");
+  const imp = {id: "BRV-0002", name: "金幣小魔"};
+  c.enemyExtraDeck.push(imp);
+  c.window.xlwGetEmptyEnemySlots = () => [{zone: "enemy_front", idx: 1}];
+  c.aiCastSpell = async (_, apply) => {
+    c.field.enemy_front[1] = unit("blocker");
+    c.window.xlwGetEmptyEnemySlots = () => [];
+    await apply();
+  };
+  await run();
+  assert.deepEqual(c.enemyExtraDeck, [imp]);
+  assert.equal(attacker.target.idx, 0);
+  assert.equal(c.field.enemy_front[1].card.id, "blocker");
+});
+
+test("sleep counterpunch targets the defending unit, not another tapped ally", () => {
+  const c = fixture();
+  c.field.player_front[0] = unit("defender");
+  c.field.player_front[1] = unit("other", {tapped: true});
+  c.field.enemy_front[0] = unit("attacker", {attacking: true, target: {zone: "player_front", idx: 0}});
+  vm.runInContext(slice("window.xlwCanTargetDefenseBuff =", "async function castSpell(handIndex)"), c);
+  const spell = {name: "睡眠反擊拳"};
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "player_front", 0), true);
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "player_front", 1), false);
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "enemy_front", 0), false);
+});
+
+test("immune units do not count as eligible enemy targets for a potion", () => {
+  const c = fixture();
+  c.isUnitEffectImmune = unit => Boolean(unit.immune);
+  c.field.enemy_front[0] = unit("magic-immune", {magicImmune: true});
+  c.field.enemy_front[1] = unit("effect-immune", {immune: true});
+  c.field.player_front[0] = unit("friendly", {magicImmune: true});
+  vm.runInContext(slice("window.xlwCanTargetDefenseBuff =", "async function castSpell(handIndex)"), c);
+  const spell = {name: "削弱藥水"};
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "enemy_front", 0), false);
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "enemy_front", 1), false);
+  assert.equal(c.window.xlwCanTargetDefenseBuff(spell, "player_front", 0), true);
+});
+
+test("AI weakening potion leaves the attacker alone if it gains magic resistance during the chain", async () => {
+  const {c, attacker, run} = aiDefenseFixture("NMG-0003", "削弱藥水");
+  c.aiCastSpell = async (_, apply) => { attacker.magicImmune = true; await apply(); };
+  await run();
+  assert.equal(attacker.equipments, undefined);
+});
+
+test("AI goat magic does not overwrite an attacker replaced during a chain", async () => {
+  const {c, run} = aiDefenseFixture("SSR-NMG-0012", "山羊術");
+  const replacement = unit("replacement");
+  c.window.xlwIsGoatBlocked = () => false;
+  c.aiCastSpell = async (_, apply) => { c.field.player_front[0] = replacement; await apply(); };
+  await run();
+  assert.equal(c.field.player_front[0], replacement);
+  assert.equal(c.graveyard.length, 0);
+});
+
+test("AI attacking-power reward uses the resolved difference after a chain response", async () => {
+  const {c, attacker, defender, run} = aiDefenseFixture("R-BRV-0049", "以小欺大");
+  defender.card.art_subtype = "魔族";
+  c.enemyBonusScore = 0;
+  c.renderScore = () => {};
+  c.aiCastSpell = async (_, apply) => { attacker.attack = 5; await apply(); };
+  await run();
+  assert.equal(c.enemyBonusScore, 1);
+});

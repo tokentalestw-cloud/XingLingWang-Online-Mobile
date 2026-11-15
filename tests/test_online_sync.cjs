@@ -162,8 +162,22 @@ module.exports = (async () => {
   // Coordinates for temporary equipment have already been flipped by the server.
   game.field.enemy_back[1] = { card: { name: 'target' } };
   await game.ws.onmessage({ data: JSON.stringify({ action: 'temp_equip_spell_resolved', zone: 'enemy_back', idx: 1,
-    spellCard: { name: 'test', id: 'test' }, currentTurn: 4 }) });
-  assert.equal(game.field.enemy_back[1].equipments[0], 'test'); tests++;
+    spellCard: { name: '塗毒', id: 'NMG-0004' }, currentTurn: 4 }) });
+  assert.equal(game.field.enemy_back[1].equipments[0], '塗毒'); tests++;
+  const replacement = { card: {name: 'replacement', id: 'new', _xlwInstanceId: 'new-1'}, summonedTurn: 4 };
+  game.field.enemy_back[1] = replacement;
+  for (const target of [
+    {targetCardId: 'old'},
+    {targetCardId: 'new', targetInstanceId: 'previous-copy'},
+    {targetCardId: 'new', targetInstanceId: 'new-1', targetSummonedTurn: 3}
+  ]) {
+    await game.ws.onmessage({ data: JSON.stringify({ action: 'temp_equip_spell_resolved', zone: 'enemy_back', idx: 1,
+      spellCard: {name: '塗毒', id: 'NMG-0004'}, currentTurn: 4, ...target }) });
+    assert.equal(replacement.equipments, undefined); tests++;
+  }
+  await game.ws.onmessage({ data: JSON.stringify({ action: 'temp_equip_spell_resolved', zone: 'enemy_back', idx: 1,
+    spellCard: {id: 'bad'}, currentTurn: 4 }) });
+  assert.equal(replacement.equipments, undefined); tests++;
   // A second error/close notification must not cancel the only reconnect timer.
   const reconnectStart = gameSource.indexOf('function reconnectWebSocket(immediate = false) {');
   const reconnectEnd = gameSource.indexOf('// ===== 23.1', reconnectStart);

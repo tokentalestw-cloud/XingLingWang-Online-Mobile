@@ -63,7 +63,17 @@ async def main():
         await a.send(json.dumps({'action': 'sync_game_state', 'message_id': 'snapshot', 'state': {'enemyHand': [], 'enemyDeck': [], 'field': {'player_front': [None]}}}))
         snapshot = await receive(b, lambda d: d.get('action') == 'sync_game_state')
         assert snapshot['state']['enemyHand'] == [] and 'player_front' in snapshot['state']['field']
-        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot)')
+        # Defense timing belongs to each card in a chain and must survive the relay.
+        for sender, receiver, action, in_defense in (
+            (a, b, 'spell_chain_start', True),
+            (b, a, 'spell_chain_add', False),
+        ):
+            await sender.send(json.dumps({'action': action, 'message_id': action,
+                                          'card': {'id': action, 'type': 'magic'},
+                                          'casterDefensePhase': in_defense}))
+            relayed = await receive(receiver, lambda d: d.get('action') == action)
+            assert relayed['casterDefensePhase'] is in_defense
+        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing)')
     finally:
         await a.close()
         await b.close()
