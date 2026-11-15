@@ -16111,12 +16111,7 @@ async function castSpell(handIndex) {
   }
   // 4. 恐怖的井 / 持久魔法卡放置到場地區
   else if (card.name.includes("恐怖的井") || card.art_subtype === "場地" || card.magic_type === "場地" || card.name.includes("場地") || text.includes("結束階段時")) {
-    const playerField = $("playerField");
-    if (playerField) {
-      if (playerField.dataset.card) {
-        graveyard.push(JSON.parse(playerField.dataset.card));
-      }
-      playerField.dataset.card = JSON.stringify(card);
+    if (window.xlwSetFactionFieldCard(card, true)) {
       logBattle(`設置魔法卡：${card.name}`);
     }
   } else if (card.name?.includes("法力回收壺") || card.id === "R-NMG-0023") {
