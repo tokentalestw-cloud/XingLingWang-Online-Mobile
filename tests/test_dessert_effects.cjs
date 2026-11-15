@@ -19,6 +19,9 @@ test("tactical tribute recognizes queen variants, excludes other factions, and r
   assert.ok(!context.xlwAllowsTacticalTribute({ id: "ART-0001" }));
   silenced = true;
   assert.ok(!context.xlwAllowsTacticalTribute(dessert));
+  vm.runInContext(section("window.xlwIsFlowerGirlTributePlayable =", "// 13."), context);
+  assert.ok(context.xlwAllowsTacticalTribute({id: "R-VLG-0062", type: "unit"}));
+  assert.ok(!context.xlwAllowsTacticalTribute({id: "VLG-0001", type: "unit"}));
 });
 
 test("gummy retrieval transfers one actual extra-deck card with a notice for each player", () => {

@@ -972,6 +972,27 @@ body.xlw-royal-ui #xlwActionFeedback {position:fixed;left:var(--xlw-player-hand-
   padding:9px 14px;border:1px solid #729ead;border-left:3px solid #a2dfe5;border-radius:6px;background:#0b1a2af2;color:#e6f2f4;
   font:500 12px/1.6 'Microsoft JhengHei',sans-serif;text-align:center;pointer-events:none;box-shadow:0 5px 18px #02061080;}
 body.xlw-royal-ui #xlwActionFeedback[hidden] {display:none !important;}
+.xlw-royal-ui #xlwCardEffectFeedback {
+  position: fixed;
+  left: clamp(8px, 5vw, 76px);
+  top: 42%;
+  width: clamp(102px, 13vw, 192px);
+  box-sizing: border-box;
+  z-index: 9701;
+  pointer-events: none;
+  border: 1px solid #c99d62;
+  border-left: 3px solid #ffdc92;
+  border-radius: 8px;
+  background: #122030f7;
+  color: #f0e9da;
+  padding: 7px 9px;
+  box-shadow: 0 4px 16px #0009;
+  line-height: 1.4;
+}
+#xlwCardEffectFeedback[hidden] { display: none; }
+#xlwCardEffectFeedback strong, #xlwCardEffectFeedback span { display: block; overflow-wrap: anywhere; }
+#xlwCardEffectFeedback strong { color: #ffdd9c; font-size: clamp(12px, 1.2vw, 17px); }
+#xlwCardEffectFeedback span { font-size: clamp(10px, 1vw, 14px); }
 body.xlw-royal-ui #xlwActionFeedback[data-tone='warning'] {border-color:#c09863;border-left-color:#edc487;color:#f7dfb4;}
 body.xlw-royal-ui #xlwActionFeedback[data-tone='success'] {border-color:#75b7ad;color:#b3ebdc;}
 /* v7 / 5: use the existing badge footprint, so score feedback cannot shrink the field. */

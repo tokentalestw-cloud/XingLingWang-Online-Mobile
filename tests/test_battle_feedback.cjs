@@ -2,6 +2,9 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const source=fs.readFileSync(path.join(__dirname,'../static/battle_feedback.js'),'utf8');
 const context=vm.createContext({setTimeout,clearTimeout,console});vm.runInContext(source,context);
 const api=context.XLWBFeedback;let tests=0;
+assert.equal(api.effectMessage('✨ 對手【芭蕉樹】效果：從額外區特殊召喚【芭蕉精】。').title,'✨ 對手【芭蕉樹】');tests++;
+assert.equal(api.effectMessage('恐怖的井 效果：從墓地特殊召喚。').detail,'從墓地特殊召喚。');tests++;
+assert.equal(api.effectMessage('—— 我方回合開始 ——'),null);tests++;
 const score=(field,bonus,units={})=>({field,bonus,total:field+bonus,units});
 assert.equal(api.scoreDifference(null,score(3,0)),null);tests++;
 let d=api.scoreDifference(score(0,0),score(3,0,{a:{name:'盾牌人偶',stars:3,count:1}}));

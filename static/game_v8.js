@@ -5733,7 +5733,8 @@ function hasFriendlyDessertQueen(side = "player") {
 window.hasFriendlyDessertQueen = hasFriendlyDessertQueen;
 
 function xlwAllowsTacticalTribute(card) {
-  return window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive ||
+  return window.xlwIsFlowerGirlTributePlayable?.(card) ||
+    window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive ||
     (hasFriendlyDessertQueen("player") && isDessertCard(card));
 }
 
@@ -17179,13 +17180,9 @@ async function startTributeSummon(handIndex) {
   const targetCost = getCardTributeCost(card);
   if (!card || card.type !== "unit" || targetCost <= 0) return;
 
-  if (phase === "戰術佈陣" && !window.XLW_playerCurseSummonActive && !window.XLW_playerFacelessManActive) {
-    if (hasFriendlyDessertQueen("player") && isDessertCard(card) && targetCost > 0) {
-      logBattle("👑【甜點女王】效果生效：你的戰術階段，可改為打出1張需要祭品的甜點王國單位卡！");
-    } else {
-      setStatus("戰術佈陣階段只能召喚免祭品單位或小旅人，不能進行獻祭召喚。");
-      return;
-    }
+  if (phase === "戰術佈陣" && !xlwAllowsTacticalTribute(card)) {
+    setStatus("此單位目前無法在戰術佈陣階段獻祭召喚。");
+    return;
   }
   if (phase === "戰術佈陣") {
     // 恐怖小丑 (R-VLG-0048) 效果
@@ -35966,17 +35963,18 @@ async function endPlayerTurnAndRunEnemy() {
 
                 const destZone = chosenSlot.zone;
                 const destIdx = chosenSlot.idx;
-                const graveIdx = graveyard.indexOf(cardToSummon);
-                if (graveIdx >= 0) graveyard.splice(graveIdx, 1);
+                if (field[destZone]?.[destIdx] !== null) return;
+                const summoned = window.XLWDuelConsistency.takeKnownCard(graveyard, cardToSummon);
+                if (!summoned) return;
                 field[destZone][destIdx] = {
-                  card: structuredClone(cardToSummon),
+                  card: structuredClone(summoned),
                   tapped: false,
                   attacking: false,
                   target: null,
                   summonedTurn: turn,
                   summonedZone: destZone
                 };
-                logBattle(`✨ 恐怖的井 效果：從墓地特殊召喚【${cardToSummon.name}】至我方${destZone.includes("front") ? "前排" : "後排"}${destIdx + 1}！`);
+                xlwLogSharedCardEffect("恐怖的井", `從墓地特殊召喚【${summoned.name}】。`, true);
                 if (isMultiplayer) {
                   if (ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
@@ -44047,6 +44045,14 @@ function logBattle(text) {
   const line = `T${turn} | ${text}`;
   battleLog.unshift(line);
   if (battleLog.length > 30) battleLog.pop();
+  window.XLWBFeedback?.effect?.(text);
+}
+
+function xlwLogSharedCardEffect(name, detail, isPlayer) {
+  logBattle(`✨ ${isPlayer ? "我方" : "對手"}【${name}】效果：${detail}`);
+  if (isMultiplayer && isPlayer && ws) {
+    ws.send(JSON.stringify({action: "battle_log", message: `✨ 對手【${name}】效果：${detail}`}));
+  }
 }
 
 // 實作動態自適應縮放引擎 (單螢幕無滾動佈局)
@@ -53235,27 +53241,12 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
     if (bananaIdx >= 0) {
       const emptySlots = isPlayerSide ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
       if (emptySlots.length > 0) {
-        if (isPlayerSide) {
-          const confirmSummon = await showXLWConfirm("【芭蕉樹】效果發動", "主要階段開始時，是否發動【芭蕉樹】效果，從額外區召喚 1 張【芭蕉精】？");
-          if (confirmSummon) {
-            const bananaCard = extraList.splice(bananaIdx, 1)[0];
-            const success = await window.xlwSpecialSummonUnit(bananaCard, true, { frontPriority: true });
-            if (!success) {
-              extraList.push(bananaCard);
-            } else {
-              if (typeof renderExtraDecks === "function") renderExtraDecks();
-              render();
-            }
-          }
-        } else {
-          const bananaCard = extraList.splice(bananaIdx, 1)[0];
-          const success = await window.xlwSpecialSummonUnit(bananaCard, false, { frontPriority: true });
-          if (!success) {
-            extraList.push(bananaCard);
-          } else {
-            if (typeof renderExtraDecks === "function") renderExtraDecks();
-            render();
-          }
+        const bananaCard = extraList[bananaIdx];
+        const accepted = !isPlayerSide || await showXLWConfirm("【芭蕉樹】效果發動", "主要階段開始時，是否發動【芭蕉樹】效果，從額外區召喚 1 張【芭蕉精】？");
+        if (accepted && await window.xlwSpecialSummonUnit(bananaCard, isPlayerSide, {sourcePile: () => extraList})) {
+          xlwLogSharedCardEffect("芭蕉樹", "從額外區特殊召喚【芭蕉精】。", isPlayerSide);
+          renderExtraDecks();
+          render();
         }
       }
     }
