@@ -17,9 +17,20 @@ module.exports=(async()=>{
  }
  // Native decay and Cursed Statue's first-unit aura settle on the unit owner's end phase.
  for(const side of ['player','enemy']){
-  const g=context();vm.runInContext(section('function isDecayed(','function hasOtherPigmentsInGrave('),g);const z=side+'_front';const statue={card:{id:'R-ART-0040',name:'詛咒斷臂雕像',keywords:['衰退']},tapped:false};g.field[z][2]=statue;g.destroyUnit=async(zone,idx)=>{g.graveyard.push(g.field[zone][idx].card);g.field[zone][idx]=null;};
+  const g=context();vm.runInContext(section('function xlwIsSeasonAngel(','window.xlwRunMainStart'),g);vm.runInContext(section('function isDecayed(','function hasOtherPigmentsInGrave('),g);const z=side+'_front';const statue={card:{id:'R-ART-0040',name:'詛咒斷臂雕像',keywords:['衰退']},tapped:false};g.field[z][2]=statue;g.destroyUnit=async(zone,idx)=>{g.graveyard.push(g.field[zone][idx].card);g.field[zone][idx]=null;};
   statue.attacking=true;statue.tapped=true;await g.resolveDecayStatus(side==='player');assert.equal(g.field[z][2],statue);assert.equal(statue._xlwDecayResolvedTurn,undefined);tests++;
   statue.attacking=false;statue.tapped=false;await g.resolveDecayStatus(side==='player');assert.equal(statue.tapped,true);await g.resolveDecayStatus(side==='player');assert.notEqual(g.field[z][2],null);g.turn+=2;await g.resolveDecayStatus(side==='player');assert.equal(g.field[z][2],null);assert.equal(g.graveyard.length,1);tests++;
+  const opposite=side==='player'?'enemy':'player';
+  const angel={card:{id:'SSR-ART-0070',name:'四季大天使 慕夏',effect_text:'敵方被賦予衰退'},irrigation:3};
+  g.field[z][0]=angel;g.field[opposite+'_front'][0]={card:{id:'target'}};
+  assert.equal(g.isDecayed(z,0),false);
+  assert.equal(g.isDecayed(opposite+'_front',0),true);
+  g.logBattle=()=>{};
+  vm.runInContext(section('window.xlwIrrigateUnit =','window.xlwSpendIrrigation ='),g);
+  g.xlwIrrigateUnit(angel,1,z,0);assert.equal(angel.irrigation,4);
+  assert.equal(g.xlwHasAngelSeason(opposite+'_front',4),true);
+  assert.equal(g.isDecayed(opposite+'_front',0),false);
+  g.xlwIrrigateUnit(angel,1,z,0);assert.equal(angel.irrigation,1);tests+=6;
   // Front statue must affect its own rear unit, previously omitted by the opponent-front-only check.
   const other=side==='player'?'enemy':'player';g.field[z][2]=statue;g.field[side+'_back'][2]={card:{id:'back',name:'後方單位'},tapped:true};g.field[other+'_front'][2]={card:{id:'near',name:'前方單位'}};g.field[other+'_back'][2]={card:{id:'far',name:'更遠單位'}};assert.equal(g.isDecayed(side+'_back',2),true);assert.equal(g.isDecayed(other+'_front',2),true);assert.equal(g.isDecayed(other+'_back',2),false);tests++;
   // A nearer occupied row blocks the statue reaching a farther row; a silenced source gives no aura.

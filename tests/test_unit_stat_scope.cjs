@@ -21,6 +21,7 @@ function fixture() {
   g.xlwIsLittleTraveler = unit => unit?.card?.id === 'TOKEN_TRAVELER';
   g.isUnitSilenced = () => false;
   vm.createContext(g);
+  vm.runInContext(source.slice(source.indexOf('function xlwIsSeasonAngel('), source.indexOf('function xlwHasAngelSeason(')), g);
   vm.runInContext(statSource, g);
   return g;
 }
