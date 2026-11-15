@@ -8250,6 +8250,14 @@ function enemyFrontIsShield(lane) {
   return !!(field.enemy_front[lane] && window.XLW_isShieldUnit(field.enemy_front[lane]));
 }
 
+function xlwFairHeroBlocksAttack(attacker, attZone, attIdx, zone, idx) {
+  const defender = field[zone]?.[idx];
+  const card = defender?.card;
+  if (!attacker || !card || !(/(?:^|-)BRV-0001(?:-|$)/.test(card.id || "") || card.name?.includes("公平勇者"))) return false;
+  return !window.isUnitSilenced(defender, zone, idx) &&
+    getUnitAtk(attacker, attZone, attIdx) !== getUnitAtk(defender, zone, idx);
+}
+
 function isUnitAttackProtected(zone, lane) {
   if (!zone || lane === undefined) return false;
   const isPlayer = zone.startsWith("player_");
@@ -19646,6 +19654,14 @@ async function performSummonToSlot(zone, idx) {
     (tributeWaitingPosition && selectedTributeCard !== null ? selectedTributeCard :
     (typeof selectedHandForSummon === "number" || (typeof selectedHandForSummon === "string" && !isNaN(selectedHandForSummon)) ? hand[Number(selectedHandForSummon)] : null)));
   
+  if (cardToVerify && selectedHandForSummon !== "TRAVELER") {
+    const restriction = xlwBlueStarRequirement(cardToVerify, !isSpecialSummon || zone.startsWith("player_"));
+    if (restriction) {
+      setStatus(restriction);
+      return;
+    }
+  }
+
   if (!isSpecialSummon && cardToVerify && !xlwCanSummonToZone(zone, cardToVerify)) {
     setStatus("前排戰線尚有空位，單位只能先召喚到前排！");
     logDebug("【放置終止】前排尚有空位，不可召喚到後排！");
@@ -19862,6 +19878,7 @@ async function performSummonToSlot(zone, idx) {
     }
     
     // 黑心網路賣家 (R-ART-0036) 我方召喚藝術品單位到敵方場上時，額外得分 +1★
+    render();
     if (zone.startsWith("enemy_") && hasBlackMerchantOnField("player")) {
       const isArtwork = card && (card.faction === "藝術品" || card.deck === "藝術品" || card.id?.includes("ART"));
       if (isArtwork) {
@@ -19894,6 +19911,8 @@ async function performSummonToSlot(zone, idx) {
       }
     }
     
+    const summonedUnit = field[zone][idx];
+    render();
     immediateEffectNegated = false;
     summonMessageSent = false;
 
@@ -19993,7 +20012,7 @@ async function performSummonToSlot(zone, idx) {
       immediateEffectNegated = true;
     }
 
-    if (!immediateEffectNegated && card) {
+    if (!immediateEffectNegated && card && summonedUnit && field[zone]?.[idx] === summonedUnit) {
       const isPlayer = zone.startsWith("player_");
       const sidePrefix = isPlayer ? "player_" : "enemy_";
       await window.xlwResolvePG2Summon(card, zone, idx, isPlayer);
@@ -24828,17 +24847,9 @@ async function selectPlayerTarget(zone, idx) {
   const defender = field[zone][idx];
   if (!defender) return;
 
-  // 公平勇者 (Fair Hero) target protection
-  if (defender.card && (defender.card.id === "BRV-0001" || defender.card.id === "R-BRV-0001" || defender.card.id === "ASSR-BRV-0001" || defender.card.name?.includes("公平勇者")) && !window.isUnitSilenced(defender, zone, idx)) {
-    const attacker = field[selectedAttacker.zone][selectedAttacker.idx];
-    if (attacker) {
-      const attAtk = getUnitAtk(attacker, selectedAttacker.zone, selectedAttacker.idx);
-      const defAtk = getUnitAtk(defender, zone, idx);
-      if (attAtk !== defAtk) {
-        setStatus("【公平勇者】效果：攻擊力不同的單位無法進攻此單位！");
-        return;
-      }
-    }
+  if (xlwFairHeroBlocksAttack(field[selectedAttacker.zone]?.[selectedAttacker.idx], selectedAttacker.zone, selectedAttacker.idx, zone, idx)) {
+    setStatus("【公平勇者】效果：攻擊力不同的單位無法進攻此單位！");
+    return;
   }
 
   // 魔王 (BRV-0050) target protection: 敵方場上有魔王時，無法進攻攻擊力不同的魔族單位
@@ -24926,6 +24937,7 @@ async function selectPlayerTarget(zone, idx) {
     }
   }
 
+  if (xlwFairHeroBlocksAttack(attacker, selectedAttacker.zone, selectedAttacker.idx, finalZone, finalIdx)) return;
   if(isUnitAttackProtected(finalZone,finalIdx)){setStatus("【進攻失敗】目標受到牆壁上的香蕉保護！");return;}
   attacker.attacking = true;
   attacker.target = { zone: finalZone, idx: finalIdx };
@@ -25063,7 +25075,7 @@ async function xlwAutoDeclarePlayerAttacks() {
       }
     }
 
-    if(isUnitAttackProtected(finalZone,finalIdx))continue;
+    if (xlwFairHeroBlocksAttack(playerAttacker, actualZone, i, finalZone, finalIdx) || isUnitAttackProtected(finalZone, finalIdx)) continue;
     playerAttacker.attacking = true;
     playerAttacker.target = { zone: finalZone, idx: finalIdx };
     playerAttacker.tapped = true;
@@ -25103,6 +25115,7 @@ function xlwAttackTargetBlock(unit, zone, idx, targetZone) {
       !window.isUnitSilenced(guard, row, i)))) {
     return "【稻草人守護】受到「林區稻草人」保護，種子單位無法被進攻。";
   }
+  if (xlwFairHeroBlocksAttack(unit, zone, idx, targetZone, idx)) return "【公平勇者】攻擊力不同，無法指定為目標。";
   if (isUnitAttackProtected(targetZone, idx)) return "【進攻失敗】敵方單位受到牆壁上的香蕉保護。";
   return "";
 }
@@ -27881,8 +27894,39 @@ function isLastCard(c) {
          (c.name?.includes("最後的"));
 }
 
+function xlwBlueStarRequirement(card, isPlayer) {
+  const side = isPlayer ? "player_" : "enemy_";
+  const units = [...(field[side + "front"] || []), ...(field[side + "back"] || [])];
+  if (card.id?.includes("ELE-0019") || card.name?.includes("大北極熊")) {
+    const hasCub = units.some(u => u?.card && (u.card.id?.includes("ELE-0025") || u.card.name?.includes("小北極熊")));
+    return hasCub ? "" : "【大北極熊】我方場上需要有小北極熊才能召喚。";
+  }
+  if (card.id?.includes("ELE-0030") || card.name?.includes("北極兔")) {
+    const negativePlants = ["front", "back"].reduce((count, row) => count +
+      (field[side + row] || []).filter((unit, idx) => unit && window.xlwIsUnitPowerPlant?.(unit) &&
+        getUnitStars(unit, side + row, idx) < 0).length, 0);
+    return negativePlants >= 4 ? "" : "【北極兔】場上需要至少四個負星的電廠單位。";
+  }
+  if (card.id?.includes("FMS-0036") || card.name?.includes("麻祖")) {
+    const exile = isPlayer ? playerExileZone : enemyExileZone;
+    const hasHu = exile.some(c => c && (/FMS-00(?:16|17)/.test(c.id || "") || /大三元|小四喜/.test(c.name || "")));
+    return hasHu ? "" : "【麻祖】我方除外區需要有胡牌才能召喚。";
+  }
+  if (card.id?.includes("RBT-0026") || /禁忌改裝師|機械改造師/.test(card.name || "")) {
+    const count = units.filter(u => u && (u.devourCards?.length || u.combinedCards?.length || u.fusionCards?.length || u.isCombined)).length;
+    return count >= 2 ? "" : "【禁忌改裝師】我方場上需要至少兩個已合體的單位。";
+  }
+  return "";
+}
+
 function canSummonCard(card, isPlayer, options = {}) {
   if (!card) return false;
+  const restriction = xlwBlueStarRequirement(card, isPlayer);
+  if (restriction) {
+    if (isPlayer && !options.silent) setStatus(restriction);
+    return false;
+  }
+
 
   // 🌸 花皇 (SSR-PLT-0021): 獻祭打出此卡前,你的獎勵須至少為5
   if (card.id === "SSR-PLT-0021" || card.name?.includes("花皇")) {
@@ -27932,50 +27976,7 @@ function canSummonCard(card, isPlayer, options = {}) {
     }
   }
 
-  // 🐇 北極兔 (R-ELE-0030): 你的主要階段,若你場上⭐為負的電廠單位數量至少為4,則可使你手牌的此卡被打出
-  if (card.id === "R-ELE-0030" || card.name?.includes("北極兔")) {
-    const sideP = isPlayer ? "player_" : "enemy_";
-    let negPowerPlants = 0;
-    if (typeof field !== "undefined" && field) {
-      for (const z of [sideP + "front", sideP + "back"]) {
-        (field[z] || []).forEach((u, i) => {
-          if (u && window.xlwIsUnitPowerPlant && window.xlwIsUnitPowerPlant(u)) {
-            const stars = getUnitStars(u, z, i);
-            if (stars < 0) negPowerPlants++;
-          }
-        });
-      }
-    }
-    if (negPowerPlants < 4) {
-      if (!options.silent) setStatus("【北極兔】場上⭐為負的電廠單位數量須至少為 4 才能打出！");
-      return false;
-    }
-  }
   const report=message=>{if(!options.silent)setStatus(message);};
-  // SR-FMS-0036 麻祖 限制
-  if (card.id === "SR-FMS-0036" || card.name?.includes("麻祖")) {
-    const exile = isPlayer ? playerExileZone : enemyExileZone;
-    const hasHu = exile.some(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
-    if (!hasHu) {
-      if (isPlayer) {
-        report("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
-      }
-      return false;
-    }
-  }
-
-  // SR-FMS-0036 麻祖 限制
-  if (card.id === "SR-FMS-0036" || card.name?.includes("麻祖")) {
-    const exile = isPlayer ? playerExileZone : enemyExileZone;
-    const hasHu = exile.some(c => c && (c.id === "SR-FMS-0016" || c.id === "R-FMS-0017" || c.name?.includes("大三元") || c.name?.includes("小四喜")));
-    if (!hasHu) {
-      if (isPlayer) {
-        report("【召喚限制】除外區沒有大三元或小四喜等胡牌，無法召喚麻祖！");
-      }
-      return false;
-    }
-  }
-
   // R-FMS-0030 / SSR-FMS-0030 高塔101號 限制
   if (card.id === "R-FMS-0030" || card.id === "SSR-FMS-0030" || card.name?.includes("高塔101號")) {
     const ok = window.xlwCheckMahjongCombo(isPlayer, "小四喜");
@@ -29097,8 +29098,9 @@ function countSelectedTributesValue(tributesList, targetCard) {
 
 async function triggerAiSummonEffects(card, destZone, destIdx) {
 
-  if (!card) return;
-  if (!isMultiplayer && field[destZone]?.[destIdx]?.card && window.XLWSpecialSummon?.match(card)) {
+  if (!card || !field[destZone]?.[destIdx]?.card) return;
+  render();
+  if (!isMultiplayer && window.XLWSpecialSummon?.match(card)) {
     await playTributeSummonAnimation(destZone, destIdx, true);
   }
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
@@ -34668,6 +34670,7 @@ window.aiFindBestSummonableCard = function() {
         if (!hasHu) return;
       }
 
+      if (xlwBlueStarRequirement(c, false)) return;
       const cost = getCardTributeCost(c);
       const numAtk = parseInt(c.attack, 10) || 0;
       if (cost <= 0) {
@@ -35482,7 +35485,7 @@ async function runEnemyTurn() {
                 continue;
               }
             }
-            if (targetDefender && isUnitAttackProtected(targetZone, i)) continue;
+            if (targetDefender && (isUnitAttackProtected(targetZone, i) || xlwFairHeroBlocksAttack(enemyAttacker, enemyAttackerZone, i, targetZone, i))) continue;
             
             if (targetDefender && !isMultiplayer) {
               const favorable = checkAiAttackFavorability(enemyAttacker, enemyAttackerZone, i, targetDefender, targetZone, i);
@@ -35544,7 +35547,7 @@ async function runEnemyTurn() {
           for (let h = 0; h < enemyHand.length; h++) {
             const c = enemyHand[h];
             if (!c || (c.type !== "unit" && c.type !== "單位")) continue;
-            if (getCardTributeCost(c) === 0) {
+            if (getCardTributeCost(c) === 0 && !xlwBlueStarRequirement(c, false)) {
               const eff = c.effect_text || "";
               if (eff.includes("只能通") || eff.includes("只能透過")) continue;
               const atkV = parseInt(c.attack, 10) || 0;
@@ -36964,13 +36967,9 @@ window.xlwCanPlayHandCard = function(card, idx) {
 
   // 🚩 革命旅人 (SR-SPT-0026 / SSR-SPT-0026): 場上小旅人總數加總 >= 5 才可打出
   
-  // 🤖 禁忌改裝師: 場上有 2 個以上合體單位才可打出
-  if (card.id === "SR-RBT-0026" || card.id === "SSR-RBT-0026" || card.name?.includes("禁忌改裝師")) {
-    let combC = 0;
-    for (const z of ["player_front", "player_back"]) {
-      (field[z] || []).forEach(u => { if (u && u.devourCards && u.devourCards.length > 0) combC++; });
-    }
-    if (combC < 2) return false;
+  if (card.id?.includes("RBT-0026") || /禁忌改裝師|機械改造師/.test(card.name || "")) {
+    return isMyTurn && (phase === "召喚階段" || phase === "戰術佈陣") &&
+      canSummonCard(card, true, {silent: true}) && window.xlwGetEmptyPlayerSlots().length > 0;
   }
   // 🤖 古代機神巨人: 需要備齊核心與 5 遺骸
   if (card.id === "RBT-0045" || card.id === "R-RBT-0045" || card.id === "SSR-RBT-0045" || card.name?.includes("古代機神巨人")) {
@@ -37503,28 +37502,11 @@ window.xlwExecuteHandUnitSummon = async function(card, idx) {
     }
   }
 
-  // 🤖 禁忌改裝師 (SR-RBT-0026 / SSR-RBT-0026): 場上 >= 2 合體單位可額外打出
-  if (card.id === "SR-RBT-0026" || card.id === "SSR-RBT-0026" || card.name?.includes("禁忌改裝師")) {
-    let combinedCount = 0;
-    for (const z of ["player_front", "player_back"]) {
-      (field[z] || []).forEach(u => {
-        if (u && u.devourCards && u.devourCards.length > 0) combinedCount++;
-      });
-    }
-    if (combinedCount >= 2) {
-      hand.splice(idx, 1);
-      const success = await window.xlwSpecialSummonUnit(card, true);
-      if (success) {
-        logBattle("🔧【禁忌改裝師】場上有 2 個或以上合體單位，額外打出成功！");
-        render();
-        return;
-      } else {
-        hand.splice(idx, 0, card);
-      }
-    } else {
-      setStatus("【召喚失敗】場上必須有 2 個或以上合體後的單位才能打出【禁忌改裝師】！");
-      return;
-    }
+  if (card.id?.includes("RBT-0026") || /禁忌改裝師|機械改造師/.test(card.name || "")) {
+    if (!isMyTurn || (phase !== "召喚階段" && phase !== "戰術佈陣")) return;
+    if (!canSummonCard(card, true)) return;
+    await window.xlwSpecialSummonUnit(card, true, {sourcePile: () => hand});
+    return;
   }
 
   const oldCard=selectedTributeCard || (selectedHandForTribute!==null?hand[selectedHandForTribute]:null);
@@ -45337,7 +45319,7 @@ function setupWebSocketEvents() {
       const targetIdx = data.targetIdx;
       const attacker = field[attZone][attIdx];
       const trophyTarget = targetZone === TROPHY_ZONE && targetIdx === attIdx && window.xlwTrophyAt(targetIdx)?.id === data.trophyTargetId && data.trophyTargetId;
-      if (attacker && (trophyTarget || (field[targetZone] && !isUnitAttackProtected(targetZone,targetIdx)))) {
+      if (attacker && (trophyTarget || (field[targetZone] && !isUnitAttackProtected(targetZone,targetIdx) && !xlwFairHeroBlocksAttack(attacker, attZone, attIdx, targetZone, targetIdx)))) {
         window.XLWBattleFlow?.forget(attZone,attIdx);
         attacker.attacking = true;
         attacker.target = { zone: targetZone, idx: targetIdx };
@@ -52485,6 +52467,7 @@ window.xlwOnUnitUpgraded = async function(isPlayer, unit, newCard) {
 };
 
 window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
+  if (!card || xlwBlueStarRequirement(card, isPlayer)) return false;
   const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
   const tribute = options.tribute;
   const validTribute = () => isMyTurn && phase === "召喚階段" && !normalSummonUsed &&
@@ -52525,6 +52508,7 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
     slot = candidateSlots[Math.floor(Math.random() * candidateSlots.length)];
   }
 
+  if (xlwBlueStarRequirement(card, isPlayer)) return false;
   const placementAvailable = () => slot && (!field[slot.zone][slot.idx] ||
     (tribute && slot.zone === tribute.zone && slot.idx === tribute.idx && validTribute()));
   if (options.beforePlacement) {

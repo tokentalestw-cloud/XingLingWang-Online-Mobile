@@ -23,11 +23,41 @@ function game() {
     unitName: unit => unit.card.name, setStatus() {}, logBattle() {}, render() {}
   };
   g.window = g;
+  g.getUnitAtk = unit => unit.attack;
+  load("function xlwFairHeroBlocksAttack(", "function isUnitAttackProtected(", g);
   load("function xlwIsFlyingGoat(", "async function changeActionPhase(", g);
   load("async function xlwAutoDeclarePlayerAttacks(", "window.xlwTogglePlayerAttack =", g);
   load("async function xlwSummonGoatTravelers(", "async function resolveUnitCombat(", g);
   return g;
 }
+
+test("Fair Hero blocks unequal attack values from either side and permits equal values", () => {
+  const g = game();
+  for (const [from, to] of [["player_front", "enemy_front"], ["enemy_front", "player_front"]]) {
+    const attacker = {attack: 7};
+    g.field[to][0] = {card: {id: "R-BRV-0001"}, attack: 8};
+    assert.equal(g.xlwFairHeroBlocksAttack(attacker, from, 0, to, 0), true);
+    attacker.attack = 8;
+    assert.equal(g.xlwFairHeroBlocksAttack(attacker, from, 0, to, 0), false);
+  }
+});
+
+test("conditional summons require the summoning side's specific prerequisites", () => {
+  const g = game();
+  g.playerExileZone = [];
+  g.enemyExileZone = [];
+  load("function xlwBlueStarRequirement(", "function canSummonCard(", g);
+  const bear = {id: "ELE-0019"}, mazu = {id: "SR-FMS-0036"}, engineer = {id: "SSR-RBT-0026"};
+  for (const card of [bear, mazu, engineer]) assert.ok(g.xlwBlueStarRequirement(card, true));
+  g.field.player_back[0] = {card: {id: "ELE-0025"}};
+  g.playerExileZone.push({id: "R-FMS-0017"});
+  g.field.player_front[0] = {devourCards: [{}]};
+  g.field.player_front[1] = {isCombined: true};
+  for (const card of [bear, mazu, engineer]) {
+    assert.equal(g.xlwBlueStarRequirement(card, true), "");
+    assert.ok(g.xlwBlueStarRequirement(card, false));
+  }
+});
 
 test("only two chosen traveler placements are mirrored from either owner", async () => {
   const g = game();
