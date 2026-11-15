@@ -1199,15 +1199,32 @@
     }
 
     // 啟動加載
-    async function loadDeckBuilderData() {
+    let catalogRequest;
+    function loadEditorCatalog() {
+      if (!catalogRequest) {
+        catalogRequest = Promise.all([
+          fetch("/api/cards").then(readDeckResponse),
+          fetch("/api/factions").then(readDeckResponse).catch(() => [])
+        ]).catch(error => {
+          catalogRequest = null;
+          throw error;
+        });
+      }
+      return catalogRequest;
+    }
+    async function loadDeckBuilderData(initialDecks) {
       try {
-        const [cardsData, decksData, factionsData] = await Promise.all([
-          fetch("/api/cards?v=" + Date.now()).then(r => r.json()),
-          fetch("/api/decks?personal=true").then(readDeckResponse),
-          fetch("/api/factions?v=" + Date.now()).then(r => r.json()).catch(() => [])
+        const [[cardsData, factionsData], decksData] = await Promise.all([
+          loadEditorCatalog(),
+          initialDecks ?? fetch("/api/decks?personal=true").then(readDeckResponse)
         ]);
 
-        allCards = cardsData;
+        const travelerTokens = new Set([
+          "TOKEN-CND-001", "TOKEN-RBT-001", "TOKEN-SKT-001",
+          "TOKEN-SPT-001", "TOKEN-SPT-002", "TOKEN-STP-001"
+        ]);
+        allCards = cardsData.filter(card => !travelerTokens.has(card.id));
+        cardsById = new Map(allCards.map(card => [card.id, card]));
         currentDecks = decksData;
         if (Array.isArray(factionsData) && factionsData.length > 0) {
           currentFactions = factionsData;
@@ -1634,7 +1651,7 @@
     function calculateDeckMana() {
       let totalMana = 0;
       selectedMainIds.forEach(id => {
-        const card = allCards.find(c => c.id === id);
+        const card = cardsById.get(id);
         if (card) {
           totalMana += Number(card.mana || 0);
         }
@@ -1685,7 +1702,8 @@
 
     // 處理名稱搜尋輸入
     function handleSearchInput() {
-      renderLibrary();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderLibrary, 120);
     }
 
     // 處理星數篩選變更 (支援 0~6+ 及 X★)
@@ -1766,9 +1784,15 @@
     }
 
     // 渲染可用卡牌庫
+    const LIBRARY_BATCH_SIZE = 32;
+    let cardsById = new Map();
+    let libraryTiles = new Map();
+    let searchTimer;
     function renderLibrary() {
       const grid = document.getElementById("libraryGrid");
       grid.innerHTML = "";
+      libraryTiles = new Map();
+      document.getElementById("libraryLoadMore")?.remove();
 
       // 依當前種族篩選
       const libraryFaction = selectedDeckName || document.getElementById("factionFilterSelect").value;
@@ -1849,55 +1873,74 @@
         return;
       }
 
-      displayCards.forEach(c => {
-        const isSelected = (c.deck_eligible === false) ? selectedExtraIds.includes(c.id) : selectedMainIds.includes(c.id);
-        const div = document.createElement("div");
-        div.className = `card-tile ${isSelected ? 'selected' : ''}`;
-        div.onclick = () => toggleSelectCard(c.id, c.deck_eligible !== false, false);
-        
-        // 滑鼠懸浮放大預覽
-        
-        
-
-        // 盾牌單位標識
-        let atkDisplay = c.attack;
-        if (atkDisplay === "盾" || String(atkDisplay).includes("盾")) {
-          atkDisplay = "🛡 盾";
-        } else {
-          atkDisplay = `⚔ ${atkDisplay}`;
+      let shown = 0;
+      const more = document.createElement("button");
+      more.type = "button";
+      more.id = "libraryLoadMore";
+      more.className = "action-btn";
+      const appendBatch = () => {
+        const fragment = document.createDocumentFragment();
+        const end = Math.min(shown + LIBRARY_BATCH_SIZE, displayCards.length);
+        for (; shown < end; shown++) {
+          const card = displayCards[shown];
+          const tile = createLibraryTile(card);
+          libraryTiles.set(card.id, tile);
+          fragment.appendChild(tile);
         }
+        grid.appendChild(fragment);
+        if (shown < displayCards.length) {
+          more.textContent = "顯示更多卡牌（" + shown + "／" + displayCards.length + "）";
+          if (!more.isConnected) grid.after(more);
+        } else more.remove();
+      };
+      more.onclick = appendBatch;
+      appendBatch();
+    }
 
-        // 特殊標籤與選取數量標籤
-        let extraLabel = '';
-        if (c.deck_eligible === false) {
-          const limit = c.extra_deck_limit || 3;
-          const currentCount = selectedExtraIds.filter(x => x === c.id).length;
-          extraLabel = `<span class="extra-tag">★ 額外 ${currentCount}/${limit}張</span>`;
-        } else {
-          const hasOverload = (c.keywords && c.keywords.some(k => k && k.includes("超載"))) ||
-                              (c.effect_text && c.effect_text.includes("超載"));
-          const maxCopies = hasOverload ? 3 : 1;
-          const currentCount = selectedMainIds.filter(x => x === c.id).length;
-          if (hasOverload) {
-            extraLabel = `<span class="extra-tag" style="background: rgba(255,152,0,0.85); color: #000;">⚡ 超載 ${currentCount}/${maxCopies}張</span>`;
-          } else if (currentCount > 0) {
-            extraLabel = `<span class="extra-tag" style="background: rgba(45,227,112,0.85); color: #000;">✓ 已選 ${currentCount}/${maxCopies}張</span>`;
-          }
+    function createLibraryTile(c) {
+      const isSelected = (c.deck_eligible === false) ? selectedExtraIds.includes(c.id) : selectedMainIds.includes(c.id);
+      const div = document.createElement("div");
+      div.className = `card-tile ${isSelected ? 'selected' : ''}`;
+      div.onclick = () => toggleSelectCard(c.id, c.deck_eligible !== false, false);
+
+      // 盾牌單位標識
+      let atkDisplay = c.attack;
+      if (atkDisplay === "盾" || String(atkDisplay).includes("盾")) {
+        atkDisplay = "🛡 盾";
+      } else {
+        atkDisplay = `⚔ ${atkDisplay}`;
+      }
+
+      // 特殊標籤與選取數量標籤
+      let extraLabel = '';
+      if (c.deck_eligible === false) {
+        const limit = c.extra_deck_limit || 3;
+        const currentCount = selectedExtraIds.filter(x => x === c.id).length;
+        extraLabel = `<span class="extra-tag">★ 額外 ${currentCount}/${limit}張</span>`;
+      } else {
+        const hasOverload = (c.keywords && c.keywords.some(k => k && k.includes("超載"))) ||
+                            (c.effect_text && c.effect_text.includes("超載"));
+        const maxCopies = hasOverload ? 3 : 1;
+        const currentCount = selectedMainIds.filter(x => x === c.id).length;
+        if (hasOverload) {
+          extraLabel = `<span class="extra-tag" style="background: rgba(255,152,0,0.85); color: #000;">⚡ 超載 ${currentCount}/${maxCopies}張</span>`;
+        } else if (currentCount > 0) {
+          extraLabel = `<span class="extra-tag" style="background: rgba(45,227,112,0.85); color: #000;">✓ 已選 ${currentCount}/${maxCopies}張</span>`;
         }
+      }
 
-        div.innerHTML = `
-          ${extraLabel}
-          <div class="card-zoom-btn" onclick="openMobileCardZoom(event, '${c.id}')" title="點擊大圖預覽">🔍</div>
-          <img class="card-tile-img" src="${c.image || '/static/card_back.jpeg'}" alt="${c.name}">
-          <div class="card-tile-name">${c.name}</div>
-          <div class="card-tile-stats">
-            <span class="stat-atk">${atkDisplay}</span>
-            <span class="stat-tribute">祭 ${c.tribute || 0}</span>
-            <span class="stat-stars">★ ${c.score || 0}</span>
-          </div>
-        `;
-        grid.appendChild(div);
-      });
+      div.innerHTML = `
+        ${extraLabel}
+        <div class="card-zoom-btn" onclick="openMobileCardZoom(event, '${c.id}')" title="點擊大圖預覽">🔍</div>
+        <img class="card-tile-img" loading="lazy" decoding="async" src="${c.image || '/static/card_back.jpeg'}" alt="${c.name}">
+        <div class="card-tile-name">${c.name}</div>
+        <div class="card-tile-stats">
+          <span class="stat-atk">${atkDisplay}</span>
+          <span class="stat-tribute">祭 ${c.tribute || 0}</span>
+          <span class="stat-stars">★ ${c.score || 0}</span>
+        </div>
+      `;
+      return div;
     }
 
     // 渲染右側構築牌組 (主牌組與額外牌組)
@@ -1913,7 +1956,7 @@
         `;
       } else {
         selectedMainIds.forEach(id => {
-          const c = allCards.find(card => card.id === id);
+          const c = cardsById.get(id);
           if (!c) return;
           const div = createDeckTile(c, true);
           grid.appendChild(div);
@@ -1931,7 +1974,7 @@
           `;
         } else {
           selectedExtraIds.forEach(id => {
-            const c = allCards.find(card => card.id === id);
+            const c = cardsById.get(id);
             if (!c) return;
             const div = createDeckTile(c, false);
             extraGrid.appendChild(div);
@@ -1966,7 +2009,7 @@
       div.innerHTML = `
         ${extraLabel}
         <div class="card-zoom-btn" onclick="openMobileCardZoom(event, '${c.id}')" title="點擊大圖預覽">🔍</div>
-        <img class="card-tile-img" src="${c.image || '/static/card_back.jpeg'}" alt="${c.name}">
+        <img class="card-tile-img" loading="lazy" decoding="async" src="${c.image || '/static/card_back.jpeg'}" alt="${c.name}">
         <div class="card-tile-name">${c.name}</div>
         <div class="card-tile-stats">
           <span class="stat-atk">${atkDisplay}</span>
@@ -1981,7 +2024,7 @@
     function toggleSelectCard(id, isMainEligible, isRemoving = false) {
       if (!isMainEligible) {
         // 額外牌組卡片
-        const cardObj = allCards.find(c => c.id === id);
+        const cardObj = cardsById.get(id);
         const limit = cardObj ? (cardObj.extra_deck_limit || 3) : 3;
         const currentCount = selectedExtraIds.filter(x => x === id).length;
 
@@ -2001,7 +2044,7 @@
         }
       } else {
         // 主牌組卡片
-        const cardObj = allCards.find(c => c.id === id);
+        const cardObj = cardsById.get(id);
         const hasOverload = cardObj && (
           (cardObj.keywords && cardObj.keywords.some(k => k && k.includes("超載"))) ||
           (cardObj.effect_text && cardObj.effect_text.includes("超載"))
@@ -2034,7 +2077,13 @@
         }
       }
 
-      renderLibrary();
+      const visibleTile = libraryTiles.get(id);
+      const card = cardsById.get(id);
+      if (visibleTile && card) {
+        const updated = createLibraryTile(card);
+        visibleTile.replaceWith(updated);
+        libraryTiles.set(id, updated);
+      }
       renderCurrentDeck();
       updateCounter();
     }
@@ -2113,6 +2162,8 @@
     const logoutButton = document.getElementById("deckLogout");
     const accountStatus = document.getElementById("deckAccountStatus");
     function showDeckAccount(account) {
+      const canEdit = Boolean(account.local || account.name);
+      document.getElementById("deckAccountPanel").style.display = account.local ? "none" : "";
       activeDeckAccount = account.name || "";
       loginForm.hidden = Boolean(account.name);
       loginForm.style.display = account.name ? "none" : "flex";
@@ -2121,8 +2172,8 @@
       accountStatus.textContent = account.name ? `${account.name} 的雲端牌組` :
         account.enabled ? "登入後即可建立個人牌組。" : "雲端牌組尚未接上資料庫。";
       for (const section of document.querySelectorAll("body > section:not(#deckAccountPanel), body > main")) {
-        section.inert = !account.name;
-        section.style.visibility = account.name ? "" : "hidden";
+        section.inert = !canEdit;
+        section.style.visibility = canEdit ? "" : "hidden";
       }
       loginForm.querySelector("button").disabled = !account.enabled;
     }
@@ -2187,22 +2238,25 @@
         accountStatus.textContent = error.message;
       }
     });
-    window.onload = async () => {
+    async function startDeckEditor() {
       showDeckAccount({enabled: false});
+      accountStatus.textContent = "正在讀取牌組帳戶…";
+      void loadEditorCatalog().catch(() => {});
       try {
-        const result = await fetch("/api/deck-account").then(readDeckResponse);
+        const result = await fetch("/api/decks?editor=true").then(readDeckResponse);
         showDeckAccount(result);
-        if (result.name) await loadDeckBuilderData();
+        if (result.local || result.name) await loadDeckBuilderData(result.decks);
       } catch (error) {
         accountStatus.textContent = error.message;
       }
-    };
+    }
+    document.addEventListener("DOMContentLoaded", startDeckEditor, {once: true});
   
     let currentModalCardId = null;
 
     function openMobileCardZoom(event, cardId) {
       if (event) event.stopPropagation();
-      const card = allCards.find(c => c.id === cardId);
+      const card = cardsById.get(cardId);
       if (!card) return;
 
       currentModalCardId = cardId;
@@ -2232,7 +2286,7 @@
 
     function toggleCardFromModal() {
       if (!currentModalCardId) return;
-      const card = allCards.find(c => c.id === currentModalCardId);
+      const card = cardsById.get(currentModalCardId);
       if (!card) return;
 
       const isMain = card.deck_eligible !== false;

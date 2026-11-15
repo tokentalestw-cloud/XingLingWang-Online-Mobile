@@ -2983,6 +2983,96 @@
     "art_subtype": "人型"
   },
   {
+    "id": "C-EWD-0020-ALT",
+    "name": "野人慶典",
+    "deck": "進化野人",
+    "type": "magic",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "0",
+    "score": 1,
+    "tribute": 0,
+    "keywords": [
+      "野人，獎勵"
+    ],
+    "effect_text": "使你場上的野人單位被賦予：此單位進攻戰鬥成功時，使你獎勵+1。",
+    "image": "/static/card_images/c_ewd_0020_alt.jpeg",
+    "original_file": "進化野人/0007_16EWD0020_野人慶典.jpg",
+    "deck_eligible": true,
+    "mana": 3,
+    "usable_phases": [
+      "Main Phase"
+    ],
+    "trigger_condition": "",
+    "art_subtype": "場地"
+  },
+  {
+    "id": "C-EWD-0023-ALT",
+    "name": "好野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "2",
+    "score": 1,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：獎勵+3。",
+    "image": "/static/card_images/c_ewd_0023_alt.jpeg",
+    "original_file": "進化野人/0006_17EWD0023_好野人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
+  },
+  {
+    "id": "C-EWD-0056",
+    "name": "觸殺野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "3",
+    "score": 2,
+    "tribute": 0,
+    "keywords": [
+      "野人"
+    ],
+    "effect_text": "你的召喚階段限一次，可使此單位左右1個野人單位被破壞，若成功使此單位被轉正並+3攻擊力直到你的下個主要階段開始時。",
+    "image": "/static/card_images/c_ewd_0056.jpeg",
+    "original_file": "進化野人/0004_19EWD0056_觸殺野人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
+  },
+  {
+    "id": "C-EWD-0057",
+    "name": "游擊野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "3",
+    "score": 3,
+    "tribute": 0,
+    "keywords": [
+      "野人"
+    ],
+    "effect_text": "你的主要階段限一次，你場上的其他野人單位被破壞後，可使你墓地或手牌的此卡被召喚。",
+    "image": "/static/card_images/c_ewd_0057.jpeg",
+    "original_file": "進化野人/0003_20EWD0057_游擊野人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
+  },
+  {
     "id": "C-EWD-0061",
     "name": "雙斧野人",
     "deck": "進化野人",
@@ -3035,8 +3125,7 @@
     "score": 3,
     "tribute": 1,
     "keywords": [
-      "滑行",
-      "武術"
+      "滑行"
     ],
     "effect_text": "滑行。此單位進攻時，可從你額外區尋找1張「無影腳」並加入手牌",
     "image": "/static/card_images/c_ewd_0066.jpeg",
@@ -3045,8 +3134,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "rarity": "C"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "C-EWD-0067",
@@ -7842,15 +7930,14 @@
     "score": 6,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "無特殊效果。",
+    "effect_text": "",
     "image": "/static/card_images/ewd_0008.jpeg",
     "original_file": "進化野人/0015_EWD0008_巨大野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "野人",
-    "is_implemented": true
+    "art_subtype": "野人"
   },
   {
     "id": "EWD-0009",
@@ -7866,13 +7953,13 @@
       "機械合體"
     ],
     "effect_text": "機械合體。",
+    "image": "/static/card_images/ewd_0009.jpeg",
     "original_file": "進化野人/0017_EWD0009_合金野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "機械/野人",
-    "image": "/static/card_images/ewd_0009.jpeg"
+    "art_subtype": "機械，野人"
   },
   {
     "id": "EWD-0010",
@@ -7894,8 +7981,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型，野人",
-    "is_implemented": true
+    "art_subtype": "人型，野人"
   },
   {
     "id": "EWD-0012",
@@ -7908,16 +7994,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，野人"
     ],
     "effect_text": "立即：使你場上所有野人單位不會被敵方魔法卡選為目標直到你下個主要階段開始。",
+    "image": "/static/card_images/ewd_0012.jpeg",
     "original_file": "進化野人/0020_EWD0012_魔法野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0012.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "EWD-0013",
@@ -7929,15 +8015,17 @@
     "attack": "6",
     "score": 7,
     "tribute": 2,
-    "keywords": [],
+    "keywords": [
+      "野人"
+    ],
     "effect_text": "使你場上所有野人單位+1攻擊力。",
+    "image": "/static/card_images/ewd_0013.jpeg",
     "original_file": "進化野人/0021_EWD0013_野人首領.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0013.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "EWD-0017",
@@ -7946,7 +8034,7 @@
     "type": "unit",
     "faction": "進化野人",
     "race": "進化野人",
-    "attack": "0",
+    "attack": "X",
     "score": 3,
     "tribute": 0,
     "keywords": [],
@@ -7957,8 +8045,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型，野人",
-    "is_implemented": true
+    "art_subtype": "人型，野人"
   },
   {
     "id": "EWD-0018",
@@ -7970,8 +8057,11 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人"
+    ],
     "effect_text": "使你場上所有野人單位轉正。",
+    "image": "/static/card_images/ewd_0018.jpeg",
     "original_file": "進化野人/0031_EWD0018_興奮.jpg",
     "deck_eligible": true,
     "mana": 2,
@@ -7979,8 +8069,7 @@
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/ewd_0018.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "EWD-0019",
@@ -7992,17 +8081,19 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人"
+    ],
     "effect_text": "本回合使你1野人單位在戰術階段選擇佈陣時仍可進攻。",
+    "image": "/static/card_images/ewd_0019.jpeg",
     "original_file": "進化野人/0033_EWD0019_就是要打打.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 3,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/ewd_0019.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "EWD-0020",
@@ -8014,145 +8105,19 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人，獎勵"
+    ],
     "effect_text": "使你場上的野人單位被賦予：此單位進攻戰鬥成功時，使你獎勵+1。",
+    "image": "/static/card_images/ewd_0020.jpeg",
     "original_file": "進化野人/0034_EWD0020_野人慶典.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 3,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/ewd_0020.jpeg"
-  },
-  {
-    "id": "EWD-0020-ALT",
-    "name": "野人慶典",
-    "deck": "進化野人",
-    "type": "magic",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "0",
-    "score": 0,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "使你場上的野人單位被賦予：此單位進攻戰鬥成功時，使你獎勵+1。",
-    "original_file": "進化野人/0007_16EWD0020_野人慶典.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [
-      "Main Phase"
-    ],
-    "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/ewd_0020_alt.jpeg"
-  },
-  {
-    "id": "EWD-0023",
-    "name": "好野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "2",
-    "score": 0,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：獎勵+3。",
-    "original_file": "進化野人/0038_EWD0023_好野人_R普.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0023.jpeg"
-  },
-  {
-    "id": "EWD-0023-ALT",
-    "name": "好野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "2",
-    "score": 0,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：獎勵+3。",
-    "original_file": "進化野人/0006_17EWD0023_好野人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0023_alt.jpeg"
-  },
-  {
-    "id": "EWD-0023-泳裝",
-    "name": "好野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "2",
-    "score": 0,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：獎勵+3。",
-    "original_file": "進化野人/0001_泳裝03_EWD0023_好野人.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0023_泳裝.jpeg"
-  },
-  {
-    "id": "EWD-0056",
-    "name": "觸殺野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "3",
-    "score": 2,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的召喚階段限一次，可使此單位左右1個野人單位被破壞，若成功使此單位被轉正並+3攻擊力直到你的下個主要階段開始時。",
-    "original_file": "進化野人/0004_19EWD0056_觸殺野人.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0056.jpeg"
-  },
-  {
-    "id": "EWD-0057",
-    "name": "游擊野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "3",
-    "score": 3,
-    "tribute": 0,
-    "keywords": [],
-    "effect_text": "你的主要階段限一次，你場上的其他野人單位被破壞後，可使你墓地或手牌的此卡被召喚。",
-    "original_file": "進化野人/0003_20EWD0057_游擊野人.jpg",
-    "deck_eligible": true,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ewd_0057.jpeg"
+    "art_subtype": "場地"
   },
   {
     "id": "GOT-0019",
@@ -9624,28 +9589,6 @@
     "trigger_condition": "",
     "art_subtype": "人型",
     "image": "/static/card_images/ny_evl_0016.jpeg"
-  },
-  {
-    "id": "NY-EWD-0015",
-    "name": "智慧野人",
-    "deck": "進化野人",
-    "type": "unit",
-    "faction": "進化野人",
-    "race": "進化野人",
-    "attack": "4",
-    "score": 4,
-    "tribute": 1,
-    "keywords": [
-      "立即"
-    ],
-    "effect_text": "立即：使你墓地1魔法卡回手牌。",
-    "original_file": "進化野人/0027_NY-EWD-0015.jpg",
-    "deck_eligible": false,
-    "mana": 0,
-    "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ny_ewd_0015.jpeg"
   },
   {
     "id": "NY-GOT-0008",
@@ -15202,13 +15145,13 @@
       "偷襲"
     ],
     "effect_text": "偷襲。",
+    "image": "/static/card_images/r_ewd_0002.jpeg",
     "original_file": "進化野人/0009_EWD0002_偷襲野人_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0002.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0011",
@@ -15245,13 +15188,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "此卡不會被敵方魔法卡選為目標。",
+    "image": "/static/card_images/r_ewd_0014.jpeg",
     "original_file": "進化野人/0022_EWD0014_鍍金合金野人_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "機械/野人",
-    "image": "/static/card_images/r_ewd_0014.jpeg"
+    "art_subtype": "機械，野人"
   },
   {
     "id": "R-EWD-0015",
@@ -15290,13 +15233,35 @@
       "立即"
     ],
     "effect_text": "立即：使你墓地1魔法卡回手牌。",
+    "image": "/static/card_images/r_ewd_0015_promo.jpeg",
     "original_file": "進化野人/0024_4圖層_進化野人_智慧_0.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0015_promo.jpeg"
+    "art_subtype": "人型/野人"
+  },
+  {
+    "id": "R-EWD-0015-新年",
+    "name": "智慧野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "4",
+    "score": 4,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：使你墓地1魔法卡回手牌。",
+    "image": "/static/card_images/r_ewd_0015_新年.jpeg",
+    "original_file": "進化野人/0027_NY-EWD-0015.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0016",
@@ -15330,15 +15295,15 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使你場上所有野人單位轉正。",
+    "image": "/static/card_images/r_ewd_0018_泳裝.jpeg",
     "original_file": "進化野人/0032_08泳裝EWD0018_興奮_黑銀夜烏.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 2,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "消耗",
-    "image": "/static/card_images/r_ewd_0018_泳裝.jpeg"
+    "art_subtype": "消耗"
   },
   {
     "id": "R-EWD-0021",
@@ -15377,13 +15342,57 @@
       "立即"
     ],
     "effect_text": "此卡的祭品須為「殭屍野人」。立即：使你墓地的殭屍野人被召喚。",
+    "image": "/static/card_images/r_ewd_0022.jpeg",
     "original_file": "進化野人/0037_EWD0022改_巨大殭屍野人_R普.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "不死族/野人",
-    "image": "/static/card_images/r_ewd_0022.jpeg"
+    "art_subtype": "不死族，野人"
+  },
+  {
+    "id": "R-EWD-0023",
+    "name": "好野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "2",
+    "score": 0,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：獎勵+3。",
+    "image": "/static/card_images/r_ewd_0023.jpeg",
+    "original_file": "進化野人/0038_EWD0023_好野人_R普.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
+  },
+  {
+    "id": "R-EWD-0023-泳裝",
+    "name": "好野人",
+    "deck": "進化野人",
+    "type": "unit",
+    "faction": "進化野人",
+    "race": "進化野人",
+    "attack": "2",
+    "score": 1,
+    "tribute": 1,
+    "keywords": [
+      "立即"
+    ],
+    "effect_text": "立即：獎勵+3。",
+    "image": "/static/card_images/r_ewd_0023_泳裝.jpeg",
+    "original_file": "進化野人/0001_泳裝03_EWD0023_好野人.jpg",
+    "deck_eligible": true,
+    "mana": 0,
+    "usable_phases": [],
+    "trigger_condition": "",
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0029",
@@ -15396,16 +15405,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "衰退"
+      "衰退，禁錮"
     ],
     "effect_text": "衰退。使此單位與其正前方的敵方單位受到禁錮。",
+    "image": "/static/card_images/r_ewd_0029.jpeg",
     "original_file": "進化野人/0049_EWD-0029.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0029.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0030",
@@ -15419,13 +15428,13 @@
     "tribute": 1,
     "keywords": [],
     "effect_text": "此單位戰鬥成功時，可使敵方墓地1張★為2或以下的單位被除外。",
+    "image": "/static/card_images/r_ewd_0030.jpeg",
     "original_file": "進化野人/0050_EWD-0030.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0030.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0031",
@@ -15439,13 +15448,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "使你場上所有虛擬單位被賦予+1攻擊力。",
+    "image": "/static/card_images/r_ewd_0031.jpeg",
     "original_file": "進化野人/0051_EWD-0031.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "虛擬/野人",
-    "image": "/static/card_images/r_ewd_0031.jpeg"
+    "art_subtype": "虛擬，野人"
   },
   {
     "id": "R-EWD-0032",
@@ -15459,13 +15468,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "你的主要階段開始時，使此單位轉正。",
+    "image": "/static/card_images/r_ewd_0032.jpeg",
     "original_file": "進化野人/0052_EWD-0032.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0032.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0033",
@@ -15479,13 +15488,13 @@
     "tribute": 0,
     "keywords": [],
     "effect_text": "此單位因單位效果而被破壞時，使此單位回手牌。",
+    "image": "/static/card_images/r_ewd_0033.jpeg",
     "original_file": "進化野人/0053_EWD0033_成為球的野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0033.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0034",
@@ -15498,16 +15507,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，野人"
     ],
     "effect_text": "立即：使此單位左邊或右邊1個其他野人單位移動至你場上另1個野人單位左邊或右邊。",
+    "image": "/static/card_images/r_ewd_0034.jpeg",
     "original_file": "進化野人/0054_EWD0034_學會傳球的野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0034.jpeg"
+    "art_subtype": "人型/野人"
   },
   {
     "id": "R-EWD-0035",
@@ -15519,15 +15528,17 @@
     "attack": "4",
     "score": 3,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "野人"
+    ],
     "effect_text": "你的戰術階段開始時限一次，可使此單位左邊或右邊1個野人單位被破壞，若成功使該位置前方1個攻擊力小於等於該野人單位在場時攻擊力的敵方單位被破壞。",
+    "image": "/static/card_images/r_ewd_0035.jpeg",
     "original_file": "進化野人/0055_EWD0035_投擲野人的野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0035.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0037",
@@ -15543,13 +15554,13 @@
       "立即"
     ],
     "effect_text": "立即：使你場上所有野人單位被賦予+1攻擊力直到下個回合結束時。",
+    "image": "/static/card_images/r_ewd_0037.jpeg",
     "original_file": "進化野人/0057_EWD0037_野人兄弟幫聲援野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0037.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0037-泳裝",
@@ -15562,16 +15573,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，野人"
     ],
     "effect_text": "立即：使你場上所有野人單位被賦予+1攻擊力直到下個回合結束時。",
+    "image": "/static/card_images/r_ewd_0037_泳裝.jpeg",
     "original_file": "進化野人/0058_09泳裝EWD0037_聲援野人_史黛菈.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0037_泳裝.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0038",
@@ -15583,17 +15594,19 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人，獎勵"
+    ],
     "effect_text": "你的主要階段開始時限一次，可使你前排戰線所有野人單位被置於此卡下方。你的結束階段時若你場上有「逃離神殿的野神」，則使你獎勵+X。X=此卡下方的野人單位卡數量。",
+    "image": "/static/card_images/r_ewd_0038.jpeg",
     "original_file": "進化野人/0059_022EWD0038_野神殿-1.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 2,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/r_ewd_0038.jpeg"
+    "art_subtype": "場地"
   },
   {
     "id": "R-EWD-0039",
@@ -15605,15 +15618,17 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野神殿，野人"
+    ],
     "effect_text": "你的主要階段限一次，可使你場上的「野神殿」下方的1張野人單位卡被召喚，若你場上有「逃離神殿的野神」改為使其被額外打出。",
+    "image": "/static/card_images/r_ewd_0039.jpeg",
     "original_file": "進化野人/0060_023EWD0039_傳教徒野人-1.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0039.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0040",
@@ -15625,15 +15640,17 @@
     "attack": "3",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "敵方效果抗性"
+    ],
     "effect_text": "使你場上的「逃離神殿的野神」被賦予敵方效果抗性。",
+    "image": "/static/card_images/r_ewd_0040.jpeg",
     "original_file": "進化野人/0061_024EWD0040_痴狂迷信的阿姨野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0040.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0041",
@@ -15646,16 +15663,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，野神殿，破壞抗性"
     ],
     "effect_text": "立即：從你牌庫尋找1張「野神殿」並加入手牌。使你場上的「野神殿」被賦予破壞抗性。",
+    "image": "/static/card_images/r_ewd_0041.jpeg",
     "original_file": "進化野人/0062_025EWD0041_打造神殿的野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0041.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0043",
@@ -15667,15 +15684,17 @@
     "attack": "4",
     "score": 3,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人，獎勵"
+    ],
     "effect_text": "你場上的野人單位因你的效果被破壞時，使你獎勵+1。",
+    "image": "/static/card_images/r_ewd_0043.jpeg",
     "original_file": "進化野人/0064_027EWD0043_本壘野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0043.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0044",
@@ -15688,16 +15707,16 @@
     "score": 1,
     "tribute": 0,
     "keywords": [
-      "遠程攻擊"
+      "遠程攻擊，野人"
     ],
     "effect_text": "遠程攻擊。此單位進攻時，可使此單位前方你的野人單位被破壞，若成功使此單位前方第一個敵方單位被破壞。",
+    "image": "/static/card_images/r_ewd_0044.jpeg",
     "original_file": "進化野人/0065_028EWD0044_第四棒野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0044.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0045",
@@ -15709,17 +15728,19 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野神殿，野人"
+    ],
     "effect_text": "此卡的卡名可視為「野神殿」。你的主要階段開始時限一次，可使你場上與墓地加總至多2張野人單位卡被置於此卡下方。使你場上的「逃離神殿的野神」被賦予+X攻擊力及+X★。X=此卡下方的野人單位卡數量兩倍。",
+    "image": "/static/card_images/r_ewd_0045.jpeg",
     "original_file": "進化野人/0066_029EWD0045_野神殿的後花園.jpg",
     "deck_eligible": true,
-    "mana": 0,
+    "mana": 2,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/r_ewd_0045.jpeg"
+    "art_subtype": "場地"
   },
   {
     "id": "R-EWD-0047",
@@ -15735,15 +15756,14 @@
       "滑行"
     ],
     "effect_text": "滑行。你的主要階段開始時，使此單位被轉正。",
-    "extra_summon_condition": "你場上的單位進攻後，若你場上進攻單位數量至少為3，可使你場上的「激動野人」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/r_ewd_0047.jpeg",
     "original_file": "進化野人/0068_EWD0047_學會滑板的機動野人_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0047.jpeg"
+    "trigger_condition": "你場上的單位進攻後，若你場上進攻單位數量至少為3，則可使你場上的[機動野人]升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型/野人"
   },
   {
     "id": "R-EWD-0048",
@@ -15756,18 +15776,17 @@
     "score": 3,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "立即，獎勵"
     ],
     "effect_text": "立即：使你場上所有野人單位被賦予+2攻擊力及「此單位進攻戰鬥成功時使你獎勵+1」，直到下個回合結束時。",
-    "extra_summon_condition": "你的主要階段，若你場上正前方有單位的野人單位數量至少為3，可使你手牌的「野人兄弟幫聲援野人」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/r_ewd_0048.jpeg",
     "original_file": "進化野人/0069_EWD0048_大聲聲援的野人_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0048.jpeg"
+    "trigger_condition": "你的主要階段，若你場上正前方有單位的野人數量至少為3，則可使你手牌的[野人兄弟幫 聲援野人] 升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0049",
@@ -15801,15 +15820,17 @@
     "attack": "4",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "綁架"
+    ],
     "effect_text": "此單位進攻戰鬥成功時，可使被進攻的單位由破壞改為被綁架。若此單位有綁架卡牌，則使此單位被賦予-2攻擊力。",
+    "image": "/static/card_images/r_ewd_0050.jpeg",
     "original_file": "進化野人/0071_EWD0050_第一次綁架的野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0050.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0051",
@@ -15821,15 +15842,17 @@
     "attack": "6",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "橫放，工藝"
+    ],
     "effect_text": "你的主要階段限一次，可使此單位被橫放，若成功則從你額外區尋找1張工藝牌並加入手牌。",
+    "image": "/static/card_images/r_ewd_0051.jpeg",
     "original_file": "進化野人/0072_EWD0051_工藝野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0051.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0052",
@@ -15845,8 +15868,7 @@
       "消逝"
     ],
     "effect_text": "消逝。使你場上1個野人單位被賦予+2攻擊力。",
-    "extra_summon_condition": "由「學會工藝的野人」之效果加入手牌。",
-    "extra_deck_limit": 3,
+    "image": "/static/card_images/r_ewd_0052.jpeg",
     "original_file": "進化野人/0074_EWD0052_野人工藝-木棒.jpg",
     "deck_eligible": false,
     "mana": 0,
@@ -15855,8 +15877,8 @@
       "Defense Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "永久/工藝",
-    "image": "/static/card_images/r_ewd_0052.jpeg"
+    "extra_deck_limit": 1,
+    "art_subtype": "永久，工藝"
   },
   {
     "id": "R-EWD-0053",
@@ -15868,19 +15890,20 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "消逝，野人"
+    ],
     "effect_text": "使你場上1個野人單位被賦予+2★。",
-    "extra_summon_condition": "由「學會工藝的野人」之效果加入手牌。",
-    "extra_deck_limit": 3,
+    "image": "/static/card_images/r_ewd_0053.jpeg",
     "original_file": "進化野人/0075_EWD053_野人工藝-披風-1.jpg",
     "deck_eligible": false,
-    "mana": 0,
+    "mana": 1,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "永久/工藝",
-    "image": "/static/card_images/r_ewd_0053.jpeg"
+    "extra_deck_limit": 1,
+    "art_subtype": "永久，工藝"
   },
   {
     "id": "R-EWD-0054",
@@ -15892,19 +15915,20 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
-    "effect_text": "使你場上1個野人單位被賦予敵方魔法抗性。",
-    "extra_summon_condition": "由「學會工藝的野人」之效果加入手牌。",
-    "extra_deck_limit": 3,
+    "keywords": [
+      "消逝，野人，敵方魔法抗性"
+    ],
+    "effect_text": " 消逝。使你場上1個野人單位被賦予敵方魔法抗性。",
+    "image": "/static/card_images/r_ewd_0054.jpeg",
     "original_file": "進化野人/0076_EWD0054_野人工藝-吊墜.jpg",
     "deck_eligible": false,
-    "mana": 0,
+    "mana": 1,
     "usable_phases": [
       "Main Phase"
     ],
     "trigger_condition": "",
-    "art_subtype": "永久/工藝",
-    "image": "/static/card_images/r_ewd_0054.jpeg"
+    "extra_deck_limit": 1,
+    "art_subtype": "永久，工藝"
   },
   {
     "id": "R-EWD-0058",
@@ -15917,16 +15941,16 @@
     "score": 2,
     "tribute": 0,
     "keywords": [
-      "滑行"
+      "滑行，破圖，獎勵"
     ],
     "effect_text": "滑行。此單位進攻時，使此單位向其前方被推擠，使單位在破圖前改為被破壞並獎勵+2。",
+    "image": "/static/card_images/r_ewd_0058.jpeg",
     "original_file": "進化野人/0002_21EWD0058_撲壘野人.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/r_ewd_0058.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "R-EWD-0062",
@@ -28385,7 +28409,7 @@
     "type": "unit",
     "faction": "進化野人",
     "race": "進化野人",
-    "attack": "0",
+    "attack": "X",
     "score": 4,
     "tribute": 1,
     "keywords": [
@@ -28398,8 +28422,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型，野人",
-    "is_implemented": true
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SR-EWD-0026",
@@ -28415,13 +28438,13 @@
       "立即"
     ],
     "effect_text": "你的主要階段，若你場上沒有野人單位，才可從你手牌打出此卡。立即：移動至後排戰線。",
+    "image": "/static/card_images/sr_ewd_0026.jpeg",
     "original_file": "進化野人/0044_EWD0026.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "神族/野人",
-    "image": "/static/card_images/sr_ewd_0026.jpeg"
+    "art_subtype": "神族，野人"
   },
   {
     "id": "SR-EWD-0027",
@@ -28433,15 +28456,17 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "橫放，獎勵"
+    ],
     "effect_text": "你的結束階段時限一次，可使此單位左右邊的野人單位橫放，若成功橫放2個單位，獎勵+1。",
+    "image": "/static/card_images/sr_ewd_0027.jpeg",
     "original_file": "進化野人/0046_EWD-0027.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/sr_ewd_0027.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SR-EWD-0028",
@@ -28457,13 +28482,13 @@
       "貫穿"
     ],
     "effect_text": "你場上的「超級賽野人II」被破壞後，才可從你手牌額外打出此卡。貫穿。X=20-你牌庫的剩餘張數。",
+    "image": "/static/card_images/sr_ewd_0028.jpeg",
     "original_file": "進化野人/0048_EWD-0028.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/sr_ewd_0028.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SR-EWD-0036",
@@ -28475,15 +28500,17 @@
     "attack": "5",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "破圖"
+    ],
     "effect_text": "此單位進攻時，使此單位前方第一個敵方單位向其後方被推擠，使被破圖的單位卡回手牌。",
+    "image": "/static/card_images/sr_ewd_0036.jpeg",
     "original_file": "進化野人/0056_EWD0036_野人兄弟幫老大魯魯.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/sr_ewd_0036.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SR-EWD-0042",
@@ -28496,16 +28523,16 @@
     "score": 4,
     "tribute": 1,
     "keywords": [
-      "立即"
+      "立即，野人"
     ],
     "effect_text": "立即：使你場上的「野神殿」下方的2張野人單位卡被召喚，若你場上有「逃離神殿的野神」改為使其被額外打出。",
+    "image": "/static/card_images/sr_ewd_0042.jpeg",
     "original_file": "進化野人/0063_026EWD0042_神父野人-1.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/sr_ewd_0042.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SR-EWD-0046",
@@ -28517,19 +28544,20 @@
     "attack": "0",
     "score": 0,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "野人，獎勵"
+    ],
     "effect_text": "使你場上所有野人單位被賦予：此單位進攻戰鬥成功時使你獎勵+1。你的主要階段限一次，可使你場上所有的野人單位被轉正。",
-    "extra_summon_condition": "你的主要階段，若你★至少為5，則可使你場上的「野人慶典」升級為此卡。",
-    "extra_deck_limit": 1,
+    "image": "/static/card_images/sr_ewd_0046.jpeg",
     "original_file": "進化野人/0067_EWD0046_野人狩獵慶典_額外牌1.jpg",
     "deck_eligible": false,
-    "mana": 0,
+    "mana": 3,
     "usable_phases": [
       "Main Phase"
     ],
-    "trigger_condition": "",
-    "art_subtype": "場地",
-    "image": "/static/card_images/sr_ewd_0046.jpeg"
+    "trigger_condition": "你的主要階段，若你獎勵至少為5，則可使你場上的[野人慶典]升級為此卡",
+    "extra_deck_limit": 1,
+    "art_subtype": "場地"
   },
   {
     "id": "SR-EWD-0055",
@@ -28542,18 +28570,17 @@
     "score": -3,
     "tribute": 0,
     "keywords": [
-      "立即"
+      "消逝。立即"
     ],
-    "effect_text": "立即：使此單位向其後方被推擠，並使破圖的單位卡被除外。",
-    "extra_summon_condition": "若你場上的野人單位在你的戰術階段被破壞時，可使你額外區的此卡被額外打出至敵方場上。",
-    "extra_deck_limit": 1,
+    "effect_text": "消逝。立即：使此單位向其後方被推擠，並使破圖的單位卡被除外。",
+    "image": "/static/card_images/sr_ewd_0055.jpeg",
     "original_file": "進化野人/0005_18EWD0055_外野手_額外牌1.jpg",
     "deck_eligible": false,
     "mana": 0,
     "usable_phases": [],
-    "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/sr_ewd_0055.jpeg"
+    "trigger_condition": "若你場上的野人單位在你的戰術階段被破壞時，則可使你額外區的此卡被額外打出至敵方場上",
+    "extra_deck_limit": 1,
+    "art_subtype": "人型/野人"
   },
   {
     "id": "SR-EWD-0059",
@@ -32571,13 +32598,13 @@
       "立即"
     ],
     "effect_text": "你的主要階段，若你場上沒有野人單位，才可從你手牌打出此卡。立即：移動至後排戰線。",
+    "image": "/static/card_images/ssr_ewd_0026.jpeg",
     "original_file": "進化野人/0045_03野人_逃離神殿的野神.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "神族/野人",
-    "image": "/static/card_images/ssr_ewd_0026.jpeg"
+    "art_subtype": "神族，野人"
   },
   {
     "id": "SSR-EWD-0027",
@@ -32589,15 +32616,17 @@
     "attack": "2",
     "score": 2,
     "tribute": 0,
-    "keywords": [],
+    "keywords": [
+      "橫放，獎勵"
+    ],
     "effect_text": "你的結束階段時限一次，可使此單位左右邊的野人單位橫放，若成功橫放2個單位，獎勵+1。",
+    "image": "/static/card_images/ssr_ewd_0027.jpeg",
     "original_file": "進化野人/0047_進化野人_女教皇卡框.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ssr_ewd_0027.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SSR-EWD-0051",
@@ -32609,15 +32638,17 @@
     "attack": "6",
     "score": 4,
     "tribute": 1,
-    "keywords": [],
+    "keywords": [
+      "橫放，工藝"
+    ],
     "effect_text": "你的主要階段限一次，可使此單位被橫放，若成功則從你額外區尋找1張工藝牌並加入手牌。",
+    "image": "/static/card_images/ssr_ewd_0051.jpeg",
     "original_file": "進化野人/0073_野人_工藝野人_1.jpg",
-    "deck_eligible": false,
+    "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型/野人",
-    "image": "/static/card_images/ssr_ewd_0051.jpeg"
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SSR-FMS-0002",
@@ -34804,15 +34835,14 @@
     "score": 6,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "無特殊效果。",
+    "effect_text": "",
     "image": "/static/card_images/sssr_ewd_0008.jpeg",
     "original_file": "進化野人/0016_進化野人_6嘆巨大野人卡框.jpg",
     "deck_eligible": true,
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "野人",
-    "is_implemented": true
+    "art_subtype": "野人"
   },
   {
     "id": "SSSR-EWD-0025",
@@ -34821,7 +34851,7 @@
     "type": "unit",
     "faction": "進化野人",
     "race": "進化野人",
-    "attack": "0",
+    "attack": "X",
     "score": 4,
     "tribute": 1,
     "keywords": [
@@ -34834,8 +34864,7 @@
     "mana": 0,
     "usable_phases": [],
     "trigger_condition": "",
-    "art_subtype": "人型，野人",
-    "is_implemented": true
+    "art_subtype": "人型，野人"
   },
   {
     "id": "SSSR-FMS-0006",

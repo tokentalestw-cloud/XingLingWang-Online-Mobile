@@ -57,10 +57,45 @@
   let previous = null;
   let scoreEvents = {};
   let toastTimer = null;
+  let effectTimer = null;
+  const effectQueue = [];
   let scoreTimer = null;
   let peerOffline = false;
   let recovering = false;
   const state = () => global.xlwGetBattleFeedbackState?.() || {};
+  function effectMessage(text) {
+    const match = String(text || "").match(/^([^：:\n]{1,64}?)\s*(?:立即效果|效果發動|效果觸發|效果)\s*[：:]\s*(\S.+)$/u);
+    if (!match) return null;
+    return {title: match[1].trim(), detail: match[2]};
+  }
+  function showNextEffect() {
+    const next = effectQueue.shift();
+    if (!next) {
+      effectTimer = null;
+      document.getElementById("xlwCardEffectFeedback")?.setAttribute("hidden", "");
+      return;
+    }
+    let box = document.getElementById("xlwCardEffectFeedback");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "xlwCardEffectFeedback";
+      box.setAttribute("role", "status");
+      box.append(document.createElement("strong"), document.createElement("span"));
+      document.body.appendChild(box);
+    }
+    box.firstElementChild.textContent = next.title;
+    box.lastElementChild.textContent = next.detail;
+    box.hidden = false;
+    effectTimer = setTimeout(showNextEffect, 2800);
+  }
+  function effect(text) {
+    if (!global.document || !state().active || global.XLW_Tutorial?.active) return;
+    const message = effectMessage(text);
+    if (!message) return;
+    if (effectQueue.length >= 3) effectQueue.shift();
+    effectQueue.push(message);
+    if (effectTimer === null) showNextEffect();
+  }
   function notice(message, tone='info') {
     if (!global.document || !message || !state().active || global.XLW_Tutorial?.active) return;
     let box = document.getElementById('xlwActionFeedback');
@@ -161,8 +196,13 @@
     }
     board.appendChild(svg);
   }
-  const api={scoreDifference,presence,unavailableReason,goalProgress,strongestLanes,notice,updateScore,updatePresence,paintTargetsAndRoutes,
-    resetScores(){previous=null;scoreEvents={};clearTimeout(scoreTimer);document.getElementById('xlwActionFeedback')?.setAttribute('hidden','');},
+  const api={scoreDifference,presence,unavailableReason,goalProgress,strongestLanes,notice,effect,effectMessage,updateScore,updatePresence,paintTargetsAndRoutes,
+    resetScores(){
+      previous=null;scoreEvents={};clearTimeout(scoreTimer);
+      effectQueue.length=0;clearTimeout(effectTimer);effectTimer=null;
+      document.getElementById('xlwActionFeedback')?.setAttribute('hidden','');
+      document.getElementById('xlwCardEffectFeedback')?.setAttribute('hidden','');
+    },
     resetConnection(){peerOffline=false;recovering=false;},
     status(text){updatePresence();if(/連線|同步|伺服器/.test(text))return;if(state().active&&(state().myTurn||/無法|不能|不足|只能|請先/.test(text)))notice(text,/無法|不能|不足|只能|請先/.test(text)?'warning':'info');},
     peer(event){const wasOffline=peerOffline;if(event==='offline')peerOffline=true;if(event==='online')peerOffline=false;updatePresence();if(wasOffline&&event==='online')notice('對手已重新連線，對局將依收到的操作繼續。','success');},

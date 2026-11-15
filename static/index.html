@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   
   <title>星靈王 Web Final - 卡牌對戰</title>
-  <link rel="stylesheet" href="/static/style_v8.css?v=20261114-red-trophy-v1">
-  <link rel="stylesheet" href="/static/royal_hud.css?v=20261114-open-stone">
+  <link rel="stylesheet" href="/static/style_v8.css?v=20261115-tribute-search">
+  <link rel="stylesheet" href="/static/royal_hud.css?v=20261115-fairy-cover">
   <link rel="stylesheet" href="/static/circus_wheel.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -179,33 +179,64 @@
         </div>
       </div>
 
+      <script>
+        window.xlwRequestWelcomeAction = action => {
+          const status = document.getElementById("xlwWelcomeLoadingStatus");
+          const run = window.xlwRunWelcomeAction;
+          if (run) run(action);
+          else {
+            window.xlwQueuedWelcomeAction = action;
+            status.textContent = "正在準備遊戲資料…";
+          }
+        };
+      </script>
+      <p id="xlwWelcomeLoadingStatus" role="status" aria-live="polite"></p>
       <!-- 三大遊戲模式主入口按鈕 -->
       <div class="welcome-menu">
-        <button class="menu-btn menu-ai" id="xlwWelcomeAiBtn" onclick="window.xlwChooseMode('single')" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-ai" id="xlwWelcomeAiBtn" onclick="window.xlwRequestWelcomeAction('single')">
           <span class="btn-icon">⚔️</span>
-          <span class="btn-text" id="xlwAiBtnText">載入中...</span>
+          <span class="btn-text" id="xlwAiBtnText">單人對抗 AI</span>
           <span class="btn-shine"></span>
         </button>
         
-        <button class="menu-btn menu-multi" id="xlwWelcomeMultiBtn" onclick="window.xlwChooseMode('multi')" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-multi" id="xlwWelcomeMultiBtn" onclick="window.xlwRequestWelcomeAction('multi')">
           <span class="btn-icon">🌐</span>
-          <span class="btn-text" id="xlwMultiBtnText">載入中...</span>
+          <span class="btn-text" id="xlwMultiBtnText">線上雙人對決</span>
           <span class="btn-shine"></span>
         </button>
         
-        <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwStartTutorial()" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-tutorial" id="xlwWelcomeTutorialBtn" onclick="window.xlwRequestWelcomeAction('tutorial')">
           <span class="btn-icon">🎓</span>
-          <span class="btn-text" id="xlwTutorialBtnText">載入中...</span>
+          <span class="btn-text" id="xlwTutorialBtnText">新手教學模式</span>
           <span class="btn-shine"></span>
         </button>
 
-        <button class="menu-btn menu-puzzle" id="xlwWelcomePuzzleBtn" onclick="window.xlwOpenPuzzleStageSelect()" disabled style="opacity: 0.55; cursor: not-allowed;">
+        <button class="menu-btn menu-puzzle" id="xlwWelcomePuzzleBtn" onclick="window.xlwRequestWelcomeAction('puzzle')">
           <span class="btn-icon">🧩</span>
-          <span class="btn-text" id="xlwPuzzleBtnText">載入中...</span>
+          <span class="btn-text" id="xlwPuzzleBtnText">殘局挑戰</span>
           <span class="btn-shine"></span>
         </button>
 
-        <a href="/static/deck_builder.html?v=20261025-faction-order-v1" style="text-decoration: none; width: 100%; display: flex; justify-content: center;">
+        <a id="xlwLocalCardEditor" class="menu-btn menu-builder" href="/static/admin.html" hidden
+           style="display:none; text-decoration:none">
+          <span class="btn-icon">📝</span>
+          <span class="btn-text">卡牌資料編輯器</span>
+          <span class="btn-shine"></span>
+        </a>
+        <script>
+          if (["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
+            fetch("/api/deck-account", {cache: "no-store"})
+              .then(response => response.ok ? response.json() : null)
+              .then(account => {
+                if (!account?.local) return;
+                const editor = document.getElementById("xlwLocalCardEditor");
+                editor.hidden = false;
+                editor.style.removeProperty("display");
+              })
+              .catch(() => {});
+          }
+        </script>
+        <a href="/static/deck_builder.html?v=20261115-load-performance" style="text-decoration: none; width: 100%; display: flex; justify-content: center;">
           <button class="menu-btn menu-builder" type="button">
             <span class="btn-icon">🎴</span>
             <span class="btn-text">牌組編輯器</span>
@@ -221,14 +252,48 @@
     </div>
   </div>
 
+  <!-- 全螢幕古典金色邊角雕花裝飾與左下角冰霜飾紋 -->
+  <div id="xlwScreenAtmosphereOverlay" class="xlw-screen-atmosphere-overlay" aria-hidden="true">
+    <div class="corner-ornament corner-top-left"></div>
+    <div class="corner-ornament corner-top-right"></div>
+    <div class="corner-ornament corner-bottom-left">
+      <div class="frost-swirl-ribbon"></div>
+      <div class="frost-snowflake sf-1">❄</div>
+      <div class="frost-snowflake sf-2">❅</div>
+      <div class="frost-snowflake sf-3">❆</div>
+    </div>
+    <div class="corner-ornament corner-bottom-right"></div>
+  </div>
+
+  <!-- 手牌選取連線動態瞄準光弧 (Targeting Arc SVG) -->
+  <svg id="xlwTargetingArcSvg" class="xlw-targeting-arc-svg" aria-hidden="true">
+    <defs>
+      <filter id="arcGlowCyan" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <path id="xlwTargetingArcPath" d="" class="xlw-targeting-arc-path" filter="url(#arcGlowCyan)" />
+  </svg>
+
+  <!-- 左上角星靈王品牌標誌與回合指示膠囊 -->
+  <div id="xlwTopLeftBrand" class="xlw-top-left-brand">
+    <div class="xlw-brand-title">星靈王</div>
+    <div id="xlwBrandTurnPill" class="xlw-brand-turn-pill">TURN 1</div>
+  </div>
+
   <!-- 獨立置頂最右上角功能按鈕列 (返回首頁在最右側) -->
   <div id="xlwFixedTopRightActionBar" class="xlw-fixed-top-right-action-bar" style="display: none !important;">
-    <button id="scoreBtn" class="topbar-setting-btn">紀錄</button>
+    <button id="scoreBtn" class="topbar-setting-btn"><span class="topbar-btn-icon">目</span> 紀錄</button>
     <button id="xlwPuzzleResetTopbarBtn" class="topbar-setting-btn" onclick="window.xlwResetPuzzle()" style="display: none !important; border-color: #f59e0b; color: #ffd76a;">重置</button>
     <button id="xlwPuzzleTopbarBtn" class="topbar-setting-btn" onclick="window.xlwOpenPuzzleStageSelect()" style="display: none !important;">關卡</button>
-    <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwOpenAudioSettings()" aria-haspopup="dialog" aria-label="音效設定">音效：開</button>
+    <button id="xlwSfxToggleBtn" class="topbar-setting-btn" onclick="window.xlwOpenAudioSettings()" aria-haspopup="dialog" aria-label="音效設定"><span class="topbar-btn-icon">🔊</span> 音效</button>
     
-    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()">首頁</button>
+    <button id="xlwReturnTitleBtn" class="topbar-action-btn" onclick="window.xlwReturnToTitle()"><span class="topbar-btn-icon">🏠</span> 首頁</button>
   </div>
 
   <!-- 上方導航工具列 -->
@@ -294,10 +359,10 @@
     
   </header>
 
-  <!-- 中上方獨立階段狀態提示板 -->
+  <!-- 右側獨立階段狀態告示板 (Heraldic Phase Plaque) -->
   <div id="phaseDisplayPanelHard" class="phase-display-panel-hard" style="display: none !important;">
-    <div id="phaseTurnOwner" class="phase-turn-owner">準備對戰</div>
-    <div class="phase-hard-title">階段<span id="phaseTextHard">召喚階段</span></div>
+    <div id="phaseTurnOwner" class="phase-turn-owner">✦ 我方回合</div>
+    <div class="phase-hard-title"><span id="phaseTextHard">召喚階段</span></div>
     <div class="phase-hard-help" id="phaseHelpHard">可進行單位召喚、祭品召喚或發動手牌魔法。</div>
   </div>
 
@@ -339,6 +404,7 @@
     <div class="starlight-particles layer-3"></div>
   </div>
 
+  <svg id="xlwAltarPlacementGuide" aria-hidden="true" focusable="false"><path/></svg>
   <div class="game-shell">
     <div class="board-wrap">
       <section id="boardWrap" class="board">
@@ -1048,14 +1114,14 @@
 
   <!-- 導入核心重構對戰引擎 -->
   <script src="/static/input_diagnostics.js?v=20261101-inputcheck-v10"></script>
-  <script src="/static/online_sync.js?v=20261111-sync-v1" charset="utf-8"></script>
+  <script src="/static/online_sync.js?v=20261115-sync-backup" charset="utf-8"></script>
   <script src="/static/astral_audio.js?v=20261104-annie-v1"></script>
-  <script src="/static/battle_feedback.js?v=20261031-turn-order-v11a"></script>
+  <script src="/static/battle_feedback.js?v=20261115-card-notices"></script>
   <script src="/static/turn_order.js?v=20261031-turn-order-v11a"></script>
   <script src="/static/special_summon.js?v=20261104-annie-v4"></script>
   <script src="/static/battle_flow.js?v=20261101-inputcheck-v10"></script>
   <script src="/static/touch_actions.js?v=20261101-inputcheck-v10"></script>
-  <script src="/static/duel_consistency.js?v=20261114-undead-summon-v1"></script>
+  <script src="/static/duel_consistency.js?v=20261115-counter-resolution"></script>
   <div id="xlwCircusWheelViewer" role="dialog" aria-modal="true" aria-labelledby="xlwCircusWheelViewerTitle" hidden>
     <section class="circus-wheel-viewer-content">
       <header>
@@ -1069,7 +1135,7 @@
     </section>
   </div>
   <script src="/static/circus_wheel.js?v=3" charset="utf-8"></script>
-  <script src="/static/game_v8.js?v=20261114-open-stone" charset="utf-8"></script>
+  <script src="/static/game_v8.js?v=20261115-fairy-resolution" charset="utf-8"></script>
   </div>
 
   <!-- 選擇出戰牌組遮罩 (Pre-Battle Deck Selection Modal) -->

@@ -27,8 +27,10 @@ async def add_smart_cache_headers(request, call_next):
     response = await call_next(request)
     path = request.url.path
 
-    # API 端點：動態資料絕不快取
-    if path.startswith("/api/"):
+    # Shared catalog data may be revalidated across the game and editor.
+    if path == "/api/cards" and request.method == "GET" and response.status_code in (200, 304):
+        response.headers["Cache-Control"] = "no-cache" if deck_accounts.local_editor(request) else "public, max-age=60"
+    elif path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
@@ -607,23 +609,63 @@ def index():
     return response
 
 @app.get("/api/cards")
-def get_cards():
+def get_cards(request: Request):
     cards_file = BASE / "data" / "cards.json"
-    if not cards_file.exists():
+    try:
+        info = cards_file.stat()
+    except FileNotFoundError:
         return []
-    return json.loads(cards_file.read_text(encoding="utf-8"))
+    etag = f'W/"{info.st_mtime_ns:x}-{info.st_size:x}"'
+    if etag in [value.strip() for value in request.headers.get("if-none-match", "").split(",")]:
+        return Response(status_code=304, headers={"ETag": etag})
+    return FileResponse(cards_file, stat_result=info, media_type="application/json", headers={"ETag": etag})
+
+# Race-specific Little Traveler tokens are generated on the board.
+TRAVELER_TOKEN_IDS = {
+    "TOKEN-CND-001", "TOKEN-RBT-001", "TOKEN-SKT-001",
+    "TOKEN-SPT-001", "TOKEN-SPT-002", "TOKEN-STP-001",
+}
+
+
+EWD_CARD_ALIASES = {
+    "EWD-0056": "C-EWD-0056",
+    "EWD-0057": "C-EWD-0057",
+    "EWD-0023": "R-EWD-0023",
+    "EWD-0023-泳裝": "R-EWD-0023-泳裝",
+    "NY-EWD-0015": "R-EWD-0015-新年",
+    "EWD-0020-ALT": "C-EWD-0020-ALT",
+    "EWD-0023-ALT": "C-EWD-0023-ALT",
+}
+
+def without_traveler_tokens(decks):
+    return {
+        name: [EWD_CARD_ALIASES.get(card_id, card_id) for card_id in cards if card_id not in TRAVELER_TOKEN_IDS]
+        for name, cards in decks.items()
+    }
+
 
 @app.get("/api/decks")
-def get_decks(request: Request, personal: bool = False):
+def get_decks(request: Request, personal: bool = False, editor: bool = False):
+    if deck_accounts.local_editor(request):
+        with deck_accounts.deck_store(deck_accounts.LOCAL_OWNER) as decks:
+            result = without_traveler_tokens(decks)
+        return {"local": True, "enabled": False, "decks": result} if editor else result
     decks_file = BASE / "data" / "decks.json"
     defaults = json.loads(decks_file.read_text(encoding="utf-8")) if decks_file.exists() else {}
+    if editor:
+        owner = deck_accounts.account(request)
+        if not owner:
+            return {"enabled": bool(deck_accounts.database_url()), "name": None}
+        with deck_accounts.deck_store(owner) as decks:
+            return {"enabled": True, "name": owner,
+                    "decks": without_traveler_tokens({"中立單位": defaults.get("中立單位", []), **decks})}
     owner = deck_accounts.require_account(request) if personal else deck_accounts.account(request)
     if not owner:
-        return defaults
+        return without_traveler_tokens(defaults)
     with deck_accounts.deck_store(owner) as decks:
         if personal:
-            return {"中立單位": defaults.get("中立單位", []), **decks}
-        return {**defaults, **decks}
+            return without_traveler_tokens({"中立單位": defaults.get("中立單位", []), **decks})
+        return without_traveler_tokens({**defaults, **decks})
 
 
 class ClientErrorLog(BaseModel):
@@ -920,6 +962,8 @@ def validate_personal_name(name):
 @app.post("/api/decks/save")
 def save_deck(data: DeckSaveSchema, request: Request):
     owner = deck_accounts.require_account(request)
+    if TRAVELER_TOKEN_IDS.intersection([*data.card_ids, *(data.extra_card_ids or [])]):
+        raise HTTPException(400, "小旅人 Token 只能在對戰中召喚。")
     validate_personal_name(data.deck_name)
     if len(data.card_ids) > 20 or len(data.extra_card_ids or []) > 100:
         raise HTTPException(400, "牌組張數超過上限。")
