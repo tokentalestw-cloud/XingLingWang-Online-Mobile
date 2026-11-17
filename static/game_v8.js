@@ -45747,9 +45747,10 @@ function adjustBoardScale() {
     const space = {
       left: openArena ? gap : Math.max(gap, score ? score.right + gap : gap),
       right: openArena ? width - gap : Math.min(width - gap, commands ? commands.left - gap : width, phasePanel ? phasePanel.left - gap : width),
-      top: Math.max(openArena ? 4 : gap, enemyHand ? enemyHand.bottom - opponentFanOverlap : gap),
+      top: Math.max(openArena ? height * .126 : gap, enemyHand ? enemyHand.bottom - opponentFanOverlap : gap),
       // A shallow overlap matches the reference fan without moving any field zones.
-      bottom: Math.min(height - gap, hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
+      bottom: Math.min(openArena ? height * .79 : height - gap,
+        hand ? hand.top + Math.min(28, (hand.bottom - hand.top) * 0.32) : height)
     };
     if (space.right <= space.left || space.bottom <= space.top) return;
     const baseFit = xlwFitBoardAroundToolbar(bounds, space, toolbar, gap);
