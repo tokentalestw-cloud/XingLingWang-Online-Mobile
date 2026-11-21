@@ -94,7 +94,21 @@ async def main():
             await sender.send(json.dumps({'action': 'extra_card_to_hand', 'message_id': f'pick-{seat}', 'card': acquired}))
             transferred = await receive(receiver, lambda d: d.get('action') == 'extra_card_to_hand')
             assert transferred['card'] == acquired
-        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing, extra-zone transfer from both seats)')
+            request_id = f'summon-{seat}'
+            await sender.send(json.dumps({'action': 'summon', 'message_id': request_id,
+                                          'summonRequestId': request_id,
+                                          'zone': 'player_front', 'idx': 0, 'card': acquired}))
+            summon = await receive(receiver, lambda d: d.get('action') == 'summon')
+            assert summon['zone'] == 'enemy_front' and summon['summonRequestId'] == request_id
+            await receiver.send(json.dumps({'action': 'sync_game_state', 'message_id': f'counter-state-{seat}',
+                                            'summonRequestId': request_id, 'state': state}))
+            await receiver.send(json.dumps({'action': 'counter_summon_response', 'message_id': f'counter-reply-{seat}',
+                                            'summonRequestId': request_id, 'countered': False}))
+            settled = await receive(sender, lambda d: d.get('action') == 'sync_game_state')
+            reply = await receive(sender, lambda d: d.get('action') == 'counter_summon_response')
+            assert settled['summonRequestId'] == reply['summonRequestId'] == request_id
+            assert settled['server_seq'] < reply['server_seq']
+        print('Real two-client WebSocket integration: PASS (handshake, ACK/retry, coordinate mapping, 20 offline operations, ordered replay, heartbeat, snapshot, spell defense timing, extra-zone transfer and correlated summon counter from both seats)')
     finally:
         await a.close()
         await b.close()

@@ -262,6 +262,8 @@ window.xlwClearAllPendingResolvers = function(force = false) {
   if(force){window.XLW_tempEquipSpellActive=false;window.XLW_tempEquipSpellCard=null;window.XLW_directBoardPrompt?._xlwCancel?.();}
   if(!force && xlwPendingRequiredSpellTarget()){xlwRequireSpellCompletion();return false;}
   if (force) {
+    window.XLWSummonReaction?.end();
+    window.XLW_pendingSummonRequestId = null;
     for (const finish of window.XLW_samuraiRecoveryWaiters?.values() || []) finish(null);
   }
   if (window.XLW_pendingSummonCounterResolve) {
@@ -3166,6 +3168,7 @@ window.hasOphiuchusOnField = function(isPlayer) {
 };
 
 window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, isMultiplayerMode) {
+  window.XLWSummonReaction?.ensure(summonedCard);
   // 1. 小陷阱
   const playerHasTrap = hand.some(c => c && (c.id === "R-NMG-0018" || c.id === "NMG-0018-2" || c.name?.includes("小陷阱")));
   if (playerHasTrap && window.XLW_enemySummonCountThisTurn >= 2) {
@@ -3179,14 +3182,15 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
       });
     }
     if (enemyUnits.length > 0) {
-      const useTrap = await showXLWConfirm("【小陷阱】手牌反制觸發", `對手本回合已召喚第 ${window.XLW_enemySummonCountThisTurn} 個單位。是否從手牌發動【小陷阱】進行反制？`);
+      const useTrap = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【小陷阱】手牌反制觸發", `對手本回合已召喚第 ${window.XLW_enemySummonCountThisTurn} 個單位。是否從手牌發動【小陷阱】進行反制？`);
       if (useTrap) {
         const choices = enemyUnits.map(item => ({
           text: `${item.zone === "enemy_front" ? "前排" : "後排"}${item.idx + 1}: ${item.unit.card.name} (原始ATK: ${item.unit.card.attack ?? item.unit.card.atk})`,
+          card: item.unit.card,
           value: JSON.stringify({ zone: item.zone, idx: item.idx })
         }));
         choices.push({ text: "不發動/取消", value: "cancel" });
-        const choiceVal = await showXLWChoiceModal(
+        const choiceVal = await (window.XLWSummonReaction?.choose || showXLWChoiceModal)(
           "請選擇要破壞的對手單位 (原始 ATK <= 3)",
           "【小陷阱】效果：對手本回合打出/召喚2個以上單位時，使其其中1個原始攻擊力3或以下的單位被破壞。",
           choices
@@ -3196,6 +3200,8 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
           const chosen = enemyUnits.find(item => item.zone === target.zone && item.idx === target.idx);
           const tUnit = chosen && field[target.zone]?.[target.idx] === chosen.unit ? chosen.unit : null;
           if (tUnit) {
+            if (window.isUnitEffectImmune?.(tUnit, target.zone, target.idx) ||
+                (typeof isUnitMagicImmune === "function" && isUnitMagicImmune(tUnit, target.zone, target.idx))) return;
             const trapIdx = hand.findIndex(c => c && (c.id === "R-NMG-0018" || c.id === "NMG-0018-2" || c.name?.includes("小陷阱")));
             if (trapIdx < 0) return;
             window.XLWDuelConsistency.identify(hand);
@@ -3231,23 +3237,26 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
       });
     }
     if (enemySummonedUnits.length > 0) {
-      const useAd = await showXLWConfirm("【嚇人彈跳廣告】手牌反制觸發", `對手本回合召喚了單位，是否從手牌發動【嚇人彈跳廣告】進行反制（將對手本回合召喚的單位轉為直立）？`);
+      const useAd = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【嚇人彈跳廣告】手牌反制觸發", `對手本回合召喚了單位，是否從手牌發動【嚇人彈跳廣告】進行反制（將對手本回合召喚的單位轉為直立）？`);
       if (useAd) {
         const choices = enemySummonedUnits.map(item => ({
           text: `${item.zone === "enemy_front" ? "前排" : "後排"}${item.idx + 1}: ${item.unit.card.name} (${item.unit.tapped ? "橫置" : "直立"})`,
+          card: item.unit.card,
           value: JSON.stringify({ zone: item.zone, idx: item.idx })
         }));
         choices.push({ text: "不發動/取消", value: "cancel" });
-        const choiceVal = await showXLWChoiceModal(
+        const choiceVal = await (window.XLWSummonReaction?.choose || showXLWChoiceModal)(
           "請選擇要轉正的對手單位",
           "【嚇人彈跳廣告】效果：使對手本回合召喚或額外打出的單位轉正（直立）。",
           choices
         );
         if (choiceVal && choiceVal !== "cancel") {
           const target = JSON.parse(choiceVal);
-          const tUnit = field[target.zone][target.idx];
+          const chosen = enemySummonedUnits.find(item => item.zone === target.zone && item.idx === target.idx);
+          const tUnit = chosen && field[target.zone]?.[target.idx] === chosen.unit ? chosen.unit : null;
           if (tUnit) {
             const adIdx = hand.findIndex(c => c && (c.id === "R-NMG-0034" || c.name?.includes("嚇人彈跳廣告")));
+            if (adIdx < 0) return;
             const adCard = hand.splice(adIdx, 1)[0];
             graveyard.push(adCard);
             tUnit.tapped = false;
@@ -3266,6 +3275,7 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
       }
     }
   }
+  if (!isMultiplayerMode) window.XLWSummonReaction?.end();
 };
 
 function checkUnitHasPiercing(unit, zone, lane) {
@@ -20806,8 +20816,12 @@ async function performSummonToSlot(zone, idx) {
                             selectedHandForSummon !== "GRAVEYARD_WELL" &&
                             selectedHandForSummon !== "GRAVEYARD_GHOST_MEOW");
         const safeTributes = (window.XLW_lastTributes || []).filter(t => !(t.zone === zone && t.idx === idx));
+        const summonRequestId = crypto.randomUUID();
+        window.XLW_pendingSummonRequestId = summonRequestId;
+        const counterReply = new Promise(resolve => { window.XLW_pendingSummonCounterResolve = resolve; });
         ws.send(JSON.stringify({
           action: "summon",
+          summonRequestId,
           card: field[zone][idx].card,
           zone: zone,
           idx: idx,
@@ -20817,21 +20831,9 @@ async function performSummonToSlot(zone, idx) {
         }));
         window.XLW_lastTributes = null;
 
-        const response = await new Promise(resolve => {
-          window.XLW_pendingSummonCounterResolve = resolve;
-          // Safety timeout: 12 seconds fallback
-          setTimeout(() => {
-            if (window.XLW_pendingSummonCounterResolve === resolve) {
-              if (isMultiplayer) {
-                setStatus("等待對手完成召喚反制選擇；連線恢復後將繼續。");
-                return;
-              }
-              console.log("[WS-Safety] Summon counter resolve timeout fired");
-              window.XLW_pendingSummonCounterResolve = null;
-              resolve({ countered: false });
-            }
-          }, 12000);
-        });
+        setStatus("等待對手的召喚反制選擇（15 秒時窗）…");
+        const response = await counterReply;
+        setStatus("");
 
         if (response.countered === true || response.countered === "true") {
           immediateEffectNegated = true;
@@ -36550,9 +36552,10 @@ async function runEnemyTurn() {
 
         try {
           let starryCountered = false;
+          window.XLWSummonReaction?.begin(card);
           const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
           if (playerHasStarry) {
-            const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制？`);
+            const useStarry = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制？`);
             if (useStarry) {
               starryCountered = true;
               const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
@@ -36569,7 +36572,7 @@ async function runEnemyTurn() {
             const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷抗性/打斷你一下")));
             const hasImm = hasImmediateEffect(card);
             if (playerHasInterrupt && hasImm) {
-              const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否發動【打斷你一下】無效其效果？`);
+              const useInterrupt = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否發動【打斷你一下】無效其效果？`);
               if (useInterrupt) {
                 interruptCountered = true;
                 const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
@@ -45838,6 +45841,16 @@ function setupDebugToggle() {
   if (!btn) return;
 }
 
+function xlwMergeSummonBoundaryRow(current, incoming) {
+  return incoming.map((unit, idx) => {
+    const prior = current[idx];
+    const same = prior?.card && unit?.card && prior.card.id === unit.card.id &&
+      (prior.card._xlwInstanceId && unit.card._xlwInstanceId ?
+        prior.card._xlwInstanceId === unit.card._xlwInstanceId : prior.summonedTurn === unit.summonedTurn);
+    return same ? Object.assign(prior, unit) : unit;
+  });
+}
+
 function setupWebSocketEvents() {
   const connection = ws;
   // Protocol 2 tracks message_id/server_seq in OnlineSync. Keep the native
@@ -45960,7 +45973,8 @@ function setupWebSocketEvents() {
     } else if (data.action === "sync_game_state") {
       const s = data.state;
       if (s && Number.isFinite(s.turn) && s.turn < turn) return;
-      if (isMyTurn && !data.turnHandoff && !window.XLW_reconnectingWaitSync && s && s.turn <= turn) {
+      const summonBoundary = data.summonRequestId && data.summonRequestId === window.XLW_pendingSummonRequestId;
+      if (isMyTurn && !summonBoundary && !data.turnHandoff && !window.XLW_reconnectingWaitSync && s && s.turn <= turn) {
         return;
       }
       window.XLW_reconnectingWaitSync = false;
@@ -45968,8 +45982,8 @@ function setupWebSocketEvents() {
         // Ordered delivery prevents a snapshot from overtaking an unfinished effect.
         // Do not resolve outstanding counter/placement promises as a side effect of syncing.
         // 翻轉格子坐標（對手的前排是我方後排，依此類推）
-        field.player_front = s.field.enemy_front;
-        field.player_back = s.field.enemy_back;
+        field.player_front = summonBoundary ? xlwMergeSummonBoundaryRow(field.player_front, s.field.enemy_front) : s.field.enemy_front;
+        field.player_back = summonBoundary ? xlwMergeSummonBoundaryRow(field.player_back, s.field.enemy_back) : s.field.enemy_back;
         field.enemy_front = s.field.player_front;
         field.enemy_back = s.field.player_back;
         
@@ -46298,11 +46312,13 @@ function setupWebSocketEvents() {
         window.XLW_ENEMY.hand.splice(cardIndex >= 0 ? cardIndex : window.XLW_ENEMY.hand.length - 1, 1);
       }
 
+      window.XLWSummonReaction?.begin(card);
+      render();
       // Check if player has 星空 in hand
       let starryCountered = false;
       const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
       if (playerHasStarry) {
-        const useStarry = await showXLWConfirm("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
+        const useStarry = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
         if (useStarry) {
           starryCountered = true;
           const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
@@ -46321,7 +46337,7 @@ function setupWebSocketEvents() {
         const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
         const hasImm = hasImmediateEffect(card);
         if (playerHasInterrupt && hasImm) {
-          const useInterrupt = await showXLWConfirm("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
+          const useInterrupt = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
           if (useInterrupt) {
             interruptCountered = true;
             const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
@@ -46349,8 +46365,8 @@ function setupWebSocketEvents() {
         }
         
         // 對手召喚時，同步觸發對我方影響的立即效果
-        let immediateEffectNegated = false;
-        if (card && !window.isUndergroundEnforcerOnField()) {
+        let immediateEffectNegated = starryCountered || interruptCountered || !field[zone]?.[idx];
+        if (card && !immediateEffectNegated && !window.isUndergroundEnforcerOnField()) {
           let mushroomZone = null, mushroomIdx = -1;
           for (const z of ["player_front", "player_back"]) {
             field[z].forEach((u, i) => {
@@ -46361,7 +46377,7 @@ function setupWebSocketEvents() {
             });
           }
           if (mushroomZone && mushroomIdx !== -1 && window.hasImmediateEffect(card)) {
-            const triggerMushroom = await showXLWConfirm("【驚嚇蘑菇】引爆觸發", `對手打出了立即單位【${card.name}】，是否引爆我方場上的【驚嚇蘑菇】以無效化其立即效果？`);
+            const triggerMushroom = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【驚嚇蘑菇】引爆觸發", `對手打出了立即單位【${card.name}】，是否引爆我方場上的【驚嚇蘑菇】以無效化其立即效果？`);
             if (triggerMushroom) {
               logBattle(`✨ 我方場上的【驚嚇蘑菇】引爆！自毀並無效化了對手【${card.name}】的立即效果。`);
               await destroyUnit(mushroomZone, mushroomIdx, "player", false);
@@ -46408,10 +46424,12 @@ function setupWebSocketEvents() {
           }
         }
 
-        // Publish all counter effects before allowing the summoning player to continue.
-        sendFullGameStateToOpponent(false);
+        window.XLWSummonReaction?.end();
+        // Publish the defender's settled state at the same summon boundary.
+        sendFullGameStateToOpponent(false, "sync_game_state", {summonRequestId: data.summonRequestId});
         ws.send(JSON.stringify({
           action: "counter_summon_response",
+          summonRequestId: data.summonRequestId,
           countered: starryCountered ? true :
             (interruptCountered || immediateEffectNegated ? "interrupt" : false)
         }));
@@ -46426,7 +46444,9 @@ function setupWebSocketEvents() {
           render();
         }
     } else if (data.action === "counter_summon_response") {
-      if (window.XLW_pendingSummonCounterResolve) {
+      if (window.XLW_pendingSummonCounterResolve &&
+          (!window.XLW_pendingSummonRequestId || data.summonRequestId === window.XLW_pendingSummonRequestId)) {
+        window.XLW_pendingSummonRequestId = null;
         const resolve = window.XLW_pendingSummonCounterResolve;
         window.XLW_pendingSummonCounterResolve = null;
         resolve({ countered: data.countered });
@@ -47622,6 +47642,8 @@ function setupWebSocketEvents() {
         (action === "goat_traveler_placement" && window.XLW_DEFENSE_RULE.resolving) ||
         (action === 'samurai_recover_result' && window.XLW_samuraiRecoveryWaiters?.has(data.requestId)) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
+        (action === "sync_game_state" && data.summonRequestId &&
+          data.summonRequestId === window.XLW_pendingSummonRequestId) ||
         (["aquarius_hand_reveal", "aquarius_request_reveal"].includes(action)) ||
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
         (["spell_chain_add", "spell_chain_resolve"].includes(action) && window.XLW_pendingSpellResolve)
@@ -48619,6 +48641,7 @@ function logDebug(msg) {
   const time = new Date().toLocaleTimeString();
   div.innerHTML = `<span style='color: #ffd76a; font-weight: bold;'>[${time}]</span> <span style='color: #00ff7f;'>${msg}</span>`;
   list.appendChild(div);
+  while (list.childElementCount > 150) list.firstElementChild.remove();
 
   // 自動捲動到最底部
   list.scrollTop = list.scrollHeight;
@@ -53056,7 +53079,7 @@ if (typeof document !== "undefined") {
   });
 }
 
-function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_game_state") {
+function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_game_state", metadata = {}) {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   for(const list of [hand,deck,graveyard,playerExileZone,playerExtraDeck]) window.XLWDuelConsistency?.identify(list);
   const peerCollections=window.XLW_peerCollectionBase;
@@ -53132,6 +53155,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     isGameOverFlag: Boolean(isGameOverFlag)
   };
   const message = {
+    ...metadata,
     action,
     next_turn: action === "end_turn" ? turn : undefined,
     state: stateToSend

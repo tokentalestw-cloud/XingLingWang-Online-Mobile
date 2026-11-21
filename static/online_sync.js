@@ -227,9 +227,12 @@
             while (this.completed.delete(this.cursor + 1)) {
               this.queued.delete(++this.cursor);
             }
-            // Save the applied state and its cursor together before acknowledging it.
-            if (!this.processing) this.checkpoint();
-            this.raw({ action: 'delivery_applied', epoch: this.epoch, cursor: this.cursor });
+            // A burst shares one durable checkpoint. Never acknowledge a cursor
+            // before both its state and metadata have been persisted.
+            if (!this.processing && this.queued.size === 0) {
+              this.checkpoint();
+              this.raw({ action: 'delivery_applied', epoch: this.epoch, cursor: this.cursor });
+            }
           }
         };
         // These replies release promises awaited by the current game handler.

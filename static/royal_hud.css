@@ -2143,3 +2143,15 @@ html body.xlw-royal-ui.xlw-game-started {
 html body.xlw-royal-ui.xlw-game-started #xlwFixedTopRightActionBar {
   right: var(--arena-edge) !important;
 }
+
+.xlw-reaction-overlay {position:fixed;inset:0;z-index:1000000;background:#050c17dc;display:grid;place-items:center;padding:10px;box-sizing:border-box;}
+.xlw-reaction-panel {width:min(820px,94vw);max-height:94dvh;overflow:auto;background:#18232c;border:1px solid #897763;border-radius:12px;color:#eee8da;padding:16px;box-sizing:border-box;}
+.xlw-reaction-panel h2 {margin:0 0 6px;font-size:20px;}
+.xlw-reaction-panel p {margin:5px 0;line-height:1.45;white-space:pre-wrap;}
+.xlw-reaction-panel [role=timer] {color:#ffdb91;font-weight:700;}
+.xlw-reaction-cards {display:flex;gap:12px;overflow:auto;max-height:52dvh;}
+.xlw-reaction-cards article {display:flex;gap:14px;min-width:min(440px,72vw);flex:1;}
+.xlw-reaction-cards img {width:clamp(100px,15vw,190px);object-fit:contain;object-position:top;align-self:flex-start;}
+.xlw-reaction-cards h3 {margin:4px 0;}
+.xlw-reaction-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.xlw-reaction-actions button {padding:10px 15px;background:#29474b;border:1px solid #897763;border-radius:7px;color:#fff;font:inherit;cursor:pointer;}
