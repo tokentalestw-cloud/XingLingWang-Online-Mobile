@@ -1366,6 +1366,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
@@ -1590,6 +1591,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
@@ -1653,6 +1655,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
@@ -13465,8 +13468,8 @@ async function castSpell(handIndex) {
         const pick = await showXLWChoiceModal("選擇打出電廠單位", "請選擇額外打出的免祭品正★電廠單位：", choices);
         if (pick !== null && pick !== undefined) {
           const chosenCard = eligibleInHand[pick];
-          hand.splice(hand.indexOf(chosenCard), 1);
-          await window.xlwSpecialSummonUnit(chosenCard, true);
+          const summoned=await window.xlwSpecialSummonUnit(chosenCard,true,{sourcePile:()=>hand});
+          if(summoned){
           let sameCount = 0;
           for (const z of ["player_front", "player_back"]) {
             sameCount += (field[z] || []).filter(u => u && u.card.name === chosenCard.name).length;
@@ -13474,6 +13477,7 @@ async function castSpell(handIndex) {
           const drawCount = Math.max(0, sameCount - 1);
           await (window.xlwDrawFairyAware?.(drawCount) ?? draw(drawCount));
           logBattle(`⚡🔮【發電球】放電召喚：額外打出【${chosenCard.name}】，並抽取 ${drawCount} 張牌！`);
+          }
         }
       }
       graveyard.push(spellCard);
@@ -13968,21 +13972,20 @@ async function castSpell(handIndex) {
       window.xlwSetFactionFieldCard(spellCard, true);
       logBattle("⛲【彩虹羊噴泉】展開！");
       
-      const goatHands = hand.filter(c => c && window.xlwIsGoatCard(c));
+      const goatHands = hand.filter(c => c && ["unit","單位"].includes(c.type) && window.xlwIsGoatCard(c));
       if (goatHands.length > 0) {
         const doDiscard = await showXLWConfirm("【彩虹羊噴泉】啟動噴泉能量", `手牌有 ${goatHands.length} 張山羊族單位，是否捨棄以提升全場山羊攻擊力（每捨棄1張+2攻）？`);
         if (doDiscard) {
           let discardedCount = 0;
           for (let k = 0; k < goatHands.length; k++) {
-            const currentGoatHands = hand.filter(c => c && window.xlwIsGoatCard(c));
+            const currentGoatHands = hand.filter(c => c && ["unit","單位"].includes(c.type) && window.xlwIsGoatCard(c));
             if (currentGoatHands.length === 0) break;
             const choices = currentGoatHands.map((c, i) => ({ text: c.name, value: i }));
             if (discardedCount > 0) choices.push({ text: "停止捨棄", value: -1 });
             const pick = await showXLWChoiceModal(`【彩虹羊噴泉】選擇捨棄山羊 (${discardedCount + 1})`, "請選擇捨棄的山羊單位：", choices);
             if (pick === null || pick === undefined || pick === -1) break;
-            const chosenCard = currentGoatHands[pick];
-            hand.splice(hand.indexOf(chosenCard), 1);
-            graveyard.push(chosenCard);
+            const chosenCard = window.XLWDuelConsistency.moveKnownCard(hand,graveyard,currentGoatHands[pick]);
+            if(!chosenCard)continue;
             discardedCount++;
           }
           if (discardedCount > 0) {
@@ -21400,22 +21403,24 @@ async function performSummonToSlot(zone, idx) {
       // 5. 校長山羊 (SR-GOT-0028): 立即：從牌庫尋找1張山羊族場地卡加入手牌
       if (card.id === "SR-GOT-0028" || card.name?.includes("校長山羊")) {
         const myDeck = isPlayer ? deck : (window.XLW_ENEMY?.deck || []);
-        const fieldGoatCards = myDeck.filter(c => c && window.xlwIsGoatCard(c) && (c.art_subtype === "場地" || c.magic_type === "場地" || c.name?.includes("場") || c.name?.includes("學院") || c.name?.includes("噴泉") || c.name?.includes("太羊")));
+        const fieldGoatCards = myDeck.filter(c => c && window.xlwIsGoatCard(c) && xlwIsFieldMagic(c));
         if (fieldGoatCards.length > 0) {
           if (isPlayer) {
             const choices = fieldGoatCards.map((c, i) => ({ text: c.name, value: i }));
             const pick = await showXLWChoiceModal("【校長山羊】檢索場地", "請選擇加入手牌的山羊族場地卡：", choices);
             if (pick !== null && pick !== undefined) {
-              const target = fieldGoatCards[pick];
-              deck.splice(deck.indexOf(target), 1);
-              hand.push(target);
-              shuffle(deck);
-              logBattle(`🏫【校長山羊】效果：從牌庫檢索場地卡【${target.name}】加入手牌！`);
+              const target = window.XLWDuelConsistency.moveKnownCard(deck,hand,fieldGoatCards[pick]);
+              if(target){
+                await window.xlwRevealCard?.(target,true);
+                shuffle(deck);
+                logBattle(`🏫【校長山羊】效果：從牌庫檢索場地卡【${target.name}】加入手牌！`);
+              }
             }
           } else {
             const target = fieldGoatCards[0];
             myDeck.splice(myDeck.indexOf(target), 1);
             (window.XLW_ENEMY?.hand || []).push(target);
+            await window.xlwRevealCard?.(target,false);
             logBattle(`🏫 對手【校長山羊】效果：從牌庫檢索場地卡【${target.name}】加入手牌！`);
           }
         }
@@ -21512,11 +21517,11 @@ async function performSummonToSlot(zone, idx) {
             const choices = targetCards.map((c, i) => ({ text: c.name, value: i }));
             const pick = await showXLWChoiceModal("【太空羊妹妹】呼叫星際同伴", "請選擇檢索加入手牌的卡牌：", choices);
             if (pick !== null && pick !== undefined) {
-              const target = targetCards[pick];
-              deck.splice(deck.indexOf(target), 1);
-              hand.push(target);
-              shuffle(deck);
-              logBattle(`👧【太空羊妹妹】從星際牌庫檢索了【${target.name}】加入手牌！`);
+              const target = window.XLWDuelConsistency.moveKnownCard(deck,hand,targetCards[pick]);
+              if(target){
+                shuffle(deck);
+                logBattle(`👧【太空羊妹妹】從星際牌庫檢索了【${target.name}】加入手牌！`);
+              }
             }
           } else {
             const target = targetCards[0];
@@ -21713,32 +21718,9 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      // 7. 黑暗商人 皮皮 (SR-STP-0026 / SSSR-STP-0026): 立即：充能+2。檢索1張道具牌，將1張手牌洗回牌庫
+      // 7. 黑暗商人 皮皮: 立即只充能；檢索是主要階段的主動效果。
       if (card.id?.includes("STP-0026") || card.name?.includes("皮皮")) {
-        logBattle("🎩【黑暗商人 皮皮】黑市開張！");
-        await window.xlwChargeEnergy(2, isPlayer);
-        if (isPlayer) {
-          const itemCards = deck.filter(c => c && (c.name?.includes("道具") || c.art_subtype?.includes("道具") || c.keywords?.includes("道具")));
-          if (itemCards.length > 0) {
-            const choices = itemCards.map((c, i) => ({ text: c.name, value: i }));
-            const pick = await showXLWChoiceModal("【黑暗商人 皮皮】檢索道具", "請選擇加入手牌的道具卡：", choices);
-            if (pick !== null && pick !== undefined) {
-              const chosen = itemCards[pick];
-              deck.splice(deck.indexOf(chosen), 1);
-              hand.push(chosen);
-              logBattle(`✨【黑暗商人 皮皮】檢索道具【${chosen.name}】加入手牌！`);
-              if (hand.length > 0) {
-                const returnChoices = hand.map((c, i) => ({ text: c.name, value: i }));
-                const returnPick = await showXLWChoiceModal("【黑暗商人 皮皮】洗回手牌", "請選擇 1 張手牌洗回牌庫：", returnChoices);
-                const retIdx = returnPick !== null && returnPick !== undefined ? returnPick : 0;
-                const retCard = hand.splice(retIdx, 1)[0];
-                deck.push(retCard);
-                shuffle(deck);
-                logBattle(`✨ 將【${retCard.name}】洗回牌庫！`);
-              }
-            }
-          }
-        }
+        await window.xlwChargeEnergy(2,isPlayer);
       }
 
       // 8. 航海商人 佐希 (SR-STP-0031): 立即：可耗能2，查看牌庫頂5張選1道具加入手牌
@@ -21755,10 +21737,11 @@ async function performSummonToSlot(zone, idx) {
                 const choices = items.map((c, i) => ({ text: c.name, value: i }));
                 const pick = await showXLWChoiceModal("【航海商人 佐希】挑選道具", "請選擇加入手牌的道具卡：", choices);
                 if (pick !== null && pick !== undefined) {
-                  const target = items[pick];
-                  deck.splice(deck.indexOf(target), 1);
-                  hand.push(target);
-                  logBattle(`🧭【航海商人 佐希】在貨物中找到了【${target.name}】加入手牌！`);
+                  const target = window.XLWDuelConsistency.moveKnownCard(deck,hand,items[pick]);
+                  if(target){
+                    await window.xlwRevealCard?.(target,true);
+                    logBattle(`🧭【航海商人 佐希】在貨物中找到了【${target.name}】加入手牌！`);
+                  }
                 }
               } else {
                 const target = items[0];
@@ -21767,6 +21750,7 @@ async function performSummonToSlot(zone, idx) {
                 logBattle(`🧭 對手【航海商人 佐希】檢索了【${target.name}】加入手牌！`);
               }
             }
+            await window.xlwOrderViewedSteamCards(top5,isPlayer);
           }
         }
       }
@@ -39619,6 +39603,56 @@ window.xlwActivateFairyWarden = async function(unit, zone, idx) {
   return true;
 };
 
+// Transactional Steam searches: card choices are handles, never array indexes after an await.
+window.xlwActivatePipi = async function(obj,zone,idx){
+  const main=()=>isMyTurn&&zone.startsWith("player_")&&["召喚階段","戰術佈陣","進攻宣言","主要階段","Main Phase"].includes(phase);
+  const valid=()=>main()&&field[zone]?.[idx]===obj&&!window.isUnitSilenced(obj,zone,idx);
+  if(!obj?.card?.id?.includes("STP-0026")||!valid()||obj.pipiSearchUsedTurn===turn||window.XLW_mechPhase||window.XLW_pendingSpellResolve||window.XLW_pendingSummonCounterResolve)return false;
+  const pending=window.XLW_pipiSearchPending ||= new WeakSet();
+  if(window.XLW_pipiSearchWaiting||pending.has(obj))return true;
+  const pendingToken={};
+  window.XLW_pipiSearchWaiting=pendingToken;
+  const release=()=>{if(window.XLW_pipiSearchWaiting===pendingToken)window.XLW_pipiSearchWaiting=false;};
+  pending.add(obj);
+  try{
+    const items=deck.filter(c=>c&&(c.art_subtype?.includes("道具")||c.keywords?.includes("道具")));
+    if(!items.length)return false;
+    const pick=await showXLWChoiceModal(obj.card.name,"是否檢索一張道具牌？",[
+      ...items.map((card,value)=>({text:card.name,card,value})),{text:"不發動",value:-1}
+    ]);
+    if(!valid()||pick===null||pick===undefined)return true;
+    if(pick<0)return false;
+    const chosen=window.XLWDuelConsistency.moveKnownCard(deck,hand,items[pick]);
+    if(!chosen)return true;
+    obj.pipiSearchUsedTurn=turn;
+    await window.xlwRevealCard?.(chosen,true);
+    const returns=[...hand];
+    if(returns.length){
+      const n=await showXLWChoiceModal(obj.card.name,"選擇一張手牌洗回牌庫。",returns.map((card,value)=>({text:card.name,card,value})),{required:true,preventOverlayClose:true,preventExternalCancel:true});
+      if(n!==null&&n!==undefined){
+        const returned=window.XLWDuelConsistency.moveKnownCard(hand,deck,returns[n]);
+        if(returned){shuffle(deck);logBattle(`【${obj.card.name}】將【${returned.name}】洗回牌庫。`);}
+      }
+    }
+    release();
+    render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
+  }finally{pending.delete(obj);release();}
+};
+window.xlwOrderViewedSteamCards = async function(viewed,isPlayer){
+  if(!isPlayer)return;
+  const pool=viewed.filter(c=>window.XLWDuelConsistency.findKnownCard(deck,c));
+  if(pool.length<2)return;
+  const ordered=[];
+  while(pool.length>1){
+    const n=await showXLWChoiceModal("放回牌庫的順序","先選擇最上方的牌，再依序往下排列。",pool.map((card,value)=>({text:card.name,card,value})),{required:true,preventOverlayClose:true,preventExternalCancel:true});
+    if(!Number.isInteger(n)||!pool[n])return;
+    ordered.push(pool.splice(n,1)[0]);
+  }
+  ordered.push(...pool);
+  const live=ordered.map(c=>window.XLWDuelConsistency.takeKnownCard(deck,c)).filter(Boolean);
+  deck.push(...live.reverse());
+};
+
 async function xlwResolveExpansionUnitClick(obj, zone, idx) {
   if (field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
 // 🌿 植物園與擴充卡牌主動技能與成長對話
@@ -40407,7 +40441,8 @@ function renderField() {
           // 電腦版也可使用此方式，原本滑鼠拖曳仍保留。
           if (selectedHandForTribute === null && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive &&
               !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive &&
-              (await window.xlwActivateSavageCraft?.(obj, zone, idx) ||
+              (await window.xlwActivatePipi?.(obj, zone, idx) ||
+               await window.xlwActivateSavageCraft?.(obj, zone, idx) ||
                await window.xlwActivateFairyWarden?.(obj, zone, idx) ||
                await window.xlwActivateDarkFairyAlchemist?.(obj, zone, idx))) return;
 
@@ -45823,11 +45858,11 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
     playerBonusScore,enemyBonusScore,spellChainStack:window.spellChainStack||[],
     factionState:{playerEnergy:window.XLW_playerSteamEnergy||0,enemyEnergy:window.XLW_enemySteamEnergy||0,
       playerWheel:window.XLW_playerRouletteWheel||[],enemyWheel:window.XLW_enemyRouletteWheel||[],banishedTimeGoats:window.XLW_banishedTimeGoats||[]},
-    busy:Boolean(window.XLW_pendingSummonCounterResolve||window.XLW_pendingSpellResolve||window.XLW_battleRuleWindow||
+    busy:Boolean(window.XLW_pipiSearchWaiting||window.XLW_pendingSummonCounterResolve||window.XLW_pendingSpellResolve||window.XLW_battleRuleWindow||
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-card-transfers-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-steam-goat-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -53040,7 +53075,7 @@ function saveLocalGameState() {
       role: player_role,
       sync_metadata: window.XLW_sync?.metadata() || window.XLW_syncMetadata || null,
       callGameRejectedTurn: window.XLW_callGameRejectedTurn ?? null,
-      pendingInteraction: Boolean(window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
+      pendingInteraction: Boolean(window.XLW_pipiSearchWaiting || window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
         ["summon", "spell_chain_start", "coin_toss_choice"].includes(window.XLW_sync?.sendingAction)),
       field: field,
       factionState: window.xlwCaptureFactionState(),
