@@ -9506,13 +9506,15 @@ window.xlwSummonPlantFromExtraDeck = async function(cardNameOrId, isPlayer = tru
 // 單位成長核心
 window.xlwExecutePlantGrowth = async function(boardUnit, targetExtraCard, zone, idx, isPlayer = true) {
   const extraList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-  const exIdx = extraList.indexOf(targetExtraCard);
-  if (exIdx >= 0) extraList.splice(exIdx, 1);
+  if(!boardUnit?.card||field[zone]?.[idx]!==boardUnit)return false;
+  const replacement=window.XLWDuelConsistency.takeKnownCard(extraList,targetExtraCard);
+  if(!replacement)return false;
+  targetExtraCard=replacement;
 
   const oldName = boardUnit.card.name;
   const oldCard = boardUnit.card;
   const exile = isPlayer ? playerExileZone : enemyExileZone;
-  if (oldCard.id !== "TOKEN_TRAVELER" && !oldCard.isTraveler) exile.push(oldCard);
+  if (oldCard.id !== "TOKEN_TRAVELER" && oldCard.id !== "SPT-LITTLE" && !oldCard.isTraveler) exile.push(oldCard);
   const discard = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard);
   for (const part of boardUnit.devourCards || []) if (part?.card) discard.push(part.card);
   boardUnit.devourCards = [];
@@ -9532,6 +9534,7 @@ window.xlwExecutePlantGrowth = async function(boardUnit, targetExtraCard, zone, 
   if (typeof triggerUpgradeBonus === "function") triggerUpgradeBonus(isPlayer);
   if (typeof renderExtraDecks === "function") renderExtraDecks();
   if (typeof render === "function") render();
+  return true;
 };
 
 // 檢查某單位可成長的額外區卡牌
@@ -10390,7 +10393,7 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
       }
     }
   });
-  enqueue("北極居民", () => canPlace() && inPile(extra, "ELE-0034", "北極居民"), async () => {
+  enqueue("北極居民", () => inPile(isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck), "ELE-0034", "北極居民"), async () => {
     // K. R-ELE-0034 北極居民
     let totalPowerPlantStars = 0;
     for (const z of [side + "front", side + "back"]) {
@@ -10401,13 +10404,13 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
       });
     }
     if (totalPowerPlantStars >= 5) {
-      const extraD = extra;
+      const extraD = isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
       const residentCard = extraD.find(c => c && (c.id === "R-ELE-0034" || c.name?.includes("北極居民")));
       if (residentCard) {
         const travelersOnField = [];
         for (const z of [side + "front", side + "back"]) {
           (field[z] || []).forEach((u, idx) => {
-            if (u && (u.card.id === "SPT-LITTLE" || u.card.name?.includes("小旅人"))) {
+            if (window.xlwIsLittleTraveler?.(u,z,idx)) {
               travelersOnField.push({ zone: z, idx, unit: u });
             }
           });
@@ -10418,11 +10421,13 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
             doGrow = await showXLWConfirm("【北極居民】寒冬成長", `電廠星數總計 ${totalPowerPlantStars}★（>=5）！是否將場上 1 個小旅人成長進化為【北極居民】？`);
           }
           if (doGrow) {
-            const targetTraveler = travelersOnField[0];
-            extraD.splice(extraD.indexOf(residentCard), 1);
-            targetTraveler.unit.card = residentCard;
-            logBattle(`❄️【北極居民】雪域適應：${isPlayer ? "" : "對手的"}小旅人進化成長為【北極居民】！`);
-            if (typeof render === "function") render();
+            const n=isPlayer?await showXLWChoiceModal("【北極居民】選擇成長位置","點選要成長的小旅人。",travelersOnField.map((t,value)=>({text:t.unit.card.name,value,boardTarget:{zone:t.zone,idx:t.idx}})),{boardOnly:true}):0;
+            const targetTraveler=travelersOnField[n];
+            let liveStars=0;
+            for(const row of [side+"front",side+"back"])for(const [i,u]of (field[row]||[]).entries())if(u&&window.xlwIsUnitPowerPlant?.(u))liveStars+=getUnitStars(u,row,i);
+            if(targetTraveler&&window.xlwIsLittleTraveler?.(targetTraveler.unit,targetTraveler.zone,targetTraveler.idx)&&liveStars>=5&&await window.xlwExecutePlantGrowth(targetTraveler.unit,residentCard,targetTraveler.zone,targetTraveler.idx,isPlayer)){
+              logBattle(`❄️【北極居民】小旅人成長為【北極居民】。`);
+            }
           }
         }
       }
@@ -10910,23 +10915,31 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
 
   // C. C-SKT-0064 靈骷召喚師
   for (const z of [side + "front", side + "back"]) {
-    const necros = (field[z] || []).filter(u => u && u !== destroyedUnit && (u.card.id === "C-SKT-0064" || u.card.name?.includes("靈骷召喚師")));
+    const necros = (field[z] || []).filter((u,i) => u && u !== destroyedUnit && (u.card.id === "C-SKT-0064" || u.card.name?.includes("靈骷召喚師")) && !window.isUnitSilenced(u,z,i));
     if (necros.length > 0) {
       const extraD = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-      const graveD = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
       const skulls = extraD.filter(c => c && (c.id === "R-SKT-0065" || c.name?.includes("靈報骷")));
       if (skulls.length > 0) {
+        const visit=(destroyedUnit.card._xlwSoulSkullVisit||0)+1;
+        destroyedUnit.card._xlwSoulSkullVisit=visit;
+        const choiceKey=isMultiplayer?xlwFactionDecisionKey(destroyedUnit,zone,"soul-skull",visit):null;
         let doSend = true;
-        if (isPlayerUnit) {
+        if(isMultiplayer){
+          doSend=await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":activate","【靈骷召喚師】墓地感應","是否從額外區將至多 2 張靈報骷送入墓地？",[{text:"發動",value:true},{text:"不發動",value:false}],{actionChoices:true});
+        }else if (isPlayerUnit) {
           doSend = await showXLWConfirm("【靈骷召喚師】墓地感應", "偵測到單位進墓！是否從額外區將至多 2 張【靈報骷】送入墓地？");
         }
         if (doSend) {
-          const sendCount = Math.min(2, skulls.length);
-          for (let k = 0; k < sendCount; k++) {
-            const skullCard = extraD.splice(extraD.indexOf(skulls[k]), 1)[0];
-            graveD.push(skullCard);
+          const maximum=Math.min(2,skulls.length);
+          const amounts=Array.from({length:maximum+1},(_,value)=>({text:value?`${value} 張`:"不送墓",value}));
+          const amount=isMultiplayer?await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":amount","【靈骷召喚師】送墓張數","選擇要送入墓地的靈報骷數量。",amounts,{actionChoices:true}):isPlayerUnit?await showXLWChoiceModal("【靈骷召喚師】送墓張數","選擇要送入墓地的靈報骷數量。",amounts,{actionChoices:true}):maximum;
+          let sent=0;
+          if(Number.isInteger(amount)&&amount>=0&&amount<=maximum)for(const candidate of skulls.slice(0,amount)){
+            const currentExtra=isPlayerUnit?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
+            const currentGrave=isPlayerUnit?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+            if(window.XLWDuelConsistency.moveKnownCard(currentExtra,currentGrave,candidate))sent++;
           }
-          logBattle(`💀📿【靈骷召喚師】死靈共鳴：${isPlayerUnit ? "" : "對手"}將 ${sendCount} 張【靈報骷】自額外區堆入墓地！`);
+          if(sent)logBattle(`💀📿【靈骷召喚師】將 ${sent} 張【靈報骷】從額外區送入墓地。`);
         }
       }
       break;
@@ -25336,15 +25349,16 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
     // 魔族小隊長 / 小魔隊長 (BRV-0003) 召喚成功：從額外牌庫特殊召喚「金幣小魔」
     if (card && (card.id?.includes("BRV-0003") || card.name?.includes("小魔隊長") || card.name?.includes("魔族小隊長"))) {
       const isPlayer = zone.startsWith("player_");
-      const extraDeck = isPlayer ? window.XLW_playerExtraDeck : (window.XLW_enemyExtraDeck || []);
+      const extraDeck = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck);
       const goldDemonCard = extraDeck.find(c => c && (c.id === "BRV-0002" || c.id === "R-BRV-0002" || c.id === "SSSR-BRV-0002" || c.name?.includes("金幣小魔")));
       if (goldDemonCard) {
         const emptySlots = isPlayer ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
         if (emptySlots.length > 0) {
-          extraDeck.splice(extraDeck.indexOf(goldDemonCard), 1);
-          await window.xlwSpecialSummonUnit(goldDemonCard, isPlayer);
-          logBattle(`✨ ${isPlayer ? '我方' : '對手'} 小魔隊長 效果發動：特殊召喚了額外牌庫的【${goldDemonCard.name}】！`);
-          render();
+          const summoned=await window.xlwSpecialSummonUnit(goldDemonCard,isPlayer,{sourcePile:()=>isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck)});
+          if(summoned){
+            logBattle(`✨ ${isPlayer ? '我方' : '對手'} 小魔隊長 效果發動：特殊召喚了額外牌庫的【${goldDemonCard.name}】！`);
+            render();
+          }
         }
       }
     }
@@ -25393,47 +25407,28 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
       }
     }
 
-    // 藥水學徒 (BRV-0040) 立即：若獎勵至少為1，則獎勵-1，從額外區尋找1張藥水牌加入手牌
-    if (card && (card.id?.includes("BRV-0040") || card.name?.includes("藥水學徒"))) {
-      const isPlayer = zone.startsWith("player_");
-      if (isPlayer) {
-        if (playerBonusScore >= 1) {
-          const extraDeck = window.XLW_playerExtraDeck || playerExtraDeck || [];
-          const potions = extraDeck.filter(c => c && window.isPotionCard(c));
-          if (potions.length > 0) {
-            const confirm = await showXLWConfirm("藥水學徒 立即效果", "是否消耗 1★ 獎勵，從額外區尋找 1 張藥水牌加入手牌？");
-            if (confirm) {
-              playerBonusScore -= 1;
-              let chosenPotion = potions[0];
-              if (potions.length > 1) {
-                const choices = potions.map((p, idx) => ({ text: p.name, value: idx }));
-                const picked = await showXLWChoiceModal("藥水學徒 選擇藥水", "請選擇要加入手牌的藥水卡：", choices);
-                if (picked !== null && picked !== undefined) {
-                  chosenPotion = potions[picked];
-                }
-              }
-              extraDeck.splice(extraDeck.indexOf(chosenPotion), 1);
-              hand.push(chosenPotion);
-              logBattle(`✨【藥水學徒】立即效果：消耗 1★ 獎勵，從額外區將【${chosenPotion.name}】加入手牌！`);
-              renderScore();
-              render();
-            }
+    // 藥水學徒: 獎勵足夠時先支付，再從額外區檢索；不存在的舊選項不會變成卡牌。
+    if(card&&(card.id?.includes("BRV-0040")||card.name?.includes("藥水學徒"))){
+      const isPlayer=zone.startsWith("player_");
+      const bonus=isPlayer?playerBonusScore:enemyBonusScore;
+      if(bonus>=1){
+        if(isPlayer)playerBonusScore-=1;else enemyBonusScore-=1;
+        renderScore();
+        logBattle("【藥水學徒】獎勵 -1。");
+        const extraNow=()=>isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
+        const potions=extraNow().filter(c=>c&&window.isPotionCard(c));
+        if(potions.length){
+          const n=isPlayer?await showXLWChoiceModal("藥水學徒：檢索藥水","選擇一張藥水牌加入手牌。",[
+            ...potions.map((card,value)=>({text:card.name,card,value})),{text:"不檢索",value:-1}
+          ]):0;
+          const targetHand=isPlayer?hand:(window.XLW_ENEMY.hand ||= []);
+          const recovered=window.XLWDuelConsistency.moveKnownCard(extraNow(),targetHand,potions[n]);
+          if(recovered){
+            await window.xlwRevealCard?.(recovered,isPlayer);
+            logBattle(`【藥水學徒】將【${recovered.name}】加入手牌。`);
           }
         }
-      } else {
-        if (enemyBonusScore >= 1) {
-          const extraDeck = window.XLW_enemyExtraDeck || enemyExtraDeck || [];
-          const pIdx = extraDeck.findIndex(c => c && window.isPotionCard(c));
-          if (pIdx >= 0) {
-            enemyBonusScore -= 1;
-            const chosenPotion = extraDeck.splice(pIdx, 1)[0];
-            if (!window.XLW_ENEMY.hand) window.XLW_ENEMY.hand = [];
-            window.XLW_ENEMY.hand.push(chosenPotion);
-            logBattle(`✨ 對手【藥水學徒】立即效果：消耗 1★ 獎勵，從額外區將【${chosenPotion.name}】加入手牌！`);
-            renderScore();
-            render();
-          }
-        }
+        render();
       }
     }
 
@@ -26712,38 +26707,39 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
       const shadowCard = extraDeck.find(c => c && (c.id === "SR-SPT-0052" || c.name?.includes("小旅人的殘影")));
       if (shadowCard) {
         const doNinja = await showXLWConfirm("【學會當忍者的小旅人】效果發動", "此單位進攻時，是否使此卡回手牌，並從額外區召喚【小旅人的殘影】至原位進攻，再召喚此卡？");
-        if (doNinja) {
-          extraDeck.splice(extraDeck.indexOf(shadowCard), 1);
-          const ninjaCard = unit.card;
-          hand.push(ninjaCard);
-          // 在原位置放置殘影
-          field[zone][idx] = {
-            card: shadowCard,
-            tapped: true,
-            attacking: true,
-            target: { zone: targetZone, idx: idx },
-            trophyTargetId: unit.trophyTargetId,
-            summonedTurn: turn,
-            summonedZone: zone
-          };
-          logBattle(`🥷【學會當忍者的小旅人】忍法替身！原位置召喚【小旅人的殘影】進攻，忍者回手牌！`);
-          // 再從手牌召喚此卡至其他空位
-          const emptySlots = window.xlwGetEmptyPlayerSlots();
-          if (emptySlots.length > 0) {
-            hand.splice(hand.indexOf(ninjaCard), 1);
-            await window.xlwSpecialSummonUnit(ninjaCard, true);
-            logBattle(`🥷【學會當忍者的小旅人】本體神出鬼沒再次特殊召喚登場！`);
+        if (doNinja && field[zone]?.[idx]===unit) {
+          const committedShadow=window.XLWDuelConsistency.takeKnownCard(playerExtraDeck,shadowCard);
+          if(committedShadow){
+            const ninjaCard = unit.card;
+            hand.push(ninjaCard);
+            // 在原位置放置殘影
+            field[zone][idx] = {
+              card: committedShadow,
+              tapped: true,
+              attacking: true,
+              target: { zone: targetZone, idx: idx },
+              trophyTargetId: unit.trophyTargetId,
+              summonedTurn: turn,
+              summonedZone: zone
+            };
+            logBattle(`🥷【學會當忍者的小旅人】忍法替身！原位置召喚【小旅人的殘影】進攻，忍者回手牌！`);
+            // 再從手牌召喚此卡至其他空位
+            const emptySlots = window.xlwGetEmptyPlayerSlots();
+            if (emptySlots.length > 0) {
+              if(await window.xlwSpecialSummonUnit(ninjaCard,true,{sourcePile:()=>hand}))logBattle(`🥷【學會當忍者的小旅人】本體再次特殊召喚登場！`);
+            }
+            // 使場上所有殘影進攻
+            for (const pz of ["player_front", "player_back"]) {
+              (field[pz] || []).forEach(u => {
+                if (u && u.card && (u.card.id === "SR-SPT-0052" || u.card.name?.includes("小旅人的殘影"))) {
+                  u.attacking = true;
+                  u.tapped = true;
+                }
+              });
+            }
+            render();
+            if(isMultiplayer)sendFullGameStateToOpponent(false);
           }
-          // 使場上所有殘影進攻
-          for (const pz of ["player_front", "player_back"]) {
-            (field[pz] || []).forEach(u => {
-              if (u && u.card && (u.card.id === "SR-SPT-0052" || u.card.name?.includes("小旅人的殘影"))) {
-                u.attacking = true;
-                u.tapped = true;
-              }
-            });
-          }
-          render();
         }
       }
     }
@@ -45862,7 +45858,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-steam-goat-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-extra-transfers-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();

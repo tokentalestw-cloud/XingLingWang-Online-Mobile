@@ -93,6 +93,7 @@ test('growth moves the old card to exile and combination material to the grave o
   (isPlayer?g.playerExtraDeck:g.enemyExtraDeck).push(target);
   const u={card:old,devourCards:[{card:{id:'material'}}],isCombined:true,irrigation:3};
   g.field[side+'_front'][0]=u;
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../static/duel_consistency.js'),'utf8'),g);
   vm.runInContext(section('window.xlwExecutePlantGrowth =','// 檢查某單位可成長'),g);
   await g.xlwExecutePlantGrowth(u,target,side+'_front',0,isPlayer);
   assert.equal((isPlayer?g.playerExileZone:g.enemyExileZone)[0],old);
