@@ -6,6 +6,47 @@ const vm = require("node:vm");
 const game = fs.readFileSync(path.join(__dirname, "../static/game_v8.js"), "utf8");
 const section = (start, end) => game.slice(game.indexOf(start), game.indexOf(end, game.indexOf(start)));
 
+test("Soft Clocks real choice routing allows board targets plus Finish", async () => {
+  const attached = [];
+  const slots = new Map();
+  const element = () => ({
+    classList: {add() {}, remove() {}},
+    appendChild(child) { child.parentNode = this; },
+    remove() {}, querySelectorAll() { return []; },
+    addEventListener(type, handler) { this[type] = handler; },
+    removeEventListener(type) { delete this[type]; }
+  });
+  const context = vm.createContext({window: {}, TROPHY_ZONE: "trophy", document: {
+    createElement: element, body: {appendChild(node) { attached.push(node); }},
+    querySelector(selector) { if (!slots.has(selector)) slots.set(selector, element()); return slots.get(selector); }
+  }});
+  vm.runInContext(section("function showXLWChoiceModal(", "// ===== 新增：墓地渲染"), context);
+  let settled = false;
+  const pending = context.showXLWChoiceModal("軟爛的時鐘們", "選擇我方單位", [
+    {text: "甲", value: 0, boardTarget: {zone: "player_front", idx: 0}},
+    {text: "結束選擇", value: "cancel"}
+  ], {boardOnly: true}).then(value => { settled = true; return value; });
+  await Promise.resolve();
+  assert.equal(settled, false, "must wait for a board click instead of silently returning null");
+  assert.equal(attached.length, 1);
+  assert.match(attached[0].innerHTML, /結束選擇/);
+  const slot = [...slots.values()][0];
+  slot.click({stopPropagation() {}, preventDefault() {}});
+  assert.equal(await pending, 0);
+  assert.equal(slot.click, undefined, "selection handlers must be removed after choosing");
+});
+
+test("Puppeteer uses its printed two stars and needs no tribute", () => {
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/cards.json"), "utf8"));
+  const card = cards.find(card => card.id === "C-ART-0066");
+  const context = vm.createContext({window: {}, field: {player_front: [], player_back: []}, phase: "戰術佈陣", isMyTurn: true, turn: 1});
+  vm.runInContext(section("function getCardTributeCost(", "function countSelectedTributesValue("), context);
+  assert.equal(card.score, 2);
+  assert.equal(context.getCardTributeCost(card), 0);
+  context.phase = "召喚階段";
+  assert.equal(context.getCardTributeCost(card), 0);
+});
+
 test("Soft Clocks taps selected units only and its branch exits after one grave entry", async () => {
   const units = ["甲", "乙", "丙"].map(name => ({card: {name}, tapped: false}));
   const spell = {id: "C-ART-0073"};

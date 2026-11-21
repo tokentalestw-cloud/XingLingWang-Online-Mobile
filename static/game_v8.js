@@ -49036,7 +49036,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
 
     // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
-    if (!config.iconChoices && boardTargets.length > 0 && (boardTargets.length >= options.filter(m => !m.target || m.target.type !== "cancel").length ||
+    if (!config.iconChoices && boardTargets.length > 0 && (boardTargets.length >= targetMaps.filter(m => !m.target || m.target.type !== "cancel").length ||
         (options.some(opt => opt.boardAction) && targetMaps.every(({opt, target}) => target || opt.boardAction)))) {
       let settled = false;
       const attachedSlotCleanups = [];
