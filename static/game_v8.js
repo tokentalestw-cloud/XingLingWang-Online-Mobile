@@ -4178,6 +4178,58 @@ window.xlwLoadCoffin = async function(unit,zone,idx,isPlayer){
 };
 // End Coffin Ship loading.
 
+// Remaining skull deck actions always use the live piles after nested effects.
+window.xlwResolveSktDeckAction = async function(card,zone,idx,isPlayer,mill=false){
+  const unit=field[zone]?.[idx];
+  if(!unit?.card)return false;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(unit))return false;
+  const token={};pending.set(unit,token);
+  const current=()=>pending.get(unit)===token;
+  const ownDeck=()=>isPlayer?deck:(window.XLW_ENEMY?.deck||[]);
+  const ownHand=()=>isPlayer?hand:(window.XLW_ENEMY.hand ||= []);
+  try{
+    if(mill){
+      for(const own of [isPlayer,!isPlayer]){
+        if(!current())return false;
+        const pile=own?deck:(window.XLW_ENEMY?.deck||[]);
+        const top=pile.at(-1);
+        if(!top||typeof top!=='object')continue;
+        const moved=window.XLWDuelConsistency.takeKnownCard(pile,top);
+        if(!moved)continue;
+        const grave=own?graveyard:(window.XLW_ENEMY.grave ||= []);
+        grave.push(moved);
+        if(!own)enemyGraveyard=grave;
+        logBattle(`【瘟疫使者】${own?'我方':'對手'}牌庫頂【${moved.name}】送入墓地。`);
+        if(window.XLWDuelConsistency.findKnownCard(grave,moved))await window.xlwOnCardEntersGraveyard?.(moved,own,false);
+      }
+    }else{
+      const options=ownDeck().filter(xlwIsFieldMagic);
+      if(!options.length)return false;
+      const serial=unit.gravediggerSerial=(unit.gravediggerSerial||0)+1;
+      const key=xlwFactionDecisionKey(unit,zone,'gravedigger',serial);
+      const n=await window.xlwChooseFactionAction(isPlayer,key,'造墓者小布：檢索','選擇一張場地魔法卡加入手牌。',options.map((card,value)=>({text:card.name,card,value})));
+      if(!current()||!Number.isInteger(n)||!options[n])return false;
+      let live=window.XLWDuelConsistency.findKnownCard(ownDeck(),options[n]);
+      if(!xlwIsFieldMagic(live))return false;
+      // Only printings whose own text requires revealing perform the reveal action.
+      if(card.effect_text?.includes('展示')){
+        await window.xlwRevealCard?.(live,isPlayer);
+        if(!current())return false;
+        live=window.XLWDuelConsistency.findKnownCard(ownDeck(),options[n]);
+        if(!xlwIsFieldMagic(live))return false;
+      }
+      const moved=window.XLWDuelConsistency.moveKnownCard(ownDeck(),ownHand(),live);
+      if(!moved)return false;
+      shuffle(ownDeck());
+      logBattle(`【造墓者小布】將場地魔法【${moved.name}】加入手牌，並重洗牌庫。`);
+    }
+    if(!current())return false;
+    render();return true;
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End remaining skull deck actions.
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -4240,23 +4292,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   if (cid.includes("SKT-0053") || name.includes("瘟疫傳教士")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"priest");
 
   // 3. 造墓者小布 (NY-SKT-0015 / R-SKT-0015 / SSR-SKT-0015): 立即：從你牌庫尋找1場地卡展示並加入手牌，然後重洗牌庫。
-  if (cid.includes("SKT-0015") || name.includes("造墓者小布")) {
-    const fieldOrMagic = myDeck.filter(xlwIsFieldMagic);
-    if (fieldOrMagic.length > 0) {
-      let chosen = fieldOrMagic[0];
-      if (isPlayer) {
-        const choices = fieldOrMagic.map((c, i) => ({ text: c.name, value: i }));
-        const picked = await showXLWChoiceModal("造墓者小布 檢索", "請選擇加入手牌的場地魔法卡：", choices);
-        chosen = picked == null ? null : fieldOrMagic[picked];
-      }
-      const currentDeck = isPlayer ? deck : window.XLW_ENEMY?.deck;
-      const moved = window.XLWDuelConsistency.moveKnownCard(currentDeck, isPlayer ? hand : window.XLW_ENEMY?.hand, chosen);
-      if (!moved) return;
-      shuffle(currentDeck);
-      logBattle(`✨【造墓者小布】立即效果：從牌庫將【${moved.name}】加入手牌！`);
-      render();
-    }
-  }
+  if (cid.includes("SKT-0015") || name.includes("造墓者小布")) await window.xlwResolveSktDeckAction(card,zone,idx,isPlayer,false);
 
   // 4. 除屍雞 (R-SKT-0006): 立即：從你牌庫尋找1不死族單位使其送入墓地，並重洗牌庫。
   if (cid.includes("SKT-0006") || name.includes("除屍雞")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"chicken");
@@ -4370,21 +4406,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   }
 
   // 12. 瘟疫使者 (SKT-0005): 立即：丟掉你牌庫頂1張牌，丟掉敵方牌庫頂1張牌。
-  if (cid.includes("SKT-0005") || name.includes("瘟疫使者")) {
-    if (myDeck.length > 0) {
-      const myCard = myDeck.shift();
-      myGrave.push(myCard);
-      logBattle(`✨【瘟疫使者】效果：${isPlayer ? "我方" : "對手"}牌庫頂【${myCard.name}】送入墓地！`);
-      await window.xlwOnCardEntersGraveyard(myCard, isPlayer, false);
-    }
-    if (oppDeck.length > 0) {
-      const oppCard = oppDeck.shift();
-      oppGrave.push(oppCard);
-      logBattle(`✨【瘟疫使者】效果：${isPlayer ? "對手" : "我方"}牌庫頂【${oppCard.name}】送入墓地！`);
-      await window.xlwOnCardEntersGraveyard(oppCard, !isPlayer, false);
-    }
-    render();
-  }
+  if (cid.includes("SKT-0005") || name.includes("瘟疫使者")) await window.xlwResolveSktDeckAction(card,zone,idx,isPlayer,true);
 
   // 13. 老骷 (SKT-0009 / ASSR-SKT-0009): 立即：使你場上1不死族單位被破壞，使敵方場上1單位被破壞。
   if (cid.includes("SKT-0009") || cid === "ASSR-SKT-0009" || name.includes("老骷")) {
@@ -20956,7 +20978,7 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
@@ -45969,7 +45991,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-coffin-release-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-skt-deck-actions-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();

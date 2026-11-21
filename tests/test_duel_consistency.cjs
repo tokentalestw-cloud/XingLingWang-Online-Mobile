@@ -101,8 +101,10 @@ module.exports=(async()=>{
        await g.xlwResolveFairyLawyer(true);
      } else {
        vm.runInContext(section('function xlwIsFieldMagic(', 'async function xlwResolveAries('), g);
-       vm.runInContext('async function run(cid, isPlayer, myDeck, name) {' + section('// 3. 造墓者小布', '// 4. 除屍雞') + '}', g);
-       await g.run('R-SKT-0015', true, g.deck, '造墓者小布');
+       g.xlwFactionDecisionKey = () => 'gravedigger-test';
+       g.xlwChooseFactionAction = (local,key,title,message,options) => g.showXLWChoiceModal(title,message,options);
+       vm.runInContext(section('// Remaining skull deck actions', '// End remaining skull deck actions.'), g);
+       await g.xlwResolveSktDeckAction({id:'R-SKT-0015'},'player_front',0,true,false);
      }
      assert.deepEqual(g[pile].map(c => c._xlwInstanceId), ['other']);
      assert.deepEqual(g.hand.map(c => c._xlwInstanceId), stillPresent ? ['chosen'] : []);
