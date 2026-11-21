@@ -20934,6 +20934,7 @@ async function performSummonToSlot(zone, idx) {
     }
 
     if (!immediateEffectNegated) {
+      if (!hasImmediateEffect(card)) await window.XLWDuelEvents?.beat();
       let mushroomZone = null, mushroomIdx = -1;
       for (const z of ["enemy_front", "enemy_back"]) {
         field[z].forEach((u, i) => {
@@ -44897,6 +44898,7 @@ function renderScore() {
 
   
   window.XLWBFeedback?.render();
+  window.XLWDuelEvents?.observe(window.xlwGetDuelEventState?.());
 }
 
 function renderEnemyPanel() {
@@ -45574,6 +45576,28 @@ window.xlwGetBattleFeedbackState = function() {
 };
 window.xlwRefreshScorePresentation = function() { renderScore(); };
 
+// Public presentation data only: never pass hidden hand/deck card identities.
+window.xlwGetDuelEventState = function() {
+  const publicField = id => {
+    try { return JSON.parse(document.getElementById(id)?.dataset.card || "null"); }
+    catch (_) { return null; }
+  };
+  const next = mulliganActive ? "雙方確認換牌後開始對戰" : window.XLW_playerNeedsToDraw
+    ? "下一步：點選我方牌庫抽牌" : phase === "防守階段"
+    ? (isMyTurn ? "等待對手完成防守與反制" : "我方防守：可發動符合條件的魔法或完成防守")
+    : `${isMyTurn ? "我方可操作" : "等待對手操作"}・${phase}`;
+  return {active:!!window.XLW_gameInProgress && !isGameOverFlag,
+    quiet:!!mulliganActive || !!window.XLW_reconnectingWaitSync || !!window.XLW_Tutorial?.active ||
+      !!(isMultiplayer && window.XLW_sync && !window.XLW_sync.ready),
+    turn,phase,myTurn:isMyTurn,next,sides:{
+      player:{front:field.player_front,back:field.player_back,grave:graveyard,exile:playerExileZone,
+        extra:playerExtraDeck,hand:hand.length,deck:deck.length,field:publicField("playerField")},
+      enemy:{front:field.enemy_front,back:field.enemy_back,grave:window.XLW_ENEMY?.grave || enemyGraveyard,
+        exile:enemyExileZone,extra:enemyExtraDeck,hand:window.XLW_ENEMY?.hand?.length || 0,
+        deck:window.XLW_ENEMY?.deck?.length || 0,field:publicField("enemyField")}
+    }};
+};
+
 function setStatus(t) {
   const s = $("status");
   if (s) s.textContent = t;
@@ -45584,7 +45608,8 @@ function logBattle(text) {
   const line = `T${turn} | ${text}`;
   battleLog.unshift(line);
   if (battleLog.length > 30) battleLog.pop();
-  window.XLWBFeedback?.effect?.(text);
+  if (window.XLWDuelEvents) window.XLWDuelEvents.effect(text);
+  else window.XLWBFeedback?.effect?.(text);
 }
 
 function xlwLogSharedCardEffect(name, detail, isPlayer) {
@@ -45999,8 +46024,11 @@ function setupWebSocketEvents() {
       if (isMyTurn && !summonBoundary && !data.turnHandoff && !window.XLW_reconnectingWaitSync && s && s.turn <= turn) {
         return;
       }
+      const quietEventRecovery = !!window.XLW_reconnectingWaitSync;
       window.XLW_reconnectingWaitSync = false;
       if (s) {
+        if (quietEventRecovery) window.XLWDuelEvents?.reset();
+        window.XLWDuelEvents?.syncLogs(s.battleLog, quietEventRecovery);
         // Ordered delivery prevents a snapshot from overtaking an unfinished effect.
         // Do not resolve outstanding counter/placement promises as a side effect of syncing.
         // 翻轉格子坐標（對手的前排是我方後排，依此類推）
@@ -51034,6 +51062,7 @@ window.xlwShowSpellSuccessToast = function(card, subtitle = "") {
 };
 
 function xlwShowSpellActivationOverlay(card, side) {
+  window.XLWDuelEvents?.activation(card, side);
   window.xlwPlaySFX?.(card?.type === 'field' || card?.type === '場地' ? 'field' : 'spell');
   return new Promise((resolve) => {
     let overlay = document.getElementById("xlw-spell-activation-overlay");

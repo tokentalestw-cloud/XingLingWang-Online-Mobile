@@ -198,6 +198,7 @@
   }
   const api={scoreDifference,presence,unavailableReason,goalProgress,strongestLanes,notice,effect,effectMessage,updateScore,updatePresence,paintTargetsAndRoutes,
     resetScores(){
+      global.XLWDuelEvents?.reset();
       previous=null;scoreEvents={};clearTimeout(scoreTimer);
       effectQueue.length=0;clearTimeout(effectTimer);effectTimer=null;
       document.getElementById('xlwActionFeedback')?.setAttribute('hidden','');

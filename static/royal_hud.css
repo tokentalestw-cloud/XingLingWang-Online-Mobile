@@ -2161,3 +2161,36 @@ html body.xlw-royal-ui.xlw-game-started #xlwFixedTopRightActionBar {
 .xlw-immediate-flash strong {font-size:clamp(18px,3vw,28px);}
 @keyframes xlw-immediate-entry {0%,100% {opacity:0;transform:scale(.94)} 20%,80% {opacity:1;transform:scale(1)}}
 @media (prefers-reduced-motion:reduce) {.xlw-immediate-flash {animation:none;}}
+/* Public action journal: compact left rail, never intercept board or hand taps. */
+#xlwDuelEvents {
+  position: fixed; left: clamp(8px, 5vw, 76px); top: 40%;
+  width: clamp(115px, 13vw, 196px); z-index: 9702; color: #eee8da;
+  font: 500 clamp(10px, .95vw, 14px)/1.4 system-ui, sans-serif;
+  pointer-events: none; box-sizing: border-box;
+}
+#xlwDuelEvents[hidden], #xlwDuelEvents [hidden] { display: none !important; }
+#xlwDuelEvents .duel-event-current {
+  display: flex; gap: 7px; align-items: center; padding: 9px;
+  background: linear-gradient(135deg, #1d303bf5, #101a25f5);
+  border: 1px solid #746750; border-left: 3px solid #8fcdce; border-radius: 7px;
+  box-shadow: 0 5px 14px #0008;
+}
+#xlwDuelEvents .duel-event-current[data-side=enemy] { border-left-color: #d5a492; }
+#xlwDuelEvents .duel-event-current img { width: 39px; max-height: 62px; object-fit: contain; flex: 0 0 auto; }
+#xlwDuelEvents .duel-event-current div { min-width: 0; }
+#xlwDuelEvents strong, #xlwDuelEvents b, #xlwDuelEvents span { display: block; overflow-wrap: anywhere; }
+#xlwDuelEvents strong { color: #b9e0e1; font-size: 1.08em; }
+#xlwDuelEvents [data-side=enemy] strong { color: #e8b9a8; }
+#xlwDuelEvents b { color: #f2dca7; }
+#xlwDuelEvents span { max-height: 4.2em; overflow: hidden; }
+#xlwDuelEvents .duel-event-next { margin: 5px 0; padding: 4px 6px; background: #101d2bef; border-radius: 4px; }
+#xlwDuelEvents button { pointer-events: auto; color: #e6dcc7; background: #18232ced; border: 1px solid #746750; border-radius: 4px; padding: 3px 8px; font: inherit; }
+#xlwDuelEventHistory { pointer-events: auto; list-style: none; margin: 5px 0 0; padding: 6px 8px; max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; background: #101a25fa; border: 1px solid #746750; border-radius: 5px; }
+#xlwDuelEventHistory li { padding: 5px 0; border-bottom: 1px solid #ffffff15; overflow-wrap: anywhere; }
+@media (max-height: 450px) {
+  #xlwDuelEvents { top: 40%; left: 1vw; width: 17vw; font-size: 10px; }
+  #xlwDuelEvents .duel-event-current { padding: 5px; gap: 5px; }
+  #xlwDuelEvents .duel-event-current img { width: 27px; max-height: 42px; }
+  #xlwDuelEvents span { max-height: 2.8em; }
+  #xlwDuelEvents .duel-event-next { margin: 3px 0; padding: 2px 4px; }
+}
