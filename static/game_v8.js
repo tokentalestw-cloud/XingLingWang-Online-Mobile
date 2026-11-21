@@ -32909,9 +32909,10 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         enemyGraveyard.push(unit.card);
         logBattle(`✨ ${unit.card.name} 被破壞，回到對手墓地。`);
       }
-    } else if (unit.card.id === "C-ART-0072" || unit.card.name === "木乃伊") {
-      (owner === "player" ? playerExtraDeck : enemyExtraDeck).push(unit.card);
-      logBattle(`【木乃伊】消逝：被破壞後返回額外區。`);
+    } else if (unit.card.id === "C-ART-0072" || unit.card.name === "木乃伊" || window.xlwCardHasKeyword(unit.card, "消逝")) {
+      const extraOwner = unit.card.id === "SR-EWD-0055" ? (owner === "player" ? "enemy" : "player") : owner;
+      (extraOwner === "player" ? playerExtraDeck : enemyExtraDeck).push(unit.card);
+      logBattle(`【${unit.card.name}】消逝：被破壞後返回額外區。`);
     } else if (owner === "player") {
       graveyard.push(unit.card);
 
@@ -55681,19 +55682,7 @@ window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
     }
   }
 
-  // 傳送門 (BRV-0046) 等消逝單位在回合結束時消逝並返回額外牌庫
-  for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
-    for (let i = 0; i < 5; i++) {
-      const u = field[z][i];
-      if (u && u.card && u.card.id !== "C-ART-0072" && u.card.name !== "木乃伊" && (u.card.id?.includes("BRV-0046") || u.card.name === "傳送門" || window.xlwCardHasKeyword(u.card, "消逝"))) {
-        logBattle(`✨【${u.card.name}】具備【消逝】，在回合結束時消逝並返回額外牌庫！`);
-        const extraOwnerIsPlayer = u.card.id === "SR-EWD-0055" ? !isPlayerSide : isPlayerSide;
-        const extraList = extraOwnerIsPlayer ? playerExtraDeck : enemyExtraDeck;
-        extraList.push(u.card);
-        field[z][i] = null;
-      }
-    }
-  }
+  // 消逝是離場時的去向規則，不是回合結束時自動離場。
 
   // 💀 骷髏人牌組：結束階段效果
   // 1. 迷你骷 (C-SKT-0011 / R-SKT-0011)

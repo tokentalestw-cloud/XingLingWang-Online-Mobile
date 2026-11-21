@@ -63,3 +63,13 @@ test('record merging keeps older history, flips perspective and does not duplica
   assert.equal(merged.length,101);assert.match(merged[0],/對手召喚木乃伊/);
   assert.equal(g.XLWBattleRecord.merge(merged,['T3 | 我方召喚木乃伊']).length,101);
 });
+test('destroyed magic seeds with Vanish return to their owners extra zone instead of the grave',async()=>{
+  for(const side of ['player','enemy']){
+    const g=setup(),seed={id:'C-PLT-0035',name:'魔法種子',keywords:['消逝'],attack:0};
+    g.xlwCardHasKeyword=(card,keyword)=>card.keywords?.includes(keyword);
+    g.field[side+'_front'][0]={card:seed,equipments:[]};
+    await g.destroyUnit(side+'_front',0,side,false);
+    assert.equal((side==='player'?g.playerExtraDeck:g.enemyExtraDeck)[0].id,seed.id);
+    assert.equal((side==='player'?g.graveyard:g.enemyGraveyard).length,0);
+  }
+});

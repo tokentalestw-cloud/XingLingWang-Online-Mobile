@@ -39,19 +39,22 @@ module.exports = (async () => {
     const portal = { card: { id: 'BRV-0046', name: '傳送門' } };
     const npc = { card: { id: 'BRV-0045', name: '傳送門NPC' } };
     const monster = { card: { id: 'BRV-0020', name: '這個怪物' } };
+    const seed = { card: { id: 'C-PLT-0035', name: '魔法種子', keywords: ['消逝'] } };
     g.field[prefix + 'front'][0] = portal;
     g.field[prefix + 'front'][1] = npc;
     g.field[prefix + 'back'][0] = monster;
+    g.field[prefix + 'back'][1] = seed;
     await g.xlwResolveTurnStartEffects(side);
     assert.equal(g.field[prefix + 'front'][0], portal);
     assert.equal(g.field[prefix + 'back'][0], monster);
     assert.equal(g.playerExtraDeck.length + g.enemyExtraDeck.length, 0);
     tests++;
     await g.xlwResolveEndPhaseEffects(side);
-    assert.equal(g.field[prefix + 'front'][0], null);
+    assert.equal(g.field[prefix + 'front'][0], portal, 'Vanish does not mean automatic turn-end expiry');
     assert.equal(g.field[prefix + 'front'][1], npc);
     assert.equal(g.field[prefix + 'back'][0], null);
-    assert.equal((side ? g.playerExtraDeck : g.enemyExtraDeck)[0], portal.card);
+    assert.equal(g.field[prefix + 'back'][1], seed, 'newly summoned seeds persist through the end phase');
+    assert.equal((side ? g.playerExtraDeck : g.enemyExtraDeck).length, 0);
     tests++;
   }
   for (const side of [true, false]) {
