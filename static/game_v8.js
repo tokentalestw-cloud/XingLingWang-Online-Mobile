@@ -3725,15 +3725,17 @@ window.xlwExileCardFromGraveyard = async function(cardOrIdx, isPlayer) {
       activate = await showXLWConfirm("大胖骷 效果發動", "墓地單位被除外，是否破壞場上的【大胖骷】，從墓地額外打出 2 張無需祭品的不死族單位？");
     }
     if (activate) {
+      if(field[fatSkullPos.zone]?.[fatSkullPos.idx]!==fatSkullPos.unit)return true;
       await destroyUnit(fatSkullPos.zone, fatSkullPos.idx, isPlayer ? "player" : "enemy", false);
+      if(field[fatSkullPos.zone]?.[fatSkullPos.idx]===fatSkullPos.unit)return true;
       const freeUndead = graveList.filter(c => c && (c.type === "unit" || c.type === "單位") && window.xlwIsUndeadCard(c) && getCardTributeCost(c) === 0);
       let countToSummon = Math.min(2, freeUndead.length);
       for (let k = 0; k < countToSummon; k++) {
         const uCard = freeUndead[k];
-        const gIdx = graveList.indexOf(uCard);
-        if (gIdx >= 0) graveList.splice(gIdx, 1);
-        logBattle(`✨【大胖骷】效果：自墓地打出 0 祭品不死族【${uCard.name}】！`);
-        await window.xlwSpecialSummonUnit(uCard, isPlayer);
+        const summoned=await window.xlwSpecialSummonUnit(uCard,isPlayer,{
+          sourcePile:()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard)
+        });
+        if(summoned)logBattle(`✨【大胖骷】效果：自墓地打出 0 祭品不死族【${uCard.name}】！`);
       }
     }
   }
@@ -3746,10 +3748,10 @@ window.xlwRecoverFairyFromGrave = async function(source, isPlayer) {
   const unitRecovery = source.id?.includes("EVL-0016");
   if (!unitRecovery && !source.id?.includes("EVL-0024")) return false;
   const pile = () => isPlayer ? graveyard : window.XLW_ENEMY?.grave;
-  const targetHand = isPlayer ? hand : window.XLW_ENEMY?.hand;
+  const targetHand = () => isPlayer ? hand : window.XLW_ENEMY?.hand;
   const grave = pile();
-  if (!grave?.includes(source) || !targetHand) return false;
-  const options = grave.filter(card => card && card !== source && window.xlwIsUnitFairy(card) &&
+  if (!window.XLWDuelConsistency.findKnownCard(grave,source) || !targetHand()) return false;
+  const options = grave.filter(card => card && card !== window.XLWDuelConsistency.findKnownCard(grave,source) && window.xlwIsUnitFairy(card) &&
     (unitRecovery ? ["unit", "單位"].includes(card.type) : ["magic", "spell", "魔法"].includes(card.type)));
   if (!options.length) return false;
   const pick = isPlayer ? await showXLWChoiceModal(source.name, "選擇一張要從墓地回手的妖精卡。", [
@@ -3757,8 +3759,8 @@ window.xlwRecoverFairyFromGrave = async function(source, isPlayer) {
     {text: "取消", value: -1}
   ]) : 0;
   const selected = options[pick];
-  if (!selected || !pile()?.includes(source) ||
-      !window.XLWDuelConsistency.moveKnownCard(pile(), targetHand, selected)) return false;
+  if (!selected || !window.XLWDuelConsistency.findKnownCard(pile(),source) ||
+      !window.XLWDuelConsistency.moveKnownCard(pile(), targetHand(), selected)) return false;
   logBattle(`✨【${source.name}】將【${selected.name}】從墓地回手。`);
   render();
   return true;
@@ -3798,16 +3800,12 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
   if (happyGraveActive && (card.type === "unit" || card.type === "單位")) {
     let doExile = isPlayer ? await showXLWConfirm("【快樂墓園】效果觸發", `【${card.name}】即將進入墓地，是否改為除外該單位並獲得 +1★ 獎勵？`) : true;
     if (doExile) {
-      if (isPlayer) {
-        const gIdx = graveyard.indexOf(card);
-        if (gIdx >= 0) graveyard.splice(gIdx, 1);
-        playerBonusScore += 1;
-      } else {
-        const eGrave = window.XLW_ENEMY?.grave || enemyGraveyard || [];
-        const gIdx = eGrave.indexOf(card);
-        if (gIdx >= 0) eGrave.splice(gIdx, 1);
-        enemyBonusScore += 1;
-      }
+      // Re-read the current grave after the prompt; an earlier trigger may already have moved this card.
+      const liveGrave=isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+      const moved=window.XLWDuelConsistency.takeKnownCard(liveGrave,card);
+      if(!moved)return;
+      card=moved;
+      if(isPlayer)playerBonusScore+=1;else enemyBonusScore+=1;
       renderScore();
       exileCard(card, isPlayer ? "player" : "enemy");
       logBattle(`✨【快樂墓園】效果發動：將【${card.name}】改為除外，獲得 +1★ 獎勵！`);
@@ -6434,18 +6432,10 @@ window.xlwResolveMechanicalEffects = async function(context,isPlayer,triggerCard
       }
       if (doSummonScrap) {
         const scrapToSummon = scrapCards[0];
-        const gIdx = graveList.indexOf(scrapToSummon);
-        if (gIdx >= 0) graveList.splice(gIdx, 1);
-        const slot = emptySlots[0];
-        field[slot.zone][slot.idx] = {
-          card: structuredClone(scrapToSummon),
-          tapped: false,
-          attacking: false,
-          target: null,
-          summonedTurn: turn,
-          summonedZone: slot.zone
-        };
-        logBattle(`♻️【${scrapToSummon.name}】效果觸發：從墓地特殊召喚至戰場！`);
+        const summoned=await window.xlwSpecialSummonUnit(scrapToSummon,isPlayer,{
+          sourcePile:()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard)
+        });
+        if(summoned)logBattle(`♻️【${scrapToSummon.name}】效果觸發：從墓地特殊召喚至戰場！`);
       }
     }
   }
@@ -6679,10 +6669,10 @@ window.xlwResolveMechanicalEffects = async function(context,isPlayer,triggerCard
           const pick = await chooseEffect("【遺骸右手】回收遺骸", "請選擇 1 張從墓地回收至手牌的遺骸單位卡：", choices);
           if (pick !== null && pick !== undefined) chosen = graveRemains[pick];
         }
-        const gIdx = graveList.indexOf(chosen);
-        if (gIdx >= 0) graveList.splice(gIdx, 1);
-        if (isPlayer) hand.push(chosen); else (window.XLW_ENEMY.hand = window.XLW_ENEMY.hand || []).push(chosen);
-        logBattle(`✊【古代機神遺骸右手】效果觸發：將墓地的【${chosen.name}】回收至手牌！`);
+        const liveGrave=isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+        const liveHand=isPlayer?hand:(window.XLW_ENEMY.hand ||= []);
+        const recovered=window.XLWDuelConsistency.moveKnownCard(liveGrave,liveHand,chosen);
+        if(recovered)logBattle(`✊【古代機神遺骸右手】效果觸發：將墓地的【${recovered.name}】回收至手牌！`);
       }
     }
   }
@@ -34050,9 +34040,8 @@ async function xlwResolveVirtualTurnStartEffects() {
                 const choices = vrtUnitsInDeck.map((c, i) => ({ text: `${c.name} (${c.id})`, value: i }));
                 const chosenIdx = await showXLWChoiceModal("搜尋虛擬單位", "請選擇要加入手牌的虛擬單位卡：", choices);
                 if (chosenIdx !== null && chosenIdx !== undefined) {
-                  const targetCard = vrtUnitsInDeck[chosenIdx];
-                  deck.splice(deck.indexOf(targetCard), 1);
-                  hand.push(targetCard);
+                  const targetCard = window.XLWDuelConsistency.moveKnownCard(deck,hand,vrtUnitsInDeck[chosenIdx]);
+                  if(!targetCard)continue;
                   if (window.shuffleArray) {
                     window.shuffleArray(deck);
                   } else {
@@ -45838,7 +45827,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-diagnostics-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-card-transfers-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
