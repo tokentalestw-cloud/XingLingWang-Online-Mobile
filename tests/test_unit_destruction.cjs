@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const {test} = require('node:test');
 const source = fs.readFileSync(path.join(__dirname, '../static/game_v8.js'), 'utf8');
 function section(name) {
   const start = source.search(new RegExp('(?:async )?function ' + name + '\\('));
@@ -12,7 +13,7 @@ const code = ['destroyUnit', 'isUnitIndestructible', 'isUnitAttackProtected', 'x
 function unit(id, attack, properties = {}) {
   return { card: { id, name: id, attack, score: 1 }, equipments: [], ...properties };
 }
-function fixture() {
+function fixture(withRewards = false) {
   const g = {
     console, document: { querySelector: () => null, getElementById: () => null },
     field: Object.fromEntries(['player_front','player_back','enemy_front','enemy_back'].map(z => [z, Array(5).fill(null)])),
@@ -25,7 +26,7 @@ function fixture() {
     getCardTributeCost: card => Number(card.tribute || 0), setTimeout: () => 0,
     getUnitAtk: u => Number(u.card.attack), getUnitStars: u => Number(u.card.score),
     hasArmorBreak: () => false, checkUnitHasPiercing: () => false,
-    showCombatNumberAnimation: async () => {}, applyCombatSuccessReward() {}
+    showCombatNumberAnimation: async () => {}, applyCombatSuccessReward() {}, sendFullGameStateToOpponent() {}
   };
   g.window = g;
   g.XLW_ENEMY = { hand: [], deck: [], grave: g.enemyGraveyard };
@@ -36,6 +37,7 @@ function fixture() {
   g.XLW_isShieldUnit = u => u?.card?.attack === '盾';
   vm.createContext(g);
   vm.runInContext(code, g);
+  if (withRewards) vm.runInContext(section('applyCombatSuccessReward'), g);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../static/battle_flow.js'), 'utf8'), g);
   return g;
 }
@@ -103,3 +105,87 @@ module.exports = (async () => {
   tests++;
   console.log(`${tests} complete combat/destruction, poison recursion, immunity and duplicate-grave checks: PASS`);
 })();
+
+test('combat-success rewards follow attack comparison despite front-row destruction resistance, from either seat', async()=>{
+  for(const side of ['player','enemy'])for(const attack of [3,5]) {
+    const other=side==='player'?'enemy':'player',g=fixture(true);
+    const attacker=unit('R-ORC-0040',attack,{attacking:true});
+    const urn=unit('C-ART-0061',3);
+    g.field[side+'_front'][0]=attacker;g.field[other+'_front'][0]=urn;
+    await g.resolveUnitCombat(side+'_front',0,other+'_front',0,other);
+    assert.equal(g.field[other+'_front'][0],urn);
+    assert.equal(side==='player'?g.playerBonusScore:g.enemyBonusScore,3);
+    assert.equal(attacker.attacking,false);
+  }
+});
+test('surviving a failed comparison does not award combat success',async()=>{
+  const g=fixture(true),attacker=unit('R-ORC-0040',2,{indestructible:true});
+  g.field.player_front[0]=attacker;g.field.enemy_front[0]=unit('target',5);
+  await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+  assert.equal(g.field.player_front[0],attacker);assert.equal(g.playerBonusScore,0);
+});
+test('defender rewards follow comparison even when the weaker attacker resists destruction',async()=>{
+  const g=fixture(true);
+  g.field.player_front[0]=unit('R-ORC-0040',2,{indestructible:true});
+  g.field.enemy_front[0]=unit('R-ORC-0007',5);
+  await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+  assert.equal(g.enemyBonusScore,1);assert.equal(g.playerBonusScore,0);
+});
+test('poison destruction cannot turn a lower attack into combat success or erase the higher comparison',async()=>{
+  const g=fixture(true);
+  g.field.player_front[0]=unit('R-ORC-0040',5);
+  g.field.enemy_front[0]=unit('poison',2,{poison:true});
+  await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+  assert.equal(g.playerBonusScore,3);assert.equal(g.field.player_front[0],null);
+});
+test('piercing resolves the rear independently instead of unconditionally destroying it',async()=>{
+  for(const side of ['player','enemy'])for(const backAttack of [2,5,8]) {
+    const other=side==='player'?'enemy':'player',g=fixture(true),animations=[];
+    const attacker=unit('R-ORC-0040',5,{piercing:true,attacking:true});
+    const back=unit('rear',backAttack);
+    g.checkUnitHasPiercing=u=>!!u.piercing;
+    g.showCombatNumberAnimation=async(a,ai,d)=>animations.push(d);
+    g.field[side+'_front'][0]=attacker;g.field[other+'_front'][0]=unit('C-ART-0061',3);g.field[other+'_back'][0]=back;
+    const result=await g.resolveUnitCombat(side+'_front',0,other+'_front',0,other);
+    assert.deepEqual(animations,[other+'_front',other+'_back']);
+    assert.equal(g.field[other+'_back'][0]===null,backAttack<=5);
+    assert.equal(g.field[side+'_front'][0]===null,backAttack>5);
+    assert.equal(side==='player'?g.playerBonusScore:g.enemyBonusScore,backAttack<=5?6:3);
+    assert.match(result,/貫穿後排/);
+  }
+});
+test('piercing honors rear shields, resistance and poison and stops if the attacker leaves',async()=>{
+  for(const kind of ['shield','resistance','poison','dead-attacker']) {
+    const g=fixture(),attacker=unit('attacker',5,{piercing:true});
+    const front=unit('front',kind==='dead-attacker'?9:1);
+    const back=unit(kind==='resistance'?'C-ART-0061':'rear',kind==='shield'?'盾':1,{poison:kind==='poison'});
+    g.checkUnitHasPiercing=u=>!!u.piercing;
+    g.field.player_front[0]=attacker;g.field.enemy_front[0]=front;g.field.enemy_back[0]=back;
+    await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+    if(kind==='poison')assert.equal(g.field.player_front[0],null);
+    else assert.equal(g.field.enemy_back[0],back);
+    if(kind==='dead-attacker')assert.equal(g.field.player_front[0],null);
+  }
+});
+test('Cleaver rewards only actual destroyed units across both piercing battles',async()=>{
+  for(const frontProtected of [false,true]) {
+    const g=fixture(true),attacker=unit('ORC-0003',5,{piercing:true});
+    g.checkUnitHasPiercing=u=>!!u.piercing;
+    g.field.player_front[0]=attacker;
+    g.field.enemy_front[0]=unit(frontProtected?'C-ART-0061':'front',2);
+    g.field.enemy_back[0]=unit('rear',2);
+    await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+    assert.equal(g.playerBonusScore,frontProtected?1:2);
+  }
+});
+test('sneak recall waits until piercing finishes and can follow a rear-only success',async()=>{
+  const g=fixture();let decisions=0;
+  g.isMultiplayer=false;
+  g.checkUnitHasPiercing=u=>!!u.piercing;
+  g.xlwUnitHasSneak=u=>!!u.sneak;
+  g.showXLWConfirm=async()=>{decisions++;return false;};
+  const attacker=unit('attacker',5,{piercing:true,sneak:true,indestructible:true});
+  g.field.player_front[0]=attacker;g.field.enemy_front[0]=unit('strong-front',9);g.field.enemy_back[0]=unit('weak-rear',1);
+  await g.resolveUnitCombat('player_front',0,'enemy_front',0,'enemy');
+  assert.equal(g.field.enemy_back[0],null);assert.equal(decisions,1);assert.equal(attacker.tapped,true);
+});

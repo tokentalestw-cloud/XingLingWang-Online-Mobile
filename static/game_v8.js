@@ -27883,7 +27883,7 @@ async function xlwHandleWolfMaceCombatSuccess(winningUnit, winZone, winIdx, winO
   if (isMultiplayer) xlwSendExtraToHand(moved);
 }
 
-async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner) {
+async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner, options = {}) {
   const attacker = field[attZone]?.[attIdx];
   const defender = field[defZone]?.[defIdx];
 
@@ -27953,6 +27953,9 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   // 4. 計算雙方是否應當被擊破 (引入 Ranged 免疫反擊與 Poisonous 必殺邏輯)
   let attackerShouldDie = false;
   let defenderShouldDie = false;
+  // A successful comparison is independent of poison, survival and destruction replacement.
+  let attackerSuccess = atkPower >= defPower;
+  let defenderSuccess = defPower >= atkPower;
 
   // 基礎戰鬥數值對決 (相同攻擊力時攻擊方獲勝，防守方被破壞)
   if (atkPower > defPower) {
@@ -27983,6 +27986,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
 
     if (playerCheated && !enemyCheated) {
+      attackerSuccess = attZone.startsWith("player_");
+      defenderSuccess = !attackerSuccess;
       if (attZone.startsWith("player_")) {
         defenderShouldDie = true;
         attackerShouldDie = false;
@@ -27992,6 +27997,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
       }
       logBattle("✨ 天下第一獸人作弊大會 效果：攻擊力平手改為我方戰鬥成功！");
     } else if (enemyCheated && !playerCheated) {
+      attackerSuccess = attZone.startsWith("enemy_");
+      defenderSuccess = !attackerSuccess;
       if (attZone.startsWith("enemy_")) {
         defenderShouldDie = true;
         attackerShouldDie = false;
@@ -28015,6 +28022,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     const attackerStars = getUnitStars(attacker, attZone, attIdx);
     const defenderStars = getUnitStars(defender, defZone, defIdx);
     if (defenderStars <= attackerStars) {
+      attackerSuccess = true;
+      defenderSuccess = false;
       defenderShouldDie = true;
       attackerShouldDie = false;
       logBattle(`✨ 狂野巨獸 金牛座 效果發動：對手單位星數 (${defenderStars}) <= 金牛座星數 (${attackerStars})，金牛座免於戰鬥破壞，且對手單位必定會被戰鬥破壞！`);
@@ -28023,6 +28032,8 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     const attackerStars = getUnitStars(attacker, attZone, attIdx);
     const defenderStars = getUnitStars(defender, defZone, defIdx);
     if (attackerStars <= defenderStars) {
+      attackerSuccess = false;
+      defenderSuccess = true;
       attackerShouldDie = true;
       defenderShouldDie = false;
       logBattle(`✨ 狂野巨獸 金牛座 效果發動：攻擊方單位星數 (${attackerStars}) <= 金牛座星數 (${defenderStars})，金牛座免於戰鬥破壞，且攻擊方單位必定會被戰鬥破壞！`);
@@ -28040,11 +28051,14 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
                                  attackerCard.id === "NMS-0013" || attackerCard.name?.includes("笨手笨腳的維修員");
   const defenderIsCombineUnit = window.isCombineUnit(defender);
   if (attackerHasDisassemble && defenderIsCombineUnit && !window.isUnitSilenced(attacker, attZone, attIdx)) {
+    attackerSuccess = true;
+    defenderSuccess = false;
     defenderShouldDie = true;
     attackerShouldDie = false;
     logBattle(`✨ 笨手笨腳的維修員 效果：【${attackerCard.name}】發動拆卸效果，進攻對手合體單位【${defenderCard.name}】，直接判定戰鬥成功並將其破壞！`);
   }
 
+  if (options.outcome) options.outcome.attackerSuccess = attackerSuccess;
   // 劇毒 / 塗毒 (Poisonous) 效果應用：與塗毒/劇毒交戰的單位（無論攻擊力高低）皆確實被破壞
   if (attackerHasPoison) {
     defenderShouldDie = true; // 劇毒進攻必殺
@@ -28488,7 +28502,7 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
   }
 
-  if (defenderShouldDie && !attackerShouldDie) {
+  if (attackerSuccess && field[attZone]?.[attIdx] === attacker) {
     // 🌿 C-PLT-0012 水槍小童: 進攻戰鬥成功時，使你場上1個植物單位被灌溉X。X=進攻目標★
     if (attUnit.card && (attUnit.card.id === "C-PLT-0012" || attUnit.card.name?.includes("水槍小童"))) {
       const defStars = getUnitStars(defUnit, defZone, defIdx);
@@ -28565,19 +28579,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   if (defenderShouldDie && !pushedByLeftHook && field[defZone]?.[defIdx] === defender) {
     destPromise.push(destroyUnit(defZone, defIdx, defenderOwner, attackerIsKnightCat, true));
 
-    // 貫穿 (Piercing) 效果判定：擊破前排後繼續進攻後排
-    const hasPiercing = checkUnitHasPiercing(attacker, attZone, attIdx);
-    let destroyedCount = 1;
-    if (hasPiercing && defZone.includes("front")) {
-      const backZone = defZone.replace("front", "back");
-      const backUnit = field[backZone]?.[defIdx];
-      if (backUnit) {
-        destPromise.push(destroyUnit(backZone, defIdx, defenderOwner, false, true));
-        piercingMsg = `，並貫穿擊破了後排的 ${unitName(backUnit)}`;
-        destroyedCount = 2;
-      }
-    }
-    attacker.xlwDestroyedInCombatCount = destroyedCount;
   }
 
   if (destPromise.length > 0) {
@@ -28648,12 +28649,15 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
   }
 
-  // 統計與套用戰鬥成功獎勵
-  const attackerSuccess = (!attackerShouldDie && defenderShouldDie);
-  const defenderSuccess = (!defenderShouldDie && attackerShouldDie);
+  // Count actual destruction separately for effects explicitly requiring a destroyed unit.
+  attacker.xlwDestroyedInCombatCount = Number(defenderShouldDie && !pushedByLeftHook && field[defZone]?.[defIdx] !== defender);
+  // 統計與套用戰鬥成功獎勵：破壞抗性不會取消已成立的數值比較結果。
   if (attackerSuccess) {
     const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
     await applyCombatSuccessReward(attacker, defender, successOwner, true);
+  }
+  if (attackerSuccess && field[attZone]?.[attIdx] === attacker) {
+    const successOwner = (defenderOwner === "enemy" ? "player" : "enemy");
 
 
     // 🤖 禁閉屋 (RBT-0053 / R-RBT-0053): 戰鬥成功改為被綁架(2)
@@ -28878,15 +28882,31 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
 
   const winner = attackerSuccess ? attacker : defenderSuccess ? defender : null;
   const winnerZone = attackerSuccess ? attZone : defZone;
+  const winnerIdx = attackerSuccess ? attIdx : defIdx;
   // 🐐 旅人騎羊 (NY-GOT-0008, R-GOT-0008): 戰鬥成功時，召喚2個小旅人
-  if (winner?.card && (winner.card.id === "NY-GOT-0008" || /(?:^|-)GOT-0008(?:-|$)/.test(winner.card.id) || winner.card.name?.includes("旅人騎羊")) &&
+  if (winner?.card && field[winnerZone]?.[winnerIdx] === winner && (winner.card.id === "NY-GOT-0008" || /(?:^|-)GOT-0008(?:-|$)/.test(winner.card.id) || winner.card.name?.includes("旅人騎羊")) &&
       !window.isUnitSilenced(winner, winnerZone, winnerIdx)) {
     await xlwSummonGoatTravelers(winnerZone, winnerIdx);
   }
 
+  // Resolve the rear row as a real second battle, even if the front unit resisted destruction.
+  // Keep the outer combat/reply scope open; settle fatigue and sneak recall once after the chain.
+  let chainAttackSuccess = attackerSuccess;
+  if (!options.piercingFollowup && defZone.endsWith("_front") &&
+      field[attZone]?.[attIdx] === attacker && checkUnitHasPiercing(attacker, attZone, attIdx)) {
+    const backZone = defZone.replace(/_front$/, "_back");
+    if (field[backZone]?.[defIdx]) {
+      logBattle(`🔱【${attackerCard.name}】貫穿：繼續與同戰線後排單位交戰。`);
+      const outcome = {};
+      const followup = await resolveUnitCombat(attZone, attIdx, backZone, defIdx, defenderOwner, {piercingFollowup: true, outcome});
+      chainAttackSuccess = chainAttackSuccess || !!outcome.attackerSuccess;
+      piercingMsg = `；貫穿後排：${followup}`;
+    }
+  }
+
   // 6. 偷襲 (Sneak Attack) 效果應用：成功進攻並存活後，將此卡收回手牌
   let sneakMsg = "";
-  if (attackerHasSneak && !attackerShouldDie && defenderShouldDie) {
+  if (!options.piercingFollowup && attackerHasSneak && chainAttackSuccess && field[attZone]?.[attIdx] === attacker) {
     if (defenderOwner === "player") {
       // 攻擊方是對手
       if (isMultiplayer) {
@@ -29014,7 +29034,7 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
   } else {
     // 未回手之存活單位進行橫置 Tap 鎖定
-    if (!attackerShouldDie) {
+    if (!options.piercingFollowup && field[attZone]?.[attIdx] === attacker) {
       attacker.tapped = true;
       attacker.attacking = false;
       attacker.target = null;
@@ -29029,19 +29049,20 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   } else if (attackerShouldDie) {
     combatMsg = `${unitName(attacker)} 攻擊失敗，自身被破壞，而 ${unitName(defender)} 完好無損`;
   } else if (defenderShouldDie) {
-    combatMsg = `${unitName(attacker)} 成功擊破了 ${unitName(defender)}${piercingMsg}${sneakMsg}`;
+    combatMsg = `${unitName(attacker)} 成功擊破了 ${unitName(defender)}${sneakMsg}`;
   } else {
     combatMsg = `${unitName(attacker)} 進攻了 ${unitName(defender)}，雙方皆安然無恙${sneakMsg}`;
   }
+  combatMsg += piercingMsg;
 
   // Recovery belongs to the winning attacker, whichever phone resolves combat.
-  if (!attackerShouldDie && defenderShouldDie && attacker.card?.name?.includes("武士繪") && !window.isUnitSilenced(attacker,attZone,attIdx)) {
+  if (attackerSuccess && field[attZone]?.[attIdx] === attacker && attacker.card?.name?.includes("武士繪") && !window.isUnitSilenced(attacker,attZone,attIdx)) {
     await xlwRecoverSamuraiCard(attZone.startsWith('player_')?'player':'enemy');
   }
 
   return combatMsg;
   } finally {
-    if (attackSpent) window.XLWBattleFlow?.finish(attacker,field[attZone]?.[attIdx],attZone,attIdx,turn);
+    if (attackSpent && !options.piercingFollowup) window.XLWBattleFlow?.finish(attacker,field[attZone]?.[attIdx],attZone,attIdx,turn);
     closeCombatReplies();
     render();
   }
@@ -45404,7 +45425,7 @@ function showModal(card, equipments, unitObj) {
         if (unitObj.tapped) statuses.push({ icon: "💤", title: "橫置疲勞", desc: "已完成本回合行動，進入防守態", cls: "tapped" });
         if (unitObj.magicImmunity || unitObj.spellShield) statuses.push({ icon: "🛡️", title: "魔法免疫", desc: "不受敵方魔法或法術效果影響", cls: "shield" });
         if (unitObj.ranged) statuses.push({ icon: "🏹", title: "遠程進攻", desc: "可跨越前排直接攻擊敵方後排目標", cls: "ranged" });
-        if (unitObj.pierce) statuses.push({ icon: "🔪", title: "貫穿傷害", desc: "擊破敵方單位時多餘傷害穿透至比分", cls: "pierce" });
+        if (checkUnitHasPiercing(unitObj)) statuses.push({ icon: "🔪", title: "貫穿", desc: "與前排交戰後，若此單位仍在場上，繼續與同戰線後排單位進行戰鬥結算。", cls: "pierce" });
         if (unitObj.poison) statuses.push({ icon: "🤢", title: "劇毒致命", desc: "造成戰鬥傷害時必定消滅目標", cls: "poison" });
         if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(unitObj)) statuses.push({ icon: "🗿", title: "不可移動", desc: "無法進行戰術移動或被位移效果移動", cls: "unmovable" });
         if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unitObj)) statuses.push({ icon: "✨", title: "不可獻祭", desc: "無法作為上級召喚或效果的獻祭祭品", cls: "unsacrificable" });
@@ -50524,9 +50545,9 @@ async function applyCombatSuccessReward(unit, oppUnit, owner, isAttacker) {
     logBattle(`✨【背刺獸人】進攻成功，自帶效果獎勵 +2★！`);
   }
   if ((cid === "ORC-0003" || cid === "SSR-ORC-0003" || name?.includes("菜刀哥")) && isAttacker) {
-    const destroyedCount = (unit.xlwDestroyedInCombatCount !== undefined && unit.xlwDestroyedInCombatCount > 0) ? unit.xlwDestroyedInCombatCount : 1;
+    const destroyedCount = unit.xlwDestroyedInCombatCount ?? 1;
     baseReward += destroyedCount;
-    hasRewardEffect = true;
+    hasRewardEffect = hasRewardEffect || destroyedCount > 0;
     logBattle(`✨【菜刀哥】戰鬥破壞 ${destroyedCount} 個單位，自帶效果獎勵 +${destroyedCount}★！`);
     unit.xlwDestroyedInCombatCount = undefined;
   }
