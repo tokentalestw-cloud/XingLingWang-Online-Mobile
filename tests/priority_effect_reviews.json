@@ -83,6 +83,62 @@
         "scenarios": 10,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "C-VLG-0056",
+      "signature": "507839d0db6910366421d98a0365d6cdc51c928890c5eaacf2e5a0b89476b9d1",
+      "regression_file": "tests/test_village_main_start.cjs",
+      "scope": [
+        "主要階段開始與單一來源限次",
+        "來源與位置重驗",
+        "實體卡移動與條件成功",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 2,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "C-VLG-0065",
+      "signature": "0bac09fd81a6c238714d764e169f60c6ec0b5702bbc29b2fc5874ffaca65da4f",
+      "regression_file": "tests/test_village_main_start.cjs",
+      "scope": [
+        "主要階段開始與單一來源限次",
+        "來源與位置重驗",
+        "實體卡移動與條件成功",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 6,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-VLG-0061",
+      "signature": "668aaf3ab249f6f44e7a8ae860972ac4f4b44f46b721f7c8d46bd7737c9fe2a3",
+      "regression_file": "tests/test_village_main_start.cjs",
+      "scope": [
+        "主要階段開始與單一來源限次",
+        "來源與位置重驗",
+        "實體卡移動與條件成功",
+        "雙人同步",
+        "一般與特殊召喚立即效果",
+        "前排祭品限制"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 4,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
