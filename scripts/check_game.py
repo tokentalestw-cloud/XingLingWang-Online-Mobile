@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     steps = [
         ("卡牌資料掃描", [sys.executable, "-X", "utf8", "scripts/audit_cards.py"]),
+        ("優先種族覆核進度", [sys.executable, "-X", "utf8", "scripts/audit_priority_effects.py"]),
         ("遊戲腳本語法", ["node", "--check", "static/game_v8.js"]),
         ("卡牌效果與對戰回歸", ["node", "--test", *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests").glob("test_*.cjs"))]),
         ("伺服器與房間回歸", [sys.executable, "-X", "utf8", "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"]),

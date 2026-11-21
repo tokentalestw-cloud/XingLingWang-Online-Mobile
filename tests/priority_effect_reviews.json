@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "priority": [
+    "妖怪村莊",
+    "藝術品",
+    "甜點王國"
+  ],
+  "reviews": [
+    {
+      "id": "R-VLG-0066",
+      "signature": "f548b2826e4b3feea62ff77315720b29bf44461d3a73314a11271c88a5ba4abd",
+      "regression_file": "tests/test_village_searches.cjs",
+      "scope": [
+        "卡文",
+        "發動時機",
+        "魔法連鎖",
+        "選牌與移牌",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 4,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-VLG-0047",
+      "signature": "ed22694e13498b40c73cacfda12d87021cbbc363653f58536604930ab6a5cbe3",
+      "regression_file": "tests/test_village_searches.cjs",
+      "scope": [
+        "卡文",
+        "發動時機",
+        "魔法連鎖",
+        "選牌與移牌",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 6,
+        "iphone_safari_tested": false
+      }
+    }
+  ]
+}

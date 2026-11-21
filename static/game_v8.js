@@ -12888,6 +12888,73 @@ window.xlwCrystalArrowTargets = function(card) {
       [{unit, zone, idx}] : []));
 };
 
+// Village search spells resolve only after the existing spell chain succeeds.
+window.xlwResolveVillageSearch = async function(spell,clairvoyance=false){
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(spell))return false;
+  const token={};pending.set(spell,token);
+  const current=()=>pending.get(spell)===token;
+  const yokai=c=>c&&(c.faction==='妖怪村莊'||c.deck==='妖怪村莊'||c.id?.includes('VLG'));
+  const free=c=>c&&['unit','單位','單位卡'].includes(c.type)&&yokai(c)&&getCardTributeCost(c)===0;
+  const station=c=>c&&(c.id?.includes('VLG-0018')||c.name==='如月車站');
+  const serial=spell.villageSearchSerial=(spell.villageSearchSerial||0)+1;
+  const key=xlwFactionDecisionKey({card:spell,summonedTurn:turn},'player_front','village-search',serial);
+  const choose=(suffix,title,message,options,config={})=>window.xlwChooseFactionAction(true,key+':'+suffix,title,message,options,config);
+  try{
+    if(clairvoyance){
+      if(hand.filter(Boolean).length<2)return false;
+      const choices=hand.filter(Boolean);
+      const first=await choose('return-1','千里眼：洗回第一張','選擇兩張手牌；確認兩張前不會移動任何卡。',choices.map((card,value)=>({text:card.name,card,value})));
+      if(!current())return null;
+      if(!Number.isInteger(first)||!choices[first])return false;
+      const rest=choices.filter((_,i)=>i!==first);
+      const second=await choose('return-2','千里眼：洗回第二張','選擇第二張要洗回牌庫的手牌。',rest.map((card,value)=>({text:card.name,card,value})));
+      if(!current())return null;
+      if(!Number.isInteger(second)||!rest[second])return false;
+      const a=window.XLWDuelConsistency.findKnownCard(hand,choices[first]);
+      const b=window.XLWDuelConsistency.findKnownCard(hand,rest[second]);
+      if(!a||!b||a===b)return false;
+      const alreadyReturned=c=>deck.includes(c)||c._xlwInstanceId&&deck.some(x=>x?._xlwInstanceId===c._xlwInstanceId);
+      if(alreadyReturned(a)||alreadyReturned(b))return false;
+      window.XLWDuelConsistency.moveKnownCard(hand,deck,a);
+      window.XLWDuelConsistency.moveKnownCard(hand,deck,b);
+      shuffle(deck);
+      const options=deck.filter(yokai);
+      if(!options.length){render();return false;}
+      const n=await choose('search','千里眼：檢索妖怪村莊','選擇一張妖怪村莊卡牌加入手牌。',options.map((card,value)=>({text:card.name,card,value})));
+      if(!current())return null;
+      const live=Number.isInteger(n)&&window.XLWDuelConsistency.findKnownCard(deck,options[n]);
+      if(!yokai(live))return false;
+      const moved=window.XLWDuelConsistency.moveKnownCard(deck,hand,live);
+      if(!moved)return false;
+      shuffle(deck);
+      logBattle(`【千里眼】洗回兩張手牌，將【${moved.name}】加入手牌。`);
+    }else{
+      const actions=[];
+      if(deck.some(station))actions.push({text:'檢索如月車站',value:'search',icon:'▤'});
+      if(hand.some(free))actions.push({text:'手牌妖怪村莊單位送墓',value:'discard',icon:'🃏'});
+      if(!actions.length)return false;
+      const action=await choose('mode','如月車票：選擇效果','選擇檢索車站，或將一張免祭品妖怪村莊單位送墓。',actions,{actionChoices:true});
+      if(!current())return null;
+      const options=(action==='search'?deck:action==='discard'?hand:[]).filter(action==='search'?station:free);
+      if(!options.length)return false;
+      const n=await choose('target','如月車票：選擇卡牌','選擇要檢索或送墓的卡牌。',options.map((card,value)=>({text:card.name,card,value})));
+      if(!current())return null;
+      const source=action==='search'?deck:hand;
+      const live=Number.isInteger(n)&&window.XLWDuelConsistency.findKnownCard(source,options[n]);
+      if(!(action==='search'?station(live):free(live)))return false;
+      const moved=window.XLWDuelConsistency.moveKnownCard(source,action==='search'?hand:graveyard,live);
+      if(!moved)return false;
+      if(action==='search')shuffle(deck);
+      else if(window.XLWDuelConsistency.findKnownCard(graveyard,moved))await window.xlwOnCardEntersGraveyard?.(moved,true,false);
+      if(!current())return null;
+      logBattle(`【如月車票】將【${moved.name}】${action==='search'?'加入手牌':'送入墓地'}。`);
+    }
+    render();return true;
+  }finally{if(pending.get(spell)===token)pending.delete(spell);}
+};
+// End village search spells.
+
 async function castSpell(handIndex) {
   if(window.XLW_mechPhase&&!/合體時|合體階段/.test(hand[handIndex]?.effect_text||"")){setStatus("請先結束機械合體階段。");return;}
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
@@ -13463,36 +13530,21 @@ async function castSpell(handIndex) {
       render();
     });
 
-  // 5. R-VLG-0066 千里眼
-  } else if (card.id === "R-VLG-0066" || card.name?.includes("千里眼")) {
-    const spellCard = hand.splice(handIndex, 1)[0];
-    await xlwShowSpellActivationOverlay(spellCard, "player");
-    await castSpellChain(spellCard, async () => {
-      if ((hand || []).length >= 2) {
-        const choices = hand.map((c, i) => ({ text: c.name, value: i }));
-        const pick1 = await showXLWChoiceModal("選擇洗回牌庫的第1張手牌", "請選擇洗回牌庫的手牌：", choices);
-        if (pick1 !== null && pick1 !== undefined) {
-          const card1 = hand.splice(pick1, 1)[0];
-          deck.push(card1);
-          const remainingChoices = hand.map((c, i) => ({ text: c.name, value: i }));
-          const pick2 = await showXLWChoiceModal("選擇洗回牌庫的第2張手牌", "請選擇第2張洗回手牌：", remainingChoices);
-          if (pick2 !== null && pick2 !== undefined) {
-            const card2 = hand.splice(pick2, 1)[0];
-            deck.push(card2);
-            shuffle(deck);
-            // 尋找1張妖怪村莊卡牌
-            const yokaiIdx = deck.findIndex(c => c && (c.faction === "妖怪村莊" || c.deck === "妖怪村莊" || c.id?.includes("VLG")));
-            if (yokaiIdx >= 0) {
-              const searched = deck.splice(yokaiIdx, 1)[0];
-              hand.push(searched);
-              logBattle(`👁️【千里眼】洞悉先機：洗回 2 張手牌，從牌庫尋找【${searched.name}】加入手牌！`);
-            }
-          }
-        }
-      }
-      graveyard.push(spellCard);
+  // Village searches use one activation and the existing counter window.
+  } else if (card.id === "R-VLG-0066" || card.name === "千里眼" || card.id === "SR-VLG-0047" || card.name === "如月車票") {
+    const clairvoyance=card.id==="R-VLG-0066"||card.name==="千里眼";
+    if(clairvoyance&&!['召喚階段','戰術佈陣','進攻宣言'].includes(phase)){
+      setStatus('【千里眼】只能在主要階段發動。');return;
+    }
+    const spellCard=window.XLWDuelConsistency.takeKnownCard(hand,card);
+    if(!spellCard)return;
+    await xlwShowSpellActivationOverlay(spellCard,"player");
+    await castSpellChain(spellCard,async()=>{
+      const result=await window.xlwResolveVillageSearch(spellCard,clairvoyance);
+      if(result!==null)graveyard.push(spellCard);
       render();
     });
+    return;
 
   } else if (card.id === "R-EVL-0037") {
     const legal = (unit, zone, idx) => zone === "enemy_front" &&
@@ -15607,37 +15659,6 @@ async function castSpell(handIndex) {
   } else if (card.id === "R-VLG-0020" || card.name.includes("詛咒通靈")) {
     window.XLW_playerCurseSummonActive = true;
     logBattle("✨ 詛咒通靈 效果發動：我方下一次打出的單位可為需要祭品的單位！");
-  }
-  else if (card.id === "SR-VLG-0047" || card.name.includes("如月車票")) {
-    const yokaiInHand = hand.filter(c => c && c.type === "unit" && getCardTributeCost(c) === 0 && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
-    const choices = [
-      { text: "【檢索】從牌庫尋找 [如月車站] 加入手牌", value: "search" }
-    ];
-    if (yokaiInHand.length > 0) {
-      choices.push({ text: "【送墓】使手牌 1 張無須祭品的妖怪村莊單位送墓", value: "discard" });
-    }
-    
-    const chosen = await showXLWChoiceModal("如月車票 選擇效果", "請選擇要執行的效果：", choices);
-    if (chosen === "search") {
-      const stationIdx = deck.findIndex(c => c && (c.id === "R-VLG-0018" || c.name.includes("如月車站")));
-      if (stationIdx >= 0) {
-        const stationCard = deck.splice(stationIdx, 1)[0];
-        hand.push(stationCard);
-        logBattle("✨ 如月車票 效果：將牌組中的【如月車站】加入手牌！");
-        shuffle(deck);
-      } else {
-        logBattle("✨ 如月車票 效果：牌組中無【如月車站】。");
-      }
-    } else if (chosen === "discard") {
-      const discardChoices = yokaiInHand.map((c, i) => ({ text: c.name, value: i }));
-      const chosenDiscardIdx = await showXLWChoiceModal("選擇送墓的妖怪村莊單位", "請選擇：", discardChoices);
-      if (chosenDiscardIdx !== null && chosenDiscardIdx !== undefined) {
-        const discardedCard = yokaiInHand[chosenDiscardIdx];
-        hand.splice(hand.indexOf(discardedCard), 1);
-        graveyard.push(discardedCard);
-        logBattle(`✨ 如月車票 效果：將手牌中的【${discardedCard.name}】送入墓地！`);
-      }
-    }
   }
   else if (card.id === "R-CAT-0019" || card.name.includes("逃脫")) {
     window.XLW_playerCatEscapeTurn = turn;
@@ -45991,7 +46012,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-skt-deck-actions-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-village-searches-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
