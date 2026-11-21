@@ -96,10 +96,11 @@ async def main():
             assert transferred['card'] == acquired
             request_id = f'summon-{seat}'
             await sender.send(json.dumps({'action': 'summon', 'message_id': request_id,
-                                          'summonRequestId': request_id,
+                                          'summonRequestId': request_id, 'immediateOnly': seat == 'guest',
                                           'zone': 'player_front', 'idx': 0, 'card': acquired}))
             summon = await receive(receiver, lambda d: d.get('action') == 'summon')
             assert summon['zone'] == 'enemy_front' and summon['summonRequestId'] == request_id
+            assert summon['immediateOnly'] is (seat == 'guest')
             await receiver.send(json.dumps({'action': 'sync_game_state', 'message_id': f'counter-state-{seat}',
                                             'summonRequestId': request_id, 'state': state}))
             await receiver.send(json.dumps({'action': 'counter_summon_response', 'message_id': f'counter-reply-{seat}',

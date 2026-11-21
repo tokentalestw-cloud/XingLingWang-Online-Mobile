@@ -4868,13 +4868,66 @@ function hasImmediateEffect(card) {
   if (card.id === "EWD-0006" || card.id === "SR-EWD-0024" || card.id === "SSR-EWD-0024" || card.id === "SR-EWD-0024-滑雪" || card.id === "R-VLG-0016") return true;
   const name = card.name || "";
   const text = card.effect_text || "";
-  const kw = card.keywords || [];
-  if (kw.some(k => k && k.includes("立即")) || text.includes("立即") || name.includes("立即") || name.includes("燈籠小鬼")) return true;
+  const kw = Array.isArray(card.keywords) ? card.keywords : [card.keywords].filter(Boolean);
+  if (kw.some(k => typeof k === "string" && /(^|[，,、\s])立即($|[，,、\s])/.test(k)) || /(^|[。\n])\s*立即\s*[:：]/.test(text)) return true;
   
   const immediateNames = ["兩位陌生人", "虎姑媽", "莉茲", "天蠍座", "弒神刺客", "喵媽媽", "學會投資", "學會投資的野人", "智慧野人", "野人寶寶", "女野人", "妖精預言家", "預言家", "妖精女王", "淨化老妖精", "老妖精", "燈籠小鬼", "座敷童子", "雪女"];
-  return immediateNames.some(n => name.includes(n));
+  return !text && immediateNames.some(n => name.includes(n));
 }
 window.hasImmediateEffect = hasImmediateEffect;
+
+window.xlwChooseImmediateCounter = async function(card, zone, idx) {
+  const source = field[zone]?.[idx];
+  const choices = [];
+  const starry = hand.find(card => card?.id === "ART-0020" || card?.name?.includes("星空"));
+  const interrupt = hand.find(card => card?.id?.includes("NMG-0022") || card?.name?.includes("打斷你一下"));
+  if (starry) choices.push({text: "星空・破壞召喚單位並終止立即效果", value: "starry", card: starry});
+  if (interrupt && hasImmediateEffect(card)) choices.push({text: "打斷你一下・無效立即效果", value: "interrupt", card: interrupt});
+  if (!choices.length) return false;
+  const choice = await window.XLWSummonReaction.choose("召喚反制", "查看召喚單位與反制卡的完整資訊後，選擇是否發動。", choices);
+  const selected = choice === "starry" ? starry : choice === "interrupt" ? interrupt : null;
+  if (!selected || !source || field[zone]?.[idx] !== source ||
+      !window.XLWDuelConsistency.takeKnownCard(hand, selected)) return false;
+  graveyard.push(selected);
+  logBattle(`✨ 發動【${selected.name}】反制【${card.name}】。`);
+  if (choice === "starry") {
+    await destroyUnit(zone, idx, zone.startsWith("player_") ? "player" : "enemy", false);
+    return true;
+  }
+  return "interrupt";
+};
+
+window.xlwPrepareImmediateEffect = async function(card, zone, idx, isPlayer) {
+  const unit = field[zone]?.[idx];
+  if (!unit || !hasImmediateEffect(card)) return true;
+  if (unit.xlwImmediateSettled) return !unit.xlwImmediateNegated;
+  unit.xlwImmediateSettled = true;
+  await window.XLWSummonReaction?.flash(card, isPlayer ? "player" : "enemy");
+  if (isMultiplayer && isPlayer) {
+    const summonRequestId = crypto.randomUUID();
+    window.XLW_pendingSummonRequestId = summonRequestId;
+    const reply = new Promise(resolve => {window.XLW_pendingSummonCounterResolve = resolve;});
+    const parentSummonRequestId = window.XLW_activeIncomingSummonId;
+    sendFullGameStateToOpponent(false, "sync_game_state", {summonRequestId: parentSummonRequestId});
+    ws.send(JSON.stringify({action: "summon", immediateOnly: true, summonRequestId,
+      parentSummonRequestId, zone, idx, card, fromHand: false}));
+    const result = await reply;
+    if (result.countered) {
+      unit.xlwImmediateNegated = true;
+      if (result.countered === true && field[zone]?.[idx] === unit) await destroyUnit(zone, idx, "player", false);
+      return false;
+    }
+  } else if (!isMultiplayer && !isPlayer) {
+    window.XLWSummonReaction?.begin(card);
+    const countered = await window.xlwChooseImmediateCounter(card, zone, idx);
+    if (countered) {
+      unit.xlwImmediateNegated = true;
+      window.XLWSummonReaction?.end();
+      return false;
+    }
+  }
+  return field[zone]?.[idx] === unit;
+};
 
 // ===== 綁架 (Kidnap) 機制輔助函式 =====
 async function cleanUnitLeavingField(unit, zone, {releaseOnly = false} = {}) {
@@ -11463,6 +11516,7 @@ window.xlwResolveFairyFreyaPush = async function(zone, idx, summonIsPlayer) {
 
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   if (!card) return;
+  if (!await window.xlwPrepareImmediateEffect(card, zone, idx, isPlayer)) return;
   const cardId = card.id || "";
   const cardName = card.name || "";
   const side = isPlayer ? "player_" : "enemy_";
@@ -20804,6 +20858,10 @@ async function performSummonToSlot(zone, idx) {
     }
     
     const summonedUnit = field[zone][idx];
+    if (hasImmediateEffect(card)) {
+      summonedUnit.xlwImmediateSettled = !isMultiplayer || !window.XLW_isFoodBallSummoning;
+      if (summonedUnit.xlwImmediateSettled) await window.XLWSummonReaction?.flash(card, "player");
+    }
     render();
     immediateEffectNegated = false;
     summonMessageSent = false;
@@ -20822,6 +20880,7 @@ async function performSummonToSlot(zone, idx) {
         ws.send(JSON.stringify({
           action: "summon",
           summonRequestId,
+          parentSummonRequestId: window.XLW_activeIncomingSummonId,
           card: field[zone][idx].card,
           zone: zone,
           idx: idx,
@@ -30242,6 +30301,7 @@ function countSelectedTributesValue(tributesList, targetCard) {
 async function triggerAiSummonEffects(card, destZone, destIdx) {
 
   if (!card || !field[destZone]?.[destIdx]?.card) return;
+  if (!await window.xlwPrepareImmediateEffect(card, destZone, destIdx, false)) return;
   render();
   if (!isMultiplayer && window.XLWSpecialSummon?.match(card)) {
     await playTributeSummonAnimation(destZone, destIdx, true);
@@ -30249,6 +30309,27 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (window.xlwIsImmediateEffectBlocked(card, false)) {
     return;
   }
+  if (!isMultiplayer) {
+    let mushroomZone = null, mushroomIdx = -1;
+    for (const z of ["player_front", "player_back"]) {
+      field[z].forEach((u, i) => {
+        if (u && u.card && (u.card.id === "SSSR-NMS-0042" || u.card.id === "R-NMS-0042" || u.card.name?.includes("驚嚇蘑菇"))) {
+          mushroomZone = z;
+          mushroomIdx = i;
+        }
+      });
+    }
+    if (mushroomZone && mushroomIdx !== -1 && window.hasImmediateEffect(card)) {
+      const useMushroom = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【驚嚇蘑菇】反制觸發", `對手召喚了具備立即效果的【${card.name}】，是否引爆我方場上的【驚嚇蘑菇】進行無效化？`);
+      if (useMushroom) {
+        logBattle(`✨ 我方引爆了場上的【驚嚇蘑菇】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
+        await destroyUnit(mushroomZone, mushroomIdx, "player", false);
+        render();
+        return;
+      }
+    }
+  }
+
   await window.xlwResolvePG2Summon(card, destZone, destIdx, false);
   // 🍬 甜點王國：軟糖幻影 (C-CND-0060) / 幻影軟糖 (R-CND-0059) 立即: 從你額外區尋找1張[軟糖幻影]並加入手牌
   if (card.id === "C-CND-0060" || card.name === "軟糖幻影" || card.id === "R-CND-0059" || card.name === "幻影軟糖") {
@@ -30665,27 +30746,6 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     }
     render();
   }
-  if (!isMultiplayer) {
-    let mushroomZone = null, mushroomIdx = -1;
-    for (const z of ["player_front", "player_back"]) {
-      field[z].forEach((u, i) => {
-        if (u && u.card && (u.card.id === "SSSR-NMS-0042" || u.card.id === "R-NMS-0042" || u.card.name?.includes("驚嚇蘑菇"))) {
-          mushroomZone = z;
-          mushroomIdx = i;
-        }
-      });
-    }
-    if (mushroomZone && mushroomIdx !== -1 && window.hasImmediateEffect(card)) {
-      const useMushroom = await showXLWConfirm("【驚嚇蘑菇】反制觸發", `對手召喚了具備立即效果的【${card.name}】，是否引爆我方場上的【驚嚇蘑菇】進行無效化？`);
-      if (useMushroom) {
-        logBattle(`✨ 我方引爆了場上的【驚嚇蘑菇】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
-        await destroyUnit(mushroomZone, mushroomIdx, "player", false);
-        render();
-        return;
-      }
-    }
-  }
-  
   if (card.id === "VRT-0003" || card.name?.includes("闆娘追隨者")) {
     const eligible = window.XLW_ENEMY.deck.filter(c => c && (c.id === "VRT-0013" || c.id === "VRT-0001" || c.id === "SSSR-VRT-0001" || c.id === "SR-VRT-0056" || c.name?.includes("酒館闆娘") || c.name?.includes("虛擬酒館")));
     if (eligible.length > 0) {
@@ -36551,49 +36611,11 @@ async function runEnemyTurn() {
         await sleep(950);
 
         try {
-          let starryCountered = false;
-          window.XLWSummonReaction?.begin(card);
-          const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-          if (playerHasStarry) {
-            const useStarry = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制？`);
-            if (useStarry) {
-              starryCountered = true;
-              const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-              const sCard = hand.splice(sIdx, 1)[0];
-              graveyard.push(sCard);
-              logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
-              await destroyUnit(destZone, destIdx, "enemy", false);
-              render();
-            }
-          }
-
-          let interruptCountered = false;
-          if (!starryCountered) {
-            const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷抗性/打斷你一下")));
-            const hasImm = hasImmediateEffect(card);
-            if (playerHasInterrupt && hasImm) {
-              const useInterrupt = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否發動【打斷你一下】無效其效果？`);
-              if (useInterrupt) {
-                interruptCountered = true;
-                const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
-                const sCard = hand.splice(sIdx, 1)[0];
-                graveyard.push(sCard);
-                logBattle(`✨ 我方發動【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
-                render();
-              }
-            }
-          }
-
-          if (!starryCountered && window.xlwCheckWaterDemonReposition) {
+          if (window.xlwCheckWaterDemonReposition) {
             destIdx = await window.xlwCheckWaterDemonReposition(destZone, destIdx);
           }
-
-          if (!starryCountered && !interruptCountered) {
-            await triggerAiSummonEffects(card, destZone, destIdx);
-          }
-          if (!starryCountered) {
-            await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
-          }
+          await triggerAiSummonEffects(card, destZone, destIdx);
+          await window.checkForPlayerSummonCounters(card, destZone, destIdx, false);
         } catch (errSummonTrig) {
           console.error("AI 召喚觸發卡牌效果出錯:", errSummonTrig);
         }
@@ -46237,6 +46259,10 @@ function setupWebSocketEvents() {
       const idx = data.idx;
       const card = data.card;
       
+      const previousIncomingSummon = window.XLW_activeIncomingSummonId;
+      window.XLW_activeIncomingSummonId = data.summonRequestId;
+      try {
+      if (!data.immediateOnly) {
       // 清除對手獻祭的祭品單位
       if (data.tributes && data.tributes.length > 0) {
         data.tributes.forEach(t => {
@@ -46312,44 +46338,17 @@ function setupWebSocketEvents() {
         window.XLW_ENEMY.hand.splice(cardIndex >= 0 ? cardIndex : window.XLW_ENEMY.hand.length - 1, 1);
       }
 
+      } else if (!field[zone]?.[idx] || !xlwMatchesPeerCard(field[zone][idx].card, card)) {
+        ws.send(JSON.stringify({action: "counter_summon_response",
+          summonRequestId: data.summonRequestId, countered: "interrupt"}));
+        return;
+      }
       window.XLWSummonReaction?.begin(card);
       render();
-      // Check if player has 星空 in hand
-      let starryCountered = false;
-      const playerHasStarry = hand.some(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-      if (playerHasStarry) {
-        const useStarry = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【星空】手牌反制觸發", `對手召喚了【${card.name}】，是否從手牌發動【星空】進行反制（將該單位破壞並無效其效果）？`);
-        if (useStarry) {
-          starryCountered = true;
-          const sIdx = hand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
-          const sCard = hand.splice(sIdx, 1)[0];
-          graveyard.push(sCard);
-          logBattle(`✨ 我方從手牌發動了【星空】，破壞了對手剛召喚的【${card.name}】！`);
-          await destroyUnit(zone, idx, "enemy", false);
-          
-
-          render();
-        }
-      }
-
-      let interruptCountered = false;
-      if (!starryCountered) {
-        const playerHasInterrupt = hand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
-        const hasImm = hasImmediateEffect(card);
-        if (playerHasInterrupt && hasImm) {
-          const useInterrupt = await (window.XLWSummonReaction?.confirm || showXLWConfirm)("【打斷你一下】手牌反制觸發", `對手召喚了具有立即效果的【${card.name}】，是否從手牌發動【打斷你一下】進行反制（無效化其效果，但保留單位）？`);
-          if (useInterrupt) {
-            interruptCountered = true;
-            const sIdx = hand.findIndex(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
-            const sCard = hand.splice(sIdx, 1)[0];
-            graveyard.push(sCard);
-            logBattle(`✨ 我方從手牌發動了【打斷你一下】，無效化了對手剛召喚的【${card.name}】的立即效果！`);
-            
-
-            render();
-          }
-        }
-      }
+      if (hasImmediateEffect(card)) await window.XLWSummonReaction?.flash(card, "enemy");
+      const counterChoice = await window.xlwChooseImmediateCounter(card, zone, idx);
+      const starryCountered = counterChoice === true;
+      const interruptCountered = counterChoice === "interrupt";
 
       if (!starryCountered) {
         await window.checkForPlayerSummonCounters(card, zone, idx, true);
@@ -46443,6 +46442,10 @@ function setupWebSocketEvents() {
         } else {
           render();
         }
+      } finally {
+        window.XLW_activeIncomingSummonId = previousIncomingSummon;
+        window.XLWSummonReaction?.end();
+      }
     } else if (data.action === "counter_summon_response") {
       if (window.XLW_pendingSummonCounterResolve &&
           (!window.XLW_pendingSummonRequestId || data.summonRequestId === window.XLW_pendingSummonRequestId)) {
@@ -47642,6 +47645,8 @@ function setupWebSocketEvents() {
         (action === "goat_traveler_placement" && window.XLW_DEFENSE_RULE.resolving) ||
         (action === 'samurai_recover_result' && window.XLW_samuraiRecoveryWaiters?.has(data.requestId)) ||
         (action === "counter_summon_response" && window.XLW_pendingSummonCounterResolve) ||
+        (action === "summon" && data.parentSummonRequestId &&
+          data.parentSummonRequestId === window.XLW_pendingSummonRequestId) ||
         (action === "sync_game_state" && data.summonRequestId &&
           data.summonRequestId === window.XLW_pendingSummonRequestId) ||
         (["aquarius_hand_reveal", "aquarius_request_reveal"].includes(action)) ||

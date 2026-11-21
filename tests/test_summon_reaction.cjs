@@ -105,3 +105,65 @@ test("A counter boundary preserves the summoned unit continuation but applies de
   const replacement = {card: {id: "snow", _xlwInstanceId: "other"}};
   assert.equal(scope.xlwMergeSummonBoundaryRow([summoned], [replacement])[0], replacement);
 });
+
+test("The catalogue's explicit immediate units are recognized across every faction and rarity", () => {
+  const a = game.indexOf("function hasImmediateEffect(");
+  const b = game.indexOf("// ===== 綁架", a);
+  const scope = vm.createContext({window: {}});
+  vm.runInContext(game.slice(a, b), scope);
+  const cards = JSON.parse(fs.readFileSync(path.join(root, "data/cards.json"), "utf8").replace(/^\uFEFF/, ""));
+  const immediate = cards.filter(card => card.type === "unit" &&
+    (/(^|[。\n])\s*立即\s*[:：]/.test(card.effect_text || "") || (card.keywords || []).some(keyword => /(^|[，,、\s])立即($|[，,、\s])/.test(keyword))));
+  assert.ok(immediate.length > 100);
+  for (const card of immediate) assert.equal(scope.hasImmediateEffect(card), true, card.id + " " + card.name);
+  assert.equal(scope.hasImmediateEffect({keywords: "立即", name: "字串關鍵字"}), true);
+  for (const id of ["GOT-0026", "R-NMS-0021", "R-NMS-0042", "R-VRT-0045", "SR-EVL-0064"]) {
+    const card = cards.find(card => card.id === id);
+    assert.equal(scope.hasImmediateEffect(card), false, id + " mentions immediate effects without owning one");
+  }
+  console.log("Immediate catalogue coverage", immediate.length, "cards");
+});
+test("A direct immediate effect waits for a correlated counter and cannot run twice", async () => {
+  const a = game.indexOf("window.xlwPrepareImmediateEffect =");
+  const b = game.indexOf("// ===== 綁架", a);
+  const flashes = [], messages = [];
+  const unit = {card: {id: "immediate"}};
+  const scope = vm.createContext({window: {XLWSummonReaction: {flash: async card => flashes.push(card.id)}},
+    field: {player_front: [unit]}, isMultiplayer: true, hasImmediateEffect: () => true,
+    crypto: {randomUUID: () => "direct-request"}, sendFullGameStateToOpponent() {},
+    ws: {send: message => messages.push(JSON.parse(message))}});
+  vm.runInContext(game.slice(a, b), scope);
+  const waiting = scope.window.xlwPrepareImmediateEffect(unit.card, "player_front", 0, true);
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].immediateOnly, true);
+  assert.equal(scope.window.XLW_pendingSummonRequestId, "direct-request");
+  scope.window.XLW_pendingSummonCounterResolve({countered: "interrupt"});
+  assert.equal(await waiting, false);
+  assert.equal(unit.xlwImmediateNegated, true);
+  assert.equal(await scope.window.xlwPrepareImmediateEffect(unit.card, "player_front", 0, true), false);
+  assert.deepEqual(flashes, ["immediate"]);
+  assert.equal(messages.length, 1);
+});
+test("The combined immediate response offers both counters and never discards a stale choice", async () => {
+  const a = game.indexOf("window.xlwChooseImmediateCounter =");
+  const b = game.indexOf("window.xlwPrepareImmediateEffect =", a);
+  const starry = {id: "ART-0020", name: "星空"};
+  const interrupt = {id: "R-NMG-0022", name: "打斷你一下"};
+  const target = {card: {id: "target"}};
+  const hand = [starry, interrupt], graveyard = [];
+  let calls = 0;
+  const scope = vm.createContext({window: {XLWSummonReaction: {choose: async (_, __, choices) => {
+      assert.equal(choices.length, 2); calls++; return "interrupt";
+    }}}, field: {enemy_front: [target]}, hand, graveyard,
+    hasImmediateEffect: () => true, logBattle() {}, destroyUnit() { assert.fail("interrupt retains the unit"); }});
+  vm.runInContext(fs.readFileSync(path.join(root, "static/duel_consistency.js"), "utf8"), scope);
+  vm.runInContext(game.slice(a, b), scope);
+  assert.equal(await scope.window.xlwChooseImmediateCounter(target.card, "enemy_front", 0), "interrupt");
+  assert.equal(calls, 1);
+  assert.deepEqual(hand, [starry]);
+  assert.deepEqual(graveyard, [interrupt]);
+  scope.window.XLWSummonReaction.choose = async () => { hand.splice(0,1); return "starry"; };
+  assert.equal(await scope.window.xlwChooseImmediateCounter(target.card, "enemy_front", 0), false);
+  assert.deepEqual(graveyard, [interrupt]);
+});

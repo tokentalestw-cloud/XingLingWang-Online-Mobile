@@ -109,6 +109,22 @@
       decline.focus();
     });
   }
-  global.XLWSummonReaction = {begin, end, ensure: card => { if (current?.card !== card) begin(card); }, choose, confirm: async (title, message) =>
+  async function flash(card, side) {
+    if (!card) return;
+    const overlay = document.createElement("div");
+    overlay.className = "xlw-immediate-flash";
+    const label = document.createElement("strong");
+    label.textContent = (side === "player" ? "我方" : "對手") + "・立即效果";
+    const image = document.createElement("img");
+    image.src = card.image || "";
+    image.alt = card.name || card.id;
+    const name = document.createElement("span");
+    name.textContent = card.name || card.id;
+    overlay.append(label, image, name);
+    document.body.append(overlay);
+    try { await new Promise(resolve => setTimeout(resolve, 700)); }
+    finally { overlay.remove(); }
+  }
+  global.XLWSummonReaction = {begin, end, flash, ensure: card => { if (current?.card !== card) begin(card); }, choose, confirm: async (title, message) =>
     (await choose(title, message, [{text: "發動", value: true}])) === true};
 })(window);
