@@ -52,8 +52,8 @@ test('Garden Aunt offers a real action menu and summons one extra-zone seed at t
     vm.runInContext(section('window.xlwSummonPlantFromExtraDeck =','// 單位成長核心'),g);
     vm.runInContext(section('window.xlwResolveExpansionTurnEnd =','window.xlwResolveExpansionPostDestruction ='),g);
     await g.xlwResolveExpansionTurnEnd(true);
-    assert.equal(g.playerExtraDeck.length,0);assert.equal(g.field.player_back[4].card.id,'seed');
-    await g.xlwResolveExpansionTurnEnd(true);assert.equal(g.field.player_back.filter(Boolean).length,1);
+    assert.equal(g.playerExtraDeck.length,0);assert.equal(g.field.player_front[4].card.id,'seed');
+    await g.xlwResolveExpansionTurnEnd(true);assert.equal(g.field.player_back.filter(Boolean).length,0);
   }
 });
 test('record merging keeps older history, flips perspective and does not duplicate snapshots',()=>{

@@ -965,7 +965,7 @@ def save_deck(data: DeckSaveSchema, request: Request):
     if TRAVELER_TOKEN_IDS.intersection([*data.card_ids, *(data.extra_card_ids or [])]):
         raise HTTPException(400, "小旅人 Token 只能在對戰中召喚。")
     validate_personal_name(data.deck_name)
-    if len(data.card_ids) > 20 or len(data.extra_card_ids or []) > 100:
+    if len(data.card_ids) > 20:
         raise HTTPException(400, "牌組張數超過上限。")
 
     # 嚴格後端陣營排他性過濾

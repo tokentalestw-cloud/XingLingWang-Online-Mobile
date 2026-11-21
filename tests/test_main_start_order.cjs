@@ -8,7 +8,7 @@ const read = name => fs.readFileSync(path.join(__dirname, "../static", name), "u
 const game = read("game_v8.js");
 const slice = (start, end) => game.slice(game.indexOf(start), game.indexOf(end, game.indexOf(start)));
 
-test("the active player orders Thief and Angel and the final state syncs once", async () => {
+test("board main-start effects follow lane order and the final state syncs once", async () => {
   const order = [];
   const thief = {card: {id: "SR-ART-0068", name: "蜘蛛魔盜團偷天"}};
   const angel = {card: {id: "SSR-ART-0070", name: "四季大天使 慕夏"}, irrigation: 4};
@@ -41,4 +41,17 @@ test("the active player orders Thief and Angel and the final state syncs once", 
   assert.equal(art.originalOwner, "player");
   assert.equal(context.hand.length, 0);
   assert.equal(angel.irrigation, 1);
+});
+
+test("same-column front source precedes back source even if the back callback was registered first", async () => {
+  const order=[],angel={card:{id:'SSR-ART-0070',name:'四季大天使 慕夏'},irrigation:4};
+  const thief={card:{id:'SR-ART-0068',name:'蜘蛛魔盜團偷天'}};
+  const field={player_front:[null,thief],player_back:[null,angel],enemy_front:[],enemy_back:[]};
+  const context=vm.createContext({field,hand:[{id:'C-ART-0001',name:'雕像',type:'unit',faction:'藝術品'}],graveyard:[],playerExtraDeck:[],turn:9,phase:'召喚階段',isMultiplayer:true,
+    window:{isUnitSilenced:()=>false,xlwIrrigateUnit:()=>order.push('angel'),xlwGetEmptyPlayerSlots:()=>[],xlwResolveExpansionTurnStart:async()=>{},xlwResolveTurnStartEffects:async()=>{}},
+    logBattle(){},render(){},getCardTributeCost:()=>0,isNonHumanoidArtworkCard:()=>true,xlwCheckBananaMarquisMovement:async()=>{},sendFullGameStateToOpponent:()=>order.push('sync'),
+    showXLWChoiceModal:async(title)=>{assert.notEqual(title,'主要階段開始');if(title.includes('魔盜行動')){order.push('thief');return 'kidnap';}return 0;}});
+  vm.runInContext(read('duel_consistency.js'),context);
+  vm.runInContext(slice('function xlwQueuePG2MainStart(','// 結束階段效果 (PG2'),context);
+  await context.window.xlwRunMainStart(true);assert.deepEqual(order,['thief','angel','sync']);
 });
