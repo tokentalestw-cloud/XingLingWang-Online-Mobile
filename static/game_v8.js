@@ -4102,6 +4102,50 @@ window.xlwResolveUndeadRecycle = async function(card,zone,idx,isPlayer,kind){
 };
 // End undead recycling.
 
+// Grave kidnappers commit only to a living captor and current physical cards.
+window.xlwResolveUndeadKidnap = async function(card,zone,idx,isPlayer,kayla=false){
+  const unit=field[zone]?.[idx];
+  if(!unit?.card)return false;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(unit))return false;
+  const token={};pending.set(unit,token);
+  const current=()=>pending.get(unit)===token;
+  const valid=()=>current()&&field[zone]?.[idx]===unit;
+  const grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const isUnit=c=>c&&['unit','單位','單位卡'].includes(c.type);
+  const eligible=c=>isUnit(c)&&(kayla||window.xlwIsUndeadCard(c)&&Number(c.score??c.stars??0)<=2);
+  const title=kayla?'墓地運輸者 凱拉':'墓園管理員 小凱希';
+  const serial=unit.undeadKidnapSerial=(unit.undeadKidnapSerial||0)+1;
+  const key=xlwFactionDecisionKey(unit,zone,'undead-kidnap',serial);
+  try{
+    if(kayla){
+      const prefix=isPlayer?'player_':'enemy_';
+      const targets=['front','back'].flatMap(row=>(field[prefix+row]||[]).flatMap((u,i)=>u?.card&&window.xlwIsUndeadCard(u.card)&&!window.isUnitEffectImmune(u,prefix+row,i)?[{zone:prefix+row,idx:i,unit:u}]:[]));
+      if(!targets.length)return false;
+      const n=await window.xlwChooseFactionAction(isPlayer,key+':destroy',title+'：破壞不死族','點選要破壞的我方不死族單位。',targets.map((t,value)=>({text:t.unit.card.name,card:t.unit.card,value,boardTarget:{zone:t.zone,idx:t.idx}})),{boardOnly:true});
+      const target=targets[n];
+      if(!valid()||!target||field[target.zone]?.[target.idx]!==target.unit||!window.xlwIsUndeadCard(target.unit.card)||window.isUnitEffectImmune(target.unit,target.zone,target.idx))return false;
+      const destroyed=await destroyUnit(target.zone,target.idx,isPlayer?'player':'enemy',false);
+      if(!destroyed||!valid())return false;
+    }
+    const options=grave().filter(eligible);
+    if(!options.length)return false;
+    const choices=options.map((card,value)=>({text:card.name,card,value}));
+    if(kayla)choices.push({text:'不綁架',value:-1});
+    const n=await window.xlwChooseFactionAction(isPlayer,key+':capture',title+'：綁架',kayla?'可選擇墓地一張單位卡綁架，或不綁架。':'選擇墓地一張 2 星或以下的不死族單位卡。',choices);
+    if(!valid()||!Number.isInteger(n)||!options[n])return false;
+    const selected=window.XLWDuelConsistency.findKnownCard(grave(),options[n]);
+    if(!eligible(selected))return false;
+    const moved=window.XLWDuelConsistency.takeKnownCard(grave(),selected);
+    if(!moved)return false;
+    moved.originalOwner ||= isPlayer?'player':'enemy';
+    (unit.kidnappedCards ||= []).push(moved);
+    logBattle(`【${title}】將墓地的【${moved.name}】綁架至其下方。`);
+    render();return true;
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End undead grave kidnappers.
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -4211,24 +4255,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   if (cid.includes("SKT-0027") || name.includes("骷髏護士長")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"nurse");
 
   // 7. 墓園管理員 小凱希 (R-SKT-0041): 立即：使你墓地1張2星或以下的不死族單位卡被綁架。
-  if (cid.includes("SKT-0041") || name.includes("小凱希")) {
-    const eligible = myGrave.filter(c => c && window.xlwIsUndeadCard(c) && (Number(c.score ?? c.stars ?? 0) <= 2));
-    if (eligible.length > 0 && unit) {
-      let chosen = eligible[0];
-      if (isPlayer) {
-        const choices = eligible.map((c, i) => ({ text: `${c.name} (${c.score ?? c.stars}★)`, value: i }));
-        const picked = await showXLWChoiceModal("墓園管理員 小凱希 綁架", "選擇墓地 1 個 2★ 或以下不死族綁架至其下方：", choices);
-        if (picked !== null && picked !== undefined) chosen = eligible[picked];
-      }
-      const moved = field[zone]?.[idx] === unit && window.XLWDuelConsistency.takeKnownCard(myGrave, chosen);
-      if (moved) {
-        moved.originalOwner = isPlayer ? "player" : "enemy";
-        (unit.kidnappedCards ||= []).push(moved);
-        logBattle(`✨【墓園管理員 小凱希】效果：將墓地的【${moved.name}】綁架至其下方！`);
-        render();
-      }
-    }
-  }
+  if (cid.includes("SKT-0041") || name.includes("小凱希")) await window.xlwResolveUndeadKidnap(card,zone,idx,isPlayer,false);
 
   // 8. 大骷龍 (R-SKT-0043): 貫穿。立即：使雙方墓地所有卡牌被除外。
   if (cid.includes("SKT-0043") || name.includes("大骷龍")) {
@@ -4245,44 +4272,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   }
 
   // 9. 墓地運輸者 凱拉 (R-SKT-0048 / SSR-SKT-0048): 立即：使你場上1個不死族單位被破壞，若成功可使你墓地1張單位卡被綁架。
-  if (cid.includes("SKT-0048") || name.includes("凱拉")) {
-    const myUndeadUnits = [];
-    for (const z of [mySidePrefix + "front", mySidePrefix + "back"]) {
-      field[z]?.forEach((u, i) => {
-        if (u && u !== unit && u.card && window.xlwIsUndeadCard(u.card) && !window.isUnitEffectImmune(u, z, i)) {
-          myUndeadUnits.push({ zone: z, idx: i, unit: u });
-        }
-      });
-    }
-    if (myUndeadUnits.length > 0) {
-      let chosenDestroy = myUndeadUnits[0];
-      if (isPlayer) {
-        const choices = myUndeadUnits.map((u, i) => ({ text: `[${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1}] ${u.unit.card.name}`, value: i }));
-        const picked = await showXLWChoiceModal("墓地運輸者 凱拉", "選擇我方 1 個不死族單位破壞：", choices);
-        chosenDestroy = picked == null ? null : myUndeadUnits[picked];
-      }
-      if (!chosenDestroy || field[chosenDestroy.zone]?.[chosenDestroy.idx] !== chosenDestroy.unit) return;
-      const destroyed = await destroyUnit(chosenDestroy.zone, chosenDestroy.idx, isPlayer ? "player" : "enemy", false);
-      if (!destroyed || field[zone]?.[idx] !== unit) return;
-      const graveUnits = myGrave.filter(c => c && (c.type === "unit" || c.type === "單位"));
-      if (graveUnits.length > 0 && unit) {
-        let chosenKidnap = graveUnits[0];
-        if (isPlayer) {
-          const kChoices = graveUnits.map((c, i) => ({ text: c.name, value: i }));
-          const kPicked = await showXLWChoiceModal("墓地運輸者 凱拉 綁架", "選擇墓地 1 個單位卡綁架至凱拉下方：", kChoices);
-          chosenKidnap = kPicked == null ? null : graveUnits[kPicked];
-        }
-        const gIdx = myGrave.indexOf(chosenKidnap);
-        if (gIdx < 0 || field[zone]?.[idx] !== unit) return;
-        myGrave.splice(gIdx, 1);
-        unit.kidnappedCards = unit.kidnappedCards || [];
-        chosenKidnap.originalOwner = chosenKidnap.creator || (isPlayer ? "player" : "enemy");
-        unit.kidnappedCards.push(chosenKidnap);
-        logBattle(`✨【墓地運輸者 凱拉】效果：破壞了不死族，並綁架了墓地的【${chosenKidnap.name}】！`);
-        render();
-      }
-    }
-  }
+  if (cid.includes("SKT-0048") || name.includes("凱拉")) await window.xlwResolveUndeadKidnap(card,zone,idx,isPlayer,true);
 
   // 10. 瘟疫教主 (R-SKT-0054): 立即：使你手牌、場上和牌庫頂加總至多3張牌進入墓地。
   if (cid.includes("SKT-0054") || name.includes("瘟疫教主")) {
@@ -20918,7 +20908,7 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
@@ -45931,7 +45921,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-undead-recycle-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-undead-kidnap-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
