@@ -9438,7 +9438,7 @@ window.xlwSummonPlantFromExtraDeck = async function(cardNameOrId, isPlayer = tru
   } else if (isSeed && isPlayer && emptySlots.length > 1) {
     const choice = await showXLWChoiceModal("額外區種子召喚", "點選我方前排或後排的任一空格。", emptySlots.map(({zone, idx}) => ({
       text: `${zone === "player_front" ? "前排" : "後排"}${idx + 1}`,
-      value: `${zone}:${idx}`
+      value: `${zone}:${idx}`, boardTarget:{zone,idx,summon:true}
     })));
     destSlot = emptySlots.find(({zone, idx}) => choice === `${zone}:${idx}`);
   } else {
@@ -9468,6 +9468,8 @@ window.xlwSummonPlantFromExtraDeck = async function(cardNameOrId, isPlayer = tru
   logBattle(`🌱 從額外區特殊召喚【${cardToSummon.name}】至 ${destSlot.zone.includes("front") ? "前排" : "後排"}${destSlot.idx + 1}！`);
   if (typeof renderExtraDecks === "function") renderExtraDecks();
   if (typeof render === "function") render();
+  if (isMultiplayer) ws.send(JSON.stringify({action:"artifact_cycle_summon",zone:destSlot.zone,idx:destSlot.idx,card:cardToSummon,
+    source:"extra",extraAfter:extraList,graveAfter:isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard)}));
   return { unit: field[destSlot.zone][destSlot.idx], slot: destSlot };
 };
 
@@ -10876,17 +10878,7 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
     }
   }
 
-  // D. C-ART-0072 木乃伊
-  if (card.id === "C-ART-0072" || card.name?.includes("木乃伊")) {
-    const graveD = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
-    const potIdx = graveD.findIndex(c => c && (c.id === "R-ART-0071" || c.name?.includes("狗頭陶罐")));
-    if (potIdx >= 0) {
-      const potCard = graveD[potIdx];
-      if (potCard && await window.xlwSpecialSummonUnit(potCard, isPlayerUnit, {sourcePile: () => graveD})) {
-        logBattle("🏺【木乃伊】亡魂寄託：自墓地復活召喚【狗頭陶罐】！");
-      }
-    }
-  }
+  // 木乃伊在破壞實際離場後再處理連動，讓原位置也可供陶罐召喚。
 
   // E. R-CRB-0034 旅人消防車
   if (window.xlwIsUnitTransport(card) && card.id !== "R-CRB-0034" && !card.name?.includes("旅人消防車")) {
@@ -12186,11 +12178,13 @@ window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
   for (const z of [side + "front", side + "back"]) {
     const aunts = (field[z] || []).filter(u => u && (u.card.id === "R-PLT-0008" || u.card.id === "SSSR-PLT-0008" || u.card.name?.includes("花園阿姨")));
     for (const aunt of aunts) {
+      if (window.isUnitSilenced(aunt,z,field[z].indexOf(aunt)) || aunt.xlwGardenEndTurn === turn) continue;
+      aunt.xlwGardenEndTurn = turn;
       if (isPlayer) {
         const opt = await showXLWChoiceModal("【花園阿姨】結束澆灌", "結束階段！請選擇花園阿姨的效果：", [
           { text: "💧 使場上至多 2 個植物單位被灌溉 1", value: "irrigate" },
           { text: "🌱 從額外區召喚 1 張【魔法種子】", value: "seed" }
-        ]);
+        ], {actionChoices:true});
         if (opt === "irrigate") {
           const plants = window.xlwGetPlantUnitsOnField(true);
           if (plants.length > 0) {
@@ -18049,7 +18043,7 @@ async function startTributeSummon(handIndex) {
         const clownTribute = [{ zone: targetUnit.zone, idx: targetUnit.idx }];
         await executeTributeEffects(clownTribute);
         await executeTributeEffects(clownTribute);
-        await window.xlwPlayerTributeUnit(targetUnit.unit, targetUnit.zone, targetUnit.idx);
+        await window.xlwPlayerTributeUnit(targetUnit.unit, targetUnit.zone, targetUnit.idx, {reservedSlot:targetUnit});
         field[targetUnit.zone][targetUnit.idx] = null;
 
         const clownCard = graveyard.splice(clownIdx, 1)[0];
@@ -19171,7 +19165,48 @@ async function xlwResolveHorrorPriestTribute(unit, zone, idx, isPlayer) {
   return true;
 }
 
-window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
+async function xlwChooseArtifactCycle(card, slots) {
+  if (!slots.length || !await showXLWConfirm(card.id === "C-ART-0072" ? "木乃伊 獻祭連動" : "木乃伊 被破壞效果",
+    `是否召喚【${card.name}】？`)) return null;
+  return await showXLWChoiceModal(`召喚【${card.name}】`, "直接點選召喚位置。", slots.map(s => ({
+    text: `${s.row === "front" ? "前排" : "後排"}${s.idx + 1}`, value: s,
+    boardTarget: {zone: "player_" + s.row, idx: s.idx, summon: true}
+  })), {boardOnly: true});
+}
+
+async function xlwResolveArtifactCycle(kind, isPlayer, reserve = 0, departed = null, reservedSlot = null) {
+  const side = isPlayer ? "player" : "enemy";
+  const pile = kind === "tribute" ? (isPlayer ? playerExtraDeck : enemyExtraDeck)
+    : (isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard));
+  const matches = c => c && (kind === "tribute" ? c.id === "C-ART-0072" || c.name === "木乃伊"
+    : c.id === "R-ART-0071" || c.name === "狗頭陶罐");
+  for (const card of pile.filter(matches)) {
+    const free = ["front", "back"].flatMap(row => (field[side + "_" + row] || []).flatMap((u, idx) => u || (reservedSlot?.zone === side + "_" + row && reservedSlot.idx === idx) ? [] : [{row, idx}]));
+    if (free.length <= reserve) break;
+    let slot;
+    if (isPlayer) slot = await xlwChooseArtifactCycle(card, free);
+    else if (isMultiplayer) {
+      const requestId = crypto.randomUUID();
+      const pending = new Promise(resolve => (window.XLW_artifactCycleWaiters ||= new Map()).set(requestId, resolve));
+      ws.send(JSON.stringify({action:"artifact_cycle_pick", requestId, card, slots:free}));
+      slot = await pending;
+    } else slot = free[0];
+    if (!slot || !free.some(s => s.row === slot.row && s.idx === slot.idx) ||
+        field[side + "_" + slot.row][slot.idx] || !pile.includes(card)) continue;
+    pile.splice(pile.indexOf(card), 1);
+    const zone = side + "_" + slot.row;
+    field[zone][slot.idx] = {card:structuredClone(card), tapped:false, attacking:false, target:null,
+      summonedTurn:turn, summonedZone:zone, equipments:[]};
+    logBattle(`🏺 ${isPlayer ? "我方" : "對手"}【木乃伊】連動：召喚【${card.name}】至${slot.row === "front" ? "前排" : "後排"}${slot.idx + 1}。`);
+    if (isMultiplayer) ws.send(JSON.stringify({action:"artifact_cycle_summon", zone, idx:slot.idx, card, source:kind, departed,
+      extraAfter:isPlayer ? playerExtraDeck : enemyExtraDeck,
+      graveAfter:isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard)}));
+    render();
+    if (kind !== "tribute") break;
+  }
+}
+
+window.xlwPlayerTributeUnit = async function(unit, zone, idx, options = {}) {
   if (typeof xlwIsUnitUnsacrificable === "function" && xlwIsUnitUnsacrificable(unit, zone, idx)) {
     logBattle(`🛡️ 【${unit.card.name}】完全不能被獻祭！`);
     return;
@@ -19195,6 +19230,10 @@ window.xlwPlayerTributeUnit = async function(unit, zone, idx) {
     if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, true)) {
       graveyard.push(unit.card);
     }
+  }
+  if ((unit.card.id === "R-ART-0071" || unit.card.name === "狗頭陶罐") && graveyard.includes(unit.card)) {
+    if (field[zone]?.[idx] === unit) field[zone][idx] = null;
+    await xlwResolveArtifactCycle("tribute", true, options.reserve || 0, {zone,idx,card:unit.card}, options.reservedSlot);
   }
 };
 
@@ -19222,6 +19261,10 @@ window.xlwEnemyTributeUnit = async function(unit, zone, idx) {
     if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, false)) {
       (window.XLW_ENEMY.grave ||= []).push(unit.card);
     }
+  }
+  if ((unit.card.id === "R-ART-0071" || unit.card.name === "狗頭陶罐") && window.XLW_ENEMY.grave.includes(unit.card)) {
+    if (field[zone]?.[idx] === unit) field[zone][idx] = null;
+    await xlwResolveArtifactCycle("tribute", false, 0, {zone,idx,card:unit.card});
   }
 };
 
@@ -20407,9 +20450,9 @@ async function confirmTribute() {
         } else if (t.xlwBeibeiAttached) {
           logBattle(`🎒【背背小鬼】已寄生合體至敵方單位，不進入墓地。`);
         } else {
-          await window.xlwPlayerTributeUnit(unit, t.zone, t.idx);
+          await window.xlwPlayerTributeUnit(unit, t.zone, t.idx, {reserve:1});
         }
-        field[t.zone][t.idx] = null;
+        if (field[t.zone][t.idx] === unit) field[t.zone][t.idx] = null;
       }
     }
 
@@ -32866,6 +32909,9 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
         enemyGraveyard.push(unit.card);
         logBattle(`✨ ${unit.card.name} 被破壞，回到對手墓地。`);
       }
+    } else if (unit.card.id === "C-ART-0072" || unit.card.name === "木乃伊") {
+      (owner === "player" ? playerExtraDeck : enemyExtraDeck).push(unit.card);
+      logBattle(`【木乃伊】消逝：被破壞後返回額外區。`);
     } else if (owner === "player") {
       graveyard.push(unit.card);
 
@@ -33678,6 +33724,9 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
   }
   await cleanUnitLeavingField(unit, zone);
   field[zone][idx] = null;
+  if ((unit.card.id === "C-ART-0072" || unit.card.name === "木乃伊") && !window.isUnitSilenced(unit, zone, idx)) {
+    for (let i = 0; i < destructionEffectTimes; i++) await xlwResolveArtifactCycle("destroy", owner === "player", 0, {zone,idx,card:unit.card});
+  }
 
   await window.xlwResolveFairySoulCrystal?.(unit.card, owner === "player");
   await window.xlwResolveSavageAfterDestruction?.(unit, zone);
@@ -36576,7 +36625,7 @@ async function runEnemyTurn() {
             }
           }
 
-          field[sac.zone][sac.idx] = null;
+          if (field[sac.zone][sac.idx] === sac.unit) field[sac.zone][sac.idx] = null;
         }
         logBattle(`✨ 對手 AI 獻祭了 ${tributeUnits.length} 個單位進行獻祭召喚！`);
         render();
@@ -36986,6 +37035,7 @@ async function runEnemyTurn() {
 
     // 12. 對手回合結束階段效果（觀光阿姨召喚小旅人、中立與陣營結束階段效果、衰敗結算）
     try {
+      await window.xlwResolveExpansionTurnEnd(false);
       await runNeutralEndPhaseEffects(false);
       await resolveDecayStatus(false);
     } catch (eEndPhase) {
@@ -45155,13 +45205,8 @@ function setupGlobalEvents() {
     });
   }
 
-  // 對戰紀錄計分面板
   const scoreBtn = $("scoreBtn");
-  if (scoreBtn) {
-    scoreBtn.onclick = () => {
-      $("scorePanel")?.classList.add("show");
-    };
-  }
+  if (scoreBtn) scoreBtn.onclick = () => window.XLWBattleRecord?.open();
   const closeScore = $("closeScorePanel");
   if (closeScore) {
     closeScore.onclick = () => {
@@ -45624,10 +45669,13 @@ function setStatus(t) {
   window.XLWBFeedback?.status(String(t));
 }
 
+window.xlwReadBattleRecord = () => ({turn,phase,player:calculateTotalStars(true),enemy:calculateTotalStars(false),logs:battleLog.slice(0,500)});
+
 function logBattle(text) {
   const line = `T${turn} | ${text}`;
   battleLog.unshift(line);
-  if (battleLog.length > 30) battleLog.pop();
+  if (battleLog.length > 500) battleLog.pop();
+  window.XLWBattleRecord?.refresh();
   if (window.XLWDuelEvents) window.XLWDuelEvents.effect(text);
   else window.XLWBFeedback?.effect?.(text);
 }
@@ -46212,16 +46260,9 @@ function setupWebSocketEvents() {
         // This flag describes the sender's opponent, not our opponent.
         if (s.mulliganDone !== undefined) opponent_mulligan_done = Boolean(s.mulliganDone);
 
-        // 同步完整戰鬥歷史紀錄
-        if (Array.isArray(s.battleLog) && s.battleLog.length > 0) {
-          if (battleLog.length === 0 || s.battleLog.length >= battleLog.length) {
-            battleLog = s.battleLog;
-            const logContainer = document.getElementById("logContent") || document.getElementById("battleLogContent");
-            if (logContainer) {
-              logContainer.innerHTML = battleLog.map(line => `<div>${line}</div>`).join("");
-              logContainer.scrollTop = logContainer.scrollHeight;
-            }
-          }
+        if (Array.isArray(s.battleLog)) {
+          battleLog = window.XLWBattleRecord?.merge(battleLog, s.battleLog) || s.battleLog;
+          window.XLWBattleRecord?.refresh();
         }
 
         // 同步抽牌與防守狀態需求
@@ -46265,6 +46306,23 @@ function setupWebSocketEvents() {
           render();
         }
       }
+    } else if (data.action === "artifact_cycle_pick") {
+      const slot = await xlwChooseArtifactCycle(data.card, data.slots || []);
+      ws.send(JSON.stringify({action:"artifact_cycle_choice", requestId:data.requestId, slot}));
+    } else if (data.action === "artifact_cycle_choice") {
+      const resolve = window.XLW_artifactCycleWaiters?.get(data.requestId);
+      if (resolve) { window.XLW_artifactCycleWaiters.delete(data.requestId); resolve(data.slot); }
+    } else if (data.action === "artifact_cycle_summon") {
+      const own = data.zone?.startsWith("player_");
+      const extra = own ? playerExtraDeck : enemyExtraDeck;
+      const grave = own ? graveyard : (window.XLW_ENEMY.grave ||= enemyGraveyard);
+      if (Array.isArray(data.extraAfter)) extra.splice(0,extra.length,...data.extraAfter);
+      if (Array.isArray(data.graveAfter)) grave.splice(0,grave.length,...data.graveAfter);
+      const departed = data.departed;
+      if (departed && field[departed.zone]?.[departed.idx]?.card?.id === departed.card?.id) field[departed.zone][departed.idx] = null;
+      if (data.card && field[data.zone] && Number.isInteger(data.idx)) field[data.zone][data.idx] = {
+        card:data.card,tapped:false,attacking:false,target:null,summonedTurn:turn,summonedZone:data.zone,irrigation:0,equipments:[]};
+      render();
     } else if (data.action === "battle_log") {
       const message = String(data.message || "");
       logBattle(message);
@@ -47689,6 +47747,8 @@ function setupWebSocketEvents() {
     window.XLW_sync = new window.XLWOnlineSync({
       key: syncKey, storage: sessionStorage,
       canBypass: (action, data) => Boolean(
+        action === "artifact_cycle_pick" ||
+        (action === "artifact_cycle_choice" && window.XLW_artifactCycleWaiters?.has(data.requestId)) ||
         window.XLWBattleFlow?.canBypass(action, data) ||
         (action === "goat_traveler_placement" && window.XLW_DEFENSE_RULE.resolving) ||
         (action === 'samurai_recover_result' && window.XLW_samuraiRecoveryWaiters?.has(data.requestId)) ||
@@ -49084,7 +49144,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
 
     // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
-    if (!config.iconChoices && boardTargets.length > 0 && (boardTargets.length >= targetMaps.filter(m => !m.target || m.target.type !== "cancel").length ||
+    if (!config.iconChoices && !config.actionChoices && boardTargets.length > 0 && (boardTargets.length >= targetMaps.filter(m => !m.target || m.target.type !== "cancel").length ||
         (options.some(opt => opt.boardAction) && targetMaps.every(({opt, target}) => target || opt.boardAction)))) {
       let settled = false;
       const attachedSlotCleanups = [];
@@ -52831,7 +52891,7 @@ function saveLocalGameState() {
       countdownRemaining: (typeof countdownRemaining !== 'undefined' ? countdownRemaining : window.countdownRemaining) || 0,
       countdownTriggerTurn: (typeof countdownTriggerTurn !== 'undefined' ? countdownTriggerTurn : window.countdownTriggerTurn) || null,
       countdownTriggerRole: (typeof countdownTriggerRole !== 'undefined' ? countdownTriggerRole : window.countdownTriggerRole) || null,
-      battleLog: Array.isArray(battleLog) ? battleLog.slice(-50) : [],
+      battleLog: Array.isArray(battleLog) ? battleLog.slice(0,80) : [],
       normalSummonUsed: normalSummonUsed,
       tacticalSummonUsed: tacticalSummonUsed,
       XLW_tacticalMoveUsed: window.XLW_tacticalMoveUsed,
@@ -53191,7 +53251,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     XLW_rainbowCatAtkBuffActive: window.XLW_rainbowCatAtkBuffActive,
     XLW_enemyRainbowCatAtkBuffActive: window.XLW_enemyRainbowCatAtkBuffActive,
     gameInProgress: window.XLW_gameInProgress || false,
-    battleLog: Array.isArray(battleLog) ? battleLog.slice(-50) : [],
+    battleLog: Array.isArray(battleLog) ? battleLog.slice(0,80) : [],
     XLW_playerNeedsToDraw: Boolean(window.XLW_playerNeedsToDraw),
     XLW_enemyNeedsToDraw: Boolean(window.XLW_enemyNeedsToDraw),
     XLW_coinTossFirstGo: typeof window.XLW_coinTossFirstGo === "boolean" ? window.XLW_coinTossFirstGo : null,
@@ -54086,7 +54146,7 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   if (tribute) {
     if (!placementAvailable() || !validTribute() || !options.sourcePile().includes(card)) return false;
     normalSummonUsed = true;
-    await window.xlwPlayerTributeUnit(tribute.unit, tribute.zone, tribute.idx);
+    await window.xlwPlayerTributeUnit(tribute.unit, tribute.zone, tribute.idx, {reservedSlot:slot});
     if (field[tribute.zone][tribute.idx] === tribute.unit) field[tribute.zone][tribute.idx] = null;
   }
 
@@ -55625,7 +55685,7 @@ window.xlwResolveEndPhaseEffects = async function(isPlayerSide) {
   for (const z of [sidePrefix + "front", sidePrefix + "back"]) {
     for (let i = 0; i < 5; i++) {
       const u = field[z][i];
-      if (u && u.card && (u.card.id?.includes("BRV-0046") || u.card.name === "傳送門" || window.xlwCardHasKeyword(u.card, "消逝"))) {
+      if (u && u.card && u.card.id !== "C-ART-0072" && u.card.name !== "木乃伊" && (u.card.id?.includes("BRV-0046") || u.card.name === "傳送門" || window.xlwCardHasKeyword(u.card, "消逝"))) {
         logBattle(`✨【${u.card.name}】具備【消逝】，在回合結束時消逝並返回額外牌庫！`);
         const extraOwnerIsPlayer = u.card.id === "SR-EWD-0055" ? !isPlayerSide : isPlayerSide;
         const extraList = extraOwnerIsPlayer ? playerExtraDeck : enemyExtraDeck;

@@ -2194,3 +2194,16 @@ html body.xlw-royal-ui.xlw-game-started #xlwFixedTopRightActionBar {
   #xlwDuelEvents span { max-height: 2.8em; }
   #xlwDuelEvents .duel-event-next { margin: 3px 0; padding: 2px 4px; }
 }
+
+/* Records are visible only when requested; the old score-gap rail is removed. */
+#xlwDuelEvents { display:none !important; }
+#xlwBattleRecord {position:fixed;inset:0;z-index:2000100;background:#050b16b8;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
+#xlwBattleRecord section {width:min(760px,90vw);max-height:88vh;display:flex;flex-direction:column;background:#15232f;color:#eee8da;border:1px solid #9b8968;border-radius:12px;box-shadow:0 18px 60px #000b;padding:16px;box-sizing:border-box;}
+#xlwBattleRecord header {display:flex;align-items:center;justify-content:space-between;gap:16px;}
+#xlwBattleRecord h2 {font-size:20px;margin:0;}
+#xlwBattleRecord button {background:#29474b;color:#fff;border:1px solid #a49472;border-radius:6px;padding:8px 18px;font:inherit;cursor:pointer;}
+#xlwBattleRecord .battle-record-summary {font-size:14px;color:#d5d2c7;flex-shrink:0;}
+#xlwBattleRecord .battle-record-content {overflow:auto;overscroll-behavior:contain;min-height:60px;font:14px/1.65 system-ui;touch-action:pan-y;}
+#xlwBattleRecord .battle-record-content p {margin:0;padding:7px 0;border-bottom:1px solid #ffffff15;white-space:pre-wrap;overflow-wrap:anywhere;}
+#xlwBattleRecord h3 {font-size:14px;color:#e5cc98;margin:12px 0 4px;}
+@media(max-height:450px){#xlwBattleRecord section{padding:10px;max-height:92vh;}#xlwBattleRecord .battle-record-summary{margin:6px 0;}#xlwBattleRecord .battle-record-content{font-size:12px;}}

@@ -87,45 +87,8 @@
   }
   let previous=null,timer=null,box=null,panel=null,nextText='',serial=0,remoteLogs=[];
   const queue=[],history=[],seen=new Map();
-  function ensureUI() {
-    if(box?.isConnected)return;
-    box=global.document.createElement('aside');box.id='xlwDuelEvents';
-    box.setAttribute('aria-label','對戰操作提示');
-    const status=global.document.createElement('div');status.className='duel-event-current';
-    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-    const image=global.document.createElement('img');image.alt='';
-    const text=global.document.createElement('div');
-    for(const tag of ['strong','b','span'])text.appendChild(global.document.createElement(tag));
-    status.append(image,text);
-    const next=global.document.createElement('p');next.className='duel-event-next';
-    const button=global.document.createElement('button');button.type='button';button.textContent='最近操作';button.setAttribute('aria-expanded','false');
-    panel=global.document.createElement('ol');panel.id='xlwDuelEventHistory';panel.hidden=true;
-    button.setAttribute('aria-controls',panel.id);
-    button.onclick=()=>{panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));};
-    box.append(status,next,button,panel);global.document.body.appendChild(box);
-  }
-  function paint(event) {
-    if(!global.document)return;
-    ensureUI();box.hidden=false;
-    const status=box.querySelector('.duel-event-current');status.dataset.side=event.side;
-    const image=status.querySelector('img');image.hidden=!event.card?.image;
-    if(event.card?.image)image.src=event.card.image;
-    const text=status.lastElementChild;
-    text.children[0].textContent=`${event.side==='player'?'我方':'對手'}・${titles[event.kind]||'操作'}${event.count>1?' ×'+event.count:''}`;
-    text.children[1].textContent=event.card?.name||'';
-    text.children[2].textContent=event.detail||'';
-    box.querySelector('.duel-event-next').textContent=nextText;
-    paintHistory();
-  }
-  function paintHistory() {
-    if(!panel)return;
-    panel.replaceChildren();
-    for(const item of history.slice(0,12)) {
-      const line=global.document.createElement('li');
-      line.textContent=`${item.side==='player'?'我方':'對手'} ${titles[item.kind]||'操作'}｜${item.card?.name||item.detail}${item.card?'・'+item.detail:''}`;
-      panel.appendChild(line);
-    }
-  }
+  function paint() { global.XLWBattleRecord?.refresh(); }
+  function paintHistory() { global.XLWBattleRecord?.refresh(); }
   function play() {
     timer=null;
     const event=queue.shift();
@@ -191,5 +154,6 @@
   // A fixed, short beat; never wait for the visual queue or a peer acknowledgement.
   const beat=()=>global.document?.hidden?Promise.resolve():new Promise(resolve=>global.setTimeout(resolve,450));
   global.XLWDuelEvents={capture,diff,group,observe,activation,effect,syncLogs,reset,beat,
+    recent:()=>history.slice(0,24),titles,
     diagnostics:()=>({queued:queue.length,history:history.length,seen:seen.size})};
 })(typeof window!=='undefined'?window:globalThis);
