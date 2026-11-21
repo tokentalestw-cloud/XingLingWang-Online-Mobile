@@ -46238,6 +46238,10 @@ function setupWebSocketEvents() {
     } else if (data.action === "sync_game_state") {
       const s = data.state;
       if (s && Number.isFinite(s.turn) && s.turn < turn) return;
+      // Cards in collections carry holder metadata just like cards on the board.
+      if(s&&window.xlwFlipHolderMarkers)for(const key of ["playerHand","playerDeck","graveyard","playerExileZone","playerExtraDeck","enemyHand","enemyDeck","enemyGraveyard","enemyExileZone","enemyExtraDeck"]){
+        if(Array.isArray(s[key]))s[key]=window.xlwFlipHolderMarkers(s[key]);
+      }
       const summonBoundary = data.summonRequestId && data.summonRequestId === window.XLW_pendingSummonRequestId;
       if (isMyTurn && !window.XLW_battleRuleWindow && !summonBoundary && !data.turnHandoff && !window.XLW_reconnectingWaitSync && s && s.turn <= turn) {
         // The active player owns the board, but still needs the peer's collection baseline
