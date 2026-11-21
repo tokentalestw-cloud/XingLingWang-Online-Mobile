@@ -187,7 +187,7 @@ test("17 a canceled guest summon leaves the selected patron in hand", async () =
 });
 test("18 guest destruction invokes the search before the guest leaves", async () => {
   const destruction = slice("async function destroyUnit(", "await window.xlwResolveSavageAfterDestruction");
-  assert.match(destruction, /await window\.xlwCheckExpelledGuestBeforeDestroy\?\.\(unit, owner === "player"\);[\s\S]*?await cleanUnitLeavingField\(unit, zone\);\s*field\[zone\]\[idx\] = null/);
+  assert.match(destruction, /await window\.xlwCheckExpelledGuestBeforeDestroy\?\.\(unit, owner === "player"\);[\s\S]*?await cleanUnitLeavingField\(unit, zone\);\s*if \(field\[zone\]\[idx\] === unit\) field\[zone\]\[idx\] = null/);
 });
 
 const fan = slice("window.xlwCheckElectricFanPush =", "// 7. C-VLG-0063");

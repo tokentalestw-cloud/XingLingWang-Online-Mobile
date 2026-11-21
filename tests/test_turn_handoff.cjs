@@ -9,7 +9,7 @@ let tests=0;
 module.exports=(async()=>{
 for(const role of ['player1','player2']){
  let defenses=0,summons=0,initializations=0;const frames=[];
- const c=vm.createContext({ws:{},console:{log(){},error(){}},document:{getElementById:()=>null},
+ const c=vm.createContext({structuredClone,ws:{},console:{log(){},error(){}},document:{getElementById:()=>null},
  field:empty(),hand:[],deck:[{}],graveyard:[],enemyGraveyard:[],playerExileZone:[],enemyExileZone:[],playerExtraDeck:[],enemyExtraDeck:[],playerBonusScore:0,enemyBonusScore:0,
  turn:10,phase:'召喚階段',isMyTurn:false,isMultiplayer:true,player_role:role,normalSummonUsed:false,tacticalSummonUsed:false,opponent_mulligan_done:true,battleLog:[],isGameOverFlag:false,
  countdownActive:false,countdownRemaining:0,countdownTriggerTurn:null,countdownTriggerRole:null,xlwExpectedIncomingSeq:null,

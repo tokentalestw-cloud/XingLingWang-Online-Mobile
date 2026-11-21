@@ -77,7 +77,7 @@ module.exports=(async()=>{
  for (const effect of ['candy', 'goat', 'lawyer', 'field']) {
    for (const stillPresent of [true, false]) {
      const g = context();
-     const selected = {...card('chosen','CND-0001'), faction:'甜點王國', type:'magic', name:'山羊術', magic_type:'場地'};
+     const selected = {...card('chosen','CND-0001'), faction:'甜點王國', type:effect === 'candy' ? 'unit' : 'magic', name:'山羊術', magic_type:'場地'};
      const other = {...card('other'), type:'magic', name:'法術保護'};
      const pile = effect === 'field' ? 'deck' : 'graveyard';
      g[pile] = [selected, other];

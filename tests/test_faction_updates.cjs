@@ -45,21 +45,14 @@ module.exports = (async () => {
     assert.equal(g[key], 0); tests++;
     delete elements[isPlayer ? 'playerField' : 'enemyField'].dataset.card;
     assert.equal(g.xlwGetMaxSteamEnergy(isPlayer), 5); tests++;
-    // Two charging sources must terminate, finish before return, and re-arm for a new event.
+    // Charging does not electrify unrelated units; sliding contacts are tested separately.
     const zone = isPlayer ? 'player_front' : 'enemy_front';
-    g.field[zone][0] = { card: { id: 'R-STP-0052', name: '蒸汽充能塔' } };
-    g.field[zone][1] = { card: { id: 'OTHER', name: '裝備單位' }, equipments: ['通電道具 通電裝'] };
-    await g.xlwChargeEnergy(1, isPlayer);
-    assert.equal(g[key], 5); assert.equal(g.XLW_electrifyChargeSources, null); tests++;
-    g.field[zone][1] = null; g[key] = 0;
-    await g.xlwChargeEnergy(1, isPlayer);
-    assert.equal(g[key], 3); tests++;
-    g[key] = 0;
-    await g.xlwChargeEnergy(1, isPlayer);
-    assert.equal(g[key], 3); tests++;
-    g.xlwTriggerElectrify = async () => { throw Error('presentation error'); };
-    await assert.rejects(g.xlwChargeEnergy(1, isPlayer), /presentation error/);
-    assert.equal(g.XLW_electrifyChargeSources, null); tests++;
+    g.field[zone][0] = {card:{id:'R-STP-0052',name:'蒸汽充能塔'}};
+    g[key]=0;
+    g.xlwTriggerElectrify=async()=>assert.fail('charging must not trigger electricity');
+    await g.xlwChargeEnergy(1,isPlayer);assert.equal(g[key],1);tests++;
+    assert.equal(g.xlwConsumeEnergy(0,isPlayer),false);assert.equal(g[key],1);tests++;
+
   }
   {
     const { g } = fixture(), { g: peer } = fixture();

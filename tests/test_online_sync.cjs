@@ -106,6 +106,7 @@ module.exports = (async () => {
   const fields = { player_front: Array(5).fill(null), player_back: Array(5).fill(null),
     enemy_front: Array(5).fill(null), enemy_back: Array(5).fill(null) };
   const globals = {
+    structuredClone,
     ws: {}, window: { XLW_ENEMY: {}, XLW_DEFENSE_RULE: {}, xlwEnterActiveOnlineBoardUI() {} },
     document: { getElementById: () => null }, console: { log() {}, error() {} },
     field: structuredClone(fields), hand: [{ id: 'old-hand' }], deck: [{ id: 'old-deck' }],
