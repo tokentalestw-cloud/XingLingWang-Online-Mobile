@@ -10,7 +10,7 @@ const effect = game.slice(game.indexOf("window.xlwTriggerSktImmediateEffects =")
 
 function setup(id) {
   const card = { id };
-  const undead = { id: "SKT-1234", name: "Undead", _xlwInstanceId: "instance-1" };
+  const undead = { id: "SKT-1234", name: "Undead", type: "unit", _xlwInstanceId: "instance-1" };
   const graveyard = [undead];
   const unit = { card };
   const row = [unit];
@@ -27,6 +27,9 @@ function setup(id) {
     shuffle() {},
   });
   vm.runInContext(consistency, context);
+  context.xlwFactionDecisionKey = () => 'coffin-test';
+  context.window.xlwChooseFactionAction = (local, key, title, message, options) => context.showXLWChoiceModal(title, message, options);
+  vm.runInContext(game.slice(game.indexOf('// Coffin Ship loads physical'), game.indexOf('// End Coffin Ship loading.')), context);
   vm.runInContext(effect, context);
   return { context, undead, graveyard, unit, row, logs,
     run: () => context.window.xlwTriggerSktImmediateEffects(card, "player_front", 0, true) };

@@ -4146,6 +4146,38 @@ window.xlwResolveUndeadKidnap = async function(card,zone,idx,isPlayer,kayla=fals
 };
 // End undead grave kidnappers.
 
+// Coffin Ship loads physical undead units, never skeleton spells.
+window.xlwLoadCoffin = async function(unit,zone,idx,isPlayer){
+  if(!unit?.card||field[zone]?.[idx]!==unit)return false;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(unit))return false;
+  const token={};pending.set(unit,token);
+  const valid=()=>pending.get(unit)===token&&field[zone]?.[idx]===unit;
+  const grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const eligible=c=>c&&['unit','單位','單位卡'].includes(c.type)&&window.xlwIsUndeadCard(c);
+  const serial=unit.coffinLoadSerial=(unit.coffinLoadSerial||0)+1;
+  const key=xlwFactionDecisionKey(unit,zone,'coffin-load',serial);
+  unit.kidnappedCards ||= [];
+  try{
+    for(let n=unit.kidnappedCards.length;n<3;n++){
+      if(!valid())return false;
+      const options=grave().filter(eligible);
+      if(!options.length)break;
+      const pick=await window.xlwChooseFactionAction(isPlayer,key+':'+n,`棺材船：綁架（${n+1}/3）`,'選擇墓地的一張不死族單位。',options.map((card,value)=>({text:card.name,card,value})));
+      if(!valid()||!Number.isInteger(pick)||!options[pick])break;
+      const selected=window.XLWDuelConsistency.findKnownCard(grave(),options[pick]);
+      if(!eligible(selected))break;
+      const moved=window.XLWDuelConsistency.takeKnownCard(grave(),selected);
+      if(!moved)break;
+      moved.originalOwner ||= isPlayer?'player':'enemy';
+      unit.kidnappedCards.push(moved);
+      logBattle(`【棺材船】將【${moved.name}】綁架至船上。`);
+    }
+    render();return true;
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End Coffin Ship loading.
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -4400,30 +4432,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   if(cid.includes("SKT-0014")||name==="骷髏頭")await window.xlwResolveSkullPeek(unit,zone,idx,isPlayer,false);
 
   // 15. 棺材船 (SR-SKT-0050): 立即：使你墓地3張不死族單位卡被綁架(3)。此單位離場後，使被其綁架的所有單位卡改為以橫放狀態被召喚。
-  if (cid.includes("SKT-0050") || name.includes("棺材船")) {
-    const undeadInGrave = myGrave.filter(c => c && window.xlwIsUndeadCard(c));
-    const kidnapCount = Math.min(3, undeadInGrave.length);
-    if (kidnapCount > 0 && unit) {
-      unit.kidnappedCards = unit.kidnappedCards || [];
-      for (let k = 0; k < kidnapCount; k++) {
-        const remaining = myGrave.filter(c => c && window.xlwIsUndeadCard(c));
-        if (remaining.length === 0) break;
-        let chosen = remaining[0];
-        if (isPlayer) {
-          const choices = remaining.map((c, i) => ({ text: c.name, value: i }));
-          const picked = await showXLWChoiceModal(`棺材船 綁架 (${k+1}/${kidnapCount})`, "選擇墓地 1 個不死族綁架至棺材船：", choices);
-          if (picked !== null && picked !== undefined) chosen = remaining[picked];
-        }
-        if (field[zone]?.[idx] !== unit) break;
-        const moved = window.XLWDuelConsistency.takeKnownCard(myGrave, chosen);
-        if (!moved) break;
-        moved.originalOwner = isPlayer ? "player" : "enemy";
-        unit.kidnappedCards.push(moved);
-        logBattle(`✨【棺材船】效果：將墓地【${moved.name}】裝載綁架至船上！`);
-      }
-      render();
-    }
-  }
+  if (cid.includes("SKT-0050") || name.includes("棺材船")) await window.xlwLoadCoffin(unit,zone,idx,isPlayer);
 };
 
 window.xlwUnitHasPoison = function(unit, zone, idx) {
@@ -5052,6 +5061,43 @@ function xlwFactionDecisionKey(unit,zone,reason,serial=0) {
 }
 
 // ===== 綁架 (Kidnap) 機制輔助函式 =====
+// Coffin Ship replaces the ordinary one-captive release with all captives.
+window.xlwReleaseCoffin = async function(unit,zone,captured,key,choose){
+  const pending=window.XLW_deckTopPending ||= new Map();
+  const token={};pending.set(unit,token);
+  const current=()=>pending.get(unit)===token;
+  try{
+    for(const [n,card]of captured.entries()){
+      if(!current())return;
+      const owner=card.originalOwner||card.owner||(zone.startsWith('player_')?'player':'enemy');
+      const grave=()=>owner==='player'?graveyard:(window.XLW_ENEMY.grave ||= []);
+      const bury=()=>{grave().push(card);if(owner==='enemy')enemyGraveyard=grave();};
+      delete card.fairyReleaseTurn;
+      const blocked=()=>typeof xlwBlueStarRequirement==='function'&&xlwBlueStarRequirement(card,owner==='player');
+      if(!['unit','單位','單位卡'].includes(card.type)||blocked()){bury();continue;}
+      const prefix=owner==='player'?'player_':'enemy_';
+      const front=()=> (field[prefix+'front']||[]).flatMap((u,idx)=>u?[]:[{zone:prefix+'front',idx}]);
+      const openFront=front();
+      const slots=openFront.length?openFront:(field[prefix+'back']||[]).flatMap((u,idx)=>u?[]:[{zone:prefix+'back',idx}]);
+      if(!slots.length){bury();continue;}
+      const options=slots.map((s,value)=>({text:`${s.zone.endsWith('front')?'前排':'後排'}${s.idx+1}`,value,boardTarget:{...s,summon:true}}));
+      const pick=await choose(owner==='player',key+':coffin-slot:'+n,'棺材船：釋放單位',`為【${card.name||card.id}】選擇橫放召喚位置。`,options,{boardOnly:true});
+      if(!current())return;
+      const slot=slots[pick];
+      if(!slot||field[slot.zone]?.[slot.idx]||blocked()||slot.zone.endsWith('back')&&front().length){bury();continue;}
+      field[slot.zone][slot.idx]={card,tapped:true,attacking:false,target:null,summonedTurn:turn,summonedZone:slot.zone,equipments:[]};
+      logBattle(`【棺材船】釋放【${card.name||card.id}】，橫放召喚至${slot.idx+1}號戰線。`);
+      await window.xlwResolvePG2Summon?.(card,slot.zone,slot.idx,owner==='player');
+    }
+    if(current()){
+      pending.delete(unit);
+      render();
+      if(typeof isMultiplayer!=='undefined'&&isMultiplayer)sendFullGameStateToOpponent();
+    }
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End Coffin Ship release.
+
 async function cleanUnitLeavingField(unit, zone, {releaseOnly = false} = {}) {
   if (!unit) return;
   if (!releaseOnly) {
@@ -5069,6 +5115,7 @@ async function cleanUnitLeavingField(unit, zone, {releaseOnly = false} = {}) {
   const captured=unit.kidnappedCards.filter(Boolean);
   unit.kidnappedCards=[]; // Consume once before any await, including a mirrored/repeated callback.
   const oldIndex=field[zone]?.indexOf(unit);
+  const coffin=!releaseOnly&&(unit.card?.id?.includes("SKT-0050")||unit.card?.name==="棺材船")&&!window.isUnitSilenced?.(unit,zone,oldIndex);
   if(!releaseOnly&&oldIndex>=0)field[zone][oldIndex]=null;
   const rows=captorLocal?["player_front","player_back"]:["enemy_front","enemy_back"];
   const officer=!releaseOnly&&rows.some(row=>(field[row]||[]).some((u,i)=>u?.card?.id==="SSSR-NMS-0050"&&!window.isUnitSilenced?.(u,row,i)));
@@ -5080,6 +5127,7 @@ async function cleanUnitLeavingField(unit, zone, {releaseOnly = false} = {}) {
   const choose=async(local,id,title,message,options,config={})=>window.xlwChooseFactionAction
     ? window.xlwChooseFactionAction(local,id,title,message,options,config)
     : options.length>1&&local?showXLWChoiceModal(title,message,options,config):options[0]?.value;
+  if(coffin&&!officer){await window.xlwReleaseCoffin(unit,zone,captured,key,choose);return;}
   let selected=-1;
   if(!officer&&!molan&&!recycler){
     const options=captured.map((card,value)=>({text:card.name||card.id,value,card}));
@@ -20908,7 +20956,7 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
@@ -45921,7 +45969,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-undead-kidnap-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-coffin-release-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
