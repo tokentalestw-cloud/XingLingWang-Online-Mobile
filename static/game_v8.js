@@ -1366,6 +1366,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
@@ -1591,6 +1592,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
@@ -1655,6 +1657,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
@@ -3928,6 +3931,122 @@ async function xlwResolveAries(isPlayer) {
   render();
 }
 
+// Shared top-of-deck effects. Viewing never removes cards before choices finish.
+window.xlwPickSkullSubset = async function(cards,isPlayer,key,title,message,isCurrent=()=>true){
+  const pool=[...cards],chosen=[];
+  while(pool.length){
+    if(!isCurrent())return [];
+    const n=await window.xlwChooseFactionAction(isPlayer,key+':pick:'+chosen.length,title,message,[
+      ...pool.map((card,value)=>({text:card.name,card,value})),{text:'完成選擇',value:-1}
+    ]);
+    if(!isCurrent())return [];
+    if(!Number.isInteger(n)||n<0||!pool[n])break;
+    chosen.push(pool.splice(n,1)[0]);
+  }
+  return chosen;
+};
+window.xlwOrderSkullRemainder = async function(cards,isPlayer,key,isCurrent=()=>true){
+  const liveDeck=()=>isPlayer?deck:(window.XLW_ENEMY?.deck||[]);
+  const pool=cards.filter(c=>window.XLWDuelConsistency.findKnownCard(liveDeck(),c));
+  if(pool.length<2)return;
+  const n=await window.xlwChooseFactionAction(isPlayer,key+':order','骷髏頭：放回順序','選擇哪一張放在牌庫最上方。',pool.map((card,value)=>({text:card.name,card,value})));
+  if(!isCurrent()||!Number.isInteger(n)||!pool[n])return;
+  const order=[pool[n],...pool.filter((_,i)=>i!==n)];
+  const moved=order.map(c=>window.XLWDuelConsistency.takeKnownCard(liveDeck(),c)).filter(Boolean);
+  liveDeck().push(...moved.reverse());
+};
+window.xlwUpgradeSkull = async function(source,zone,idx,isPlayer,key,isCurrent=()=>true){
+  const isSkull=()=>source?.card&&(source.card.id?.includes('SKT-0014')||source.card.name==='骷髏頭');
+  const valid=()=>isCurrent()&&field[zone]?.[idx]===source&&isSkull();
+  const extra=()=>isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
+  const upgrade=extra().find(c=>c&&(c.id?.includes('SKT-0059')||c.name==='法巫骷髏頭'));
+  if(!valid()||!upgrade)return false;
+  const accepted=await window.xlwChooseFactionAction(isPlayer,key+':upgrade','法巫骷髏頭：升級','是否將場上的骷髏頭升級？',[{text:'升級',value:true},{text:'不升級',value:false}],{actionChoices:true});
+  if(!accepted||!valid())return false;
+  const prefix=isPlayer?'player_':'enemy_';
+  const empty=['front','back'].flatMap(row=>(field[prefix+row]||[]).flatMap((u,i)=>!u||u===source?[{zone:prefix+row,idx:i}]:[]));
+  const front=empty.filter(s=>s.zone.endsWith('front')),slots=front.length?front:empty;
+  if(!slots.length)return false;
+  const n=await window.xlwChooseFactionAction(isPlayer,key+':position','法巫骷髏頭：升級位置','點選升級後的位置（前排優先）。',slots.map((s,value)=>({text:`${s.zone.endsWith('front')?'前排':'後排'}${s.idx+1}`,value,boardTarget:{zone:s.zone,idx:s.idx}})),{boardOnly:true});
+  const slot=slots[n];
+  if(!valid()||!slot||field[slot.zone]?.[slot.idx]&&field[slot.zone][slot.idx]!==source)return false;
+  // A front slot becoming free while the chooser is open still takes priority.
+  if(slot.zone.endsWith('back')&&field[prefix+'front'].some(u=>!u||u===source))return false;
+  const next=window.XLWDuelConsistency.takeKnownCard(extra(),upgrade);
+  if(!next)return false;
+  const old=source.card;
+  field[zone][idx]=null;
+  const replacement={card:structuredClone(next),tapped:false,attacking:false,target:null,equipments:[],summonedTurn:source.summonedTurn??turn,summonedZone:slot.zone,entryKind:'upgrade'};
+  field[slot.zone][slot.idx]=replacement;
+  const oldHolder=old.originalOwner||(isPlayer?"player":"enemy");
+  (oldHolder==="player"?playerExileZone:enemyExileZone).push(old);
+  for(const part of source.devourCards||[])if(part?.card){
+    const owner=part.card.originalOwner||(isPlayer?'player':'enemy');
+    (owner==='player'?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard)).push(part.card);
+  }
+  source.devourCards=[];
+  await window.xlwDiscardFusionMagic?.(source,zone);
+  if(!isCurrent())return true;
+  await cleanUnitLeavingField(source,zone);
+  if(!isCurrent())return true;
+  if(typeof triggerUpgradeBonus==='function')await triggerUpgradeBonus(isPlayer);
+  await window.xlwOnUnitUpgraded?.(isPlayer,replacement,next);
+  logBattle('【骷髏頭】升級為【法巫骷髏頭】，原卡除外。');
+  render();return true;
+};
+window.xlwResolveSkullPeek = async function(unit,zone,idx,isPlayer,witch=false){
+  if(!unit?.card||field[zone]?.[idx]!==unit)return false;
+  // Main-start effects are executed by the active controller; the peer receives the final snapshot.
+  if(witch&&isMultiplayer&&!isPlayer)return false;
+  if(witch&&(unit.skullWitchUsedTurn===turn||window.isUnitSilenced(unit,zone,idx)))return false;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(unit))return false;
+  const token={};pending.set(unit,token);
+  const isCurrent=()=>pending.get(unit)===token;
+  const serial=unit.skullPeekSerial=(unit.skullPeekSerial||0)+1;
+  const key=xlwFactionDecisionKey(unit,zone,witch?'witch-peek':'skull-peek',serial);
+  const currentDeck=()=>isPlayer?deck:(window.XLW_ENEMY?.deck||[]);
+  const currentGrave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  try{
+    if(witch){
+      unit.skullWitchUsedTurn=turn;
+      const use=await window.xlwChooseFactionAction(isPlayer,key+':activate','法巫骷髏頭：主要階段效果','是否展示牌庫頂兩張，選擇魔法卡加入手牌？',[{text:'發動',value:true},{text:'不發動',value:false}],{actionChoices:true});
+      if(!isCurrent()||!use||field[zone]?.[idx]!==unit)return false;
+    }
+    const viewed=currentDeck().slice(-2).reverse().filter(Boolean);
+    if(!viewed.length)return false;
+    if(witch&&(!isMultiplayer||isPlayer))for(const c of viewed){await window.xlwRevealCard?.(c,isPlayer);if(!isCurrent())return false;}
+    const chosen=await window.xlwPickSkullSubset(witch?viewed.filter(c=>['magic','魔法','魔法卡','法術'].includes(c.type)):viewed,isPlayer,key,
+      witch?'法巫骷髏頭：選擇回手':'骷髏頭：選擇送墓',witch?'可選任意張魔法卡回手；未選卡牌送墓。':'可選 0、1 或 2 張牌送墓。',isCurrent);
+    if(!isCurrent())return false;
+    for(const [i,c]of (witch?viewed:chosen).entries()){
+      if(!isCurrent())return false;
+      const moved=window.XLWDuelConsistency.takeKnownCard(currentDeck(),c);
+      if(!moved)continue;
+      if(witch&&chosen.includes(c)){
+        (isPlayer?hand:(window.XLW_ENEMY.hand ||= [])).push(moved);
+        logBattle(`【法巫骷髏頭】將【${moved.name}】加入手牌。`);
+      }else{
+        const grave=currentGrave();grave.push(moved);
+        const entered=Boolean(window.XLWDuelConsistency.findKnownCard(grave,moved));
+        const magicSent=["magic","魔法","魔法卡","法術"].includes(moved.type);
+        if(entered){
+          logBattle(`【${witch?'法巫骷髏頭':'骷髏頭'}】將【${moved.name}】送入墓地。`);
+          await window.xlwOnCardEntersGraveyard?.(moved,isPlayer,false);
+          if(!isCurrent())return false;
+          if(!witch&&magicSent)await window.xlwUpgradeSkull(unit,zone,idx,isPlayer,key+':grave:'+i,isCurrent);
+        }
+      }
+    }
+    if(!witch&&isCurrent())await window.xlwOrderSkullRemainder(viewed.filter(c=>!chosen.includes(c)),isPlayer,key,isCurrent);
+    if(!isCurrent())return false;
+    render();
+    if(witch&&isMultiplayer&&isPlayer){pending.delete(unit);sendFullGameStateToOpponent(false);}
+    return true;
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End shared top-of-deck effects.
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -4299,50 +4418,8 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
     }
   }
 
-  // 14. 骷髏頭 (SKT-0014): 立即：查看牌庫頂2張牌，使其中任意張牌進入墓地，其餘以任意順序放回牌庫頂。
-  if (cid.includes("SKT-0014") || name.includes("骷髏頭")) {
-    if (myDeck.length > 0) {
-      const peekCount = Math.min(2, myDeck.length);
-      const peeked = myDeck.splice(0, peekCount);
-      if (isPlayer) {
-        const choices = peeked.map((c, i) => ({ text: c.name, value: i }));
-        const p = await showXLWChoiceModal("骷髏頭 檢視牌庫頂", "請選擇要送入墓地的卡牌（其餘放回牌庫頂）：", [{ text: "都不送墓", value: -1 }, ...choices]);
-        if (p !== null && p !== undefined && p !== -1) {
-          const sent = peeked.splice(p, 1)[0];
-          myGrave.push(sent);
-          logBattle(`✨【骷髏頭】效果：將【${sent.name}】送入墓地！`);
-          await window.xlwOnCardEntersGraveyard(sent, true, false);
-
-          // 💀 法巫骷髏頭 (C-SKT-0059) 升級觸發：你場上的「骷髏頭」立即效果使魔法卡進入墓地時，可使其升級為此卡
-          if (sent && (sent.type === "magic" || sent.type === "魔法")) {
-            const extraDeck = window.XLW_playerExtraDeck || playerExtraDeck || [];
-            const witchCard = extraDeck.find(c => c && (c.id === "C-SKT-0059" || c.name?.includes("法巫骷髏頭")));
-            if (witchCard && unit) {
-              const confirmUpgrade = await showXLWConfirm("【法巫骷髏頭】額外升級", "【骷髏頭】將魔法卡送入了墓地！是否將場上的【骷髏頭】升級為額外區的【法巫骷髏頭】？");
-              if (confirmUpgrade) {
-                extraDeck.splice(extraDeck.indexOf(witchCard), 1);
-                unit.card = structuredClone(witchCard);
-                logBattle("✨ 額外升級：場上的【骷髏頭】成功升級為【法巫骷髏頭】！");
-                triggerUpgradeBonus(true);
-                if (typeof renderExtraDecks === "function") renderExtraDecks();
-                render();
-              }
-            }
-          }
-        }
-        while (peeked.length > 0) {
-          myDeck.unshift(peeked.pop());
-        }
-      } else {
-        const sent = peeked.shift();
-        myGrave.push(sent);
-        await window.xlwOnCardEntersGraveyard(sent, false, false);
-        while (peeked.length > 0) myDeck.unshift(peeked.pop());
-        logBattle(`✨ 對手【骷髏頭】效果：檢視牌庫頂並將【${sent.name}】送入墓地！`);
-      }
-      render();
-    }
-  }
+  // 14. 骷髏頭：只處理本卡的立即效果，不包含法巫骷髏頭。
+  if(cid.includes("SKT-0014")||name==="骷髏頭")await window.xlwResolveSkullPeek(unit,zone,idx,isPlayer,false);
 
   // 15. 棺材船 (SR-SKT-0050): 立即：使你墓地3張不死族單位卡被綁架(3)。此單位離場後，使被其綁架的所有單位卡改為以橫放狀態被召喚。
   if (cid.includes("SKT-0050") || name.includes("棺材船")) {
@@ -20851,6 +20928,14 @@ async function performSummonToSlot(zone, idx) {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
     }
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+    // Special placement bypasses the normal-hand immediate-effects block below.
+    // Skull still needs its counter window before viewing the deck.
+    if ((card.id?.includes("SKT-0014") || card.name === "骷髏頭") && field[zone]?.[idx]) {
+      const own = zone.startsWith("player_");
+      const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
+      if (isMultiplayer && own) summonMessageSent = true;
+      if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) await window.xlwTriggerSktImmediateEffects(card, zone, idx, own);
+    }
     if (window.XLWSpecialSummon?.match(card)) await playTributeSummonAnimation(zone, idx, true);
   } else if (selectedHandForSummon === "TRAVELER") {
     // 召喚小旅人
@@ -45854,11 +45939,11 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
     playerBonusScore,enemyBonusScore,spellChainStack:window.spellChainStack||[],
     factionState:{playerEnergy:window.XLW_playerSteamEnergy||0,enemyEnergy:window.XLW_enemySteamEnergy||0,
       playerWheel:window.XLW_playerRouletteWheel||[],enemyWheel:window.XLW_enemyRouletteWheel||[],banishedTimeGoats:window.XLW_banishedTimeGoats||[]},
-    busy:Boolean(window.XLW_pipiSearchWaiting||window.XLW_pendingSummonCounterResolve||window.XLW_pendingSpellResolve||window.XLW_battleRuleWindow||
+    busy:Boolean(window.XLW_deckTopPending?.size||window.XLW_pipiSearchWaiting||window.XLW_pendingSummonCounterResolve||window.XLW_pendingSpellResolve||window.XLW_battleRuleWindow||
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-extra-transfers-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-skull-deck-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -53071,7 +53156,7 @@ function saveLocalGameState() {
       role: player_role,
       sync_metadata: window.XLW_sync?.metadata() || window.XLW_syncMetadata || null,
       callGameRejectedTurn: window.XLW_callGameRejectedTurn ?? null,
-      pendingInteraction: Boolean(window.XLW_pipiSearchWaiting || window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
+      pendingInteraction: Boolean(window.XLW_deckTopPending?.size || window.XLW_pipiSearchWaiting || window.XLW_pendingSummonCounterResolve || window.XLW_pendingSpellResolve ||
         ["summon", "spell_chain_start", "coin_toss_choice"].includes(window.XLW_sync?.sendingAction)),
       field: field,
       factionState: window.xlwCaptureFactionState(),
@@ -54949,46 +55034,9 @@ window.xlwResolveTurnStartEffects = async function(isPlayerSide) {
     }
   }
 
-  // 💀 骷髏人：法巫骷髏頭 (C-SKT-0059)
-  for (const z of [prefix + "front", prefix + "back"]) {
-    for (let i = 0; i < 5; i++) {
-      const u = field[z]?.[i];
-      if (u && u.card && (u.card.id === "C-SKT-0059" || u.card.name?.includes("法巫骷髏頭")) && !window.isUnitSilenced(u, z, i)) {
-        const myDeck = isPlayerSide ? deck : (window.XLW_ENEMY?.deck || []);
-        const myGrave = isPlayerSide ? graveyard : (window.XLW_ENEMY?.grave || []);
-        if (myDeck.length > 0) {
-          const peekCount = Math.min(2, myDeck.length);
-          const peeked = [];
-          for (let p = 0; p < peekCount; p++) peeked.push(myDeck.pop());
-          logBattle(`✨【法巫骷髏頭】效果：展示牌庫頂 ${peekCount} 張牌：${peeked.map(c => `【${c.name}】`).join("、")}`);
-          for (const cardItem of peeked) {
-            const isMagic = (cardItem.type === "magic" || cardItem.type === "魔法");
-            if (isMagic) {
-              if (isPlayerSide) {
-                const addIt = await showXLWConfirm("【法巫骷髏頭】加入手牌", `展示的【${cardItem.name}】為魔法卡，是否將其加入手牌？（否則進入墓地）`);
-                if (addIt) {
-                  hand.push(cardItem);
-                  logBattle(`✨【法巫骷髏頭】將魔法卡【${cardItem.name}】加入手牌！`);
-                } else {
-                  myGrave.push(cardItem);
-                  await window.xlwOnCardEntersGraveyard(cardItem, true, false);
-                }
-              } else {
-                (window.XLW_ENEMY.hand || []).push(cardItem);
-                logBattle(`✨ 對手【法巫骷髏頭】將魔法卡【${cardItem.name}】加入手牌！`);
-              }
-            } else {
-              myGrave.push(cardItem);
-              logBattle(`💀【${cardItem.name}】非魔法卡，進入墓地。`);
-              await window.xlwOnCardEntersGraveyard(cardItem, isPlayerSide, false);
-            }
-          }
-          render();
-        }
-        break;
-      }
-    }
-  }
+  // 💀 骷髏人：法巫骷髏頭，開始時存在的各單位各自處理一次。
+  const skullWitches=[prefix+"front",prefix+"back"].flatMap(zone=>(field[zone]||[]).flatMap((unit,idx)=>unit&&(unit.card.id?.includes("SKT-0059")||unit.card.name==="法巫骷髏頭")?[{unit,zone,idx}]:[]));
+  for(const {unit,zone,idx}of skullWitches)await window.xlwResolveSkullPeek(unit,zone,idx,isPlayerSide,true);
 
   // 💀 骷髏人：狂骷侯爵 (SR-SKT-0057)
   for (const z of [prefix + "front", prefix + "back"]) {
