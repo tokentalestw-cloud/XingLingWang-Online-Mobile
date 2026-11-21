@@ -63,3 +63,12 @@ assert.doesNotThrow(() => limitedSocket.onmessage({data: '{"type":"delivery_ack"
 assert.equal(limited.failed, true);
 assert.equal(errors.length, 1);
 console.log('Transport checks: immutable outbox, ACK cleanup, backup reset and storage errors PASS');
+// Observational receipts must not persist or checkpoint mutable game state.
+let diagnosticCheckpoints=0,diagnosticWrites=0;
+const diagnosticWire=[],diagnosticSocket={readyState:1,bufferedAmount:0,send:v=>diagnosticWire.push(JSON.parse(v))};
+const diagnosticSync=new scope.XLWOnlineSync({key:'diagnostic',storage:{getItem:()=>null,setItem:()=>diagnosticWrites++},process:async()=>{},checkpoint:()=>diagnosticCheckpoints++,fail:()=>assert.fail('diagnostics cannot stop sync')});
+diagnosticSync.attach(diagnosticSocket);diagnosticSync.ready=true;
+diagnosticSync.send({action:'duel_diagnostic_receipt',id:'proof'});
+assert.equal(diagnosticWire.length,1);assert.equal(diagnosticSync.pending.size,0);assert.equal(diagnosticWrites,0);assert.equal(diagnosticCheckpoints,0);
+diagnosticSocket.bufferedAmount=100000;diagnosticSync.send({action:'duel_diagnostic_receipt',id:'busy'});assert.equal(diagnosticWire.length,1);
+diagnosticSocket.bufferedAmount=0;diagnosticSync.ready=false;diagnosticSync.send({action:'duel_diagnostic_receipt',id:'offline'});assert.equal(diagnosticWire.length,1);

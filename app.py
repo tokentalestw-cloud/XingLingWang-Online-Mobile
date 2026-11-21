@@ -367,6 +367,27 @@ class ConnectionManager:
                 return
             if action == "delivery_applied":
                 return
+            if action == "duel_diagnostic_receipt":
+                # Diagnostics are expendable: never journal, ACK, persist or delay gameplay.
+                if not r["ready"].get(sender_role) or not r["ready"].get(other_role) or target_ws is None:
+                    return
+                sections = message.get("sections")
+                skipped = message.get("skipped") == "interaction_in_progress"
+                valid_sections = isinstance(sections, dict) and set(sections) == {"board", "scores", "zones", "energy", "counts"} and all(isinstance(v, str) and re.fullmatch(r"[0-9a-f]{8}", v) for v in sections.values())
+                proof_id = message.get("id")
+                if message.get("version") != "duel-diagnostics-v1" or not isinstance(proof_id, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,180}", proof_id) or not (skipped or valid_sections):
+                    return
+                clock = asyncio.get_running_loop().time()
+                recent = r.setdefault("diagnostic_last", {})
+                if clock - recent.get(sender_role, -1) < 0.1:
+                    return
+                recent[sender_role] = clock
+                safe = {"action": action, "version": "duel-diagnostics-v1", "id": proof_id, "sections": None if skipped else sections, "skipped": "interaction_in_progress" if skipped else None}
+                try:
+                    await asyncio.wait_for(target_ws.send_json(safe), timeout=0.1)
+                except Exception:
+                    pass
+                return
             message_id = message.get("message_id")
             if active_ws is not None and active_ws.query_params.get("protocol") == "2":
                 if not r["ready"].get(sender_role) and action not in ("leave_room", "turn_order_pick", "turn_order_choice", "multi_deck_selected", "sync_deck", "mulligan_confirm", "end_turn"):

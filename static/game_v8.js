@@ -1366,6 +1366,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
@@ -1589,6 +1590,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  window.XLWDuelDiagnostics?.reset();
   const fh = document.getElementById("xlwEnemyFloatingHand"); if (fh) fh.style.display = "none";
   if (typeof hideMultiplayerLobby === 'function') hideMultiplayerLobby();
   const hardPhasePanel = document.getElementById("phaseDisplayPanelHard");
@@ -1651,6 +1653,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.XLWDuelDiagnostics?.reset();
   delete window.XLW_crystalArrowTurn;
   window.XLW_xiaoyuanUsedThisTurn = false;
   delete window.XLW_samuraiTacticalAttackTurn;
@@ -38281,6 +38284,7 @@ function renderSteamBattery() {
 }
 
 function render() {
+  window.XLWDuelDiagnostics?.schedule();
   for(const zone of ["player_front","player_back","enemy_front","enemy_back"])for(const unit of field[zone]||[]){
     if(!unit)continue;
     if(window.xlwPassengerSpec?.(unit).capacity||unit._xlwHadPassengerTrait)window.xlwPassengerCount(unit);
@@ -45819,6 +45823,30 @@ function setStatus(t) {
   window.XLWBFeedback?.status(String(t));
 }
 
+// Read-only diagnostic projection; no account keys or hidden peer card contents are exported.
+function xlwReadDiagnosticState(ignoreProcessing=false){
+  const readField=id=>{try{return JSON.parse(document.getElementById(id)?.dataset.card||'null');}catch(_){return null;}};
+  return {active:Boolean(window.XLW_gameInProgress),role:player_role,turn,phase,field,
+    hand,deck,graveyard,playerExtraDeck,playerExileZone,
+    playerHand:hand,playerDeck:deck,enemyHand:window.XLW_ENEMY?.hand||[],enemyDeck:window.XLW_ENEMY?.deck||[],
+    enemyGraveyard:window.XLW_ENEMY?.grave||enemyGraveyard,enemyExtraDeck,enemyExileZone,
+    playerFieldCard:readField('playerField'),enemyFieldCard:readField('enemyField'),
+    playerBonusScore,enemyBonusScore,spellChainStack:window.spellChainStack||[],
+    factionState:{playerEnergy:window.XLW_playerSteamEnergy||0,enemyEnergy:window.XLW_enemySteamEnergy||0,
+      playerWheel:window.XLW_playerRouletteWheel||[],enemyWheel:window.XLW_enemyRouletteWheel||[],banishedTimeGoats:window.XLW_banishedTimeGoats||[]},
+    busy:Boolean(window.XLW_pendingSummonCounterResolve||window.XLW_pendingSpellResolve||window.XLW_battleRuleWindow||
+      window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
+      (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
+}
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-diagnostics-v1'});
+window.xlwProcessDiagnosticMessage=async function(handler,data){
+  if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
+  const started=performance.now();
+  window.XLWDuelDiagnostics?.record('receive',{action:data.action||data.type,seq:data.server_seq});
+  try{return await handler({parsedData:data});}
+  catch(error){window.XLWDuelDiagnostics?.record('operation_error',{action:data.action||data.type,message:String(error.message).replace(/https?:\/\/[^\s)]+/g,'[url]').slice(0,180)});throw error;}
+  finally{window.XLWDuelDiagnostics?.record('processed',{action:data.action||data.type,duration:Math.round(performance.now()-started)});window.XLWDuelDiagnostics?.schedule();}
+};
 window.xlwReadBattleRecord = () => ({turn,phase,player:calculateTotalStars(true),enemy:calculateTotalStars(false),logs:battleLog.slice(0,500)});
 
 function logBattle(text) {
@@ -46460,6 +46488,12 @@ function setupWebSocketEvents() {
         if (!data.turnHandoff) {
           if (!window.XLW_sync?.processing) saveLocalGameState();
           render();
+        }
+        if(data.diagnosticProof&&!data.turnHandoff){
+          const diagnosticState=xlwReadDiagnosticState(true);
+          const overlapping=diagnosticState.busy||window.XLW_sync?.processing>1;
+          const receipt=window.XLWDuelDiagnostics?.receipt(data.diagnosticProof,diagnosticState,player_role,overlapping);
+          if(receipt&&ws?.readyState===WebSocket.OPEN){if(typeof ws.sendObject==='function')ws.sendObject(receipt);else ws.send(JSON.stringify(receipt));}
         }
       }
     } else if (data.action === "faction_choice_request" || data.action === "faction_choice_result") {
@@ -47911,7 +47945,7 @@ function setupWebSocketEvents() {
     window.XLW_sync = new window.XLWOnlineSync({
       key: syncKey, storage: sessionStorage,
       canBypass: (action, data) => Boolean(
-        action === "faction_choice_request" || action === "faction_choice_result" ||
+        action === "duel_diagnostic_receipt" || action === "faction_choice_request" || action === "faction_choice_result" ||
         action === "battle_rule_pass" || action === "battle_rule_choice" ||
         (window.XLW_battleRuleWindow && ["spell_chain_start", "spell_chain_add", "spell_chain_resolve", "sync_game_state"].includes(action)) ||
         action === "artifact_cycle_pick" ||
@@ -47928,7 +47962,7 @@ function setupWebSocketEvents() {
         (action === "scarecrow_move_sync" && window.XLW_scarecrowMoveResolve) ||
         (["spell_chain_add", "spell_chain_resolve"].includes(action) && window.XLW_pendingSpellResolve)
       ),
-      process: data => gameMessageHandler({ parsedData: data }),
+      process: data => window.xlwProcessDiagnosticMessage(gameMessageHandler,data),
       checkpoint: () => { if (saveLocalGameState() === false) throw new Error("無法儲存對局進度，請檢查瀏覽器儲存空間。"); },
       fail: message => {
         setStatus("同步已暫停：" + message);
@@ -47941,6 +47975,12 @@ function setupWebSocketEvents() {
         }
         notice.textContent = "同步已暫停，避免雙方戰局繼續分歧。\n" + message + "\n請先重新整理；若仍無法恢復，請雙方重新開局。";
         notice.style.flexDirection = "column";
+        const exportDiagnostic = document.createElement("button");
+        exportDiagnostic.id = "xlwSyncExportDiagnostic";
+        exportDiagnostic.textContent = "匯出診斷";
+        exportDiagnostic.style.cssText = "margin-top:20px;padding:12px 24px;cursor:pointer";
+        exportDiagnostic.onclick = () => window.XLWDuelDiagnostics?.download();
+        notice.appendChild(exportDiagnostic);
         const exit = document.createElement("button");
         exit.id = "xlwSyncExit";
         exit.textContent = "結束本局並返回首頁";
@@ -47956,7 +47996,7 @@ function setupWebSocketEvents() {
     }
   }
   // Keep the same queue during reconnect so in-flight animations cannot be overtaken.
-  window.XLW_sync.process = data => gameMessageHandler({ parsedData: data });
+  window.XLW_sync.process = data => window.xlwProcessDiagnosticMessage(gameMessageHandler,data);
   window.XLW_sync.attach(connection);
   if (window.XLW_savedLegacyState) {
     window.XLW_sync.stop(new Error("這是舊版對局存檔，請雙方更新頁面後重新開局。"));
@@ -53440,6 +53480,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     ...metadata,
     action,
     next_turn: action === "end_turn" ? turn : undefined,
+    diagnosticProof: action === "sync_game_state" && peerCollections && !window.XLW_battleRuleWindow && !window.XLW_DEFENSE_RULE?.resolving ? window.XLWDuelDiagnostics?.proof(stateToSend,player_role) : undefined,
     state: stateToSend
   };
   if (typeof ws.sendObject === "function") ws.sendObject(message);

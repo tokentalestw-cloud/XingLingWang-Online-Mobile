@@ -35,13 +35,14 @@
     const panel=document.createElement('section');panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','xlwBattleRecordTitle');
     const header=document.createElement('header'),title=document.createElement('h2'),button=document.createElement('button');
     title.id='xlwBattleRecordTitle';title.textContent='對戰記錄';button.type='button';button.textContent='關閉';button.onclick=close;
-    header.append(title,button);summary=document.createElement('p');summary.className='battle-record-summary';
+    const diagnosticButton=document.createElement('button');diagnosticButton.type='button';diagnosticButton.textContent='匯出診斷';diagnosticButton.onclick=()=>global.XLWDuelDiagnostics?.download();
+    header.append(title,diagnosticButton,button);summary=document.createElement('p');summary.className='battle-record-summary';
     content=document.createElement('div');content.className='battle-record-content';content.tabIndex=0;
     panel.append(header,summary,content);overlay.appendChild(panel);
     overlay.onclick=event=>{if(event.target===overlay)close();};
     overlay.onkeydown=event=>{
       if(event.key==='Escape'){event.stopPropagation();close();}
-      if(event.key==='Tab'){event.preventDefault();(document.activeElement===button?content:button).focus();}
+      if(event.key==='Tab'){event.preventDefault();const nodes=[diagnosticButton,button,content];const i=nodes.indexOf(document.activeElement);nodes[(i+(event.shiftKey?2:1))%3].focus();}
     };
     document.body.appendChild(overlay);render();button.focus();
   }

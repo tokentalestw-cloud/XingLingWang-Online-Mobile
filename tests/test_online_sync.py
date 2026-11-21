@@ -39,6 +39,25 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
     async def send(self, pid, socket, message):
         await self.manager.broadcast_to_other('test', pid, message, socket)
 
+    async def test_diagnostics_are_validated_ephemeral_and_never_journaled(self):
+        before = dict(self.manager.rooms['test']['delivery'].sequence)
+        message = {'action': 'duel_diagnostic_receipt', 'version': 'duel-diagnostics-v1', 'id': 'proof:1',
+                   'sections': {key: '1234abcd' for key in ['board', 'scores', 'zones', 'energy', 'counts']}, 'private': 'must not relay'}
+        await self.send('a', self.a, message)
+        self.assertEqual(len(self.b.messages), 1)
+        self.assertNotIn('private', self.b.messages[0])
+        self.assertNotIn('server_seq', self.b.messages[0])
+        self.assertEqual(self.a.messages, [])
+        self.assertEqual(self.manager.rooms['test']['delivery'].sequence, before)
+
+    async def test_invalid_or_offline_diagnostics_do_not_enter_replay(self):
+        before = dict(self.manager.rooms['test']['delivery'].sequence)
+        await self.send('a', self.a, {'action': 'duel_diagnostic_receipt', 'id': 'invalid', 'sections': {'secret': 'no'}})
+        self.assertEqual(self.b.messages, [])
+        self.manager.disconnect('test', 'b', self.b)
+        await self.send('a', self.a, {'action': 'duel_diagnostic_receipt', 'version': 'duel-diagnostics-v1', 'id': 'proof:2', 'skipped': 'interaction_in_progress'})
+        self.assertEqual(self.manager.rooms['test']['delivery'].sequence, before)
+
     async def test_atomic_handoff_preserves_sender_coordinates_for_both_roles(self):
         for pid, sock, peer in [('a', self.a, self.b), ('b', self.b, self.a)]:
             message = {'action': 'end_turn', 'next_turn': 2, 'message_id': 'handoff-' + pid,

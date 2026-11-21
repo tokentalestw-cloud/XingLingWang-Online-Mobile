@@ -244,6 +244,8 @@ module.exports = (async () => {
   });
   vm.runInContext('window = globalThis;', setupContext);
   vm.runInContext(transportSource, setupContext);
+  setupContext.performance=performance;
+  vm.runInContext(gameSource.slice(gameSource.indexOf('window.xlwProcessDiagnosticMessage='),gameSource.indexOf('window.xlwReadBattleRecord =')),setupContext);
   vm.runInContext(gameSource.slice(setupStart, setupEnd), setupContext);
   setupContext.setupWebSocketEvents();
   setupSocket.onopen();

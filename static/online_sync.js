@@ -92,6 +92,8 @@
       this.latestBackup = null;
     }
     send(message) {
+      if(message.action==='duel_diagnostic_receipt'){if(this.ready&&!this.failed&&!this.pending.size&&!(this.socket?.bufferedAmount>65536))this.raw(message);return;}
+
       if (message.action === 'leave_room') {
         message.message_id ||= global.crypto.randomUUID();
         this.raw(message);
@@ -108,6 +110,7 @@
       if (this.failed) throw new Error('Online synchronization is paused');
       if (message.action === 'new_game') this.clearBackup();
       message.message_id ||= global.crypto.randomUUID();
+      if(message.action!=='duel_diagnostic_receipt')global.XLWDuelDiagnostics?.record('send',{action:message.action,pending:this.pending.size});
       if (["end_turn","mulligan_confirm"].includes(message.action)) global.XLWInputDiagnostics?.mark("send:entry",{action:message.action});
       if (this.pending.get(message.message_id) !== message) this.encodedPending.delete(message.message_id);
       this.pending.set(message.message_id, message);
@@ -174,6 +177,7 @@
           catch (_) { return; } // persistOutbox already pauses synchronization.
           return;
         }
+        if(data.action==='duel_diagnostic_receipt'){Promise.resolve(this.process(data)).catch(()=>{});return;}
         if (data.action === 'pong') { this.lastPong = Date.now(); return; }
         if (data.type === 'sync_error' || data.type === 'error') {
           this.stop(new Error(data.message));
@@ -246,6 +250,7 @@
       this.failed = true;
       this.ready = false;
       this.wireReady = false;
+      global.XLWDuelDiagnostics?.record('sync_stopped',{message:String(error.message||error).slice(0,180)});
       this.fail(error.message || String(error));
     }
   }
