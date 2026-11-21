@@ -12955,6 +12955,54 @@ window.xlwResolveVillageSearch = async function(spell,clairvoyance=false){
 };
 // End village search spells.
 
+// Accident Property grants an ability; the spell itself is not an equipment card.
+window.xlwApplyAccidentProperty = async function(spell){
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(spell))return false;
+  const token={};pending.set(spell,token);
+  const current=()=>pending.get(spell)===token;
+  const legal=(unit,zone,idx)=>unit?.card&&!window.isUnitEffectImmune(unit,zone,idx)&&!window.isUnitMagicImmune(unit,zone,idx,spell);
+  try{
+    const targets=['enemy_front','enemy_back'].flatMap(zone=>(field[zone]||[]).flatMap((unit,idx)=>legal(unit,zone,idx)?[{unit,zone,idx}]:[]));
+    if(!targets.length)return false;
+    const serial=spell.accidentTargetSerial=(spell.accidentTargetSerial||0)+1;
+    const key=xlwFactionDecisionKey({card:spell,summonedTurn:turn},'player_front','accident-target',serial);
+    const n=await window.xlwChooseFactionAction(true,key,'事故物件：指定單位','點選要賦予事故物件效果的敵方單位。',targets.map((t,value)=>({text:t.unit.card.name,card:t.unit.card,value,boardTarget:{zone:t.zone,idx:t.idx}})),{boardOnly:true});
+    if(!current())return null;
+    const target=targets[n];
+    if(!target||field[target.zone]?.[target.idx]!==target.unit||!legal(target.unit,target.zone,target.idx))return false;
+    target.unit.accidentProperty=true;
+    logBattle(`【事故物件】賦予【${target.unit.card.name}】被獻祭時，敵方玩家回收墓地妖怪村莊卡牌的效果。`);
+    render();return true;
+  }finally{if(current())pending.delete(spell);}
+};
+window.xlwResolveAccidentTribute = async function(unit,zone,idx){
+  const cursed=unit?.accidentProperty||unit?.equipments?.some(e=>(typeof e==='string'?e:e?.name)==='事故物件');
+  if(!cursed||unit.accidentTributeSettled||window.isUnitSilenced(unit,zone,idx))return false;
+  unit.accidentTributeSettled=true;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  const token={};pending.set(token,token);
+  const current=()=>pending.get(token)===token;
+  const beneficiaryLocal=zone.startsWith('enemy_');
+  const grave=()=>beneficiaryLocal?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const handNow=()=>beneficiaryLocal?hand:(window.XLW_ENEMY.hand ||= []);
+  const eligible=c=>c&&(c.faction==='妖怪村莊'||c.deck==='妖怪村莊'||c.id?.includes('VLG'));
+  try{
+    const options=grave().filter(eligible);
+    if(!options.length)return false;
+    const key=xlwFactionDecisionKey(unit,zone,'accident-tribute',0);
+    const n=await window.xlwChooseFactionAction(beneficiaryLocal,key,'事故物件：獻祭後回收','由受益玩家選擇墓地一張妖怪村莊卡牌回手。',options.map((card,value)=>({text:card.name,card,value})));
+    if(!current())return null;
+    const chosen=Number.isInteger(n)&&window.XLWDuelConsistency.findKnownCard(grave(),options[n]);
+    if(!eligible(chosen))return false;
+    const moved=window.XLWDuelConsistency.moveKnownCard(grave(),handNow(),chosen);
+    if(!moved)return false;
+    logBattle(`【事故物件】${beneficiaryLocal?'我方':'對手'}選擇【${moved.name}】從墓地回手。`);
+    render();return true;
+  }finally{if(current())pending.delete(token);}
+};
+// End Accident Property lifecycle.
+
 async function castSpell(handIndex) {
   if(window.XLW_mechPhase&&!/合體時|合體階段/.test(hand[handIndex]?.effect_text||"")){setStatus("請先結束機械合體階段。");return;}
   if (window.XLW_playerMagicBannedUntilTurn && turn < window.XLW_playerMagicBannedUntilTurn) {
@@ -13531,7 +13579,7 @@ async function castSpell(handIndex) {
     });
 
   // Village searches use one activation and the existing counter window.
-  } else if (card.id === "R-VLG-0066" || card.name === "千里眼" || card.id === "SR-VLG-0047" || card.name === "如月車票") {
+  } else if (card.id === "R-VLG-0066" || card.name === "千里眼" || card.id === "SR-VLG-0047" || card.name === "如月車票" || card.id === "R-VLG-0054" || card.name === "事故物件") {
     const clairvoyance=card.id==="R-VLG-0066"||card.name==="千里眼";
     if(clairvoyance&&!['召喚階段','戰術佈陣','進攻宣言'].includes(phase)){
       setStatus('【千里眼】只能在主要階段發動。');return;
@@ -13540,7 +13588,8 @@ async function castSpell(handIndex) {
     if(!spellCard)return;
     await xlwShowSpellActivationOverlay(spellCard,"player");
     await castSpellChain(spellCard,async()=>{
-      const result=await window.xlwResolveVillageSearch(spellCard,clairvoyance);
+      const accident=spellCard.id==="R-VLG-0054"||spellCard.name==="事故物件";
+      const result=accident?await window.xlwApplyAccidentProperty(spellCard):await window.xlwResolveVillageSearch(spellCard,clairvoyance);
       if(result!==null)graveyard.push(spellCard);
       render();
     });
@@ -15663,31 +15712,6 @@ async function castSpell(handIndex) {
   else if (card.id === "R-CAT-0019" || card.name.includes("逃脫")) {
     window.XLW_playerCatEscapeTurn = turn;
     logBattle("✨ 逃脫 效果發動：本次進攻時，我方所有被破壞的單位將回到手牌！");
-  }
-  else if (card.id === "R-VLG-0054" || card.name.includes("事故物件")) {
-    const enemyUnits = [];
-    for (const z of ["enemy_front", "enemy_back"]) {
-      field[z].forEach((u, i) => {
-        if (u && !isUnitEffectImmune(u, z, i)) {
-          enemyUnits.push({ zone: z, idx: i, name: u.card.name });
-        }
-      });
-    }
-    if (enemyUnits.length === 0) {
-      setStatus("對手場上沒有可選擇的單位！");
-      await finishWithoutTarget();
-      return;
-    }
-    const choices = enemyUnits.map((item, idx) => ({ text: `${item.name} (${item.zone.includes("front") ? "前" : "後"}${item.idx + 1})`, value: idx }));
-    const chosenVal = await showXLWChoiceModal("事故物件 施加效果", "請選擇一個敵方單位：", choices);
-    if (chosenVal !== null && chosenVal !== undefined) {
-      const target = enemyUnits[chosenVal];
-      const unit = field[target.zone][target.idx];
-      unit.equipments = unit.equipments || [];
-      unit.equipments.push("事故物件");
-      unit.accidentProperty = true;
-      logBattle(`✨ 事故物件 效果：使對手【${unit.card.name}】獲得「事故物件」詛咒效果！`);
-    }
   }
   else if (card.name.includes("天氣晴") || card.id === "R-NMG-0021" || card.id === "SSSR-NMG-0021") {
     const hasField = ($("playerField").dataset.card || $("enemyField").dataset.card);
@@ -19476,21 +19500,10 @@ window.xlwPlayerTributeUnit = async function(unit, zone, idx, options = {}) {
     return;
   }
   if (!window.isUnitSilenced(unit, zone, idx)) window.xlwCheckGhostSamuraiSacrifice?.(unit.card, true);
+  if(await window.xlwResolveAccidentTribute?.(unit,zone,idx)===null)return;
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
     logBattle(`✨ ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
   } else {
-    // Check for Accident Property (事故物件)
-    if (unit.accidentProperty || (unit.equipments && unit.equipments.includes("事故物件"))) {
-      const oppGrave = window.XLW_ENEMY.grave || [];
-      const yokaiInGrave = oppGrave.filter(c => c && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
-      if (yokaiInGrave.length > 0) {
-        const chosen = yokaiInGrave[Math.floor(Math.random() * yokaiInGrave.length)];
-        oppGrave.splice(oppGrave.indexOf(chosen), 1);
-        window.XLW_ENEMY.hand.push(chosen);
-        logBattle(`✨ 對手 事故物件 效果：對手將其墓地中的【${chosen.name}】回收至其手牌！`);
-      }
-    }
-
     if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, true)) {
       graveyard.push(unit.card);
     }
@@ -19506,22 +19519,10 @@ window.xlwEnemyTributeUnit = async function(unit, zone, idx) {
     logBattle(`🛡️ 對手【${unit.card.name}】完全不能被獻祭！`);
     return;
   }
+  if(await window.xlwResolveAccidentTribute?.(unit,zone,idx)===null)return;
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
     logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
   } else {
-    // Check for Accident Property (事故物件)
-    if (unit.accidentProperty || (unit.equipments && unit.equipments.includes("事故物件"))) {
-      const yokaiInGrave = graveyard.filter(c => c && (c.faction === "妖怪村莊" || c.id?.includes("VLG")));
-      if (yokaiInGrave.length > 0) {
-        const choices = yokaiInGrave.map((c, i) => ({ text: c.name, value: i }));
-        const chosenIdxVal = await showXLWChoiceModal("事故物件 效果發動", "選擇回到我方手牌的妖怪村莊卡牌：", choices);
-        if (chosenIdxVal !== null && chosenIdxVal !== undefined) {
-          const chosen = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, yokaiInGrave[chosenIdxVal]);
-          if (chosen) logBattle(`✨ 事故物件 效果：我方將墓地中的【${chosen.name}】回收至手牌！`);
-        }
-      }
-    }
-
     if (!await xlwResolveHorrorPriestTribute(unit, zone, idx, false)) {
       (window.XLW_ENEMY.grave ||= []).push(unit.card);
     }
@@ -46012,7 +46013,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-village-searches-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-accident-property-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();

@@ -43,6 +43,26 @@
         "scenarios": 6,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-VLG-0054",
+      "signature": "fe222aa1a39f73aaf8675a7abd3376210e37600033b64c1f31838d165ba2dfa2",
+      "regression_file": "tests/test_accident_property.cjs",
+      "scope": [
+        "魔法連鎖與反制",
+        "直接指定與抗性",
+        "賦予效果與裝備區分",
+        "獻祭回收選擇",
+        "小旅人與效果失效",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 8,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
