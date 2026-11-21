@@ -12483,8 +12483,8 @@ function triggerLittleTraveler(e) {
     return;
   }
   if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-    const handled = window.XLW_Tutorial.handleInteraction("click_forest");
-    if (handled) return;
+    void window.XLW_Tutorial.handleInteraction("click_forest");
+    return;
   }
   if (isMultiplayer && !isMyTurn) {
     setStatus("對手回合中，請稍候！");
@@ -25613,7 +25613,7 @@ function xlwCanDeclareAfterTactical() {
     field[zone].some((unit, idx) => unit && !unit.tapped && xlwCanAttackAfterTactical(unit, zone, idx)));
 }
 
-async function changeActionPhase(targetPhase) {
+async function changeActionPhase(targetPhase, options = {}) {
   if(xlwRequireSpellCompletion())return;
   if (window.XLW_directBoardPrompt) return;
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('click');
@@ -25625,8 +25625,8 @@ async function changeActionPhase(targetPhase) {
     setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌！");
     return;
   }
-  if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-    window.XLW_Tutorial.handleInteraction("click_phase_btn", { phase: targetPhase });
+  if (window.XLW_Tutorial?.active && !options.tutorialAction) {
+    return await window.XLW_Tutorial.handleInteraction("click_phase_btn", { phase: targetPhase });
   }
   window.xlwClearAllPendingResolvers();
   if ((turn === 1 && (!window.XLW_Tutorial || !window.XLW_Tutorial.active)) || (countdownActive && countdownRemaining === 1)) {
@@ -38145,7 +38145,7 @@ function render() {
   const phaseHelpText = $("phaseHelpText") || $("phaseHelpHard");
   const phaseDisplayPanel = $("phaseDisplayPanel") || $("phaseDisplayPanelHard");
   
-  if (phaseDisplayPanel && phase && (!window.XLW_Tutorial || !window.XLW_Tutorial.active)) {
+  if (phaseDisplayPanel && phase) {
     phaseDisplayPanel.style.setProperty("display", "flex", "important");
     phaseDisplayPanel.dataset.phase = phase;
   }
@@ -39125,10 +39125,8 @@ function renderHand() {
     cardEl.onclick = async (e) => {
       e.stopPropagation();
       if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-        const handled = await window.XLW_Tutorial.handleInteraction("click_card", { index: idx, card });
-        if (handled) {
-          return;
-        }
+        await window.XLW_Tutorial.handleInteraction("click_card", { index: idx, card });
+        return;
       }
       if (window.XLW_playerNeedsToDraw) {
         setStatus("⚠️ 請先點擊右下角【我方牌庫】完成抽牌，再進行卡牌操作！");
@@ -40102,8 +40100,8 @@ function renderField() {
           e.stopPropagation();
           
           if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-            const handled = window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx, obj });
-            if (handled) return;
+            void window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx, obj });
+            return;
           }
 
           // 任何階段點選場上單位皆在左側特寫面板預覽大圖、數值與所有裝備/狀態效果
@@ -44161,8 +44159,8 @@ if (obj.card?.id === "SPT-0006" || obj.card?.name?.includes("惡魔旅人")) {
           e.stopPropagation();
           
           if (window.XLW_Tutorial && window.XLW_Tutorial.active) {
-            const handled = window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx });
-            if (handled) return;
+            void window.XLW_Tutorial.handleInteraction("click_slot", { zone, idx });
+            return;
           }
           
           if (window.XLW_meowToyShopPlacementActive) {
@@ -45587,7 +45585,8 @@ window.xlwGetDuelEventState = function() {
     ? (isMyTurn ? "等待對手完成防守與反制" : "我方防守：可發動符合條件的魔法或完成防守")
     : `${isMyTurn ? "我方可操作" : "等待對手操作"}・${phase}`;
   return {active:!!window.XLW_gameInProgress && !isGameOverFlag,
-    quiet:!!mulliganActive || !!window.XLW_reconnectingWaitSync || !!window.XLW_Tutorial?.active ||
+    quiet:!!mulliganActive || !!window.XLW_reconnectingWaitSync ||
+      !!(window.XLW_Tutorial?.active && window.XLW_Tutorial.currentStep < 11) ||
       !!(isMultiplayer && window.XLW_sync && !window.XLW_sync.ready),
     turn,phase,myTurn:isMyTurn,next,sides:{
       player:{front:field.player_front,back:field.player_back,grave:graveyard,exile:playerExileZone,
@@ -56322,7 +56321,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "專屬牌組",
-      content: "我方主要牌庫。每回合自動抽 2 張補充手牌（上限10張）。",
+      content: "我方主要牌庫。每回合開始時，點擊發光牌庫抽 2 張補充手牌（上限10張）。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: null
@@ -56380,7 +56379,7 @@ window.XLW_Tutorial = {
     },
     {
       title: "實戰 Step 1：抽牌階段",
-      content: "第一回合【抽牌階段】！每回合開始自動補牌，請點擊右下角的【專屬牌組】抽取 2 張手牌。",
+      content: "第一回合【抽牌階段】！請點擊發光的【我方牌組】，或右側【抽取回合手牌】，抽取 2 張手牌。",
       spotlightSelector: "#playerDeck",
       anatomyModal: false,
       interactive: { type: "click_deck" }
@@ -56414,6 +56413,13 @@ window.XLW_Tutorial = {
       interactive: { type: "click_first_turn_end" }
     },
     {
+      title: "第 2 回合：抽牌階段",
+      content: "輪到我方！和一般對戰相同，先點擊發光的我方牌庫，抽取本回合手牌，再進入召喚階段。",
+      spotlightSelector: "#playerDeck",
+      anatomyModal: false,
+      interactive: { type: "click_deck" }
+    },
+    {
       title: "實戰 Step 6：第 2 回合召喚（選擇盾牌獸人）",
       content: "對手召喚了【創世老人】，並以戰術佈陣召喚了【小旅人】！輪到我方第 2 回合，進入【召喚階段】，請點擊手牌最左側的【盾牌獸人】準備登場。",
       spotlightSelector: "#hand .card:nth-child(1)",
@@ -56440,6 +56446,13 @@ window.XLW_Tutorial = {
       spotlightSelector: "#stableActionEnd",
       anatomyModal: false,
       interactive: { type: "click_end_turn" }
+    },
+    {
+      title: "第 3 回合：先抽牌，再防守",
+      content: "對手已宣告進攻。先點擊發光的我方牌庫抽牌，隨後進入防守階段，準備以魔法反制。",
+      spotlightSelector: "#playerDeck",
+      anatomyModal: false,
+      interactive: { type: "click_deck", afterDrawPhase: "防守階段" }
     },
     {
       title: "實戰 Step 10：我方防守（使用削弱藥水反制）",
@@ -56549,6 +56562,9 @@ window.XLW_Tutorial = {
     }
     
     this.active = true;
+    clearTimeout(this._advanceTimer);
+    this._advanceTimer = null;
+    this._inAction = false;
     window.XLWAudio?.resetBattle();
     window.xlwStarLineTrophies = Array(5).fill(null);
     window.XLWBattleFlow?.reset();
@@ -56593,7 +56609,20 @@ window.XLW_Tutorial = {
     tacticalSummonUsed = false;
     window.XLW_tacticalSelected = null;
     window.XLW_defenseCounterActive = false;
-    window.XLW_bypassNormalSummonLimit = true; // ensure tutorial doesn't block summons
+    // Guided ordinary summons must consume their normal phase allowance.
+    window.XLW_bypassNormalSummonLimit = false;
+    window.XLW_bypassTurnCheck = false;
+    window.XLW_playerNeedsToDraw = false;
+    window.XLW_tacticalMoveUsed = false;
+    window.XLW_forcedTravelerPending = null;
+    isGameOverFlag = false;
+    graveyard = [];
+    enemyGraveyard = [];
+    battleLog = [];
+    if (window.XLW_ENEMY) window.XLW_ENEMY.grave = enemyGraveyard;
+    playerBonusScore = 0;
+    enemyBonusScore = 0;
+    clearModes();
 
     const demoUnit1 = {
         id: "C-ORC-0012",
@@ -56697,6 +56726,11 @@ window.XLW_Tutorial = {
       setStatus("🎉 遊戲開始！每回合依序經歷：抽牌 ➔ 防守 ➔ 召喚 ➔ 戰術 ➔ 結束階段。");
       logBattle("🎉 —— 遊戲開始！先攻第一回合 ——");
     }
+    if (step.interactive?.type === "click_deck") {
+      phase = "抽牌階段";
+      window.XLW_playerNeedsToDraw = deck.length > 0;
+    }
+    render();
 
     const titleEl = document.getElementById("xlwTutorialTitle");
     const contentEl = document.getElementById("xlwTutorialContent");
@@ -57046,6 +57080,11 @@ window.XLW_Tutorial = {
 
   endTutorial: function() {
     this.active = false;
+    clearTimeout(this._advanceTimer);
+    this._advanceTimer = null;
+    this._inAction = false;
+    window.XLW_playerNeedsToDraw = false;
+    window.XLW_bypassNormalSummonLimit = false;
     document.body.classList.remove("xlw-tutorial-active");
     const overlay = document.getElementById("xlwTutorialOverlay");
     if (overlay) overlay.style.setProperty("display", "none", "important");
@@ -57069,7 +57108,7 @@ window.XLW_Tutorial = {
     const isMulliganClick = (expectedType === "click_mulligan_card" && (actionType === "click_mulligan_card" || actionType === "click_card"));
 
     if (expectedType === actionType || isDefenseSpellClick || isMulliganClick) {
-      if (this._inAction) return false;
+      if (this._inAction || this._advanceTimer) return false;
       this._inAction = true;
 
       let stepDelay = 300;
@@ -57108,9 +57147,11 @@ window.XLW_Tutorial = {
         render();
       }
       else if (actionType === "click_deck") {
-          performPlayerTurnStartDraw();
-          phase = "召喚階段";
-          window.xlwShowPhaseBanner("召喚階段", "#4ade80");
+          window.XLW_playerNeedsToDraw = false;
+          await performPlayerTurnStartDraw();
+          phase = step.interactive.afterDrawPhase || "召喚階段";
+          window.XLW_defenseCounterActive = phase === "防守階段";
+          window.xlwShowPhaseBanner(phase, "#4ade80");
           render();
       }
       else if (actionType === "click_first_turn_end") {
@@ -57182,11 +57223,11 @@ window.XLW_Tutorial = {
         isMyTurn = true;
         normalSummonUsed = false;
         tacticalSummonUsed = false;
-        window.XLW_bypassNormalSummonLimit = true;
+        window.XLW_bypassNormalSummonLimit = false;
         playerUntap();
-        await performPlayerTurnStartDraw();
-        phase = "召喚階段";
-        setStatus("我方第 2 回合開始！已自動抽 2 張牌，進入「召喚階段」請先打出一個單位！");
+        phase = "抽牌階段";
+        window.XLW_playerNeedsToDraw = deck.length > 0;
+        setStatus("我方第 2 回合開始！請先點擊發光牌庫抽牌，再進入召喚階段。");
         render();
         await window.xlwShowPhaseBanner("我方回合", "#4ade80");
       }
@@ -57242,7 +57283,7 @@ window.XLW_Tutorial = {
         window.xlwShowPhaseBanner("召喚階段", "#4ade80");
         normalSummonUsed = false;
         tacticalSummonUsed = false;
-        window.XLW_bypassNormalSummonLimit = true;
+        window.XLW_bypassNormalSummonLimit = false;
         setStatus("防守階段結束，進入我方「召喚階段」！準備進行獻祭召喚！");
         render();
       }
@@ -57300,7 +57341,7 @@ window.XLW_Tutorial = {
       }
       else if (actionType === "click_phase_btn" && (!payload || payload.phase === step.interactive.phase)) {
         $("cardModal")?.classList.remove("show");
-        await changeActionPhase(step.interactive.phase);
+        await changeActionPhase(step.interactive.phase, {tutorialAction: true});
       }
       else if (actionType === "click_end_turn") {
         $("cardModal")?.classList.remove("show");
@@ -57371,28 +57412,14 @@ window.XLW_Tutorial = {
         tacticalSummonUsed = false;
         window.XLW_tacticalMoveUsed = false;
         playerUntap();
-        await performPlayerTurnStartDraw();
-        phase = "防守階段";
-        window.XLW_defenseCounterActive = true;
-        setStatus("🛡️ 輪到我方防守階段：請點擊手牌中的【削弱藥水】反制對手的進攻！");
-        logBattle("—— 我方防守階段開始：開啟防守魔法反制時機 ——");
+        phase = "抽牌階段";
+        window.XLW_playerNeedsToDraw = deck.length > 0;
+        window.XLW_defenseCounterActive = false;
+        setStatus("我方抽牌階段：先抽牌，再使用【削弱藥水】防守。");
+        logBattle("—— 我方回合開始：先抽牌，再處理敵方進攻 ——");
         render();
-        await window.xlwShowPhaseBanner("我方防守階段", "#3b82f6");
-
-        // 如一般防守階段一樣跳出反制魔法提示
-        const wantCounter = await showXLWConfirm(
-          "🛡️ 防守階段反制魔法",
-          "對手【呐喊的人】(攻擊力 4) 宣告了進攻！是否在戰鬥結算前發動防守反制魔法卡【削弱藥水】？",
-          "發動防守魔法",
-          "不發動"
-        );
-        if (wantCounter) {
-          logBattle("我方宣告發動防守反制魔法！");
-          setStatus("🛡️ 請點擊手牌中的【削弱藥水】發動反制！");
-        } else {
-          logBattle("我方暫未發動魔法。教學提示：面對強敵進攻，請發動手牌【削弱藥水】進行反制！");
-          setStatus("教學提示：若不防守我方單位將被擊潰，請點擊【削弱藥水】進行反制！");
-        }
+        setStatus("我方回合開始：請先抽牌，再於防守階段點選【削弱藥水】反制。");
+        await window.xlwShowPhaseBanner("我方抽牌階段", "#3b82f6");
       }
       else if (actionType === "click_tribute_confirm") {
         await confirmTribute();
@@ -57402,7 +57429,10 @@ window.XLW_Tutorial = {
       }
 
       this._inAction = false;
-      setTimeout(() => this.nextStep(), stepDelay);
+      this._advanceTimer = setTimeout(() => {
+        this._advanceTimer = null;
+        if (this.active && this.steps[this.currentStep] === step) this.nextStep();
+      }, stepDelay);
       return true;
     }
     return false;
