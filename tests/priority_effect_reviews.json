@@ -63,6 +63,26 @@
         "scenarios": 8,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-VLG-0020",
+      "signature": "c21b0521620e392b54178a6b6c2dc927ce7f5ae5e26c2a7af34a82d7c937e4ad",
+      "regression_file": "tests/test_curse_communion.cjs",
+      "scope": [
+        "主要階段與魔法反制",
+        "下一次打出的許可消耗時機",
+        "祭品支付與免祭品打出",
+        "特殊召喚區分",
+        "存檔恢復與回合期限",
+        "雙方快照持有權"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 10,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

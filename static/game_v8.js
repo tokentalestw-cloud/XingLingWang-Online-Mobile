@@ -1366,6 +1366,7 @@ async function init() {
 
 // 建立線上雙人新局
 function newGameMultiplayer() {
+  window.xlwResetCurseSummon?.();
   window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
@@ -1592,6 +1593,7 @@ function strictSourceCards(deckName) {
 
 // ===== 3. 對戰與回合流程 =====
 function initGameEmptyState() {
+  window.xlwResetCurseSummon?.();
   window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
@@ -1657,6 +1659,7 @@ function initGameEmptyState() {
 }
 
 function newGame() {
+  window.xlwResetCurseSummon?.();
   window.XLW_deckTopPending?.clear();
   window.XLW_pipiSearchWaiting=false;
   window.XLWDuelDiagnostics?.reset();
@@ -6130,9 +6133,31 @@ function hasFriendlyDessertQueen(side = "player") {
 }
 window.hasFriendlyDessertQueen = hasFriendlyDessertQueen;
 
+// Curse Communion permits the next played unit in the chosen tactical phase.
+window.xlwHasCurseSummon = function(isPlayer=true){
+  const side=isPlayer?'player':'enemy';
+  const active=window['XLW_'+side+'CurseSummonActive'];
+  const activeTurn=window['XLW_'+side+'CurseSummonTurn'];
+  return Boolean(active&&(activeTurn==null||activeTurn===turn));
+};
+window.xlwConsumeCurseSummon = function(zone){
+  if(phase!=='戰術佈陣'||!zone.startsWith('player_')||!window.xlwHasCurseSummon(true))return false;
+  window.XLW_playerCurseSummonActive=false;
+  window.XLW_playerCurseSummonTurn=null;
+  logBattle('【詛咒通靈】下一個單位已打出，本次佈陣獻祭打出許可已消耗。');
+  return true;
+};
+window.xlwResetCurseSummon = function(){
+  for(const side of ['player','enemy']){
+    window['XLW_'+side+'CurseSummonActive']=false;
+    window['XLW_'+side+'CurseSummonTurn']=null;
+  }
+};
+// End Curse Communion state.
+
 function xlwAllowsTacticalTribute(card) {
   return window.xlwIsFlowerGirlTributePlayable?.(card) ||
-    window.XLW_playerCurseSummonActive || window.XLW_playerFacelessManActive ||
+    window.xlwHasCurseSummon(true) || window.XLW_playerFacelessManActive ||
     (hasFriendlyDessertQueen("player") && isDessertCard(card));
 }
 
@@ -8805,6 +8830,10 @@ window.xlwCaptureFactionState = function() {
     fairyRetreats: window.XLW_fairyRetreats || [],
     playerEnergy: window.xlwGetSteamEnergy(true),
     enemyEnergy: window.xlwGetSteamEnergy(false),
+    playerCurseSummonActive: Boolean(window.XLW_playerCurseSummonActive),
+    enemyCurseSummonActive: Boolean(window.XLW_enemyCurseSummonActive),
+    playerCurseSummonTurn: window.XLW_playerCurseSummonTurn ?? null,
+    enemyCurseSummonTurn: window.XLW_enemyCurseSummonTurn ?? null,
     playerMechanicalTurn: window.XLW_mechanicalManualTurn,
     enemyMechanicalTurn: window.XLW_enemyMechanicalManualTurn,
     playerBlackHoleLane: window.XLW_playerBlackHoleLane || 0,
@@ -8818,8 +8847,15 @@ window.xlwCaptureFactionState = function() {
     auntieGoatUsedThisTurn: Boolean(window.XLW_auntieGoatUsedThisTurn)
   };
 };
-window.xlwRestoreFactionState = function(state, peer = false) {
+window.xlwRestoreFactionState = function(state, peer = false, options = {}) {
   if (!state || typeof state !== "object") return;
+  for(const side of ['player','enemy']){
+    if(peer&&side==='player'&&options.preserveCurseOwner)continue;
+    const source=peer?(side==='player'?'enemy':'player'):side;
+    if(typeof state[source+'CurseSummonActive']==='boolean')window['XLW_'+side+'CurseSummonActive']=state[source+'CurseSummonActive'];
+    const activeTurn=state[source+'CurseSummonTurn'];
+    if(activeTurn===null||Number.isInteger(activeTurn))window['XLW_'+side+'CurseSummonTurn']=activeTurn;
+  }
   if (Array.isArray(state.trophies)) xlwRestoreTrophies(state.trophies, peer);
   if (Array.isArray(state.fairyRetreats)) {
     const records = state.fairyRetreats.map(record => peer ? {
@@ -8862,6 +8898,7 @@ window.xlwRestoreFactionState = function(state, peer = false) {
   }
 };
 window.xlwResetFactionState = function() {
+  window.xlwResetCurseSummon?.();
   window.XLW_fairyRetreats = [];
   window.XLW_playerRouletteWheel = [];
   window.XLW_enemyRouletteWheel = [];
@@ -13579,17 +13616,24 @@ async function castSpell(handIndex) {
     });
 
   // Village searches use one activation and the existing counter window.
-  } else if (card.id === "R-VLG-0066" || card.name === "千里眼" || card.id === "SR-VLG-0047" || card.name === "如月車票" || card.id === "R-VLG-0054" || card.name === "事故物件") {
+  } else if (card.id === "R-VLG-0066" || card.name === "千里眼" || card.id === "SR-VLG-0047" || card.name === "如月車票" || card.id === "R-VLG-0054" || card.name === "事故物件" || card.id === "R-VLG-0020" || card.name === "詛咒通靈") {
     const clairvoyance=card.id==="R-VLG-0066"||card.name==="千里眼";
-    if(clairvoyance&&!['召喚階段','戰術佈陣','進攻宣言'].includes(phase)){
-      setStatus('【千里眼】只能在主要階段發動。');return;
+    const curse=card.id==="R-VLG-0020"||card.name==="詛咒通靈";
+    if((clairvoyance||curse)&&!['召喚階段','戰術佈陣','進攻宣言'].includes(phase)){
+      setStatus(`【${card.name}】只能在主要階段發動。`);return;
     }
     const spellCard=window.XLWDuelConsistency.takeKnownCard(hand,card);
     if(!spellCard)return;
     await xlwShowSpellActivationOverlay(spellCard,"player");
     await castSpellChain(spellCard,async()=>{
       const accident=spellCard.id==="R-VLG-0054"||spellCard.name==="事故物件";
-      const result=accident?await window.xlwApplyAccidentProperty(spellCard):await window.xlwResolveVillageSearch(spellCard,clairvoyance);
+      let result;
+      if(curse){
+        window.XLW_playerCurseSummonActive=true;
+        window.XLW_playerCurseSummonTurn=turn;
+        logBattle('【詛咒通靈】若本回合選擇戰術佈陣，下一個打出的單位可為需要祭品的單位；仍須支付祭品。');
+        result=true;
+      }else result=accident?await window.xlwApplyAccidentProperty(spellCard):await window.xlwResolveVillageSearch(spellCard,clairvoyance);
       if(result!==null)graveyard.push(spellCard);
       render();
     });
@@ -15705,9 +15749,6 @@ async function castSpell(handIndex) {
       setStatus("我方牌庫已無卡牌，無法發動【託夢】！");
       return;
     }
-  } else if (card.id === "R-VLG-0020" || card.name.includes("詛咒通靈")) {
-    window.XLW_playerCurseSummonActive = true;
-    logBattle("✨ 詛咒通靈 效果發動：我方下一次打出的單位可為需要祭品的單位！");
   }
   else if (card.id === "R-CAT-0019" || card.name.includes("逃脫")) {
     window.XLW_playerCatEscapeTurn = turn;
@@ -20729,10 +20770,6 @@ async function confirmTribute() {
       normalSummonUsed = true;
     } else if (phase === "戰術佈陣") {
       tacticalSummonUsed = true;
-      if (window.XLW_playerCurseSummonActive) {
-        window.XLW_playerCurseSummonActive = false;
-        logBattle("✨ 詛咒通靈 效果：已使用此效果進行了獻祭召喚！");
-      }
     }
     selectedHandForTribute = null;
     selectedTributes = [];
@@ -21112,6 +21149,7 @@ async function performSummonToSlot(zone, idx) {
       logBattle(`特殊召喚墓地單位 ${card.name} 到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     } else {
       hand.splice(handIndex, 1);
+      window.xlwConsumeCurseSummon?.(zone);
       if (window.XLW_bypassNormalSummonLimit) {
         window.XLW_bypassNormalSummonLimit = false;
         logDebug(`【連動額外召喚】成功！不佔用本回合常規召喚額度。`);
@@ -37410,6 +37448,7 @@ async function endPlayerTurnAndRunEnemy() {
 
   clearModes();
     window.XLW_playerCurseSummonActive = false;
+    window.XLW_playerCurseSummonTurn = null;
     window.XLW_playerFacelessManActive = false;
     window.XLW_enemyFacelessManActive = false;
     window.XLW_legendaryBootsPlayedThisTurn = false;
@@ -46013,7 +46052,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-accident-property-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-curse-communion-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46537,7 +46576,7 @@ function setupWebSocketEvents() {
           }
         }
         
-        window.xlwRestoreFactionState(s.factionState, true);
+        window.xlwRestoreFactionState(s.factionState, true, {preserveCurseOwner:isMyTurn&&!quietEventRecovery&&!data.turnHandoff});
         playerBonusScore = s.enemyBonusScore;
         enemyBonusScore = s.playerBonusScore;
         
