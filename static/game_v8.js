@@ -25982,9 +25982,26 @@ async function selectPlayerTarget(zone, idx) {
   const origin = selectedAttacker;
   selectedAttacker = null;
   await window.xlwResolveSavageAttack?.(attacker, origin.zone, origin.idx);
+  await window.xlwTryThiefSummon?.(attacker, origin.zone, origin.idx);
   render();
 }
 window.selectPlayerTarget = selectPlayerTarget;
+
+window.xlwTryThiefSummon = async function(unit, zone, idx) {
+  const valid = () => isMyTurn && phase === "進攻宣言" && field[zone]?.[idx] === unit &&
+    unit?.attacking && checkUnitHasPiercing(unit, zone, idx) &&
+    getUnitAtk(unit, zone, idx) === getUnitStars(unit, zone, idx) * 2;
+  const available = () => ["enemy_front", "enemy_back"].some(row => field[row].some(slot => !slot));
+  const thief = playerExtraDeck.find(card => card?.id === "SSSR-NMS-0064" || card?.id === "NEU-0064");
+  if (!thief || !valid() || !available()) return false;
+  const accepted = await showXLWConfirm("大耳賊 效果觸發",
+    `【${unit.card.name}】進攻時攻擊力 ${getUnitAtk(unit, zone, idx)}，剛好等於目前 ${getUnitStars(unit, zone, idx)}★ 的兩倍。是否將額外區的大耳賊召喚到對手場上？`);
+  if (!accepted || !valid() || !available() || !playerExtraDeck.includes(thief)) return false;
+  return window.xlwSpecialSummonUnit(thief, true, {
+    destinationIsPlayer: false, frontPriority: false, sourcePile: () => playerExtraDeck,
+    beforePlacement: () => valid() && available()
+  });
+};
 
 window.xlwResolveSavageMartial = async function(id, isPlayer, attacker, attZone, attIdx, defZone, defIdx, defender) {
   if (isMultiplayer && (id === "R-EWD-0068" || !isPlayer)) return false;
@@ -26159,6 +26176,7 @@ async function xlwAutoDeclarePlayerAttacks() {
       }));
     }
     await window.xlwResolveSavageAttack?.(playerAttacker, actualZone, i);
+    await window.xlwTryThiefSummon?.(playerAttacker, actualZone, i);
   }
 
   window.XLW_DEFENSE_RULE.enemyNeedsDefense = playerAttackCount > 0;
@@ -26522,25 +26540,7 @@ async function xlwTogglePlayerAttack(zone, idx, hasSlid = false) {
       }
     }
 
-    // --- 大耳賊效果觸發判定 ---
-    const hasPiercing = checkUnitHasPiercing(unit, zone, idx);
-    const baseAtkNum = Number(unit.card.attack || 0);
-    const hasDoubleAtk = baseAtkNum > 0 && getUnitAtk(unit, zone, idx) === baseAtkNum * 2;
-    const thiefInExtra = playerExtraDeck.find(c => c?.id === "SSSR-NMS-0064" || c?.id === "NEU-0064");
-
-    if (hasPiercing && hasDoubleAtk && thiefInExtra) {
-      const confirmSummon = await showXLWConfirm(
-        "大耳賊 效果觸發",
-        `我方進攻的 貫穿 單位 ${unit.card.name} 攻擊力剛好為其基礎值 (${baseAtkNum}) 的 2 倍！是否從我方額外牌庫召喚【大耳賊】至對手場上任意空位？`,
-        "是",
-        "否"
-      );
-      if (confirmSummon) {
-        await window.xlwSpecialSummonUnit(thiefInExtra, true, {
-          destinationIsPlayer: false, frontPriority: false, sourcePile: () => playerExtraDeck
-        });
-      }
-    }
+    await window.xlwTryThiefSummon?.(unit, zone, idx);
     // --------------------------
   }
 
@@ -38381,7 +38381,7 @@ window.xlwCanPlayHandCard = function(card, idx) {
       phases = ["Main Phase", "Defense Phase"];
     }
     let canPlayPhase = false;
-    if (phases.includes("Main Phase") && (phase === "召喚階段" || phase === "戰術佈陣") && (isMyTurn || !isMultiplayer)) canPlayPhase = true;
+    if (phases.includes("Main Phase") && ["召喚階段", "戰術佈陣", "進攻宣言", "主要階段"].includes(phase) && isMyTurn) canPlayPhase = true;
     if (phases.includes("Summon Phase") && phase === "召喚階段" && (isMyTurn || !isMultiplayer)) canPlayPhase = true;
     if (phases.includes("Defense Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlayPhase = true;
     if (phases.includes("Enemy Phase") && (phase === "防守階段" || window.XLW_defenseCounterActive)) canPlayPhase = true;

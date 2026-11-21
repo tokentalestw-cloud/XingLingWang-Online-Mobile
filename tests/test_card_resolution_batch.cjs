@@ -1751,3 +1751,65 @@ test("A mirrored pile summon rejects a stale destination and preserves other cop
   assert.deepEqual(c.enemyGraveyard, [other]);
   assert.equal(c.field.enemy_front[1].card, card);
 });
+
+test("Thief asks its attacking owner only when current attack is exactly twice current stars", async () => {
+  const c = fixture(), attacker = unit("piercer", {attacking: true, attack: 8, stars: 4, piercing: true});
+  attacker.card.attack = 3;
+  c.phase = "進攻宣言";
+  c.field.player_front[0] = attacker;
+  const thief = {id: "SSSR-NMS-0064"};
+  c.playerExtraDeck.push(thief);
+  c.getUnitAtk = unit => unit.attack;
+  c.getUnitStars = unit => unit.stars;
+  c.checkUnitHasPiercing = unit => unit.piercing;
+  let prompts = 0, placements = 0;
+  c.showXLWConfirm = async () => { prompts++; return true; };
+  c.window.xlwSpecialSummonUnit = async (card, own, options) => {
+    assert.equal(card, thief);
+    assert.equal(own, true);
+    assert.equal(options.destinationIsPlayer, false);
+    assert.equal(options.frontPriority, false);
+    assert.equal(options.beforePlacement(), true);
+    attacker.stars = 3;
+    assert.equal(options.beforePlacement(), false);
+    attacker.stars = 4;
+    placements++;
+    return true;
+  };
+  vm.runInContext(slice("window.xlwTryThiefSummon =", "window.xlwResolveSavageMartial ="), c);
+  const trigger = () => c.window.xlwTryThiefSummon(attacker, "player_front", 0);
+  assert.equal(await trigger(), true);
+  assert.equal(placements, 1);
+  attacker.attack = 6; // Twice printed attack, but not twice current stars.
+  assert.equal(await trigger(), false);
+  attacker.attack = 8;
+  attacker.attacking = false;
+  assert.equal(await trigger(), false);
+  attacker.attacking = true;
+  c.isMyTurn = false;
+  assert.equal(await trigger(), false);
+  c.isMyTurn = true;
+  c.showXLWConfirm = async () => { prompts++; attacker.stars = 5; return true; };
+  assert.equal(await trigger(), false);
+  assert.equal(prompts, 2);
+  assert.equal(placements, 1);
+});
+
+test("Main-phase equipment remains playable while its owner is declaring attacks", () => {
+  const c = fixture();
+  c.xlwIsBreakfast = () => false;
+  c.phase = "進攻宣言";
+  c.isMultiplayer = true;
+  const attacker = unit("R-ORC-0001", {attacking: true, tapped: true, target: {zone: "enemy_front", idx: 0}});
+  c.field.player_front[0] = attacker;
+  const hat = {id: "R-0RC-0044", name: "符咒獸人的符咒帽", type: "magic", usable_phases: ["Main Phase"]};
+  vm.runInContext(slice("window.xlwCanPlayHandCard =", "window.xlwShowHandCardQuickMenu ="), c);
+  assert.equal(c.window.xlwCanPlayHandCard(hat, 0), true);
+  assert.equal(attacker.attacking, true);
+  assert.equal(attacker.target.idx, 0);
+  assert.equal(c.window.xlwCanPlayHandCard({...hat, usable_phases: ["Defense Phase"]}, 0), false);
+  c.isMyTurn = false;
+  assert.equal(c.window.xlwCanPlayHandCard(hat, 0), false);
+  c.isMyTurn = true;
+  assert.equal(c.window.xlwCanPlayHandCard({id: "ART-0020", name: "星空", type: "magic"}, 0), false);
+});
