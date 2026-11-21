@@ -3932,9 +3932,9 @@ async function xlwResolveAries(isPlayer) {
 }
 
 // Shared top-of-deck effects. Viewing never removes cards before choices finish.
-window.xlwPickSkullSubset = async function(cards,isPlayer,key,title,message,isCurrent=()=>true){
+window.xlwPickSkullSubset = async function(cards,isPlayer,key,title,message,isCurrent=()=>true,limit=cards.length){
   const pool=[...cards],chosen=[];
-  while(pool.length){
+  while(pool.length&&chosen.length<limit){
     if(!isCurrent())return [];
     const n=await window.xlwChooseFactionAction(isPlayer,key+':pick:'+chosen.length,title,message,[
       ...pool.map((card,value)=>({text:card.name,card,value})),{text:'完成選擇',value:-1}
@@ -4047,6 +4047,61 @@ window.xlwResolveSkullPeek = async function(unit,zone,idx,isPlayer,witch=false){
 };
 // End shared top-of-deck effects.
 
+// Undead recycling uses current piles after each asynchronous choice.
+window.xlwResolveUndeadRecycle = async function(card,zone,idx,isPlayer,kind){
+  const unit=field[zone]?.[idx];
+  if(!unit?.card)return false;
+  const pending=window.XLW_deckTopPending ||= new Map();
+  if(pending.has(unit))return false;
+  const token={};pending.set(unit,token);
+  const current=()=>pending.get(unit)===token;
+  const ownDeck=()=>isPlayer?deck:(window.XLW_ENEMY?.deck||[]);
+  const ownGrave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const eligible=c=>c&&['unit','單位','單位卡'].includes(c.type)&&window.xlwIsUndeadCard(c);
+  const title=kind==='priest'?'瘟疫傳教士':kind==='nurse'?'骷髏護士長':'除屍雞';
+  const serial=unit.undeadRecycleSerial=(unit.undeadRecycleSerial||0)+1;
+  const key=xlwFactionDecisionKey(unit,zone,'undead-'+kind,serial);
+  try{
+    const source=kind==='chicken'?ownDeck:ownGrave;
+    const options=source().filter(eligible);
+    let chosen=[];
+    if(options.length){
+      if(kind==='priest')chosen=await window.xlwPickSkullSubset(options,isPlayer,key,title+'：選擇洗回','選擇至多兩張不死族單位洗回牌庫。',current,2);
+      else{
+        const n=await window.xlwChooseFactionAction(isPlayer,key+':target',title+'：選擇不死族',kind==='chicken'?'選擇牌庫的一張不死族單位送墓。':'選擇墓地的一張不死族單位洗回牌庫。',options.map((card,value)=>({text:card.name,card,value})));
+        if(Number.isInteger(n)&&options[n])chosen=[options[n]];
+      }
+    }
+    if(!current())return false;
+    let movedCount=0;
+    for(const selected of chosen){
+      const live=window.XLWDuelConsistency.findKnownCard(source(),selected);
+      if(!eligible(live))continue;
+      const moved=window.XLWDuelConsistency.moveKnownCard(source(),kind==='chicken'?ownGrave():ownDeck(),live);
+      if(!moved)continue;
+      movedCount++;
+      logBattle(`【${title}】將【${moved.name}】${kind==='chicken'?'送入墓地':'洗回牌庫'}。`);
+      if(kind==='chicken'){
+        shuffle(ownDeck());
+        if(window.XLWDuelConsistency.findKnownCard(ownGrave(),moved))await window.xlwOnCardEntersGraveyard?.(moved,isPlayer,false);
+        if(!current())return false;
+      }
+    }
+    if(kind!=='chicken'&&movedCount)shuffle(ownDeck());
+    if(kind==='priest')for(let count=0;count<2;count++){
+      if(!current())return false;
+      const milled=ownDeck().pop();
+      if(!milled)break;
+      ownGrave().push(milled);
+      logBattle(`【瘟疫傳教士】牌庫頂【${milled.name}】進入墓地。`);
+      if(window.XLWDuelConsistency.findKnownCard(ownGrave(),milled))await window.xlwOnCardEntersGraveyard?.(milled,isPlayer,false);
+    }
+    if(!current())return false;
+    render();return true;
+  }finally{if(pending.get(unit)===token)pending.delete(unit);}
+};
+// End undead recycling.
+
 window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer) {
   if (!card) return;
   const name = card.name || "";
@@ -4106,41 +4161,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   }
 
   // 2. 瘟疫傳教士 (C-SKT-0053): 立即：使你墓地至多2張不死族單位卡被洗回牌庫，並使你牌庫頂2張牌進入墓地。
-  if (cid.includes("SKT-0053") || name.includes("瘟疫傳教士")) {
-    const undeadGrave = myGrave.filter(c => c && window.xlwIsUndeadCard(c));
-    let toShuffle = [];
-    if (undeadGrave.length > 0) {
-      if (isPlayer) {
-        const choices = undeadGrave.map((c, i) => ({ text: c.name, value: i }));
-        const p1 = await showXLWChoiceModal("瘟疫傳教士 (1/2)", "選擇要洗回牌庫的第 1 張不死族（可選）：", [{ text: "不洗回", value: -1 }, ...choices]);
-        if (p1 !== null && p1 !== undefined && p1 !== -1) {
-          toShuffle.push(undeadGrave[p1]);
-          const remaining = undeadGrave.filter(c => c !== toShuffle[0]);
-          if (remaining.length > 0) {
-            const p2Choices = remaining.map((c, i) => ({ text: c.name, value: i }));
-            const p2 = await showXLWChoiceModal("瘟疫傳教士 (2/2)", "選擇要洗回牌庫的第 2 張不死族（可選）：", [{ text: "不洗回", value: -1 }, ...p2Choices]);
-            if (p2 !== null && p2 !== undefined && p2 !== -1) toShuffle.push(remaining[p2]);
-          }
-        }
-      } else {
-        toShuffle = undeadGrave.slice(0, Math.min(2, undeadGrave.length));
-      }
-      const movedCount = toShuffle.filter(card =>
-        window.XLWDuelConsistency.moveKnownCard(myGrave, myDeck, card)).length;
-      if (movedCount > 0) {
-        shuffle(myDeck);
-        logBattle(`✨【瘟疫傳教士】效果：將墓地 ${movedCount} 張不死族洗回牌庫！`);
-      }
-    }
-    const millCount = Math.min(2, myDeck.length);
-    for (let m = 0; m < millCount; m++) {
-      const milled = myDeck.shift();
-      myGrave.push(milled);
-      logBattle(`✨【瘟疫傳教士】效果：牌庫頂【${milled.name}】進入墓地！`);
-      await window.xlwOnCardEntersGraveyard(milled, isPlayer, false);
-    }
-    render();
-  }
+  if (cid.includes("SKT-0053") || name.includes("瘟疫傳教士")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"priest");
 
   // 3. 造墓者小布 (NY-SKT-0015 / R-SKT-0015 / SSR-SKT-0015): 立即：從你牌庫尋找1場地卡展示並加入手牌，然後重洗牌庫。
   if (cid.includes("SKT-0015") || name.includes("造墓者小布")) {
@@ -4162,24 +4183,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   }
 
   // 4. 除屍雞 (R-SKT-0006): 立即：從你牌庫尋找1不死族單位使其送入墓地，並重洗牌庫。
-  if (cid.includes("SKT-0006") || name.includes("除屍雞")) {
-    const undeadInDeck = myDeck.filter(c => c && (c.type === "unit" || c.type === "單位") && window.xlwIsUndeadCard(c));
-    if (undeadInDeck.length > 0) {
-      let chosen = undeadInDeck[0];
-      if (isPlayer) {
-        const choices = undeadInDeck.map((c, i) => ({ text: c.name, value: i }));
-        const picked = await showXLWChoiceModal("除屍雞 檢索不死族", "請選擇送入墓地的不死族單位：", choices);
-        if (picked !== null && picked !== undefined) chosen = undeadInDeck[picked];
-      }
-      const moved = window.XLWDuelConsistency.moveKnownCard(myDeck, myGrave, chosen);
-      if (moved) {
-        shuffle(myDeck);
-        logBattle(`✨【除屍雞】立即效果：從牌庫將【${moved.name}】送入墓地！`);
-        render();
-        await window.xlwOnCardEntersGraveyard(moved, isPlayer, false);
-      }
-    }
-  }
+  if (cid.includes("SKT-0006") || name.includes("除屍雞")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"chicken");
 
   // 5. 小瘟疫 (R-SKT-0023): 立即：你可丟掉1張手牌。
   if (cid.includes("SKT-0023") || name.includes("小瘟疫")) {
@@ -4204,23 +4208,7 @@ window.xlwTriggerSktImmediateEffects = async function(card, zone, idx, isPlayer)
   }
 
   // 6. 骷髏護士長 (R-SKT-0027 / SSR-SKT-0027): 立即：使你墓地1不死族單位洗回牌庫。
-  if (cid.includes("SKT-0027") || name.includes("骷髏護士長")) {
-    const undeadGrave = myGrave.filter(c => c && window.xlwIsUndeadCard(c));
-    if (undeadGrave.length > 0) {
-      let chosen = undeadGrave[0];
-      if (isPlayer) {
-        const choices = undeadGrave.map((c, i) => ({ text: c.name, value: i }));
-        const picked = await showXLWChoiceModal("骷髏護士長 效果", "請選擇洗回牌庫的不死族單位：", choices);
-        if (picked !== null && picked !== undefined) chosen = undeadGrave[picked];
-      }
-      const moved = window.XLWDuelConsistency.moveKnownCard(myGrave, myDeck, chosen);
-      if (moved) {
-        shuffle(myDeck);
-        logBattle(`✨【骷髏護士長】效果：將墓地的【${moved.name}】洗回牌庫！`);
-        render();
-      }
-    }
-  }
+  if (cid.includes("SKT-0027") || name.includes("骷髏護士長")) await window.xlwResolveUndeadRecycle(card,zone,idx,isPlayer,"nurse");
 
   // 7. 墓園管理員 小凱希 (R-SKT-0041): 立即：使你墓地1張2星或以下的不死族單位卡被綁架。
   if (cid.includes("SKT-0041") || name.includes("小凱希")) {
@@ -20929,8 +20917,8 @@ async function performSummonToSlot(zone, idx) {
     }
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
-    // Skull still needs its counter window before viewing the deck.
-    if ((card.id?.includes("SKT-0014") || card.name === "骷髏頭") && field[zone]?.[idx]) {
+    // These undead effects still need their counter window before moving cards.
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
@@ -45943,7 +45931,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-skull-deck-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261121-undead-recycle-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
