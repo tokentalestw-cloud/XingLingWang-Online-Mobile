@@ -139,6 +139,25 @@
         "scenarios": 4,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "SSR-CND-0068",
+      "signature": "316661005e7676276565be202b8c9d736613d0eaaed286a6fd47e63bb8fe2d38",
+      "regression_file": "tests/test_dessert_general.cjs",
+      "scope": [
+        "立即效果與反制",
+        "一般獻祭與特殊召喚",
+        "吞食合體後計入自身",
+        "額外區實卡移入手牌",
+        "雙座位同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-22",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 12,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

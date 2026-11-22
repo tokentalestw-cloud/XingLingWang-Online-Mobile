@@ -11721,6 +11721,33 @@ window.xlwResolveFairyFreyaPush = async function(zone, idx, summonIsPlayer) {
   return moved;
 };
 
+// Dessert General retrieves physical swords once for this summoned unit.
+window.xlwResolveDessertGeneral = function(card,zone,idx,isPlayer){
+  const unit=field[zone]?.[idx];
+  if(!unit?.card||unit.dessertGeneralResolved)return 0;
+  const general=c=>c&&(c.id?.includes('CND-0068')||c.name==='甜點將軍');
+  if(!general(card)||!general(unit.card))return 0;
+  if(card._xlwInstanceId&&unit.card._xlwInstanceId&&card._xlwInstanceId!==unit.card._xlwInstanceId)return 0;
+  unit.dessertGeneralResolved=true;
+  if(window.isUnitSilenced(unit,zone,idx)||unit.xlwImmediateNegated)return 0;
+  const realPart=p=>Boolean(p&&(p.card||p.id||p.name));
+  const combined=u=>u?.card&&(u.isCombined||(u.devourCards||[]).some(p=>p?.card)||(u.combinedCards||[]).some(realPart)||(u.fusionCards||[]).some(realPart));
+  const prefix=isPlayer?'player_':'enemy_';
+  const count=['front','back'].reduce((n,row)=>n+(field[prefix+row]||[]).filter(combined).length,0);
+  const extra=()=>isPlayer?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck||[]);
+  const handNow=()=>isPlayer?hand:(window.XLW_ENEMY.hand ||= []);
+  const sword=c=>c&&(/(?:^|-)CND-0072(?:-|$)/.test(c.id||'')||/[枴拐]杖糖寶劍/.test((c.name||'').replace(/\s+/g,'')));
+  const choices=extra().filter(sword).slice(0,count);
+  let retrieved=0;
+  for(const selected of choices)if(window.XLWDuelConsistency.moveKnownCard(extra(),handNow(),selected))retrieved++;
+  const detail=count===0?'X＝0（場上沒有合體後單位），不取得寶劍。':retrieved===0?`X＝${count}，但額外區沒有【枴杖糖寶劍】，未取得卡牌。`:`X＝${count}，從額外區取得 ${retrieved} 張【枴杖糖寶劍】${retrieved<count?'（額外區數量不足，取出現有張數）':''}。`;
+  xlwLogSharedCardEffect('甜點將軍',detail,isPlayer);
+  window.XLWBFeedback?.notice('甜點將軍：'+detail,retrieved?'success':'info');
+  renderExtraDecks();render();
+  return retrieved;
+};
+// End Dessert General retrieval.
+
 window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   if (!card) return;
   if (!await window.xlwPrepareImmediateEffect(card, zone, idx, isPlayer)) return;
@@ -11995,29 +12022,7 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
   }
 
   // G. SSR-CND-0068 甜點將軍
-  if (cardId === "SSR-CND-0068" || cardName.includes("甜點將軍")) {
-    let combinedCount = 0;
-    for (const z of [side + "front", side + "back"]) {
-      combinedCount += (field[z] || []).filter(u => u &&
-        (u.devourCards?.length || u.combinedCards?.length || u.fusionCards?.length || u.isCombined)).length;
-    }
-    if (combinedCount > 0) {
-      const extraD = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-      const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-      let retrieved = 0;
-      for (let k = 0; k < combinedCount; k++) {
-        const swordIdx = extraD.findIndex(c => c && (c.id === "R-CND-0072" || /[枴拐]杖糖寶劍/.test(c.name || "")));
-        if (swordIdx >= 0) {
-          myHand.push(extraD.splice(swordIdx, 1)[0]);
-          retrieved++;
-        }
-      }
-      if (!retrieved) return;
-      renderExtraDecks();
-      logBattle(`🍭⚔️【甜點將軍】軍備就緒：從額外區將 ${retrieved} 張【枴杖糖寶劍】加入手牌！`);
-      if (typeof render === "function") render();
-    }
-  }
+  if (cardId.includes('CND-0068') || cardName.includes('甜點將軍')) window.xlwResolveDessertGeneral(card,zone,idx,isPlayer);
 
   // H. C-STP-0068 面具蒸汽戰士
   if (cardId === "C-STP-0068" || cardName.includes("面具蒸汽戰士")) {
@@ -21022,12 +21027,13 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
       if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) {
-        if(card.id?.includes('VLG-0061')||card.name==='海坊主')await window.xlwPushSeaMonkWave(own);
+        if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
+        else if(card.id?.includes('VLG-0061')||card.name==='海坊主')await window.xlwPushSeaMonkWave(own);
         else await window.xlwTriggerSktImmediateEffects(card, zone, idx, own);
       }
     }
@@ -46026,7 +46032,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-village-main-start-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-dessert-general-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
