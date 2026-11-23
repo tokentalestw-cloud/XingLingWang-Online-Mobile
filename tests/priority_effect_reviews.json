@@ -158,6 +158,25 @@
         "scenarios": 12,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "SSR-VLG-0013",
+      "signature": "539a088b8e1fa6e7ecbfe4b38bd43263d5ccabfb00af318a76e2d4b8a146e1b7",
+      "regression_file": "tests/test_yarn_battle_rewards.cjs",
+      "scope": [
+        "結束階段獎勵",
+        "金牛座沉默",
+        "同回合不重複結算",
+        "雙座位比分同步",
+        "單人對手結算"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-23",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 6,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

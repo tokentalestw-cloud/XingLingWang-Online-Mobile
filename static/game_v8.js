@@ -12388,6 +12388,28 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   if (typeof render === "function") render();
 };
 
+// Yarn Monster end reward: one resolution per active source and turn, on either side.
+window.xlwResolveYarnEndReward = function(isPlayer = true) {
+  const side=isPlayer?'player_':'enemy_',opponent=isPlayer?'enemy_':'player_';
+  let reward=0;
+  const confined=['front','back'].some(row=>(field[opponent+row]||[]).some((u,i)=>u&&isUnitConfined(opponent+row,i)));
+  for(const row of ['front','back']) {
+    const zone=side+row;
+    (field[zone]||[]).forEach((unit,i)=>{
+      if(!unit?.card || !(unit.card.id?.includes('VLG-0013')||unit.card.name==='毛線怪') || unit.xlwYarnRewardTurn===turn) return;
+      unit.xlwYarnRewardTurn=turn;
+      if(confined&&!window.isUnitSilenced(unit,zone,i))reward++;
+    });
+  }
+  if(reward) {
+    if(isPlayer)playerBonusScore+=reward;else enemyBonusScore+=reward;
+    xlwLogSharedCardEffect('毛線怪',`敵方場上有被禁錮的單位，獎勵 +${reward}★。`,isPlayer);
+    renderScore();
+  }
+  return reward;
+};
+// End Yarn Monster reward.
+
 // 6. 擴充卡牌結束階段效果結算
 window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
   const side = isPlayer ? "player_" : "enemy_";
@@ -12477,6 +12499,7 @@ window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
     });
   }
 
+  window.xlwResolveYarnEndReward(isPlayer);
   if (typeof render === "function") render();
 };
 
@@ -20618,16 +20641,6 @@ async function confirmTribute() {
             logBattle(`✨ 裝備卡 ${cloned.name} 隨著單位被獻祭進入我方墓地。`);
           });
           unit.equipments = [];
-        }
-
-        if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064" || unit.card.id === "SSSR-NMS-0064" || unit.card.id?.includes("0064")) {
-          if (t.zone.startsWith("player_")) {
-            enemyBonusScore += 2;
-            logBattle(`💥 大耳賊 被獻祭破壞：對手額外獎勵 +2 ★！`);
-          } else {
-            playerBonusScore += 2;
-            logBattle(`💥 大耳賊 被獻祭破壞：我方額外獎勵 +2 ★！`);
-          }
         }
 
         // 🌴 芭蕉精 (SR-VLG-0057 / SSR-VLG-0057): 此單位被獻祭時，獎勵+2
@@ -33016,7 +33029,8 @@ if (unit.card && (unit.card.id === "SPT-0009" || unit.card.id === "SSR-SPT-0009"
     unit.equipments = [];
   }
 
-  if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
+  if (isCombatDestruction && !window.isUnitSilenced(unit, zone, idx) &&
+      (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064" || unit.card.id === "SSSR-NMS-0064")) {
     if (zone.startsWith("player_")) {
       enemyBonusScore += 2;
       logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
@@ -37473,35 +37487,6 @@ async function endPlayerTurnAndRunEnemy() {
 
   // === 妖怪村莊結束階段效果結算 ===
   const runYokaiEndPhaseEffects = async () => {
-    let yarnCount = 0;
-    for (const zone of ["player_front", "player_back"]) {
-      for (let i = 0; i < 5; i++) {
-        const u = field[zone][i];
-        if (u && u.card && u.card.name.includes("毛線怪")) {
-          yarnCount += 1;
-        }
-      }
-    }
-    
-    if (yarnCount > 0) {
-      let hasEnemyConfined = false;
-      for (const zone of ["enemy_front", "enemy_back"]) {
-        for (let i = 0; i < 5; i++) {
-          if (field[zone][i] && isUnitConfined(zone, i)) {
-            hasEnemyConfined = true;
-            break;
-          }
-        }
-        if (hasEnemyConfined) break;
-      }
-      
-      if (hasEnemyConfined) {
-        playerBonusScore += yarnCount;
-        logBattle(`✨ 毛線怪 效果：對手場上存在被禁錮的單位，我方獲得 +${yarnCount}★ 獎勵！`);
-        renderScore();
-      }
-    }
-
     const enemyFrontCount = field["enemy_front"].filter(u => u !== null).length;
     if (enemyFrontCount >= 2) {
       for (let idx = 0; idx < 5; idx++) {
@@ -46032,7 +46017,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261122-dessert-general-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261123-yarn-battle-rewards-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46779,16 +46764,6 @@ function setupWebSocketEvents() {
               unit.equipments = [];
             }
             
-            if (unit.card.name === "大耳賊" || unit.card.id === "NEU-0064") {
-              if (zone.startsWith("player_")) {
-                enemyBonusScore += 2;
-                logBattle(`💥 大耳賊 被戰鬥破壞：對手額外獎勵 +2 ★！`);
-              } else {
-                playerBonusScore += 2;
-                logBattle(`💥 大耳賊 被戰鬥破壞：我方額外獎勵 +2 ★！`);
-              }
-            }
-
   if (unit.card.name.includes("小旅人") || unit.card.id === "TOKEN_TRAVELER") {
               logBattle(`✨ 對手 ${unit.card.name} 作為祭品被獻祭，直接返回森林。`);
             } else if (isDevourFusionUnit(unit)) {
