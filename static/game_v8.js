@@ -12388,6 +12388,112 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   if (typeof render === "function") render();
 };
 
+// Horror Tape uses the same physical search after normal or special placement.
+window.xlwResolveHorrorTape = function(card,zone,idx,isPlayer) {
+  const unit=field[zone]?.[idx];
+  const tape=c=>c&&(c.id?.includes('VLG-0009')||c.name==='恐怖錄影帶');
+  if(!tape(card)||!tape(unit?.card)||unit.xlwTapeResolved)return false;
+  if(card._xlwInstanceId&&unit.card._xlwInstanceId!==card._xlwInstanceId)return false;
+  unit.xlwTapeResolved=true;
+  if(window.isUnitSilenced(unit,zone,idx)||unit.xlwImmediateNegated)return false;
+  const pile=isPlayer?deck:(window.XLW_ENEMY?.deck||[]),dest=isPlayer?hand:(window.XLW_ENEMY.hand ||= []);
+  const well=pile.find(c=>c&&(c.id?.includes('VLG-0019')||c.name==='恐怖的井'));
+  const moved=well&&window.XLWDuelConsistency.moveKnownCard(pile,dest,well);
+  if(moved)shuffle(pile);
+  xlwLogSharedCardEffect('恐怖錄影帶',moved?'從牌庫展示【恐怖的井】並加入手牌，然後重洗牌庫。':'牌庫沒有【恐怖的井】，未取得卡牌。',isPlayer);
+  render();return !!moved;
+};
+// End Horror Tape search.
+
+// Shared village/art end effects and actual off-board Bottle revival.
+window.xlwReviveLongBottles = async function(pushedSide) {
+  const isPlayer=pushedSide==='enemy';
+  const grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const bottles=grave().filter(c=>c&&(c.id?.includes('VLG-0052')||c.name==='瓶子長長'));
+  const pending=window.XLW_deckTopPending ||=new Map(),token={};pending.set(token,token);
+  const valid=()=>pending.get(token)===token;
+  try {
+    for(const card of bottles) {
+      if(!valid())break;
+      const source=window.XLWDuelConsistency.findKnownCard(grave(),card);
+      if(!source)continue;
+      const choosePlacement=!isPlayer&&isMultiplayer?async slots=>{
+        const key=xlwFactionDecisionKey({card:source},'enemy_grave','bottle-revive')+':'+crypto.randomUUID();
+        const n=await window.xlwChooseFactionAction(false,key,'瓶子長長：破圖復活','直接點選我方召喚位置。',slots.map((slot,value)=>({text:(slot.zone.endsWith('front')?'前排':'後排')+(slot.idx+1),value,boardTarget:{zone:slot.zone,idx:slot.idx,summon:true}})),{boardOnly:true});
+        return slots[n];
+      }:undefined;
+      const summoned=await window.xlwSpecialSummonUnit(source,isPlayer,{sourcePile:grave,requiredPlacement:true,validatePlacement:()=>valid(),choosePlacement});
+      if(!valid())break;
+      if(summoned)xlwLogSharedCardEffect('瓶子長長','敵方單位破圖離場，從墓地召喚。',isPlayer);
+    }
+  } finally {if(pending.get(token)===token)pending.delete(token);}
+};
+window.xlwResolveVillageArtEnd = async function(isPlayer=true) {
+  const side=isPlayer?'player_':'enemy_',opp=isPlayer?'enemy_':'player_',startedTurn=turn;
+  const pending=window.XLW_deckTopPending ||=new Map(),token={};pending.set(token,token);
+  const current=()=>pending.get(token)===token&&turn===startedTurn;
+  const matches=(c,id,name)=>c&&(c.id?.includes(id)||c.name===name);
+  const sources=['front','back'].flatMap(row=>(field[side+row]||[]).flatMap((unit,idx)=>unit?[{unit,zone:side+row,idx}]:[]));
+  const live=s=>current()&&field[s.zone]?.[s.idx]===s.unit&&!window.isUnitSilenced(s.unit,s.zone,s.idx);
+  const frontPriority=slot=>slot&&(slot.zone.endsWith('front')||!(field[side+'front']||[]).some(u=>!u));
+  const choose=async(key,title,msg,options)=>window.xlwChooseFactionAction(isPlayer,key,title,msg,options,{required:true,preventOverlayClose:true,preventExternalCancel:true});
+  try {
+    const broomCondition=(field[opp+'front']||[]).filter(Boolean).length>=2;
+    for(const source of sources.filter(s=>matches(s.unit.card,'VLG-0053','掃把精'))) {
+      if(!live(source)||source.unit.xlwVillageEndTurn===turn)continue;
+      source.unit.xlwVillageEndTurn=turn;
+      if(!broomCondition)continue;
+      // The nearest unit forward of a rear-row source can be its own front unit.
+      const targetZone=source.zone.endsWith('back')&&field[side+'front']?.[source.idx]?side+'front':field[opp+'front']?.[source.idx]?opp+'front':opp+'back';
+      const target=field[targetZone]?.[source.idx];
+      if(!target)continue;
+      const moved=await xlwPushUnit(targetZone,source.idx,'back',{offBoardAction:'hand',sourceName:'掃把精'});
+      if(!current())return;
+      if(moved)xlwLogSharedCardEffect('掃把精',`將【${target.card.name}】向後推擠，破圖單位回手。`,isPlayer);
+    }
+
+    const fieldEl=document.getElementById(isPlayer?'playerField':'enemyField'),raw=fieldEl?.dataset.card;
+    let well=null;try{well=raw?JSON.parse(raw):null;}catch{}
+    const wellKey='village-well-end:'+side,stamp=pending.get(wellKey);
+    if(matches(well,'VLG-0019','恐怖的井')&&!(stamp?.turn===turn&&stamp.raw===raw)) {
+      pending.set(wellKey,{turn,raw});
+      const liveWell=()=>current()&&fieldEl.dataset.card===raw;
+      const grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+      const eligible=c=>c&&['unit','單位'].includes(c.type)&&(c.faction==='妖怪村莊'||c.deck==='妖怪村莊'||c.id?.includes('VLG'))&&Number(c.score??c.stars??0)<=2;
+      const cards=grave().filter(eligible);
+      const hasSlot=['front','back'].some(row=>(field[side+row]||[]).some(u=>!u));
+      if(cards.length&&hasSlot) {
+        const key=xlwFactionDecisionKey({card:well},side+'field','well-end');
+        const n=await choose(key,'恐怖的井：結束階段','選擇墓地 2 星以下妖怪村莊單位，或不發動。',[...cards.map((card,value)=>({text:card.name,card,value})),{text:'不發動',value:-1}]);
+        const selected=cards[n],card=window.XLWDuelConsistency.findKnownCard(grave(),selected);
+        if(liveWell()&&eligible(card)) {
+          const summoned=await window.xlwSpecialSummonUnit(card,isPlayer,{sourcePile:grave,requiredPlacement:true,validatePlacement:slot=>liveWell()&&eligible(window.XLWDuelConsistency.findKnownCard(grave(),card))&&frontPriority(slot)});
+          if(current()&&summoned)xlwLogSharedCardEffect('恐怖的井',`從墓地召喚【${card.name}】。`,isPlayer);
+        }
+      }
+    }
+    if(!current())return;
+    for(const source of sources.filter(s=>matches(s.unit.card,'ART-0045','調色盤'))) {
+      if(!live(source)||source.unit.xlwVillageEndTurn===turn)continue;
+      source.unit.xlwVillageEndTurn=turn;
+      const eligible=c=>c&&['unit','單位'].includes(c.type)&&isPigmentCard(c)&&getCardTributeCost(c)<=0;
+      const handNow=()=>isPlayer?hand:(window.XLW_ENEMY?.hand||[]),grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+      const choices=[{pile:handNow,label:'手牌'},{pile:grave,label:'墓地'}].flatMap(group=>group.pile().filter(eligible).map(card=>({...group,card})));
+      if(!choices.length||!['front','back'].some(row=>(field[side+row]||[]).some(u=>!u)))continue;
+      const key=xlwFactionDecisionKey(source.unit,source.zone,'palette-end');
+      const n=await choose(key,'調色盤：結束階段','選擇手牌或墓地的無需祭品顏料單位。',choices.map((c,value)=>({text:c.card.name+'（'+c.label+'）',card:c.card,value})));
+      const selected=choices[n];
+      if(!live(source)||!selected)continue;
+      const card=window.XLWDuelConsistency.findKnownCard(selected.pile(),selected.card);
+      if(!eligible(card))continue;
+      const summoned=await window.xlwSpecialSummonUnit(card,isPlayer,{sourcePile:selected.pile,requiredPlacement:true,validatePlacement:slot=>live(source)&&eligible(window.XLWDuelConsistency.findKnownCard(selected.pile(),card))&&frontPriority(slot)});
+      if(current()&&summoned)xlwLogSharedCardEffect('調色盤',`從${selected.label}召喚【${card.name}】。`,isPlayer);
+    }
+    if(current())render();
+  } finally {if(pending.get(token)===token)pending.delete(token);}
+};
+// End shared village/art end effects.
+
 // Yarn Monster end reward: one resolution per active source and turn, on either side.
 window.xlwResolveYarnEndReward = function(isPlayer = true) {
   const side=isPlayer?'player_':'enemy_',opponent=isPlayer?'enemy_':'player_';
@@ -12500,6 +12606,7 @@ window.xlwResolveExpansionTurnEnd = async function(isPlayer = true) {
   }
 
   window.xlwResolveYarnEndReward(isPlayer);
+  await window.xlwResolveVillageArtEnd(isPlayer);
   if (typeof render === "function") render();
 };
 
@@ -18989,6 +19096,7 @@ async function xlwPushUnit(startZone, startIdx, direction, options = {}) {
     logBattle(`✨【${movingUnit.card.name}】推擠移動完成！`);
   }
 
+  if (offBoardUnit) await window.xlwReviveLongBottles?.(side);
   if (isMultiplayer) {
     sendFullGameStateToOpponent();
   }
@@ -21040,12 +21148,13 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
       if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) {
-        if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
+        if(card.id?.includes('VLG-0009')||card.name==='恐怖錄影帶')window.xlwResolveHorrorTape(card,zone,idx,own);
+        else if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
         else if(card.id?.includes('VLG-0061')||card.name==='海坊主')await window.xlwPushSeaMonkWave(own);
         else await window.xlwTriggerSktImmediateEffects(card, zone, idx, own);
       }
@@ -24925,15 +25034,7 @@ if (card.id === "VRT-0009" || card.name?.includes("打卡的酒醉鄉民")) {
         await runLanternImpPlacementFlow();
       }
       else if (card.name.includes("恐怖錄影帶")) {
-        const wellIdx = deck.findIndex(c => c && c.name.includes("恐怖的井"));
-        if (wellIdx >= 0) {
-          const wellCard = deck.splice(wellIdx, 1)[0];
-          hand.push(wellCard);
-          logBattle("恐怖錄影帶 效果：從牌庫檢索「恐怖的井」並加入手牌！");
-          shuffle(deck);
-        } else {
-          logBattle("恐怖錄影帶 效果：牌庫中沒有「恐怖的井」。");
-        }
+        window.xlwResolveHorrorTape(card,zone,idx,true);
       }
       else if (card.id === "SR-VLG-0061" || card.name?.includes("海坊主")) {
         await window.xlwPushSeaMonkWave(zone.startsWith('player_'));
@@ -31606,19 +31707,10 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
       render();
     }
   }
-  else if (card.name?.includes("恐怖錄影帶")) {
-    const wellIdx = window.XLW_ENEMY.deck.findIndex(c => c && c.name.includes("恐怖的井"));
-    if (wellIdx >= 0) {
-      const wellCard = window.XLW_ENEMY.deck.splice(wellIdx, 1)[0];
-      if (window.XLW_ENEMY.hand) {
-        window.XLW_ENEMY.hand.push(wellCard);
-      }
-      logBattle("✨ 對手 恐怖錄影帶 效果：對手從牌庫檢索「恐怖的井」並加入其手牌！");
-      shuffle(window.XLW_ENEMY.deck);
-    } else {
-      logBattle("對手 恐怖錄影帶 效果：對手牌庫中沒有「恐怖的井」。");
-    }
+  else if (card.name.includes("恐怖錄影帶")) {
+    window.xlwResolveHorrorTape(card,destZone,destIdx,false);
   }
+
   else if (card.id === "SR-VLG-0061" || card.name?.includes("海坊主")) {
     await window.xlwPushSeaMonkWave(false);
   }
@@ -37485,196 +37577,7 @@ async function endPlayerTurnAndRunEnemy() {
   xlwCleanExpiredTempEquips(turn);
   render();
 
-  // === 妖怪村莊結束階段效果結算 ===
-  const runYokaiEndPhaseEffects = async () => {
-    const enemyFrontCount = field["enemy_front"].filter(u => u !== null).length;
-    if (enemyFrontCount >= 2) {
-      for (let idx = 0; idx < 5; idx++) {
-        const hasBroom = (field["player_front"][idx] && field["player_front"][idx].card.name.includes("掃把精")) ||
-                          (field["player_back"][idx] && field["player_back"][idx].card.name.includes("掃把精"));
-        if (hasBroom) {
-          const oppUnit = field["enemy_front"][idx];
-          if (oppUnit) {
-            let confirmUse = true;
-            if (!isMultiplayer || isMyTurn) {
-              confirmUse = await showXLWConfirm(
-                "掃把精 效果發動",
-                `是否發動星星戰線 ${idx + 1} 掃把精 的效果，將對手 【${oppUnit.card.name}】 推往後排？`
-              );
-            }
-            if (confirmUse) {
-              await xlwPushUnit("enemy_front", idx, "back", { offBoardAction: "hand", sourceName: "掃把精" });
-
-              const hasBottleInGrave = graveyard.some(c => c && c.name.includes("瓶子長長"));
-              const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
-              if (hasBottleInGrave && hasEmptySlot) {
-                const graveIdx = graveyard.findIndex(c => c && c.name.includes("瓶子長長"));
-                const bottleCard = graveyard[graveIdx];
-                graveyard.splice(graveIdx, 1);
-                
-                let summoned = false;
-                for (const zone of ["player_front", "player_back"]) {
-                  for (let i = 0; i < 5; i++) {
-                    if (!summoned && !field[zone][i] && xlwCanSummonToZone(zone, bottleCard)) {
-                      field[zone][i] = {
-                        card: structuredClone(bottleCard),
-                        tapped: false,
-                        attacking: false,
-                        target: null,
-                        summonedTurn: turn,
-                        summonedZone: zone
-                      };
-                      summoned = true;
-                      logBattle(`瓶子長長 效果：偵測到敵方單位因推擠離場，從墓地自動特殊召喚至我方 ${zone.includes("front") ? "前排" : "後排"}${i + 1}！`);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    const pfEl = $("playerField");
-    if (pfEl && pfEl.dataset.card) {
-      try {
-        const fieldCard = JSON.parse(pfEl.dataset.card);
-        if (fieldCard.name.includes("恐怖的井")) {
-          const eligible = graveyard.filter(c => c && c.type === "unit" && (c.faction === "妖怪村莊" || c.id?.includes("VLG")) && (Number(c.score || 0) <= 2));
-          const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
-          if (eligible.length > 0 && hasEmptySlot) {
-            const choices = eligible.map((c, i) => ({ text: `${c.name} (祭品需求: ${c.tribute})`, value: i }));
-            choices.push({ text: "不發動 / 放棄召喚", value: -1 });
-            const chosen = await showXLWChoiceModal("恐怖的井 效果發動", "請選擇要從墓地特殊召喚的 2 星或以下單位：", choices);
-            if (chosen !== null && chosen !== undefined && chosen !== -1) {
-              const cardToSummon = eligible[chosen];
-              if (!cardToSummon) return;
-
-              const allValidSlots = [];
-              for (const z of ["player_front", "player_back"]) {
-                for (let i = 0; i < 5; i++) {
-                  if (!field[z][i]) {
-                    allValidSlots.push({ zone: z, idx: i, label: `${z.includes("front") ? "前排" : "後排"}${i + 1}`, isFront: z.includes("front") });
-                  }
-                }
-              }
-              // 恐怖的井召喚規則：只能選擇空位，且前排戰線有空格則必須優先召喚至前排戰線
-              const frontSlots = allValidSlots.filter(s => s.isFront);
-              const validSlots = frontSlots.length > 0 ? frontSlots : allValidSlots;
-              if (validSlots.length > 0) {
-                let chosenSlot = validSlots[0];
-                if (validSlots.length > 1) {
-                  const slotChoices = validSlots.map((s, idx) => ({ text: s.label, value: idx }));
-                  const titlePrompt = frontSlots.length > 0 ? "恐怖的井 選擇召喚位置 (前排優先)" : "恐怖的井 選擇召喚位置";
-                  const chosenSlotIdx = await showXLWChoiceModal(titlePrompt, `請選擇【${cardToSummon.name}】要放置的戰線位置：`, slotChoices);
-                  if (chosenSlotIdx === null || chosenSlotIdx === undefined || chosenSlotIdx === -1) {
-                    return;
-                  }
-                  chosenSlot = validSlots[chosenSlotIdx];
-                }
-                if (!chosenSlot) return;
-
-                const destZone = chosenSlot.zone;
-                const destIdx = chosenSlot.idx;
-                if (field[destZone]?.[destIdx] !== null) return;
-                const summoned = window.XLWDuelConsistency.takeKnownCard(graveyard, cardToSummon);
-                if (!summoned) return;
-                field[destZone][destIdx] = {
-                  card: structuredClone(summoned),
-                  tapped: false,
-                  attacking: false,
-                  target: null,
-                  summonedTurn: turn,
-                  summonedZone: destZone
-                };
-                xlwLogSharedCardEffect("恐怖的井", `從墓地特殊召喚【${summoned.name}】。`, true);
-                if (isMultiplayer) {
-                  if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                      action: "summon",
-                      card: field[destZone][destIdx].card,
-                      zone: destZone,
-                      idx: destIdx,
-                      fromHand: false,
-                      tributes: []
-                    }));
-                  }
-                  sendFullGameStateToOpponent(false);
-                }
-                render();
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error("恐怖的井 效果結算異常:", err);
-      }
-    }
-  };
-  window.runYokaiEndPhaseEffects = runYokaiEndPhaseEffects;
-
-  const runArtEndPhaseEffects = async () => {
-    const hasPalette = field["player_front"].concat(field["player_back"]).some(u => u && u.card && (u.card.id === "R-ART-0045" || u.card.name?.includes("調色盤")));
-    const hasEmptySlot = ["player_front", "player_back"].some(zone => field[zone].some(u => u === null));
-    if (hasPalette && hasEmptySlot) {
-      const eligible = [];
-      hand.forEach((c, idx) => {
-        if (c && c.type === "unit" && isPigmentCard(c) && getCardTributeCost(c) <= 0) {
-          eligible.push({ card: c, source: "hand", idx });
-        }
-      });
-      graveyard.forEach((c, idx) => {
-        if (c && c.type === "unit" && isPigmentCard(c) && getCardTributeCost(c) <= 0) {
-          eligible.push({ card: c, source: "grave", idx });
-        }
-      });
-      
-      if (eligible.length > 0) {
-        const choices = eligible.map((item, idx) => ({ text: `${item.card.name} (${item.source === "hand" ? "手牌" : "墓地"})`, value: idx }));
-        const chosenIdxVal = await showXLWChoiceModal("調色盤 效果發動", "請選擇要特殊召喚的顏料單位：", choices);
-        if (chosenIdxVal !== null && chosenIdxVal !== undefined) {
-          const chosen = eligible[chosenIdxVal];
-          const card = chosen.card;
-          if (chosen.source === "hand") {
-            hand.splice(chosen.idx, 1);
-          } else {
-            graveyard.splice(graveyard.indexOf(card), 1);
-          }
-          
-          let destZone = null;
-          let destIdx = -1;
-          for (const z of ["player_front", "player_back"]) {
-            const idx = field[z].indexOf(null);
-            if (idx >= 0) {
-              destZone = z;
-              destIdx = idx;
-              break;
-            }
-          }
-          
-          if (destZone) {
-            field[destZone][destIdx] = {
-              card: structuredClone(card),
-              tapped: false,
-              attacking: false,
-              target: null,
-              summonedTurn: turn,
-              summonedZone: destZone
-            };
-            logBattle(`✨ 調色盤 效果：特殊召喚手牌/墓地中的顏料單位【${card.name}】到我方場上！`);
-            if (isMultiplayer) {
-              sendFullGameStateToOpponent();
-            }
-            render();
-          }
-        }
-      }
-    }
-  };
-
-  await runYokaiEndPhaseEffects();
-  await runArtEndPhaseEffects();
+  // Village and palette end effects run in the shared expansion resolver above.
 
   // 🎪 惡作劇的小朋友 (R-CCS-0001 / SSR-CCS-0001 / SSSR-CCS-0001 / STR-CCS-0001): 結束階段墓地此卡與另一張馬戲團單位上靶
   const prankChildIdx = graveyard.findIndex(c => c && (c.id === "R-CCS-0001" || c.id === "SSR-CCS-0001" || c.id === "SSSR-CCS-0001" || c.id === "STR-CCS-0001" || c.name?.includes("惡作劇的小朋友")));
@@ -46017,7 +45920,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261123-yarn-battle-rewards-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261123-village-art-end-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -54497,7 +54400,9 @@ window.xlwSpecialSummonUnit = async function(card, isPlayer, options = {}) {
   const candidateSlots = (frontPriority && frontSlots.length > 0) ? frontSlots : emptySlots;
 
   let slot = null;
-  if (isPlayer) {
+  if (options.choosePlacement) {
+    slot = await options.choosePlacement(candidateSlots);
+  } else if (isPlayer) {
     const choices = candidateSlots.map((s, i) => ({
       text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
       value: i,

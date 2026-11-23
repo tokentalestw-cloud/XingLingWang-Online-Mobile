@@ -51,6 +51,7 @@ test('Garden Aunt offers a real action menu and summons one extra-zone seed at t
     g.showXLWChoiceModal=async(t,m,options,config)=>{if(t.includes('花園阿姨')){assert.equal(config.actionChoices,true);return 'seed';}return options.at(-1).value;};
     vm.runInContext(section('window.xlwSummonPlantFromExtraDeck =','// 單位成長核心'),g);
     vm.runInContext(section('// Yarn Monster end reward:','// End Yarn Monster reward.'),g);
+    vm.runInContext(section('// Shared village/art end effects','// End shared village/art end effects.'),g);
     vm.runInContext(section('window.xlwResolveExpansionTurnEnd =','window.xlwResolveExpansionPostDestruction ='),g);
     await g.xlwResolveExpansionTurnEnd(true);
     assert.equal(g.playerExtraDeck.length,0);assert.equal(g.field.player_front[4].card.id,'seed');

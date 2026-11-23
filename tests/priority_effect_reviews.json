@@ -177,6 +177,81 @@
         "scenarios": 6,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-VLG-0053",
+      "signature": "c097f52f7e2c26e6852440ec7e9c271dfce1ca8cf5c19613087d9bbd61066485",
+      "regression_file": "tests/test_village_art_end.cjs",
+      "scope": [
+        "結束階段前排數條件",
+        "沉默與正前方判定",
+        "強制推擠與破圖回手",
+        "雙座位同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-23",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 8,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-VLG-0019",
+      "signature": "1fbf78a04cdd1c8cb1851047931336edeaf1e72bd169c427da8060f9ac62c505",
+      "regression_file": "tests/test_village_art_end.cjs",
+      "scope": [
+        "墓地星數及種族條件",
+        "可選發動與直接選位",
+        "來源變更與重設取消",
+        "完整特殊召喚及立即效果",
+        "雙座位同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-23",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 6,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-ART-0045",
+      "signature": "6518ed5f7b1a4b3a7db8c15b39f158e156a50796c53f0957d363e5eab03576c4",
+      "regression_file": "tests/test_village_art_end.cjs",
+      "scope": [
+        "手牌及墓地顏料篩選",
+        "多張調色盤分別結算",
+        "過期選牌及來源失效保護",
+        "直接選位與實卡移牌",
+        "雙座位同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-23",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 6,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-VLG-0009",
+      "signature": "34c13f4fe315939723abc0f216d3a6d0ebe1faf542f7bc473113588cba774519",
+      "regression_file": "tests/test_village_art_end.cjs",
+      "scope": [
+        "一般及特殊召喚路徑",
+        "牌庫實卡檢索及重洗",
+        "無效效果與重複結算保護",
+        "恐怖的井召回連動",
+        "雙座位同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-23",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 2,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
