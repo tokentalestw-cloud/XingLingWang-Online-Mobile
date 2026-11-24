@@ -5014,16 +5014,22 @@ window.hasImmediateEffect = hasImmediateEffect;
 
 window.xlwChooseImmediateCounter = async function(card, zone, idx) {
   const source = field[zone]?.[idx];
+  if(!source?.card)return false;
+  source.xlwSummonCounterChecked=true;
+  const sourceCard=source.card;
+  const sameCard=(a,b)=>a&&b&&(a._xlwInstanceId||b._xlwInstanceId?a._xlwInstanceId&&a._xlwInstanceId===b._xlwInstanceId:a.id===b.id&&a.name===b.name);
   const choices = [];
   const starry = hand.find(card => card?.id === "ART-0020" || card?.name?.includes("星空"));
   const interrupt = hand.find(card => card?.id?.includes("NMG-0022") || card?.name?.includes("打斷你一下"));
-  if (starry) choices.push({text: "星空・破壞召喚單位並終止立即效果", value: "starry", card: starry});
+  if (starry) choices.push({text: "星空・破壞這次打出的單位"+(hasImmediateEffect(card)?"，無效立即效果":""), value: "starry", card: starry});
   if (interrupt && hasImmediateEffect(card)) choices.push({text: "打斷你一下・無效立即效果", value: "interrupt", card: interrupt});
   if (!choices.length) return false;
   const choice = await window.XLWSummonReaction.choose("召喚反制", "查看召喚單位與反制卡的完整資訊後，選擇是否發動。", choices);
   const selected = choice === "starry" ? starry : choice === "interrupt" ? interrupt : null;
-  if (!selected || !source || field[zone]?.[idx] !== source ||
-      !window.XLWDuelConsistency.takeKnownCard(hand, selected)) return false;
+  const current=field[zone]?.[idx];
+  if(!sameCard(current?.card,sourceCard))return false;
+  current.xlwSummonCounterChecked=true;
+  if (!selected || !window.XLWDuelConsistency.takeKnownCard(hand, selected)) return false;
   graveyard.push(selected);
   logBattle(`✨ 發動【${selected.name}】反制【${card.name}】。`);
   if (choice === "starry") {
@@ -5035,10 +5041,14 @@ window.xlwChooseImmediateCounter = async function(card, zone, idx) {
 
 window.xlwPrepareImmediateEffect = async function(card, zone, idx, isPlayer) {
   const unit = field[zone]?.[idx];
-  if (!unit || !hasImmediateEffect(card)) return true;
-  if (unit.xlwImmediateSettled) return !unit.xlwImmediateNegated;
-  unit.xlwImmediateSettled = true;
-  await window.XLWSummonReaction?.flash(card, isPlayer ? "player" : "enemy");
+  if (!unit) return true;
+  const immediate=hasImmediateEffect(card);
+  if (unit.xlwSummonCounterSettled || (immediate&&unit.xlwImmediateSettled)) return !unit.xlwImmediateNegated;
+  unit.xlwSummonCounterSettled=true;
+  if(immediate){
+    unit.xlwImmediateSettled = true;
+    await window.XLWSummonReaction?.flash(card, isPlayer ? "player" : "enemy");
+  }
   if (isMultiplayer && isPlayer) {
     const summonRequestId = crypto.randomUUID();
     window.XLW_pendingSummonRequestId = summonRequestId;
@@ -21174,6 +21184,11 @@ async function performSummonToSlot(zone, idx) {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
     }
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
+    // Every special placement has a correlated summon-response window, even without Immediate.
+    const summonOwner=zone.startsWith('player_');
+    const summonAllowed=await window.xlwPrepareImmediateEffect(card,zone,idx,summonOwner);
+    if(isMultiplayer&&summonOwner)summonMessageSent=true;
+    if(!summonAllowed){render();if(isMultiplayer)sendFullGameStateToOpponent(false);return;}
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
     if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾"].includes(card.name)) && field[zone]?.[idx]) {
@@ -21357,6 +21372,7 @@ async function performSummonToSlot(zone, idx) {
     }
     
     const summonedUnit = field[zone][idx];
+    summonedUnit.xlwSummonCounterSettled=true;
     if (hasImmediateEffect(card)) {
       summonedUnit.xlwImmediateSettled = !isMultiplayer || !window.XLW_isFoodBallSummoning;
       if (summonedUnit.xlwImmediateSettled) await window.XLWSummonReaction?.flash(card, "player");
@@ -21410,7 +21426,7 @@ async function performSummonToSlot(zone, idx) {
       const hasInterrupt = oppHand.some(c => c && (c.id === "R-NMG-0022" || c.id === "SSSR-NMG-0022" || c.name?.includes("打斷你一下")));
       const hasImm = hasImmediateEffect(card);
 
-      if (hasStarry && hasImm && Math.random() < 0.4) {
+      if (hasStarry && Math.random() < 0.4) {
         const sIdx = oppHand.findIndex(c => c && (c.id === "ART-0020" || c.name?.includes("星空")));
         const sCard = oppHand.splice(sIdx, 1)[0];
         window.XLW_ENEMY.grave.push(sCard);
@@ -45909,7 +45925,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-cookie-battle-pass-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-starry-summon-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();

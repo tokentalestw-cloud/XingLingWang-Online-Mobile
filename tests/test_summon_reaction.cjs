@@ -25,14 +25,14 @@ function ui() {
   vm.runInNewContext(fs.readFileSync(path.join(root, "static/summon_reaction.js"), "utf8"), scope);
   return {reaction: scope.window.XLWSummonReaction, document, timers, advance(ms) { now += ms; for (const timer of [...timers.values()]) if (timer.due <= now) timer.fn(); }};
 }
-test("Summon reaction shares a 15-second deadline across confirmation and target selection", async () => {
+test("Summon reaction shares an 8-second deadline across confirmation and target selection", async () => {
   const c = ui(), card = {id: "summon", name: "雪女", attack: 6, score: 5, tribute: 2, effect_text: "完整效果", image: "/card.jpg"};
   c.reaction.begin(card);
   const confirm = c.reaction.confirm("星空", "是否反制");
   const overlay = c.document.body.children[0];
   assert.ok(overlay.querySelectorAll("img").some(n => n.src === "/card.jpg"));
   assert.ok(overlay.querySelectorAll("p").some(n => n.textContent === "完整效果"));
-  c.advance(14000);
+  c.advance(7000);
   overlay.querySelectorAll("button")[0].onclick();
   assert.equal(await confirm, true);
   const choose = c.reaction.choose("小陷阱目標", "選擇目標", [{text: "目標", card, value: 0}]);
@@ -42,12 +42,19 @@ test("Summon reaction shares a 15-second deadline across confirmation and target
   assert.equal(c.timers.size, 0);
   assert.equal(await c.reaction.confirm("後續反制", "期限已過"), false);
 });
+
+test("A snapshot clone of the same summoned card cannot restart its eight-second decision deadline",async()=>{
+  const c=ui(),card={id:'plain',name:'plain',_xlwInstanceId:'one-unit'};
+  c.reaction.begin(card);c.advance(7000);c.reaction.ensure({...card});
+  const waiting=c.reaction.choose('星空','是否反制',[{text:'發動',value:true}]);
+  c.advance(1001);assert.equal(await waiting,null);assert.equal(c.timers.size,0);
+});
 test("Closing a reaction cleans its timer and a late tap cannot activate it", async () => {
   const c = ui();
   c.reaction.begin({id: "a"});
   const waiting = c.reaction.confirm("反制", "說明");
   const button = c.document.body.children[0].querySelectorAll("button")[0];
-  c.advance(15000);
+  c.advance(8000);
   button.onclick();
   assert.equal(await waiting, false);
   assert.equal(c.timers.size, 0);

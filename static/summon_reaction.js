@@ -3,7 +3,7 @@
   "use strict";
   let current = null;
   let close = null;
-  const duration = 15000;
+  const duration = 8000;
   function begin(card) {
     end();
     current = {card, deadline: Date.now() + duration};
@@ -125,6 +125,7 @@
     try { await new Promise(resolve => setTimeout(resolve, 700)); }
     finally { overlay.remove(); }
   }
-  global.XLWSummonReaction = {begin, end, flash, ensure: card => { if (current?.card !== card) begin(card); }, choose, confirm: async (title, message) =>
+  const sameCard=(a,b)=>a&&b&&(a._xlwInstanceId||b._xlwInstanceId?a._xlwInstanceId&&a._xlwInstanceId===b._xlwInstanceId:a.id===b.id&&a.name===b.name);
+  global.XLWSummonReaction = {begin, end, flash, ensure: card => { if (!sameCard(current?.card,card)) begin(card); }, choose, confirm: async (title, message) =>
     (await choose(title, message, [{text: "發動", value: true}])) === true};
 })(window);

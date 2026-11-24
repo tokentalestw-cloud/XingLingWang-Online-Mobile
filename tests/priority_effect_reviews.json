@@ -272,6 +272,26 @@
         "scenarios": 8,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "ART-0020",
+      "signature": "61cf82f38a57607faa449046baab87e4315134c5606b89cb54fd697f5ca2e27f",
+      "regression_file": "tests/test_starry_all_summons.cjs",
+      "scope": [
+        "無立即與有立即召喚反制",
+        "一般與特殊召喚",
+        "單人 AI 與雙座位連線",
+        "八秒決策與不重啟期限",
+        "實卡目標及快照更新保護",
+        "關聯反制結果與防止復原"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients plus single-player AI",
+        "scenarios": 15,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
