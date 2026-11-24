@@ -312,6 +312,44 @@
         "scenarios": 14,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "ORC-0009",
+      "signature": "205fa51dce59d98fca674d9cec42c9e458eb41216d5f4991e9db0780d2b82c7d",
+      "regression_file": "tests/test_orc_king.cjs",
+      "scope": [
+        "立即效果在敵方同欄前排召喚小旅人",
+        "一般獻祭與特殊召喚",
+        "佔格及沉默阻擋保護",
+        "獸人王與小旅人的星空反制",
+        "雙座位場地同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 10,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SSR-ORC-0009",
+      "signature": "205fa51dce59d98fca674d9cec42c9e458eb41216d5f4991e9db0780d2b82c7d",
+      "regression_file": "tests/test_orc_king.cjs",
+      "scope": [
+        "立即效果在敵方同欄前排召喚小旅人",
+        "一般獻祭與特殊召喚",
+        "佔格及沉默阻擋保護",
+        "獸人王與小旅人的星空反制",
+        "雙座位場地同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 4,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

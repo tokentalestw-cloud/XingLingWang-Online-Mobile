@@ -5060,7 +5060,7 @@ window.xlwPrepareImmediateEffect = async function(card, zone, idx, isPlayer) {
     const result = await reply;
     if (result.countered) {
       unit.xlwImmediateNegated = true;
-      if (result.countered === true && field[zone]?.[idx] === unit) await destroyUnit(zone, idx, "player", false);
+      if (result.countered === true && field[zone]?.[idx] === unit) await destroyUnit(zone, idx, zone.startsWith("player_")?"player":"enemy", false);
       return false;
     }
   } else if (!isMultiplayer && !isPlayer) {
@@ -12397,6 +12397,32 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
 
   if (typeof render === "function") render();
 };
+
+// Orc King creates the canonical forest token opposite its column, never on its own half.
+window.xlwResolveOrcKing = async function(card,zone,idx,isPlayer) {
+  const unit=field[zone]?.[idx],king=c=>c&&(/(?:^|-)ORC-0009(?:-|$)/.test(c.id||'')||c.name?.includes('加爾帝'));
+  if(!king(card)||!king(unit?.card)||unit.xlwOrcKingResolved)return false;
+  if(card._xlwInstanceId&&unit.card._xlwInstanceId!==card._xlwInstanceId)return false;
+  unit.xlwOrcKingResolved=true;
+  if(window.isUnitSilenced(unit,zone,idx)||unit.xlwImmediateNegated)return false;
+  if(window.xlwIsImmediateEffectBlocked?.(card,isPlayer))return false;
+  const targetZone=isPlayer?'enemy_front':'player_front';
+  if(field[targetZone]?.[idx]) {
+    xlwLogSharedCardEffect('獸人王 加爾帝','正對的敵方前排已有單位，本次不召喚小旅人。',isPlayer);return false;
+  }
+  const blocked=['front','back'].some(row=>(field[(isPlayer?'enemy_':'player_')+row]||[]).some((u,i)=>u?.card&&(u.card.id==='R-SPT-0003'||u.card.name==='憤怒旅人')&&!window.isUnitSilenced(u,(isPlayer?'enemy_':'player_')+row,i)));
+  if(blocked){xlwLogSharedCardEffect('獸人王 加爾帝','受到憤怒旅人限制，不能召喚小旅人。',isPlayer);return false;}
+  const token={...structuredClone(LITTLE_TRAVELER),_xlwInstanceId:crypto.randomUUID()};
+  field[targetZone][idx]={card:token,tapped:false,attacking:false,target:null,equipments:[],summonedTurn:turn,summonedZone:targetZone};
+  const count=isPlayer?'XLW_playerSummonCountThisTurn':'XLW_enemySummonCountThisTurn';window[count]=(window[count]||0)+1;
+  xlwLogSharedCardEffect('獸人王 加爾帝',`在敵方前排第 ${idx+1} 格召喚 1 個小旅人。`,isPlayer);
+  render();
+  // The caster owns this summon response even though the token is placed on the other half.
+  await window.xlwPrepareImmediateEffect(token,targetZone,idx,isPlayer);
+  if(isMultiplayer)sendFullGameStateToOpponent(false);
+  render();return field[targetZone]?.[idx]?.card._xlwInstanceId===token._xlwInstanceId;
+};
+// End Orc King token placement.
 
 // Bitten Cookie returns one confirmed physical dessert unit, never a magic card.
 window.xlwResolveBittenCookie = async function(card,zone,idx,isPlayer) {
@@ -21191,12 +21217,13 @@ async function performSummonToSlot(zone, idx) {
     if(!summonAllowed){render();if(isMultiplayer)sendFullGameStateToOpponent(false);return;}
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014","ORC-0009"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾","獸人王 加爾帝"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
       if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) {
-        if(card.id?.includes('CND-0014')||card.name==='被咬的夾心餅乾')await window.xlwResolveBittenCookie(card,zone,idx,own);
+        if(card.id?.includes('ORC-0009')||card.name?.includes('加爾帝'))await window.xlwResolveOrcKing(card,zone,idx,own);
+        else if(card.id?.includes('CND-0014')||card.name==='被咬的夾心餅乾')await window.xlwResolveBittenCookie(card,zone,idx,own);
         else if(card.id?.includes('VLG-0009')||card.name==='恐怖錄影帶')window.xlwResolveHorrorTape(card,zone,idx,own);
         else if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
         else if(card.id?.includes('VLG-0061')||card.name==='海坊主')await window.xlwPushSeaMonkWave(own);
@@ -23950,24 +23977,9 @@ async function performSummonToSlot(zone, idx) {
           render();
         }
       }
-      // ORC-0009 / SSR-ORC-0009 獸人王 加爾帝
-      if (card.id === "ORC-0009" || card.id === "SSR-ORC-0009" || card.name?.includes("加爾帝")) {
-        const isPlayer = zone.startsWith("player_");
-        const frontZone = isPlayer ? "player_front" : "enemy_front";
-        const backZone = isPlayer ? "player_back" : "enemy_back";
-        if (zone === backZone && field[frontZone][idx] === null) {
-          const travelerCard = allCards.find(c => c && (c.id === "TOKEN_TRAVELER" || c.name.includes("小旅人"))) || { id: "TOKEN_TRAVELER", name: "小旅人", type: "unit", tribute: 0, attack: "1", score: 1 };
-          field[frontZone][idx] = {
-            card: travelerCard,
-            tapped: false,
-            attacking: false,
-            target: null,
-            summonedTurn: turn,
-            summonedZone: frontZone
-          };
-          logBattle(`✨ 獸人王 加爾帝 立即效果：召喚了一個【小旅人】至其正前方！`);
-          render();
-        }
+      // Both Orc King rarities share the same opponent-facing placement.
+      if (card.id?.includes('ORC-0009') || card.name?.includes('加爾帝')) {
+        await window.xlwResolveOrcKing(card,zone,idx,zone.startsWith('player_'));
       }
 
   // 特殊旅人預組 - SPT-0001 金白蘭旅人 / 白金旅人 (使你場上與卡牌庫的所有小旅人+1生命+1星星)
@@ -30843,6 +30855,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
 
   if (!card || !field[destZone]?.[destIdx]?.card) return;
   if (!await window.xlwPrepareImmediateEffect(card, destZone, destIdx, false)) return;
+  if(card.id?.includes('ORC-0009')||card.name?.includes('加爾帝'))await window.xlwResolveOrcKing(card,destZone,destIdx,false);
   render();
   if (!isMultiplayer && window.XLWSpecialSummon?.match(card)) {
     await playTributeSummonAnimation(destZone, destIdx, true);
@@ -45926,7 +45939,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-mace-equipment-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-king-front-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
