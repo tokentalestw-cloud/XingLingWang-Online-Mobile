@@ -379,12 +379,20 @@ function counterPromptFixture() {
   c.setTimeout = () => 1;
   c.requestAnimationFrame = callback => callback();
   c.showSpellChainUI = () => {};
+  c.setStatus = () => {};
   c.xlwShowSpellActivationOverlay = async () => {};
   c.hideSpellChainUI = () => {};
   vm.runInContext(slice("function promptNextChainAction()", "function resolveLocalSpellChain()"), c);
   const button = name => actions.children.find(entry => entry.textContent?.includes(name));
   return {c, item, button};
 }
+
+for(const id of ['NMG-0020','R-NMG-0020','R-NMG-0020-2'])for(const own of [true,false])test(`Magic Counter is offered only during opponent turn: ${id}/${own}`,()=>{
+  const {c,button}=counterPromptFixture();c.isMyTurn=own;c.hand.push({id,name:'魔法反制',type:'magic'});c.promptNextChainAction();assert.equal(!!button('魔法反制'),!own);
+});
+test('a Magic Counter button becomes unusable after the turn changes',async()=>{const {c,button}=counterPromptFixture();c.isMyTurn=false;c.hand.push({id:'NMG-0020',name:'魔法反制',type:'magic'});c.promptNextChainAction();const old=button('魔法反制');c.isMyTurn=true;await old.onclick();assert.equal(c.hand.length,1);assert.equal(c.spellChainStack.length,1);});
+for(const own of [true,false])test(`resolver rejects wrong-turn Magic Counter without consuming it: ${own}`,()=>{const {c}=chainFixture(null);c.isMyTurn=true;const counter={id:'NMG-0020',name:'魔法反制',type:'magic',_xlwInstanceId:'counter'};c.spellChainStack[1]={card:counter,owner:own?'me':'opponent'};c.resolveLocalSpellChain();assert.equal(c.result.countered,!own);assert.equal(c.hand.includes(counter),own);assert.equal(c.enemyGraveyard.includes(counter),!own);});
+for(const myTurn of [true,false])test(`AI Magic Counter obeys the same opponent-turn rule: ${myTurn}`,async()=>{const {c}=chainFixture(null);c.isMyTurn=myTurn;c.Math=Object.create(Math);c.Math.random=()=>0;c.spellChainStack.length=1;c.window.XLW_ENEMY.hand=[{id:'NMG-0020',name:'魔法反制',type:'magic'}];c.showSpellChainUI=()=>{};c.promptNextChainAction=()=>{};vm.runInContext(slice('async function aiRespondToSpellChain()','function promptNextChainAction()'),c);await c.aiRespondToSpellChain();assert.equal(c.window.XLW_ENEMY.hand.length,myTurn?0:1);});
 
 test("bomber is unavailable with no deck cost and offered once the deck has a real card", () => {
   const {c, button} = counterPromptFixture();
@@ -398,6 +406,7 @@ test("bomber is unavailable with no deck cost and offered once the deck has a re
 
 test("a stale button cannot cast an already-removed counter or spend a different copy", async () => {
   const {c, button} = counterPromptFixture();
+  c.isMyTurn = false;
   c.hand.push({id: "NMG-0020", name: "魔法反制", _xlwInstanceId: "removed"});
   c.promptNextChainAction();
   const old = button("魔法反制");
@@ -490,7 +499,7 @@ test("a silenced merchant cannot make black orb playable at reduced cost", () =>
 test("a magic-only counter cannot counter the mushroom's unit effect", () => {
   const {c} = chainFixture(null);
   c.spellChainStack[1].card = {id: "VRT-0011-EFFECT", name: "酒醉的魔法魔菇", type: "unit"};
-  const handCounter = {id: "NMG-0020", name: "魔法反制", type: "magic"};
+  const handCounter = {id: "NMG-0021", name: "終極無效化", type: "magic"};
   c.spellChainStack.push({card: handCounter, owner: "me"});
   c.resolveLocalSpellChain();
   assert.equal(c.result.countered, true);

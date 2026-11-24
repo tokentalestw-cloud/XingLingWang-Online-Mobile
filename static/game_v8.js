@@ -4537,37 +4537,64 @@ async function xlwCheckAndTriggerLeafTraveler(isPlayerSide) {
 }
 window.xlwCheckAndTriggerLeafTraveler = xlwCheckAndTriggerLeafTraveler;
 
+window.xlwOrcEquipmentCard = function(eq) {
+  const raw=typeof eq==='string'?{name:eq}:(eq?.card||eq);
+  if(!raw)return null;
+  const c=(allCards||[]).find(c=>c&&((raw.id&&c.id===raw.id)||(raw.name&&(c.name===raw.name||c.id===raw.name))))||raw;
+  const orc=c.faction==='獸人'||c.race==='獸人'||c.deck==='獸人'||/(?:^|[-=])(?:ORC|0RC)-/.test(c.id||'');
+  const subtype=c.art_subtype||c.magic_type||'',kw=Array.isArray(c.keywords)?c.keywords.join(','):String(c.keywords||'');
+  return ['magic','魔法','法術'].includes(c.type)&&orc&&!/消耗|場地/.test(subtype)&&(/裝備/.test(subtype+kw)||c.id==='R-ORC-0025')?c:null;
+};
 window.xlwGetAvailableOrcEquipments = function() {
-  const equips = [];
-  if (typeof graveyard !== "undefined" && Array.isArray(graveyard)) {
-    graveyard.forEach((c, idx) => {
-      if (c && (c.type === "magic" || c.type === "魔法" || c.type === "法術")) {
-        const isOrcFaction = (c.faction === "獸人" || c.deck === "獸人" || c.id?.includes("ORC") || c.id?.includes("0RC"));
-        const hasWeaponKw = /帽|菜刀|狼牙棒|弓|牛排|斧|戰錘|盾牌|裝備|武器/.test(c.name || "");
-        if (isOrcFaction || hasWeaponKw) {
-          equips.push({ source: "graveyard", index: idx, card: c, name: c.name });
-        }
-      }
+  const result=[];
+  (graveyard||[]).forEach(card=>{if(window.xlwOrcEquipmentCard(card))result.push({source:'graveyard',card,name:card.name});});
+  for(const zone of ['player_front','player_back']) (field[zone]||[]).forEach((unit,slotIdx)=>{
+    (unit?.equipments||[]).forEach((equipment,eqIdx)=>{
+      const card=window.xlwOrcEquipmentCard(equipment);
+      if(card&&unit.tempEquips?.[card.name]===undefined)result.push({source:'field',zone,slotIdx,eqIdx,equipment,unitCard:unit.card,card,name:card.name});
     });
-  }
-  if (typeof field !== "undefined" && field) {
-    for (const z of ["player_front", "player_back"]) {
-      if (!field[z]) continue;
-      for (let i = 0; i < 5; i++) {
-        const u = field[z][i];
-        if (u && u.equipments && u.equipments.length > 0) {
-          u.equipments.forEach((eqName, eqIdx) => {
-            const isTempMagic = ["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳", "法術保護"].some(x => eqName.includes(x));
-            const isOrcEquip = /帽|菜刀|狼牙棒|弓|牛排|斧|戰錘|盾牌|裝備|武器/.test(eqName);
-            if (!isTempMagic && isOrcEquip) {
-              equips.push({ source: "field", zone: z, slotIdx: i, eqIdx: eqIdx, name: eqName });
-            }
-          });
-        }
+  });
+  return result;
+};
+window.xlwChooseSteakEquipments = async function(spell) {
+  window.XLWDuelConsistency.identify(graveyard);
+  const choices=window.xlwGetAvailableOrcEquipments();
+  if(choices.length<2)return false;
+  const pending=window.XLW_deckTopPending ||=new Map(),token={},startedTurn=turn;pending.set(token,token);
+  const current=()=>pending.get(token)===token&&turn===startedTurn;
+  const label=item=>item.source==='graveyard'?'墓地':`場上・${field[item.zone]?.[item.slotIdx]?.card.name||''}（${item.zone.endsWith('front')?'前排':'後排'}${item.slotIdx+1}）`;
+  const pick=async(pool,n)=>{
+    const value=await showXLWChoiceModal(`戰斧牛排：選擇第 ${n} 張裝備`,`自行選擇要除外的 2 張獸人裝備；兩張確認前不會移除。`,pool.map((item,value)=>({text:item.name+'・'+label(item),card:item.card,value})),{confirmCard:true,preventOverlayClose:true});
+    return Number.isInteger(value)?pool[value]:null;
+  };
+  const valid=item=>{
+    if(item.source==='graveyard')return !!window.xlwOrcEquipmentCard(window.XLWDuelConsistency.findKnownCard(graveyard,item.card));
+    const unit=field[item.zone]?.[item.slotIdx];
+    const same=unit?.card&&(unit.card===item.unitCard||(item.unitCard._xlwInstanceId&&unit.card._xlwInstanceId===item.unitCard._xlwInstanceId));
+    const eq=unit?.equipments?.[item.eqIdx],card=window.xlwOrcEquipmentCard(eq);
+    return same&&card?.id===item.card.id&&card.name===item.card.name&&unit.tempEquips?.[card.name]===undefined;
+  };
+  try {
+    const first=await pick(choices,1);if(!first||!current())return false;
+    const second=await pick(choices.filter(c=>c!==first),2);if(!second||!current()||!valid(first)||!valid(second))return false;
+    // Validate the complete selection before touching either source. Remove attached copies backwards.
+    const selected=[first,second].sort((a,b)=>a.source==='field'&&b.source==='field'&&a.zone===b.zone&&a.slotIdx===b.slotIdx?b.eqIdx-a.eqIdx:0);
+    for(const item of selected) {
+      let card;
+      if(item.source==='graveyard')card=window.XLWDuelConsistency.takeKnownCard(graveyard,item.card);
+      else {
+        const unit=field[item.zone][item.slotIdx];unit.equipments.splice(item.eqIdx,1);
+        const names=unit.equipments.map(eq=>typeof eq==='string'?eq:(eq?.card?.name||eq?.name||''));
+        if(item.name.includes('戰斧牛排')){unit.atkModifier=(unit.atkModifier||0)-5;unit.steakBonus=names.some(n=>n.includes('戰斧牛排'));}
+        if(item.name.includes('弓箭')){unit.atkModifier=(unit.atkModifier||0)-1;unit.hasRanged=names.some(n=>n.includes('弓箭'));}
+        if(item.name.includes('符咒帽')&&!names.some(n=>/符咒帽|法術保護/.test(n)))unit.magicImmune=false;
+        if(/菜刀|迴旋飛斧/.test(item.name)&&!names.some(n=>/菜刀|迴旋飛斧|肌肉魔法/.test(n)))unit.piercing=false;
+        card=structuredClone(item.card);if(!card._xlwInstanceId)card._xlwInstanceId=crypto.randomUUID();
       }
+      exileCard(card,'player');logBattle(`【戰斧牛排】除外${label(item)}的【${card.name}】。`);
     }
-  }
-  return equips;
+    render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
+  } finally {if(pending.get(token)===token)pending.delete(token);}
 };
 
 async function promptAndSummonTraveler(side, count, sourceName = "效果") {
@@ -12398,6 +12425,32 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   if (typeof render === "function") render();
 };
 
+// Challenger chooses a front-row target; its destination is fixed by the source column.
+window.xlwResolveOrcChallenger = async function(card,zone,idx,isPlayer) {
+  const unit=field[zone]?.[idx],kind=c=>c&&(/(?:^|-)ORC-(?:0014|0007)(?:-|$)/.test(c.id||'')||/獸人[挑跳]戰者/.test(c.name||''));
+  if(!kind(card)||!kind(unit?.card)||unit.xlwChallengerResolved)return false;
+  unit.xlwChallengerResolved=true;
+  const dest=isPlayer?'enemy_front':'player_front',startedTurn=turn,pending=window.XLW_deckTopPending ||=new Map(),token={};pending.set(token,token);
+  const same=(a,b)=>a===b||!!(a?.card?._xlwInstanceId&&a.card._xlwInstanceId===b?.card?._xlwInstanceId&&a.card.id===b.card.id);
+  const live=()=>{const current=field[zone]?.[idx];return pending.get(token)===token&&turn===startedTurn&&same(current,unit)&&!window.isUnitSilenced(current,zone,idx)&&!current.xlwImmediateNegated;};
+  const movable=(u,i)=>u?.card&&i!==idx&&!xlwIsUnitUnmovable(u,dest,i)&&!window.isUnitEffectImmune?.(u,dest,i);
+  try {
+    if(!live()||window.xlwIsImmediateEffectBlocked?.(card,isPlayer))return false;
+    if(field[dest]?.[idx]){xlwLogSharedCardEffect('獸人挑戰者','正前方已有單位，不能移動或覆蓋。',isPlayer);return false;}
+    const targets=(field[dest]||[]).flatMap((unit,i)=>movable(unit,i)?[{unit,idx:i}]:[]);
+    if(!targets.length)return false;
+    const n=await window.xlwChooseFactionAction(isPlayer,xlwFactionDecisionKey(unit,zone,'challenger'),'獸人挑戰者：選擇目標','點選敵方前排單位；只會移動到挑戰者正前方。',targets.map((t,value)=>({text:t.unit.card.name,card:t.unit.card,value,boardTarget:{zone:dest,idx:t.idx}})),{boardOnly:true,forceChoice:true});
+    const target=targets[n];
+    const currentTarget=target&&field[dest]?.[target.idx];
+    if(!live()||!target||field[dest]?.[idx]||!same(currentTarget,target.unit)||!movable(currentTarget,target.idx))return false;
+    field[dest][idx]=currentTarget;field[dest][target.idx]=null;currentTarget.summonedZone=dest;
+    window.xlwOnOpponentUnitMoved?.(currentTarget,dest,dest);
+    xlwLogSharedCardEffect('獸人挑戰者',`將【${currentTarget.card.name}】移到正前方第 ${idx+1} 格。`,isPlayer);
+    render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
+  } finally {if(pending.get(token)===token)pending.delete(token);}
+};
+// End Challenger fixed destination.
+
 // Orc King creates the canonical forest token opposite its column, never on its own half.
 window.xlwResolveOrcKing = async function(card,zone,idx,isPlayer) {
   const unit=field[zone]?.[idx],king=c=>c&&(/(?:^|-)ORC-0009(?:-|$)/.test(c.id||'')||c.name?.includes('加爾帝'));
@@ -17470,35 +17523,10 @@ async function castSpell(handIndex) {
         return;
       }
 
-      const proceed = await showXLWConfirm("戰斧牛排 額外代價", `發動戰斧牛排需要除外我方場上/墓地共 2 張獸人裝備卡，系統將自動為您除外以下裝備卡：\n${equipCards.slice(0, 2).map(e => e.card ? e.card.name : e.name).join("、")}。是否確認？`);
-      if (!proceed) {
-        hand.splice(handIndex, 0, card);
-        render();
-        return;
+      if(!await window.xlwChooseSteakEquipments(card)) {
+        if(!window.XLWDuelConsistency.findKnownCard(hand,card))hand.splice(Math.min(handIndex,hand.length),0,card);
+        render();return;
       }
-
-      const toRemove = equipCards.slice(0, 2);
-      toRemove.forEach(item => {
-        if (item.source === "graveyard") {
-          const idx = graveyard.indexOf(item.card);
-          if (idx !== -1) {
-            graveyard.splice(idx, 1);
-          }
-          exileCard(item.card, "player");
-          logBattle(`[戰斧牛排 代價] 除外了墓地獸人裝備卡：${item.card.name}`);
-        } else {
-          const u = field[item.zone]?.[item.slotIdx];
-          if (u && u.equipments) {
-            const idx = u.equipments.indexOf(item.name);
-            if (idx !== -1) {
-              u.equipments.splice(idx, 1);
-            }
-            const cardObj = (typeof allCards !== "undefined" && allCards.find(c => c && c.name === item.name)) || { name: item.name, type: "magic" };
-            exileCard(cardObj, "player");
-            logBattle(`[戰斧牛排 代價] 除外了場上 ${u.card.name} 附著的獸人裝備：${item.name}`);
-          }
-        }
-      });
     }
 
     window.XLW_equipSpellActive = true;
@@ -21217,12 +21245,13 @@ async function performSummonToSlot(zone, idx) {
     if(!summonAllowed){render();if(isMultiplayer)sendFullGameStateToOpponent(false);return;}
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014","ORC-0009"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾","獸人王 加爾帝"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014","ORC-0009","ORC-0014","ORC-0007"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾","獸人王 加爾帝","獸人挑戰者","獸人跳戰者"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
       if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) {
-        if(card.id?.includes('ORC-0009')||card.name?.includes('加爾帝'))await window.xlwResolveOrcKing(card,zone,idx,own);
+        if(card.id?.includes('ORC-0014')||card.id==='ORC-0007'||/獸人[挑跳]戰者/.test(card.name||''))await window.xlwResolveOrcChallenger(card,zone,idx,own);
+        else if(card.id?.includes('ORC-0009')||card.name?.includes('加爾帝'))await window.xlwResolveOrcKing(card,zone,idx,own);
         else if(card.id?.includes('CND-0014')||card.name==='被咬的夾心餅乾')await window.xlwResolveBittenCookie(card,zone,idx,own);
         else if(card.id?.includes('VLG-0009')||card.name==='恐怖錄影帶')window.xlwResolveHorrorTape(card,zone,idx,own);
         else if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
@@ -23897,33 +23926,7 @@ async function performSummonToSlot(zone, idx) {
           logBattle("札克 立即效果：對手正前方及後方皆滿，無法召喚小旅人。");
         }
       }
-      // R-ORC-0014 / ORC-0007 獸人跳戰者 / 獸人挑戰者
-      if (card.id === "R-ORC-0014" || card.id === "ORC-0007" || card.name?.includes("挑戰者") || card.name?.includes("跳戰者")) {
-        const isPlayer = zone.startsWith("player_");
-        const oppFrontZone = isPlayer ? "enemy_front" : "player_front";
-        const candidates = [];
-        field[oppFrontZone].forEach((u, col) => {
-          if (u && col !== idx) candidates.push({ zone: oppFrontZone, idx: col, unit: u });
-        });
-        if (candidates.length > 0) {
-          if (isPlayer) {
-            const choices = candidates.map((item, cIdx) => ({
-              text: `${item.unit.card.name} (前排${item.idx + 1})`,
-              value: cIdx
-            }));
-            const chosen = await showXLWChoiceModal("獸人挑戰者 效果", "請選擇要拉到其正前方的敵方前排單位：", choices);
-            if (chosen !== null && chosen !== undefined) {
-              const target = candidates[chosen];
-              logBattle(`✨ 獸人挑戰者 效果：拉動對手【${target.unit.card.name}】至其正前方！`);
-              await moveOrPushUnitToSlot(target.zone, target.idx, oppFrontZone, idx);
-            }
-          } else {
-            const target = candidates[Math.floor(Math.random() * candidates.length)];
-            logBattle(`✨ 對手 獸人挑戰者 效果：拉動我方【${target.unit.card.name}】至其正前方！`);
-            await moveOrPushUnitToSlot(target.zone, target.idx, oppFrontZone, idx);
-          }
-        }
-      }
+      if(card.id?.includes('ORC-0014')||card.id==='ORC-0007'||/獸人[挑跳]戰者/.test(card.name||''))await window.xlwResolveOrcChallenger(card,zone,idx,zone.startsWith('player_'));
       // R-ORC-0041 士氣獸人
       if (card.id === "R-ORC-0041" || card.name?.includes("士氣獸人")) {
         const isPlayer = zone.startsWith("player_");
@@ -30856,6 +30859,7 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
   if (!card || !field[destZone]?.[destIdx]?.card) return;
   if (!await window.xlwPrepareImmediateEffect(card, destZone, destIdx, false)) return;
   if(card.id?.includes('ORC-0009')||card.name?.includes('加爾帝'))await window.xlwResolveOrcKing(card,destZone,destIdx,false);
+  if(card.id?.includes('ORC-0014')||card.id==='ORC-0007'||/獸人[挑跳]戰者/.test(card.name||''))await window.xlwResolveOrcChallenger(card,destZone,destIdx,false);
   render();
   if (!isMultiplayer && window.XLWSpecialSummon?.match(card)) {
     await playTributeSummonAnimation(destZone, destIdx, true);
@@ -45939,7 +45943,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-king-front-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-target-steak-counter-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -51685,6 +51689,7 @@ async function aiRespondToSpellChain() {
     if (!c) return false;
     const name = c.name || "";
     const cid = c.id || "";
+    if(name.includes("魔法反制")||cid.includes("NMG-0020"))return isMyTurn;
     if (name.includes("怒吼") || cid === "R-ORC-0036") {
       return lastItem.card && lastItem.card.type === "magic" && Number(lastItem.card.mana || 0) >= 1;
     }
@@ -51785,6 +51790,7 @@ function promptNextChainAction() {
       if (!c) return false;
       const name = c.name || "";
       const cid = c.id || "";
+      if(name.includes("魔法反制")||cid.includes("NMG-0020"))return !isMyTurn;
       if (name.includes("怒吼") || cid === "R-ORC-0036") {
         return lastItemCard && lastItemCard.type === "magic" && lastItemMana >= 1;
       }
@@ -51847,6 +51853,7 @@ function promptNextChainAction() {
         counterBtn.className = "chain-action-btn counter-btn";
         counterBtn.textContent = `🔥 使用 ${c.name}`;
         counterBtn.onclick = async () => {
+          if((c.name?.includes('魔法反制')||c.id?.includes('NMG-0020'))&&isMyTurn){setStatus('魔法反制只能在對手回合使用。');promptNextChainAction();return;}
           if(!takeDecision())return;
           const handIndex = hand.findIndex(card => card === c || (c._xlwInstanceId && card?._xlwInstanceId === c._xlwInstanceId));
           const isBomber = c.name?.includes("魔法炸彈客") || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(c.id) || /(?:^|-)NMS-0025(?:-|$)/.test(c.id || "");
@@ -52048,6 +52055,11 @@ function resolveLocalSpellChain() {
   }
   // 1. Work backwards from the top of the stack to determine which counter/spell resolves
   const resolved = new Array(spellChainStack.length).fill(true);
+  const forbiddenCounters=new Set();
+  for(let i=1;i<spellChainStack.length;i++){
+    const item=spellChainStack[i],c=item?.card;
+    if((c?.name?.includes('魔法反制')||c?.id?.includes('NMG-0020'))&&(item.owner==='me'?isMyTurn:!isMyTurn)){resolved[i]=false;forbiddenCounters.add(i);}
+  }
   const unpaidBombs = new Set();
   const bombCosts = new Map();
   const bomb = card => card?.name?.includes("魔法炸彈客") || ["NEU-0025", "SSR-NMG-0025-特殊"].includes(card?.id) ||
@@ -52117,6 +52129,11 @@ function resolveLocalSpellChain() {
     if (!item?.card || ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"].includes(item.card.id)) continue;
     const ours = item.owner === "me";
     const owner = ours ? "player" : "enemy";
+    if(forbiddenCounters.has(i)){
+      const dest=ours?hand:window.XLW_ENEMY.hand;
+      if(!dest.some(c=>item.card._xlwInstanceId?c?._xlwInstanceId===item.card._xlwInstanceId:c===item.card))dest.push(item.card);
+      continue;
+    }
     if (item.wasExiledByBomb || bombCosts.has(i)) {
       exileCard(item.card, owner);
     } else if (unpaidBombs.has(i) || item.wasRoared) {

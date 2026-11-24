@@ -9278,7 +9278,7 @@
     "usable_phases": [
       "Enemy Phase"
     ],
-    "trigger_condition": "",
+    "trigger_condition": "僅限對手回合，對手打出魔法卡時可發動；不可在自己的回合發動。",
     "art_subtype": "消耗"
   },
   {
@@ -17860,9 +17860,9 @@
     "deck_eligible": true,
     "mana": 3,
     "usable_phases": [
-      "Opponent Use Magic"
+      "Enemy Phase"
     ],
-    "trigger_condition": "",
+    "trigger_condition": "僅限對手回合，對手打出魔法卡時可發動；不可在自己的回合發動。",
     "art_subtype": "消耗"
   },
   {
@@ -17881,8 +17881,10 @@
     "original_file": "中立單位/IMG_6442.JPG",
     "deck_eligible": true,
     "mana": 3,
-    "usable_phases": [],
-    "trigger_condition": "",
+    "usable_phases": [
+      "Enemy Phase"
+    ],
+    "trigger_condition": "僅限對手回合，對手打出魔法卡時可發動；不可在自己的回合發動。",
     "art_subtype": "消耗"
   },
   {
@@ -29442,7 +29444,7 @@
     "keywords": [
       "裝備，獸人，獎勵"
     ],
-    "effect_text": "使你場上/墓地加總2張裝備卡被除外，若成功則使你場上1個獸人單位被賦予+5攻擊力及此單位進攻時戰鬥成功，你獎勵+5",
+    "effect_text": "使你場上/墓地加總2張獸人裝備魔法卡被除外，若成功則使你場上1個獸人單位被賦予+5攻擊力及此單位進攻時戰鬥成功，你獎勵+5",
     "image": "/static/card_images/sr_orc_0043.jpeg",
     "original_file": "獸人/IMG_6728.JPG",
     "deck_eligible": true,

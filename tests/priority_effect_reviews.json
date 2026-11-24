@@ -350,6 +350,86 @@
         "scenarios": 4,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-ORC-0014",
+      "signature": "c8be4099967a85b2c6a570558032890f698f307610bdef3f1b6f93d939034496",
+      "regression_file": "tests/test_orc_target_steak.cjs",
+      "scope": [
+        "固定目標位置與不可覆蓋",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-ORC-0043",
+      "signature": "c665cf364dc86dd0ffa8131d9730e59f2174c56986ddb6e5692e3cfe07cb26c6",
+      "regression_file": "tests/test_orc_target_steak.cjs",
+      "scope": [
+        "選擇兩張獸人裝備及取消無扣牌",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "NMG-0020",
+      "signature": "0ba15a573a36057df46f70e26c9549517e739bc215abfb9b7340f483f247c6c9",
+      "regression_file": "tests/test_card_resolution_batch.cjs",
+      "scope": [
+        "僅限對手回合反制",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-NMG-0020",
+      "signature": "0ba15a573a36057df46f70e26c9549517e739bc215abfb9b7340f483f247c6c9",
+      "regression_file": "tests/test_card_resolution_batch.cjs",
+      "scope": [
+        "僅限對手回合反制",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-NMG-0020-2",
+      "signature": "0ba15a573a36057df46f70e26c9549517e739bc215abfb9b7340f483f247c6c9",
+      "regression_file": "tests/test_card_resolution_batch.cjs",
+      "scope": [
+        "僅限對手回合反制",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
