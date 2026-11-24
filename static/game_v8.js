@@ -5075,7 +5075,7 @@ function xlwGetFactionChoices() {
 }
 window.xlwChooseFactionAction = async function(isLocal,key,title,message,options,config={}) {
   if(!options.length)return null;
-  if(options.length===1)return options[0].value;
+  if(options.length===1&&!config.forceChoice)return options[0].value;
   if(!isMultiplayer)return isLocal ? showXLWChoiceModal(title,message,options,{...config,required:true,preventOverlayClose:true,preventExternalCancel:true}) : options[0].value;
   return xlwGetFactionChoices().choose(isLocal,key,title,message,options,config);
 };
@@ -12388,6 +12388,33 @@ window.xlwResolveExpansionTurnStart = async function(isPlayer = true) {
   if (typeof render === "function") render();
 };
 
+// Bitten Cookie returns one confirmed physical dessert unit, never a magic card.
+window.xlwResolveBittenCookie = async function(card,zone,idx,isPlayer) {
+  const unit=field[zone]?.[idx],cookie=c=>c&&(c.id?.includes('CND-0014')||c.name==='被咬的夾心餅乾');
+  if(!cookie(card)||!cookie(unit?.card)||unit.xlwCookieResolved)return false;
+  if(card._xlwInstanceId&&unit.card._xlwInstanceId!==card._xlwInstanceId)return false;
+  unit.xlwCookieResolved=true;
+  const pending=window.XLW_deckTopPending ||=new Map(),token={},startedTurn=turn;pending.set(token,token);
+  const live=()=>pending.get(token)===token&&turn===startedTurn&&field[zone]?.[idx]===unit&&cookie(unit.card)&&(!card._xlwInstanceId||card._xlwInstanceId===unit.card._xlwInstanceId)&&!window.isUnitSilenced(unit,zone,idx)&&!unit.xlwImmediateNegated;
+  const grave=()=>isPlayer?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
+  const pile=()=>isPlayer?deck:(window.XLW_ENEMY.deck ||= []);
+  const eligible=c=>c&&['unit','單位'].includes(c.type)&&isDessertCard(c);
+  try {
+    if(!live())return false;
+    const cards=grave().filter(eligible);
+    if(!cards.length){xlwLogSharedCardEffect('被咬的夾心餅乾','墓地沒有可選的甜點王國單位。',isPlayer);return false;}
+    const n=await window.xlwChooseFactionAction(isPlayer,xlwFactionDecisionKey(unit,zone,'cookie-return'),'被咬的夾心餅乾：立即效果','選擇墓地的甜點王國單位，確認後洗回牌庫（不包含魔法卡）。',cards.map((card,value)=>({text:card.name,card,value})),{confirmCard:true,forceChoice:true});
+    const selected=window.XLWDuelConsistency.findKnownCard(grave(),cards[n]);
+    if(!live()||!eligible(selected))return false;
+    const moved=window.XLWDuelConsistency.moveKnownCard(grave(),pile(),selected);
+    if(!moved)return false;
+    shuffle(pile());
+    xlwLogSharedCardEffect('被咬的夾心餅乾',`將墓地【${moved.name}】洗回牌庫。`,isPlayer);
+    render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
+  } finally {if(pending.get(token)===token)pending.delete(token);}
+};
+// End Bitten Cookie return.
+
 // Horror Tape uses the same physical search after normal or special placement.
 window.xlwResolveHorrorTape = function(card,zone,idx,isPlayer) {
   const unit=field[zone]?.[idx];
@@ -12863,6 +12890,7 @@ function xlwAcceptSpellOwnerCollections(collections){
 
 // 魔法反制與連鎖連線輔助函式
 async function castSpellChain(spellCard, effectCallback) {
+  window.XLWOfficialBattle?.controller?.invalidate();
   window.XLW_battleRuleWindow?.resetPasses();
   // 對手反制判定 (單機 VS AI 模式與 multiplayer 連鎖反制機制統一整合)
   spellChainStack = [{ card: spellCard, owner: "me", casterDefensePhase: phase === "防守階段" }];
@@ -21148,12 +21176,13 @@ async function performSummonToSlot(zone, idx) {
     logBattle(`✨ 特殊召喚單位【${card.name}】到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
     // Special placement bypasses the normal-hand immediate-effects block below.
     // These undead effects still need their counter window before moving cards.
-    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶"].includes(card.name)) && field[zone]?.[idx]) {
+    if ((["SKT-0014","SKT-0053","SKT-0027","SKT-0006","SKT-0041","SKT-0048","SKT-0050","SKT-0005","SKT-0015","VLG-0061","CND-0068","VLG-0009","CND-0014"].some(id=>card.id?.includes(id)) || ["骷髏頭","瘟疫傳教士","骷髏護士長","除屍雞","墓園管理員 小凱希","墓地運輸者 凱拉","棺材船","瘟疫使者","造墓者小布","海坊主","甜點將軍","恐怖錄影帶","被咬的夾心餅乾"].includes(card.name)) && field[zone]?.[idx]) {
       const own = zone.startsWith("player_");
       const allowed = await window.xlwPrepareImmediateEffect(card, zone, idx, own);
       if (isMultiplayer && own) summonMessageSent = true;
       if (allowed && !window.xlwIsImmediateEffectBlocked(card, own)) {
-        if(card.id?.includes('VLG-0009')||card.name==='恐怖錄影帶')window.xlwResolveHorrorTape(card,zone,idx,own);
+        if(card.id?.includes('CND-0014')||card.name==='被咬的夾心餅乾')await window.xlwResolveBittenCookie(card,zone,idx,own);
+        else if(card.id?.includes('VLG-0009')||card.name==='恐怖錄影帶')window.xlwResolveHorrorTape(card,zone,idx,own);
         else if(card.id?.includes('CND-0068')||card.name==='甜點將軍')window.xlwResolveDessertGeneral(card,zone,idx,own);
         else if(card.id?.includes('VLG-0061')||card.name==='海坊主')await window.xlwPushSeaMonkWave(own);
         else await window.xlwTriggerSktImmediateEffects(card, zone, idx, own);
@@ -22785,39 +22814,9 @@ async function performSummonToSlot(zone, idx) {
         render();
       }
 
-      // 🍬 甜點王國：被咬的夾心餅乾 (R-CND-0014) 立即: 使你墓地1甜點王國單位洗回牌庫
-      if (card.id === "R-CND-0014" || card.name?.includes("被咬的夾心餅乾")) {
-        const isPlayer = zone.startsWith("player_");
-        if (isPlayer) {
-          const dessertUnits = graveyard.filter(c => c && isDessertCard(c) && (c.type === "unit" || c.attack !== undefined));
-          if (dessertUnits.length > 0) {
-            const choices = dessertUnits.map((c, i) => ({ text: `${c.name} (攻:${c.attack || 0}/星:${c.score || c.stars || 0})`, value: i }));
-            const chosenIdx = await showXLWChoiceModal("【被咬的夾心餅乾】立即效果", "請選擇洗回牌庫的甜點王國單位：", choices);
-            if (chosenIdx !== null && chosenIdx !== undefined) {
-              const targetCard = window.XLWDuelConsistency.moveKnownCard(graveyard, deck, dessertUnits[chosenIdx]);
-              if (targetCard) {
-                shuffle(deck);
-                logBattle(`✨【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
-                if (isMultiplayer) sendFullGameStateToOpponent();
-                render();
-              }
-            }
-          } else {
-            logBattle("【被咬的夾心餅乾】立即效果：我方墓地中沒有甜點王國單位。");
-          }
-        } else {
-          const oppGrave = window.XLW_ENEMY?.grave || [];
-          const dessertUnits = oppGrave.filter(c => c && isDessertCard(c) && (c.type === "unit" || c.attack !== undefined));
-          if (dessertUnits.length > 0) {
-            const targetCard = dessertUnits[0];
-            oppGrave.splice(oppGrave.indexOf(targetCard), 1);
-            if (!window.XLW_ENEMY.deck) window.XLW_ENEMY.deck = [];
-            window.XLW_ENEMY.deck.push(targetCard);
-            shuffle(window.XLW_ENEMY.deck);
-            logBattle(`✨ 對手【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
-            render();
-          }
-        }
+      // Bitten Cookie shares selection confirmation and physical transfer on both sides.
+      if (card.id?.includes('CND-0014') || card.name?.includes('被咬的夾心餅乾')) {
+        await window.xlwResolveBittenCookie(card,zone,idx,zone.startsWith('player_'));
       }
 
       // 🍬 甜點王國：糖果女孩 (SSR-CND-0064) 立即: 使你額外區及墓地加總至多2張「糖果居民」被召喚
@@ -30866,19 +30865,9 @@ async function triggerAiSummonEffects(card, destZone, destIdx) {
     await xlwSeparateAllFusedUnits(false);
     render();
   }
-  // 🍬 甜點王國：被咬的夾心餅乾 (R-CND-0014) 立即: 使你墓地1甜點王國單位洗回牌庫
-  else if (card.id === "R-CND-0014" || card.name?.includes("被咬的夾心餅乾")) {
-    const oppGrave = window.XLW_ENEMY?.grave || [];
-    const dessertUnits = oppGrave.filter(c => c && isDessertCard(c) && (c.type === "unit" || c.attack !== undefined));
-    if (dessertUnits.length > 0) {
-      const targetCard = dessertUnits[0];
-      oppGrave.splice(oppGrave.indexOf(targetCard), 1);
-      if (!window.XLW_ENEMY.deck) window.XLW_ENEMY.deck = [];
-      window.XLW_ENEMY.deck.push(targetCard);
-      shuffle(window.XLW_ENEMY.deck);
-      logBattle(`✨ 對手【被咬的夾心餅乾】立即效果：將墓地中的【${targetCard.name}】洗回牌組！`);
-      render();
-    }
+  // Bitten Cookie uses the current owner collections after confirming a physical unit.
+  else if (card.id?.includes('CND-0014') || card.name?.includes('被咬的夾心餅乾')) {
+    await window.xlwResolveBittenCookie(card,destZone,destIdx,false);
   }
   // 🍬 甜點王國：糖果女孩 (SSR-CND-0064) 立即: 使你額外區及墓地加總至多2張「糖果居民」被召喚
   else if (card.id === "SSR-CND-0064" || card.name?.includes("糖果女孩")) {
@@ -45225,7 +45214,7 @@ function renderStablePanel() {
   if (window.XLW_battleRuleWindow) {
     const state = window.XLW_battleRuleWindow;
     setContent(`<div class="stable-action-choice-tip" role="status">${state.label}</div>
-      <button class="stable-action-btn end" ${state.localPassed ? "disabled" : ""} onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">${state.localPassed ? "等待對手確認" : "不再發動，繼續結算"}</button>`);
+      <button class="stable-action-btn end" ${state.localPassed ? "disabled" : ""} onclick="event.stopPropagation(); window.XLW_endDefenseCounter()">${state.localPassed ? "等待對手確認" : "本次交戰不再發動，繼續結算"}</button>`);
     return;
   }
   if (window.XLW_defenseCounterActive) {
@@ -45920,7 +45909,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261123-village-art-end-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-cookie-battle-pass-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46835,7 +46824,8 @@ function setupWebSocketEvents() {
     } else if (data.action === "samurai_recover_result") {
       const resolve=window.XLW_samuraiRecoveryWaiters?.get(data.requestId);if(resolve){window.XLW_samuraiRecoveryWaiters.delete(data.requestId);resolve(data.card||null);}
     } else if (data.action === "spell_chain_start") {
-      window.XLW_battleRuleWindow?.resetPasses();
+      window.XLWOfficialBattle?.controller?.invalidate();
+  window.XLW_battleRuleWindow?.resetPasses();
       if (!data.card?.id) return;
       void xlwShowSpellActivationOverlay(data.card, "enemy");
       spellChainStack = [{ card: data.card, owner: "opponent", casterDefensePhase: data.casterDefensePhase === true }];

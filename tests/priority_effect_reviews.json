@@ -252,6 +252,26 @@
         "scenarios": 2,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-CND-0014",
+      "signature": "ae27d990643cfeeaa688c964c0d925c4660a33b01d8324f1109c09c3356608f5",
+      "regression_file": "tests/test_cookie_battle_pass.cjs",
+      "scope": [
+        "一般及特殊召喚立即效果",
+        "僅限甜點王國單位",
+        "放大預覽與明確確認",
+        "墓地至牌庫實卡移動",
+        "來源失效與同名不同實體保護",
+        "雙座位及重複快照同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 8,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

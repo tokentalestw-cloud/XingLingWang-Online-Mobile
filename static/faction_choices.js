@@ -16,7 +16,7 @@
   }
   async function choose(isLocal,key,title,message,options,config={}){
    if(!options?.length)return null;
-   if(options.length===1)return options[0].value;
+   if(options.length===1&&!config.forceChoice)return options[0].value;
    if(isLocal)return own(key,title,message,options,config);
    if(answers.has(key)){const value=answers.get(key);answers.delete(key);return valid(options,value)?value:options[0].value;}
    if(!waiters.has(key)){
