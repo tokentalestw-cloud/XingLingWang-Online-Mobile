@@ -28303,39 +28303,40 @@ async function xlwSummonGoatTravelers(zone, idx) {
 }
 
 async function xlwHandleWolfMaceCombatSuccess(winningUnit, winZone, winIdx, winOwner) {
-  if (!winningUnit || !winningUnit.card) return;
-  const isOrc = winningUnit.card && (
-    winningUnit.card.faction === "獸人" ||
-    winningUnit.card.race === "獸人" ||
-    winningUnit.card.id?.includes("ORC") ||
-    winningUnit.card.id?.includes("0RC")
-  );
-  if (!isOrc) return;
-
-  const hasOtherEquip = winningUnit.equipments && winningUnit.equipments.some(eqName => {
-    if (eqName === "血戰幫狼牙棒") return false;
-    if (winningUnit.tempEquips && winningUnit.tempEquips[eqName] !== undefined) return false;
-    if (["削弱藥水", "振奮藥水", "塗毒", "睡眠反擊拳"].some(x => eqName.includes(x))) return false;
-    return true;
+  const isPlayerOwner=winOwner==='player';
+  if(!isPlayerOwner&&isMultiplayer)return false;
+  const orc=card=>card&&(card.faction==='獸人'||card.race==='獸人'||card.deck==='獸人'||/(?:^|[-=])(?:ORC|0RC)-/.test(card.id||''));
+  const equipped=unit=>(unit?.equipments||[]).some(eq=>{
+    const raw=typeof eq==='string'?{name:eq}:(eq?.card||eq);
+    if(!raw)return false;
+    const c=(typeof allCards!=='undefined'?allCards:[]).find(c=>c&&(c.id===raw.id||c.name===raw.name||c.id===raw.name))||raw;
+    const name=c.name||raw.name||'';
+    if(c.id?.includes('ORC-0054')||/血戰(?:幫)?狼牙棒/.test(name)||unit.tempEquips?.[name]!==undefined)return false;
+    const subtype=c.art_subtype||c.magic_type||'',keywords=Array.isArray(c.keywords)?c.keywords.join(','):String(c.keywords||'');
+    // The original Cleaver Axe record lacks the equipment subtype, but is a permanent weapon.
+    return ['magic','魔法'].includes(c.type)&&orc(c)&&!/消耗|場地/.test(subtype)&&(/裝備/.test(subtype+keywords)||c.id==='R-ORC-0025');
   });
-  if (!hasOtherEquip) return;
-
-  const isPlayerOwner = winOwner === "player";
-  if (!isPlayerOwner && isMultiplayer) return;
-  const extra = isPlayerOwner ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck);
-  const destination = isPlayerOwner ? hand : window.XLW_ENEMY?.hand;
-  const mace = extra?.find(card => card?.id === "R-ORC-0054");
-  if (!mace || !destination) return;
-  if (isPlayerOwner && !await showXLWConfirm(
-    "血戰幫狼牙棒", `【${winningUnit.card.name}】戰鬥成功，是否將額外區的狼牙棒加入手牌？`
-  )) return;
-  if (field[winZone]?.[winIdx] !== winningUnit) return;
-  const moved = window.XLWDuelConsistency.moveKnownCard(extra, destination, mace);
-  if (!moved) return;
-  logBattle("✨【血戰幫狼牙棒】已從額外區加入手牌。");
-  renderExtraDecks();
-  render();
-  if (isMultiplayer) xlwSendExtraToHand(moved);
+  const eligible=unit=>unit?.card&&orc(unit.card)&&equipped(unit);
+  if(!eligible(winningUnit)||field[winZone]?.[winIdx]!==winningUnit)return false;
+  const extra=()=>isPlayerOwner?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
+  const destination=()=>isPlayerOwner?hand:(window.XLW_ENEMY.hand ||= []);
+  const mace=extra()?.find(c=>c?.id==='R-ORC-0054');
+  if(!mace)return false;
+  const pending=window.XLW_deckTopPending ||=new Map(),token={},startedTurn=turn,sourceCard=winningUnit.card;
+  pending.set(token,token);
+  const current=()=>pending.get(token)===token&&turn===startedTurn;
+  try {
+    if(isPlayerOwner&&!await showXLWConfirm('血戰幫狼牙棒',`【${sourceCard.name}】裝備獸人裝備並進攻戰鬥成功，是否從額外區取得 1 張狼牙棒？`))return false;
+    const live=field[winZone]?.[winIdx];
+    const same=live===winningUnit||(sourceCard._xlwInstanceId&&live?.card?._xlwInstanceId===sourceCard._xlwInstanceId);
+    if(!current()||!same||!eligible(live))return false;
+    const moved=window.XLWDuelConsistency.moveKnownCard(extra(),destination(),mace);
+    if(!moved)return false;
+    logBattle('✨【血戰幫狼牙棒】本次進攻戰鬥成功，從額外區加入手牌 1 張。');
+    renderExtraDecks();render();
+    if(isMultiplayer)xlwSendExtraToHand(moved);
+    return true;
+  } finally {if(pending.get(token)===token)pending.delete(token);}
 }
 
 // All battle replies share a canonical seat/row key, independent of mirrored UI coordinates.
@@ -45925,7 +45926,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-starry-summon-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-mace-equipment-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46372,10 +46373,10 @@ function setupWebSocketEvents() {
         // Ordered delivery prevents a snapshot from overtaking an unfinished effect.
         // Do not resolve outstanding counter/placement promises as a side effect of syncing.
         // 翻轉格子坐標（對手的前排是我方後排，依此類推）
-        field.player_front = window.XLW_battleRuleWindow ? window.XLWOfficialBattle.mergeRow(field.player_front, s.field.enemy_front) : summonBoundary ? xlwMergeSummonBoundaryRow(field.player_front, s.field.enemy_front) : s.field.enemy_front;
-        field.player_back = window.XLW_battleRuleWindow ? window.XLWOfficialBattle.mergeRow(field.player_back, s.field.enemy_back) : summonBoundary ? xlwMergeSummonBoundaryRow(field.player_back, s.field.enemy_back) : s.field.enemy_back;
-        field.enemy_front = window.XLW_battleRuleWindow ? window.XLWOfficialBattle.mergeRow(field.enemy_front, s.field.player_front) : s.field.player_front;
-        field.enemy_back = window.XLW_battleRuleWindow ? window.XLWOfficialBattle.mergeRow(field.enemy_back, s.field.player_back) : s.field.player_back;
+        field.player_front = (window.XLW_battleRuleWindow||window.XLWBattleFlow?.inCombat) ? window.XLWOfficialBattle.mergeRow(field.player_front, s.field.enemy_front) : summonBoundary ? xlwMergeSummonBoundaryRow(field.player_front, s.field.enemy_front) : s.field.enemy_front;
+        field.player_back = (window.XLW_battleRuleWindow||window.XLWBattleFlow?.inCombat) ? window.XLWOfficialBattle.mergeRow(field.player_back, s.field.enemy_back) : summonBoundary ? xlwMergeSummonBoundaryRow(field.player_back, s.field.enemy_back) : s.field.enemy_back;
+        field.enemy_front = (window.XLW_battleRuleWindow||window.XLWBattleFlow?.inCombat) ? window.XLWOfficialBattle.mergeRow(field.enemy_front, s.field.player_front) : s.field.player_front;
+        field.enemy_back = (window.XLW_battleRuleWindow||window.XLWBattleFlow?.inCombat) ? window.XLWOfficialBattle.mergeRow(field.enemy_back, s.field.player_back) : s.field.player_back;
         
         window.XLWBattleFlow?.reconcile(field, s.turn !== undefined ? s.turn : turn);
 
@@ -52554,7 +52555,7 @@ function showExtraDeckDetailModal(title, extraList, owner) {
         }
         
         if (card.id === "R-ORC-0054") {
-          setStatus("【血戰幫狼牙棒】須由裝備其他魔法卡的己方獸人進攻戰鬥成功，才能從額外區加入手牌。");
+          setStatus("【血戰幫狼牙棒】須由裝備其他獸人裝備魔法卡的己方獸人進攻戰鬥成功，每次成功可從額外區取得 1 張。");
           return;
         }
 

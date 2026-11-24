@@ -1574,6 +1574,7 @@ test("Relocation upgrade requires two distinct enemy retreats in the ending turn
 
 test("Wolf Mace uses one authoritative transfer and does not move another extra card on a stale choice", async () => {
   const c = fixture(), orc = unit("R-ORC-0001", {equipments: ["破甲劍"]});
+  c.allCards=[{id:'R-ORC-0072',name:'破甲劍',type:'magic',faction:'獸人',art_subtype:'永久，裝備'}];
   const mace = {id: "R-ORC-0054"}, other = {id: "other"};
   c.field.player_front[0] = orc;
   c.playerExtraDeck.push(mace, other);

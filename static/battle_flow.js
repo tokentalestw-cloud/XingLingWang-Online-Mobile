@@ -36,5 +36,5 @@
     return {player,enemy};
   }
   function forgetSide(side){for(const k of spent.keys())if(k.startsWith(side+'_'))spent.delete(k);}
-  global.XLWBattleFlow={renderPanel,drawFlags,openCombat,canBypass,settle,finish,reconcile,exhaust,forget(zone,idx){spent.delete(key(zone,idx));},forgetSide,reset(){scopes.clear();spent.clear();}};
+  global.XLWBattleFlow={renderPanel,drawFlags,openCombat,canBypass,settle,finish,reconcile,exhaust,get inCombat(){return scopes.size>0;},forget(zone,idx){spent.delete(key(zone,idx));},forgetSide,reset(){scopes.clear();spent.clear();}};
 })(typeof window==='undefined'?globalThis:window);

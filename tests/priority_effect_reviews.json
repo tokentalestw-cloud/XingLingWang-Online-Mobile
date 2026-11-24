@@ -292,6 +292,26 @@
         "scenarios": 15,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "R-ORC-0054",
+      "signature": "c0851312b44ee10b2a47b4ea660c3db36a20dfd8286dc2acac4c0e73e6026c5b",
+      "regression_file": "tests/test_orc_mace_equipment.cjs",
+      "scope": [
+        "額外區取得的獸人裝備條件",
+        "排除中立魔法與狼牙棒本身",
+        "每次進攻戰鬥成功分別取一張",
+        "貫穿前後排成功與失敗",
+        "快照期間的同一實卡參照",
+        "雙座位手牌與額外區同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-24",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 14,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }
