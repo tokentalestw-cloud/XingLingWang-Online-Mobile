@@ -430,6 +430,54 @@
         "scenarios": 14,
         "iphone_safari_tested": false
       }
+    },
+    {
+      "id": "C-ART-0073",
+      "signature": "94ca56d98cdc7e1c956de4fcfe916fe3dbf7c8721509a574210b96b0cd48ca61",
+      "regression_file": "tests/test_candy_resident_reveal.cjs",
+      "scope": [
+        "法力點數2",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 12,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-CND-0056",
+      "signature": "e7425ca7aab6e929e10d35606a26421b3da85ead91f5fc8ea9625af7fe8fde33",
+      "regression_file": "tests/test_candy_resident_reveal.cjs",
+      "scope": [
+        "獻祭合體後結束階段特殊召喚",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 12,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-ART-0030",
+      "signature": "92bf50df5ccc5e44614d9f201111f343d085cb31f5e1c1b567eca362b0d2e644",
+      "regression_file": "tests/test_candy_resident_reveal.cjs",
+      "scope": [
+        "展示視窗來源標題",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 12,
+        "iphone_safari_tested": false
+      }
     }
   ]
 }

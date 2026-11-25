@@ -1922,7 +1922,7 @@ window.xlwDrawFairyAware = async function(n, isPlayer = true) {
 };
 
 // 智慧的般若/憤怒的般若：視覺化展示抽到的卡牌
-function showRevealedCardModal(card, ownerName) {
+function showRevealedCardModal(card, ownerName, sourceName = "") {
   return new Promise((resolve) => {
     let closed = false;
     let autoCloseTimer = null;
@@ -1950,7 +1950,7 @@ function showRevealedCardModal(card, ownerName) {
 
     const title = document.createElement("h3");
     title.style.cssText = "margin: 0 0 10px 0; color: #e94560; font-size: 17px; font-weight: bold; text-shadow: 0 0 8px rgba(233, 69, 96, 0.5);";
-    title.textContent = `智慧的般若 展示卡牌 (${ownerName})`;
+    title.textContent = `${sourceName ? sourceName + "・" : ""}展示卡牌 (${ownerName})`;
     
     const cardEl = document.createElement("div");
     cardEl.style.cssText = "margin: 12px auto; width: 125px; height: 175px; border: 1.5px solid #e94560; border-radius: 8px; overflow: hidden; position: relative; background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.6);";
@@ -1962,7 +1962,7 @@ function showRevealedCardModal(card, ownerName) {
     
     const text = document.createElement("div");
     text.style.cssText = "font-size: 13px; color: #e0e0e0; margin-bottom: 16px; line-height: 1.5;";
-    text.textContent = `對手展示了抽到的卡牌：【${card ? card.name : "未知卡牌"}】`;
+    text.textContent = `${ownerName}展示卡牌：【${card ? card.name : "未知卡牌"}】`;
     
     const btn = document.createElement("button");
     btn.style.cssText = "background: linear-gradient(135deg, #e94560 0%, #c12c44 100%); color: #fff; border: 1px solid #ff7b92; padding: 10px 32px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(233,69,96,0.4); pointer-events: auto;";
@@ -10147,7 +10147,7 @@ window.xlwCheckDragonTigerDefense = async function(isPlayerTurn, isFriendlyDefen
             await destroyUnit(travelers[1].zone, travelers[1].idx, "player", false);
             if ((deck || []).length > 0) {
               const topCard = deck[deck.length - 1];
-              await showRevealedCardModal(topCard, "我方");
+              await showRevealedCardModal(topCard, "我方", "義氣一族 龍哥");
             }
           }
         }
@@ -10172,7 +10172,7 @@ window.xlwCheckDragonTigerDefense = async function(isPlayerTurn, isFriendlyDefen
             await destroyUnit(travelers[1].zone, travelers[1].idx, "player", false);
             if ((deck || []).length > 0) {
               const topCard = deck[deck.length - 1];
-              await showRevealedCardModal(topCard, "我方");
+              await showRevealedCardModal(topCard, "我方", "義氣一族 虎哥");
             }
           }
         }
@@ -34725,6 +34725,36 @@ async function triggerBossLadySummon() {
   }
 }
 
+// Candy Resident checks its extra-deck trigger, not the printed fusion keyword alone.
+window.xlwHasFusedCandyMan = function(isPlayer) {
+  const candy=c=>c&&(c.id==='CND-0001'||c.name==='糖果人');
+  return (isPlayer?['player_front','player_back']:['enemy_front','enemy_back']).some(zone=>
+    (field[zone]||[]).some(u=>u?.card&&u.devourCards?.length>0&&
+      (candy(u.card)||u.devourCards.some(part=>candy(part?.card)))));
+};
+window.xlwResolveCandyResidentEndPhase = async function(isPlayer) {
+  if(isMultiplayer&&!isPlayer)return false; // The active owner's client resolves its own end phase.
+  const pile=()=>isPlayer?playerExtraDeck:enemyExtraDeck;
+  const card=pile().find(c=>c&&(c.id==='R-CND-0056'||c.name==='糖果居民'));
+  const slots=()=>isPlayer?window.xlwGetEmptyPlayerSlots():window.xlwGetEmptyEnemySlots();
+  if(!card||!window.xlwHasFusedCandyMan(isPlayer)||!slots().length)return false;
+  const pending=window.XLW_deckTopPending ||=new Map(),startedTurn=turn,key=`candy-resident:${isPlayer}:${turn}`,token={};
+  if(pending.has(key))return false;
+  pending.set(key,token);
+  const valid=()=>pending.get(key)===token&&turn===startedTurn&&window.xlwHasFusedCandyMan(isPlayer)&&
+    !!window.XLWDuelConsistency.findKnownCard(pile(),card);
+  try {
+    if(isPlayer&&!await showXLWConfirm('【糖果居民】效果發動','場上有包含【糖果人】的合體單位，是否從額外區召喚【糖果居民】？'))return false;
+    if(!valid())return false;
+    const success=await window.xlwSpecialSummonUnit(card,isPlayer,{sourcePile:pile,frontPriority:true,
+      validatePlacement:slot=>valid()&&!!slot&&!field[slot.zone]?.[slot.idx]});
+    if(!success)return false;
+    logBattle('【糖果居民】結束階段效果：從額外區召喚。');
+    render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
+  } finally {if(pending.get(key)===token)pending.delete(key);}
+};
+// End Candy Resident trigger.
+
 async function runNeutralEndPhaseEffects(isPlayerSide) {
   const mySidePrefix = isPlayerSide ? "player_" : "enemy_";
   const oppSidePrefix = isPlayerSide ? "enemy_" : "player_";
@@ -35016,86 +35046,7 @@ async function runNeutralEndPhaseEffects(isPlayerSide) {
     }
   });
 
-  // 🍬 甜點王國：糖果居民 (R-CND-0056) 結束階段特召效果
-  // 僅在卡片效果文字包含結束階段特召時觸發
-  const checkCandyZones = isPlayerSide ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"];
-  let hasFusedWithCandyMan = false;
-  for (const z of checkCandyZones) {
-    if (field[z]) {
-      field[z].forEach(u => {
-        if (!u || !u.card) return;
-        const selfIsCandyMan = u.card.id === "CND-0001" || u.card.name?.includes("糖果人");
-        const hasDevoured = u.devourCards && u.devourCards.length > 0;
-        const devouredHasCandyMan = hasDevoured && u.devourCards.some(d => d.card && (d.card.id === "CND-0001" || d.card.name?.includes("糖果人")));
-        if ((selfIsCandyMan && hasDevoured) || devouredHasCandyMan) {
-          hasFusedWithCandyMan = true;
-        }
-      });
-    }
-  }
-
-  if (hasFusedWithCandyMan) {
-    const extraList = isPlayerSide ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-    const residentIdx = extraList.findIndex(c => c && (c.id === "R-CND-0056" || c.name?.includes("糖果居民")) && c.effect_text?.includes("結束階段"));
-    if (residentIdx >= 0) {
-      const emptySlots = isPlayerSide ? window.xlwGetEmptyPlayerSlots() : window.xlwGetEmptyEnemySlots();
-      if (emptySlots.length > 0) {
-        if (isPlayerSide) {
-          const confirmSummon = await showXLWConfirm("【糖果居民】效果發動", "你的結束階段時，場上有包含【糖果人】的合體單位！\n是否特殊召喚額外區的【糖果居民】？");
-          if (confirmSummon) {
-            const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
-            const validSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
-            const choices = validSlots.map((s, i) => ({
-              text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
-              value: i
-            }));
-            const titlePrompt = frontSlots.length > 0 ?
-              "【糖果居民】召喚位置選擇 (前排優先)" :
-              "【糖果居民】召喚位置選擇";
-            const chosenIdx = await showXLWChoiceModal(
-              titlePrompt,
-              "請選擇要特殊召喚【糖果居民】的位置：",
-              choices
-            );
-            if (chosenIdx !== null && chosenIdx !== undefined && chosenIdx !== -1) {
-              const targetSlot = validSlots[chosenIdx];
-              const residentCard = extraList.splice(residentIdx, 1)[0];
-              field[targetSlot.zone][targetSlot.idx] = {
-                card: residentCard,
-                tapped: false,
-                attacking: false,
-                target: null,
-                summonedTurn: turn,
-                summonedZone: targetSlot.zone,
-                equipments: []
-              };
-              logBattle(`✨【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
-              if (typeof renderExtraDecks === "function") renderExtraDecks();
-              if (isMultiplayer) sendFullGameStateToOpponent();
-              render();
-            }
-          }
-        } else {
-          const frontSlots = emptySlots.filter(s => s.zone.includes("front"));
-          const validSlots = frontSlots.length > 0 ? frontSlots : emptySlots;
-          const targetSlot = validSlots[0];
-          const residentCard = extraList.splice(residentIdx, 1)[0];
-          field[targetSlot.zone][targetSlot.idx] = {
-            card: residentCard,
-            tapped: false,
-            attacking: false,
-            target: null,
-            summonedTurn: turn,
-            summonedZone: targetSlot.zone,
-            equipments: []
-          };
-          logBattle(`✨ 對手【糖果居民】效果：從額外區特殊召喚【${residentCard.name}】至 ${targetSlot.zone.includes("front") ? "前排" : "後排"}${targetSlot.idx + 1}！`);
-          if (typeof renderExtraDecks === "function") renderExtraDecks();
-          render();
-        }
-      }
-    }
-  }
+  await window.xlwResolveCandyResidentEndPhase(isPlayerSide);
 
   // 🍬 甜點王國：過期軟糖 (R-CND-0039) & 香菇軟糖 (R-CND-0040) 賦予破壞檢測
   // "若合體後的單位包含此卡，該單位被賦予：此單位攻擊力小於等於0時，使此單位被破壞"
@@ -36694,7 +36645,7 @@ async function runEnemyTurn() {
           const revealedCard = enemyDrawn[revealIdx];
           enemyDrawn.forEach(c => (window.XLW_ENEMY.hand || []).push(c));
           logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
-          await showRevealedCardModal(revealedCard, "對手");
+          await showRevealedCardModal(revealedCard, "對手", "智慧的般若");
 
           const isUnit = revealedCard && (revealedCard.type === "unit" || revealedCard.type === "單位") && revealedCard.type !== "magic" && revealedCard.type !== "魔法";
           if (isUnit) {
@@ -45943,7 +45894,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261124-orc-target-steak-counter-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261125-candy-clock-breakfast-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -47401,7 +47352,7 @@ function setupWebSocketEvents() {
       }
     } else if (data.action === "breakfast_reveal_sync") {
       logBattle(data.fromField ? "✨ 對手發動場上的【最後的早餐】！" : "✨ 對手展示了手牌中的【最後的早餐】！");
-      showRevealedCardModal(data.card, "對手");
+      showRevealedCardModal(data.card, "對手", "最後的早餐");
       logBattle(`✨ 對手【最後的早餐】效果：對手展示該卡並抽 1 張牌，然後洗回牌庫！`);
       render();
     } else if (data.action === "card_reveal_sync") {
@@ -47855,7 +47806,7 @@ function setupWebSocketEvents() {
     } else if (data.action === "hannya_reveal_drawn_card") {
       const revealedCard = data.revealedCard;
       logBattle(`智慧的般若 效果：對手選擇展示抽出的卡片：【${revealedCard.name}】！`);
-      await showRevealedCardModal(revealedCard, "對手");
+      await showRevealedCardModal(revealedCard, "對手", "智慧的般若");
       
       const isUnit = revealedCard && (revealedCard.type === "unit" || revealedCard.type === "單位") && revealedCard.type !== "magic" && revealedCard.type !== "魔法";
       if (isUnit) {
