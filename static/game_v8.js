@@ -6403,6 +6403,18 @@ function xlwRecoverGummyPhantom(card, isPlayer) {
   render();
 }
 
+// Recompute row priority after every placement and asynchronous position choice.
+function xlwFusionSeparationSlots(origZone, isPlayer) {
+  const side=isPlayer?'player_':'enemy_';
+  const rows=origZone.includes('front')?['front','back']:['back','front'];
+  for(const row of rows){
+    const zone=side+row;
+    const free=(field[zone] || []).flatMap((unit,idx)=>unit?[]:[{zone,idx}]);
+    if(free.length)return free;
+  }
+  return [];
+}
+
 async function xlwSeparateAllFusedUnits(isPlayer = true) {
   const sidePrefix = isPlayer ? "player_" : "enemy_";
   let separatedCount = 0;
@@ -6420,8 +6432,9 @@ async function xlwSeparateAllFusedUnits(isPlayer = true) {
     const u = field[origZone] ? field[origZone][origIdx] : null;
     if (!u || !u.devourCards || u.devourCards.length === 0) continue;
 
-    const devouredList = [...u.devourCards];
+    const devouredList = u.devourCards.filter(piece => piece?.card?.id);
     u.devourCards = [];
+    u.isCombined = false;
 
     // 先清空原位置，讓玩家在符合規則下可自由選擇兩個單位（主體與合體卡）的放置位置
     field[origZone][origIdx] = null;
@@ -6454,40 +6467,7 @@ async function xlwSeparateAllFusedUnits(isPlayer = true) {
     for (let uIdx = 0; uIdx < unitsToPlace.length; uIdx++) {
       const item = unitsToPlace[uIdx];
 
-      // 計算符合規則的可用空格：
-      // 原先站在前排的合體單位拆開後都在前排，除非前排滿了才會放到後排；
-      // 後排的合體單位拆開後都會放在後排
-      const frontZone = sidePrefix + "front";
-      const backZone = sidePrefix + "back";
-
-      const emptyFrontSlots = [];
-      const emptyBackSlots = [];
-      if (field[frontZone]) {
-        for (let s = 0; s < 5; s++) {
-          if (!field[frontZone][s]) emptyFrontSlots.push({ zone: frontZone, idx: s });
-        }
-      }
-      if (field[backZone]) {
-        for (let s = 0; s < 5; s++) {
-          if (!field[backZone][s]) emptyBackSlots.push({ zone: backZone, idx: s });
-        }
-      }
-
-      let legalSlots = [];
-      if (isOrigFront) {
-        if (emptyFrontSlots.length > 0) {
-          legalSlots = emptyFrontSlots;
-        } else {
-          legalSlots = emptyBackSlots;
-        }
-      } else {
-        if (emptyBackSlots.length > 0) {
-          legalSlots = emptyBackSlots;
-        } else {
-          legalSlots = emptyFrontSlots;
-        }
-      }
-
+      const legalSlots = xlwFusionSeparationSlots(origZone,isPlayer);
       if (legalSlots.length === 0) {
         if (isPlayer) {
           hand.push(item.card);
@@ -6506,12 +6486,13 @@ async function xlwSeparateAllFusedUnits(isPlayer = true) {
       if (isPlayer) {
         const choices = legalSlots.map((s, cIdx) => ({
           text: `${s.zone.includes("front") ? "前排" : "後排"}${s.idx + 1}`,
-          value: cIdx
+          value: cIdx,
+          boardTarget:{zone:s.zone,idx:s.idx,summon:true}
         }));
         const promptTitle = `【合體分開】選擇放置位置 (${uIdx + 1}/${unitsToPlace.length})`;
         const promptDesc = `原【${u.card.name}】合體單位（原位於 ${isOrigFront ? "前排" : "後排"}${origIdx + 1}）分開：\n請選擇【${item.displayName}】要放置的戰場位置：`;
 
-        let chosenIdx = await showXLWChoiceModal(promptTitle, promptDesc, choices);
+        let chosenIdx = await showXLWChoiceModal(promptTitle, promptDesc, choices,{boardOnly:true});
         if (chosenIdx === null || chosenIdx === undefined || chosenIdx < 0 || chosenIdx >= legalSlots.length) {
           chosenIdx = 0;
         }
@@ -6525,6 +6506,16 @@ async function xlwSeparateAllFusedUnits(isPlayer = true) {
         }
       }
 
+      const liveSlots=xlwFusionSeparationSlots(origZone,isPlayer);
+      if(!liveSlots.some(s=>s.zone===chosenSlot.zone&&s.idx===chosenSlot.idx))chosenSlot=liveSlots[0];
+      if(!chosenSlot){
+        (isPlayer?hand:(window.XLW_ENEMY.hand ||= [])).push(item.card);
+        separatedCount++;
+        continue;
+      }
+      item.unitObj.tapped=false;
+      item.unitObj.attacking=false;
+      item.unitObj.target=null;
       item.unitObj.summonedZone = chosenSlot.zone;
       field[chosenSlot.zone][chosenSlot.idx] = item.unitObj;
       logBattle(`✨ 分開合體：【${item.card.name}】放置於 ${chosenSlot.zone.includes("front") ? "前排" : "後排"}${chosenSlot.idx + 1}！`);
@@ -7186,9 +7177,7 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
 
   for (let uIdx = 0; uIdx < unitsToPlace.length; uIdx++) {
     const item = unitsToPlace[uIdx];
-    const zones = isOrigFront ? [sidePrefix + "front", sidePrefix + "back"] : [sidePrefix + "back", sidePrefix + "front"];
-    const freeSlots = () => zones.map(zone => (field[zone] || []).flatMap((slot, idx) =>
-      slot ? [] : [{zone, idx}])).find(slots => slots.length) || [];
+    const freeSlots = () => xlwFusionSeparationSlots(origZone,isPlayer);
     const returnToHand = async () => {
       const destination = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
       destination.push(item.card);
@@ -7217,11 +7206,15 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
       chosenSlot = legalSlots[0];
     }
 
-    if (field[chosenSlot.zone]?.[chosenSlot.idx]) chosenSlot = freeSlots()[0];
+    const liveSlots=freeSlots();
+    if(!liveSlots.some(s=>s.zone===chosenSlot.zone&&s.idx===chosenSlot.idx))chosenSlot=liveSlots[0];
     if (!chosenSlot) {
       await returnToHand();
       continue;
     }
+    item.unitObj.tapped=false;
+    item.unitObj.attacking=false;
+    item.unitObj.target=null;
     item.unitObj.summonedZone = chosenSlot.zone;
     field[chosenSlot.zone][chosenSlot.idx] = item.unitObj;
     logBattle(`✨ 分開合體：【${item.card.name}】放置於 ${chosenSlot.zone.includes("front") ? "前排" : "後排"}${chosenSlot.idx + 1}！`);
@@ -27315,11 +27308,12 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
   }
 
   const legalSlot=xlwTimerSlot();
-  if(!legalSlot){logBattle('【規則限制】沒有合法的小旅人召喚位置，不強制放入非法格。');return false;}
+  if(!legalSlot){setStatus('尚無合法的小旅人召喚位置，請先完成必要效果或騰出位置。');return true;}
   clearModes();selectedHandForSummon='TRAVELER';
   await performSummonToSlot(legalSlot.zone,legalSlot.idx);
   window.XLW_forcedTravelerPending=null;
-  clearModes();render();return false;
+  clearModes();render();
+  return currentPhaseName==='召喚階段'?!normalSummonUsed:!tacticalSummonUsed;
 }
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
@@ -39172,6 +39166,11 @@ async function endPlayerTurnAndRunEnemy() {
     const blocked = await xlwEnforceForcedSummonRule("召喚階段", "結束回合");
     if (blocked) {
       revertButtonState();
+      return;
+    }
+    // Ending the summon stage advances to tactics instead of skipping its mandatory summon.
+    if(turn!==1 && !(countdownActive && countdownRemaining===1)){
+      await changeActionPhase("戰術佈陣");
       return;
     }
   } else if (phase === "戰術佈陣") {

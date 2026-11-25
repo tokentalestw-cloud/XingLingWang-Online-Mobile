@@ -783,6 +783,7 @@ test("splitting rechecks the slot after an interactive choice and skips missing 
     }
     return 0;
   };
+  vm.runInContext(slice("function xlwFusionSeparationSlots(", "async function xlwSeparateAllFusedUnits"), c);
   vm.runInContext(slice("async function xlwSeparateSingleFusedUnit(", "// 單位真實攻擊力"), c);
   assert.equal(await c.xlwSeparateSingleFusedUnit("player_front", 0), 2);
   assert.equal(host.isCombined, false);
