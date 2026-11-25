@@ -57,9 +57,11 @@ test("Small Trap prompts after two summons and compares original attack", async 
   let prompts = 0;
   const ctx = vm.createContext({
     field, hand, graveyard, turn: 3, window: {XLW_enemySummonCountThisTurn: 1},
-    showXLWConfirm: async () => { prompts++; return true; },
+    structuredClone, isUnitMagicImmune: () => false, xlwShowSpellActivationOverlay: async () => {},
+    showXLWConfirm: async () => { throw new Error("No redundant confirmation"); },
     showXLWChoiceModal: async (_, __, options) => {
-      assert.equal(options.length, 2);
+      prompts++;
+      assert.equal(options.length, 1);
       return options[0].value;
     },
     destroyUnit: async (zone, idx) => { field[zone][idx] = null; },
