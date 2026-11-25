@@ -5057,6 +5057,8 @@ window.xlwChooseImmediateCounter = async function(card, zone, idx) {
   if(!sameCard(current?.card,sourceCard))return false;
   current.xlwSummonCounterChecked=true;
   if (!selected || !window.XLWDuelConsistency.takeKnownCard(hand, selected)) return false;
+  current.xlwCounterPresentation=structuredClone(selected);
+  if(typeof xlwShowSpellActivationOverlay==='function')void xlwShowSpellActivationOverlay(selected,'player');
   graveyard.push(selected);
   logBattle(`✨ 發動【${selected.name}】反制【${card.name}】。`);
   if (choice === "starry") {
@@ -5087,7 +5089,7 @@ window.xlwPrepareImmediateEffect = async function(card, zone, idx, isPlayer) {
     const result = await reply;
     if (result.countered) {
       unit.xlwImmediateNegated = true;
-      if (result.countered === true && field[zone]?.[idx] === unit) await destroyUnit(zone, idx, zone.startsWith("player_")?"player":"enemy", false);
+      if (!result.stateApplied && result.countered === true && field[zone]?.[idx] === unit) await destroyUnit(zone, idx, zone.startsWith("player_")?"player":"enemy", false);
       return false;
     }
   } else if (!isMultiplayer && !isPlayer) {
@@ -8647,14 +8649,13 @@ function getUnitStars(unit, zone, lane, skipFairyReductionAwards = false, record
     }
   }
 
-  // 🍰 提拉米蘇主教 (SR-CND-0071): 使你場上合體後的單位+X★。X=與該單位合體的卡牌數量
-  if (zone && (unit.combinedCards || []).length > 0) {
-    const isPlayer = zone.startsWith("player_");
-    const sideP = isPlayer ? "player_" : "enemy_";
-    const hasBishop = ["front", "back"].some(r => (field[sideP + r] || []).some(u => u && (u.card.id === "SR-CND-0071" || u.card.name?.includes("提拉米蘇主教")) && !window.isUnitSilenced(u)));
-    if (hasBishop) {
-      baseStars += unit.combinedCards.length;
-    }
+  // Devour tribute parts live in devourCards; combinedCards is a legacy fallback.
+  const fusionParts=unit.devourCards?.length?unit.devourCards:(unit.combinedCards||[]);
+  if(zone&&fusionParts.length){
+    const prefix=zone.startsWith('player_')?'player_':'enemy_';
+    const bishops=['front','back'].reduce((n,row)=>n+(field[prefix+row]||[]).filter((u,i)=>
+      u?.card&&(u.card.id==='SR-CND-0071'||u.card.name?.includes('提拉米蘇主教'))&&!window.isUnitSilenced(u,prefix+row,i)).length,0);
+    baseStars+=fusionParts.filter(part=>part?.card||part?.id).length*bishops;
   }
 
   // 🌸 花皇 (SSR-PLT-0021): 使你場上的植物單位+X★ X=該單位的灌溉值
@@ -18952,6 +18953,9 @@ function toggleTributeSelection(zone, idx) {
   }
   const card = hand[selectedHandForTribute];
   const targetCost = getCardTributeCost(card);
+  if(isDessertQueen(card)&&existIdx<0&&!isDessertUnit(unit)){
+    setStatus('【甜點女王】只能選取甜點王國單位作為祭品。');return;
+  }
 
   if (card?.id === "EVL-0057" && existIdx < 0 && !window.xlwIsUnitFairy(unit)) {
     setStatus("【妖精英雄凱薩倫】只能使用妖精單位作為祭品。");
@@ -20668,6 +20672,14 @@ async function executeTributeEffects(selectedTributes) {
 }
 
 async function confirmTribute() {
+  if(window.XLW_confirmTributeBusy)return;
+  const token={};window.XLW_confirmTributeBusy=token;
+  try{return await xlwConfirmTributeOnce();}
+  finally{if(window.XLW_confirmTributeBusy===token)window.XLW_confirmTributeBusy=null;}
+}
+
+async function xlwConfirmTributeOnce() {
+  const tributes=selectedTributes.map(t=>({...t}));
   if (typeof window.xlwPlaySFX === 'function') window.xlwPlaySFX('tribute');
   if (selectedHandForTribute === null && selectedTributeCard === null) return;
   let card = selectedTributeCard || (selectedHandForTribute !== null ? hand[selectedHandForTribute] : null);
@@ -20678,8 +20690,8 @@ async function confirmTribute() {
   }
   selectedTributeCard = card;
   const targetCost = getCardTributeCost(card);
-  const selectedVal = countSelectedTributesValue(selectedTributes, card);
-  if (card.id === "EVL-0057" && !selectedTributes.every(({zone, idx}) => zone.startsWith("player_") &&
+  const selectedVal = countSelectedTributesValue(tributes, card);
+  if (card.id === "EVL-0057" && !tributes.every(({zone, idx}) => zone.startsWith("player_") &&
       window.xlwIsUnitFairy(field[zone]?.[idx]) && !xlwIsUnitUnsacrificable(field[zone][idx], zone, idx))) {
     setStatus("【妖精英雄凱薩倫】祭品必須全為可獻祭的妖精單位。");
     return;
@@ -20691,12 +20703,12 @@ async function confirmTribute() {
 
   // 黃金旅人 (SPT-0013)：此卡的祭品必須為小旅人
   if (card.id === "SPT-0013" || card.name?.includes("黃金旅人")) {
-    const allLittleTravelers = selectedTributes.every(t => {
+    const allLittleTravelers = tributes.every(t => {
       if (t.zone === "dummy") return false;
       const u = field[t.zone]?.[t.idx];
       return u && u.card && (u.card.id === "TOKEN_TRAVELER" || u.card.id === "SPT-LITTLE" || u.card.id === "C-NMS-0071" || u.card.name?.includes("小旅人"));
     });
-    if (!allLittleTravelers || selectedTributes.length < targetCost) {
+    if (!allLittleTravelers || tributes.length < targetCost) {
       setStatus("【黃金旅人】效果限制：此卡的祭品必須全為小旅人！");
       return;
     }
@@ -20704,12 +20716,12 @@ async function confirmTribute() {
 
   // 金幣大魔 (BRV-0042)：此卡的祭品須為「金幣小魔」
   if (card.id === "BRV-0042" || card.id === "R-BRV-0042" || card.id === "SSR-BRV-0042" || card.name?.includes("金幣大魔")) {
-    const allCoinImps = selectedTributes.every(t => {
+    const allCoinImps = tributes.every(t => {
       if (t.zone === "dummy") return false;
       const u = field[t.zone]?.[t.idx];
       return u && u.card && (u.card.id === "BRV-0002" || u.card.id === "R-BRV-0002" || u.card.name?.includes("金幣小魔"));
     });
-    if (!allCoinImps || selectedTributes.length < targetCost) {
+    if (!allCoinImps || tributes.length < targetCost) {
       setStatus("【金幣大魔】效果限制：此卡的祭品必須全為「金幣小魔」！");
       return;
     }
@@ -20718,7 +20730,7 @@ async function confirmTribute() {
 
   // 🤖 碰碰車 (SR-RBT-0023) 升級為 碰碰碰碰車 (SR-RBT-0055) 檢測
   if (card && (card.id === "SR-RBT-0023" || card.name === "碰碰車")) {
-    const hasCombinedTribute = selectedTributes.some(t => {
+    const hasCombinedTribute = tributes.some(t => {
       const u = field[t.zone]?.[t.idx];
       return u && u.devourCards && u.devourCards.length > 0;
     });
@@ -20740,7 +20752,7 @@ async function confirmTribute() {
   // 🍬 科學怪薑餅人 (R-CND-0026): 祭品數量可為 1-3
   // 升級條件：選擇祭品數量為 3 時，可使該卡升級為「超科學怪薑餅人」並獻祭所選祭品使其被打出
   if (card && (card.id === "R-CND-0026" || card.name?.includes("科學怪薑餅人"))) {
-    if (selectedTributes.length === 3) {
+    if (tributes.length === 3) {
       const extraList = playerExtraDeck;
       const superIdx = extraList.findIndex(c => c && (c.id === "R-CND-0050" || c.name?.includes("超科學怪薑餅人")));
       if (superIdx >= 0) {
@@ -20758,12 +20770,12 @@ async function confirmTribute() {
 
   // 甜點女王 (SR-CND-0057 / SSR-CND-0057-泳裝)：此卡的祭品須為甜點王國單位
   if (card.id === "SR-CND-0057" || card.id === "SSR-CND-0057-泳裝" || card.name?.includes("甜點女王")) {
-    const allDessert = selectedTributes.every(t => {
+    const allDessert = tributes.every(t => {
       if (t.zone === "dummy") return false;
       const u = field[t.zone]?.[t.idx];
       return u && u.card && isDessertUnit(u);
     });
-    if (!allDessert || selectedTributes.length < targetCost) {
+    if (!allDessert || tributes.length < targetCost) {
       setStatus("【甜點女王】效果限制：此卡的祭品必須全為甜點王國單位！");
       return;
     }
@@ -20771,11 +20783,11 @@ async function confirmTribute() {
 
   // 🌊 海坊主 (SR-VLG-0061)：此卡的祭品須為前排單位
   if (card && (card.id === "SR-VLG-0061" || card.name?.includes("海坊主"))) {
-    const allFront = selectedTributes.every(t => {
+    const allFront = tributes.every(t => {
       if (t.zone === "dummy") return false;
       return t.zone && t.zone.includes("front");
     });
-    if (!allFront || selectedTributes.length < targetCost) {
+    if (!allFront || tributes.length < targetCost) {
       setStatus("【海坊主】效果限制：此卡的祭品必須全為前排戰線單位！");
       return;
     }
@@ -20783,9 +20795,9 @@ async function confirmTribute() {
 
   // 祭品送墓前觸發效果
 
-  return executeTributeEffects(selectedTributes).then(async () => {
+  return executeTributeEffects(tributes).then(async () => {
     // 記錄被獻祭的祭品位置，供聯網召喚同步清除
-    window.XLW_lastTributes = selectedTributes.map(t => ({ zone: t.zone, idx: t.idx }));
+    window.XLW_lastTributes = tributes.map(t => ({ zone: t.zone, idx: t.idx }));
     
     // 觸發對手墓地中的殭屍女 (R-VLG-0045)
     const oppGrave = window.XLW_ENEMY.grave || [];
@@ -20815,7 +20827,7 @@ async function confirmTribute() {
     const hadUmbrellaInGraveBefore = graveyard.some(c => c && c.name.includes("雨傘妖怪"));
 
     // 預先記錄被獻祭的單位卡片，避免迴圈中 field 置為 null 造成 map 丟失資料
-    window.XLW_lastSacrificedCards = selectedTributes.map(t2 => {
+    window.XLW_lastSacrificedCards = tributes.map(t2 => {
       if (t2.zone === "dummy") return null;
       return field[t2.zone]?.[t2.idx] ? field[t2.zone][t2.idx].card : null;
     }).filter(Boolean);
@@ -20825,7 +20837,7 @@ async function confirmTribute() {
     }
 
     window.XLW_pendingDevourCards = [];
-    for (const t of selectedTributes) {
+    for (const t of tributes) {
       if (t.zone === "dummy") continue;
       const unit = field[t.zone]?.[t.idx];
       if (unit) {
@@ -21461,14 +21473,14 @@ async function performSummonToSlot(zone, idx) {
         }));
         window.XLW_lastTributes = null;
 
-        setStatus("等待對手的召喚反制選擇（15 秒時窗）…");
+        setStatus("等待對手的召喚反制選擇（8 秒時窗）…");
         const response = await counterReply;
         setStatus("");
 
         if (response.countered === true || response.countered === "true") {
           immediateEffectNegated = true;
           logBattle(`對手發動了手牌中的【星空】！召喚的【${card.name}】被破壞，效果無效。`);
-          await destroyUnit(zone, idx, "player", false);
+          if(!response.stateApplied)await destroyUnit(zone, idx, "player", false);
           render();
         } else if (response.countered === "interrupt") {
           immediateEffectNegated = true;
@@ -29650,6 +29662,14 @@ function canSummonCard(card, isPlayer, options = {}) {
       return false;
     }
   }
+  if(card.id?.includes('CND-0057')||/甜點女王|糖果女王|甜品女王/.test(card.name||'')){
+    const prefix=isPlayer?'player_':'enemy_';
+    const eligible=['front','back'].reduce((n,row)=>n+(field[prefix+row]||[]).filter((u,i)=>
+      u?.card&&isDessertUnit(u)&&!xlwIsUnitUnsacrificable(u,prefix+row,i)).length,0);
+    if(eligible<getCardTributeCost(card)){
+      if(isPlayer&&!options.silent)setStatus('【甜點女王】需要足夠的甜點王國單位作為祭品。');return false;
+    }
+  }
   const restriction = xlwBlueStarRequirement(card, isPlayer);
   if (restriction) {
     if (isPlayer && !options.silent) setStatus(restriction);
@@ -30476,6 +30496,26 @@ function countUnitOnField(side, cardId, cardNamePart) {
   return count;
 }
 
+function xlwObserveArtworkTaps() {
+  const ledger=window.XLW_artTapLedger ||=new Map(),present=new Set();
+  for(const zone of ['player_front','player_back','enemy_front','enemy_back']) (field[zone]||[]).forEach((u,idx)=>{
+    if(!u?.card)return;
+    window.XLWDuelConsistency?.identify([u.card]);
+    const key=u.card._xlwInstanceId||u;
+    present.add(key);
+    const prior=ledger.get(key),tapped=!!u.tapped;
+    ledger.set(key,tapped); // Mark before renderScore / snapshots can re-enter rendering.
+    if(!tapped||prior===true||(isMultiplayer&&!isMyTurn))return;
+    const art=u.card.faction==='藝術品'||u.card.deck==='藝術品'||u.card.id?.includes('ART');
+    if(art)xlwNotifyUnitTapped(zone,idx);
+    if(u.card.id==='C-ART-0060'||u.card.name==='戰士陶俑'){
+      if(zone.startsWith('player_'))playerBonusScore+=1;else enemyBonusScore+=1;
+      logBattle('【戰士陶俑】被橫放，獎勵+1。');
+    }
+  });
+  for(const key of ledger.keys())if(!present.has(key))ledger.delete(key);
+}
+
 function xlwNotifyUnitTapped(zone, idx) {
   const u = field[zone] ? field[zone][idx] : null;
   if (!u || !u.card) return;
@@ -30486,7 +30526,8 @@ function xlwNotifyUnitTapped(zone, idx) {
   logBattle(`📸 偵測到場上的藝術品單位【${unitName}】被橫置！`);
   
   // 1. 害羞的斑點南瓜 (R-ART-0062)
-  const pumpkinCount = countUnitOnField(side, "R-ART-0062", "害羞的斑點南瓜");
+  const pumpkinCount=[side+'_front',side+'_back'].reduce((n,z)=>n+(field[z]||[]).filter((p,i)=>
+    p?.card&&(p.card.id==='R-ART-0062'||p.card.name==='害羞的斑點南瓜')&&!window.isUnitSilenced(p,z,i)).length,0);
   if (pumpkinCount > 0) {
     const scoreAdd = pumpkinCount * 1;
     if (side === "player") {
@@ -38340,55 +38381,7 @@ function render() {
   }
 
   xlwSanitizeGoatCardTypes();
-  // 藝術品單位被橫置事件監聽與觸發體系
-  for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-    if (field[zone]) {
-      field[zone].forEach((u, idx) => {
-        if (u && u.card) {
-          const isArt = u.card.faction === "藝術品" || u.card.deck === "藝術品" || u.card.id?.includes("ART");
-          if (isArt) {
-            if (u.tapped) {
-              if (!u.xlwTappedObserved) {
-                u.xlwTappedObserved = true;
-                xlwNotifyUnitTapped(zone, idx);
-              }
-            } else {
-              u.xlwTappedObserved = false;
-            }
-          }
-        }
-      });
-    }
-  }
-
-  // 戰士陶俑被橫置獎勵邏輯
-  for (const zone of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
-    if (field[zone]) {
-      field[zone].forEach(u => {
-        if (u && u.card && (u.card.id === "C-ART-0060" || u.card.name === "戰士陶俑")) {
-          if (u.tapped) {
-            if (!u.tappedAwarded) {
-              u.tappedAwarded = true;
-              if (zone.startsWith("player_")) {
-                playerBonusScore += 1;
-                logBattle(`✨ 我方的【戰士陶俑】被橫置，我方額外獲得 +1★ 獎勵點數！`);
-              } else {
-                enemyBonusScore += 1;
-                logBattle(`✨ 對手的【戰士陶俑】被橫置，對手額外獲得 +1★ 獎勵點數！`);
-              }
-              if (isMultiplayer) {
-                sendFullGameStateToOpponent();
-              }
-            }
-          } else {
-            if (u.tappedAwarded) {
-              u.tappedAwarded = false;
-            }
-          }
-        }
-      });
-    }
-  }
+  xlwObserveArtworkTaps();
 
   adjustBoardScale();
   const phaseDisplayText = $("phaseDisplayText") || $("phaseTextHard");
@@ -40414,6 +40407,10 @@ function renderField() {
 
           // 任何階段點選場上單位皆在左側特寫面板預覽大圖、數值與所有裝備/狀態效果
           showModal(obj.card, obj.equipments, obj);
+
+          if((phase==='召喚階段'||phase==='戰術佈陣')&&selectedHandForTribute!==null){
+            toggleTributeSelection(zone,idx);return;
+          }
 
           // 若正處於從手牌召喚的選位階段（且非獻祭目標選取），點選已佔用格子的單位僅作檢視，防止誤觸主動技能或卡住
           if (selectedHandForSummon !== null && selectedHandForTribute === null && !tributeWaitingPosition) {
@@ -45894,7 +45891,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261125-candy-clock-breakfast-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261125-starry-queen-aura-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46692,7 +46689,10 @@ function setupWebSocketEvents() {
       window.XLWSummonReaction?.begin(card);
       render();
       if (hasImmediateEffect(card)) await window.XLWSummonReaction?.flash(card, "enemy");
+      const reactionUnit=field[zone]?.[idx];
       const counterChoice = await window.xlwChooseImmediateCounter(card, zone, idx);
+      const counterCard=reactionUnit?.xlwCounterPresentation;
+      if(reactionUnit)delete reactionUnit.xlwCounterPresentation;
       const starryCountered = counterChoice === true;
       const interruptCountered = counterChoice === "interrupt";
 
@@ -46770,14 +46770,11 @@ function setupWebSocketEvents() {
         }
 
         window.XLWSummonReaction?.end();
-        // Publish the defender's settled state at the same summon boundary.
-        sendFullGameStateToOpponent(false, "sync_game_state", {summonRequestId: data.summonRequestId});
-        ws.send(JSON.stringify({
-          action: "counter_summon_response",
-          summonRequestId: data.summonRequestId,
-          countered: starryCountered ? true :
-            (interruptCountered || immediateEffectNegated ? "interrupt" : false)
-        }));
+        // Keep the decision and its physical card movements in one ordered message.
+        sendFullGameStateToOpponent(false,'counter_summon_response',{
+          summonRequestId:data.summonRequestId,counterCard,
+          countered:starryCountered?true:(interruptCountered||immediateEffectNegated?'interrupt':false)
+        });
         if (card && card.id === "TOKEN_TRAVELER") {
           playTravelerSummonAnimation("#enemyForest", zone, idx);
         } else if (card && (window.XLWSpecialSummon?.match(card) || (Number(card.tribute || 0) > 0 && (!data.tributes || data.tributes.length > 0)))) {
@@ -46795,10 +46792,17 @@ function setupWebSocketEvents() {
     } else if (data.action === "counter_summon_response") {
       if (window.XLW_pendingSummonCounterResolve &&
           (!window.XLW_pendingSummonRequestId || data.summonRequestId === window.XLW_pendingSummonRequestId)) {
+        const requestId=window.XLW_pendingSummonRequestId;
+        if(data.state)await gameMessageHandler({parsedData:{action:'sync_game_state',summonRequestId:data.summonRequestId,state:data.state}});
+        if(data.counterCard){
+          logBattle(`對手發動【${data.counterCard.name}】召喚反制。`);
+          await xlwShowSpellActivationOverlay(data.counterCard,'enemy');
+        }
+        if(requestId!==window.XLW_pendingSummonRequestId||!window.XLW_pendingSummonCounterResolve)return;
         window.XLW_pendingSummonRequestId = null;
         const resolve = window.XLW_pendingSummonCounterResolve;
         window.XLW_pendingSummonCounterResolve = null;
-        resolve({ countered: data.countered });
+        resolve({ countered: data.countered, stateApplied: !!data.state });
       }
     } else if (data.action === "samurai_recover_request") {
       const cards=Array.isArray(data.cards)?data.cards:[];

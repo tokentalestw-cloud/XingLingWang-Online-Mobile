@@ -274,26 +274,6 @@
       }
     },
     {
-      "id": "ART-0020",
-      "signature": "61cf82f38a57607faa449046baab87e4315134c5606b89cb54fd697f5ca2e27f",
-      "regression_file": "tests/test_starry_all_summons.cjs",
-      "scope": [
-        "無立即與有立即召喚反制",
-        "一般與特殊召喚",
-        "單人 AI 與雙座位連線",
-        "八秒決策與不重啟期限",
-        "實卡目標及快照更新保護",
-        "關聯反制結果與防止復原"
-      ],
-      "verified": true,
-      "reviewed_on": "2026-11-24",
-      "evidence": {
-        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients plus single-player AI",
-        "scenarios": 15,
-        "iphone_safari_tested": false
-      }
-    },
-    {
       "id": "R-ORC-0054",
       "signature": "c0851312b44ee10b2a47b4ea660c3db36a20dfd8286dc2acac4c0e73e6026c5b",
       "regression_file": "tests/test_orc_mace_equipment.cjs",
@@ -476,6 +456,86 @@
       "evidence": {
         "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
         "scenarios": 12,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "ART-0020",
+      "signature": "61cf82f38a57607faa449046baab87e4315134c5606b89cb54fd697f5ca2e27f",
+      "regression_file": "tests/test_summon_reaction.cjs",
+      "scope": [
+        "雙方反制提示、可見時限及原子盤面回覆",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 16,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-CND-0057",
+      "signature": "b3e85fcb2498b9cbe769cd228e75ac25645c72cfc2c4e110d53b2dc631f880d1",
+      "regression_file": "tests/test_queen_bishop_pumpkin.cjs",
+      "scope": [
+        "確認獻祭防重入及甜點祭品限制",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 16,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SSR-CND-0057-泳裝",
+      "signature": "b3e85fcb2498b9cbe769cd228e75ac25645c72cfc2c4e110d53b2dc631f880d1",
+      "regression_file": "tests/test_queen_bishop_pumpkin.cjs",
+      "scope": [
+        "確認獻祭防重入及甜點祭品限制",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 16,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "SR-CND-0071",
+      "signature": "74c14ccb4bc10b4e9bf2bc771b6ce8eac42842558d92844babcf5642b6644db0",
+      "regression_file": "tests/test_queen_bishop_pumpkin.cjs",
+      "scope": [
+        "吞食合體星數光環",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 16,
+        "iphone_safari_tested": false
+      }
+    },
+    {
+      "id": "R-ART-0062",
+      "signature": "70ee6284945329edddbaeb0538fd3ca8c7bbdf920aa52946dac2392b7e15a8b5",
+      "regression_file": "tests/test_queen_bishop_pumpkin.cjs",
+      "scope": [
+        "橫放事件加分去重與同步",
+        "雙人同步"
+      ],
+      "verified": true,
+      "reviewed_on": "2026-11-25",
+      "evidence": {
+        "browser": "Chrome mobile emulation 844x390, two real WebSocket clients",
+        "scenarios": 16,
         "iphone_safari_tested": false
       }
     }

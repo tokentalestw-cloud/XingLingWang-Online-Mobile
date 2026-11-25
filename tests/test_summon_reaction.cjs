@@ -45,7 +45,9 @@ test("Summon reaction shares an 8-second deadline across confirmation and target
 
 test("A snapshot clone of the same summoned card cannot restart its eight-second decision deadline",async()=>{
   const c=ui(),card={id:'plain',name:'plain',_xlwInstanceId:'one-unit'};
-  c.reaction.begin(card);c.advance(7000);c.reaction.ensure({...card});
+  c.reaction.begin(card);
+  const first=c.reaction.choose('先前選擇','是否反制',[{text:'不發動',value:false}]);
+  c.advance(7000);c.document.body.children[0].querySelectorAll('button')[0].onclick();await first;c.reaction.ensure({...card});
   const waiting=c.reaction.choose('星空','是否反制',[{text:'發動',value:true}]);
   c.advance(1001);assert.equal(await waiting,null);assert.equal(c.timers.size,0);
 });
@@ -64,20 +66,24 @@ test("Closing a reaction cleans its timer and a late tap cannot activate it", as
   assert.equal(await next, false);
   assert.equal(c.document.body.children.length, 0);
 });
-test("A delayed counter answer cannot settle another summon request", () => {
+test("A delayed counter answer cannot settle another summon request", async () => {
   const start = game.indexOf('    } else if (data.action === "counter_summon_response") {');
   const end = game.indexOf('    } else if (data.action === "samurai_recover_request") {', start);
   const scope = {window: {XLW_pendingSummonRequestId: "second"}};
   const replies = [];
   scope.window.XLW_pendingSummonCounterResolve = data => replies.push(data);
   vm.createContext(scope);
-  vm.runInContext("function receive(data) { if(false) {} " + game.slice(start, end).replace(/^\s*}/, "") + "}}", scope);
-  scope.receive({action: "counter_summon_response", summonRequestId: "first", countered: true});
+  vm.runInContext("async function receive(data) { if(false) {} " + game.slice(start, end).replace(/^\s*}/, "") + "}}", scope);
+  await scope.receive({action: "counter_summon_response", summonRequestId: "first", countered: true});
   assert.equal(replies.length, 0);
-  scope.receive({action: "counter_summon_response", summonRequestId: "second", countered: false});
+  await scope.receive({action: "counter_summon_response", summonRequestId: "second", countered: false});
   assert.equal(replies.length, 1);
   assert.equal(scope.window.XLW_pendingSummonCounterResolve, null);
 });
+
+test('rendering and the Immediate flash do not consume the visible decision time',async()=>{const c=ui();c.reaction.begin({id:'slow'});c.advance(15000);const waiting=c.reaction.choose('星空','完整八秒',[{text:'發動',value:true}]);c.advance(7999);c.document.body.children[0].querySelectorAll('button')[0].onclick();assert.equal(await waiting,true);assert.equal(c.timers.size,0);});
+
+test('the settled counter snapshot is applied before the pending promise can resume',async()=>{const start=game.indexOf('    } else if (data.action === "counter_summon_response") {'),end=game.indexOf('    } else if (data.action === "samurai_recover_request") {',start);let applied=false,release;const scope={window:{XLW_pendingSummonRequestId:'one'},gameMessageHandler:async event=>{assert.equal(event.parsedData.summonRequestId,'one');await new Promise(r=>release=r);applied=true;}};scope.window.XLW_pendingSummonCounterResolve=result=>{assert.equal(applied,true);assert.equal(result.stateApplied,true)};vm.createContext(scope);vm.runInContext('async function receive(data){if(false){}'+game.slice(start,end).replace(/^\s*}/,'')+'}}',scope);const task=scope.receive({action:'counter_summon_response',summonRequestId:'one',state:{field:{}},countered:true});assert.equal(scope.window.XLW_pendingSummonRequestId,'one');release();await task;assert.equal(scope.window.XLW_pendingSummonRequestId,null);});
 test("A 500-message late-game burst checkpoints once and acknowledges only durable applied state", async () => {
   const scope = {crypto: {randomUUID}, console, Date, Promise, Set, Map};
   vm.runInNewContext(fs.readFileSync(path.join(root, "static/online_sync.js"), "utf8"), scope);
@@ -160,7 +166,7 @@ test("The combined immediate response offers both counters and never discards a 
   const target = {card: {id: "target"}};
   const hand = [starry, interrupt], graveyard = [];
   let calls = 0;
-  const scope = vm.createContext({window: {XLWSummonReaction: {choose: async (_, __, choices) => {
+  const scope = vm.createContext({structuredClone,window: {XLWSummonReaction: {choose: async (_, __, choices) => {
       assert.equal(choices.length, 2); calls++; return "interrupt";
     }}}, field: {enemy_front: [target]}, hand, graveyard,
     hasImmediateEffect: () => true, logBattle() {}, destroyUnit() { assert.fail("interrupt retains the unit"); }});

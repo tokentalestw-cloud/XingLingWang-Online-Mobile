@@ -6,7 +6,7 @@
   const duration = 8000;
   function begin(card) {
     end();
-    current = {card, deadline: Date.now() + duration};
+    current = {card, deadline: null};
     return current;
   }
   function end() {
@@ -15,6 +15,7 @@
   }
   function choose(title, message, options) {
     const context = current || {deadline: Date.now() + duration};
+    if(context.deadline===null)context.deadline=Date.now()+duration;
     if (Date.now() >= context.deadline) return Promise.resolve(null);
     return new Promise(resolve => {
       const overlay = document.createElement("div");
