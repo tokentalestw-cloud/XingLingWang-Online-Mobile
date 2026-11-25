@@ -21284,6 +21284,7 @@ async function performSummonToSlot(zone, idx) {
     };
     pendingCover = xlwCaptureSummonCover(zone, idx);
     card = field[zone][idx].card;
+    card.creator=zone.startsWith('player_')?'player':'enemy';
     if (phase === "召喚階段" && !window.XLW_bypassTurnCheck) normalSummonUsed = true;
     if (phase === "戰術佈陣" && !window.XLW_bypassTurnCheck) tacticalSummonUsed = true;
     logBattle(`從森林召喚小旅人到 ${zone.includes("front") ? "前排" : "後排"}${idx + 1}`);
@@ -21294,6 +21295,10 @@ async function performSummonToSlot(zone, idx) {
     } else {
       window.XLW_enemySummonCountThisTurn = (window.XLW_enemySummonCountThisTurn || 0) + 1;
     }
+
+    const travelerAllowed=await window.xlwPrepareImmediateEffect(card,zone,idx,true);
+    if(isMultiplayer)summonMessageSent=true;
+    if(!travelerAllowed){render();if(isMultiplayer)sendFullGameStateToOpponent(false);return;}
 
     // 🚂 蒸汽旅客 (STP-0009): 每當你召喚小旅人時，充能+1
     const isPlayerTraveler = zone.startsWith("player_");
@@ -25986,6 +25991,140 @@ async function runDebbiePlacementFlow() {
 const placeUnit = performSummonToSlot;
 window.placeUnit = performSummonToSlot;
 
+// Turn clock adapter: all expiry actions use the existing rules and summon/counter pipeline.
+function xlwTimeoutChoice(options) {
+  const pass=options.find(o=>o&&(['cancel','done','end','pass','none','no',-1,false].includes(o.value)||/不.*(?:發動|使用|宣告|call)|放棄|結束選擇|不再發動/i.test(o.text||'')));
+  return pass?pass.value:options[0]?.value??null;
+}
+function xlwTimerSlot(card=LITTLE_TRAVELER) {
+  for(const zone of ['player_front','player_back'])for(let idx=0;idx<5;idx++)
+    if(!field[zone]?.[idx]&&xlwCanSummonToZone(zone,card)&&window.xlwCheckDesireQueenConstraint(zone,idx))return {zone,idx};
+  return null;
+}
+function xlwDrawTurnClock(state,read) {
+  let node=document.getElementById('xlwTurnClock');
+  if(!node){node=document.createElement('div');node.id='xlwTurnClock';node.className='xlw-turn-clock';node.setAttribute('role','timer');document.body.appendChild(node);}
+  const panel=document.getElementById('phaseDisplayPanelHard')||document.getElementById('phaseDisplayPanel');
+  if(!state||state.turn!==read.turn||!panel||!read.enabled){node.hidden=true;return;}
+  const rect=panel.getBoundingClientRect();if(!rect.width||!rect.height){node.hidden=true;return;}
+  const seconds=Math.max(0,Math.ceil(Math.min(state.remaining,state.stageRemaining)/1000));
+  node.hidden=false;node.style.left=rect.left+'px';node.style.top=Math.min(rect.bottom+5,window.innerHeight-43)+'px';node.style.width=rect.width+'px';
+  node.dataset.urgent=String(seconds<=15);node.dataset.expired=String(seconds===0);
+  const label=state.paused?'等待對手':seconds===0?'時間到':state.phase==='召喚階段'?'召喚剩餘':'回合剩餘',total=Math.max(0,Math.ceil(state.remaining/1000));
+  node.innerHTML=`<span>${label}<small>${state.paused?'暫停計時':'回合 '+Math.floor(total/60)+':'+String(total%60).padStart(2,'0')}</small></span><strong>${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}</strong>`;
+}
+function xlwEnsureTurnClock() {
+  if(window.XLW_turnClock||!window.XLWTurnClock?.create)return window.XLW_turnClock;
+  const read=()=>({enabled:!!window.XLW_gameInProgress&&!mulliganActive&&!window.XLW_Tutorial?.active,
+    over:isGameOverFlag,ours:isMyTurn,turn,phase,role:isMultiplayer?player_role:'local',ending:!!window.XLW_isPlayerTurnEnding,
+    waiting:!!(window.XLW_pendingSummonCounterResolve||(window.XLW_pendingSpellResolve&&spellChainStack.at(-1)?.owner==='me')||
+      window.XLWFactionChoices.controller?.waiting||(window.XLW_battleRuleWindow?.localPassed&&!window.XLW_battleRuleWindow?.peerPassed))});
+  window.XLW_turnClock=window.XLWTurnClock.create({read,expire:xlwExpireTurnClock,draw:xlwDrawTurnClock,
+    publish:clock=>{if(isMultiplayer&&ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify({action:'turn_clock',clock}));}});
+  setInterval(()=>{void window.XLW_turnClock.tick().catch(error=>{console.error('Turn clock expiry failed',error);setStatus('回合計時自動處理中，請確認連線。');});},200);
+  for(const type of ['pointerdown','click','keydown'])document.addEventListener(type,event=>{
+    if(event.isTrusted&&window.XLW_turnClock.locked&&!event.target?.closest?.('#xlwFixedTopRightActionBar')){event.preventDefault();event.stopImmediatePropagation();}
+  },true);
+  return window.XLW_turnClock;
+}
+function xlwResolveClockPrompts() {
+  if(window.XLW_clockTargetDispatch&&window.XLW_clockTargetDispatch.generation!==window.XLW_turnClock?.generation)window.XLW_clockTargetDispatch=null;
+  if(window.XLW_exileExcessHandActive){document.querySelector('#hand .card:last-child')?.click();return;}
+  window.XLW_directBoardPrompt?._xlwTimeout?.();
+  document.querySelectorAll('.xlw-premium-choice-overlay,.xlw-premium-confirm-overlay').forEach(n=>n._xlwTimeout?.());
+  document.querySelector('.chain-action-btn.pass-btn:not([disabled])')?.click();
+  if(window.XLW_battleRuleWindow&&!window.XLW_battleRuleWindow.localPassed)window.XLW_battleRuleWindow.pass();
+  if(window.XLW_pendingSummonCounterResolve)return;
+  const placement=window.XLW_lanternPlacementActive||
+    ((window.XLW_receptionistPlacementActive||window.XLW_peepeeboyPlacementActive||window.XLW_emperorSlotSelecting)?'player':null);
+  if(placement){
+    const slots=['front','back'].flatMap(row=>(field[placement+'_'+row]||[]).flatMap((u,idx)=>u?[]:[{zone:placement+'_'+row,idx}]));
+    const slot=slots.find(s=>window.XLW_emperorSlotSelecting?(window.XLW_emperorAllowedSlots||[]).some(v=>v.zone===s.zone&&v.idx===s.idx):
+      xlwCanLanternSummonToZone(placement,s.zone,s.idx));
+    if(slot)document.querySelector(`.slot[data-zone="${slot.zone}"][data-index="${slot.idx}"]`)?.click();
+    else for(const [flag,key]of [['XLW_lanternPlacementActive','XLW_lanternResolve'],['XLW_receptionistPlacementActive','XLW_receptionistResolve'],['XLW_peepeeboyPlacementActive','XLW_peepeeboyResolve'],['XLW_emperorSlotSelecting','XLW_emperorSlotResolve']]){
+      if(window[flag]){window[flag]=false;const resolve=window[key];window[key]=null;resolve?.(null);}
+    }
+    return;
+  }
+  if(window.XLW_emperorTapSelecting){
+    const target=['player_front','player_back','enemy_front','enemy_back'].flatMap(zone=>(field[zone]||[]).flatMap((u,idx)=>
+      u&&!u.tapped&&(!zone.startsWith('enemy_')||!window.isUnitEffectImmune?.(u,zone,idx))?[{zone,idx}]:[]))[0];
+    if(target)document.querySelector(`.slot[data-zone="${target.zone}"][data-index="${target.idx}"] .card`)?.click();
+    else{window.XLW_emperorTapSelecting=false;const resolve=window.XLW_emperorTapResolve;window.XLW_emperorTapResolve=null;resolve?.(null);}
+    return;
+  }
+  for(const key of ['XLW_twoStrangersResolve','XLW_bottleResolve','XLW_confinementResolve','XLW_goatResolve','XLW_resistIronFistResolve','XLW_teasingStickResolve','XLW_demonicExorcistResolve']){
+    if(typeof window[key]==='function'){const resolve=window[key];window[key]=null;resolve(null);}
+  }
+  if(!(window.XLW_equipSpellActive||window.XLW_tempEquipSpellActive)||window.XLW_clockTargetDispatch)return;
+  const temp=!!window.XLW_tempEquipSpellActive,spell=temp?window.XLW_tempEquipSpellCard:window.XLW_equipSpellCard;
+  let node;
+  targets:for(const zone of ['player_front','player_back','enemy_front','enemy_back'])for(let idx=0;idx<5;idx++){
+    const u=field[zone]?.[idx];if(!u)continue;
+    const allowed=temp?window.xlwCanTargetDefenseBuff?.(spell,zone,idx):zone.startsWith('player_')&&
+      (u.card?.faction==='獸人'||u.card?.id?.includes('ORC')||/盾牌|戰錘|法術保護/.test(spell?.name||''));
+    if(allowed){node=document.querySelector(`.slot[data-zone="${zone}"][data-index="${idx}"] .card`);if(node?.onclick)break targets;}
+  }
+  if(node?.onclick){
+    const token={generation:window.XLW_turnClock?.generation};window.XLW_clockTargetDispatch=token;
+    Promise.resolve(node.onclick({target:node,currentTarget:node,stopPropagation(){},preventDefault(){}})).catch(e=>console.error('Timed target selection failed',e)).finally(()=>{if(window.XLW_clockTargetDispatch===token)window.XLW_clockTargetDispatch=null;});
+  }else if(spell){
+    // A target can disappear while the choice is pending. Fizzle once rather than strand the turn.
+    window.XLWDuelConsistency.identify([spell]);
+    if(!window.XLWDuelConsistency.findKnownCard(graveyard,spell)){
+      if(spell.keywords?.some(k=>String(k).includes('消逝')))exileCard(spell,'player');else graveyard.push(spell);
+    }
+    const key=temp?'XLW_tempEquipSpellResolve':'XLW_equipSpellResolve',resolve=window[key];window[key]=null;
+    window[temp?'XLW_tempEquipSpellActive':'XLW_equipSpellActive']=false;
+    window[temp?'XLW_tempEquipSpellCard':'XLW_equipSpellCard']=null;
+    resolve?.(null);render();if(isMultiplayer)sendFullGameStateToOpponent(false);
+  }
+}
+async function xlwExpireTurnClock(reason,startedTurn) {
+  const generation=window.XLW_turnClock?.generation,room=isMultiplayer?room_id:null;
+  const pump=setInterval(()=>{if(isMyTurn&&turn===startedTurn&&window.XLW_turnClock?.generation===generation&&
+    (isMultiplayer?room_id:null)===room)xlwResolveClockPrompts();},100);
+  try{return await xlwExpireTurnClockOnce(reason,startedTurn);}finally{clearInterval(pump);}
+}
+async function xlwCancelStrandedTimedTribute() {
+  const parts=window.XLW_pendingDevourCards||[];window.XLW_pendingDevourCards=[];
+  // The hand card has not been removed yet. Paid fusion materials must not vanish in clearModes.
+  for(const part of parts){const card=part?.card;if(!card)continue;
+    const exists=[hand,graveyard,...['player_front','player_back','enemy_front','enemy_back'].map(z=>(field[z]||[]).filter(Boolean).map(u=>u.card))]
+      .some(pile=>window.XLWDuelConsistency.findKnownCard(pile,card));
+    if(!exists){graveyard.push(card);await window.xlwOnCardEntersGraveyard?.(card,true,true);}
+  }
+  clearModes();logBattle('【回合計時】已無合法召喚位置，手牌保留，已支付的合體祭品進入墓地。');render();
+}
+async function xlwExpireTurnClockOnce(reason,startedTurn) {
+  const startedRoom=isMultiplayer?room_id:null,generation=window.XLW_turnClock?.generation;
+  const valid=()=>isMyTurn&&turn===startedTurn&&!isGameOverFlag&&!mulliganActive&&
+    (isMultiplayer?room_id:null)===startedRoom&&window.XLW_turnClock?.generation===generation;
+  logBattle(reason==='summon'?'【回合計時】召喚階段時間到，自動完成召喚並進入戰術佈陣。':'【回合計時】本回合時間到，自動完成必要操作並結束回合。');
+  while(valid()) {
+    xlwResolveClockPrompts();
+    if(window.XLW_playerNeedsToDraw){await window.xlwHandlePlayerDeckClick();await sleep(50);continue;}
+    if(tributeWaitingPosition&&selectedTributeCard){const slot=xlwTimerSlot(selectedTributeCard);if(slot)await performSummonToSlot(slot.zone,slot.idx);else await xlwCancelStrandedTimedTribute();await sleep(50);continue;}
+    const busy=window.XLW_confirmTributeBusy||window.XLW_castSpellBusy||window.XLW_pendingSpellResolve||window.XLW_pendingSummonCounterResolve||
+      window.XLW_mechPhase||window.XLW_DEFENSE_RULE?.resolving||window.XLW_battleRuleWindow||window.XLW_equipSpellActive||window.XLW_tempEquipSpellActive||
+      document.querySelector('.xlw-premium-choice-overlay,.xlw-premium-confirm-overlay,.xlw-direct-board-target');
+    if(busy||phase==='防守階段'){await sleep(100);continue;}
+    clearModes();
+    if(phase==='召喚階段'){
+      await xlwEnforceForcedSummonRule('召喚階段','計時自動處理');
+      if(!valid())return;
+      if(turn===1||(countdownActive&&countdownRemaining===1)){await endPlayerTurnAndRunEnemy();return;}
+      await changeActionPhase('戰術佈陣',{timeout:true});
+      if(reason==='summon')return;
+      continue;
+    }
+    if(phase==='戰術佈陣')await xlwEnforceForcedSummonRule('戰術佈陣','結束回合');
+    if(valid())await endPlayerTurnAndRunEnemy();return;
+  }
+}
+// End turn clock adapter.
+
 // 強制打出單位/森林小旅人檢測（雙方召喚階段以及戰術佈陣階段不能直接跳過完全不從手牌打出單位）
 async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
   if (window.XLW_playerNeedsToDraw) return true;
@@ -26017,44 +26156,12 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
     return false;
   }
 
-  // 尚未滿足「必須打出單位」之規則：自動為玩家自森林召喚【小旅人】至第一個合法空格並直接放行，避免按鈕無反應或阻塞
-  const legalSlot = emptySlots.find(s => xlwCanSummonToZone(s.zone, LITTLE_TRAVELER)) || emptySlots[0];
-  clearModes();
-  field[legalSlot.zone][legalSlot.idx] = {
-    card: structuredClone(LITTLE_TRAVELER),
-    tapped: false,
-    attacking: false,
-    target: null,
-    summonedTurn: turn,
-    summonedZone: legalSlot.zone
-  };
-  field[legalSlot.zone][legalSlot.idx].card.creator = "player";
-  if (currentPhaseName === "召喚階段") normalSummonUsed = true;
-  if (currentPhaseName === "戰術佈陣") tacticalSummonUsed = true;
-  window.XLW_playerSummonCountThisTurn = (window.XLW_playerSummonCountThisTurn || 0) + 1;
-  window.XLW_playerActionsPerformedThisTurn = true;
-  logBattle(`🌲【規則限制】${currentPhaseName}未從手牌打出單位，系統依規則自動自森林召喚【小旅人】至我方${legalSlot.zone.includes("front") ? "前排" : "後排"}${legalSlot.idx + 1}！`);
-  setStatus(`🌲【規則限制】已自動召喚【小旅人】，正在執行【${nextActionName}】...`);
-  try {
-    playTravelerSummonAnimation("#playerForest", legalSlot.zone, legalSlot.idx);
-  } catch (e) {}
-  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
-    try {
-      ws.send(JSON.stringify({
-        action: "summon",
-        card: field[legalSlot.zone][legalSlot.idx].card,
-        zone: legalSlot.zone,
-        idx: legalSlot.idx,
-        fromHand: false,
-        tributes: []
-      }));
-      sendFullGameStateToOpponent(false);
-    } catch (e) {}
-  }
-  window.XLW_forcedTravelerPending = null;
-  clearModes();
-  render();
-  return false;
+  const legalSlot=xlwTimerSlot();
+  if(!legalSlot){logBattle('【規則限制】沒有合法的小旅人召喚位置，不強制放入非法格。');return false;}
+  clearModes();selectedHandForSummon='TRAVELER';
+  await performSummonToSlot(legalSlot.zone,legalSlot.idx);
+  window.XLW_forcedTravelerPending=null;
+  clearModes();render();return false;
 }
 
 // ===== 7. 戰術佈陣與進攻宣言二選一 =====
@@ -38330,6 +38437,7 @@ function renderSteamBattery() {
 }
 
 function render() {
+  xlwEnsureTurnClock();
   window.XLWDuelDiagnostics?.schedule();
   for(const zone of ["player_front","player_back","enemy_front","enemy_back"])for(const unit of field[zone]||[]){
     if(!unit)continue;
@@ -45891,7 +45999,7 @@ function xlwReadDiagnosticState(ignoreProcessing=false){
       window.XLW_DEFENSE_RULE?.resolving||window.XLW_mechPhase||(window.spellChainStack||[]).length||
       (!ignoreProcessing&&window.XLW_sync?.processing)||document.querySelector('.xlw-premium-choice-overlay, .xlw-direct-board-target, #xlwConfirmYes'))};
 }
-window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261125-starry-queen-aura-v1'});
+window.XLWDuelDiagnostics?.init({read:xlwReadDiagnosticState,logs:()=>battleLog,build:'20261125-turn-clock-v1'});
 window.xlwProcessDiagnosticMessage=async function(handler,data){
   if(data.action==='duel_diagnostic_receipt'){window.XLWDuelDiagnostics?.receive(data);return;}
   const started=performance.now();
@@ -46316,6 +46424,8 @@ function setupWebSocketEvents() {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ action: "ping" }));
       }
+    } else if(data.action==='turn_clock'){
+      xlwEnsureTurnClock()?.receive(data.clock);
     } else if (data.action === "sync_game_state") {
       const s = data.state;
       if (s && Number.isFinite(s.turn) && s.turn < turn) return;
@@ -46538,6 +46648,7 @@ function setupWebSocketEvents() {
           executeGameOverCalculations();
         }
         
+        if(s.turnClock)xlwEnsureTurnClock()?.receive(s.turnClock,{restore:quietEventRecovery});
         if (!data.turnHandoff) {
           if (!window.XLW_sync?.processing) saveLocalGameState();
           render();
@@ -49208,6 +49319,7 @@ async function playTributeSummonAnimation(zone, idx, isRealTribute = false) {
 // 啟動對戰引擎
 // ===== 23. 喵喵賊 偷襲效果與連動確認彈窗引擎 =====
 function showXLWConfirm(title, message, confirmText = "要", cancelText = "不要") {
+  if(window.XLW_turnClock?.autoResolving)return Promise.resolve(false);
   return new Promise((resolve) => {
     // 創建奢華遮罩層
     const overlay = document.createElement("div");
@@ -49271,6 +49383,7 @@ function showXLWConfirm(title, message, confirmText = "要", cancelText = "不�
 
     // 事件監聽
     let settled = false;
+    overlay._xlwTimeout=()=>overlay._xlwCancel();
     overlay._xlwCancel = () => {
       if (settled) return;
       settled = true;
@@ -49310,6 +49423,7 @@ function xlwChoiceCardImage(option) {
 }
 
 function showXLWChoiceModal(title, message, options, config = {}) {
+  if(window.XLW_turnClock?.autoResolving)return Promise.resolve(xlwTimeoutChoice(options));
   return new Promise((resolve) => {
     // 1. Check if the options map to battlefield elements (lanes, slots, or units)
     const parseTarget = (opt) => {
@@ -49444,6 +49558,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         attachedSlotCleanups.forEach(fn => fn());
         resolve(val);
       };
+      promptBar._xlwTimeout=()=>cleanup(xlwTimeoutChoice(options));
       promptBar._xlwCancel = () => cleanup(null);
       promptBar._xlwRefreshHighlights = () => refreshHighlights.forEach(refresh => refresh());
 
@@ -49600,6 +49715,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       try { overlay.remove(); } catch (e) {}
       resolve(val);
     };
+    overlay._xlwTimeout=()=>cleanup(xlwTimeoutChoice(options));
     overlay._xlwCancel = () => {
       if (!preventExternalCancel) cleanup(null);
     };
@@ -53119,6 +53235,7 @@ function saveLocalGameState() {
         ["summon", "spell_chain_start", "coin_toss_choice"].includes(window.XLW_sync?.sendingAction)),
       field: field,
       factionState: window.xlwCaptureFactionState(),
+    turnClock: window.XLW_turnClock?.snapshot(),
       playerFieldCard: pfEl?.dataset.card ? JSON.parse(pfEl.dataset.card) : null,
       enemyFieldCard: efEl?.dataset.card ? JSON.parse(efEl.dataset.card) : null,
       hand: hand,
@@ -53314,6 +53431,7 @@ window.xlwApplySavedStateObject = function(s) {
       if (s[name] !== undefined) window[name] = s[name];
     }
     window.xlwEnterActiveOnlineBoardUI();
+    if(s.turnClock)xlwEnsureTurnClock()?.receive(s.turnClock,{restore:true});
     render();
     console.log("Game state successfully restored and UI rendered!");
     return true;
@@ -53475,6 +53593,7 @@ function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_ga
     mulliganDone: !mulliganActive,
     field: field,
     factionState: window.xlwCaptureFactionState(),
+    turnClock: window.XLW_turnClock?.snapshot(),
     playerFieldCard: document.getElementById("playerField")?.dataset.card ? JSON.parse(document.getElementById("playerField").dataset.card) : null,
     enemyFieldCard: document.getElementById("enemyField")?.dataset.card ? JSON.parse(document.getElementById("enemyField").dataset.card) : null,
     playerBonusScore: playerBonusScore,

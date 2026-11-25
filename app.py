@@ -347,6 +347,18 @@ class ConnectionManager:
             other_role = "player2" if sender_role == "player1" else "player1"
             delivery = r["delivery"]
             action = message.get("action")
+            if action == "turn_clock":
+                clock = message.get("clock")
+                if (isinstance(clock, dict) and clock.get("owner") == sender_role
+                    and isinstance(clock.get("turn"), int) and clock["turn"] >= 1
+                    and all(isinstance(clock.get(key), (int, float)) and 0 <= clock[key] <= 120000
+                            for key in ("remaining", "stageRemaining"))):
+                    packet = {"action": "turn_clock", "clock": {key: clock.get(key) for key in
+                              ("turn", "owner", "phase", "remaining", "stageRemaining", "paused")}}
+                    peer = r.get(other_role, (None, None))[1]
+                    if peer:
+                        await self._send_delivery_message(r, other_role, peer, packet)
+                return
             if action == "resume_delivery":
                 epoch, cursor = message.get("epoch"), message.get("cursor", 0)
                 backup = r["client_backups"].get(sender_role)

@@ -92,6 +92,8 @@
       this.latestBackup = null;
     }
     send(message) {
+      // Display-only durations are replaceable; never checkpoint or replay each clock tick.
+      if(message.action==='turn_clock'){if(this.ready&&!this.failed&&!this.pending.size&&!(this.socket?.bufferedAmount>65536))this.raw(message);return;}
       if(message.action==='duel_diagnostic_receipt'){if(this.ready&&!this.failed&&!this.pending.size&&!(this.socket?.bufferedAmount>65536))this.raw(message);return;}
 
       if (message.action === 'leave_room') {
@@ -212,6 +214,7 @@
           }).catch(error => this.stop(error));
           return;
         }
+        if(data.action==='turn_clock'){Promise.resolve(this.process(data)).catch(error=>this.stop(error));return;}
         const seq = data.server_seq;
         if (Number.isSafeInteger(seq)) {
           if (seq <= this.cursor || this.queued.has(seq)) return;

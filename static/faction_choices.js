@@ -35,7 +35,7 @@
     void own(data.key,data.title,data.message,data.options,data.config);
    }
   }
-  return {choose,receive};
+  return {choose,receive,get waiting(){return waiters.size>0;}};
  }
  global.XLWFactionChoices={create};
 })(typeof window==='undefined'?globalThis:window);
