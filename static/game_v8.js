@@ -3354,6 +3354,41 @@ window.checkForPlayerSummonCounters = async function(summonedCard, zone, idx, is
     }
   }
 
+  // 1b. 飛來一顆石頭 (R-NMG-0041): 敵方打出/召喚單位至其場上時，若該單位的原始攻擊力及原始★皆不超過1，則使該單位被破壞
+  const stone = hand.find(c => c && (c.id === "R-NMG-0041" || c.name?.includes("飛來一顆石頭")));
+  const eligibleStoneTarget = (u, z, i) => {
+    const originalAtk = Number(u?.card?.attack ?? u?.card?.atk);
+    const originalScore = Number(u?.card?.score ?? u?.card?.stars ?? 0);
+    return (z === "enemy_front" || z === "enemy_back") && !!u?.card &&
+      Number.isFinite(originalAtk) && originalAtk <= 1 &&
+      Number.isFinite(originalScore) && originalScore <= 1 &&
+      !window.isUnitEffectImmune?.(u,z,i) && !isUnitMagicImmune(u,z,i,stone);
+  };
+  if (stone && window.XLW_playerCannotUseCardIdThisTurn !== stone.id &&
+      eligibleStoneTarget(field[zone]?.[idx], zone, idx)) {
+    const targetUnit = field[zone][idx];
+    window.XLWDuelConsistency.identify([targetUnit.card]);
+    const targetInstance = targetUnit.card._xlwInstanceId;
+    const startedTurn = turn;
+    const picked = await (window.XLWSummonReaction?.choose || showXLWChoiceModal)(
+      "飛來一顆石頭：選擇目標即發動",
+      "選擇本次敵方打出/召喚、原始攻擊力及原始★皆不超過1的單位；也可以不發動。",
+      [{text:`破壞【${targetUnit.card.name}】（${zone.includes('front')?'前排':'後排'}${idx+1}）`,card:targetUnit.card,value:"0"}]);
+    const current = (picked === "0" || picked === 0) ? field[zone]?.[idx] : null;
+    if (turn === startedTurn && current?.card?._xlwInstanceId === targetInstance &&
+        eligibleStoneTarget(current,zone,idx)) {
+      const spent = window.XLWDuelConsistency.takeKnownCard(hand,stone);
+      if (spent) {
+        graveyard.push(spent);
+        counterCards.push(structuredClone(spent));
+        logBattle(`🪨💥 我方發動【飛來一顆石頭】，破壞【${current.card.name}】！`);
+        void xlwShowSpellActivationOverlay(spent,"player");
+        await destroyUnit(zone,idx,"enemy",false);
+        render();
+      }
+    }
+  }
+
   // 2. 嚇人彈跳廣告
   const playerHasAd = hand.some(c => c && (c.id === "R-NMG-0034" || c.name?.includes("嚇人彈跳廣告")));
   if (playerHasAd) {
@@ -14240,9 +14275,10 @@ async function castSpell(handIndex) {
 
   window.XLW_playerActionsPerformedThisTurn = true;
 
-  const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("黑球") || card.id === "R-STP-0030" || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+  const isSummonCounter = card.name && (card.name.includes("星空") || card.id === "ART-0020" || card.id === "R-NMG-0041" || card.name.includes("飛來一顆石頭") || card.id?.includes("NMG-0022") || card.name.includes("打斷你一下") || card.id?.includes("NMG-0018") || card.name.includes("小陷阱"));
+  const isPureCounter = isSummonCounter || (card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("黑球") || card.id === "R-STP-0030" || card.name.includes("法術解析")));
   if (isPureCounter) {
-    if (card.id === "ART-0020" || card.name.includes("星空")) {
+    if (isSummonCounter) {
       setStatus("【提示】反制魔法卡無法直接打出，必須在對手召喚單位時發動進行反制。");
     } else {
       setStatus("【提示】反制魔法卡無法直接打出，必須在對手使用魔法卡時進行反制。");
@@ -22655,7 +22691,9 @@ async function performSummonToSlot(zone, idx) {
           render();
         } else if (response.countered === "interrupt") {
           immediateEffectNegated = true;
-          logBattle(`對手發動了手牌中的【打斷你一下】！無效化了【${card.name}】的立即效果（單位保留）。`);
+          if (!response.stateApplied || field[zone]?.[idx]) {
+            logBattle(`對手發動了手牌中的【打斷你一下】！無效化了【${card.name}】的立即效果（單位保留）。`);
+          }
           render();
         }
       }
@@ -40329,7 +40367,7 @@ window.xlwCanPlayHandCard = function(card, idx) {
       return false;
     }
     // 反制卡不能主動發動 (需敵方動作觸發)
-    const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020");
+    const isPureCounter = card.name && (card.name.includes("魔法反制") || card.name.includes("終極無效化") || card.name.includes("法術解析") || card.name.includes("星空") || card.id === "ART-0020" || card.id === "R-NMG-0041" || card.name.includes("飛來一顆石頭") || card.id?.includes("NMG-0022") || card.name.includes("打斷你一下") || card.id?.includes("NMG-0018") || card.name.includes("小陷阱"));
     if (isPureCounter) return false;
 
     if (window.XLW_playerCannotUseCardIdThisTurn === card.id) return false;
@@ -40454,7 +40492,7 @@ window.xlwShowHandCardQuickMenu = function(cardEl, card, idx) {
       magic:isMagic,phase,normalUsed:normalSummonUsed,tacticalUsed:tacticalSummonUsed,
       bypass:!!window.XLW_bypassNormalSummonLimit || !!window.XLW_bypassTurnCheck,
       tribute:isMagic?0:getCardTributeCost(card),units:[...field.player_front,...field.player_back].filter(Boolean).length,
-      counterOnly:isMagic && (!!card.name?.match(/魔法反制|終極無效化|法術解析|星空/) || card.id === "ART-0020")}));
+      counterOnly:isMagic && (!!card.name?.match(/魔法反制|終極無效化|法術解析|星空|飛來一顆石頭|打斷你一下|小陷阱/) || card.id === "ART-0020" || card.id === "R-NMG-0041")}));
   }
 
   const rect = cardEl.getBoundingClientRect();
