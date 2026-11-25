@@ -46,7 +46,7 @@
     },
     {
       "id": "R-VLG-0054",
-      "signature": "fe222aa1a39f73aaf8675a7abd3376210e37600033b64c1f31838d165ba2dfa2",
+      "signature": "52fb7def2132553082cdf4b02b2d69839bb5efff602edcf3095d7499dce4e54d",
       "regression_file": "tests/test_accident_property.cjs",
       "scope": [
         "魔法連鎖與反制",
@@ -104,7 +104,7 @@
     },
     {
       "id": "C-VLG-0065",
-      "signature": "0bac09fd81a6c238714d764e169f60c6ec0b5702bbc29b2fc5874ffaca65da4f",
+      "signature": "38e35c63fd37a0f710e289cc6e79876d27c2ebbb33df32802ccfd5d4b40a6f8f",
       "regression_file": "tests/test_village_main_start.cjs",
       "scope": [
         "主要階段開始與單一來源限次",
@@ -122,7 +122,7 @@
     },
     {
       "id": "SR-VLG-0061",
-      "signature": "668aaf3ab249f6f44e7a8ae860972ac4f4b44f46b721f7c8d46bd7737c9fe2a3",
+      "signature": "be725d3f394601245f44660d0194f66a5903af303f1851ffdae6d05bfca741e2",
       "regression_file": "tests/test_village_main_start.cjs",
       "scope": [
         "主要階段開始與單一來源限次",
@@ -142,7 +142,7 @@
     },
     {
       "id": "SSR-CND-0068",
-      "signature": "316661005e7676276565be202b8c9d736613d0eaaed286a6fd47e63bb8fe2d38",
+      "signature": "6b1cfee2017d43e74959a1eec87661f851706c668196c9b7e3d3fb41cfe4e620",
       "regression_file": "tests/test_dessert_general.cjs",
       "scope": [
         "立即效果與反制",
@@ -161,7 +161,7 @@
     },
     {
       "id": "SSR-VLG-0013",
-      "signature": "539a088b8e1fa6e7ecbfe4b38bd43263d5ccabfb00af318a76e2d4b8a146e1b7",
+      "signature": "3440bc1eec74bb55cd859e2897bd27c6b35b1b68ef46e8944f3b451d070b4807",
       "regression_file": "tests/test_yarn_battle_rewards.cjs",
       "scope": [
         "結束階段獎勵",
@@ -255,7 +255,7 @@
     },
     {
       "id": "R-CND-0014",
-      "signature": "ae27d990643cfeeaa688c964c0d925c4660a33b01d8324f1109c09c3356608f5",
+      "signature": "938f13cc050453c331bb5f0e59708e14e744e1b3713090bda749a657ca66b8a9",
       "regression_file": "tests/test_cookie_battle_pass.cjs",
       "scope": [
         "一般及特殊召喚立即效果",
@@ -295,7 +295,7 @@
     },
     {
       "id": "ORC-0009",
-      "signature": "205fa51dce59d98fca674d9cec42c9e458eb41216d5f4991e9db0780d2b82c7d",
+      "signature": "130a34c5456f98ff0e9a9357b7bf4f779eddfa7badec276eafc1fc87d2f93011",
       "regression_file": "tests/test_orc_king.cjs",
       "scope": [
         "立即效果在敵方同欄前排召喚小旅人",
@@ -314,7 +314,7 @@
     },
     {
       "id": "SSR-ORC-0009",
-      "signature": "205fa51dce59d98fca674d9cec42c9e458eb41216d5f4991e9db0780d2b82c7d",
+      "signature": "130a34c5456f98ff0e9a9357b7bf4f779eddfa7badec276eafc1fc87d2f93011",
       "regression_file": "tests/test_orc_king.cjs",
       "scope": [
         "立即效果在敵方同欄前排召喚小旅人",
@@ -333,7 +333,7 @@
     },
     {
       "id": "R-ORC-0014",
-      "signature": "c8be4099967a85b2c6a570558032890f698f307610bdef3f1b6f93d939034496",
+      "signature": "13554862cf8322800cfc8610747d01be1b17f22dd40a73420848c0e9772c95ad",
       "regression_file": "tests/test_orc_target_steak.cjs",
       "scope": [
         "固定目標位置與不可覆蓋",
@@ -349,7 +349,7 @@
     },
     {
       "id": "SR-ORC-0043",
-      "signature": "c665cf364dc86dd0ffa8131d9730e59f2174c56986ddb6e5692e3cfe07cb26c6",
+      "signature": "a519bbd64c9edfcddcc234f7b190db09fda7c2f5b17f3adc6fe109e288e8083c",
       "regression_file": "tests/test_orc_target_steak.cjs",
       "scope": [
         "選擇兩張獸人裝備及取消無扣牌",
@@ -525,7 +525,7 @@
     },
     {
       "id": "R-ART-0062",
-      "signature": "70ee6284945329edddbaeb0538fd3ca8c7bbdf920aa52946dac2392b7e15a8b5",
+      "signature": "abddb8c21bd2e12f40fcfb80cf3a9db461ccaa21bcfee6aebdcefaf48a782067",
       "regression_file": "tests/test_queen_bishop_pumpkin.cjs",
       "scope": [
         "橫放事件加分去重與同步",
