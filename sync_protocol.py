@@ -1,5 +1,6 @@
 """Bounded, per-recipient replay journals. Game rules stay in the existing engine."""
 import json
+import zlib
 from collections import OrderedDict, deque
 from uuid import uuid4
 
@@ -27,12 +28,18 @@ class RoomDelivery:
     def append(self, role, message):
         self.sequence[role] += 1
         event = dict(message, epoch=self.epoch, server_seq=self.sequence[role])
-        size = len(json.dumps(event, ensure_ascii=False).encode('utf-8'))
+        encoded = json.dumps(event, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+        size = len(encoded)
+        # Keep immutable bytes instead of a second graph of every card in every snapshot.
+        # Compression is local to recovery storage; the wire protocol stays unchanged.
+        packed = zlib.compress(encoded, level=1) if size >= 4096 else encoded
+        compressed = len(packed) < size
+        payload = packed if compressed else encoded
         events = self.events[role]
-        events.append((event, size))
+        events.append((event['server_seq'], payload, size, compressed))
         self.sizes[role] += size
         while len(events) > self.MAX_EVENTS or (self.sizes[role] > self.MAX_BYTES and len(events) > 1):
-            _, removed_size = events.popleft()
+            _, _, removed_size, _ = events.popleft()
             self.sizes[role] -= removed_size
         return event
 
@@ -42,6 +49,7 @@ class RoomDelivery:
         if not isinstance(cursor, int) or isinstance(cursor, bool) or not 0 <= cursor <= self.sequence[role]:
             raise ValueError('對局進度不符，已暫停同步以保護戰局。')
         events = self.events[role]
-        if events and cursor < events[0][0]['server_seq'] - 1:
+        if events and cursor < events[0][0] - 1:
             raise ValueError('離線時間過長，完整補送紀錄已過期，請雙方重新開局。')
-        return [event for event, _ in events if event['server_seq'] > cursor]
+        return [json.loads(zlib.decompress(payload) if compressed else payload)
+                for seq, payload, _, compressed in events if seq > cursor]

@@ -54932,8 +54932,7 @@ window.xlwLeaveOnlineRoom = function(promptConfirm = false) {
   // 3. 徹底清除所有線上對戰 Storage 與 URL 參數
   window.xlwClearOnlineSession();
   if (window.XLW_sync) {
-    sessionStorage.removeItem(window.XLW_sync.key + ':outbox');
-    window.XLW_sync.ready = false;
+    window.XLW_sync.discard();
   }
   window.XLW_sync = null;
   window.XLW_syncMetadata = null;
@@ -55177,9 +55176,12 @@ function saveLocalGameState() {
 
     // If websocket is active, push a backup to the server as well
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const backup = { action: "backup_client_state", state };
-      if (typeof ws.sendObject === "function") ws.sendObject(backup);
-      else ws.send(JSON.stringify(backup));
+      if (typeof ws.sendBackup === "function") ws.sendBackup(jsonStr);
+      else {
+        const backup = { action: "backup_client_state", state };
+        if (typeof ws.sendObject === "function") ws.sendObject(backup);
+        else ws.send(JSON.stringify(backup));
+      }
     }
   } catch (e) {
     console.error("saveLocalGameState failed:", e);
@@ -55459,7 +55461,8 @@ if (typeof document !== "undefined") {
 }
 
 function sendFullGameStateToOpponent(includeTurnPhase = false, action = "sync_game_state", metadata = {}) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  // Reliable transport can persist a snapshot while the physical socket is reconnecting.
+  if (!ws || (typeof ws.sendObject !== "function" && ws.readyState !== WebSocket.OPEN)) return;
   for(const list of [hand,deck,graveyard,playerExileZone,playerExtraDeck]) window.XLWDuelConsistency?.identify(list);
   const peerCollections=window.XLW_peerCollectionBase;
   const compactBaseList = list => Array.isArray(list) ? list.map(c => c ? { _xlwInstanceId: c._xlwInstanceId, id: c.id, name: c.name } : null) : list;

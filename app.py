@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 import re
 import shutil
 import secrets
@@ -430,10 +431,10 @@ class ConnectionManager:
                     r["sync_decks"][sender_role] = json.loads(json.dumps(message))
                     r["game_active"] = True
                 elif action == "counter_summon_response" and isinstance(message.get("state"), dict):
-                    r["last_state"][sender_role] = {**json.loads(json.dumps(message)), "action": "sync_game_state"}
+                    r["last_state"][sender_role] = {**message, "action": "sync_game_state"}
                     r["game_active"] = True
                 elif action == "sync_game_state":
-                    r["last_state"][sender_role] = json.loads(json.dumps(message))
+                    r["last_state"][sender_role] = dict(message)
                     r["game_active"] = True
                 elif action in ("coin_toss_roll", "coin_toss_choice", "mulligan_confirm", "summon", "end_turn"):
                     r["game_active"] = True
@@ -532,9 +533,9 @@ class ConnectionManager:
 
 
     def flip_message_coordinates(self, msg: dict) -> dict:
-        flipped = json.loads(json.dumps(msg))
+        # Preserve independent payloads without a redundant JSON encode/decode round trip.
+        flipped = copy.deepcopy(msg)
         if flipped.get("action") in ("sync_game_state", "end_turn", "counter_summon_response"):
-            # sync_game_state 包含全域戰場 field，由前端在接收時專屬對稱翻轉
             return flipped
 
         zone_map = {
@@ -578,10 +579,19 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str,
                     await websocket.send_json({"action": "pong"})
                     continue
                 await manager.broadcast_to_other(room_id, player_id, message, websocket)
+            except json.JSONDecodeError:
+                continue
             except WebSocketDisconnect:
                 raise
             except Exception as e:
-                print(f"Error in websocket loop for room {room_id}, player {player_id}: {e}")
+                # A closed socket raises immediately on every subsequent receive.
+                # Retrying here creates a hot loop that can freeze ALL rooms.
+                print(f"WebSocket ended for room {room_id}, player {player_id}: {e}")
+                try:
+                    await asyncio.wait_for(websocket.close(code=1011), timeout=0.5)
+                except Exception:
+                    pass
+                raise WebSocketDisconnect(code=1011)
     except WebSocketDisconnect:
         disconnected = manager.disconnect(room_id, player_id, websocket)
         if disconnected and room_id in manager.rooms:
