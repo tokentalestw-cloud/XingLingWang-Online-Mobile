@@ -1510,10 +1510,18 @@ function xlwInitExtraDeck(deckName) {
   const extraKey = deckName + "_extra";
   if (decks && Array.isArray(decks[extraKey]) && decks[extraKey].length > 0) {
     const extraIds = decks[extraKey];
-    return extraIds.map(id => {
+    const saved=extraIds.map(id => {
       const c = allCards.find(card => card.id === id);
       return c ? structuredClone(c) : null;
     }).filter(c => c !== null);
+    const soul=allCards.find(c=>c.id==='R-SKT-0065');
+    const count=saved.filter(c=>c.id==='R-SKT-0065').length;
+    if(soul&&count>0){
+      const others=saved.filter(c=>c.id!=='R-SKT-0065');
+      for(let i=0;i<10;i++)others.push(structuredClone(soul));
+      return others;
+    }
+    return saved;
   } else {
     // Fallback: If no extra deck is saved/constructed (or empty []), default to loading all eligible extra deck cards up to extra_deck_limit
     const baseSeen = new Set();
@@ -3933,7 +3941,7 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
   }
 
   // 1. 炸骷 (SKT-0012 / SSR-SKT-0012)
-  if (card.id?.includes("SKT-0012") || card.name?.includes("炸骷")) {
+  if (card.id?.includes("SKT-0012") || card.name === "炸骷") {
     const oppSide = isPlayer ? "enemy" : "player";
     const oppZones = isPlayer ? ["enemy_front", "enemy_back"] : ["player_front", "player_back"];
     const targets = [];
@@ -3945,20 +3953,23 @@ window.xlwOnCardEntersGraveyard = async function(card, isPlayer, fromField) {
       });
     }
     if (targets.length > 0) {
-      let chosen = targets[0];
-      if (isPlayer) {
-        const choices = targets.map((t, idx) => ({
-          text: `[${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1}] ${t.unit.card.name} (${getUnitStars(t.unit, t.zone, t.idx)}★)`,
-          value: idx
-        }));
-        const picked = await showXLWChoiceModal("炸骷 效果發動", "請選擇要破壞的敵方 2★ 或以下單位：", choices);
-        if (picked !== null && picked !== undefined) chosen = targets[picked];
-      } else {
-        chosen = targets.sort((a, b) => getUnitAtk(b.unit, b.zone, b.idx) - getUnitAtk(a.unit, a.zone, a.idx))[0];
+      targets.forEach(t=>{window.XLWDuelConsistency.identify([t.unit.card]);t.instance=t.unit.card._xlwInstanceId;});
+      const choices=targets.map((t,value)=>({text:t.unit.card.name,card:t.unit.card,value,boardTarget:{zone:t.zone,idx:t.idx}}));
+      let picked=0;
+      if(isMultiplayer){
+        const visit=(card._xlwBombGraveVisit||0)+1;card._xlwBombGraveVisit=visit;
+        picked=await window.xlwChooseFactionAction(isPlayer,xlwFactionDecisionKey({card},isPlayer?'player_grave':'enemy_grave','bomb-skull',visit),
+          '炸骷：進入墓地效果','點選敵方 2★ 或以下的單位。',choices,{boardOnly:true,forceChoice:true});
+      }else if(isPlayer){
+        picked=await showXLWChoiceModal('炸骷：進入墓地效果','點選敵方 2★ 或以下的單位。',choices,{boardOnly:true});
+      }else picked=targets.reduce((best,t,i)=>getUnitAtk(t.unit,t.zone,t.idx)>getUnitAtk(targets[best].unit,targets[best].zone,targets[best].idx)?i:best,0);
+      const chosen=targets[picked==null?0:picked];
+      const current=chosen&&field[chosen.zone]?.[chosen.idx];
+      if(chosen&&current?.card?._xlwInstanceId===chosen.instance&&getUnitStars(current,chosen.zone,chosen.idx)<=2&&!window.isUnitEffectImmune(current,chosen.zone,chosen.idx)){
+        logBattle(`💥【炸骷】進入墓地效果：破壞【${current.card.name}】！`);
+        await destroyUnit(chosen.zone,chosen.idx,oppSide,false);
+        render();
       }
-      logBattle(`💥【炸骷】進入墓地效果發動：破壞了【${chosen.unit.card.name}】！`);
-      await destroyUnit(chosen.zone, chosen.idx, oppSide, false);
-      render();
     }
   }
 
@@ -11539,9 +11550,9 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
     }
   }
 
-  // B. R-SKT-0065 靈報骷
-  if (card.id === "R-SKT-0065" || card.name?.includes("靈報骷")) {
-    logBattle("💀💥【靈報骷】怨念索命：此單位被破壞，帶走敵方 1 個單位！");
+  // B. R-SKT-0065 靈爆骷
+  if (card.id === "R-SKT-0065" || card.name?.includes("靈爆骷")) {
+    logBattle("💀💥【靈爆骷】怨念索命：此單位被破壞，帶走敵方 1 個單位！");
     const oppTargets = [];
     for (const oz of [oppSide + "front", oppSide + "back"]) {
       (field[oz] || []).forEach((u, i) => {
@@ -11552,7 +11563,7 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
       let chosen = oppTargets[0];
       if (isPlayerUnit) {
         const choices = oppTargets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1})`, value: idx }));
-        const pick = await showXLWChoiceModal("【靈報骷】索命目標", "請選擇被靈報破壞的敵方單位：", choices);
+        const pick = await showXLWChoiceModal("【靈爆骷】索命目標", "請選擇被靈報破壞的敵方單位：", choices);
         if (pick !== null && pick !== undefined) chosen = oppTargets[pick];
       }
       await destroyUnit(chosen.zone, chosen.idx, isPlayerUnit ? "enemy" : "player", false);
@@ -11561,31 +11572,31 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
 
   // C. C-SKT-0064 靈骷召喚師
   for (const z of [side + "front", side + "back"]) {
-    const necros = (field[z] || []).filter((u,i) => u && u !== destroyedUnit && (u.card.id === "C-SKT-0064" || u.card.name?.includes("靈骷召喚師")) && !window.isUnitSilenced(u,z,i));
+    const necros = (field[z] || []).filter((u,i) => u && (u.card.id === "C-SKT-0064" || u.card.name?.includes("靈骷召喚師")) && !window.isUnitSilenced(u,z,i));
     if (necros.length > 0) {
       const extraD = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-      const skulls = extraD.filter(c => c && (c.id === "R-SKT-0065" || c.name?.includes("靈報骷")));
+      const skulls = extraD.filter(c => c && (c.id === "R-SKT-0065" || c.name?.includes("靈爆骷")));
       if (skulls.length > 0) {
         const visit=(destroyedUnit.card._xlwSoulSkullVisit||0)+1;
         destroyedUnit.card._xlwSoulSkullVisit=visit;
         const choiceKey=isMultiplayer?xlwFactionDecisionKey(destroyedUnit,zone,"soul-skull",visit):null;
         let doSend = true;
         if(isMultiplayer){
-          doSend=await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":activate","【靈骷召喚師】墓地感應","是否從額外區將至多 2 張靈報骷送入墓地？",[{text:"發動",value:true},{text:"不發動",value:false}],{actionChoices:true});
+          doSend=await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":activate","【靈骷召喚師】墓地感應","是否從額外區將至多 2 張靈爆骷送入墓地？",[{text:"發動",value:true},{text:"不發動",value:false}],{actionChoices:true});
         }else if (isPlayerUnit) {
-          doSend = await showXLWConfirm("【靈骷召喚師】墓地感應", "偵測到單位進墓！是否從額外區將至多 2 張【靈報骷】送入墓地？");
+          doSend = await showXLWConfirm("【靈骷召喚師】墓地感應", "偵測到單位進墓！是否從額外區將至多 2 張【靈爆骷】送入墓地？");
         }
         if (doSend) {
           const maximum=Math.min(2,skulls.length);
           const amounts=Array.from({length:maximum+1},(_,value)=>({text:value?`${value} 張`:"不送墓",value}));
-          const amount=isMultiplayer?await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":amount","【靈骷召喚師】送墓張數","選擇要送入墓地的靈報骷數量。",amounts,{actionChoices:true}):isPlayerUnit?await showXLWChoiceModal("【靈骷召喚師】送墓張數","選擇要送入墓地的靈報骷數量。",amounts,{actionChoices:true}):maximum;
+          const amount=isMultiplayer?await window.xlwChooseFactionAction(isPlayerUnit,choiceKey+":amount","【靈骷召喚師】送墓張數","選擇要送入墓地的靈爆骷數量。",amounts,{actionChoices:true}):isPlayerUnit?await showXLWChoiceModal("【靈骷召喚師】送墓張數","選擇要送入墓地的靈爆骷數量。",amounts,{actionChoices:true}):maximum;
           let sent=0;
           if(Number.isInteger(amount)&&amount>=0&&amount<=maximum)for(const candidate of skulls.slice(0,amount)){
             const currentExtra=isPlayerUnit?playerExtraDeck:(window.XLW_enemyExtraDeck||enemyExtraDeck);
             const currentGrave=isPlayerUnit?graveyard:(window.XLW_ENEMY?.grave||enemyGraveyard);
             if(window.XLWDuelConsistency.moveKnownCard(currentExtra,currentGrave,candidate))sent++;
           }
-          if(sent)logBattle(`💀📿【靈骷召喚師】將 ${sent} 張【靈報骷】從額外區送入墓地。`);
+          if(sent)logBattle(`💀📿【靈骷召喚師】將 ${sent} 張【靈爆骷】從額外區送入墓地。`);
         }
       }
       break;
@@ -14207,6 +14218,42 @@ window.xlwResolveAccidentTribute = async function(unit,zone,idx){
   }finally{if(current())pending.delete(token);}
 };
 // End Accident Property lifecycle.
+
+async function xlwResolveEvilRitual(isPlayer=true) {
+  const own=isPlayer?'player_':'enemy_',opponent=isPlayer?'enemy_':'player_';
+  const units=side=>[side+'front',side+'back'].flatMap(zone=>(field[zone]||[]).flatMap((unit,idx)=>{
+    if(!unit?.card)return [];
+    window.XLWDuelConsistency.identify([unit.card]);
+    return [{zone,idx,unit,instance:unit.card._xlwInstanceId}];
+  }));
+  const live=t=>{const unit=t&&field[t.zone]?.[t.idx];return unit?.card?._xlwInstanceId===t?.instance?unit:null;};
+  const enemyLegal=t=>{const u=live(t);return u&&!window.isUnitEffectImmune(u,t.zone,t.idx)&&!isUnitMagicImmune(u,t.zone,t.idx);};
+  const same=(a,b)=>Number(getUnitStars(a.unit,a.zone,a.idx))===Number(getUnitStars(b.unit,b.zone,b.idx));
+  const ownTargets=units(own).filter(a=>units(opponent).some(b=>enemyLegal(b)&&same(a,b)));
+  if(!ownTargets.length)return false;
+  const choose=async(title,targets)=>{
+    if(!targets.length)return null;
+    if(!isPlayer)return targets[0];
+    const n=await showXLWChoiceModal(title,'點選場上符合條件的單位。',targets.map((t,value)=>({text:t.unit.card.name,card:t.unit.card,value,boardTarget:{zone:t.zone,idx:t.idx}})),{boardOnly:true});
+    return n==null?null:targets[n];
+  };
+  const a=await choose('邪降儀式：破壞我方單位',ownTargets);
+  const ownUnit=live(a);if(!ownUnit)return false;
+  const stars=Number(getUnitStars(ownUnit,a.zone,a.idx));
+  const enemies=units(opponent).filter(b=>enemyLegal(b)&&Number(getUnitStars(b.unit,b.zone,b.idx))===stars);
+  const b=await choose(`邪降儀式：破壞敵方 ${stars}★ 單位`,enemies);
+  const enemyUnit=live(b);
+  if(!enemyUnit||!live(a)||!enemyLegal(b)||Number(getUnitStars(live(a),a.zone,a.idx))!==stars||Number(getUnitStars(enemyUnit,b.zone,b.idx))!==stars)return false;
+  await destroyUnit(a.zone,a.idx,isPlayer?'player':'enemy',false);
+  // A prevented destruction is not payment. A grave trigger may already remove the second target.
+  if(live(a))return false;
+  const remaining=live(b);
+  if(remaining&&enemyLegal(b)&&Number(getUnitStars(remaining,b.zone,b.idx))===stars){
+    await destroyUnit(b.zone,b.idx,isPlayer?'enemy':'player',false);
+  }
+  logBattle(`【邪降儀式】結算：我方【${ownUnit.card.name}】與敵方同為 ${stars}★ 的【${enemyUnit.card.name}】。`);
+  render();return true;
+}
 
 async function castSpell(handIndex) {
   if(window.XLW_mechPhase&&!/合體時|合體階段/.test(hand[handIndex]?.effect_text||"")){setStatus("請先結束機械合體階段。");return;}
@@ -17401,7 +17448,7 @@ async function castSpell(handIndex) {
     });
     const enemyUnits = [];
     ["enemy_front", "enemy_back"].forEach(z => {
-      field[z]?.forEach((u, i) => { if (u && u.card && !window.isUnitEffectImmune(u, z, i)) enemyUnits.push({ zone: z, idx: i, unit: u }); });
+      field[z]?.forEach((u, i) => { if (u && u.card && !window.isUnitEffectImmune(u, z, i) && !isUnitMagicImmune(u,z,i)) enemyUnits.push({ zone: z, idx: i, unit: u }); });
     });
     const canMatch = myUnits.some(m => {
       const ms = getUnitStars(m.unit, m.zone, m.idx);
@@ -17491,42 +17538,7 @@ async function castSpell(handIndex) {
   }
   // 2. SKT-0017 邪降儀式
   else if (card.id === "SKT-0017" || card.name?.includes("邪降儀式")) {
-    const myUnits = [];
-    ["player_front", "player_back"].forEach(z => {
-      field[z]?.forEach((u, i) => { if (u && u.card) myUnits.push({ zone: z, idx: i, unit: u }); });
-    });
-    const enemyUnits = [];
-    ["enemy_front", "enemy_back"].forEach(z => {
-      field[z]?.forEach((u, i) => { if (u && u.card && !window.isUnitEffectImmune(u, z, i)) enemyUnits.push({ zone: z, idx: i, unit: u }); });
-    });
-    const validMyUnits = myUnits.filter(m => {
-      const s = getUnitStars(m.unit, m.zone, m.idx);
-      return enemyUnits.some(e => getUnitStars(e.unit, e.zone, e.idx) === s);
-    });
-    if (validMyUnits.length > 0) {
-      const myChoices = validMyUnits.map((m, idx) => ({
-        text: `[${m.zone.includes("front") ? "前排" : "後排"}${m.idx + 1}] ${m.unit.card.name} (${getUnitStars(m.unit, m.zone, m.idx)}★)`,
-        value: idx
-      }));
-      const pickedMyIdx = await showXLWChoiceModal("邪降儀式：選擇破壞的我方單位", "請選擇破壞的我方單位：", myChoices);
-      if (pickedMyIdx !== null && pickedMyIdx !== undefined) {
-        const chosenMy = validMyUnits[pickedMyIdx];
-        const matchStars = getUnitStars(chosenMy.unit, chosenMy.zone, chosenMy.idx);
-        const matchEnemies = enemyUnits.filter(e => getUnitStars(e.unit, e.zone, e.idx) === matchStars);
-        let chosenEnemy = matchEnemies[0];
-        if (matchEnemies.length > 1) {
-          const oppChoices = matchEnemies.map((e, idx) => ({
-            text: `[${e.zone.includes("front") ? "前排" : "後排"}${e.idx + 1}] ${e.unit.card.name} (${getUnitStars(e.unit, e.zone, e.idx)}★)`,
-            value: idx
-          }));
-          const pickedOppIdx = await showXLWChoiceModal("邪降儀式：選擇破壞的敵方同星數單位", "請選擇破壞的敵方單位：", oppChoices);
-          if (pickedOppIdx !== null && pickedOppIdx !== undefined) chosenEnemy = matchEnemies[pickedOppIdx];
-        }
-        logBattle(`✨【邪降儀式】發動：破壞我方【${chosenMy.unit.card.name}】，並破壞敵方【${chosenEnemy.unit.card.name}】（${matchStars}★）！`);
-        await destroyUnit(chosenMy.zone, chosenMy.idx, "player", false);
-        await destroyUnit(chosenEnemy.zone, chosenEnemy.idx, "enemy", false);
-      }
-    }
+    await xlwResolveEvilRitual(true);
     graveyard.push(card);
     render();
   }
@@ -18283,7 +18295,7 @@ async function castSpell(handIndex) {
   }
   else if (card.name.includes("復活術") || card.id === "NMG-0016" || card.id === "R-NMG-0016") {
     const unitsInGrave = graveyard.filter(c => c && c.type === "unit");
-    const choices = unitsInGrave.map((c, i) => ({ text: `${c.name} (墓地)`, value: i }));
+    const choices = unitsInGrave.map((c, i) => ({ text: `${c.name} (墓地)`,card:c,value:i }));
     const chosenIdx = await showXLWChoiceModal("復活術 效果發動", "選擇一個墓地單位進行特殊召喚：", choices);
     if (chosenIdx !== null && chosenIdx !== undefined) {
       const chosenCard = unitsInGrave[chosenIdx];
@@ -18506,20 +18518,22 @@ async function castSpell(handIndex) {
     }
 
     // 我方發動
+    window.XLWDuelConsistency.identify(graveyard);
     const spellsInGrave = graveyard.filter(c => c && (c.type === "magic" || c.type === "魔法"));
     if (spellsInGrave.length > 0) {
       const choices = spellsInGrave.map((card, value) => ({ text: card.name, card, value }));
       const chosenIdx = await showXLWChoiceModal("法力回收壺 效果：選擇一張墓地魔法卡回手", "選擇魔法卡：", choices, {confirmCard: true});
       if (chosenIdx !== null && chosenIdx !== undefined) {
         const chosenSpell = window.XLWDuelConsistency.moveKnownCard(graveyard, hand, spellsInGrave[chosenIdx]);
-        if (!chosenSpell) return;
+        if (chosenSpell) {
         logBattle(`✨ 法力回收壺 效果：將墓地魔法卡 ${chosenSpell.name} 回收至手牌！`);
         render();
+        }
       }
     } else {
       setStatus("墓地中無魔法卡可回收！");
-      return;
     }
+    if(!window.XLWDuelConsistency.findKnownCard(graveyard,card))graveyard.push(card);
   } else if (card.name?.includes("力場保護") || card.id === "NMG-0040") {
     if (!isMyTurn) {
       // AI 發動：自動抽 1 張牌
@@ -18883,12 +18897,10 @@ async function castSpell(handIndex) {
       const unitsInGrave = graveyard.filter(c => c && c.type === "unit");
       if (unitsInGrave.length > 0) {
         const choices = unitsInGrave.map((c, i) => ({ text: `${c.name} (墓地)`, value: i }));
-        const chosenIdx = await showXLWChoiceModal("希翁/招魂 效果發動", "請選擇要回收至手牌的單位卡：", choices);
+        const chosenIdx = await showXLWChoiceModal("希翁/招魂 效果發動", "請選擇要回收至手牌的單位卡：", choices,{confirmCard:true});
         if (chosenIdx !== null && chosenIdx !== undefined) {
-          const chosenUnit = unitsInGrave[chosenIdx];
-          const gIdx = graveyard.indexOf(chosenUnit);
-          if (gIdx >= 0) graveyard.splice(gIdx, 1);
-          hand.push(chosenUnit);
+          const chosenUnit = window.XLWDuelConsistency.moveKnownCard(graveyard,hand,unitsInGrave[chosenIdx]);
+          if(!chosenUnit){render();return;}
           logBattle(`✨ ${card.name} 效果：將墓地中的單位【${chosenUnit.name}】回收至手牌！`);
         } else {
           hand.splice(handIndex, 0, card);
@@ -37483,8 +37495,7 @@ async function aiPlayMagicCardsSummonPhase() {
       await xlwShowSpellActivationOverlay(spellCard, "enemy");
       await aiCastSpell(spellCard, async () => {
         logBattle(`✨ 對手 AI 發動【邪降儀式】：破壞其【${bestAi.unit.card.name}】，並破壞我方【${bestPlayer.unit.card.name}】！`);
-        await destroyUnit(bestAi.zone, bestAi.idx, "enemy", false);
-        await destroyUnit(bestPlayer.zone, bestPlayer.idx, "player", false);
+        await xlwResolveEvilRitual(false);
         render();
         await sleep(650);
       });
@@ -51277,7 +51288,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
     const boardTargets = targetMaps.filter(m => m.target && (m.target.type === "summon" || m.target.type === "unit" || m.target.type === "lane"));
 
     // If options map to board targets, launch DIRECT ON-SCREEN TARGET MODE!
-    if (!config.iconChoices && !config.actionChoices && boardTargets.length > 0 && (boardTargets.length >= targetMaps.filter(m => !m.target || m.target.type !== "cancel").length ||
+    if (!config.confirmCard && !config.iconChoices && !config.actionChoices && boardTargets.length > 0 && (boardTargets.length >= targetMaps.filter(m => !m.target || m.target.type !== "cancel").length ||
         (options.some(opt => opt.boardAction) && targetMaps.every(({opt, target}) => target || opt.boardAction)))) {
       let settled = false;
       const attachedSlotCleanups = [];
@@ -51444,7 +51455,8 @@ function showXLWChoiceModal(title, message, options, config = {}) {
 
     const images = options.map(xlwChoiceCardImage);
     const isCardSearch = config.confirmCard ||
-      (/墓地|牌組|牌庫|額外區|檢索/.test(title + message) && images.some(Boolean));
+      (/墓地|牌組|牌庫|額外區|檢索/.test(title + message) && (images.some(Boolean)||options.some(option=>option.card)));
+    if(isCardSearch){box.classList.add("xlw-card-search-box");overlay.classList.add("xlw-card-search-overlay");}
     let buttonsHTML = "";
     options.forEach((opt, idx) => {
       const isEnd = opt.value === "end_effects";
@@ -51452,7 +51464,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         ? "background: rgba(255, 255, 255, 0.05); color: #c4b9a6; border: 1px solid rgba(255, 255, 255, 0.15);"
         : "background: rgba(205, 170, 82, 0.15); color: #ffd76a; border: 1.5px solid var(--gold-accent);";
       buttonsHTML += `
-        <button class="xlw-choice-btn" data-opt-idx="${idx}" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
+        <button class="xlw-choice-btn${isCardSearch ? " xlw-card-search-option" : ""}" data-opt-idx="${idx}" data-value="${opt.value}" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; ${btnStyle}">
           ${config.iconChoices || images[idx] ? "" : opt.text}
         </button>
       `;
@@ -51466,6 +51478,10 @@ function showXLWChoiceModal(title, message, options, config = {}) {
       </div>
     `;
 
+    if(isCardSearch){
+      const list=box.querySelector('.xlw-choice-btn')?.parentElement;
+      if(list)list.classList.add('xlw-card-search-grid');
+    }
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
@@ -51545,6 +51561,7 @@ function showXLWChoiceModal(title, message, options, config = {}) {
           const preview = document.createElement("img");
           preview.src = image;
           preview.alt = "";
+          if(isCardSearch){preview.loading='lazy';preview.decoding='async';}
           preview.style.cssText = isCardSearch
             ? "height:clamp(82px, 28vh, 144px);width:auto;vertical-align:middle"
             : "height:64px;width:auto;vertical-align:middle;margin-left:8px";
@@ -51562,7 +51579,16 @@ function showXLWChoiceModal(title, message, options, config = {}) {
         }
         cleanup(options[idx] ? options[idx].value : btn.dataset.value);
       };
-      btn.onclick = (e) => {e.stopPropagation();handleChoose();};
+      if(isCardSearch){
+        const label=document.createElement('span');label.className='xlw-card-search-name';label.textContent=options[optionIndex].text;btn.appendChild(label);
+      }
+      let gesture=null,dragged=false;
+      if(isCardSearch){
+        btn.onpointerdown=e=>{gesture={x:e.clientX,y:e.clientY};dragged=false;};
+        btn.onpointermove=e=>{if(gesture&&Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>10)dragged=true;};
+        btn.onpointercancel=()=>{dragged=true;};
+      }
+      btn.onclick = (e) => {e.stopPropagation();if(isCardSearch&&dragged){e.preventDefault();return;}handleChoose();};
       if (!isCardSearch) btn.ontouchend = (e) => {
         e.preventDefault();e.stopPropagation();
         handleChoose();

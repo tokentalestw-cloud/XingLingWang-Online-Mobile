@@ -9225,3 +9225,36 @@ body #phaseDisplayPanelHard #phaseTextHard,
 }
 .xlw-card-search-preview::backdrop { background: #030711dd; }
 .xlw-card-search-preview img { display: block; max-width: 83vw; height: min(74dvh, 760px); object-fit: contain; margin-bottom: 8px; }
+/* Search cards keep their readable size; only the list scrolls, never the controls. */
+.xlw-card-search-overlay .xlw-card-search-box {
+  display:flex!important;flex-direction:column;gap:8px;
+  width:min(94vw,960px)!important;max-width:960px!important;
+  max-height:calc(100dvh - 24px)!important;padding:14px!important;overflow:hidden!important;
+  animation:none!important;transform:none!important;
+  background:linear-gradient(145deg,#1a2633,#101923)!important;
+  border:1px solid #8a7959!important;border-radius:12px!important;
+}
+.xlw-card-search-box > div:first-child {flex:none;margin-bottom:0!important;}
+.xlw-card-search-box > div:nth-child(2):not(.xlw-card-search-grid) {flex:none;margin-bottom:0!important;}
+.xlw-card-search-box .xlw-card-search-grid {
+  display:grid!important;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));
+  gap:10px;padding:6px!important;min-height:0;max-height:none!important;grid-auto-rows:max-content;align-content:start;
+  overflow-y:auto!important;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+.xlw-card-search-box .xlw-card-search-grid .xlw-choice-btn {
+  display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;
+  flex:none;min-width:0;min-height:198px!important;height:auto!important;max-height:none!important;margin:0!important;padding:8px!important;box-shadow:none!important;
+  border:1px solid #536675!important;background:#202e3c!important;transform:none!important;
+  touch-action:pan-y;
+}
+.xlw-card-search-grid .xlw-choice-btn img {height:144px!important;max-width:100%;width:auto!important;object-fit:contain;pointer-events:none;}
+.xlw-card-search-name {display:block;color:#f2e9d7;font-size:13px;line-height:1.4;margin-top:6px;overflow-wrap:anywhere;}
+.xlw-card-search-box .xlw-card-search-controls {flex:none;padding-top:4px;min-height:40px;gap:10px;}
+.xlw-card-search-box .xlw-card-search-controls button {min-height:40px;min-width:80px;touch-action:manipulation;}
+@media(max-height:460px){
+ .xlw-card-search-box .xlw-card-search-grid .xlw-choice-btn {min-height:176px!important;}
+ .xlw-card-search-grid .xlw-choice-btn img {height:128px!important;}
+ .xlw-card-search-box > div:first-child {font-size:17px!important;}
+ .xlw-card-search-box > div:nth-child(2):not(.xlw-card-search-grid){font-size:12px!important;}
+}

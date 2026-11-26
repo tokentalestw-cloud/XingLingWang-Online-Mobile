@@ -436,7 +436,7 @@ body.xlw-royal-ui :is(.xlw-premium-confirm-overlay, .xlw-premium-choice-overlay)
 }
 body.xlw-royal-ui :is(#xlwConfirmYes, #prebattleConfirmBtn),
 body.xlw-royal-ui #xlw-coin-toss-actions button,
-body.xlw-royal-ui .xlw-choice-btn {
+body.xlw-royal-ui .xlw-choice-btn:not(.xlw-card-search-option) {
   min-height: 44px !important; padding: 11px 20px !important;
   background: linear-gradient(145deg, #456879, #1c3548) !important;
   border: 1px solid #d3bb81 !important; border-radius: 4px !important;
@@ -451,9 +451,9 @@ body.xlw-royal-ui #xlwConfirmNo {
   box-shadow: inset 0 1px 0 #fff1, 0 3px 0 #080d17, 0 7px 13px #0007 !important;
   color: #cad5df !important;
 }
-body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn):hover,
+body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn:not(.xlw-card-search-option)):hover,
 body.xlw-royal-ui #xlw-coin-toss-actions button:hover { filter: brightness(1.15) !important; transform: translateY(-1px) !important; }
-body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn):active,
+body.xlw-royal-ui :is(#xlwConfirmYes, #xlwConfirmNo, #prebattleConfirmBtn, .xlw-choice-btn:not(.xlw-card-search-option)):active,
 body.xlw-royal-ui #xlw-coin-toss-actions button:active { transform: translateY(2px) !important; }
 body.xlw-royal-ui #xlw-coin-toss-status {
   background: #07101b99 !important; border: 1px solid #8492a32e !important;
@@ -1174,7 +1174,7 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
 
 :is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
     .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, body.xlw-royal-ui #prebattleConfirmBtn,
-    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn) {
+    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn:not(.xlw-card-search-option)) {
   min-height: 40px !important;
   padding: 8px 14px !important;
   border: 1px solid #baa16a !important;
@@ -1201,7 +1201,7 @@ html body.xlw-royal-ui #stableActionPanel { z-index: 10030 !important; }
 
 :is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
     .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, #prebattleConfirmBtn, #xlwConfirmYes, #xlwConfirmNo,
-    .xlw-choice-btn):focus-visible {
+    .xlw-choice-btn:not(.xlw-card-search-option)):focus-visible {
   outline: 2px solid #bef5ff !important;
   outline-offset: 2px;
 }
@@ -1295,13 +1295,13 @@ body.xlw-royal-ui .prebattle-container { width: min(460px, calc(100 * var(--xvw,
 body.xlw-royal-ui #xlwFixedTopRightActionBar button:active:not(:disabled),
 :is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
     .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, body.xlw-royal-ui #prebattleConfirmBtn,
-    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn):active:not(:disabled) {
+    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn:not(.xlw-card-search-option)):active:not(:disabled) {
   transform: translateY(2px) !important;
   box-shadow: inset 0 2px 5px #0006, 0 1px 0 #101520 !important;
 }
 :is(.xlw-order-choice, .xlw-dialog-secondary, #xlwAudioSettings button, .xlw-mulligan-close-btn,
     .xlw-mulligan-nav-btn, .xlw-mulligan-done-btn, body.xlw-royal-ui #prebattleConfirmBtn,
-    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn):disabled {
+    body.xlw-royal-ui #xlwConfirmYes, body.xlw-royal-ui #xlwConfirmNo, body.xlw-royal-ui .xlw-choice-btn:not(.xlw-card-search-option)):disabled {
   filter: saturate(.25) brightness(.75) !important;
   cursor: not-allowed;
 }

@@ -4476,7 +4476,7 @@
     "score": 2,
     "tribute": 1,
     "keywords": [],
-    "effect_text": "單位卡進入你的墓地前，可使你額外區至多2張「靈報骷」被置於你的墓地",
+    "effect_text": "單位卡進入你的墓地前，可使你額外區至多2張「靈爆骷」被置於你的墓地",
     "image": "/static/card_images/c_skt_0064.jpeg",
     "original_file": "骷髏人\\S007-PG2_SKT0064_靈骷召喚師.jpg",
     "deck_eligible": true,
@@ -22357,7 +22357,7 @@
   },
   {
     "id": "R-SKT-0065",
-    "name": "靈報骷",
+    "name": "靈爆骷",
     "deck": "骷髏人",
     "type": "unit",
     "faction": "骷髏人",
@@ -22377,7 +22377,7 @@
     "trigger_condition": "",
     "art_subtype": "不死族",
     "rarity": "R",
-    "extra_deck_limit": 2
+    "extra_deck_limit": 10
   },
   {
     "id": "R-SPT-0003",
