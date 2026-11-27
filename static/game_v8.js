@@ -3290,7 +3290,11 @@ window.isVirtualUnit = function(unit) {
     }
   }
 
+  if (unit.isVirtualUntilNextTurn) return true;
+
   const c = unit.card || unit;
+  if (c.art_subtype && c.art_subtype.includes("虛擬")) return true;
+  if (c.subtypes && Array.isArray(c.subtypes) && c.subtypes.includes("虛擬")) return true;
   if (c.keywords && c.keywords.some(k => k.includes("虛擬") || k.includes("Virtual") || k.includes("VIR"))) return true;
   if (c.name && (c.name.includes("虛擬") || c.name.includes("Virtual"))) return true;
   if (c.faction && (c.faction.includes("虛擬") || c.faction.includes("Virtual") || c.faction === "虛擬世界")) return true;
@@ -3579,18 +3583,20 @@ window.xlwCheckDesireQueenConstraint = function(zone, idx) {
   const isPlayerPlacement = zone.startsWith("player_");
   const oppRowPrefix = isPlayerPlacement ? "enemy_" : "player_";
   const myFrontZone = isPlayerPlacement ? "player_front" : "enemy_front";
+  const requiredCols = [];
 
   for (const oppRow of [oppRowPrefix + "front", oppRowPrefix + "back"]) {
     for (let qi = 0; qi < 5; qi++) {
       const oppUnit = field[oppRow]?.[qi];
       if (oppUnit && oppUnit.card && (oppUnit.card.id?.includes("BRV-0048") || oppUnit.card.name?.includes("慾望女王")) && !window.isUnitSilenced(oppUnit, oppRow, qi)) {
-        if (field[myFrontZone][qi] === null) {
-          if (zone !== myFrontZone || idx !== qi) {
-            return false;
-          }
+        if (field[myFrontZone][qi] === null && !requiredCols.includes(qi)) {
+          requiredCols.push(qi);
         }
       }
     }
+  }
+  if (requiredCols.length > 0) {
+    return zone === myFrontZone && requiredCols.includes(idx);
   }
   return true;
 };
@@ -4952,7 +4958,22 @@ window.xlwTriggerSageEffect = async function(isPlayerSide, sageUnit) {
 window.xlwOnMagicCardCast = async function(isPlayer, castedCard) {
   const friendlyPrefix = isPlayer ? "player_" : "enemy_";
   const enemyPrefix = isPlayer ? "enemy_" : "player_";
-  if (castedCard?.id === "C-VRT-0065") await window.xlwCheckDrunkenBoyBeerMove?.(isPlayer);
+  if (castedCard?.id === "C-VRT-0065" || castedCard?.name?.includes("渣釀酒")) {
+    await window.xlwCheckDrunkenBoyBeerMove?.(isPlayer);
+  }
+  const activeFieldCard = window.xlwGetFactionFieldCard?.(isPlayer);
+  if (activeFieldCard && (activeFieldCard.id === "R-VRT-0070" || activeFieldCard.name?.includes("鬧事酒館"))) {
+    let beerBonus = 0;
+    if (castedCard?.id === "C-VRT-0065" || castedCard?.name?.includes("渣釀酒")) beerBonus = 1;
+    else if (castedCard?.id === "R-VRT-0058" || castedCard?.id === "C-VRT-0021" || castedCard?.name?.includes("一札啤酒")) beerBonus = 2;
+    else if (castedCard?.id === "R-VRT-0067" || castedCard?.name?.includes("精釀啤酒")) beerBonus = 4;
+    if (beerBonus > 0) {
+      if (isPlayer) playerBonusScore += beerBonus;
+      else enemyBonusScore += beerBonus;
+      logBattle(`🍻【鬧事酒館】酒酣耳熱：${isPlayer ? "我方" : "對手"}使用【${castedCard.name}】，獲得獎勵 +${beerBonus}★！`);
+      if (typeof renderScore === "function") renderScore();
+    }
+  }
 
   // 1. 見習魔法師 (BRV-0025)：主要階段限一次，使用魔法卡時，可使敵方場上1個星星為1的單位被破壞
   // 升級條件：破壞1個非小旅人單位時，可使其升級為「巫師勇者」(BRV-0036)
@@ -7188,7 +7209,16 @@ async function xlwSeparateSingleFusedUnit(origZone, origIdx, isPlayer = true) {
 
   for (let uIdx = 0; uIdx < unitsToPlace.length; uIdx++) {
     const item = unitsToPlace[uIdx];
-    const freeSlots = () => xlwFusionSeparationSlots(origZone,isPlayer);
+    const freeSlots = () => {
+      if (typeof xlwFusionSeparationSlots === "function") return xlwFusionSeparationSlots(origZone, isPlayer);
+      const rows = origZone.includes("front") ? ["front", "back"] : ["back", "front"];
+      for (const row of rows) {
+        const zone = sidePrefix + row;
+        const free = (field[zone] || []).flatMap((unit, idx) => unit ? [] : [{ zone, idx }]);
+        if (free.length) return free;
+      }
+      return [];
+    };
     const returnToHand = async () => {
       const destination = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
       destination.push(item.card);
@@ -10089,10 +10119,25 @@ window.xlwGetEligibleGrowthCards = function(unit, isPlayer = true) {
 
 window.xlwIsUnitPatron = function(uOrCard) {
   if (!uOrCard) return false;
+  if (uOrCard.isDrinker) return true;
+  if (Array.isArray(uOrCard.equipments) && uOrCard.equipments.some(e => String(e?.name || e || "").includes("渣釀酒"))) return true;
   const c = uOrCard.card || uOrCard;
   const sub = c.art_subtype || "";
+  const subtypes = Array.isArray(c.subtypes) ? c.subtypes : [];
+  const kw = Array.isArray(c.keywords) ? c.keywords : [];
   const name = c.name || "";
-  return sub.includes("酒客") || name.includes("酒客") || name.includes("富豪") || name.includes("醉拳") || name.includes("不速之客");
+  return sub.includes("酒客") ||
+         subtypes.includes("酒客") ||
+         kw.some(k => String(k || "").includes("酒客")) ||
+         name.includes("酒") ||
+         name.includes("闆娘") ||
+         name.includes("不醉翁") ||
+         name.includes("追隨者") ||
+         name.includes("不速之客") ||
+         name.includes("富豪") ||
+         name.includes("醉拳") ||
+         name.includes("做夢冒險者") ||
+         name.includes("小幫主");
 };
 
 window.xlwIsUnitMartial = function(uOrCard) {
@@ -10382,21 +10427,41 @@ window.xlwCheckCircusSpinReaction = async function(revealed, isPlayer) {
 // 3. C-CND-0070 檸檬塔: 吞食合體。被破壞時橫放代替破壞
 window.xlwCheckLemonTartPreventDestruction = async function(destroyedUnit, zone, idx, isPlayer) {
   if (!destroyedUnit || !destroyedUnit.card) return false;
+  if (window.isUnitSilenced?.(destroyedUnit, zone, idx)) return false;
   const c = destroyedUnit.card;
   if (c.id === "C-CND-0070" || c.name?.includes("檸檬塔")) {
-    if (!destroyedUnit.tapped) {
-      if (isPlayer) {
-        const doSave = await showXLWConfirm("【檸檬塔】韌性甜心", "檸檬塔即將被破壞！是否將其橫放以代替破壞？");
-        if (doSave) {
-          destroyedUnit.tapped = true;
-          logBattle("🍋【檸檬塔】橫放護體：成功代替破壞，保全於場上！");
-          if (typeof render === "function") render();
-          return true;
-        }
+    if (!destroyedUnit.tapped || destroyedUnit.attacking) {
+      const ownerIsLocal = zone ? zone.startsWith("player_") : Boolean(isPlayer);
+      let doSave = false;
+      if (isMultiplayer && typeof window.xlwChooseFactionAction === "function") {
+        const serial = (destroyedUnit.xlwLemonTartPromptSerial = (destroyedUnit.xlwLemonTartPromptSerial || 0) + 1);
+        const key = xlwFactionDecisionKey(destroyedUnit, zone || (ownerIsLocal ? "player_front" : "enemy_front"), "lemon-tart-save", serial);
+        const choice = await window.xlwChooseFactionAction(
+          ownerIsLocal,
+          key,
+          "【檸檬塔】韌性甜心",
+          "檸檬塔即將被破壞！是否將其橫放以代替破壞？",
+          [
+            { text: "橫放代替破壞", value: "tap" },
+            { text: "不發動（被破壞）", value: "destroy" }
+          ],
+          { forceChoice: true }
+        );
+        doSave = choice === "tap" || choice === true;
+      } else if (ownerIsLocal) {
+        doSave = await showXLWConfirm("【檸檬塔】韌性甜心", "檸檬塔即將被破壞！是否將其橫放以代替破壞？");
       } else {
+        doSave = true;
+      }
+      if (doSave) {
         destroyedUnit.tapped = true;
-        logBattle("🍋 對手【檸檬塔】橫放護體：代替破壞！");
+        destroyedUnit.attacking = false;
+        destroyedUnit.target = null;
+        logBattle(ownerIsLocal
+          ? "🍋【檸檬塔】橫放護體：成功代替破壞，保全於場上！"
+          : "🍋 對手【檸檬塔】橫放護體：代替破壞！");
         if (typeof render === "function") render();
+        if (isMultiplayer && isMyTurn) sendFullGameStateToOpponent(false);
         return true;
       }
     }
@@ -10505,14 +10570,22 @@ window.xlwCheckDrunkenBoyBeerMove = async function(isPlayer) {
   const side = isPlayer ? "player_" : "enemy_";
   const rows = [side + "front", side + "back"];
   const sources = rows.flatMap(zone => field[zone].map((unit, idx) => ({unit, zone, idx})))
-    .filter(({unit}) => unit?.card?.id === "C-VRT-0073");
+    .filter(({unit}) => unit?.card && (unit.card.id === "C-VRT-0073" || unit.card.name?.includes("醉拳小子")));
   for (const {unit, zone, idx} of sources) {
     const canMove = () => field[zone][idx] === unit && !window.isUnitSilenced(unit, zone, idx) && !xlwIsUnitUnmovable(unit, zone, idx);
     if (!canMove()) continue;
     const slots = rows.flatMap(row => field[row].flatMap((occupant, col) => occupant ? [] : [{zone: row, idx: col, summon: true}]));
     if (!slots.length) continue;
-    const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "可點選空格移動並轉正。", slots.map((slot, value) =>
-      ({text: unit.card.name, value, boardTarget: slot})), {boardOnly: true}) : 0;
+    const choices = [
+      ...slots.map((slot, value) => ({
+        text: `${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}`,
+        value,
+        boardTarget: slot
+      })),
+      { text: "不發動", value: -1 }
+    ];
+    const pick = isPlayer ? await showXLWChoiceModal(unit.card.name, "可點選我方場上任意空位移動並轉正：", choices) : 0;
+    if (pick === null || pick === undefined || pick < 0) continue;
     const slot = slots[pick];
     if (!slot || !canMove() || field[slot.zone][slot.idx]) continue;
     field[zone][idx] = null;
@@ -10521,7 +10594,8 @@ window.xlwCheckDrunkenBoyBeerMove = async function(isPlayer) {
     unit.tapped = false;
     unit.attacking = false;
     unit.target = null;
-    logBattle("【醉拳小子】移動並轉正。");
+    logBattle(`🍶🥊【醉拳小子】借酒行拳：移動至${slot.zone.includes("front") ? "前排" : "後排"}${slot.idx + 1}並轉正！`);
+    if (typeof render === "function") render();
   }
 };
 
@@ -10567,14 +10641,14 @@ window.xlwCheckExpelledGuestBeforeDestroy = async function(unit, isPlayer) {
   const c = unit.card;
   if (c.id === "R-VRT-0071" || c.name?.includes("被驅逐的不速之客")) {
     const hList = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-    const freePatrons = hList.filter(card => card && card.type === "unit" && (parseInt(card.tribute) || 0) === 0 && window.xlwIsUnitPatron(card));
+    const freePatrons = hList.filter(card => card && card.type === "unit" && (typeof getCardTributeCost === "function" ? getCardTributeCost(card) : (parseInt(card.tribute) || 0)) === 0 && window.xlwIsUnitPatron(card));
     if (!freePatrons.length || (!isPlayer && isMultiplayer)) return;
-    const pick = isPlayer ? await showXLWChoiceModal(c.name, "可從手牌額外打出一張免祭品酒客。", [
+    const pick = isPlayer ? await showXLWChoiceModal(c.name, "此單位被破壞前，可從手牌額外打出一張無需祭品的酒客單位卡：", [
       ...freePatrons.map((card, value) => ({ card, text: card.name, value })),
       { text: "不發動", value: -1 }
     ]) : 0;
-    if (freePatrons[pick] && await window.xlwSpecialSummonUnit(freePatrons[pick], isPlayer, {sourcePile: () => hList})) {
-      logBattle(`【${c.name}】額外打出了【${freePatrons[pick].name}】。`);
+    if (pick >= 0 && freePatrons[pick] && await window.xlwSpecialSummonUnit(freePatrons[pick], isPlayer, {sourcePile: () => hList})) {
+      logBattle(`🍺【${c.name}】被破壞前效果：從手牌額外打出了【${freePatrons[pick].name}】！`);
     }
   }
 };
@@ -10656,31 +10730,41 @@ window.xlwCheckGoatMaskSpellCountered = async function(counteredCard, isPlayer) 
   return true;
 };
 
-// 17. SR-VRT-0077 亡靈法師: 敵方用魔法時還魂X無效化
+// 17. SR-VRT-0077 亡靈法師: 敵方在其回合使用魔法卡時限一次，可還魂X，若成功使該卡無效化。X=該魔法卡的法力值
 window.xlwCheckNecromancerSpellCounter = async function(spellCard, isPlayerCaster) {
   if (!spellCard) return false;
-  const manaCost = parseInt(spellCard.mana) || 1;
-  const side = isPlayerCaster ? "enemy_" : "player_"; // Opponent of caster has necromancer
-  const hasNecro = ["front", "back"].some(r => (field[side + r] || []).some(u => u && (u.card.id === "SR-VRT-0077" || u.card.name?.includes("亡靈法師")) && !u.necroUsedThisTurn));
-  if (hasNecro && isPlayerCaster) {
-    // Enemy has necromancer
-    const enemyGrave = window.XLW_ENEMY?.grave || [];
-    const soulsInGrave = enemyGrave.filter(c => c && (c.art_subtype?.includes("亡靈") || c.name?.includes("亡靈")));
-    if (soulsInGrave.length >= manaCost) {
-      logBattle(`🧙‍♂️💀 對手【亡靈法師】還魂 ${manaCost} 隻亡靈，強力無效化了我方的魔法卡【${spellCard.name}】！`);
-      return true;
-    }
-  } else if (hasNecro && !isPlayerCaster) {
-    // Player has necromancer
-    const myGrave = graveyard || [];
-    const soulsInGrave = myGrave.filter(c => c && (c.art_subtype?.includes("亡靈") || c.name?.includes("亡靈")));
-    if (soulsInGrave.length >= manaCost) {
-      const doCounter = await showXLWConfirm("【亡靈法師】還魂禁咒", `敵方施放了【${spellCard.name}】(法力值 ${manaCost})！是否消耗墓地 ${manaCost} 隻亡靈進行還魂，無效化該魔法卡？`);
-      if (doCounter) {
-        logBattle(`🧙‍♂️💀【亡靈法師】還魂禁咒：消耗 ${manaCost} 點亡魂，成功無效化對手的魔法卡【${spellCard.name}】！`);
-        return true;
+  // Must be the caster's turn ("敵方在其回合使用魔法卡時")
+  if (isPlayerCaster && !isMyTurn) return false;
+  if (!isPlayerCaster && isMyTurn) return false;
+  const manaCost = Number(spellCard.mana ?? spellCard.cost ?? 0) || 0;
+  const responderIsPlayer = !isPlayerCaster;
+  const side = responderIsPlayer ? "player_" : "enemy_";
+  const turnFlag = responderIsPlayer ? "XLW_playerNecroUsedTurn" : "XLW_enemyNecroUsedTurn";
+  if (window[turnFlag] === turn) return false;
+
+  let necroUnit = null;
+  for (const r of ["front", "back"]) {
+    const z = side + r;
+    (field[z] || []).forEach((u, i) => {
+      if (!necroUnit && u && u.card && (u.card.id === "SR-VRT-0077" || u.card.name?.includes("亡靈法師")) && !window.isUnitSilenced(u, z, i) && u.necroUsedTurn !== turn) {
+        necroUnit = u;
       }
-    }
+    });
+  }
+  if (!necroUnit) return false;
+  if (!window.xlwCanSoulReturnForPlayer?.(manaCost, responderIsPlayer)) return false;
+
+  if (responderIsPlayer) {
+    const doCounter = await showXLWConfirm("【亡靈法師】還魂禁咒", `敵方在其回合施放了【${spellCard.name}】(法力值 ${manaCost})！是否發動【亡靈法師】效果，還魂 ${manaCost} 使該魔法卡無效化？`);
+    if (!doCounter) return false;
+  }
+  const soulOk = await window.xlwExecuteSoulReturn(manaCost, responderIsPlayer);
+  if (soulOk) {
+    necroUnit.necroUsedTurn = turn;
+    window[turnFlag] = turn;
+    window.xlwTriggerUndeadHospital?.(1, responderIsPlayer);
+    logBattle(`🧙‍♂️💀 ${responderIsPlayer ? "我方" : "對手"}【亡靈法師】還魂 ${manaCost} 成功，無效化了魔法卡【${spellCard.name}】！`);
+    return true;
   }
   return false;
 };
@@ -11007,22 +11091,27 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
       }
     }
   });
-  enqueue("失去戰意的骨灰戰士", () => canPlace() && inPile(myGraveyard, "VRT-0075", "失去戰意的骨灰戰士") && myGraveyard.some(c => c?.art_subtype?.includes("亡靈")), async () => {
-    // M. C-VRT-0075 失去戰意的骨灰戰士
+  enqueue("失去戰意的骨灰戰士", () => {
+    if (!canPlace()) return false;
+    const boneCard = myGraveyard.find(c => c && (c.id === "C-VRT-0075" || c.name?.includes("失去戰意的骨灰戰士")));
+    if (!boneCard) return false;
+    return typeof window.xlwCanSoulReturnForPlayer === "function"
+      ? window.xlwCanSoulReturnForPlayer([1, 2], isPlayer, [boneCard])
+      : myGraveyard.some(c => c && c !== boneCard && c.art_subtype?.includes("亡靈"));
+  }, async () => {
+    // M. C-VRT-0075 失去戰意的骨灰戰士: 你的主要階段開始時限一次，可還魂1-2，若成功使你墓地的此卡被召喚
     const myGraveList = isPlayer ? myGraveyard : (window.XLW_ENEMY?.grave || []);
-    const boneIdx = myGraveList.findIndex(c => c && (c.id === "C-VRT-0075" || c.name?.includes("失去戰意的骨灰戰士")));
-    if (boneIdx >= 0) {
-      const undeadInGrave = myGraveList.filter(c => c && c.art_subtype?.includes("亡靈"));
-      if (undeadInGrave.length >= 1) {
-        let doRevive = true;
-        if (isPlayer) {
-          doRevive = await showXLWConfirm("【骨灰戰士】遺魂喚醒", `墓地擁有 ${undeadInGrave.length} 隻亡靈，是否遺魂消耗亡靈，將【失去戰意的骨灰戰士】喚醒召喚？`);
-        }
-        if (doRevive) {
-          const boneCard = myGraveList[boneIdx];
-          if (boneCard && await window.xlwSpecialSummonUnit(boneCard, isPlayer, {sourcePile: () => myGraveList})) {
-            logBattle(`💀【失去戰意的骨灰戰士】遺魂歸來：${isPlayer ? "" : "對手"}自墓地重返戰場！`);
-          }
+    const boneCard = myGraveList.find(c => c && (c.id === "C-VRT-0075" || c.name?.includes("失去戰意的骨灰戰士")));
+    if (boneCard && window.xlwCanSoulReturnForPlayer?.([1, 2], isPlayer, [boneCard])) {
+      let doRevive = true;
+      if (isPlayer) {
+        doRevive = await showXLWConfirm("【失去戰意的骨灰戰士】還魂喚醒", "主要階段開始時限一次：是否發動「還魂 1-2」，若成功使墓地的【失去戰意的骨灰戰士】被召喚？");
+      }
+      if (doRevive) {
+        const soulOk = await window.xlwExecuteSoulReturn([1, 2], isPlayer, { excludeCards: [boneCard] });
+        if (soulOk && myGraveList.includes(boneCard) && await window.xlwSpecialSummonUnit(boneCard, isPlayer, { sourcePile: () => myGraveList })) {
+          window.xlwTriggerUndeadHospital?.(1, isPlayer);
+          logBattle(`💀【失去戰意的骨灰戰士】還魂歸來：${isPlayer ? "" : "對手"}完成還魂 1-2，自墓地重返戰場！`);
         }
       }
     }
@@ -11030,35 +11119,51 @@ function xlwQueuePG2MainStart(isPlayer, enqueue) {
   enqueue("黑網交易商人菲比", () => hasUnit("VRT-0079", "菲比"), async () => {
     // N. R-VRT-0079 黑網交易商人菲比
     for (const z of [side + "front", side + "back"]) {
-      const phobes = (field[z] || []).filter(u => u && sourceOK(u) && (u.card.id === "R-VRT-0079" || u.card.name?.includes("菲比")));
+      const phobes = (field[z] || []).filter((u, i) => u && sourceOK(u) && (u.card.id === "R-VRT-0079" || u.card.name?.includes("菲比")) && !window.isUnitSilenced(u, z, i));
       for (const ph of phobes) {
         let pick = "search";
         if (isPlayer) {
           const choices = [
-            { text: "使敵方全體單位被賦予「虛擬」類型直到下回合", value: "infect" },
-            { text: "從牌庫/墓地尋找【惡意程式伯格】加入手牌", value: "search" },
+            { text: "使敵方全體單位被賦予「虛擬」特殊類型直到你的下個回合開始時", value: "infect" },
+            { text: "從牌庫或墓地尋找【惡意程式 伯格】加入手牌", value: "search" },
             { text: "略過", value: "skip" }
           ];
-          pick = await showXLWChoiceModal("【黑網交易商人菲比】暗網交易", "主要階段開始：請選擇菲比的交易行動：", choices);
+          pick = await showXLWChoiceModal("【黑網交易商人菲比】暗網交易", "主要階段開始時限一次：請選擇菲比的交易行動：", choices);
         }
         if (pick === "infect") {
           for (const oz of [oppSide + "front", oppSide + "back"]) {
-            (field[oz] || []).forEach(u => { if (u) u.isVirtualUntilNextTurn = true; });
+            (field[oz] || []).forEach(u => {
+              if (u) {
+                u.isVirtualUntilNextTurn = true;
+                u.virtualGrantedBy = isPlayer ? "player" : "enemy";
+              }
+            });
           }
-          logBattle(`🌐【黑網交易商人菲比】數據注入：${isPlayer ? "敵方" : "我方"}全體單位被賦予【虛擬】特殊類型！`);
+          logBattle(`🌐【黑網交易商人菲比】數據注入：${isPlayer ? "敵方" : "我方"}全體單位被賦予【虛擬】特殊類型直到下個回合開始時！`);
+          if (typeof render === "function") render();
         } else if (pick === "search") {
           const myDeck = isPlayer ? (deck || []) : (window.XLW_ENEMY?.deck || []);
           const myGrave = isPlayer ? (graveyard || myGraveyard || []) : (window.XLW_ENEMY?.grave || []);
           const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-          let targetCard = myDeck.find(c => c && c.name?.includes("伯格")) || myGrave.find(c => c && c.name?.includes("伯格"));
+          let fromDeck = true;
+          let targetCard = myDeck.find(c => c && (c.id === "VRT-0029" || c.name?.includes("伯格")));
+          if (!targetCard) {
+            fromDeck = false;
+            targetCard = myGrave.find(c => c && (c.id === "VRT-0029" || c.name?.includes("伯格")));
+          }
           if (targetCard) {
-            if (myDeck.includes(targetCard)) myDeck.splice(myDeck.indexOf(targetCard), 1);
-            else if (myGrave.includes(targetCard)) myGrave.splice(myGrave.indexOf(targetCard), 1);
+            if (fromDeck) {
+              myDeck.splice(myDeck.indexOf(targetCard), 1);
+              shuffle(myDeck);
+            } else {
+              myGrave.splice(myGrave.indexOf(targetCard), 1);
+            }
             myHand.push(targetCard);
-            logBattle(`💾【黑網交易商人菲比】暗網檢索：${isPlayer ? "" : "對手"}將【${targetCard.name}】加入手牌！`);
+            await window.xlwRevealCard?.(targetCard, isPlayer);
+            logBattle(`💾【黑網交易商人菲比】暗網檢索：${isPlayer ? "" : "對手"}從${fromDeck ? "牌庫" : "墓地"}將【${targetCard.name}】加入手牌！`);
             if (typeof render === "function") render();
           } else if (isPlayer) {
-            setStatus("牌庫與墓地中未找到【惡意程式伯格】！");
+            setStatus("牌庫與墓地中未找到【惡意程式 伯格】！");
           }
         }
         break;
@@ -11144,6 +11249,14 @@ window.xlwRunMainStart = async function(isPlayerSide) {
   window[turnKey] = turn;
   for (const row of ["front", "back"]) {
     for (const unit of field[side + row] || []) if (unit?.houndDebuff) delete unit.houndDebuff;
+    for (const z of [side + row, oppSide + row]) {
+      for (const unit of field[z] || []) {
+        if (unit?.isVirtualUntilNextTurn && (!unit.virtualGrantedBy || unit.virtualGrantedBy === (isPlayer ? "player" : "enemy"))) {
+          delete unit.isVirtualUntilNextTurn;
+          delete unit.virtualGrantedBy;
+        }
+      }
+    }
   }
   const extra = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
   const liveUnits = predicate => [side + "front", side + "back"].flatMap(zone =>
@@ -11331,18 +11444,24 @@ window.xlwResolvePG2TurnEnd = async function(isPlayer = true) {
 
   // B. C-VRT-0076 亡靈阿姨
   for (const z of [side + "front", side + "back"]) {
-    const aunties = (field[z] || []).filter(u => u && (u.card.id === "C-VRT-0076" || u.card.name?.includes("亡靈阿姨")));
-    for (const au of aunties) {
+    const rowArr = field[z] || [];
+    for (let idx = 0; idx < rowArr.length; idx++) {
+      const au = rowArr[idx];
+      if (!au || !au.card || !(au.card.id === "C-VRT-0076" || au.card.name?.includes("亡靈阿姨"))) continue;
+      if (window.isUnitSilenced(au, z, idx)) continue;
+      if (!window.xlwCanSoulReturnForPlayer(1, isPlayer)) continue;
       let doSoul = true;
       if (isPlayer) {
-        doSoul = await showXLWConfirm("【亡靈阿姨】溫暖招魂", "結束階段：是否遺魂消耗 1 隻亡靈，召喚 2 個小旅人？");
+        doSoul = await showXLWConfirm("【亡靈阿姨】溫暖招魂", "結束階段：是否發動【亡靈阿姨】效果，進行還魂 1，若成功則召喚 2 個小旅人？");
       }
       if (doSoul) {
-        await window.xlwSpecialSummonTraveler(isPlayer);
-        await window.xlwSpecialSummonTraveler(isPlayer);
-        logBattle(`👵【亡靈阿姨】遺魂牽引：${isPlayer ? "" : "對手"}召喚了 2 個小旅人！`);
+        const soulOk = await window.xlwExecuteSoulReturn(1, isPlayer);
+        if (soulOk) {
+          await window.xlwSpecialSummonTraveler(isPlayer);
+          await window.xlwSpecialSummonTraveler(isPlayer);
+          logBattle(`👵【亡靈阿姨】還魂牽引：${isPlayer ? "我方" : "對手"}還魂 1 成功，召喚了 2 個小旅人！`);
+        }
       }
-      break;
     }
   }
 
@@ -11683,8 +11802,8 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
     }
   }
 
-  // G. C-VRT-0072 酒醉的富豪
-  if (card.id === "C-VRT-0072" || card.name?.includes("酒醉的富豪")) {
+  // G. C-VRT-0072 酒醉的富豪: 此單位被破壞前，獎勵+X。X=你場上的酒客單位數量
+  if ((card.id === "C-VRT-0072" || card.name?.includes("酒醉的富豪")) && !window.isUnitSilenced(destroyedUnit, zone, idx)) {
     let patronCount = 0;
     for (const z of [side + "front", side + "back"]) {
       patronCount += (field[z] || []).filter(u => u && window.xlwIsUnitPatron(u)).length;
@@ -11693,23 +11812,6 @@ window.xlwResolvePG2Destruction = async function(destroyedUnit, zone, idx, owner
       if (isPlayerUnit) playerBonusScore += patronCount; else enemyBonusScore += patronCount;
       logBattle(`💰【酒醉的富豪】散財離場（${patronCount} 位酒客在場）：獲得獎勵 +${patronCount}★！`);
       if (typeof renderScore === "function") renderScore();
-    }
-  }
-
-  // H. R-VRT-0070 鬧事酒館
-  const isPatronOrVirtual = (card.faction === "虛擬世界" || card.deck === "虛擬世界" || card.id?.includes("VRT") || card.art_subtype?.includes("虛擬")) && !card.name?.includes("小旅人");
-  if (isPatronOrVirtual && !window.XLW_brawlTavernUsedThisTurn) {
-    const isTavernActive = (isPlayerUnit ? window.xlwGetFactionFieldCard(true) : window.xlwGetFactionFieldCard(false))?.name?.includes("鬧事酒館");
-    if (isTavernActive) {
-      window.XLW_brawlTavernUsedThisTurn = true;
-      const graveD = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || []);
-      const gIdx = graveD.indexOf(card);
-      if (gIdx >= 0) graveD.splice(gIdx, 1);
-      const myDeck = isPlayerUnit ? deck : (window.XLW_ENEMY?.deck || []);
-      myDeck.push(card);
-      shuffle(myDeck);
-      if (isPlayerUnit) await (window.xlwDrawFairyAware?.(1) ?? draw(1));
-      logBattle(`🍻【鬧事酒館】鬧事善後：將破壞的【${card.name}】洗回牌庫並抽 1 張牌！`);
     }
   }
 
@@ -12537,25 +12639,63 @@ window.xlwResolvePG2Summon = async function(card, zone, idx, isPlayer = true) {
     if (typeof render === "function") render();
   }
 
-  // D. SR-VRT-0069 黑網刺客極樂
-  if (cardId === "SR-VRT-0069" || cardName.includes("極樂")) {
+  // D. SR-VRT-0069 黑網刺客極樂: 立即：使場上1個虛擬單位被破壞
+  if (cardId === "SR-VRT-0069" || cardName.includes("黑網刺客") || cardName.includes("極樂")) {
     const virtualTargets = [];
     for (const oz of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
       (field[oz] || []).forEach((u, i) => {
-        if (u && (u.card.faction === "虛擬世界" || u.card.deck === "虛擬世界" || u.card.art_subtype?.includes("虛擬") || u.isVirtualUntilNextTurn) && !window.isUnitEffectImmune(u, oz, i)) {
-          virtualTargets.push({ zone: oz, idx: i, name: u.card.name, owner: oz.startsWith("player_") ? "player" : "enemy" });
+        if (u && window.isVirtualUnit(u) && !window.isUnitEffectImmune(u, oz, i)) {
+          virtualTargets.push({ zone: oz, idx: i, name: u.card.name, owner: oz.startsWith("player_") ? "player" : "enemy", unit: u });
         }
       });
     }
     if (virtualTargets.length > 0) {
-      let chosen = virtualTargets[0];
+      let chosen = virtualTargets.find(t => t.owner !== (isPlayer ? "player" : "enemy")) || virtualTargets[0];
       if (isPlayer) {
         const choices = virtualTargets.map((t, idx) => ({ text: `${t.name} (${t.zone.includes("front") ? "前排" : "後排"}${t.idx + 1} - ${t.owner === "player" ? "我方" : "敵方"})`, value: idx }));
-        const pick = await showXLWChoiceModal("【黑網刺客極樂】刺殺目標", "立即效果：請選擇要粉碎的虛擬單位：", choices);
-        if (pick !== null && pick !== undefined) chosen = virtualTargets[pick];
+        const pick = await showXLWChoiceModal("【黑網刺客極樂】刺殺目標", "立即效果：請選擇要破壞的場上虛擬單位：", choices);
+        if (pick !== null && pick !== undefined && virtualTargets[pick]) chosen = virtualTargets[pick];
       }
-      logBattle(`🥷【黑網刺客極樂】代碼湮滅：刺殺粉碎了【${chosen.name}】！`);
-      await destroyUnit(chosen.zone, chosen.idx, chosen.owner, false);
+      if (chosen) {
+        logBattle(`🥷【黑網刺客極樂】代碼湮滅：刺殺破壞了【${chosen.name}】！`);
+        await destroyUnit(chosen.zone, chosen.idx, chosen.owner, false);
+      }
+    }
+  }
+
+  // D2. SR-VRT-0064 釀酒酒客: 立即:從你額外區尋找1張「渣釀酒」並加入手牌
+  if (cardId === "SR-VRT-0064" || cardName.includes("釀酒酒客")) {
+    const exList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const myHand = isPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
+    const dIdx = exList.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+    if (dIdx >= 0) {
+      const dc = exList.splice(dIdx, 1)[0];
+      myHand.push(dc);
+      logBattle(`🍻【釀酒酒客】立即效果：從額外區尋找 1 張【渣釀酒】並加入手牌！`);
+      if (typeof renderExtraDecks === "function") renderExtraDecks();
+      if (typeof render === "function") render();
+    }
+  }
+
+  // D3. C-VRT-0066 啤酒酒商: 立即:使你手牌1張「渣釀酒」升級為「一札啤酒」
+  if (cardId === "C-VRT-0066" || cardName.includes("啤酒酒商")) {
+    const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
+    const exList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const draftIdx = myHand.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+    if (draftIdx >= 0) {
+      const mugInExtraIdx = exList.findIndex(c => c && (c.id === "R-VRT-0058" || c.name?.includes("一札啤酒")));
+      let mugCard = null;
+      if (mugInExtraIdx >= 0) {
+        mugCard = exList.splice(mugInExtraIdx, 1)[0];
+      } else {
+        const mugSample = (typeof allCards !== "undefined" ? allCards : []).find(c => c && (c.id === "R-VRT-0058" || c.name === "一札啤酒" || c.name?.includes("一札啤酒")))
+          || { name: "一札啤酒", id: "R-VRT-0058", type: "magic", magic_type: "通常", deck: "虛擬世界", faction: "虛擬世界", effect: "你的主要階段，可使你手牌的2張「渣釀酒」升級為此卡。使場上1個單位被轉正或橫放；若該單位為酒客，則額外使其至多2個負面狀態被解除" };
+        mugCard = structuredClone(mugSample);
+      }
+      myHand[draftIdx] = mugCard;
+      logBattle(`🍺【啤酒酒商】立即效果：使手牌中的 1 張【渣釀酒】升級為【一札啤酒】！`);
+      if (typeof renderExtraDecks === "function") renderExtraDecks();
+      if (typeof render === "function") render();
     }
   }
 
@@ -13968,6 +14108,7 @@ async function castSpellChain(spellCard, effectCallback) {
   if (typeof effectCallback === "function") {
     await effectCallback();
   }
+  await window.xlwCheckMalwareBorgDestruction?.();
   if(isMultiplayer)sendFullGameStateToOpponent(false);
   clearModes();render();
   return true;
@@ -15442,7 +15583,7 @@ async function castSpell(handIndex) {
     });
     return;
 
-  // 🍺 C-VRT-0065 渣釀酒
+  // 🍺 C-VRT-0065 渣釀酒: 永久。使你場上1個單位被賦予酒客特殊類型
   } else if (card.id === "C-VRT-0065" || card.name?.includes("渣釀酒")) {
     const myUnits = [];
     for (const z of ["player_front", "player_back"]) {
@@ -15456,25 +15597,27 @@ async function castSpell(handIndex) {
     const spellCard = hand.splice(handIndex, 1)[0];
     await xlwShowSpellActivationOverlay(spellCard, "player");
     await castSpellChain(spellCard, async () => {
-      const choices = myUnits.map((u, i) => ({ text: u.name, value: i }));
+      const choices = myUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
       const pick = await showXLWChoiceModal("【渣釀酒】微醺賦予", "選擇賦予【酒客】特殊類型的單位：", choices);
-      if (pick !== null && pick !== undefined) {
+      if (pick !== null && pick !== undefined && myUnits[pick]) {
         const targetU = myUnits[pick].unit;
         targetU.isDrinker = true;
+        targetU.equipments = targetU.equipments || [];
+        if (!targetU.equipments.includes("渣釀酒")) targetU.equipments.push("渣釀酒");
         targetU.card.subtypes = targetU.card.subtypes || [];
         if (!targetU.card.subtypes.includes("酒客")) targetU.card.subtypes.push("酒客");
-        logBattle(`🍺【渣釀酒】入口醇厚：使【${targetU.card.name}】獲得【酒客】特殊類型！`);
+        logBattle(`🍺【渣釀酒】入口醇厚：使【${targetU.card.name}】永久獲得【酒客】特殊類型！`);
       }
       graveyard.push(spellCard);
       render();
     });
     return;
 
-  // 🍺 R-VRT-0067 精釀啤酒
+  // 🍺 R-VRT-0067 精釀啤酒: 使敵方場上1個單位被賦予禁錮、衰退，及此單位進攻時，由敵方選擇場上任意1個符合條件的單位作為其進攻目標
   } else if (card.id === "R-VRT-0067" || card.name?.includes("精釀啤酒")) {
     const oppUnits = [];
     for (const z of ["enemy_front", "enemy_back"]) {
-      (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i)) oppUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
+      (field[z] || []).forEach((u, i) => { if (u && !window.isUnitEffectImmune(u, z, i) && !window.isUnitMagicImmune(u, z, i)) oppUnits.push({ unit: u, zone: z, idx: i, name: u.card.name }); });
     }
     if (oppUnits.length === 0) {
       setStatus("敵方場上沒有可指定的單位！");
@@ -15486,12 +15629,54 @@ async function castSpell(handIndex) {
     await castSpellChain(spellCard, async () => {
       const choices = oppUnits.map((u, i) => ({ text: `${u.name} (${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`, value: i }));
       const pick = await showXLWChoiceModal("【精釀啤酒】醉意酩酊", "選擇被灌醉的敵方單位：", choices);
-      if (pick !== null && pick !== undefined) {
+      if (pick !== null && pick !== undefined && oppUnits[pick]) {
         const targetU = oppUnits[pick].unit;
         targetU.confined = true;
         targetU.decay = true;
+        targetU.beerRedirect = true;
         targetU.craftBeerTaunt = true;
-        logBattle(`🍻【精釀啤酒】極致微醺：使敵方【${targetU.card.name}】被賦予【禁錮】、【衰退】與攻擊重定向！`);
+        targetU.equipments = targetU.equipments || [];
+        if (!targetU.equipments.includes("精釀啤酒")) targetU.equipments.push("精釀啤酒");
+        if (!targetU.equipments.includes("禁錮")) targetU.equipments.push("禁錮");
+        logBattle(`🍻【精釀啤酒】極致微醺：使敵方【${targetU.card.name}】被賦予【禁錮】、【衰退】與進攻目標由我方重定向！`);
+      }
+      graveyard.push(spellCard);
+      render();
+    });
+    return;
+
+  // 💾 VRT-0029 惡意程式 伯格: 永久。使場上1虛擬裝置被賦予-4攻擊力及此單位攻擊力小於等於-1時，使此單位被破壞
+  } else if (card.id === "VRT-0029" || card.name?.includes("惡意程式") || card.name?.includes("伯格")) {
+    const virtUnits = [];
+    for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+      (field[z] || []).forEach((u, i) => {
+        if (!u || !window.isVirtualUnit(u)) return;
+        if (z.startsWith("enemy_") && (window.isUnitEffectImmune(u, z, i) || window.isUnitMagicImmune(u, z, i))) return;
+        virtUnits.push({ unit: u, zone: z, idx: i, name: u.card.name });
+      });
+    }
+    if (virtUnits.length === 0) {
+      setStatus("場上沒有可指定的虛擬單位！");
+      await finishWithoutTarget();
+      return;
+    }
+    const spellCard = hand.splice(handIndex, 1)[0];
+    await xlwShowSpellActivationOverlay(spellCard, "player");
+    await castSpellChain(spellCard, async () => {
+      const choices = virtUnits.map((u, i) => ({
+        text: `${u.name} (${u.zone.startsWith("player_") ? "我方" : "敵方"}${u.zone.includes("front") ? "前排" : "後排"}${u.idx + 1})`,
+        value: i
+      }));
+      const pick = await showXLWChoiceModal("【惡意程式 伯格】植入病毒", "選擇要植入【惡意程式 伯格】(-4 攻擊力，<= -1 破壞) 的虛擬單位：", choices);
+      if (pick !== null && pick !== undefined && virtUnits[pick]) {
+        const target = virtUnits[pick];
+        const targetU = target.unit;
+        if (field[target.zone]?.[target.idx] === targetU) {
+          targetU.equipments = targetU.equipments || [];
+          targetU.equipments.push("惡意程式 伯格(-4)");
+          logBattle(`💾💥【惡意程式 伯格】病毒侵入：使【${targetU.card.name}】攻擊力 -4，當攻擊力 <= -1 時立即被破壞！`);
+          await window.xlwCheckMalwareBorgDestruction?.();
+        }
       }
       graveyard.push(spellCard);
       render();
@@ -22878,30 +23063,6 @@ async function performSummonToSlot(zone, idx) {
         }
       }
 
-      if (card.id === "C-VRT-0066" || card.name?.includes("啤酒酒商")) {
-        const myHand = isPlayer ? hand : (window.XLW_ENEMY?.hand || []);
-        const draftIdx = myHand.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
-        if (draftIdx >= 0) {
-          const draftCard = myHand[draftIdx];
-          const mugSample = (typeof allCards !== "undefined" ? allCards : []).find(c => c && (c.id === "C-VRT-0021" || c.name?.includes("一札啤酒"))) || { name: "一札啤酒", id: "C-VRT-0021", type: "magic" };
-          myHand[draftIdx] = structuredClone(mugSample);
-          logBattle(`🍺【啤酒酒商】立即效果：將手牌中的【渣釀酒】升級為【一札啤酒】！`);
-          render();
-        }
-      }
-
-      if (card.id === "SR-VRT-0064" || card.name?.includes("釀酒酒客")) {
-        const exList = isPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
-        const dIdx = exList.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
-        if (dIdx >= 0) {
-          const dc = exList.splice(dIdx, 1)[0];
-          (isPlayer ? hand : window.XLW_ENEMY?.hand).push(dc);
-          logBattle(`🍻【釀酒酒客】立即效果：從額外區尋找 1 張【渣釀酒】加入手牌！`);
-          renderExtraDecks();
-          render();
-        }
-      }
-
       if (card.id === "SSR-CRB-0028" || card.name?.includes("白碳子")) {
         if (isPlayer) playerBonusScore += 2; else enemyBonusScore += 2;
         logBattle(`✨【白碳子】淨化登場：獎勵 +2★！`);
@@ -27319,11 +27480,15 @@ async function xlwEnforceForcedSummonRule(currentPhaseName, nextActionName) {
     return false;
   }
 
-  const legalSlot=xlwTimerSlot();
+  const legalSlot = xlwTimerSlot();
   if(!legalSlot){setStatus('尚無合法的小旅人召喚位置，請先完成必要效果或騰出位置。');return true;}
-  clearModes();selectedHandForSummon='TRAVELER';
-  await performSummonToSlot(legalSlot.zone,legalSlot.idx);
-  window.XLW_forcedTravelerPending=null;
+  clearModes();
+  phase = currentPhaseName;
+  window.XLW_bypassTurnCheck = false;
+  window.XLW_bypassNormalSummonLimit = false;
+  selectedHandForSummon = 'TRAVELER';
+  await performSummonToSlot(legalSlot.zone, legalSlot.idx);
+  window.XLW_forcedTravelerPending = null;
   clearModes();render();
   return currentPhaseName==='召喚階段'?!normalSummonUsed:!tacticalSummonUsed;
 }
@@ -27705,11 +27870,15 @@ async function selectPlayerTarget(zone, idx) {
   let finalZone = zone;
   let finalIdx = idx;
   let finalDefender = defender;
-  if (attacker.beerRedirect) {
+  if (attacker.beerRedirect || attacker.craftBeerTaunt) {
     let enemyUnits = [];
     for (const ez of ["enemy_front", "enemy_back"]) {
       field[ez].forEach((u, uIdx) => {
-        if (u) enemyUnits.push({ zone: ez, idx: uIdx, unit: u });
+        if (!u) return;
+        if (window.hasFlying(u) && !window.hasFlying(attacker) && !(window.xlwUnitHasRanged ? window.xlwUnitHasRanged(attacker, selectedAttacker.zone, selectedAttacker.idx) : false)) return;
+        if (window.XLW_isShieldUnit(u) && !hasArmorBreak(attacker, selectedAttacker.zone, selectedAttacker.idx)) return;
+        if (isUnitAttackProtected(ez, uIdx) || xlwFairHeroBlocksAttack(attacker, selectedAttacker.zone, selectedAttacker.idx, ez, uIdx)) return;
+        enemyUnits.push({ zone: ez, idx: uIdx, unit: u });
       });
     }
     if (enemyUnits.length > 0) {
@@ -27717,7 +27886,7 @@ async function selectPlayerTarget(zone, idx) {
       finalZone = chosen.zone;
       finalIdx = chosen.idx;
       finalDefender = chosen.unit;
-      logBattle(`🍺 一札啤酒 重新導向：因我方進攻單位具有進攻重新導向效果，對手選擇用其 ${finalDefender.card.name} 迎戰！`);
+      logBattle(`🍺 啤酒微醺重定向：因我方進攻單位具有進攻目標重定向效果，對手選擇用其【${finalDefender.card.name}】迎戰！`);
     }
   }
 
@@ -27964,11 +28133,15 @@ async function xlwAutoDeclarePlayerAttacks() {
     let finalZone = targetZone;
     let finalIdx = i;
     let finalDefender = targetDefender;
-    if (playerAttacker.beerRedirect) {
+    if (playerAttacker.beerRedirect || playerAttacker.craftBeerTaunt) {
       let enemyUnits = [];
       for (const ez of ["enemy_front", "enemy_back"]) {
         field[ez].forEach((u, uIdx) => {
-          if (u) enemyUnits.push({ zone: ez, idx: uIdx, unit: u });
+          if (!u) return;
+          if (window.hasFlying(u) && !window.hasFlying(playerAttacker) && !hasRanged) return;
+          if (window.XLW_isShieldUnit(u) && !hasArmorBreak(playerAttacker, actualZone, i)) return;
+          if (isUnitAttackProtected(ez, uIdx) || xlwFairHeroBlocksAttack(playerAttacker, actualZone, i, ez, uIdx)) return;
+          enemyUnits.push({ zone: ez, idx: uIdx, unit: u });
         });
       }
       if (enemyUnits.length > 0) {
@@ -27976,7 +28149,7 @@ async function xlwAutoDeclarePlayerAttacks() {
         finalZone = chosen.zone;
         finalIdx = chosen.idx;
         finalDefender = chosen.unit;
-        logBattle(`🍺 一札啤酒 重新導向：因我方自動進攻單位具有進攻重新導向效果，對手選擇用其 ${finalDefender.card.name} 迎戰！`);
+        logBattle(`🍺 啤酒微醺重定向：因我方自動進攻單位具有進攻目標重定向效果，對手選擇用其【${finalDefender.card.name}】迎戰！`);
       }
     }
 
@@ -28707,7 +28880,11 @@ async function xlwResolvePlayerDefensePhase() {
       logBattle("—— 我方防守階段：開啟防守魔法反制時機 ——");
       render();
       await choice;
+      while (window.XLW_pendingSpellResolve || window.XLW_spellChainActive) {
+        await sleep(50);
+      }
       window.XLW_defenseCounterActive = false;
+      if (isMultiplayer) sendFullGameStateToOpponent(false);
       render();
     }
 
@@ -29710,7 +29887,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
   const closeCombatReplies = window.XLWBattleFlow?.openCombat(attZone,attIdx,defZone,defIdx) || (()=>{});
   let attackSpent = false;
   try {
-  await window.xlwOpenBattleRuleWindow?.(attZone, attIdx, defZone, defIdx, "before");
   const blocked = typeof xlwAttackTargetBlock === "function" ? xlwAttackTargetBlock(attacker,attZone,attIdx,defZone,defIdx) : isUnitAttackProtected(defZone,defIdx);
   if (field[attZone]?.[attIdx] !== attacker || field[defZone]?.[defIdx] !== defender || blocked) {
     if (field[attZone]?.[attIdx] === attacker) {attacker.attacking=false;attacker.target=null;}
@@ -30388,7 +30564,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     }
   }
 
-  await window.xlwOpenBattleRuleWindow?.(attZone, attIdx, defZone, defIdx, "success");
   // 統計與套用戰鬥成功獎勵：破壞抗性不會取消已成立的數值比較結果。
   attacker.xlwDestroyedInCombatCount = 0;
   if (attackerSuccess) {
@@ -30628,7 +30803,6 @@ async function resolveUnitCombat(attZone, attIdx, defZone, defIdx, defenderOwner
     await xlwSummonGoatTravelers(winnerZone, winnerIdx);
   }
 
-  await window.xlwOpenBattleRuleWindow?.(attZone, attIdx, defZone, defIdx, "failure");
   const loser = attackerSuccess ? defender : defenderSuccess ? attacker : null;
   const loserZone = attackerSuccess ? defZone : attZone;
   const loserIdx = attackerSuccess ? defIdx : attIdx;
@@ -31943,9 +32117,11 @@ async function triggerMuseumReceptionistEffect(side) {
 }
 
 function isDrinkerUnit(u) {
-  if (!u || !u.card) return false;
-  const name = u.card.name || "";
-  return name.includes("酒") || name.includes("闆娘") || name.includes("不醉翁") || name.includes("助手") || name.includes("追隨者") || name.includes("不速之客");
+  if (!u) return false;
+  if (typeof window.xlwIsUnitPatron === "function") return window.xlwIsUnitPatron(u);
+  const c = u.card || u;
+  const name = c.name || "";
+  return Boolean(u.isDrinker || name.includes("酒") || name.includes("闆娘") || name.includes("不醉翁") || name.includes("助手") || name.includes("追隨者") || name.includes("不速之客"));
 }
 
 function isDecayed(zone, idx) {
@@ -32024,11 +32200,40 @@ async function resolveDecayStatus(isPlayerTurn) {
           if (!pending.tapped) {
             u.tapped = true;
             logBattle(`💀 【衰退】效果：將直立的【${c.name}】（${isPlayerUnit ? '我方' : '對手'}）橫置！`);
+            if (typeof window.xlwHandleUnitTappedTriggers === "function") {
+              await window.xlwHandleUnitTappedTriggers(u, zone, i);
+            }
           } else {
             logBattle(`💀 【衰退】死亡：【${c.name}】（${isPlayerUnit ? '我方' : '對手'}）已處於橫置狀態，被衰退吞噬破壞！`);
             const owner = isPlayerUnit ? "player" : "enemy";
             await destroyUnit(zone, i, owner, false);
             anyDestroyed = true;
+
+            // 🍺 R-VRT-0071 被驅逐的不速之客: 你的「酒館不速之客」因衰退而進入墓地時，可使其升級為此卡並加入手牌
+            const isTavernGuest = c && (c.id === "R-VRT-0057" || (c.name?.includes("不速之客") && !c.name?.includes("被驅逐") && c.id !== "R-VRT-0071"));
+            if (isTavernGuest) {
+              const myGrave = isPlayerUnit ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+              const myExtra = isPlayerUnit ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+              const myHand = isPlayerUnit ? hand : (window.XLW_ENEMY.hand ||= []);
+              const gIdx = myGrave.indexOf(c);
+              const expIdx = myExtra.findIndex(ec => ec && (ec.id === "R-VRT-0071" || ec.name?.includes("被驅逐的不速之客")));
+              if (gIdx >= 0 && expIdx >= 0) {
+                const doUpgradeGuest = isPlayerUnit
+                  ? await showXLWConfirm("【被驅逐的不速之客】升級", "你的【酒館不速之客】因衰退進入墓地！是否使其升級為額外區的【被驅逐的不速之客】並加入手牌？")
+                  : true;
+                if (doUpgradeGuest) {
+                  const curGIdx = myGrave.indexOf(c);
+                  const curExpIdx = myExtra.findIndex(ec => ec && (ec.id === "R-VRT-0071" || ec.name?.includes("被驅逐的不速之客")));
+                  if (curGIdx >= 0 && curExpIdx >= 0) {
+                    myGrave.splice(curGIdx, 1);
+                    const expelledCard = myExtra.splice(curExpIdx, 1)[0];
+                    myHand.push(expelledCard);
+                    logBattle(`🍺💢【被驅逐的不速之客】升級發動：${isPlayerUnit ? "我方" : "對手"}因衰退進入墓地的【${c.name}】升級為【${expelledCard.name}】並加入手牌！`);
+                    if (typeof renderExtraDecks === "function") renderExtraDecks();
+                  }
+                }
+              }
+            }
 
             const isDespairOrSaint = c && (c.id === "BRV-0051" || c.id === "R-BRV-0051" || c.id === "ASSR-BRV-0051" || c.id === "BRV-0052" || c.id === "SR-BRV-0052" || c.id === "SR-VRV-0052" || c.id === "ASSR-BRV-0052" || c.name?.includes("絕望勇者") || c.name === "聖女");
             if (isDespairOrSaint) {
@@ -34541,6 +34746,11 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     if (sparks) sparks.remove();
   }
 
+  // 被驅逐的不速之客 (R-VRT-0071): 此單位被破壞前，可使你手牌1張無需祭品的酒客單位卡被額外打出
+  if ((unit.card.id === "R-VRT-0071" || unit.card.name?.includes("被驅逐的不速之客")) && !window.isUnitSilenced(unit, zone, idx)) {
+    await window.xlwCheckExpelledGuestBeforeDestroy?.(unit, owner === "player");
+  }
+
   // 4. 送墓或除外並真正清空格子
   if (unit.equipments && unit.equipments.length > 0) {
     unit.equipments.forEach(eqName => {
@@ -34901,21 +35111,27 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
         }
       }
       
-      // 虛擬酒館 (VRT-0013) 效果：我方非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
-      const isVirtual = unit.card && (unit.card.id?.includes("VRT") || unit.card.deck === "虛擬世界" || unit.card.faction === "虛擬世界");
+      // 虛擬酒館 (VRT-0013) & 鬧事酒館 (R-VRT-0070) 效果：主要階段一回合限一次，我方非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
+      const isVirtual = typeof window.isVirtualUnit === "function"
+        ? window.isVirtualUnit(unit)
+        : Boolean(unit.card && (unit.card.id?.includes("VRT") || unit.card.deck === "虛擬世界" || unit.card.faction === "虛擬世界"));
       const isTraveler = unit.card && (unit.card.name?.includes("小旅人") || unit.card.id?.includes("TRAVELER"));
       const playerFieldEl = document.getElementById("playerField");
-      let hasTavern = false;
-      if (playerFieldEl && playerFieldEl.dataset.card) {
+      let tavernName = null;
+      const pfc = typeof window.xlwGetFactionFieldCard === "function" ? window.xlwGetFactionFieldCard(true) : null;
+      if (pfc && (pfc.id === "VRT-0013" || pfc.id === "R-VRT-0070" || pfc.name?.includes("虛擬酒館") || pfc.name?.includes("鬧事酒館"))) {
+        tavernName = pfc.name || (pfc.id === "R-VRT-0070" ? "鬧事酒館" : "虛擬酒館");
+      } else if (playerFieldEl && playerFieldEl.dataset.card) {
         try {
           const fc = JSON.parse(playerFieldEl.dataset.card);
-          if (fc.id === "VRT-0013" || fc.name?.includes("虛擬酒館")) {
-            hasTavern = true;
+          if (fc.id === "VRT-0013" || fc.id === "R-VRT-0070" || fc.name?.includes("虛擬酒館") || fc.name?.includes("鬧事酒館")) {
+            tavernName = fc.name || (fc.id === "R-VRT-0070" ? "鬧事酒館" : "虛擬酒館");
           }
         } catch (e) {}
       }
-      if (isVirtual && !isTraveler && hasTavern && !window.XLW_playerTavernTriggeredThisTurn && !shouldExile && !geminiReturnedToHand) {
-        const useTavern = await showXLWConfirm("【虛擬酒館】效果發動", `我方虛擬單位【${unit.card.name}】被破壞，是否發動【虛擬酒館】效果，將其洗回牌庫並抽 1 張牌？`);
+      const inMainPhase = typeof phase === "undefined" || !phase || ["召喚階段", "戰術佈陣", "進攻宣言", "主要階段", "Main Phase"].includes(phase);
+      if (isVirtual && !isTraveler && tavernName && inMainPhase && !window.XLW_playerTavernTriggeredThisTurn && !shouldExile && !geminiReturnedToHand) {
+        const useTavern = await showXLWConfirm(`【${tavernName}】效果發動`, `我方虛擬單位【${unit.card.name}】被破壞，是否發動【${tavernName}】效果，將其洗回牌庫並抽 1 張牌？`);
         if (useTavern) {
           window.XLW_playerTavernTriggeredThisTurn = true;
           const idxInGrave = graveyard.indexOf(unit.card);
@@ -34924,14 +35140,14 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
           }
           deck.push(unit.card);
           deck.sort(() => Math.random() - 0.5);
-          logBattle(`✨ 虛擬酒館 效果：將【${unit.card.name}】洗回牌庫！`);
+          logBattle(`✨ ${tavernName} 效果：將【${unit.card.name}】洗回牌庫！`);
           if (window.xlwOnUnitReturnedToDeck) {
             await window.xlwOnUnitReturnedToDeck(unit.card, "player");
           }
           if (deck.length > 0) {
             const drawn = deck.pop();
             hand.push(drawn);
-            logBattle(`✨ 虛擬酒館 效果：我方抽 1 張牌【${drawn.name}】！`);
+            logBattle(`✨ ${tavernName} 效果：我方抽 1 張牌【${drawn.name}】！`);
           }
           if (isMultiplayer && ws) {
             sendFullGameStateToOpponent();
@@ -35024,20 +35240,26 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
         }
       }
 
-      // 虛擬酒館 (VRT-0013) 效果：對手非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
-      const isVirtual = unit.card && (unit.card.id?.includes("VRT") || unit.card.deck === "虛擬世界" || unit.card.faction === "虛擬世界");
+      // 虛擬酒館 (VRT-0013) & 鬧事酒館 (R-VRT-0070) 效果：主要階段一回合限一次，對手非小旅人虛擬單位被破壞時，可洗回牌庫並抽 1
+      const isVirtual = typeof window.isVirtualUnit === "function"
+        ? window.isVirtualUnit(unit)
+        : Boolean(unit.card && (unit.card.id?.includes("VRT") || unit.card.deck === "虛擬世界" || unit.card.faction === "虛擬世界"));
       const isTraveler = unit.card && (unit.card.name?.includes("小旅人") || unit.card.id?.includes("TRAVELER"));
       const enemyFieldEl = document.getElementById("enemyField");
-      let hasTavern = false;
-      if (enemyFieldEl && enemyFieldEl.dataset.card) {
+      let tavernName = null;
+      const efc = typeof window.xlwGetFactionFieldCard === "function" ? window.xlwGetFactionFieldCard(false) : null;
+      if (efc && (efc.id === "VRT-0013" || efc.id === "R-VRT-0070" || efc.name?.includes("虛擬酒館") || efc.name?.includes("鬧事酒館"))) {
+        tavernName = efc.name || (efc.id === "R-VRT-0070" ? "鬧事酒館" : "虛擬酒館");
+      } else if (enemyFieldEl && enemyFieldEl.dataset.card) {
         try {
           const fc = JSON.parse(enemyFieldEl.dataset.card);
-          if (fc.id === "VRT-0013" || fc.name?.includes("虛擬酒館")) {
-            hasTavern = true;
+          if (fc.id === "VRT-0013" || fc.id === "R-VRT-0070" || fc.name?.includes("虛擬酒館") || fc.name?.includes("鬧事酒館")) {
+            tavernName = fc.name || (fc.id === "R-VRT-0070" ? "鬧事酒館" : "虛擬酒館");
           }
         } catch (e) {}
       }
-      if (isVirtual && !isTraveler && hasTavern && !window.XLW_enemyTavernTriggeredThisTurn && !shouldExile && !geminiReturnedToHand) {
+      const inMainPhase = typeof phase === "undefined" || !phase || ["召喚階段", "戰術佈陣", "進攻宣言", "主要階段", "Main Phase"].includes(phase);
+      if (isVirtual && !isTraveler && tavernName && inMainPhase && !window.XLW_enemyTavernTriggeredThisTurn && !shouldExile && !geminiReturnedToHand) {
         if (!isMultiplayer) {
           window.XLW_enemyTavernTriggeredThisTurn = true;
           const idxInGrave = window.XLW_ENEMY.grave.indexOf(unit.card);
@@ -35046,14 +35268,14 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
           }
           window.XLW_ENEMY.deck.push(unit.card);
           window.XLW_ENEMY.deck.sort(() => Math.random() - 0.5);
-          logBattle(`✨ 對手 虛擬酒館 效果：將【${unit.card.name}】洗回牌庫！`);
+          logBattle(`✨ 對手 ${tavernName} 效果：將【${unit.card.name}】洗回牌庫！`);
           if (window.xlwOnUnitReturnedToDeck) {
             await window.xlwOnUnitReturnedToDeck(unit.card, "enemy");
           }
           if (window.XLW_ENEMY.deck.length > 0) {
             const drawn = window.XLW_ENEMY.deck.pop();
             window.XLW_ENEMY.hand.push(drawn);
-            logBattle(`✨ 對手 虛擬酒館 效果：對手抽 1 張牌！`);
+            logBattle(`✨ 對手 ${tavernName} 效果：對手抽 1 張牌！`);
           }
           render();
         }
@@ -35583,9 +35805,6 @@ async function destroyUnit(zone, idx, owner, shouldExile, isCombatDestruction = 
     unit.devourCards = [];
   }
 
-  if (unit.card.id === "R-VRT-0071" && !window.isUnitSilenced(unit, zone, idx)) {
-    await window.xlwCheckExpelledGuestBeforeDestroy?.(unit, owner === "player");
-  }
   await cleanUnitLeavingField(unit, zone);
   if (field[zone][idx] === unit) field[zone][idx] = null;
   if ((unit.card.id === "C-ART-0072" || unit.card.name === "木乃伊") && !window.isUnitSilenced(unit, zone, idx)) {
@@ -36824,6 +37043,7 @@ async function aiCastSpell(spellCard, effectCallback, casterDefensePhase = false
   
   await window.xlwOnMagicCardCast(false, spellCard);
   const outcome = await effectCallback();
+  await window.xlwCheckMalwareBorgDestruction?.();
   if (outcome === "transformed") return true;
   if (["BRV-0037", "BRV-0038"].some(id => spellCard?.id?.includes(id)) &&
       window.xlwCardHasKeyword(spellCard, "消逝")) {
@@ -38864,10 +39084,43 @@ async function runEnemyTurn() {
               }
             }
 
+            let finalEnemyTargetZone = targetZone;
+            let finalEnemyTargetIdx = i;
+            let finalEnemyDefender = targetDefender;
+            if (enemyAttacker.beerRedirect || enemyAttacker.craftBeerTaunt) {
+              const eligiblePlayerUnits = [];
+              for (const pz of ["player_front", "player_back"]) {
+                field[pz].forEach((pu, pIdx) => {
+                  if (!pu) return;
+                  if (window.hasFlying(pu) && !window.hasFlying(enemyAttacker) && !hasRanged) return;
+                  if (window.XLW_isShieldUnit(pu) && !hasArmorBreak(enemyAttacker, enemyAttackerZone, i)) return;
+                  if (isUnitAttackProtected(pz, pIdx) || xlwFairHeroBlocksAttack(enemyAttacker, enemyAttackerZone, i, pz, pIdx)) return;
+                  eligiblePlayerUnits.push({ zone: pz, idx: pIdx, unit: pu });
+                });
+              }
+              if (eligiblePlayerUnits.length > 0) {
+                let pickedItem = eligiblePlayerUnits[0];
+                if (eligiblePlayerUnits.length > 1) {
+                  const choices = eligiblePlayerUnits.map((item, cIdx) => ({
+                    text: `${item.unit.card.name} (${item.zone.includes("front") ? "前排" : "後排"}${item.idx + 1})`,
+                    value: cIdx
+                  }));
+                  const pick = await showXLWChoiceModal("【啤酒進攻目標重定向】", `對手【${unitName(enemyAttacker)}】受啤酒效果影響，請由你選擇場上 1 個符合條件的單位作為其進攻目標：`, choices);
+                  if (pick !== null && pick !== undefined && eligiblePlayerUnits[pick]) {
+                    pickedItem = eligiblePlayerUnits[pick];
+                  }
+                }
+                finalEnemyTargetZone = pickedItem.zone;
+                finalEnemyTargetIdx = pickedItem.idx;
+                finalEnemyDefender = pickedItem.unit;
+                logBattle(`🍻 啤酒進攻重定向：我方指定【${unitName(finalEnemyDefender)}】作為對手【${unitName(enemyAttacker)}】的進攻目標！`);
+              }
+            }
+
             enemyAttacker.attacking = true;
-            enemyAttacker.target = { zone: targetZone, idx: i };
+            enemyAttacker.target = { zone: finalEnemyTargetZone, idx: finalEnemyTargetIdx };
             opponentAttackCount++;
-            logBattle(`⚔️ 對手進攻宣言：星星戰線${i + 1}，對手 ${unitName(enemyAttacker)} 指向我方 ${unitName(targetDefender)}`);
+            logBattle(`⚔️ 對手進攻宣言：星星戰線${finalEnemyTargetIdx + 1}，對手 ${unitName(enemyAttacker)} 指向我方 ${unitName(finalEnemyDefender)}`);
           }
         }
       } catch (errAtk) {
@@ -39173,6 +39426,7 @@ async function endPlayerTurnAndRunEnemy() {
   }
 
   // 強制打出單位規則：召喚階段與戰術佈陣階段均不能直接跳過
+  clearModes();
   if (phase === "召喚階段") {
     const blocked = await xlwEnforceForcedSummonRule("召喚階段", "結束回合");
     if (blocked) {
@@ -39180,8 +39434,9 @@ async function endPlayerTurnAndRunEnemy() {
       return;
     }
     // Ending the summon stage advances to tactics instead of skipping its mandatory summon.
-    if(turn!==1 && !(countdownActive && countdownRemaining===1)){
+    if (turn !== 1 && !(countdownActive && typeof countdownRemaining !== "undefined" && countdownRemaining === 1)) {
       await changeActionPhase("戰術佈陣");
+      revertButtonState();
       return;
     }
   } else if (phase === "戰術佈陣") {
@@ -39189,6 +39444,18 @@ async function endPlayerTurnAndRunEnemy() {
     if (blocked) {
       revertButtonState();
       return;
+    }
+  } else if (phase === "進攻宣言") {
+    const hasAttackingUnit = ["player_front", "player_back"].some(z =>
+      (field[z] || []).some(u => u && (u.attacking || u.target))
+    );
+    if (!hasAttackingUnit && typeof tacticalSummonUsed !== "undefined" && !tacticalSummonUsed && turn !== 1 && !(countdownActive && typeof countdownRemaining !== "undefined" && countdownRemaining === 1)) {
+      phase = "戰術佈陣";
+      const blocked = await xlwEnforceForcedSummonRule("戰術佈陣", "結束回合");
+      if (blocked) {
+        revertButtonState();
+        return;
+      }
     }
   }
 
@@ -41432,6 +41699,94 @@ window.xlwActivatePipi = async function(obj,zone,idx){
     render();if(isMultiplayer)sendFullGameStateToOpponent(false);return true;
   }finally{pending.delete(obj);release();}
 };
+window.xlwActivateGuardingSculpture = async function(obj, zone, idx) {
+  const isSculpture = obj?.card && (obj.card.id === "R-ART-0048" || obj.card.id?.includes("ART-0048") || obj.card.name?.includes("守護的斷臂雕像"));
+  const inMain = isMyTurn && zone.startsWith("player_") && ["召喚階段", "戰術佈陣", "Main Phase", "主要階段"].includes(phase);
+  if (!isSculpture || !inMain || field[zone]?.[idx] !== obj || window.isUnitSilenced(obj, zone, idx)) return false;
+  if (window.XLW_mechPhase || window.XLW_pendingSpellResolve || window.XLW_pendingSummonCounterResolve) return false;
+  if (phase === "戰術佈陣" && window.XLW_tacticalSelected) return false;
+  if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(obj, zone, idx)) {
+    if (phase !== "戰術佈陣") setStatus("守護的斷臂雕像 完全不能被移動，無法發動位置互換效果！");
+    return phase !== "戰術佈陣";
+  }
+  if (obj.sculptureEffectUsedTurn === turn) {
+    if (phase !== "戰術佈陣") {
+      setStatus("守護的斷臂雕像 的效果本回合已使用過。");
+      return true;
+    }
+    return false;
+  }
+  window.XLWDuelConsistency.identify([obj.card]);
+  const sculptureInstance = obj.card._xlwInstanceId;
+  const targets = [];
+  for (const z of ["player_front", "player_back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (u && u.card && u.tapped && !(z === zone && i === idx) && !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, i))) {
+        window.XLWDuelConsistency.identify([u.card]);
+        targets.push({
+          zone: z,
+          idx: i,
+          unit: u,
+          instance: u.card._xlwInstanceId,
+          text: `${u.card.name} (${z === "player_front" ? "前排" : "後排"}${i + 1})`
+        });
+      }
+    });
+  }
+  if (targets.length === 0) {
+    if (phase !== "戰術佈陣") {
+      setStatus("我方場上沒有其他橫置的單位可供轉正與交換位置！");
+      return true;
+    }
+    return false;
+  }
+  const confirmUse = await showXLWConfirm(
+    "守護的斷臂雕像 效果發動",
+    "是否發動【守護的斷臂雕像】效果：使我方場上 1 個橫置單位轉正，並與此單位互換位置？"
+  );
+  if (!confirmUse) return phase !== "戰術佈陣";
+  window.XLW_playerActionsPerformedThisTurn = true;
+  const modalChoices = targets.map((t, i) => ({
+    text: t.text,
+    value: i,
+    card: t.unit.card,
+    boardTarget: { zone: t.zone, idx: t.idx }
+  }));
+  const chosenIdxVal = await showXLWChoiceModal("選擇要轉正並互換位置的單位", "請選擇一個橫置的單位：", modalChoices);
+  if (chosenIdxVal === null || chosenIdxVal === undefined) return true;
+  const chosen = targets[Number(chosenIdxVal)];
+  if (!chosen) return true;
+
+  let liveSculpture = null;
+  let liveTarget = null;
+  for (const z of ["player_front", "player_back"]) {
+    (field[z] || []).forEach((u, i) => {
+      if (!u?.card) return;
+      if (u.card._xlwInstanceId === sculptureInstance || u === obj) liveSculpture = { zone: z, idx: i, unit: u };
+      if (u.card._xlwInstanceId === chosen.instance || u === chosen.unit) liveTarget = { zone: z, idx: i, unit: u };
+    });
+  }
+  if (!liveSculpture || !liveTarget || (liveSculpture.zone === liveTarget.zone && liveSculpture.idx === liveTarget.idx)) return true;
+
+  liveTarget.unit.tapped = false;
+  liveTarget.unit.attacking = false;
+  liveTarget.unit.target = null;
+  window.XLWBattleFlow?.forget(liveTarget.zone, liveTarget.idx);
+  window.XLWBattleFlow?.forget(liveSculpture.zone, liveSculpture.idx);
+
+  field[liveSculpture.zone][liveSculpture.idx] = liveTarget.unit;
+  field[liveTarget.zone][liveTarget.idx] = liveSculpture.unit;
+  liveTarget.unit.summonedZone = liveSculpture.zone;
+  liveSculpture.unit.summonedZone = liveTarget.zone;
+  liveSculpture.unit.sculptureEffectUsedTurn = turn;
+
+  logBattle(`✨ 守護的斷臂雕像 效果：使我方【${liveTarget.unit.card.name}】轉正，並與【守護的斷臂雕像】互換位置！`);
+  if (isMultiplayer) {
+    sendFullGameStateToOpponent();
+  }
+  render();
+  return true;
+};
 window.xlwOrderViewedSteamCards = async function(viewed,isPlayer){
   if(!isPlayer)return;
   const pool=viewed.filter(c=>window.XLWDuelConsistency.findKnownCard(deck,c));
@@ -42347,6 +42702,7 @@ function renderField() {
           if (selectedHandForTribute === null && !window.XLW_equipSpellActive && !window.XLW_tempEquipSpellActive &&
               !window.XLW_blackCatChoosing && !window.XLW_bottlePlacementActive &&
               (await window.xlwActivatePipi?.(obj, zone, idx) ||
+               await window.xlwActivateGuardingSculpture?.(obj, zone, idx) ||
                await window.xlwActivateSavageCraft?.(obj, zone, idx) ||
                await window.xlwActivateFairyWarden?.(obj, zone, idx) ||
                await window.xlwActivateDarkFairyAlchemist?.(obj, zone, idx))) return;
@@ -44442,69 +44798,7 @@ function renderField() {
 
             const isSculpture48 = obj.card?.id === "R-ART-0048" || obj.card?.name?.includes("守護的斷臂雕像");
             if (isSculpture48) {
-              if (typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(obj, zone, idx)) {
-                setStatus("守護的斷臂雕像 完全不能被移動，無法發動位置互換效果！");
-                return;
-              }
-              if (obj.sculptureEffectUsedTurn === turn) {
-                setStatus("守護的斷臂雕像 的效果本回合已使用過。");
-                
-                return;
-              }
-
-              // Scan for tapped units on player's field (excluding this unit itself)
-              const choices = [];
-              for (const z of ["player_front", "player_back"]) {
-                field[z].forEach((u, i) => {
-                  if (u && u.tapped && !(z === zone && i === idx) && !(typeof xlwIsUnitUnmovable === "function" && xlwIsUnitUnmovable(u, z, i))) {
-                    choices.push({
-                      text: `${u.card.name} (${z === "player_front" ? "前排" : "後排"}${i + 1})`,
-                      value: choices.length,
-                      pos: { zone: z, idx: i }
-                    });
-                  }
-                });
-              }
-
-              if (choices.length === 0) {
-                setStatus("我方場上沒有其他橫置的單位可供轉正與交換位置！");
-                
-                return;
-              }
-
-              const confirmUse = await showXLWConfirm(
-                "守護的斷臂雕像 效果發動",
-                "是否發動【守護的斷臂雕像】效果：使我方場上 1 個橫置單位轉正，並與此單位互換位置？"
-              );
-              if (confirmUse) {
-                window.XLW_playerActionsPerformedThisTurn = true;
-                const chosenIdxVal = await showXLWChoiceModal("選擇要轉正並互換位置的單位", "請選擇一個橫置的單位：", choices);
-                if (chosenIdxVal !== null && chosenIdxVal !== undefined) {
-                  const chosenIdx = parseInt(chosenIdxVal, 10);
-                  const targetPos = choices[chosenIdx].pos;
-                  const targetUnit = field[targetPos.zone][targetPos.idx];
-                  
-                  // Untap the target unit
-                  targetUnit.tapped = false;
-                  
-                  // Swap positions
-                  const temp = field[zone][idx];
-                  field[zone][idx] = field[targetPos.zone][targetPos.idx];
-                  field[targetPos.zone][targetPos.idx] = temp;
-                  
-                  // Update summonedZone property
-                  field[zone][idx].summonedZone = zone;
-                  field[targetPos.zone][targetPos.idx].summonedZone = targetPos.zone;
-                  
-                  obj.sculptureEffectUsedTurn = turn;
-                  logBattle(`✨ 守護的斷臂雕像 效果：使我方【${targetUnit.card.name}】轉正，並與【守護的斷臂雕像】互換位置！`);
-                  
-                  if (isMultiplayer) {
-                    sendFullGameStateToOpponent();
-                  }
-                  render();
-                }
-              }
+              await window.xlwActivateGuardingSculpture?.(obj, zone, idx);
               return;
             }
 
@@ -49028,12 +49322,10 @@ function setupWebSocketEvents() {
     } else if (data.action === "destroy_unit") {
       const zone = data.zone;
       const idx = data.idx;
-      const unit = field[zone][idx];
+      const unit = field[zone]?.[idx];
       if (unit) {
-        graveyard.push(unit.card);
-        await cleanUnitLeavingField(unit, zone);
-        if (field[zone][idx] === unit) field[zone][idx] = null;
         logBattle(`\u5c0d\u624b\u7279\u6b8a\u6548\u679c\uff1a\u7834\u58bad\u6211\u65b9\u0020${unitName(unit)}\u0021`); // 對手特殊效果：破壞我方 [單位]！
+        await destroyUnit(zone, idx, zone.startsWith("player_") ? "player" : "enemy", false);
         render();
       }
     } else if (data.action === "attack_declare") {
@@ -53627,12 +53919,19 @@ async function aiRespondToSpellChain() {
   });
 
   const aiMushroomUnits = [];
+  let aiNecroUnit = null;
+  const aiTargetMana = Number(lastItem.card?.mana ?? lastItem.card?.cost ?? 0) || 0;
   ["enemy_front", "enemy_back"].forEach(z => {
     field[z].forEach((u, i) => {
-      if (u && u.card && 
-          (u.card.id === "VRT-0011" || u.card.name?.includes("酒醉的魔法魔菇")) &&
-          !window.isUnitSilenced(u, z, i)) {
-        aiMushroomUnits.push({ zone: z, idx: i, unit: u });
+      if (u && u.card && !window.isUnitSilenced(u, z, i)) {
+        if (u.card.id === "VRT-0011" || u.card.name?.includes("酒醉的魔法魔菇")) {
+          aiMushroomUnits.push({ zone: z, idx: i, unit: u });
+        }
+        if (!aiNecroUnit && isMyTurn && window.XLW_enemyNecroUsedTurn !== turn && u.necroUsedTurn !== turn &&
+            (u.card.id === "SR-VRT-0077" || u.card.name?.includes("亡靈法師")) &&
+            window.xlwCanSoulReturnForPlayer?.(aiTargetMana, false)) {
+          aiNecroUnit = { zone: z, idx: i, unit: u };
+        }
       }
     });
   });
@@ -53652,6 +53951,26 @@ async function aiRespondToSpellChain() {
     spellChainStack.push({ card: counterCard, owner: "opponent", casterDefensePhase: false });
     showSpellChainUI(spellChainStack);
     promptNextChainAction();
+  } else if (aiNecroUnit) {
+    const soulOk = await window.xlwExecuteSoulReturn(aiTargetMana, false);
+    if (soulOk && spellChainStack.at(-1) === lastItem) {
+      aiNecroUnit.unit.necroUsedTurn = turn;
+      window.XLW_enemyNecroUsedTurn = turn;
+      window.xlwTriggerUndeadHospital?.(1, false);
+      logBattle(`🧙‍♂️💀 對手發動了【亡靈法師】的反制效果（還魂 ${aiTargetMana}）！`);
+      const dummyCard = {
+        id: "SR-VRT-0077-EFFECT",
+        name: "亡靈法師 (還魂反制)",
+        type: "unit",
+        effect_text: "無效化該魔法卡"
+      };
+      spellChainStack.push({ card: dummyCard, owner: "opponent" });
+      showSpellChainUI(spellChainStack);
+      promptNextChainAction();
+      render();
+    } else {
+      resolveLocalSpellChain();
+    }
   } else if (aiMushroomUnits.length > 0 && Math.random() < 0.5) {
     const mushItem = aiMushroomUnits[0];
     await destroyUnit(mushItem.zone, mushItem.idx, "enemy", false);
@@ -53754,6 +54073,21 @@ function promptNextChainAction() {
       }
     }
 
+    // 🧙‍♂️💀 SR-VRT-0077 亡靈法師: 敵方在其回合使用魔法卡時限一次，可還魂X，若成功使該卡無效化。X=該魔法卡的法力值
+    let eligibleNecromancer = null;
+    const necroReqMana = Number(lastItemCard?.mana ?? lastItemCard?.cost ?? 0) || 0;
+    if (!isMyTurn && !isLastItemUnit && lastItemCard && (lastItemCard.type === "magic" || lastItemCard.type === "spell") && window.XLW_playerNecroUsedTurn !== turn) {
+      if (window.xlwCanSoulReturnForPlayer?.(necroReqMana, true)) {
+        for (const z of ["player_front", "player_back"]) {
+          (field[z] || []).forEach((u, i) => {
+            if (!eligibleNecromancer && u && u.card && (u.card.id === "SR-VRT-0077" || u.card.name?.includes("亡靈法師")) && !window.isUnitSilenced(u, z, i) && u.necroUsedTurn !== turn) {
+              eligibleNecromancer = { zone: z, idx: i, unit: u };
+            }
+          });
+        }
+      }
+    }
+
     const eligibleMushroomUnits = [];
     if (!isLastItemUnit) {
       ["player_front", "player_back"].forEach(z => {
@@ -53767,7 +54101,7 @@ function promptNextChainAction() {
       });
     }
 
-    if (counterCards.length || eligibleMushroomUnits.length || eligibleXiaoyuan) {
+    if (counterCards.length || eligibleMushroomUnits.length || eligibleXiaoyuan || eligibleNecromancer) {
       statusText.textContent = `🔥 對手連鎖發動了 ${lastItem.card.name}，是否進行連鎖反制？`;
       
       // Counter buttons
@@ -53910,6 +54244,50 @@ function promptNextChainAction() {
         actionsDiv.appendChild(xyBtn);
       }
 
+      if (eligibleNecromancer) {
+        const necroBtn = document.createElement("button");
+        necroBtn.className = "chain-action-btn counter-btn";
+        necroBtn.textContent = `🧙‍♂️💀 使用【亡靈法師】還魂 ${necroReqMana} 反制`;
+        necroBtn.onclick = async () => {
+          if (!takeDecision()) return;
+          actionsDiv.innerHTML = "";
+          statusText.textContent = `🧙‍♂️💀 正在發動【亡靈法師】還魂 ${necroReqMana} 反制...`;
+          if (isMyTurn || window.XLW_playerNecroUsedTurn === turn ||
+              field[eligibleNecromancer.zone]?.[eligibleNecromancer.idx] !== eligibleNecromancer.unit ||
+              window.isUnitSilenced(eligibleNecromancer.unit, eligibleNecromancer.zone, eligibleNecromancer.idx) ||
+              !window.xlwCanSoulReturnForPlayer?.(necroReqMana, true)) {
+            promptNextChainAction();
+            return;
+          }
+          const soulOk = await window.xlwExecuteSoulReturn(necroReqMana, true);
+          if (spellChainStack.at(-1) !== lastItem) return;
+          if (soulOk) {
+            eligibleNecromancer.unit.necroUsedTurn = turn;
+            window.XLW_playerNecroUsedTurn = turn;
+            window.xlwTriggerUndeadHospital?.(1, true);
+            logBattle(`🧙‍♂️💀【亡靈法師】還魂禁咒：成功還魂 ${necroReqMana}，無效化敵方魔法【${lastItemCard.name}】！`);
+            const dummyCard = {
+              id: "SR-VRT-0077-EFFECT",
+              name: "亡靈法師 (還魂反制)",
+              type: "unit",
+              effect_text: "無效化該魔法卡"
+            };
+            spellChainStack.push({ card: dummyCard, owner: "me" });
+            if (isMultiplayer && ws) {
+              ws.send(JSON.stringify({ action: "spell_chain_add", ownerCollections: window.xlwSpellOwnerCollections?.(), card: dummyCard }));
+            }
+            showSpellChainUI(spellChainStack);
+            promptNextChainAction();
+            render();
+          } else {
+            decisionTaken = false;
+            showSpellChainUI(spellChainStack);
+            promptNextChainAction();
+          }
+        };
+        actionsDiv.appendChild(necroBtn);
+      }
+
       // Pass button
       const passBtn = document.createElement("button");
       passBtn.className = "chain-action-btn pass-btn";
@@ -54025,7 +54403,7 @@ function resolveLocalSpellChain() {
                                    (counteringCard.name && counteringCard.name.includes("\u6cd5\u8853\u4fdd\u8b77")) ||
                                    (counteringCard.name && counteringCard.name.includes("黑球")) ||
                                    (counteringCard.id === "R-STP-0030") ||
-                                   ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"].includes(counteringCard.id);
+                                   ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT", "SR-VRT-0077-EFFECT"].includes(counteringCard.id);
                                    
         if (isTargetUnit && isCounterMagicOnly) {
           logBattle(`\u3010\u53cd\u5236\u7121\u6548\u3011${counteringCard.name} \u7121\u6cd5\u53cd\u5236\u55ae\u4f4d\u5361 ${targetCard.name} \u7684\u6548\u679c\uff01`);
@@ -54049,7 +54427,7 @@ function resolveLocalSpellChain() {
   }
   for (let i = 1; i < spellChainStack.length; i++) {
     const item = spellChainStack[i];
-    if (!item?.card || ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT"].includes(item.card.id)) continue;
+    if (!item?.card || ["VRT-0011-EFFECT", "SSR-CCS-0037-EFFECT", "SR-VRT-0077-EFFECT"].includes(item.card.id)) continue;
     const ours = item.owner === "me";
     const owner = ours ? "player" : "enemy";
     if(forbiddenCounters.has(i)){
@@ -54502,8 +54880,9 @@ function showExtraDeckDetailModal(title, extraList, owner) {
     if (owner === "player") {
       cardEl.onclick = async (e) => {
         e.stopPropagation();
-        if (phase !== "召喚階段") {
-          setStatus("【額外召喚】只能在召喚階段進行！");
+        const isMainPhaseUpgradeCard = (card.id === "R-VRT-0067" || card.name?.includes("精釀啤酒") || card.id === "R-VRT-0070" || card.name?.includes("鬧事酒館"));
+        if (!isMyTurn || (phase !== "召喚階段" && !(isMainPhaseUpgradeCard && phase === "戰術佈陣"))) {
+          setStatus("【額外召喚/升級】只能在你的主要階段進行！");
           return;
         }
         
@@ -54751,7 +55130,7 @@ function showExtraDeckDetailModal(title, extraList, owner) {
 
         if (cardId === "R-VRT-0067" || cardName.includes("精釀啤酒")) {
           const draftIdx = hand.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
-          const beerIdx = hand.findIndex(c => c && (c.id === "C-VRT-0021" || c.name?.includes("一札啤酒")));
+          const beerIdx = hand.findIndex(c => c && (c.id === "R-VRT-0058" || c.id === "C-VRT-0021" || c.id === "VRT-0021" || c.name?.includes("一札啤酒")));
           if (draftIdx >= 0 && beerIdx >= 0) {
             overlay.remove();
             const brewed = window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, card);
@@ -54762,12 +55141,41 @@ function showExtraDeckDetailModal(title, extraList, owner) {
             hand.splice(lower, 1);
             hand.push(brewed);
             if (isMultiplayer) sendFullGameStateToOpponent();
-            logBattle(`🍻 釀造升級：將手牌中的【渣釀酒】與【一札啤酒】升級合成出【精釀啤酒】！`);
+            logBattle(`🍻 釀造升級：將手牌中的【渣釀酒】與【一札啤酒】升級為【精釀啤酒】！`);
             renderExtraDecks();
             render();
             return;
           } else {
             setStatus("【精釀啤酒】升級合成需要手牌同時擁有 1 張「渣釀酒」與 1 張「一札啤酒」！");
+            return;
+          }
+        }
+
+        if (cardId === "R-VRT-0070" || cardName.includes("鬧事酒館")) {
+          const currentField = window.xlwGetFactionFieldCard(true);
+          const isVirtualTavern = currentField && (currentField.id === "VRT-0013" || currentField.name?.includes("虛擬酒館"));
+          let patronCount = 0;
+          for (const z of ["player_front", "player_back"]) {
+            (field[z] || []).forEach(u => {
+              if (u && window.xlwIsUnitPatron && window.xlwIsUnitPatron(u)) patronCount++;
+            });
+          }
+          if (isVirtualTavern && patronCount >= 5) {
+            overlay.remove();
+            const upgradedTavern = window.XLWDuelConsistency.takeKnownCard(playerExtraDeck, card);
+            if (!upgradedTavern) return;
+            const pFieldEl = document.getElementById("playerField");
+            if (pFieldEl) {
+              pFieldEl.dataset.card = JSON.stringify({ ...structuredClone(upgradedTavern), art_subtype: "場地" });
+            }
+            logBattle(`🍻💥【虛擬酒館】場上酒客雲集（${patronCount} 位酒客），正式升級為【鬧事酒館】！`);
+            if (typeof window.xlwOnUnitUpgraded === "function") await window.xlwOnUnitUpgraded(true, null, upgradedTavern);
+            if (isMultiplayer) sendFullGameStateToOpponent();
+            renderExtraDecks();
+            render();
+            return;
+          } else {
+            setStatus(`【鬧事酒館】升級需要場地區有「虛擬酒館」且我方場上有至少 5 個酒客單位（目前酒客數：${patronCount}）！`);
             return;
           }
         }
@@ -55800,12 +56208,21 @@ window.xlwGetCardGhostCount = function(card) {
   const name = card.name || "";
   const effect = card.effect_text || "";
 
+  // Named cards with special multi-values first (so regex doesn't prematurely return single value for "亡魂1或亡魂-1")
+  if (name.includes("不明人口") || card.id?.includes("VRT-0062")) return [1, -1];
+  if (name.includes("不敢喝孟婆湯的亡靈") || card.id?.includes("VRT-0068")) return [-1, 0, 1];
+  if (name.includes("亡靈阿姨") || card.id?.includes("VRT-0076")) return [2];
+
   if (effect.includes("亡魂")) {
+    let orMatch = effect.match(/亡魂\s*(-?\d+)\s*或\s*(?:亡魂\s*)?(-?\d+)/);
+    if (orMatch) {
+      return [parseInt(orMatch[1], 10), parseInt(orMatch[2], 10)];
+    }
     // Support -1~1, -1-1, or plain numbers
     let match = effect.match(/亡魂\s*(-?\d+)\s*[~～至-]\s*(-?\d+)/);
     if (match) {
-      const start = parseInt(match[1]);
-      const end = parseInt(match[2]);
+      const start = parseInt(match[1], 10);
+      const end = parseInt(match[2], 10);
       const range = [];
       const low = Math.min(start, end);
       const high = Math.max(start, end);
@@ -55814,20 +56231,7 @@ window.xlwGetCardGhostCount = function(card) {
     }
     match = effect.match(/亡魂\s*(-?\d+)/);
     if (match) {
-      const valStr = match[1];
-      if (valStr.includes("-")) {
-        const parts = valStr.split("-");
-        const start = parseInt(parts[0]);
-        const end = parseInt(parts[1]);
-        const range = [];
-        for (let i = start; i <= end; i++) {
-          range.push(i);
-        }
-        return range;
-      } else {
-        const val = parseInt(valStr);
-        return [val];
-      }
+      return [parseInt(match[1], 10)];
     }
   }
 
@@ -55844,31 +56248,53 @@ window.xlwGetCardGhostCount = function(card) {
   if (name.includes("亡靈女孩")) return [1];
   if (name.includes("過勞的外科醫師")) return [4];
   if (name.includes("萬年老骨灰")) return [6, 7, 8];
-  if (name.includes("不明人口")) return [1, -1];
 
   return [0];
 };
 
 window.xlwCanSoulReturn = function(targetValue, candidates) {
-  function dfs(index, currentSum) {
-    if (currentSum === targetValue) return true;
+  const targets = Array.isArray(targetValue) ? targetValue : [targetValue];
+  function dfs(index, currentSum, pickedCount) {
+    if (pickedCount > 0 && targets.includes(currentSum)) return true;
     if (index >= candidates.length) return false;
 
     const card = candidates[index];
     const possibleValues = window.xlwGetCardGhostCount(card);
 
-    if (dfs(index + 1, currentSum)) return true;
+    if (dfs(index + 1, currentSum, pickedCount)) return true;
 
     for (const val of possibleValues) {
-      if (dfs(index + 1, currentSum + val)) return true;
+      if (dfs(index + 1, currentSum + val, pickedCount + 1)) return true;
     }
 
     return false;
   }
-  return dfs(0, 0);
+  return dfs(0, 0, 0);
+};
+
+window.xlwCanSoulReturnForPlayer = function(targetValue, isPlayer, excludeCards = []) {
+  const grave = isPlayer ? graveyard : (window.XLW_ENEMY?.grave || enemyGraveyard || []);
+  const excluded = new Set(excludeCards || []);
+  const candidates = grave.filter(c => c && !excluded.has(c) && c.type === "unit" && c.art_subtype && c.art_subtype.includes("亡靈"));
+  if (candidates.length === 0) return false;
+  const baseTargets = Array.isArray(targetValue) ? targetValue : [targetValue];
+  if (window.xlwCanSoulReturn(baseTargets, candidates)) return true;
+  const medic = (isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"])
+    .flatMap(z => (field[z] || []).map((u, i) => ({ u, z, i })))
+    .find(({ u, z, i }) => u && (u.card?.id === "SSR-VRT-0074" || u.card?.name?.includes("亡靈法醫")) && u.medicUsedTurn !== turn && !u.medicUsedThisTurn && !window.isUnitSilenced?.(u, z, i));
+  if (medic) {
+    const adjusted = [];
+    for (const t of baseTargets) {
+      adjusted.push(Math.max(1, t - 1), t + 1);
+    }
+    if (window.xlwCanSoulReturn(adjusted, candidates)) return true;
+  }
+  return false;
 };
 
 window.xlwShowSoulReturnModal = function(targetValue, candidates) {
+  const targets = Array.isArray(targetValue) ? targetValue : [targetValue];
+  const targetLabel = targets.join(" 或 ");
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "xlw-soul-return-overlay";
@@ -55903,7 +56329,7 @@ window.xlwShowSoulReturnModal = function(targetValue, candidates) {
     container.innerHTML = `
       <div style="text-align: center;">
         <h2 style="margin: 0; color: #ffd76a; text-shadow: 0 0 10px rgba(255,215,106,0.5);">👻 亡靈還魂儀式 👻</h2>
-        <p style="color: #c4b9a6; font-size: 14px; margin-top: 8px; margin-bottom: 0;">請選擇墓地中的亡靈單位，使其亡魂值加總剛好等於 <b style="color:#ffd76a; font-size:16px;">${targetValue}</b></p>
+        <p style="color: #c4b9a6; font-size: 14px; margin-top: 8px; margin-bottom: 0;">請選擇墓地中的亡靈單位，使其亡魂值加總剛好等於 <b style="color:#ffd76a; font-size:16px;">${targetLabel}</b></p>
       </div>
       
       <div id="xlwSoulList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2);">
@@ -55911,7 +56337,7 @@ window.xlwShowSoulReturnModal = function(targetValue, candidates) {
 
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
         <div style="font-size: 16px; font-weight: bold; color: #c4b9a6;">
-          當前選擇亡魂值：<span id="xlwCurrentSoulSum" style="color: #ffd76a; font-size: 20px;">0</span> / ${targetValue}
+          當前選擇亡魂值：<span id="xlwCurrentSoulSum" style="color: #ffd76a; font-size: 20px;">0</span> / ${targetLabel}
         </div>
         <div style="display: flex; gap: 15px;">
           <button id="xlwSoulCancel" style="padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color:#fff; cursor:pointer;">取消</button>
@@ -55936,7 +56362,7 @@ window.xlwShowSoulReturnModal = function(targetValue, candidates) {
         sum += val;
       }
       sumEl.textContent = sum;
-      if (sum === targetValue) {
+      if (selectedMap.size > 0 && targets.includes(sum)) {
         confirmBtn.disabled = false;
         confirmBtn.style.cursor = "pointer";
         confirmBtn.style.opacity = "1";
@@ -56039,10 +56465,11 @@ window.xlwShowSoulReturnModal = function(targetValue, candidates) {
 };
 
 window.xlwFindSoulReturnSubset = function(targetValue, candidates) {
+  const targets = Array.isArray(targetValue) ? targetValue : [targetValue];
   let result = null;
   function dfs(index, currentSum, currentSelected) {
     if (result) return;
-    if (currentSum === targetValue) {
+    if (currentSelected.length > 0 && targets.includes(currentSum)) {
       result = [...currentSelected];
       return;
     }
@@ -56064,51 +56491,65 @@ window.xlwFindSoulReturnSubset = function(targetValue, candidates) {
   return result;
 };
 
-window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
+window.xlwExecuteSoulReturn = async function(targetValue, isPlayer, options = {}) {
+  let targets = Array.isArray(targetValue) ? [...targetValue] : [targetValue];
+  const excluded = new Set(options.excludeCards || []);
+  const grave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
+  const candidates = grave.filter(c => c && !excluded.has(c) && c.type === "unit" && c.art_subtype && c.art_subtype.includes("亡靈"));
+
   // 💉 SSR-VRT-0074 亡靈法醫: 一回合限一次，你還魂前可使該次還魂所需的亡魂數+1或-1
-  const medic = (isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"])
-    .flatMap(z => field[z] || []).find(u => u && (u.card?.id === "SSR-VRT-0074" || u.card?.name?.includes("亡靈法醫")) && !u.medicUsedThisTurn && !window.isUnitSilenced?.(u));
+  const medicEntry = (isPlayer ? ["player_front", "player_back"] : ["enemy_front", "enemy_back"])
+    .flatMap(z => (field[z] || []).map((u, i) => ({ u, z, i })))
+    .find(({ u, z, i }) => u && (u.card?.id === "SSR-VRT-0074" || u.card?.name?.includes("亡靈法醫")) && u.medicUsedTurn !== turn && !u.medicUsedThisTurn && !window.isUnitSilenced?.(u, z, i));
+  const medic = medicEntry?.u;
   if (medic) {
+    const minusTargets = [...new Set(targets.map(t => Math.max(1, t - 1)))];
+    const plusTargets = [...new Set(targets.map(t => t + 1))];
     if (isPlayer) {
       const choices = [
-        { text: `維持所需亡魂數 (${targetValue})`, value: 0 },
-        { text: `所需亡魂數 -1 (改為 ${Math.max(1, targetValue - 1)})`, value: -1 },
-        { text: `所需亡魂數 +1 (改為 ${targetValue + 1})`, value: 1 }
+        { text: `維持所需亡魂數 (${targets.join(" 或 ")})`, value: 0 },
+        { text: `所需亡魂數 -1 (改為 ${minusTargets.join(" 或 ")})`, value: -1 },
+        { text: `所需亡魂數 +1 (改為 ${plusTargets.join(" 或 ")})`, value: 1 }
       ];
       const pick = await showXLWChoiceModal("【亡靈法醫】微調亡魂", `場上有【亡靈法醫】！是否調整此次還魂所需之亡魂數？`, choices);
       if (pick === -1 || pick === 1) {
-        medic.medicUsedThisTurn = true;
-        targetValue = Math.max(1, targetValue + pick);
-        logBattle(`💉【亡靈法醫】解剖精算：將此次還魂所需亡魂數調整為 ${targetValue}！`);
+        medic.medicUsedTurn = turn;
+        targets = pick === -1 ? minusTargets : plusTargets;
+        logBattle(`💉【亡靈法醫】解剖精算：將此次還魂所需亡魂數調整為 ${targets.join(" 或 ")}！`);
       }
     } else {
-      if (targetValue > 1) {
-        medic.medicUsedThisTurn = true;
-        targetValue = targetValue - 1;
-        logBattle(`💉 對手【亡靈法醫】發動效果：將此次還魂所需亡魂數 -1（改為 ${targetValue}）！`);
+      if (!window.xlwCanSoulReturn(targets, candidates) && window.xlwCanSoulReturn(minusTargets, candidates)) {
+        medic.medicUsedTurn = turn;
+        targets = minusTargets;
+        logBattle(`💉 對手【亡靈法醫】發動效果：將此次還魂所需亡魂數 -1（改為 ${targets.join(" 或 ")}）！`);
+      } else if (!window.xlwCanSoulReturn(targets, candidates) && window.xlwCanSoulReturn(plusTargets, candidates)) {
+        medic.medicUsedTurn = turn;
+        targets = plusTargets;
+        logBattle(`💉 對手【亡靈法醫】發動效果：將此次還魂所需亡魂數 +1（改為 ${targets.join(" 或 ")}）！`);
+      } else if (targets[0] > 1 && window.xlwCanSoulReturn(minusTargets, candidates)) {
+        medic.medicUsedTurn = turn;
+        targets = minusTargets;
+        logBattle(`💉 對手【亡靈法醫】發動效果：將此次還魂所需亡魂數 -1（改為 ${targets.join(" 或 ")}）！`);
       }
     }
   }
 
-  const grave = isPlayer ? graveyard : (window.XLW_ENEMY.grave || []);
-  const candidates = grave.filter(c => c && c.type === "unit" && c.art_subtype && c.art_subtype.includes("亡靈"));
-
-  if (!window.xlwCanSoulReturn(targetValue, candidates)) {
+  if (!window.xlwCanSoulReturn(targets, candidates)) {
     if (isPlayer) {
-      setStatus(`還魂失敗：墓地中的亡靈單位無法湊齊剛好 ${targetValue} 點亡魂值。`);
+      setStatus(`還魂失敗：墓地中的亡靈單位無法湊齊剛好 ${targets.join(" 或 ")} 點亡魂值。`);
     }
     return false;
   }
 
   let selectedCards = null;
   if (isPlayer) {
-    selectedCards = await window.xlwShowSoulReturnModal(targetValue, candidates);
+    selectedCards = await window.xlwShowSoulReturnModal(targets, candidates);
     if (!selectedCards || selectedCards.length === 0) {
       setStatus("已取消還魂。");
       return false;
     }
   } else {
-    selectedCards = window.xlwFindSoulReturnSubset(targetValue, candidates);
+    selectedCards = window.xlwFindSoulReturnSubset(targets, candidates);
     if (!selectedCards) return false;
   }
 
@@ -56187,6 +56628,26 @@ window.xlwExecuteSoulReturn = async function(targetValue, isPlayer) {
       if (c.id === "R-VRT-0050" || c.name?.includes("幽靈骨灰妹妹")) {
         enemyBonusScore += 2;
         logBattle("✨ 對手 幽靈骨灰妹妹 效果：回到對手手牌，對手獎勵 +2★！");
+      }
+      if (c.id === "R-VRT-0068" || c.name?.includes("不敢喝孟婆湯的亡靈") || c.name?.includes("孟婆湯")) {
+        const validUnits = [];
+        for (const z of ["player_front", "player_back", "enemy_front", "enemy_back"]) {
+          (field[z] || []).forEach((u, uIdx) => {
+            if (u && u.card) {
+              const atk = typeof getUnitAtk === "function" ? getUnitAtk(u, z, uIdx) : (parseInt(u.card.attack) || 0);
+              const stars = typeof getUnitStars === "function" ? getUnitStars(u, z, uIdx) : (parseInt(u.card.score) || 0);
+              if (atk === 1 && stars === 1) {
+                validUnits.push({ zone: z, idx: uIdx, unit: u, name: u.card.name });
+              }
+            }
+          });
+        }
+        if (validUnits.length > 0) {
+          const target = validUnits[0];
+          target.unit.card = structuredClone(c);
+          logBattle(`🥣👻 對手【不敢喝孟婆湯的亡靈】執念附身：使【${target.name}】變成了【不敢喝孟婆湯的亡靈】！`);
+          render();
+        }
       }
     });
     renderScore();
@@ -56942,6 +57403,35 @@ window.xlwHandleUnitTappedTriggers = async function(tappedUnit, zone, idx) {
             target.unit.tapped = false;
             logBattle(`✨ 對手【法師陶俑】效果：使對手【${target.unit.card.name}】轉正！`);
             render();
+          }
+        }
+      }
+    }
+
+    // 3. 釀酒酒客 (SR-VRT-0064): 敵方場上的單位被橫放時,你可從你額外區尋找1張「渣釀酒」並加入手牌
+    const oppIsPlayer = !isPlayerSide;
+    const oppPrefix = oppIsPlayer ? "player_" : "enemy_";
+    const oppExtra = oppIsPlayer ? playerExtraDeck : (window.XLW_enemyExtraDeck || enemyExtraDeck || []);
+    const oppHand = oppIsPlayer ? hand : (window.XLW_ENEMY.hand ||= []);
+    for (const oz of [oppPrefix + "front", oppPrefix + "back"]) {
+      const rowUnits = field[oz] || [];
+      for (let oi = 0; oi < rowUnits.length; oi++) {
+        const u = rowUnits[oi];
+        if (!u || !u.card || !(u.card.id === "SR-VRT-0064" || u.card.name?.includes("釀酒酒客"))) continue;
+        if (window.isUnitSilenced(u, oz, oi)) continue;
+        const beerIdx = oppExtra.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+        if (beerIdx < 0) break;
+        const doSearch = oppIsPlayer
+          ? await showXLWConfirm("【釀酒酒客】微醺契機", `敵方場上的【${tappedUnit.card.name}】被橫放！是否發動【釀酒酒客】效果，從額外區尋找 1 張【渣釀酒】並加入手牌？`)
+          : true;
+        if (doSearch) {
+          const bIdx = oppExtra.findIndex(c => c && (c.id === "C-VRT-0065" || c.name?.includes("渣釀酒")));
+          if (bIdx >= 0) {
+            const beerCard = oppExtra.splice(bIdx, 1)[0];
+            oppHand.push(beerCard);
+            logBattle(`🍻【釀酒酒客】效果發動：因敵方單位被橫放，${oppIsPlayer ? "我方" : "對手"}從額外區將 1 張【渣釀酒】加入手牌！`);
+            if (typeof renderExtraDecks === "function") renderExtraDecks();
+            if (typeof render === "function") render();
           }
         }
       }
